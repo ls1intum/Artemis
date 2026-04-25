@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.exercise.review;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
@@ -8,12 +12,14 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
@@ -21,19 +27,25 @@ import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadGroup;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
+import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadSyncAction;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.InlineCodeChangeDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseReviewThreadUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
+import de.tum.cit.aet.artemis.hyperion.domain.Severity;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -149,6 +161,47 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void shouldMarkConsistencyInlineFixAsApplied() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO consistencyThread = createThreadWithConsistencyComment(exercise, "Consistency issue", false);
+        CommentDTO consistencyComment = consistencyThread.comments().getFirst();
+        clearInvocations(websocketMessagingService);
+
+        var updated = request.performMvcRequest(MockMvcRequestBuilders.put(new URI(reviewCommentInlineFixAppliedPath(exercise.getId(), consistencyComment.id())))
+                .contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isOk()).andReturn();
+        CommentDTO updatedComment = objectMapper.readValue(updated.getResponse().getContentAsString(), CommentDTO.class);
+
+        assertThat(updatedComment.type()).isEqualTo(CommentType.CONSISTENCY_CHECK);
+        assertThat(updatedComment.content()).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+        InlineCodeChangeDTO inlineFix = ((ConsistencyIssueCommentContentDTO) updatedComment.content()).suggestedFix();
+        assertThat(inlineFix).isNotNull();
+        assertThat(inlineFix.applied()).isTrue();
+
+        ArgumentCaptor<Object> websocketPayloadCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), websocketPayloadCaptor.capture());
+        ExerciseReviewThreadUpdateDTO websocketPayload = (ExerciseReviewThreadUpdateDTO) websocketPayloadCaptor.getValue();
+        assertThat(websocketPayload.action()).isEqualTo(ReviewThreadSyncAction.COMMENT_UPDATED);
+        assertThat(websocketPayload.comment().id()).isEqualTo(consistencyComment.id());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void shouldRejectMarkConsistencyInlineFixAsAppliedForUserComment() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO createdThread = createThreadWithComment(exercise, "Initial comment");
+        CommentDTO userComment = createdThread.comments().getFirst();
+
+        var result = request.performMvcRequest(
+                MockMvcRequestBuilders.put(new URI(reviewCommentInlineFixAppliedPath(exercise.getId(), userComment.id()))).contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest()).andReturn();
+        String content = result.getResponse().getContentAsString();
+        var payload = objectMapper.readValue(content, java.util.Map.class);
+        assertThat(payload.get("message")).isEqualTo("error.inlineFixNotSupported");
+        assertThat(payload.get("params")).isEqualTo("exerciseReviewComment");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldDeleteThreadWhenLastCommentRemoved() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
@@ -183,6 +236,40 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         CommentThreadDTO resolved = request.putWithResponseBody(reviewThreadResolvedPath(exercise.getId(), createdThread.id()), update, CommentThreadDTO.class, HttpStatus.OK);
 
         assertThat(resolved.resolved()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void shouldUpdateThreadGroupResolvedState() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO first = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("First")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+        CommentThreadDTO second = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Second")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+        CommentThreadDTO ungrouped = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Ungrouped")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+
+        CreateCommentThreadGroupDTO groupRequest = new CreateCommentThreadGroupDTO(List.of(first.id(), second.id()));
+        CommentThreadGroupDTO group = request.postWithResponseBody(reviewThreadGroupsPath(exercise.getId()), groupRequest, CommentThreadGroupDTO.class, HttpStatus.CREATED);
+
+        UpdateThreadResolvedStateDTO update = new UpdateThreadResolvedStateDTO(true);
+        clearInvocations(websocketMessagingService);
+        var mvcResult = request.performMvcRequest(MockMvcRequestBuilders.put(new URI(reviewThreadGroupResolvedPath(exercise.getId(), group.id())))
+                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(update))).andExpect(status().isOk()).andReturn();
+        List<CommentThreadDTO> updatedGroupThreads = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        assertThat(updatedGroupThreads).hasSize(2).allMatch(CommentThreadDTO::resolved);
+
+        var threads = request.getList(reviewThreadsPath(exercise.getId()), HttpStatus.OK, CommentThreadDTO.class);
+        assertThat(threads.stream().filter(thread -> List.of(first.id(), second.id()).contains(thread.id()))).allMatch(CommentThreadDTO::resolved);
+        assertThat(threads.stream().filter(thread -> thread.id().equals(ungrouped.id())).findFirst().orElseThrow().resolved()).isFalse();
+
+        ArgumentCaptor<Object> websocketPayloadCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(websocketMessagingService, times(2)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), websocketPayloadCaptor.capture());
+        List<ExerciseReviewThreadUpdateDTO> websocketPayloads = websocketPayloadCaptor.getAllValues().stream().map(ExerciseReviewThreadUpdateDTO.class::cast).toList();
+        assertThat(websocketPayloads).allMatch(payload -> payload.action() == ReviewThreadSyncAction.THREAD_UPDATED).extracting(payload -> payload.thread().id())
+                .containsExactlyInAnyOrder(first.id(), second.id());
     }
 
     @Test
@@ -318,6 +405,27 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
         CommentThread persisted = commentThreadRepository.findById(createdThread.id()).orElseThrow();
         assertThat(persisted.isResolved()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldForbidThreadGroupResolvedUpdateForStudent() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThread first = commentThreadRepository.save(buildThreadEntity(exercise));
+        CommentThread second = commentThreadRepository.save(buildThreadEntity(exercise));
+        CommentThreadGroup group = new CommentThreadGroup();
+        group.setExercise(exercise);
+        group = commentThreadGroupRepository.save(group);
+        first.setGroup(group);
+        second.setGroup(group);
+        commentThreadRepository.saveAll(List.of(first, second));
+
+        UpdateThreadResolvedStateDTO update = new UpdateThreadResolvedStateDTO(true);
+        request.performMvcRequest(MockMvcRequestBuilders.put(new URI(reviewThreadGroupResolvedPath(exercise.getId(), group.getId()))).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(update))).andExpect(status().isForbidden());
+
+        assertThat(commentThreadRepository.findById(first.getId())).get().extracting(CommentThread::isResolved).isEqualTo(false);
+        assertThat(commentThreadRepository.findById(second.getId())).get().extracting(CommentThread::isResolved).isEqualTo(false);
     }
 
     @Test
@@ -581,6 +689,10 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         return "/api/exercise/exercises/" + exerciseId + "/review-comments/" + commentId;
     }
 
+    private String reviewCommentInlineFixAppliedPath(long exerciseId, long commentId) {
+        return reviewCommentPath(exerciseId, commentId) + "/inline-fix/applied";
+    }
+
     private String reviewThreadResolvedPath(long exerciseId, long threadId) {
         return reviewThreadsPath(exerciseId) + "/" + threadId + "/resolved";
     }
@@ -591,6 +703,10 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     private String reviewThreadGroupPath(long exerciseId, long groupId) {
         return reviewThreadGroupsPath(exerciseId) + "/" + groupId;
+    }
+
+    private String reviewThreadGroupResolvedPath(long exerciseId, long groupId) {
+        return reviewThreadGroupPath(exerciseId, groupId) + "/resolved";
     }
 
     private void assertBadRequest(String path, Object body, String expectedMessage, String expectedParams) throws Exception {
@@ -656,6 +772,30 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         comment.setThread(savedThread);
         comment.setType(CommentType.USER);
         comment.setContent(new UserCommentContentDTO(text));
+        comment.setInitialVersion(savedThread.getInitialVersion());
+        var savedComment = commentRepository.save(comment);
+
+        return new CommentThreadDTO(savedThread, List.of(new CommentDTO(savedComment)));
+    }
+
+    private CommentThreadDTO createThreadWithConsistencyComment(TextExercise exercise, String text, boolean applied) {
+        var thread = new CommentThread();
+        thread.setExercise(exercise);
+        thread.setTargetType(CommentThreadLocationType.PROBLEM_STATEMENT);
+        thread.setInitialFilePath(null);
+        thread.setInitialLineNumber(1);
+        thread.setFilePath(null);
+        thread.setLineNumber(1);
+        thread.setOutdated(false);
+        thread.setResolved(false);
+        thread.setInitialVersion(exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElse(null));
+        var savedThread = commentThreadRepository.save(thread);
+
+        var comment = new Comment();
+        comment.setThread(savedThread);
+        comment.setType(CommentType.CONSISTENCY_CHECK);
+        comment.setContent(new ConsistencyIssueCommentContentDTO(Severity.HIGH, ConsistencyIssueCategory.IDENTIFIER_NAMING_INCONSISTENCY, text,
+                new InlineCodeChangeDTO(1, 1, "old", "new", applied)));
         comment.setInitialVersion(savedThread.getInitialVersion());
         var savedComment = commentRepository.save(comment);
 

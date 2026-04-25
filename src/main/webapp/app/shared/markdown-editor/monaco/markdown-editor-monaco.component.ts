@@ -331,6 +331,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
+    readonly onApplyInlineFix = output<{ threadId: number }>();
 
     /** Emits when user selects lines in the editor (includes selectedText, position, and column info for inline refinement) */
     readonly onSelectionChange = output<EditorSelectionWithPosition | undefined>();
@@ -971,6 +972,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 filterThread: (thread) => this.isProblemStatementThread(thread),
                 getThreadLine: (thread) => this.getProblemStatementThreadLine(thread),
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
+                onApplyInlineFix: ({ thread }) => this.onApplyInlineFix.emit({ threadId: thread.id }),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.showLocationWarning(),
             });

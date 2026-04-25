@@ -111,6 +111,9 @@ A valid issue must have at least 2 locations establishing the contradiction. If 
 - If the problem statement also references the conflicting element, add it
 - If a caller in the solution is affected by the conflict (e.g., method return type change breaks a call site), add that location
 
+## Inline fix suggestions
+Each `relatedLocations[]` entry includes `inlineFixOperation`: `NONE`, `REPLACE`, or `DELETE`. Use `REPLACE` only for simple, local line replacements where the correct replacement is obvious (e.g., a rename, return type, visibility, parameter, or signature fix), and set `suggestedInlineFix` to the exact replacement. Use `DELETE` only if the correct fix is deleting the selected lines, and set `suggestedInlineFix` to an empty string. Use `NONE` for locations that do not need a direct replacement or where the fix is complex/non-local, and set `suggestedInlineFix` to `null`.
+
 ---
 
 # PHASE 4 — SELF-VERIFICATION
@@ -141,13 +144,17 @@ Return a single JSON object. Preserve the exact same structure as the input. Do 
           "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
           "filePath": "exact/path/to/file.java",
           "startLine": 1,
-          "endLine": 3
+          "endLine": 3,
+          "inlineFixOperation": "REPLACE",
+          "suggestedInlineFix": "exact replacement for the selected lines, or null"
         },
         {
           "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
           "filePath": "related/file/path.java",
           "startLine": 5,
-          "endLine": 7
+          "endLine": 7,
+          "inlineFixOperation": "NONE",
+          "suggestedInlineFix": null
         }
       ],
       "suggestedFix": "Specific, actionable correction that resolves the inconsistency while preserving educational intent"
