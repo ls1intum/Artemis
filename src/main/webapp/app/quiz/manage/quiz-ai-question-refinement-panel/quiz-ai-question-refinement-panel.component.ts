@@ -6,6 +6,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { faCircleNotch, faPaperPlane, faWandMagicSparkles, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
@@ -21,7 +22,7 @@ import { debounceTime, finalize } from 'rxjs/operators';
     templateUrl: './quiz-ai-question-refinement-panel.component.html',
     styleUrl: './quiz-ai-question-refinement-panel.component.scss',
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, ButtonModule, TextareaModule, TranslateDirective, FaIconComponent],
+    imports: [FormsModule, ButtonModule, TextareaModule, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class QuizAiQuestionRefinementPanelComponent {
     private alertService = inject(AlertService);

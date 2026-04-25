@@ -458,11 +458,11 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             )
             .subscribe({
                 next: (results) => {
-                    const reasonings = new Map<QuizQuestion, string>();
-                    results.forEach((result, index) => {
-                        reasonings.set(mcQuestions[index], result.reasoning);
-                    });
-                    this.quizQuestionListEditComponent().applyBulkRefinement(reasonings);
+                    const failedCount = mcQuestions.length - results.size;
+                    if (failedCount > 0) {
+                        this.alertService.warning('artemisApp.quizExercise.aiGeneration.errors.partialRefinementFailed', { count: failedCount });
+                    }
+                    this.quizQuestionListEditComponent().applyBulkRefinement(results);
                     this.globalRefinementPrompt.set('');
                     this.isRefinementFabOpen.set(false);
                 },
@@ -760,8 +760,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.reconcileMappingReferences(quizExercise);
         this.prepareEntity(quizExercise);
         this.quizExercise = quizExercise;
-        // Respect the server-provided isEditable flag (accounts for exam dates), combined with local check
-        this.quizExercise.isEditable = this.quizExercise.isEditable && isQuizEditable(this.quizExercise);
+        // Prefer the server-provided editability flag (e.g. exam-date-aware) when present; otherwise fall back to the
+        // local check. The create/update endpoints currently omit the field, which is why the unconditional overwrite
+        // by the previous implementation flipped the banner on for fresh, not-yet-started quizzes.
+        this.quizExercise.isEditable = this.quizExercise.isEditable ?? isQuizEditable(this.quizExercise);
         this.exerciseService.validateDate(this.quizExercise);
         this.savedEntity = cloneDeep(this.quizExercise);
         this.changeDetector.detectChanges();

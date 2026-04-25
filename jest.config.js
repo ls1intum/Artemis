@@ -11,6 +11,7 @@ const esModules = [
     '@angular/platform-browser-dynamic',
     '@angular/router',
     '@angular/service-worker',
+    '@angular/youtube-player',
     '@ctrl/ngx-emoji-mart',
     '@danielmoncada/angular-datetime-picker',
     '@fortawesome/angular-fontawesome',
@@ -46,6 +47,7 @@ const esModules = [
     'dayjs/esm',
     'export-to-csv',
     'franc-min',
+    'interactjs',
     'internmap',
     'lodash-es',
     'markdown-it-github-alerts',
@@ -57,6 +59,7 @@ const esModules = [
     'primeng',
     'rxjs/operators',
     'trigram-utils',
+    'uuid',
 ].join('|');
 
 const {

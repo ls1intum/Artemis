@@ -164,7 +164,7 @@ public class HyperionQuizQuestionGenerationService {
 
         GeneratedQuizQuestionDTO refinedQuestion = mapAndValidateQuestion(output.question());
         String reasoning = sanitizeInput(output.reasoning());
-        return new QuizQuestionRefinementResponseDTO(refinedQuestion, reasoning);
+        return new QuizQuestionRefinementResponseDTO.SuccessDTO(refinedQuestion, reasoning);
     }
 
     /**
@@ -178,8 +178,15 @@ public class HyperionQuizQuestionGenerationService {
     @Observed(name = "hyperion.quiz.refine-all", contextualName = "bulk quiz question refinement", lowCardinalityKeyValues = { "ai.span", "true" })
     public QuizQuestionBulkRefinementResponseDTO refineAllQuizQuestions(Course course, QuizQuestionBulkRefinementRequestDTO request) {
         log.debug("Bulk-refining {} quiz questions for course [{}]", request.questions().size(), course.getId());
-        List<QuizQuestionRefinementResponseDTO> refinements = request.questions().parallelStream()
-                .map(question -> refineQuizQuestion(course, new QuizQuestionRefinementRequestDTO(question, request.refinementPrompt()))).toList();
+        List<QuizQuestionRefinementResponseDTO> refinements = request.questions().parallelStream().map(question -> {
+            try {
+                return refineQuizQuestion(course, new QuizQuestionRefinementRequestDTO(question, request.refinementPrompt()));
+            }
+            catch (Exception e) {
+                log.warn("Failed to refine quiz question for course [{}]: {}", course.getId(), e.getMessage());
+                return new QuizQuestionRefinementResponseDTO.FailureDTO(e.getMessage());
+            }
+        }).toList();
         return new QuizQuestionBulkRefinementResponseDTO(refinements);
     }
 

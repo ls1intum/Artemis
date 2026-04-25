@@ -11,7 +11,7 @@
 
 import { Inject, Injectable, Optional }                      from '@angular/core';
 import { HttpClient,
-         HttpResponse, HttpEvent, HttpContext
+         HttpResponse, HttpEvent, HttpContext 
         }       from '@angular/common/http';
 import { Observable }                                        from 'rxjs';
 // @ts-ignore
@@ -25,7 +25,7 @@ import { QuizQuestionGenerationResponse } from '../model/quizQuestionGenerationR
 // @ts-ignore
 import { QuizQuestionRefinementRequest } from '../model/quizQuestionRefinementRequest';
 // @ts-ignore
-import { QuizQuestionRefinementResponse } from '../model/quizQuestionRefinementResponse';
+import { QuizQuestionRefinementSuccessDTO } from '../model/quizQuestionRefinementSuccessDTO';
 
 // @ts-ignore
 import { BASE_PATH }                     from '../variables';
@@ -45,8 +45,8 @@ export class HyperionQuizQuestionGenerationApiService extends BaseService {
 
     /**
      * @endpoint post /api/hyperion/courses/{courseId}/quiz-exercises/generate-questions
-     * @param courseId
-     * @param quizQuestionGenerationRequest
+     * @param courseId 
+     * @param quizQuestionGenerationRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
@@ -113,78 +113,9 @@ export class HyperionQuizQuestionGenerationApiService extends BaseService {
     }
 
     /**
-     * @endpoint post /api/hyperion/courses/{courseId}/quiz-exercises/refine-question
-     * @param courseId
-     * @param quizQuestionRefinementRequest
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<QuizQuestionRefinementResponse>;
-    public refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<QuizQuestionRefinementResponse>>;
-    public refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<QuizQuestionRefinementResponse>>;
-    public refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (courseId === null || courseId === undefined) {
-            throw new Error('Required parameter courseId was null or undefined when calling refineQuizQuestion.');
-        }
-        if (quizQuestionRefinementRequest === null || quizQuestionRefinementRequest === undefined) {
-            throw new Error('Required parameter quizQuestionRefinementRequest was null or undefined when calling refineQuizQuestion.');
-        }
-
-        let localVarHeaders = this.defaultHeaders;
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        // to determine the Content-Type header
-        const consumes: string[] = [
-            'application/json'
-        ];
-        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
-        if (httpContentTypeSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
-        }
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/quiz-exercises/refine-question`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<QuizQuestionRefinementResponse>('post', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                body: quizQuestionRefinementRequest,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
      * @endpoint post /api/hyperion/courses/{courseId}/quiz-exercises/refine-all-questions
-     * @param courseId
-     * @param quizQuestionBulkRefinementRequest
+     * @param courseId 
+     * @param quizQuestionBulkRefinementRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
@@ -240,6 +171,75 @@ export class HyperionQuizQuestionGenerationApiService extends BaseService {
             {
                 context: localVarHttpContext,
                 body: quizQuestionBulkRefinementRequest,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * @endpoint post /api/hyperion/courses/{courseId}/quiz-exercises/refine-question
+     * @param courseId 
+     * @param quizQuestionRefinementRequest 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<QuizQuestionRefinementSuccessDTO>;
+    public refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<QuizQuestionRefinementSuccessDTO>>;
+    public refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<QuizQuestionRefinementSuccessDTO>>;
+    public refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (courseId === null || courseId === undefined) {
+            throw new Error('Required parameter courseId was null or undefined when calling refineQuizQuestion.');
+        }
+        if (quizQuestionRefinementRequest === null || quizQuestionRefinementRequest === undefined) {
+            throw new Error('Required parameter quizQuestionRefinementRequest was null or undefined when calling refineQuizQuestion.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/quiz-exercises/refine-question`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<QuizQuestionRefinementSuccessDTO>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: quizQuestionRefinementRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
