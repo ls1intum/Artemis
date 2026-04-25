@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, effect, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewEncapsulation, effect, input, output, signal, viewChild } from '@angular/core';
 import { YouTubePlayer } from '@angular/youtube-player';
 import interact from 'interactjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,6 +24,8 @@ const MIN_TRANSCRIPT_HEIGHT = 500;
     templateUrl: './youtube-player.component.html',
     styleUrls: ['./youtube-player.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    encapsulation: ViewEncapsulation.None,
+    host: { class: 'youtube-player-host' },
 })
 export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     videoId = input.required<string>();
@@ -68,7 +70,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
                 this.playerFailed.emit();
             }
         }, READINESS_TIMEOUT_MS);
-        this.initResizer();
+        this.initializeResizer();
     }
 
     ngOnDestroy(): void {
@@ -80,7 +82,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         this.resizeObserver?.disconnect();
     }
 
-    private initResizer(): void {
+    private initializeResizer(): void {
         const wrapperEl = this.videoWrapper()?.nativeElement;
         const videoColumnEl = this.videoColumn()?.nativeElement;
         const resizerEl = this.resizerHandle()?.nativeElement;
@@ -113,15 +115,14 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
             cursorChecker: () => 'col-resize',
         });
         this.resizeHandler = () => {
-            if (wrapperEl && videoColumnEl) {
-                this.syncTranscriptHeight();
-            }
+            this.syncTranscriptHeight();
         };
         window.addEventListener('resize', this.resizeHandler);
         this.resizeObserver = new ResizeObserver(() => {
             this.syncTranscriptHeight();
         });
         this.resizeObserver.observe(videoColumnEl);
+        this.syncTranscriptHeight();
     }
 
     /**
