@@ -5,7 +5,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.hibernate7.Hibernate7Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -50,4 +52,19 @@ public class JacksonConfiguration {
         return module;
     }
 
+    /**
+     * Exposes a MappingJackson2HttpMessageConverter bean using the auto-configured ObjectMapper.
+     * <p>
+     * This bean ensures Spring Boot registers a Jackson 2.x HTTP message converter that uses the
+     * Hibernate7Module-aware ObjectMapper. Without it, Spring Framework 7 may default to a Jackson 3.x
+     * converter that does not support Hibernate7Module, causing LazyInitializationException when
+     * serializing entities with uninitialized lazy collections.
+     *
+     * @param objectMapper the auto-configured Jackson ObjectMapper
+     * @return the HTTP message converter
+     */
+    @Bean
+    public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter(ObjectMapper objectMapper) {
+        return new MappingJackson2HttpMessageConverter(objectMapper);
+    }
 }
