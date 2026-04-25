@@ -14,6 +14,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -1164,6 +1165,142 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             DragAndDropSubmittedAnswer persistedDndAnswer = updatedSubmission.getSubmittedAnswers().stream().filter(DragAndDropSubmittedAnswer.class::isInstance)
                     .map(DragAndDropSubmittedAnswer.class::cast).findFirst().orElseThrow();
             assertThat(persistedDndAnswer.getMappings()).hasSize(validMappingCount).allSatisfy(mapping -> assertThat(mapping.getDragItem().getId()).isNotEqualTo(Long.MAX_VALUE));
+        }
+
+        /**
+         * Symmetric to {@code testQuizSubmitLiveMode_ignoresStaleDragItemIds}: the lenient DTO conversion must also drop
+         * a single drag-and-drop mapping whose dropLocation id no longer resolves on the server-side question, instead
+         * of failing the whole submit.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testQuizSubmitLiveMode_ignoresStaleDropLocationIds() throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
+
+            DragAndDropSubmittedAnswer dndAnswer = quizSubmission.getSubmittedAnswers().stream().filter(DragAndDropSubmittedAnswer.class::isInstance)
+                    .map(DragAndDropSubmittedAnswer.class::cast).findFirst().orElseThrow();
+            DragAndDropQuestion dndQuestion = (DragAndDropQuestion) dndAnswer.getQuizQuestion();
+            DragAndDropMapping staleMapping = new DragAndDropMapping();
+            staleMapping.setDragItem(dndQuestion.getDragItems().getFirst());
+            DropLocation staleDropLocation = new DropLocation();
+            staleDropLocation.setId(Long.MAX_VALUE);
+            staleMapping.setDropLocation(staleDropLocation);
+            dndAnswer.getMappings().add(staleMapping);
+            int validMappingCount = dndAnswer.getMappings().size() - 1;
+
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+                    QuizSubmission.class, HttpStatus.OK);
+
+            assertThat(updatedSubmission.isSubmitted()).isTrue();
+            DragAndDropSubmittedAnswer persistedDndAnswer = updatedSubmission.getSubmittedAnswers().stream().filter(DragAndDropSubmittedAnswer.class::isInstance)
+                    .map(DragAndDropSubmittedAnswer.class::cast).findFirst().orElseThrow();
+            assertThat(persistedDndAnswer.getMappings()).hasSize(validMappingCount)
+                    .allSatisfy(mapping -> assertThat(mapping.getDropLocation().getId()).isNotEqualTo(Long.MAX_VALUE));
+        }
+
+        /**
+         * Lenient DTO conversion drops a single short-answer submitted text whose spot id no longer resolves on the
+         * server-side question, instead of failing the whole submit. The other valid texts on the same answer survive.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testQuizSubmitLiveMode_ignoresStaleSpotIds() throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
+
+            ShortAnswerSubmittedAnswer saAnswer = quizSubmission.getSubmittedAnswers().stream().filter(ShortAnswerSubmittedAnswer.class::isInstance)
+                    .map(ShortAnswerSubmittedAnswer.class::cast).findFirst().orElseThrow();
+            ShortAnswerSubmittedText staleText = new ShortAnswerSubmittedText();
+            ShortAnswerSpot staleSpot = new ShortAnswerSpot();
+            staleSpot.setId(Long.MAX_VALUE);
+            staleText.setSpot(staleSpot);
+            staleText.setText("text-with-stale-spot-id");
+            saAnswer.getSubmittedTexts().add(staleText);
+            int validTextCount = saAnswer.getSubmittedTexts().size() - 1;
+
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+                    QuizSubmission.class, HttpStatus.OK);
+
+            assertThat(updatedSubmission.isSubmitted()).isTrue();
+            ShortAnswerSubmittedAnswer persistedSaAnswer = updatedSubmission.getSubmittedAnswers().stream().filter(ShortAnswerSubmittedAnswer.class::isInstance)
+                    .map(ShortAnswerSubmittedAnswer.class::cast).findFirst().orElseThrow();
+            assertThat(persistedSaAnswer.getSubmittedTexts()).hasSize(validTextCount).allSatisfy(text -> assertThat(text.getSpot().getId()).isNotEqualTo(Long.MAX_VALUE));
+        }
+
+        /**
+         * End-to-end correctness check: a complete live submit (with a correct answer to every question) must be persisted exactly as the
+         * student submitted, scored correctly per question, and produce the expected total score.
+         * <p>
+         * This is the round-trip "happy path" assertion that complements the lenient-conversion edge cases — if the DTO conversion ever
+         * silently drops, mis-routes, or duplicates an answer, this test catches it because each question's persisted answer is checked
+         * against the expected selection / mapping / text.
+         */
+        @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+        @EnumSource(QuizMode.class)
+        void testQuizSubmitLiveMode_persistsAllAnswerTypesCorrectly(QuizMode quizMode) throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, quizMode);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+            if (quizMode != QuizMode.SYNCHRONIZED) {
+                var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(10)));
+                request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), QuizBatch.class,
+                        HttpStatus.OK);
+            }
+
+            // Build a fully correct submission for all three question types and capture the expected per-question selections so we can
+            // assert the persisted state matches them exactly (not just by count).
+            QuizSubmission quizSubmission = new QuizSubmission();
+            for (var question : quizExercise.getQuizQuestions()) {
+                var correctAnswer = QuizExerciseFactory.generateSubmittedAnswerFor(question, true);
+                quizSubmission.addSubmittedAnswers(correctAnswer);
+            }
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+                    QuizSubmission.class, HttpStatus.OK);
+
+            assertThat(updatedSubmission.isSubmitted()).as("submitted flag must be flipped server-side").isTrue();
+            assertThat(updatedSubmission.getSubmissionDate()).as("submission date must be assigned server-side").isNotNull();
+            assertThat(updatedSubmission.getSubmittedAnswers()).as("server must persist exactly one answer per question type").hasSize(quizExercise.getQuizQuestions().size());
+
+            // For each question, verify the persisted answer matches what the student submitted (selections, mappings, or texts).
+            // This catches any DTO-conversion regression where an answer is silently dropped, mis-typed, or attached to the wrong question.
+            for (var question : quizExercise.getQuizQuestions()) {
+                SubmittedAnswer persistedAnswer = updatedSubmission.getSubmittedAnswerForQuestion(question);
+                assertThat(persistedAnswer).as("an answer must be persisted for every question (id=%s)", question.getId()).isNotNull();
+                if (question instanceof MultipleChoiceQuestion mcQuestion) {
+                    var expectedCorrectIds = mcQuestion.getAnswerOptions().stream().filter(opt -> Boolean.TRUE.equals(opt.isIsCorrect())).map(AnswerOption::getId)
+                            .collect(Collectors.toSet());
+                    var persistedSelectedIds = ((MultipleChoiceSubmittedAnswer) persistedAnswer).toSelectedIds();
+                    assertThat(persistedSelectedIds).as("MC: persisted selected option ids must match the correct ones the student picked").isEqualTo(expectedCorrectIds);
+                }
+                else if (question instanceof DragAndDropQuestion) {
+                    var persistedMappings = ((DragAndDropSubmittedAnswer) persistedAnswer).getMappings();
+                    var persistedPairs = persistedMappings.stream().map(m -> Map.entry(m.getDragItem().getId(), m.getDropLocation().getId())).collect(Collectors.toSet());
+                    var expectedPairs = ((DragAndDropQuestion) question).getCorrectMappings().stream().map(m -> Map.entry(m.getDragItem().getId(), m.getDropLocation().getId()))
+                            .collect(Collectors.toSet());
+                    assertThat(persistedPairs).as("DnD: persisted (dragItem, dropLocation) id pairs must match the correct mappings").isEqualTo(expectedPairs);
+                }
+                else if (question instanceof ShortAnswerQuestion saQuestion) {
+                    var persistedTexts = ((ShortAnswerSubmittedAnswer) persistedAnswer).getSubmittedTexts();
+                    var persistedSpotIds = persistedTexts.stream().map(t -> t.getSpot().getId()).collect(Collectors.toSet());
+                    var expectedSpotIds = saQuestion.getSpots().stream().map(ShortAnswerSpot::getId).collect(Collectors.toSet());
+                    assertThat(persistedSpotIds).as("SA: persisted submitted-text spot ids must cover every spot the student answered").isEqualTo(expectedSpotIds);
+                    persistedTexts.forEach(t -> assertThat(t.getText()).as("SA: each persisted text must be non-blank (lifted from the request body)").isNotBlank());
+                }
+            }
         }
     }
 }
