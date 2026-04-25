@@ -12,7 +12,7 @@
                 },
                 "from": "From",
                 "to": "To",
-                "costWarning": "A longer time range and more participations with activity in that window increase runtime and use more model and server resources. The run executes in the background and may take a long time. Prefer the narrowest range that still fits your review goal.",
+                "costWarning": "A longer time range and more participations with activity in that window increase runtime and use more model and server resources. The run executes in the background and may take a long time. Prefer the narrowest range that still fits your review goal. The assessment is LLM-generated and can be wrong—verify important results yourself.",
                 "validation": {
                     "required": "Please select both start and end date.",
                     "order": "Start date must be before or equal to end date.",

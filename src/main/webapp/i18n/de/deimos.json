@@ -12,7 +12,7 @@
                 },
                 "from": "Von",
                 "to": "Bis",
-                "costWarning": "Ein laengeres Zeitfenster und mehr Teilnahmen mit Aktivitaet in diesem Zeitraum verlaengern die Laufzeit und belasten Modell- und Serverressourcen staerker. Die Analyse laeuft im Hintergrund und kann lange dauern. Waehle den kleinstmoeglichen Zeitraum, der fuer deine Ueberpruefung noch sinnvoll ist.",
+                "costWarning": "Ein laengeres Zeitfenster und mehr Teilnahmen mit Aktivitaet in diesem Zeitraum verlaengern die Laufzeit und belasten Modell- und Serverressourcen staerker. Die Analyse laeuft im Hintergrund und kann lange dauern. Waehle den kleinstmoeglichen Zeitraum, der fuer deine Ueberpruefung noch sinnvoll ist. Die Einschaetzung entsteht per Sprachmodell (LLM) und kann unzutreffend sein—wichtige Ergebnisse bitte selbst pruefen.",
                 "validation": {
                     "required": "Bitte waehle Start- und Enddatum aus.",
                     "order": "Das Startdatum muss vor oder gleich dem Enddatum liegen.",
