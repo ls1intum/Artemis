@@ -80,12 +80,7 @@
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.quizExercise.addDragAndDropQuestion"></span>
                     </button>
-                    <button
-                        id="quiz-import-apollon-dnd-question"
-                        class="add-question-btn"
-                        [jhiFeatureToggleHide]="ApollonQuizDragAndDrop"
-                        (click)="importApollonDragAndDropQuestion()"
-                    >
+                    <button id="quiz-import-apollon-dnd-question" class="add-question-btn" (click)="importApollonDragAndDropQuestion()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.quizExercise.addApollonDragAndDropQuestion"></span>
                     </button>
