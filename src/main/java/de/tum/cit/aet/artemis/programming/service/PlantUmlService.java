@@ -6,6 +6,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import jakarta.annotation.PostConstruct;
 
@@ -32,6 +34,17 @@ public class PlantUmlService {
     private static final String DARK_THEME_FILE_NAME = "puml-theme-artemisdark.puml";
 
     private static final String LIGHT_THEME_FILE_NAME = "puml-theme-artemislight.puml";
+
+    /**
+     * Smetana is PlantUML's built-in Java layout engine that doesn't require external Graphviz installation.
+     */
+    private static final String SMETANA_PRAGMA = "!pragma layout smetana\n";
+
+    private static final Pattern THEME_DIRECTIVE = Pattern.compile("(?m)^\\s*!theme\\b");
+
+    private static final Pattern PRAGMA_LAYOUT_DIRECTIVE = Pattern.compile("(?m)^\\s*!pragma\\s+layout\\b");
+
+    private static final Pattern START_UML_DIRECTIVE = Pattern.compile("(?im)^\\s*@startuml\\b");
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -109,10 +122,19 @@ public class PlantUmlService {
             throw new IllegalArgumentException("Cannot parse plantUml input longer than 10.000 characters");
         }
 
-        if (!plantUml.contains("!theme")) {
+        if (!THEME_DIRECTIVE.matcher(plantUml).find()) {
+            // Apply Artemis theme (which includes Smetana pragma)
             String themeContent = useDarkTheme ? darkThemeContent : lightThemeContent;
-            return plantUml.replace("@startuml", "@startuml\n" + themeContent);
+            return injectAfterStartUml(plantUml, themeContent);
+        }
+        // User has custom theme - still apply Smetana to avoid Graphviz dependency
+        if (!PRAGMA_LAYOUT_DIRECTIVE.matcher(plantUml).find()) {
+            return injectAfterStartUml(plantUml, SMETANA_PRAGMA);
         }
         return plantUml;
+    }
+
+    private String injectAfterStartUml(final String plantUml, final String contentToInject) {
+        return START_UML_DIRECTIVE.matcher(plantUml).replaceFirst("$0\n" + Matcher.quoteReplacement(contentToInject));
     }
 }
