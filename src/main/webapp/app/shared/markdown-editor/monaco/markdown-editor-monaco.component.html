@@ -16,7 +16,7 @@
                     <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
                 }
                 <ng-template ngbNavContent>
-                    <div class="markdown-editor markdown-editor-wrapper flex-column" [ngClass]="{ 'd-flex': inEditMode, 'd-none': !inEditMode }">
+                    <div class="markdown-editor markdown-editor-wrapper flex-column d-flex">
                         @if (mode() === 'diff') {
                             @if (renderSideBySide()) {
                                 <!-- Split-view column headers so users know which side is which -->
@@ -329,7 +329,7 @@
                 </ng-container>
             }
         </nav>
-        <div [ngbNavOutlet]="nav"></div>
+        <div [ngbNavOutlet]="nav" class="flex-grow-1 overflow-hidden"></div>
     </div>
     @if (enableResize && inEditMode) {
         <div #resizePlaceholder [style.cursor]="isResizing ? 'ns-resize' : undefined" class="d-flex justify-content-center resize-placeholder">

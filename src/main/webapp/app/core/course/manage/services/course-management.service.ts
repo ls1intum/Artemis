@@ -15,7 +15,6 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { Submission, reconnectSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementDetailViewDto } from 'app/core/course/shared/entities/course-management-detail-view-dto.model';
-import { convertDateFromClient } from 'app/shared/util/date.utils';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { CourseForDashboardDTO } from 'app/core/course/shared/entities/course-for-dashboard-dto';
@@ -600,17 +599,6 @@ export class CourseManagementService {
             this.fetchingCoursesForNotifications = false;
         }
         return res;
-    }
-
-    static convertCourseDatesFromClient(course: Course): Course {
-        // copy of the object
-        return Object.assign({}, course, {
-            startDate: convertDateFromClient(course.startDate),
-            endDate: convertDateFromClient(course.endDate),
-            enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),
-            enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
-            unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
-        });
     }
 
     private convertTutorialGroupDatesFromServer(courseRes: EntityResponseType): EntityResponseType {

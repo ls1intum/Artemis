@@ -126,6 +126,22 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(focusSpy).not.toHaveBeenCalled();
     });
 
+    it('should not hide the editor wrapper with d-none when switching to preview', () => {
+        fixture.detectChanges();
+        const editorWrapper = fixture.debugElement.nativeElement.querySelector('.markdown-editor.markdown-editor-wrapper');
+        expect(editorWrapper).toBeTruthy();
+        // Switch to preview mode
+        comp.onNavChanged({
+            nextId: MarkdownEditorMonacoComponent.TAB_PREVIEW,
+            activeId: MarkdownEditorMonacoComponent.TAB_EDIT,
+            preventDefault: jest.fn(),
+        });
+        fixture.detectChanges();
+        // The editor wrapper should not have d-none class — visibility is controlled by the ngbNav pane
+        expect(editorWrapper.classList.contains('d-none')).toBeFalse();
+        expect(editorWrapper.classList.contains('d-flex')).toBeTrue();
+    });
+
     it('should emit when leaving the visual tab', () => {
         const emitSpy = jest.spyOn(comp.onLeaveVisualTab, 'emit');
         fixture.detectChanges();
