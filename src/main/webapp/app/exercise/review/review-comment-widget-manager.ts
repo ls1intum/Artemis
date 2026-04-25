@@ -3,6 +3,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
 
 export type ReviewCommentDraftContext = {
     targetType: CommentThreadLocationType;
@@ -20,9 +21,16 @@ export type ReviewCommentWidgetManagerConfig = {
     filterThread: (thread: CommentThread) => boolean;
     getThreadLine: (thread: CommentThread) => number;
     onAdd: (payload: { lineNumber: number; fileName: string }) => void;
+    onApplyInlineFix?: (payload: { thread: CommentThread; inlineFix: InlineCodeChange }) => void;
     onNavigateToLocation?: (location: ReviewThreadLocation) => void;
     showLocationWarning: () => boolean;
 };
+
+enum InlineFixApplyResult {
+    APPLIED,
+    OUTDATED,
+    INVALID,
+}
 
 export class ReviewCommentWidgetManager {
     private readonly draftLinesByFile: Map<string, Set<number>> = new Map();
@@ -83,8 +91,7 @@ export class ReviewCommentWidgetManager {
                 updated = false;
                 continue;
             }
-            widgetRef.setInput('thread', thread);
-            widgetRef.setInput('showLocationWarning', this.config.showLocationWarning());
+            this.setThreadWidgetInputs(widgetRef, thread, this.config.showLocationWarning());
         }
         return updated;
     }
@@ -135,16 +142,9 @@ export class ReviewCommentWidgetManager {
             this.draftLinesByFile.set(fileName, existing);
         }
         const widgetKey = this.getDraftKey(fileName, lineNumberZeroBased);
-        let widgetRef = this.draftWidgetRefs.get(widgetKey);
-        if (!widgetRef) {
-            widgetRef = this.viewContainerRef.createComponent(ReviewCommentDraftWidgetComponent);
-            this.registerDraftWidgetSubscriptions(widgetKey, widgetRef, fileName, lineNumberZeroBased);
-            this.draftWidgetRefs.set(widgetKey, widgetRef);
-        }
+        const widgetRef = this.getOrCreateDraftWidget(widgetKey, fileName, lineNumberZeroBased);
         this.setDraftWidgetInputs(widgetRef, lineNumberZeroBased, draftContext);
-        // Re-adding the same draft line must replace the existing Monaco widget to avoid stacked view zones.
-        this.editor.disposeWidgetsByPrefix(this.buildDraftWidgetId(fileName, lineNumberZeroBased));
-        this.editor.addLineWidget(lineNumber, this.buildDraftWidgetId(fileName, lineNumberZeroBased), widgetRef.location.nativeElement);
+        this.renderDraftLineWidget(fileName, lineNumberZeroBased, widgetRef);
         this.config.onAdd({ lineNumber, fileName });
     }
 
@@ -166,18 +166,43 @@ export class ReviewCommentWidgetManager {
                 this.removeDraft(activeFileName, line);
                 continue;
             }
-            const widgetKey = this.getDraftKey(activeFileName, line);
-            let widgetRef = this.draftWidgetRefs.get(widgetKey);
-            if (!widgetRef) {
-                widgetRef = this.viewContainerRef.createComponent(ReviewCommentDraftWidgetComponent);
-                this.registerDraftWidgetSubscriptions(widgetKey, widgetRef, activeFileName, line);
-                this.draftWidgetRefs.set(widgetKey, widgetRef);
-            }
+            const widgetRef = this.getOrCreateDraftWidget(this.getDraftKey(activeFileName, line), activeFileName, line);
             this.setDraftWidgetInputs(widgetRef, line, draftContext);
-            // Keep rendering idempotent when renderWidgets() runs repeatedly for the same draft.
-            this.editor.disposeWidgetsByPrefix(this.buildDraftWidgetId(activeFileName, line));
-            this.editor.addLineWidget(line + 1, this.buildDraftWidgetId(activeFileName, line), widgetRef.location.nativeElement);
+            this.renderDraftLineWidget(activeFileName, line, widgetRef);
         }
+    }
+
+    /**
+     * Returns an existing draft widget or creates one with its output subscriptions.
+     *
+     * @param widgetKey The internal key for the draft widget.
+     * @param fileName The file where the draft is shown.
+     * @param line The zero-based line index of the draft.
+     * @returns The component reference for the draft widget.
+     */
+    private getOrCreateDraftWidget(widgetKey: string, fileName: string, line: number): ComponentRef<ReviewCommentDraftWidgetComponent> {
+        const existingWidgetRef = this.draftWidgetRefs.get(widgetKey);
+        if (existingWidgetRef) {
+            return existingWidgetRef;
+        }
+
+        const widgetRef = this.viewContainerRef.createComponent(ReviewCommentDraftWidgetComponent);
+        this.registerDraftWidgetSubscriptions(widgetKey, widgetRef, fileName, line);
+        this.draftWidgetRefs.set(widgetKey, widgetRef);
+        return widgetRef;
+    }
+
+    /**
+     * Replaces the Monaco line widget for the current draft location.
+     *
+     * @param fileName The file where the draft is shown.
+     * @param line The zero-based line index of the draft.
+     * @param widgetRef The component reference for the draft widget.
+     */
+    private renderDraftLineWidget(fileName: string, line: number, widgetRef: ComponentRef<ReviewCommentDraftWidgetComponent>): void {
+        const widgetId = this.buildDraftWidgetId(fileName, line);
+        this.editor.disposeWidgetsByPrefix(widgetId);
+        this.editor.addLineWidget(line + 1, widgetId, widgetRef.location.nativeElement);
     }
 
     /**
@@ -185,41 +210,122 @@ export class ReviewCommentWidgetManager {
      */
     private addSavedWidgets(): void {
         const threads = this.config.getThreads().filter((thread) => this.config.filterThread(thread));
-        const threadIds = new Set<number>();
+        this.disposeStaleThreadWidgets(new Set(threads.map((thread) => thread.id)));
         for (const thread of threads) {
-            threadIds.add(thread.id);
+            this.renderThreadWidget(thread);
         }
+    }
+
+    /**
+     * Disposes widgets for threads that are no longer visible in the active editor context.
+     *
+     * @param activeThreadIds Thread ids that should remain rendered.
+     */
+    private disposeStaleThreadWidgets(activeThreadIds: Set<number>): void {
         for (const [threadId, ref] of this.threadWidgetRefs.entries()) {
-            if (!threadIds.has(threadId)) {
+            if (!activeThreadIds.has(threadId)) {
                 this.editor.disposeWidgetsByPrefix(this.buildThreadWidgetId(threadId));
                 ref.destroy();
                 this.threadWidgetRefs.delete(threadId);
             }
         }
-        for (const thread of threads) {
-            const line = this.config.getThreadLine(thread);
-            const widgetId = this.buildThreadWidgetId(thread.id);
-            const showLocationWarning = this.config.showLocationWarning();
-            let widgetRef = this.threadWidgetRefs.get(thread.id);
-            if (!widgetRef) {
-                widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
-                widgetRef.setInput('thread', thread);
-                widgetRef.setInput('showLocationWarning', showLocationWarning);
-                if (!this.collapseState.has(thread.id)) {
-                    const shouldCollapse = thread.resolved || showLocationWarning;
-                    this.collapseState.set(thread.id, shouldCollapse);
-                }
-                widgetRef.setInput('initialCollapsed', this.collapseState.get(thread.id) ?? false);
-                widgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
-                widgetRef.instance.onNavigateToLocation.subscribe((location) => this.config.onNavigateToLocation?.(location));
-                this.threadWidgetRefs.set(thread.id, widgetRef);
-            } else {
-                widgetRef.setInput('thread', thread);
-                widgetRef.setInput('showLocationWarning', showLocationWarning);
-            }
-            this.editor.disposeWidgetsByPrefix(widgetId);
-            this.editor.addLineWidget(line + 1, widgetId, widgetRef.location.nativeElement);
+    }
+
+    /**
+     * Creates or updates a thread widget and places it at the current mapped line.
+     *
+     * @param thread The review thread to render.
+     */
+    private renderThreadWidget(thread: CommentThread): void {
+        const showLocationWarning = this.config.showLocationWarning();
+        const widgetRef = this.getOrCreateThreadWidget(thread, showLocationWarning);
+        this.setThreadWidgetInputs(widgetRef, thread, showLocationWarning);
+        this.renderThreadLineWidget(thread, widgetRef);
+    }
+
+    /**
+     * Returns an existing thread widget or creates one with its output subscriptions.
+     *
+     * @param thread The review thread associated with the widget.
+     * @param showLocationWarning Whether the widget should start collapsed because locations may be stale.
+     * @returns The component reference for the thread widget.
+     */
+    private getOrCreateThreadWidget(thread: CommentThread, showLocationWarning: boolean): ComponentRef<ReviewCommentThreadWidgetComponent> {
+        const existingWidgetRef = this.threadWidgetRefs.get(thread.id);
+        if (existingWidgetRef) {
+            return existingWidgetRef;
         }
+
+        const widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
+        this.initializeThreadCollapseState(thread, showLocationWarning);
+        widgetRef.setInput('initialCollapsed', this.collapseState.get(thread.id) ?? false);
+        this.registerThreadWidgetSubscriptions(thread, widgetRef);
+        this.threadWidgetRefs.set(thread.id, widgetRef);
+        return widgetRef;
+    }
+
+    /**
+     * Initializes the persisted collapse state for a newly created thread widget.
+     *
+     * @param thread The review thread associated with the widget.
+     * @param showLocationWarning Whether the widget should start collapsed because locations may be stale.
+     */
+    private initializeThreadCollapseState(thread: CommentThread, showLocationWarning: boolean): void {
+        if (!this.collapseState.has(thread.id)) {
+            this.collapseState.set(thread.id, thread.resolved || showLocationWarning);
+        }
+    }
+
+    /**
+     * Applies the current thread data to a thread widget.
+     *
+     * @param widgetRef The component reference for the thread widget.
+     * @param thread The latest review thread data.
+     * @param showLocationWarning Whether the widget should show a location warning.
+     */
+    private setThreadWidgetInputs(widgetRef: ComponentRef<ReviewCommentThreadWidgetComponent>, thread: CommentThread, showLocationWarning: boolean): void {
+        widgetRef.setInput('thread', thread);
+        widgetRef.setInput('showLocationWarning', showLocationWarning);
+    }
+
+    /**
+     * Registers output handlers for a newly created thread widget.
+     *
+     * @param thread The review thread associated with the widget.
+     * @param widgetRef The component reference for the thread widget.
+     */
+    private registerThreadWidgetSubscriptions(thread: CommentThread, widgetRef: ComponentRef<ReviewCommentThreadWidgetComponent>): void {
+        widgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
+        widgetRef.instance.onNavigateToLocation.subscribe((location) => this.config.onNavigateToLocation?.(location));
+        widgetRef.instance.onApplyInlineFix.subscribe((inlineFix) => this.handleInlineFixApplication(thread, widgetRef, inlineFix));
+    }
+
+    /**
+     * Applies an inline fix and notifies the owning editor only when the edit was actually written.
+     *
+     * @param thread The thread that owns the inline fix.
+     * @param widgetRef The widget that triggered the action.
+     * @param inlineFix The inline fix payload to apply.
+     */
+    private handleInlineFixApplication(thread: CommentThread, widgetRef: ComponentRef<ReviewCommentThreadWidgetComponent>, inlineFix: InlineCodeChange): void {
+        const applyResult = this.applyInlineFixToActiveEditor(inlineFix);
+        widgetRef.instance.setInlineFixOutdatedWarning(applyResult === InlineFixApplyResult.OUTDATED);
+        if (applyResult === InlineFixApplyResult.APPLIED) {
+            const currentThread = this.config.getThreads().find((candidate) => candidate.id === thread.id) ?? thread;
+            this.config.onApplyInlineFix?.({ thread: currentThread, inlineFix });
+        }
+    }
+
+    /**
+     * Replaces the Monaco line widget for the current thread location.
+     *
+     * @param thread The review thread to render.
+     * @param widgetRef The component reference for the thread widget.
+     */
+    private renderThreadLineWidget(thread: CommentThread, widgetRef: ComponentRef<ReviewCommentThreadWidgetComponent>): void {
+        const widgetId = this.buildThreadWidgetId(thread.id);
+        this.editor.disposeWidgetsByPrefix(widgetId);
+        this.editor.addLineWidget(this.config.getThreadLine(thread) + 1, widgetId, widgetRef.location.nativeElement);
     }
 
     /**
@@ -348,5 +454,50 @@ export class ReviewCommentWidgetManager {
         for (const ref of this.threadWidgetRefs.values()) {
             ref.instance.hideAllCommentMenus();
         }
+    }
+
+    /**
+     * Applies an inline fix only if the current editor content in the referenced line range
+     * still matches the expected snapshot from consistency-check creation time.
+     *
+     * @param inlineFix The inline fix payload to apply.
+     * @returns Whether the fix was applied, is outdated, or could not be applied because the editor state is invalid.
+     */
+    private applyInlineFixToActiveEditor(inlineFix: InlineCodeChange): InlineFixApplyResult {
+        const model = this.editor.getModel();
+        if (!model) {
+            return InlineFixApplyResult.INVALID;
+        }
+
+        const startLine = inlineFix.startLine;
+        const endLine = inlineFix.endLine;
+        if (startLine < 1 || endLine < startLine || endLine > model.getLineCount()) {
+            return InlineFixApplyResult.INVALID;
+        }
+
+        const endColumn = model.getLineMaxColumn(endLine);
+        const currentCode = model.getValueInRange({
+            startLineNumber: startLine,
+            startColumn: 1,
+            endLineNumber: endLine,
+            endColumn,
+        });
+        if (currentCode !== inlineFix.expectedCode) {
+            return InlineFixApplyResult.OUTDATED;
+        }
+
+        this.editor.getActiveEditor().executeEdits('ReviewCommentWidgetManager::applyInlineFix', [
+            {
+                range: {
+                    startLineNumber: startLine,
+                    startColumn: 1,
+                    endLineNumber: endLine,
+                    endColumn,
+                },
+                text: inlineFix.replacementCode,
+                forceMoveMarkers: true,
+            },
+        ]);
+        return InlineFixApplyResult.APPLIED;
     }
 }

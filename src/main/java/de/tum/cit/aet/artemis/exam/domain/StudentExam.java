@@ -67,21 +67,20 @@ public class StudentExam extends AbstractAuditingEntity {
     @JoinColumn(name = "user_id")
     private User user;
 
+    // No @Cache on exercises / examSessions / studentParticipations: all three are mutated during exam prep and conduct (session reconnects, participations grow
+    // as the student works); NONSTRICT would give monitoring reads on another node a stale view, same class of bug as #12574.
     @ManyToMany
     @JoinTable(name = "student_exam_exercise", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"))
     @OrderColumn(name = "exercise_order")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<Exercise> exercises = new ArrayList<>();
 
     @OneToMany(mappedBy = "studentExam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("studentExam")
     private Set<ExamSession> examSessions = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "student_exam_participation", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "participation_id", referencedColumnName = "id"))
     @OrderColumn(name = "participation_order")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<StudentParticipation> studentParticipations = new ArrayList<>();
 
     public Boolean isSubmitted() {

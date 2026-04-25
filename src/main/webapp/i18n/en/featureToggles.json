@@ -189,11 +189,6 @@
                     "name": "Global Search",
                     "description": "Enables a unified search interface accessible via Cmd+K/Ctrl+K that allows users to quickly search across courses, exercises, lectures, and other content.",
                     "disableWarning": "Users will not have access to the global search functionality and must navigate manually through the interface."
-                },
-                "ApollonQuizDragAndDrop": {
-                    "name": "Apollon Quiz Drag-and-Drop Import",
-                    "description": "Allows instructors to add Apollon-based drag-and-drop quiz questions from the quiz editor.",
-                    "disableWarning": "Instructors will not be able to create new Apollon-based drag-and-drop quiz questions from the quiz editor."
                 }
             }
         }
