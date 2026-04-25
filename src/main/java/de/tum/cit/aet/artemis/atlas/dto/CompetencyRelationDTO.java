@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.dto;
 
+import java.io.Serializable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
@@ -13,7 +15,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
  * @param relationType     the relation type
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyRelationDTO(Long id, long tailCompetencyId, long headCompetencyId, RelationType relationType) {
+public record CompetencyRelationDTO(Long id, long tailCompetencyId, long headCompetencyId, RelationType relationType) implements Serializable {
 
     public static CompetencyRelationDTO of(CompetencyRelation competencyRelation) {
         return new CompetencyRelationDTO(competencyRelation.getId(), competencyRelation.getTailCompetency().getId(), competencyRelation.getHeadCompetency().getId(),
