@@ -8,8 +8,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -28,8 +28,14 @@ import org.springframework.ai.chat.prompt.Prompt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphEdgeDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentHistoryMessageDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyRelationPreviewDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphPreviewDTO;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,6 +56,16 @@ class AtlasAgentServiceTest {
     @Mock
     private AtlasAgentSessionCacheService atlasAgentSessionCacheService;
 
+    @Mock
+    private AtlasAgentToolCallbackService toolCallbackFactory;
+
+    @Mock
+    private AtlasAgentToolsService toolsService;
+
+    private static final String TEST_DEPLOYMENT_NAME = "gpt-4o";
+
+    private static final double TEST_TEMPERATURE = 0.2;
+
     private AtlasAgentPreviewService previewService;
 
     private AtlasAgentService atlasAgentService;
@@ -58,7 +74,8 @@ class AtlasAgentServiceTest {
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
         previewService = new AtlasAgentPreviewService(chatMemory);
-        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, null, null, chatMemory, "gpt-4o", 0.2, executionPlanStateManagerService,
+        AtlasAgentDelegationService delegationService = new AtlasAgentDelegationService(chatClient, templateService, chatMemory, TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE);
+        atlasAgentService = new AtlasAgentService(chatClient, chatMemory, delegationService, toolCallbackFactory, toolsService, executionPlanStateManagerService,
                 atlasAgentSessionCacheService, previewService);
     }
 
@@ -126,6 +143,7 @@ class AtlasAgentServiceTest {
         List<Message> messages = List.of(userMessage, assistantMessage);
 
         when(chatMemory.get(sessionId)).thenReturn(messages);
+        when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
         List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
@@ -155,7 +173,8 @@ class AtlasAgentServiceTest {
     @Test
     void testGetConversationHistoryAsDTO_NullChatMemory() {
         String sessionId = "course_456_user_789";
-        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null, null, null, "gpt-4o", 0.2,
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), null,
+                new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, null, TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE), toolCallbackFactory, toolsService,
                 executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
 
         List<AtlasAgentHistoryMessageDTO> result = serviceWithNullMemory.getConversationHistoryAsDTO(sessionId);
@@ -184,6 +203,7 @@ class AtlasAgentServiceTest {
                 new AssistantMessage("I'm doing well, thanks!"));
 
         when(chatMemory.get(sessionId)).thenReturn(messages);
+        when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
         List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
@@ -237,30 +257,28 @@ class AtlasAgentServiceTest {
         }
 
         @Test
-        void shouldHandleDelegationMarkerInResponse() {
-            String testMessage = "Create a new competency";
+        void shouldReturnNullPreviewsWhenNoToolDelegationOccurred() {
+            String testMessage = "Create a competency for OOP";
             Long courseId = 123L;
-            String sessionId = "delegation_test";
-            String responseWithDelegationMarker = "%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:Create OOP competency";
+            String sessionId = "preview_collection_test";
 
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-            // First call returns delegation marker, second call (from competency expert) returns clean response
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithDelegationMarker)))))
-                    .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"preview\": true}")))));
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Here is your competency preview")))));
 
             AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-
-            // The response should be processed and replaced with clean JSON from competency expert
-            assertThat(result.message()).isNotNull();
-            // At minimum, the raw delegation marker should be sanitized
-            assertThat(result.message()).doesNotContain("%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:");
+            assertThat(result.message()).isEqualTo("Here is your competency preview");
+            // No delegation tools were invoked, so no preview data should be present
+            assertThat(result.competencyPreviews()).isNull();
+            assertThat(result.relationPreviews()).isNull();
+            assertThat(result.exerciseMappingPreview()).isNull();
         }
 
         @Test
         void shouldHandleCompetencyExpertToolsServiceNull() {
-            AtlasAgentService serviceWithoutTools = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null, null, null, "gpt-4o", 0.2,
+            AtlasAgentService serviceWithoutTools = new AtlasAgentService(ChatClient.create(chatModel), null,
+                    new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, null, TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE), toolCallbackFactory, toolsService,
                     executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
 
             String testMessage = "Test message";
@@ -307,58 +325,22 @@ class AtlasAgentServiceTest {
     class ErrorHandlingAndEdgeCases {
 
         @Test
-        void shouldHandleMultipleDelegationMarkersGracefully() {
-            String testMessage = "Test multiple delegations";
+        void shouldReturnResponseWithNullPreviewsWhenNoSubAgentInvoked() {
+            String testMessage = "Hello, what can you do?";
             Long courseId = 123L;
-            String sessionId = "multi_delegation_test";
-            String responseWithMultipleMarkers = "First %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%{\"brief\": \"test\"} Second %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%{\"brief\": \"test2\"}";
+            String sessionId = "no_delegation_test";
 
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithMultipleMarkers)))));
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("I can help you manage competencies.")))));
 
             AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-
-            // Should handle multiple markers without crashing
-            assertThat(result.message()).isNotNull();
-        }
-
-        @Test
-        void shouldHandleEmptyDelegationBrief() {
-            String testMessage = "Test empty brief";
-            Long courseId = 123L;
-            String sessionId = "empty_brief_test";
-            String responseWithEmptyBrief = "%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%";
-
-            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithEmptyBrief)))));
-
-            AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
-
-            assertThat(result).isNotNull();
-
-            // Should handle empty brief gracefully
-            assertThat(result.message()).isNotNull();
-        }
-
-        @Test
-        void shouldHandleReturnToMainAgentMarker() {
-            String testMessage = "Test return marker";
-            Long courseId = 123L;
-            String sessionId = "return_marker_test";
-            String responseWithReturnMarker = "Task complete %%ARTEMIS_RETURN_TO_MAIN_AGENT%%";
-
-            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithReturnMarker)))));
-
-            AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
-
-            assertThat(result).isNotNull();
-
-            // The marker should be removed from the response
-            assertThat(result.message()).doesNotContain("%%ARTEMIS_RETURN_TO_MAIN_AGENT%%");
-            assertThat(result.message()).isEqualTo("Task complete");
+            assertThat(result.message()).isEqualTo("I can help you manage competencies.");
+            assertThat(result.competencyPreviews()).isNull();
+            assertThat(result.relationPreviews()).isNull();
+            assertThat(result.relationGraphPreview()).isNull();
+            assertThat(result.exerciseMappingPreview()).isNull();
         }
 
         @Test
@@ -433,10 +415,13 @@ class AtlasAgentServiceTest {
         @Test
         void shouldExtractSingleCompetencyPreviewFromHistory() {
             String sessionId = "course_123_user_456";
-            String responseText = "Here's your competency preview %%PREVIEW_DATA_START%%{\"previews\":[{\"title\":\"OOP Basics\",\"description\":\"Object-Oriented Programming fundamentals\",\"taxonomy\":\"UNDERSTAND\",\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
-            List<Message> messages = List.of(new UserMessage("Create a competency"), new AssistantMessage(responseText));
+            List<Message> messages = List.of(new UserMessage("Create a competency"), new AssistantMessage("Here's your competency preview"));
+
+            var preview = new CompetencyPreviewDTO("OOP Basics", "Object-Oriented Programming fundamentals", "UNDERSTAND", null, null);
+            var previewData = new AtlasAgentSessionCacheService.MessagePreviewData(List.of(preview), null, null, null);
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
+            when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of(0, previewData));
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
@@ -455,10 +440,14 @@ class AtlasAgentServiceTest {
         @Test
         void shouldExtractBatchCompetencyPreviewFromHistory() {
             String sessionId = "course_123_user_789";
-            String responseText = "Here are multiple competencies %%PREVIEW_DATA_START%%{\"previews\":[{\"title\":\"Comp 1\",\"description\":\"Description 1\",\"taxonomy\":\"REMEMBER\",\"competencyId\":null,\"viewOnly\":null},{\"title\":\"Comp 2\",\"description\":\"Description 2\",\"taxonomy\":\"APPLY\",\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
-            List<Message> messages = List.of(new UserMessage("Create multiple competencies"), new AssistantMessage(responseText));
+            List<Message> messages = List.of(new UserMessage("Create multiple competencies"), new AssistantMessage("Here are multiple competencies"));
+
+            var comp1 = new CompetencyPreviewDTO("Comp 1", "Description 1", "REMEMBER", null, null);
+            var comp2 = new CompetencyPreviewDTO("Comp 2", "Description 2", "APPLY", null, null);
+            var previewData = new AtlasAgentSessionCacheService.MessagePreviewData(List.of(comp1, comp2), null, null, null);
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
+            when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of(0, previewData));
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
@@ -471,12 +460,12 @@ class AtlasAgentServiceTest {
         }
 
         @Test
-        void shouldFilterOutDelegationMarkers() {
+        void shouldKeepUserAndAssistantMessages() {
             String sessionId = "course_123_user_101";
-            List<Message> messages = List.of(new UserMessage("Create a competency"), new AssistantMessage("%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:Create OOP competency"),
-                    new AssistantMessage("Competency created successfully"));
+            List<Message> messages = List.of(new UserMessage("Create a competency"), new AssistantMessage("Competency created successfully"));
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
+            when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
@@ -493,13 +482,13 @@ class AtlasAgentServiceTest {
                     new AssistantMessage("Here are your competencies"));
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
+            when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
             assertThat(result).hasSize(2);
             assertThat(result.getFirst().content()).isEqualTo("Show me competencies");
             assertThat(result.get(1).content()).isEqualTo("Here are your competencies");
-            // Briefing message should be filtered out
         }
 
         @Test
@@ -509,6 +498,7 @@ class AtlasAgentServiceTest {
                     new AssistantMessage("Competencies are learning objectives that define what students should know and be able to do."));
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
+            when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
@@ -519,12 +509,12 @@ class AtlasAgentServiceTest {
         }
 
         @Test
-        void shouldHandleMalformedPreviewData() {
+        void shouldReturnNullPreviewsWhenCacheHasNoEntryForAssistantIndex() {
             String sessionId = "course_123_user_404";
-            String responseText = "Message %%PREVIEW_DATA_START%%{invalid json}%%PREVIEW_DATA_END%%";
-            List<Message> messages = List.of(new UserMessage("Test"), new AssistantMessage(responseText));
+            List<Message> messages = List.of(new UserMessage("Test"), new AssistantMessage("Message"));
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
+            when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
@@ -534,27 +524,33 @@ class AtlasAgentServiceTest {
         }
 
         @Test
-        void shouldHandlePreviewDataWithoutEndMarker() {
+        void shouldHandleEmptyPreviewHistory() {
             String sessionId = "course_123_user_505";
-            String responseText = "Message %%PREVIEW_DATA_START%%{\"singlePreview\":{}}";
-            List<Message> messages = List.of(new UserMessage("Test"), new AssistantMessage(responseText));
+            List<Message> messages = List.of(new UserMessage("Test"), new AssistantMessage("Message"));
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
+            when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
             assertThat(result).hasSize(2);
-            // Should return original text when end marker is missing
-            assertThat(result.get(1).content()).contains("Message");
+            assertThat(result.get(1).content()).isEqualTo("Message");
             assertThat(result.get(1).competencyPreviews()).isNull();
         }
 
         @Test
         void shouldHandleMultipleMessagesWithMixedPreviewData() {
             String sessionId = "course_123_user_606";
-            final var messages = getMessages();
+            List<Message> messages = List.of(new UserMessage("User message 1"), new AssistantMessage("First response"), new UserMessage("User message 2"),
+                    new AssistantMessage("Second response without preview"), new UserMessage("User message 3"), new AssistantMessage("Third response"));
+
+            var preview1 = new CompetencyPreviewDTO("Test 1", "Desc 1", "APPLY", null, null);
+            var previewData1 = new AtlasAgentSessionCacheService.MessagePreviewData(List.of(preview1), null, null, null);
+            var preview2 = new CompetencyPreviewDTO("Test 2", "Desc 2", "ANALYZE", null, null);
+            var previewData2 = new AtlasAgentSessionCacheService.MessagePreviewData(List.of(preview2), null, null, null);
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
+            when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of(0, previewData1, 2, previewData2));
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
@@ -579,77 +575,77 @@ class AtlasAgentServiceTest {
         @Test
         void shouldFilterOutAllInternalMessagesAndKeepUserFacingOnes() {
             String sessionId = "course_123_user_707";
-            List<Message> messages = List.of(new UserMessage("Create OOP competency"), new AssistantMessage("%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:Brief"),
-                    new AssistantMessage("TOPIC: OOP\nREQUIREMENTS: Create\nCONSTRAINTS: None\nCONTEXT: Course"),
-                    new AssistantMessage(
-                            "Competency created %%PREVIEW_DATA_START%%{\"singlePreview\":{\"preview\":true,\"title\":\"OOP\",\"description\":\"Test\",\"taxonomy\":\"APPLY\",\"}}}%%PREVIEW_DATA_END%%"),
-                    new AssistantMessage("%%ARTEMIS_RETURN_TO_MAIN_AGENT%%"), new AssistantMessage("Task completed successfully"));
+            List<Message> messages = List.of(new UserMessage("Create OOP competency"), new AssistantMessage("TOPIC: OOP\nREQUIREMENTS: Create\nCONSTRAINTS: None\nCONTEXT: Course"),
+                    new AssistantMessage("Competency created"), new AssistantMessage("Task completed successfully"));
+
+            var preview = new CompetencyPreviewDTO("OOP", "Test", "APPLY", null, null);
+            var previewData = new AtlasAgentSessionCacheService.MessagePreviewData(List.of(preview), null, null, null);
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
+            // Index 0 = briefing (skipped), index 1 = "Competency created", index 2 = "Task completed"
+            when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of(1, previewData));
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
-            // Should only have user message and two assistant messages (competency created and task completed)
             assertThat(result).hasSize(3);
             assertThat(result.getFirst().content()).isEqualTo("Create OOP competency");
             assertThat(result.get(1).content()).isEqualTo("Competency created");
-            assertThat(result.get(1).competencyPreviews()).isNull();
+            assertThat(result.get(1).competencyPreviews()).isNotNull();
+            assertThat(result.get(1).competencyPreviews()).hasSize(1);
             assertThat(result.get(2).content()).isEqualTo("Task completed successfully");
         }
-    }
-
-    @NonNull
-    private static List<Message> getMessages() {
-        String message1 = "First response %%PREVIEW_DATA_START%%{\"previews\":[{\"title\":\"Test 1\",\"description\":\"Desc 1\",\"taxonomy\":\"APPLY\",\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
-        String message2 = "Second response without preview";
-        String message3 = "Third response %%PREVIEW_DATA_START%%{\"previews\":[{\"title\":\"Test 2\",\"description\":\"Desc 2\",\"taxonomy\":\"ANALYZE\",\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
-
-        return List.of(new UserMessage("User message 1"), new AssistantMessage(message1), new UserMessage("User message 2"), new AssistantMessage(message2),
-                new UserMessage("User message 3"), new AssistantMessage(message3));
     }
 
     @Nested
     class RelationPreviewHandling {
 
         @Test
-        void shouldHandleDelegationToCompetencyMapper() {
+        void shouldReturnRelationPreviewsWhenMapperSetsThreadLocal() {
             String testMessage = "Map competencies in this course";
             Long courseId = 123L;
             String sessionId = "mapper_test";
-            String responseWithMapperDelegation = "%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:Map OOP to Design Patterns";
 
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithMapperDelegation)))))
-                    .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Relation preview generated")))));
+            // Simulate main agent call where delegation tool internally invoked the mapper
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Relation preview generated")))));
 
             AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-            assertThat(result.message()).doesNotContain("%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%");
+            assertThat(result.message()).isEqualTo("Relation preview generated");
         }
 
         @Test
         void shouldExtractRelationPreviewFromHistory() {
             String sessionId = "course_123_user_relation";
-            String responseWithRelationPreview = "Here's the relation %%PREVIEW_DATA_START%%{\"singleRelationPreview\":{\"preview\":true,\"relation\":{\"relationId\":null,\"headCompetencyId\":1,\"headCompetencyTitle\":\"OOP\",\"tailCompetencyId\":2,\"tailCompetencyTitle\":\"Patterns\",\"relationType\":\"ASSUMES\"},\"viewOnly\":false}}%%PREVIEW_DATA_END%%";
-            List<Message> messages = List.of(new UserMessage("Create a relation"), new AssistantMessage(responseWithRelationPreview));
+            List<Message> messages = List.of(new UserMessage("Create a relation"), new AssistantMessage("Here's the relation"));
+
+            var relationPreview = new CompetencyRelationPreviewDTO(null, 1L, "OOP", 2L, "Patterns", RelationType.ASSUMES, false);
+            var previewData = new AtlasAgentSessionCacheService.MessagePreviewData(null, List.of(relationPreview), null, null);
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
+            when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of(0, previewData));
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
             assertThat(result).hasSize(2);
             assertThat(result.get(1).content()).isEqualTo("Here's the relation");
             assertThat(result.get(1).relationPreviews()).isNotNull();
+            assertThat(result.get(1).relationPreviews()).hasSize(1);
         }
 
         @Test
         void shouldExtractRelationGraphPreviewFromHistory() {
             String sessionId = "course_123_user_graph";
-            String responseWithGraphPreview = "Graph preview %%PREVIEW_DATA_START%%{\"relationGraphPreview\":{\"nodes\":[{\"id\":\"1\",\"label\":\"A\"},{\"id\":\"2\",\"label\":\"B\"}],\"edges\":[{\"id\":\"edge-1\",\"source\":\"1\",\"target\":\"2\",\"relationType\":\"ASSUMES\"}],\"viewOnly\":false}}%%PREVIEW_DATA_END%%";
-            List<Message> messages = List.of(new UserMessage("Show graph"), new AssistantMessage(responseWithGraphPreview));
+            List<Message> messages = List.of(new UserMessage("Show graph"), new AssistantMessage("Graph preview"));
+
+            var nodes = List.of(new CompetencyGraphNodeDTO("1", "A", null, null, null), new CompetencyGraphNodeDTO("2", "B", null, null, null));
+            var edges = List.of(new CompetencyGraphEdgeDTO("edge-1", "1", "2", RelationType.ASSUMES));
+            var graphPreview = new RelationGraphPreviewDTO(nodes, edges, false);
+            var previewData = new AtlasAgentSessionCacheService.MessagePreviewData(null, null, graphPreview, null);
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
+            when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of(0, previewData));
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
@@ -664,6 +660,7 @@ class AtlasAgentServiceTest {
             List<Message> messages = List.of(new UserMessage("Approve"), new AssistantMessage("[CREATE_APPROVED_RELATION]"), new AssistantMessage("Relation created"));
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
+            when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
@@ -678,7 +675,8 @@ class AtlasAgentServiceTest {
 
         @Test
         void shouldReturnUnavailableMessageWhenChatClientIsNull() {
-            AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null, null, chatMemory, "gpt-4o", 0.2,
+            AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, chatMemory,
+                    new AtlasAgentDelegationService(null, templateService, chatMemory, TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE), toolCallbackFactory, toolsService,
                     executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
 
             AtlasAgentChatResponseDTO result = serviceWithNullClient.processChatMessage("Test message", 123L, "test_session");
@@ -699,14 +697,16 @@ class AtlasAgentServiceTest {
 
         @Test
         void shouldReturnFalseWhenChatClientNull() {
-            AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null, null, chatMemory, "gpt-4o", 0.2,
+            AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, chatMemory,
+                    new AtlasAgentDelegationService(null, templateService, chatMemory, TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE), toolCallbackFactory, toolsService,
                     executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
             assertThat(serviceWithNullClient.isAvailable()).isFalse();
         }
 
         @Test
         void shouldReturnFalseWhenChatMemoryNull() {
-            AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null, null, null, "gpt-4o", 0.2,
+            AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), null,
+                    new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, null, TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE), toolCallbackFactory, toolsService,
                     executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
             assertThat(serviceWithNullMemory.isAvailable()).isFalse();
         }
@@ -787,20 +787,18 @@ class AtlasAgentServiceTest {
     class ExerciseMappingDelegation {
 
         @Test
-        void shouldHandleDelegationToExerciseMapper() {
+        void shouldReturnExerciseMappingPreviewWhenMapperSetsThreadLocal() {
             String testMessage = "Map exercises in this course";
             Long courseId = 123L;
             String sessionId = "exercise_mapper_test";
-            String responseWithExerciseMapperDelegation = "%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER%%:Map OOP competency to Java exercise";
 
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithExerciseMapperDelegation)))))
-                    .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Exercise mapping preview generated")))));
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Exercise mapping preview generated")))));
 
             AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-            assertThat(result.message()).doesNotContain("%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER%%");
+            assertThat(result.message()).isEqualTo("Exercise mapping preview generated");
         }
 
         @Test

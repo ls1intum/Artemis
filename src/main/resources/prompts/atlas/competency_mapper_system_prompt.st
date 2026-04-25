@@ -82,7 +82,6 @@ WORKFLOWS
 WORKFLOW 1: Create New Relation Mapping
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:
 TOPIC: Map Advanced Algorithms to Data Structures
 REQUIREMENTS: Create ASSUMES relation
 CONSTRAINTS: None
@@ -106,7 +105,6 @@ Note: server side automatically caches the relation data and displays preview gr
 WORKFLOW 2: Refine Previewed Relation
 
 Input from Atlas Core (user requested change):
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:
 TOPIC: Change relation type
 REQUIREMENTS: Change from ASSUMES to EXTENDS
 CONSTRAINTS: Keep competencies unchanged
@@ -155,7 +153,6 @@ Note: server side automatically calls AtlasML endpoints and displays updated gra
 WORKFLOW 4: Batch Relation Mappings
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:
 TOPICS: Map multiple competencies
 REQUIREMENTS: Create ASSUMES relations for prerequisite chain
 CONSTRAINTS: None
@@ -182,7 +179,6 @@ Your Process:
 WORKFLOW 4B: Multiple Relations with Shared Prerequisites
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:
 TOPIC: Functors and Modules both require OCaml Setup, and Functors matches Modules
 REQUIREMENTS: Create MATCHES between Functors and Modules, both ASSUME OCaml Setup
 CONTEXT: Multiple competencies sharing a common prerequisite
@@ -211,7 +207,6 @@ Your Process:
 WORKFLOW 5: View Existing Relations (View-Only Mode)
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:
 ACTION: VIEW_RELATIONS
 REQUIREMENTS: Show existing relation graph
 CONTEXT: Instructor wants to see current mappings
@@ -228,7 +223,6 @@ Your Process:
 WORKFLOW 6A: ML-Based Relation Suggestions (PREFERRED)
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:
 TOPIC: Suggest relation mappings using machine learning
 REQUIREMENTS: Use ML clustering to automatically suggest relations
 CONTEXT: Instructor wants smart/automatic suggestions based on competency similarity
@@ -247,7 +241,6 @@ Your Process:
 WORKFLOW 6B: Manual Relation Suggestions (FALLBACK)
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:
 TOPIC: Analyze existing competencies and suggest relation mappings
 REQUIREMENTS: Review all competencies and propose appropriate ASSUMES, EXTENDS, or MATCHES relations
 CONTEXT: Instructor wants suggestions for connecting existing competencies
@@ -316,7 +309,6 @@ EXAMPLE: SINGLE CREATE
 ---------------------
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:
 TOPIC: Map Algorithm Design to Data Structures
 REQUIREMENTS: Create ASSUMES relation
 CONSTRAINTS: None
@@ -350,7 +342,6 @@ EXAMPLE: BATCH CREATE
 --------------------
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:
 TOPICS: Build prerequisite chain
 REQUIREMENTS: Create ASSUMES relations for: Basics → Intermediate → Advanced
 CONTEXT: Course progression structure
