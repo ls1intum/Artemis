@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import java.util.List;
+
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -41,6 +43,8 @@ public class HyperionCodeGenerationResource {
     private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationResource.class);
 
     private static final String ENTITY_NAME = "hyperionCodeGeneration";
+
+    private static final int MAX_SELECTED_FEEDBACK_THREAD_IDS = 25;
 
     private final UserRepository userRepository;
 
@@ -87,7 +91,7 @@ public class HyperionCodeGenerationResource {
                     .orElseGet(() -> ResponseEntity.noContent().build());
         }
         Long courseId = resolveCourseId(exercise);
-        String jobId = codeGenerationJobService.startJob(user, exercise, courseId, request.repositoryType());
+        String jobId = codeGenerationJobService.startJob(user, exercise, courseId, request.repositoryType(), request.selectedFeedbackThreadIds());
         log.info("Started code generation job [{}] for exercise [{}]", jobId, exerciseId);
         return ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId, request.repositoryType()));
     }
@@ -102,6 +106,7 @@ public class HyperionCodeGenerationResource {
     private void validateGenerationRequest(long exerciseId, CodeGenerationRequestDTO request) {
         validateExerciseId(exerciseId);
         validateRepositoryType(request.repositoryType());
+        validateSelectedFeedbackThreadIds(request.selectedFeedbackThreadIds());
     }
 
     private void validateExerciseId(long exerciseId) {
@@ -116,6 +121,19 @@ public class HyperionCodeGenerationResource {
         }
         if (!isSupportedRepositoryType(repositoryType)) {
             throw new BadRequestAlertException("Repository type not supported for code generation: " + repositoryType, ENTITY_NAME, "unsupportedRepositoryType");
+        }
+    }
+
+    private void validateSelectedFeedbackThreadIds(List<Long> selectedFeedbackThreadIds) {
+        if (selectedFeedbackThreadIds == null) {
+            return;
+        }
+        if (selectedFeedbackThreadIds.size() > MAX_SELECTED_FEEDBACK_THREAD_IDS) {
+            throw new BadRequestAlertException("Too many selected feedback thread ids", ENTITY_NAME, "tooManySelectedFeedbackThreadIds");
+        }
+        boolean hasInvalidThreadId = selectedFeedbackThreadIds.stream().anyMatch(threadId -> threadId == null || threadId <= 0);
+        if (hasInvalidThreadId) {
+            throw new BadRequestAlertException("Selected feedback thread ids must be positive", ENTITY_NAME, "invalidSelectedFeedbackThreadIds");
         }
     }
 

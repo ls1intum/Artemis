@@ -344,7 +344,18 @@
                 "settingsTooltip": "Select repositories to generate",
                 "statusTitle": "Generation Status",
                 "statusTooltip": "Show live generation status",
-                "executionOrder": "Selected repositories run consecutively in this order: Template, Solution, Test.",
+                "executionOrder": "Selected repositories run consecutively in this order: Solution, Template, Test.",
+                "selectedFeedback": {
+                    "title": "Selected Feedback Threads",
+                    "description": "These selected threads will be forwarded as feedback context for code generation.",
+                    "count": "{{count}} selected",
+                    "empty": "No threads are currently selected as feedback.",
+                    "showThreads": "Show Threads",
+                    "hideThreads": "Hide Threads",
+                    "viewThread": "View Thread",
+                    "line": "Line {{line}}",
+                    "unknownLocation": "Unknown location"
+                },
                 "repositories": {
                     "template": "Template Repository",
                     "solution": "Solution Repository",

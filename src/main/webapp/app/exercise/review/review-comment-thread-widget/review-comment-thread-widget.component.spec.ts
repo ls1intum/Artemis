@@ -24,6 +24,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             createReplyInContext: vi.fn(),
             updateCommentInContext: vi.fn(),
             toggleResolvedInContext: vi.fn(),
+            toggleThreadFeedbackSelection: vi.fn(),
+            isThreadSelectedAsFeedback: vi.fn().mockReturnValue(false),
             toggleGroupResolvedInContext: vi.fn(),
             threads: signal([]),
         };
@@ -178,6 +180,24 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
         expect(comp.showThreadBody()).toBe(false);
         expect(collapseSpy).toHaveBeenCalledWith(true);
+    });
+
+    it('should toggle feedback selection when enabled', () => {
+        fixture.componentRef.setInput('showFeedbackAction', true);
+
+        comp.toggleFeedbackSelection();
+
+        expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledWith(1);
+    });
+
+    it('should hide the feedback action for outdated threads', () => {
+        fixture.componentRef.setInput('showFeedbackAction', true);
+        fixture.componentRef.setInput('thread', { id: 1, resolved: false, outdated: true, comments: [] } as any);
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.selectThreadAsFeedback');
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.removeThreadFromFeedback');
     });
 
     it('should resolve all threads in the group and collapse current thread', () => {

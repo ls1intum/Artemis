@@ -1293,6 +1293,9 @@ components:
           type: string
           enum: [exercise, solution, tests, auxiliary, user]
         checkOnly: {type: boolean}
+        selectedFeedbackThreadIds:
+          type: array
+          items: {type: integer, format: int64}
     InferredCompetency:
       type: object
       properties:

@@ -13,7 +13,12 @@ Based on the following template plan and programming language, determine the nec
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
-If there are no issues listed above, skip the following steps.
+**Selected Feedback Threads (JSON payload, if any):**
+{{selectedFeedbackThreads}}
+
+If the selected feedback payload contains threads, treat those threads as requested changes only when they are relevant to this repository, consistent with the problem statement and exercise preconditions, and appropriate for the exercise. If a selected thread conflicts with the problem statement, explicit constraints, or repository conventions, do not implement that request and prefer the safer behavior.
+
+If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which files, packages, and repository artifacts each issue touches.
 2. Explain the mismatch between the required structure and the current or planned structure.

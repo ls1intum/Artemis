@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.dto;
 
+import java.util.List;
+
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -13,5 +15,5 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * Repository type is optional when checkOnly is true.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CodeGenerationRequestDTO(@Nullable RepositoryType repositoryType, boolean checkOnly) {
+public record CodeGenerationRequestDTO(@Nullable RepositoryType repositoryType, boolean checkOnly, @Nullable List<Long> selectedFeedbackThreadIds) {
 }

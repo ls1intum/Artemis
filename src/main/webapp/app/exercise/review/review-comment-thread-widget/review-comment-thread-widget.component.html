@@ -235,6 +235,15 @@
                             </ng-template>
                         </p-menu>
                     }
+                    @if (showFeedbackAction() && !thread().outdated && (!thread().resolved || isSelectedAsFeedback())) {
+                        <button pButton type="button" severity="secondary" size="small" (click)="toggleFeedbackSelection()">
+                            @if (isSelectedAsFeedback()) {
+                                {{ 'artemisApp.review.removeThreadFromFeedback' | artemisTranslate }}
+                            } @else {
+                                {{ 'artemisApp.review.selectThreadAsFeedback' | artemisTranslate }}
+                            }
+                        </button>
+                    }
                 </div>
                 <button pButton type="button" size="small" (click)="submitReply()">
                     {{ 'artemisApp.review.replySubmit' | artemisTranslate }}

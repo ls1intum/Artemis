@@ -25,6 +25,8 @@
             "threadLocationWarning": "Kommentare können an einer falschen Position stehen. Bitte Änderungen absenden, um den Kommentar zu aktualisieren.",
             "resolveThread": "Erledigen",
             "unresolveThread": "Wieder öffnen",
+            "selectThreadAsFeedback": "Thread als Feedback auswählen",
+            "removeThreadFromFeedback": "Thread aus Feedback entfernen",
             "resolveThreadOptions": "Erledigen-Optionen",
             "resolveThreadGroup": "Gruppe erledigen",
             "unresolveThreadGroup": "Gruppe wieder öffnen",

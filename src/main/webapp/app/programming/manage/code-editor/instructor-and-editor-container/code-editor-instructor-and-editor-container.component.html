@@ -248,6 +248,81 @@
                                                     <span [jhiTranslate]="getCodeGenerationRepositoryTranslationKey(repositoryType)"></span>
                                                 </label>
                                             }
+                                            <div class="code-generation-popover__feedback-section">
+                                                <div class="code-generation-popover__feedback-header">
+                                                    <div>
+                                                        <div
+                                                            class="code-generation-popover__subtitle"
+                                                            jhiTranslate="artemisApp.programmingExercise.codeGeneration.selectedFeedback.title"
+                                                        ></div>
+                                                        <div
+                                                            class="code-generation-popover__hint"
+                                                            jhiTranslate="artemisApp.programmingExercise.codeGeneration.selectedFeedback.description"
+                                                        ></div>
+                                                    </div>
+                                                    <span class="code-generation-feedback-summary-total">
+                                                        {{
+                                                            'artemisApp.programmingExercise.codeGeneration.selectedFeedback.count'
+                                                                | artemisTranslate: { count: totalSelectedFeedbackThreadCount() }
+                                                        }}
+                                                    </span>
+                                                </div>
+                                                @if (totalSelectedFeedbackThreadCount() === 0) {
+                                                    <div
+                                                        class="code-generation-feedback-summary-empty"
+                                                        jhiTranslate="artemisApp.programmingExercise.codeGeneration.selectedFeedback.empty"
+                                                    ></div>
+                                                } @else {
+                                                    <div class="code-generation-feedback-summary-list">
+                                                        @for (summary of codeGenerationSelectedFeedbackSummaries(); track summary.repositoryType) {
+                                                            <div class="code-generation-feedback-summary-card">
+                                                                <div class="code-generation-feedback-summary-card__header">
+                                                                    <div class="code-generation-feedback-summary-card__title">
+                                                                        <span [jhiTranslate]="getCodeGenerationRepositoryTranslationKey(summary.repositoryType)"></span>
+                                                                        <span class="code-generation-feedback-summary-card__count">
+                                                                            {{
+                                                                                'artemisApp.programmingExercise.codeGeneration.selectedFeedback.count'
+                                                                                    | artemisTranslate: { count: summary.threadCount }
+                                                                            }}
+                                                                        </span>
+                                                                    </div>
+                                                                    <button
+                                                                        pButton
+                                                                        type="button"
+                                                                        text
+                                                                        size="small"
+                                                                        [disabled]="summary.threadCount === 0"
+                                                                        (click)="toggleFeedbackSummaryRepository(summary.repositoryType)"
+                                                                    >
+                                                                        @if (isFeedbackSummaryRepositoryExpanded(summary.repositoryType)) {
+                                                                            {{ 'artemisApp.programmingExercise.codeGeneration.selectedFeedback.hideThreads' | artemisTranslate }}
+                                                                        } @else {
+                                                                            {{ 'artemisApp.programmingExercise.codeGeneration.selectedFeedback.showThreads' | artemisTranslate }}
+                                                                        }
+                                                                    </button>
+                                                                </div>
+                                                                @if (isFeedbackSummaryRepositoryExpanded(summary.repositoryType) && summary.threadCount > 0) {
+                                                                    <div class="code-generation-feedback-summary-threads">
+                                                                        @for (thread of summary.threads; track thread.threadId) {
+                                                                            <div class="code-generation-feedback-summary-thread">
+                                                                                <span class="code-generation-feedback-summary-thread__location">
+                                                                                    {{ thread.locationLabel }}
+                                                                                </span>
+                                                                                <button pButton type="button" text size="small" (click)="navigateToSelectedFeedbackThread(thread)">
+                                                                                    {{
+                                                                                        'artemisApp.programmingExercise.codeGeneration.selectedFeedback.viewThread'
+                                                                                            | artemisTranslate
+                                                                                    }}
+                                                                                </button>
+                                                                            </div>
+                                                                        }
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
                                         </div>
                                     </p-popover>
                                     @if (exercise.isAtLeastEditor) {

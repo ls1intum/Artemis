@@ -25,6 +25,8 @@
             "threadLocationWarning": "Comments may be not in the correct location. Submit changes to update the comment.",
             "resolveThread": "Resolve",
             "unresolveThread": "Unresolve",
+            "selectThreadAsFeedback": "Select Thread as Feedback",
+            "removeThreadFromFeedback": "Remove Thread from Feedback",
             "resolveThreadOptions": "Resolve options",
             "resolveThreadGroup": "Resolve group",
             "unresolveThreadGroup": "Unresolve group",

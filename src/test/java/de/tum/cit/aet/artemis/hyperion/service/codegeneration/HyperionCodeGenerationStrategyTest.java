@@ -30,6 +30,10 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.retry.TransientAiException;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
@@ -42,12 +46,10 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 class HyperionCodeGenerationServiceTest {
 
-    @Mock
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Mock
     private ChatModel chatModel;
@@ -68,7 +70,7 @@ class HyperionCodeGenerationServiceTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.builder(chatModel).defaultAdvisors(ChatModelCallAdvisor.builder().chatModel(chatModel).build()).build();
-        this.strategy = new TestCodeGenerationStrategy(programmingExerciseRepository, chatClient, templates, llmTokenUsageService);
+        this.strategy = new TestCodeGenerationStrategy(chatClient, templates, llmTokenUsageService);
 
         this.user = new User();
         user.setLogin("testuser");
@@ -85,7 +87,7 @@ class HyperionCodeGenerationServiceTest {
 
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, "build logs", "repo structure", "consistency issues");
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, "build logs", "repo structure", "consistency issues", "{\"threads\":[]}");
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).path()).isEqualTo("Sort.java");
@@ -102,7 +104,7 @@ class HyperionCodeGenerationServiceTest {
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Test.java\",\"content\":\"class Test {}\"}]}";
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, null, "repo structure", "consistency issues");
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, null, "repo structure", "consistency issues", "{\"threads\":[]}");
 
         assertThat(result).hasSize(1);
         verify(chatModel, times(2)).call(any(Prompt.class));
@@ -110,14 +112,45 @@ class HyperionCodeGenerationServiceTest {
 
     @Test
     void generateCode_withNullRepositoryStructure_throwsIllegalArgumentException() {
-        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", null, "consistency issues")).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", null, "consistency issues", "{\"threads\":[]}")).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("repositoryStructure must not be null");
     }
 
     @Test
     void generateCode_withNullConsistencyIssues_throwsIllegalArgumentException() {
-        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", "repo structure", null)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", "repo structure", null, "{\"threads\":[]}")).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("consistencyIssues must not be null");
+    }
+
+    @Test
+    void normalizeSelectedFeedbackThreads_withOversizedValidJson_trimsThreadsAndReturnsValidJson() throws Exception {
+        int maxLength = getMaxSelectedFeedbackThreadsLength();
+        String oversizedPayload = createOversizedThreadsPayload(80, 300);
+
+        String normalized = ReflectionTestUtils.invokeMethod(strategy, "normalizeSelectedFeedbackThreads", oversizedPayload);
+
+        assertThat(normalized).isNotNull();
+        assertThat(normalized.length()).isLessThanOrEqualTo(maxLength);
+
+        JsonNode normalizedJson = OBJECT_MAPPER.readTree(normalized);
+        assertThat(normalizedJson.path("repositoryType").asText()).isEqualTo("SOLUTION");
+        assertThat(normalizedJson.path("threads").isArray()).isTrue();
+        assertThat(normalizedJson.path("threads").size()).isLessThan(80);
+        assertThat(normalizedJson.path("threads")).isNotEmpty();
+    }
+
+    @Test
+    void normalizeSelectedFeedbackThreads_withOversizedInvalidJson_returnsLastValidObject() throws Exception {
+        int maxLength = getMaxSelectedFeedbackThreadsLength();
+        String validPayload = createOversizedThreadsPayload(2, 120);
+        assertThat(validPayload.length()).isLessThan(maxLength);
+
+        String oversizedInvalidPayload = validPayload + " {\"threads\":[" + "x".repeat(maxLength);
+
+        String normalized = ReflectionTestUtils.invokeMethod(strategy, "normalizeSelectedFeedbackThreads", oversizedInvalidPayload);
+
+        assertThat(normalized).isEqualTo(OBJECT_MAPPER.writeValueAsString(OBJECT_MAPPER.readTree(validPayload)));
+        assertThat(OBJECT_MAPPER.readTree(normalized).path("threads").size()).isEqualTo(2);
     }
 
     @Test
@@ -363,37 +396,52 @@ class HyperionCodeGenerationServiceTest {
         return new ChatResponse(List.of(generation), metadata);
     }
 
+    private int getMaxSelectedFeedbackThreadsLength() {
+        return (int) ReflectionTestUtils.getField(HyperionCodeGenerationService.class, "MAX_SELECTED_FEEDBACK_THREADS_LENGTH");
+    }
+
+    private String createOversizedThreadsPayload(int threadCount, int commentLength) throws Exception {
+        StringBuilder payload = new StringBuilder("{\"repositoryType\":\"SOLUTION\",\"threads\":[");
+        for (int index = 0; index < threadCount; index++) {
+            if (index > 0) {
+                payload.append(',');
+            }
+            payload.append("{\"id\":").append(index).append(",\"comments\":[{\"type\":\"USER\",\"text\":\"").append("x".repeat(commentLength)).append("\"}]}");
+        }
+        payload.append("]}");
+        return OBJECT_MAPPER.writeValueAsString(OBJECT_MAPPER.readTree(payload.toString()));
+    }
+
     private static class TestCodeGenerationStrategy extends HyperionCodeGenerationService {
 
-        public TestCodeGenerationStrategy(ProgrammingExerciseTestRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
-                LLMTokenUsageService llmTokenUsageService) {
-            super(programmingExerciseRepository, chatClient, templates, llmTokenUsageService);
+        public TestCodeGenerationStrategy(ChatClient chatClient, HyperionPromptTemplateService templates, LLMTokenUsageService llmTokenUsageService) {
+            super(chatClient, templates, llmTokenUsageService);
         }
 
         @Override
         protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
-                String consistencyIssues) throws NetworkingException {
+                String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "plan");
             return callChatClient(user, exercise, courseId, "test-plan-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String consistencyIssues) throws NetworkingException {
+                String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "structure");
             return callChatClient(user, exercise, courseId, "test-structure-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String consistencyIssues) throws NetworkingException {
+                String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "headers");
             return callChatClient(user, exercise, courseId, "test-headers-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String consistencyIssues) throws NetworkingException {
+                String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "logic");
             return callChatClient(user, exercise, courseId, "test-logic-template", variables);
         }
