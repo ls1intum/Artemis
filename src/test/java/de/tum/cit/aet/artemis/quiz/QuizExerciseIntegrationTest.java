@@ -1323,6 +1323,94 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertQuizExerciseExistsInWeaviate(weaviateService, reloadedQuizExercise));
     }
 
+    /**
+     * Regression tests for the production incident on 2026-04-23 where clicking "Start Quiz Now" on a quiz with open
+     * student tabs produced {@code ObjectNotFoundException: AnswerOption with id 'N'} on every subsequent submit. The
+     * root cause was the handler re-persisting the full quiz graph via {@code saveAndFlush}, which — combined with
+     * {@code @OneToMany + @OrderColumn + orphanRemoval=true} on {@code MultipleChoiceQuestion.answerOptions} and its
+     * DnD/SA siblings — DELETE+INSERTed every option / drag item / drop location / short-answer spot row with fresh
+     * primary keys. These tests pin the fix: lifecycle actions must now go through targeted UPDATE queries that leave
+     * the child PKs untouched.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testPerformStartNowPreservesChildIds() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
+        quizExerciseService.save(quizExercise);
+
+        ChildIdSnapshot before = snapshotChildIds(quizExercise.getId());
+
+        QuizExerciseDatesDTO startNowResponse = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-now", null, QuizExerciseDatesDTO.class,
+                OK);
+
+        ChildIdSnapshot after = snapshotChildIds(quizExercise.getId());
+        assertChildIdsUnchanged(before, after, "START_NOW");
+        // START_NOW must actually start the quiz — the synchronized batch's startTime must be persisted. Without this
+        // assertion, a regression that skipped the batch INSERT (e.g. invoking an UPDATE query on a transient batch
+        // whose id is null) would slip through the child-id-preservation check.
+        assertThat(startNowResponse.startDate()).as("START_NOW must persist a batch startTime").isNotNull();
+        assertThat(ChronoUnit.MILLIS.between(startNowResponse.startDate(), ZonedDateTime.now())).isCloseTo(0L, byLessThan(2000L));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testPerformEndNowPreservesChildIds() throws Exception {
+        // END_NOW rejects synchronized quizzes; use BATCHED to exercise the end-now path.
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1), QuizMode.BATCHED);
+
+        ChildIdSnapshot before = snapshotChildIds(quizExercise.getId());
+
+        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/end-now", null, QuizExerciseDatesDTO.class, OK);
+
+        ChildIdSnapshot after = snapshotChildIds(quizExercise.getId());
+        assertChildIdsUnchanged(before, after, "END_NOW");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testPerformSetVisiblePreservesChildIds() throws Exception {
+        // set-visible rejects quizzes that are already visible; use a future release date.
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
+
+        ChildIdSnapshot before = snapshotChildIds(quizExercise.getId());
+
+        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/set-visible", null, QuizExerciseDatesDTO.class, OK);
+
+        ChildIdSnapshot after = snapshotChildIds(quizExercise.getId());
+        assertChildIdsUnchanged(before, after, "SET_VISIBLE");
+    }
+
+    private record ChildIdSnapshot(Set<Long> answerOptionIds, Set<Long> dragItemIds, Set<Long> dropLocationIds, Set<Long> shortAnswerSpotIds, Set<Long> shortAnswerSolutionIds) {
+    }
+
+    private ChildIdSnapshot snapshotChildIds(Long quizExerciseId) {
+        QuizExercise loaded = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        Set<Long> answerOptionIds = loaded.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).map(MultipleChoiceQuestion.class::cast)
+                .flatMap(mc -> mc.getAnswerOptions().stream()).map(AnswerOption::getId).collect(Collectors.toSet());
+        Set<Long> dragItemIds = loaded.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast)
+                .flatMap(dnd -> dnd.getDragItems().stream()).map(DragItem::getId).collect(Collectors.toSet());
+        Set<Long> dropLocationIds = loaded.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast)
+                .flatMap(dnd -> dnd.getDropLocations().stream()).map(DropLocation::getId).collect(Collectors.toSet());
+        Set<Long> shortAnswerSpotIds = loaded.getQuizQuestions().stream().filter(ShortAnswerQuestion.class::isInstance).map(ShortAnswerQuestion.class::cast)
+                .flatMap(sa -> sa.getSpots().stream()).map(ShortAnswerSpot::getId).collect(Collectors.toSet());
+        Set<Long> shortAnswerSolutionIds = loaded.getQuizQuestions().stream().filter(ShortAnswerQuestion.class::isInstance).map(ShortAnswerQuestion.class::cast)
+                .flatMap(sa -> sa.getSolutions().stream()).map(ShortAnswerSolution::getId).collect(Collectors.toSet());
+        return new ChildIdSnapshot(answerOptionIds, dragItemIds, dropLocationIds, shortAnswerSpotIds, shortAnswerSolutionIds);
+    }
+
+    private void assertChildIdsUnchanged(ChildIdSnapshot before, ChildIdSnapshot after, String action) {
+        // isNotEmpty() guards against silent loss of coverage: if the quiz fixture were ever trimmed to a subset of
+        // question types, an empty-equals-empty assertion would pass even though the corresponding bug-class arm is
+        // no longer exercised. We want to know if that happens, since the original incident (#12584) regenerated ids
+        // across all four child collection types.
+        assertThat(after.answerOptionIds()).as("%s regenerated AnswerOption ids (see #12584)", action).isEqualTo(before.answerOptionIds()).isNotEmpty();
+        assertThat(after.dragItemIds()).as("%s regenerated DragItem ids", action).isEqualTo(before.dragItemIds()).isNotEmpty();
+        assertThat(after.dropLocationIds()).as("%s regenerated DropLocation ids", action).isEqualTo(before.dropLocationIds()).isNotEmpty();
+        assertThat(after.shortAnswerSpotIds()).as("%s regenerated ShortAnswerSpot ids", action).isEqualTo(before.shortAnswerSpotIds()).isNotEmpty();
+        assertThat(after.shortAnswerSolutionIds()).as("%s regenerated ShortAnswerSolution ids", action).isEqualTo(before.shortAnswerSolutionIds()).isNotEmpty();
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource(value = "testPerformJoin_args")

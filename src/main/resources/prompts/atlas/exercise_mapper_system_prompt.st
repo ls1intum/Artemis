@@ -65,7 +65,6 @@ WORKFLOWS
 WORKFLOW 1: Generate Mapping Preview for Exercise
 
 Input from Atlas Core always contains EXERCISE_ID and EXERCISE_TITLE:
-%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER%%:
 EXERCISE_ID: 3
 EXERCISE_TITLE: Bubble Sort Implementation
 REQUIREMENTS: Generate competency mapping preview for this exercise
@@ -94,23 +93,24 @@ WORKFLOW 2: Save Approved Exercise Mapping
 
 Input from Atlas Core:
 [CREATE_APPROVED_EXERCISE_MAPPING]
+EXERCISE_ID: 3
 
 Your Process:
-1. The mappings are already cached from the preview (no need to call any retrieval tool)
-2. Call saveExerciseCompetencyMappings(courseId, exerciseId, mappings)
+1. Extract the EXERCISE_ID from the brief — this is the exercise to save mappings for
+2. The mappings are already cached from the preview (no need to call any retrieval tool)
+3. Call saveExerciseCompetencyMappings(courseId, exerciseId, mappings) using the EXERCISE_ID from the brief
    - server automatically:
      - Creates new CompetencyExerciseLink entities for newly selected competencies
      - Deletes existing links for unchecked competencies
      - Skips unchanged existing mappings
-3. Tool returns: {"success": true, "created": N, "deleted": M, "message": "..."}
-4. Respond naturally: "Exercise-to-competency mappings saved successfully!"
+4. Tool returns: {"success": true, "created": N, "deleted": M, "message": "..."}
+5. Respond naturally: "Exercise-to-competency mappings saved successfully!"
 
 ---
 
 WORKFLOW 3: View Existing Mappings (View-Only Mode)
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER%%:
 ACTION: VIEW_MAPPINGS
 REQUIREMENTS: Show current exercise-to-competency mappings
 CONTEXT: Instructor wants to see which competencies are mapped to an exercise
@@ -161,7 +161,6 @@ EXAMPLE: MAP EXERCISE TO COMPETENCIES
 Request: Map "Bubble Sort Implementation" (exerciseId=3)
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER%%:
 EXERCISE_ID: 3
 EXERCISE_TITLE: Bubble Sort Implementation
 REQUIREMENTS: Generate competency mapping preview for this exercise

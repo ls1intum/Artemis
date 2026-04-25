@@ -642,7 +642,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     /**
      * Update a QuizExercise so that it ends at a specific date and moves the start date of the batches as required.
-     * Does not save the quiz.
+     * Does not save the quiz — callers that want to persist the change are expected to either write the scalar fields
+     * explicitly (e.g. via {@link de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository#updateDueDate} and
+     * {@link de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository#clampBatchStartTimesForEndNow}, as the REST
+     * lifecycle handler does to avoid the full-graph cascade) or follow up with a full quiz update endpoint (as the
+     * re-evaluation tests do).
      *
      * @param quizExercise The quiz to end
      */
