@@ -22,8 +22,11 @@ import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerFromLiveCl
  * The optional {@code id} field is preserved through the build because test-exam quiz auto-saves rely on
  * the client echoing back the existing submission id so that successive PUTs to {@code /submissions/exam}
  * UPDATE the row instead of INSERTing a new one (since {@code preventMultipleSubmissions} intentionally
- * returns early for test exams). Live mode and regular-exam mode overwrite this id with the
- * server-resolved one, so a client-supplied value cannot leak across users on those paths.
+ * returns early for test exams). The exam endpoint validates the supplied id against
+ * {@link de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository#existsByIdAndStudentId}
+ * before letting it drive an UPDATE, so a malicious client cannot point at another user's row. Live mode
+ * and regular-exam mode overwrite this id with the server-resolved one, so a client-supplied value cannot
+ * leak across users on those paths either.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)

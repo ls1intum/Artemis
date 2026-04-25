@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.quiz.dto.result.ResultAfterEvaluationWithSubmissio
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
 
 /**
@@ -70,6 +71,8 @@ public class QuizSubmissionResource {
 
     private final QuizSubmissionService quizSubmissionService;
 
+    private final QuizSubmissionRepository quizSubmissionRepository;
+
     private final ParticipationService participationService;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -80,11 +83,12 @@ public class QuizSubmissionResource {
 
     private final Optional<ExamSubmissionApi> examSubmissionApi;
 
-    public QuizSubmissionResource(QuizExerciseRepository quizExerciseRepository, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
-            ResultWebsocketService resultWebsocketService, UserRepository userRepository, AuthorizationCheckService authCheckService, Optional<ExamSubmissionApi> examSubmissionApi,
-            StudentParticipationRepository studentParticipationRepository) {
+    public QuizSubmissionResource(QuizExerciseRepository quizExerciseRepository, QuizSubmissionService quizSubmissionService, QuizSubmissionRepository quizSubmissionRepository,
+            ParticipationService participationService, ResultWebsocketService resultWebsocketService, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            Optional<ExamSubmissionApi> examSubmissionApi, StudentParticipationRepository studentParticipationRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizSubmissionService = quizSubmissionService;
+        this.quizSubmissionRepository = quizSubmissionRepository;
         this.participationService = participationService;
         this.resultWebsocketService = resultWebsocketService;
         this.userRepository = userRepository;
@@ -238,6 +242,14 @@ public class QuizSubmissionResource {
 
             // Apply further checks if it is an exam submission
             api.checkSubmissionAllowanceElseThrow(quizExercise, user);
+
+            // For test exams, preventMultipleSubmissions returns immediately, so a non-null id from the client
+            // would otherwise drive an UPDATE on whichever row matches that id — including another student's
+            // submission. Drop the id unless it actually belongs to the requesting user, in which case
+            // saveSubmissionForExamMode merge-updates the existing row instead of inserting a new one.
+            if (quizSubmission.getId() != null && quizExercise.getExam().isTestExam() && !quizSubmissionRepository.existsByIdAndStudentId(quizSubmission.getId(), user.getId())) {
+                quizSubmission.setId(null);
+            }
 
             // Prevent multiple submissions (currently only for exam submissions)
             quizSubmission = (QuizSubmission) api.preventMultipleSubmissions(quizExercise, quizSubmission, user);

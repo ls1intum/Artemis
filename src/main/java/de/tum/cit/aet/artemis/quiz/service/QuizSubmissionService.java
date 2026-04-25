@@ -720,8 +720,11 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
                 DragAndDropMapping mapping = new DragAndDropMapping();
                 mapping.setDragItem(serverDragItem);
                 mapping.setDropLocation(serverDropLocation);
-                mapping.setDragItemIndex(mappingDTO.dragItemIndex());
-                mapping.setDropLocationIndex(mappingDTO.dropLocationIndex());
+                // Recompute the denormalized positional hints from the server's own lists rather than trusting the
+                // client-sent indices. Otherwise a malicious or stale client could push indices that disagree with
+                // the resolved entities, breaking downstream consumers that index back into the question's lists.
+                mapping.setDragItemIndex(question.getDragItems().indexOf(serverDragItem));
+                mapping.setDropLocationIndex(question.getDropLocations().indexOf(serverDropLocation));
                 mapping.setSubmittedAnswer(answer);
                 mappings.add(mapping);
             }
