@@ -1,7 +1,7 @@
 <div [id]="'exercise-' + quizExercise?.id" class="position-relative min-h-100 d-flex flex-column">
     @if (quizExercise) {
-        <div #quizHeader class="row module-bg" [ngClass]="{ 'sticky-top': mode === 'preview' || mode === 'solution' }">
-            <div class="d-flex justify-content-between align-items-center module-bg gap-2 pt-2" [ngClass]="{ 'mt-n3': mode === 'preview' || mode === 'solution' }">
+        <div #quizHeader class="row module-bg">
+            <div class="d-flex justify-content-between align-items-center module-bg gap-2 pt-2">
                 <h5 class="mb-0 d-flex gap-2 align-items-center">
                     @if (mode === 'preview' || mode === 'solution') {
                         {{ quizExercise.course?.title ? quizExercise.course?.title : quizExercise.exerciseGroup?.exam?.course?.title }}
