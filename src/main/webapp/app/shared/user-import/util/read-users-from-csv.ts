@@ -14,6 +14,7 @@ const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutz
 const POSSIBLE_EMAIL_HEADERS = ['email', 'e-mail', 'mail'];
 const POSSIBLE_FIRST_NAME_HEADERS = ['firstname', 'firstnameofstudent', 'givenname', 'forename', 'vorname'];
 const POSSIBLE_LAST_NAME_HEADERS = ['familyname', 'lastname', 'familynameofstudent', 'surname', 'nachname', 'familienname', 'name'];
+const POSSIBLE_PASSWORD_HEADERS = ['password', 'passwort', 'pw'];
 const POSSIBLE_ROOM_HEADERS = ['actualroom', 'actualRoom', 'raum', 'room', 'Room'];
 const POSSIBLE_SEAT_HEADERS = ['actualseat', 'actualSeat', 'sitzplatz', 'sitz', 'seat', 'Seat'];
 
@@ -35,6 +36,8 @@ export async function readStudentDTOsFromCSVFile(csvFile: File): Promise<Student
     const firstNameHeader = usedHeaders.find((value) => POSSIBLE_FIRST_NAME_HEADERS.includes(value)) || '';
     const lastNameHeader = usedHeaders.find((value) => POSSIBLE_LAST_NAME_HEADERS.includes(value)) || '';
 
+    const passwordHeader = usedHeaders.find((value) => POSSIBLE_PASSWORD_HEADERS.includes(value)) || '';
+
     const students = csvUsers.map((user: CsvUser) => {
         return {
             registrationNumber: user[registrationNumberHeader]?.trim() || '',
@@ -42,6 +45,7 @@ export async function readStudentDTOsFromCSVFile(csvFile: File): Promise<Student
             email: user[emailHeader]?.trim() || '',
             firstName: user[firstNameHeader]?.trim() || '',
             lastName: user[lastNameHeader]?.trim() || '',
+            ...(passwordHeader && user[passwordHeader]?.trim() ? { password: user[passwordHeader].trim() } : {}),
         };
     });
     return {

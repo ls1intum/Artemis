@@ -26,7 +26,13 @@
             "registrationNumber": "Matrikelnummer",
             "room": "Raum",
             "seat": "Sitz",
-            "email": "E-Mail"
+            "email": "E-Mail",
+            "password": "Passwort",
+            "createInternalUsers": {
+                "label": "Nutzer als interne Artemis-Nutzer erstellen, wenn nicht gefunden",
+                "tooltip": "Wenn aktiviert, werden Nutzer, die nicht in der Datenbank oder im LDAP gefunden werden, als interne Artemis-Nutzer erstellt. Optional kann eine 'Passwort'-Spalte in der CSV-Datei enthalten sein, um spezifische Passwörter zu setzen. Wenn kein Passwort angegeben wird, wird ein zufälliges Passwort generiert."
+            },
+            "numberOfUsersFailed": "Fehlgeschlagen:"
         }
     }
 }

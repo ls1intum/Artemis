@@ -4,4 +4,5 @@ export class StudentDTO {
     public lastName: string;
     public registrationNumber: string;
     public email: string;
+    public password?: string;
 }

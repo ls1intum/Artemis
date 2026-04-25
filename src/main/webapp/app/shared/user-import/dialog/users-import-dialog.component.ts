@@ -18,6 +18,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 import { Student } from 'app/openapi/model/student';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Checkbox } from 'primeng/checkbox';
 import { PrimeTemplate } from 'primeng/api';
 import { readExamUserDTOsFromCSVFile, readStudentDTOsFromCSVFile } from 'app/shared/user-import/util/read-users-from-csv';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
@@ -27,7 +28,7 @@ import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.servic
     templateUrl: './users-import-dialog.component.html',
     styleUrls: ['./users-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, ArtemisTranslatePipe, PrimeTemplate],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, Checkbox, ArtemisTranslatePipe, PrimeTemplate],
 })
 export class UsersImportDialogComponent implements OnDestroy {
     private alertService = inject(AlertService);
@@ -52,6 +53,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     usersToImport: StudentDTO[] = [];
     examUsersToImport: ExamUserDTO[] = [];
     notFoundUsers: Partial<StudentDTO>[] = [];
+    createInternalUsers = false;
 
     isParsing = false;
     validationError?: string;
@@ -78,6 +80,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         this.examUsersToImport = [];
         this.notFoundUsers = [];
         this.hasImported = false;
+        this.createInternalUsers = false;
         this.validationError = undefined;
         this.noUsersFoundError = undefined;
     }
@@ -161,7 +164,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         } else if (this.adminUserMode()) {
             // convert StudentDTO to User
             const artemisUsers = this.usersToImport.map((student) => ({ ...student, visibleRegistrationNumber: student.registrationNumber }));
-            this.adminUserService.importAll(artemisUsers).subscribe({
+            this.adminUserService.importAll(artemisUsers, this.createInternalUsers).subscribe({
                 next: (res) => {
                     const convertedStudents =
                         res.body?.map((user) => ({

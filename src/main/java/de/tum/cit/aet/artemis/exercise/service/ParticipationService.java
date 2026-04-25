@@ -717,32 +717,7 @@ public class ParticipationService {
      * @return all participations where the individual due date actually changed.
      */
     public List<StudentParticipation> updateIndividualDueDates(final Exercise exercise, final List<StudentParticipation> participations) {
-        final List<StudentParticipation> changedParticipations = new ArrayList<>();
-
-        for (final StudentParticipation toBeUpdated : participations) {
-            final Optional<StudentParticipation> optionalOriginalParticipation = studentParticipationRepository.findById(toBeUpdated.getId());
-            if (optionalOriginalParticipation.isEmpty()) {
-                continue;
-            }
-            final StudentParticipation originalParticipation = optionalOriginalParticipation.get();
-
-            // individual due dates can only exist if the exercise has a due date
-            // they also have to be after the exercise due date
-            final ZonedDateTime newIndividualDueDate;
-            if (exercise.getDueDate() == null || (toBeUpdated.getIndividualDueDate() != null && toBeUpdated.getIndividualDueDate().isBefore(exercise.getDueDate()))) {
-                newIndividualDueDate = null;
-            }
-            else {
-                newIndividualDueDate = toBeUpdated.getIndividualDueDate();
-            }
-
-            if (!Objects.equals(originalParticipation.getIndividualDueDate(), newIndividualDueDate)) {
-                originalParticipation.setIndividualDueDate(newIndividualDueDate);
-                changedParticipations.add(originalParticipation);
-            }
-        }
-
-        return changedParticipations;
+        return participations.stream().map(p -> updateSingleDueDate(exercise, p.getId(), p.getIndividualDueDate())).flatMap(Optional::stream).toList();
     }
 
     /**
@@ -754,30 +729,33 @@ public class ParticipationService {
      * @return all participations where the individual due date actually changed.
      */
     public List<StudentParticipation> updateIndividualDueDatesFromDTOs(final Exercise exercise, final List<ParticipationDueDateUpdateDTO> dueDateUpdates) {
-        final List<StudentParticipation> changedParticipations = new ArrayList<>();
+        return dueDateUpdates.stream().map(dto -> updateSingleDueDate(exercise, dto.id(), dto.individualDueDate())).flatMap(Optional::stream).toList();
+    }
 
-        for (final ParticipationDueDateUpdateDTO dto : dueDateUpdates) {
-            final Optional<StudentParticipation> optionalOriginalParticipation = studentParticipationRepository.findById(dto.id());
-            if (optionalOriginalParticipation.isEmpty()) {
-                continue;
-            }
-            final StudentParticipation originalParticipation = optionalOriginalParticipation.get();
-
-            final ZonedDateTime newIndividualDueDate;
-            if (exercise.getDueDate() == null || (dto.individualDueDate() != null && dto.individualDueDate().isBefore(exercise.getDueDate()))) {
-                newIndividualDueDate = null;
-            }
-            else {
-                newIndividualDueDate = dto.individualDueDate();
-            }
-
-            if (!Objects.equals(originalParticipation.getIndividualDueDate(), newIndividualDueDate)) {
-                originalParticipation.setIndividualDueDate(newIndividualDueDate);
-                changedParticipations.add(originalParticipation);
-            }
+    /**
+     * Updates the individual due date for a single participation if it has changed.
+     * Individual due dates can only exist if the exercise has a due date and must be after the exercise due date.
+     *
+     * @param exercise         the exercise the participation belongs to
+     * @param participationId  the ID of the participation to update
+     * @param candidateDueDate the proposed new individual due date
+     * @return the updated participation if the due date changed, empty otherwise
+     */
+    private Optional<StudentParticipation> updateSingleDueDate(final Exercise exercise, final Long participationId, final ZonedDateTime candidateDueDate) {
+        final Optional<StudentParticipation> optionalParticipation = studentParticipationRepository.findById(participationId);
+        if (optionalParticipation.isEmpty()) {
+            return Optional.empty();
         }
+        final StudentParticipation participation = optionalParticipation.get();
 
-        return changedParticipations;
+        final ZonedDateTime newDueDate = (exercise.getDueDate() == null || (candidateDueDate != null && candidateDueDate.isBefore(exercise.getDueDate()))) ? null
+                : candidateDueDate;
+
+        if (!Objects.equals(participation.getIndividualDueDate(), newDueDate)) {
+            participation.setIndividualDueDate(newDueDate);
+            return Optional.of(participation);
+        }
+        return Optional.empty();
     }
 
     /**

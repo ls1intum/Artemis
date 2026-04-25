@@ -1,6 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -25,6 +26,7 @@ import * as readUsersFromCsv from 'app/shared/user-import/util/read-users-from-c
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { User } from 'app/core/user/user.model';
+import { Checkbox } from 'primeng/checkbox';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 describe('UsersImportDialogComponent', () => {
@@ -40,6 +42,15 @@ describe('UsersImportDialogComponent', () => {
     const exam: Exam = { course, id: 2, title: 'Exam Title' };
 
     const testDir = path.join(process.cwd(), 'src', 'test', 'javascript', 'spec', 'helpers', 'sample', 'user-import');
+
+    beforeAll(() => {
+        try {
+            TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
+        } catch (error) {
+            // The environment is already initialized when running through the Angular CLI test harness.
+        }
+    });
+
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [FormsModule, FaIconComponent, UsersImportDialogComponent],
@@ -57,7 +68,15 @@ describe('UsersImportDialogComponent', () => {
         })
             .overrideComponent(UsersImportDialogComponent, {
                 set: {
-                    imports: [FormsModule, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent), FaIconComponent, DialogModule],
+                    imports: [
+                        FormsModule,
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisTranslatePipe),
+                        MockComponent(HelpIconComponent),
+                        FaIconComponent,
+                        DialogModule,
+                        MockComponent(Checkbox),
+                    ],
                 },
             })
             .compileComponents()
@@ -349,6 +368,57 @@ describe('UsersImportDialogComponent', () => {
         expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
     });
 
+    it('should read students from csv with password column', async () => {
+        const csvWithPassword = 'login,firstname,lastname,email,password\nuser1,Max,Mustermann,max@test.com,secret123\nuser2,Bob,Ross,bob@test.com,';
+        const event = { target: { files: [csvWithPassword] } };
+        await component.onCSVFileSelect(event);
+
+        expect(component.usersToImport).toHaveLength(2);
+        expect(component.usersToImport[0].password).toBe('secret123');
+        expect(component.usersToImport[1].password).toBeUndefined();
+    });
+
+    it('should reset createInternalUsers on dialog reset', () => {
+        component.createInternalUsers = true;
+        component.open();
+        expect(component.createInternalUsers).toBeFalse();
+    });
+
+    it('should import users in admin mode with createInternalUsers flag', () => {
+        fixture.componentRef.setInput('adminUserMode', true);
+        fixture.componentRef.setInput('examUserMode', false);
+        fixture.componentRef.setInput('exam', undefined);
+        fixture.componentRef.setInput('courseGroup', undefined);
+
+        const failedUsers: User[] = [];
+        const fakeResponse = { body: failedUsers } as HttpResponse<User[]>;
+        jest.spyOn(adminUserService, 'importAll').mockReturnValue(of(fakeResponse));
+
+        component.usersToImport = [{ registrationNumber: '', login: 'user1', email: 'user1@test.com', firstName: 'Max', lastName: 'Mustermann', password: 'secret123' }];
+        component.createInternalUsers = true;
+        component.importUsers();
+
+        expect(adminUserService.importAll).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ login: 'user1', password: 'secret123' })]), true);
+        expect(component.isImporting).toBeFalse();
+        expect(component.hasImported).toBeTrue();
+    });
+
+    it('should import users in admin mode without createInternalUsers flag by default', () => {
+        fixture.componentRef.setInput('adminUserMode', true);
+        fixture.componentRef.setInput('examUserMode', false);
+        fixture.componentRef.setInput('exam', undefined);
+        fixture.componentRef.setInput('courseGroup', undefined);
+
+        const failedUsers: User[] = [];
+        const fakeResponse = { body: failedUsers } as HttpResponse<User[]>;
+        jest.spyOn(adminUserService, 'importAll').mockReturnValue(of(fakeResponse));
+
+        component.usersToImport = [{ registrationNumber: '', login: 'user1', email: 'user1@test.com', firstName: 'Max', lastName: 'Mustermann' }];
+        component.importUsers();
+
+        expect(adminUserService.importAll).toHaveBeenCalledWith(expect.anything(), false);
+    });
+
     it('should expose validationError for invalid exam user csv rows', async () => {
         fixture.componentRef.setInput('examUserMode', true);
         jest.spyOn(readUsersFromCsv, 'readExamUserDTOsFromCSVFile').mockResolvedValue({
@@ -450,10 +520,13 @@ describe('UsersImportDialogComponent', () => {
         component.usersToImport = usersToImport;
         component.importUsers();
 
-        expect(adminUserService.importAll).toHaveBeenCalledWith([
-            { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: 'test@mail', visibleRegistrationNumber: '1' },
-            { registrationNumber: '2', firstName: 'Ada', lastName: 'Lovelace', login: 'ada', email: 'ada@example.com', visibleRegistrationNumber: '2' },
-        ]);
+        expect(adminUserService.importAll).toHaveBeenCalledWith(
+            [
+                { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: 'test@mail', visibleRegistrationNumber: '1' },
+                { registrationNumber: '2', firstName: 'Ada', lastName: 'Lovelace', login: 'ada', email: 'ada@example.com', visibleRegistrationNumber: '2' },
+            ],
+            false,
+        );
         expect(component.isImporting).toBeFalse();
         expect(component.hasImported).toBeTrue();
         expect(component.notFoundUsers).toMatchObject([

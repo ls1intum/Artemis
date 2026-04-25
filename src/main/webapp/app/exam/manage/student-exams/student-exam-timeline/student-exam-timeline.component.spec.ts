@@ -136,6 +136,9 @@ describe('Student Exam Timeline Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(StudentExamTimelineComponent);
                 component = fixture.componentInstance;
+                // Initialize selectedTimestamp to 0 to prevent dayjs(undefined) from returning
+                // current time, which causes NG0100 when time changes between change detection cycles
+                component.selectedTimestamp = 0;
                 submissionService = TestBed.inject(SubmissionService);
                 submissionVersionService = TestBed.inject(SubmissionVersionService);
                 fixture.detectChanges();

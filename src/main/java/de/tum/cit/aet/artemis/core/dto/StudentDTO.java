@@ -5,16 +5,22 @@ import java.util.Objects;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentDTO(@Size(max = 50) String login, @Size(max = 50) String firstName, @Size(max = 50) String lastName, @Size(max = 10) String registrationNumber,
-        @Email @Size(max = 100) String email) {
+        @Email @Size(max = 100) String email, @Nullable @Size(max = 100) String password) {
 
     public StudentDTO(User user) {
-        this(user.getLogin(), user.getFirstName(), user.getLastName(), user.getRegistrationNumber(), user.getEmail());
+        this(user.getLogin(), user.getFirstName(), user.getLastName(), user.getRegistrationNumber(), user.getEmail(), null);
+    }
+
+    public StudentDTO(String login, String firstName, String lastName, String registrationNumber, String email) {
+        this(login, firstName, lastName, registrationNumber, email, null);
     }
 
     @Override
