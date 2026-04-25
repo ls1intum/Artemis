@@ -1907,7 +1907,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testValidateAuxiliaryRepositoryIdSetOnRequest() throws Exception {
-        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withId(0L), HttpStatus.INTERNAL_SERVER_ERROR);
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withId(0L), HttpStatus.BAD_REQUEST);
 
     }
 

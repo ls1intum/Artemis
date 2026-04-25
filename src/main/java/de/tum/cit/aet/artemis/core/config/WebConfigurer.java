@@ -158,6 +158,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
      * so that String responses are written as plain text by default, matching the behavior
      * expected by the client and tests.
      */
+    @SuppressWarnings("deprecation") // Will be migrated to configureMessageConverters(ServerBuilder) once lazy-loading serialization is resolved
     @Override
     public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
         // Collect all StringHttpMessageConverters and remove them from their current positions

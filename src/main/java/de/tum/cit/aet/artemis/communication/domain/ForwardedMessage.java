@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.communication.domain;
 
+import jakarta.persistence.CheckConstraint;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -8,7 +9,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Check;
 import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
@@ -16,8 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
-@Table(name = "forwarded_message")
-@Check(constraints = "((destination_post_id IS NOT NULL AND destination_answer_id IS NULL) OR (destination_post_id IS NULL AND destination_answer_id IS NOT NULL))")
+@Table(name = "forwarded_message", check = @CheckConstraint(name = "forwarded_message_destination_check", constraint = "((destination_post_id IS NOT NULL AND destination_answer_id IS NULL) OR (destination_post_id IS NULL AND destination_answer_id IS NOT NULL))"))
 public class ForwardedMessage extends DomainObject {
 
     @Column(name = "source_id", nullable = false)

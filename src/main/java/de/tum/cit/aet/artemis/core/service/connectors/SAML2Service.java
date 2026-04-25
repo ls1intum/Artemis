@@ -123,6 +123,7 @@ public class SAML2Service {
      * @param request      the HTTP request, used to extract the client environment
      * @return a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user
      */
+    @SuppressWarnings("deprecation") // Saml2AuthenticatedPrincipal is deprecated; migrate to Saml2ResponseAssertionAccessor when API stabilizes
     public Authentication handleAuthentication(final Authentication originalAuth, final Saml2AuthenticatedPrincipal principal, final HttpServletRequest request) {
         Map<String, Object> details = originalAuth.getDetails() == null ? Map.of() : Map.of("details", originalAuth.getDetails());
 
@@ -166,6 +167,7 @@ public class SAML2Service {
         return auth;
     }
 
+    @SuppressWarnings("deprecation")
     private void syncUserDataFromSaml2(Saml2AuthenticatedPrincipal principal, User user) {
         log.debug("SAML2 sync user data enabled and will be performed for user {}", user.getLogin());
         // We assume that only the name of the user might change
@@ -190,6 +192,7 @@ public class SAML2Service {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private User createUser(String username, final Saml2AuthenticatedPrincipal principal) {
         ManagedUserVM newUser = new ManagedUserVM();
         // Fill in User information using the patterns and the SAML2 attributes.
@@ -214,6 +217,7 @@ public class SAML2Service {
         return authorities.stream().map(Authority::getName).map(SimpleGrantedAuthority::new).collect(Collectors.toSet());
     }
 
+    @SuppressWarnings("deprecation")
     private String substituteAttributes(final String input, final Saml2AuthenticatedPrincipal principal) {
         String output = input;
         for (String key : principal.getAttributes().keySet()) {
@@ -231,6 +235,7 @@ public class SAML2Service {
      * @param key       of the attribute that should be extracted.
      * @return the value associated with the given key.
      */
+    @SuppressWarnings("deprecation")
     private String getAttributeValue(final Saml2AuthenticatedPrincipal principal, final String key) {
         final String value = principal.getFirstAttribute(key);
         if (value == null) {

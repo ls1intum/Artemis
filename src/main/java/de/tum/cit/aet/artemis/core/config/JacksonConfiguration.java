@@ -61,6 +61,7 @@ public class JacksonConfiguration {
      * @return the HTTP message converter
      */
     @Bean
+    @SuppressWarnings("removal") // Blocked by Jackson 2→3 migration
     public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter(ObjectMapper objectMapper) {
         return new MappingJackson2HttpMessageConverter(objectMapper);
     }

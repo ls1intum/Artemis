@@ -52,7 +52,7 @@
         </button>
     </div>
 
-    <owl-date-time [startAt]="startDate()" #dtDefault />
+    <owl-date-time [startAt]="startDate()" #dtDefault (afterPickerOpen)="onPickerOpen(dtDefault)" (afterPickerClosed)="onPickerClose()" />
     <owl-date-time [pickerType]="'calendar'" #dtCalendar />
     <owl-date-time [pickerType]="'timer'" #dtTimer />
 </div>

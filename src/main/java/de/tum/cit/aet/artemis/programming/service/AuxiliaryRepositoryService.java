@@ -63,6 +63,12 @@ public class AuxiliaryRepositoryService {
             if (repo.getId() == null) {
                 return true;
             }
+            // If the ID is set but doesn't belong to an existing auxiliary repository of this exercise, treat it as new
+            // so that validateAuxiliaryRepositoryId will reject it with BAD_REQUEST
+            boolean belongsToExercise = programmingExercise.getAuxiliaryRepositories().stream().anyMatch(existing -> repo.getId().equals(existing.getId()));
+            if (!belongsToExercise) {
+                return true;
+            }
             AuxiliaryRepository auxiliaryRepositoryBeforeUpdate = auxiliaryRepositoryRepository.findById(repo.getId())
                     .orElseThrow(() -> new IllegalStateException("Edited an existing repository that is not in the database!"));
             return !repo.containsEqualStringValues(auxiliaryRepositoryBeforeUpdate);

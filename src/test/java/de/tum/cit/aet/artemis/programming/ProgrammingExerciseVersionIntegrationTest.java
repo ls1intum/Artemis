@@ -86,6 +86,10 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         // Arrange: Create a new programming exercise
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
+        // Set a valid Windfile with at least one action so it converts to non-empty phases
+        newExercise.getBuildConfig()
+                .setBuildPlanConfiguration("{\"api\":\"v0.0.1\",\"metadata\":{},\"actions\":[{\"name\":\"build\",\"script\":\"echo test\",\"class\":\"script-action\"}]}");
+
         AuxiliaryRepository auxiliaryRepository = new AuxiliaryRepository();
         auxiliaryRepository.setName("extra");
         auxiliaryRepository.setCheckoutDirectory("extra");

@@ -12,6 +12,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.CreatedDate;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
@@ -32,8 +33,12 @@ import de.tum.cit.aet.artemis.core.domain.User;
 public class Reaction extends DomainObject {
 
     @ManyToOne
-    // Avoid to leak too much information, only the name (for display) and the id (for comparison) is needed)
-    @JsonIncludeProperties({ "id", "name" })
+    // NOTE: Using @JsonIgnoreProperties instead of @JsonIncludeProperties to avoid Jackson deserialization issues
+    // with "No _valueDeserializer assigned" errors in nested entity hierarchies
+    // We basically want: @JsonIncludeProperties({ "id", "name" })
+    @JsonIgnoreProperties(value = { "password", "registrationNumber", "activationKey", "resetKey", "vcsAccessToken", "vcsAccessTokenExpiryDate", "groups", "authorities",
+            "organizations", "tutorialGroupRegistrations", "completedLectureUnits", "competencyProgresses", "learningPaths", "examUsers", "pushNotificationDeviceConfigurations",
+            "savedPosts", "learnerProfile" }, allowSetters = true)
     private User user;
 
     @CreatedDate

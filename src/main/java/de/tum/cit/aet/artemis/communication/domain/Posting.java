@@ -16,7 +16,6 @@ import org.springframework.data.annotation.CreatedDate;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
@@ -34,8 +33,12 @@ import de.tum.cit.aet.artemis.core.domain.User;
 public abstract class Posting extends DomainObject {
 
     @ManyToOne
-    // Avoid to leak too much information, only the name + image (for display) and the id (for comparison) is needed)
-    @JsonIncludeProperties({ "id", "name", "imageUrl", "bot" })
+    // NOTE: Using @JsonIgnoreProperties instead of @JsonIncludeProperties to avoid Jackson deserialization issues
+    // with "No _valueDeserializer assigned" errors in nested entity hierarchies
+    // We basically want: @JsonIncludeProperties({ "id", "name", "imageUrl", "bot" })
+    @JsonIgnoreProperties(value = { "password", "registrationNumber", "activationKey", "resetKey", "vcsAccessToken", "vcsAccessTokenExpiryDate", "groups", "authorities",
+            "organizations", "tutorialGroupRegistrations", "completedLectureUnits", "competencyProgresses", "learningPaths", "examUsers", "pushNotificationDeviceConfigurations",
+            "savedPosts", "learnerProfile" }, allowSetters = true)
     private User author;
 
     @CreatedDate
