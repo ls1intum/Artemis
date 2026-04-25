@@ -167,8 +167,10 @@ SLOW_TEST_TIMEOUT_SECONDS=90
 ```
 
 <Callout variant={CalloutVariant.info}>
-    <p><code>BASE_URL=http://localhost:9000</code> is correct for manual setup where the Angular dev server runs on port 9000.
-    The committed <code>playwright.env</code> defaults to <code>BASE_URL=https://localhost</code> (no port, HTTPS) for the Docker-based setup.</p>
+
+    <code>BASE_URL=http://localhost:9000</code> is correct for manual setup where the Angular dev server runs on port 9000.
+The committed <code>playwright.env</code> defaults to <code>BASE_URL=https://localhost</code> (no port, HTTPS) for the Docker-based setup.
+
 </Callout>
 
 Make sure `BASE_URL` matches your Artemis client URL and `ADMIN_USERNAME` and
@@ -239,9 +241,11 @@ instance and executes a subset of tests. The number of worker processes can be a
 file.
 
 <Callout variant={CalloutVariant.warning}>
-    <p>Using more worker processes divides the available computing resources, giving each worker fewer resources. Using too
-    many workers can lead to resource contention, slowing down individual test execution and potentially causing
-    timeouts.</p>
+
+    Using more worker processes divides the available computing resources, giving each worker fewer resources. Using too
+many workers can lead to resource contention, slowing down individual test execution and potentially causing
+timeouts.
+
 </Callout>
 
 To run tests sequentially (one after another), set the `workers` option to `1`. To run tests within each file
@@ -409,9 +413,11 @@ const urlText = await this.page.locator('.clone-url').innerText();
 ```
 
 <Callout variant={CalloutVariant.warning}>
-    <p>Avoid using <code>page.waitForSelector()</code> function to wait for an element to appear on the page. This function
-    waits for the visibility in the DOM, but it does not guarantee that the element is actionable. Always
-    prefer the <code>waitFor()</code> function of a locator instead.</p>
+
+    Avoid using <code>page.waitForSelector()</code> function to wait for an element to appear on the page. This function
+waits for the visibility in the DOM, but it does not guarantee that the element is actionable. Always
+prefer the <code>waitFor()</code> function of a locator instead.
+
 </Callout>
 
 In some cases, we may need to wait for the page to load completely before interacting with its elements. Use
@@ -422,8 +428,10 @@ await page.waitForLoadState('load');
 ```
 
 <Callout variant={CalloutVariant.warning}>
-    <p>Waiting for the page load state is not recommended if we are only interested in specific elements appearing on
-    the page - use <code>waitFor()</code> function of a locator instead.</p>
+
+    Waiting for the page load state is not recommended if we are only interested in specific elements appearing on
+the page - use <code>waitFor()</code> function of a locator instead.
+
 </Callout>
 
 ### 5. AI-assisted test authoring with a Playwright MCP server

@@ -256,3 +256,4 @@ deferredEagerBeanInstantiationViolations.dot
 /src/test/playwright/monocart-report
 /venv/
 /src/test/playwright/test-exercise-repos
+/docker/playwright-multinode-arch-override.yml
