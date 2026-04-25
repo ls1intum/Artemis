@@ -842,6 +842,7 @@ describe('ChecklistPanelComponent', () => {
             hardExercise.id = 123;
             hardExercise.difficulty = DifficultyLevel.HARD;
             fixture.componentRef.setInput('exercise', hardExercise);
+            fixture.detectChanges(); // flush the localDeclaredDifficulty effect
             component.analysisResult.set(Object.assign({}, mockResponse, { difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy } }));
             expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Lower);
         });
@@ -859,6 +860,7 @@ describe('ChecklistPanelComponent', () => {
             mediumExercise.id = 123;
             mediumExercise.difficulty = DifficultyLevel.MEDIUM;
             fixture.componentRef.setInput('exercise', mediumExercise);
+            fixture.detectChanges(); // flush the localDeclaredDifficulty effect
             // Now declared = MEDIUM = suggested → MATCH
             expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Match);
         });
@@ -895,6 +897,253 @@ describe('ChecklistPanelComponent', () => {
             fixture.detectChanges();
 
             expect(component.staleSections().size).toBe(0);
+        });
+    });
+
+    describe('Competency Multi-Select', () => {
+        const mockResponseWithMultipleCompetencies: ChecklistAnalysisResponse = {
+            inferredCompetencies: [
+                { competencyTitle: 'Loops', taxonomyLevel: 'APPLY', confidence: 0.9, whyThisMatches: 'Uses loops', rank: 1, matchedCourseCompetencyId: 1 },
+                { competencyTitle: 'Recursion', taxonomyLevel: 'ANALYZE', confidence: 0.7, whyThisMatches: 'Recursive patterns', rank: 2 },
+                { competencyTitle: 'Sorting', taxonomyLevel: 'UNDERSTAND', confidence: 0.5, whyThisMatches: 'Sorting algorithms', rank: 3 },
+            ],
+            difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy, reasoning: 'Reason', matchesDeclared: true, taskCount: 5, testCount: 10 },
+            qualityIssues: [],
+        };
+
+        beforeEach(() => {
+            component.analysisResult.set(mockResponseWithMultipleCompetencies);
+        });
+
+        it('should toggle competency selection on and off', () => {
+            expect(component.isCompetencySelected(0)).toBeFalsy();
+
+            component.toggleCompetencySelection(0);
+            expect(component.isCompetencySelected(0)).toBeTruthy();
+
+            component.toggleCompetencySelection(0);
+            expect(component.isCompetencySelected(0)).toBeFalsy();
+        });
+
+        it('should select all competencies', () => {
+            component.selectAllCompetencies();
+
+            expect(component.selectedCompetencyIndices()).toEqual(new Set([0, 1, 2]));
+            expect(component.allCompetenciesSelected()).toBeTruthy();
+        });
+
+        it('should deselect all competencies', () => {
+            component.selectAllCompetencies();
+            component.deselectAllCompetencies();
+
+            expect(component.selectedCompetencyIndices().size).toBe(0);
+            expect(component.allCompetenciesSelected()).toBeFalsy();
+        });
+
+        it('should return false for allCompetenciesSelected when no competencies exist', () => {
+            component.analysisResult.set(Object.assign({}, mockResponse, { inferredCompetencies: [] }));
+            expect(component.allCompetenciesSelected()).toBeFalsy();
+        });
+
+        it('should discard a single competency and show success alert', () => {
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            component.discardCompetency(1);
+
+            expect(component.analysisResult()?.inferredCompetencies).toHaveLength(2);
+            expect(component.analysisResult()?.inferredCompetencies?.[0].competencyTitle).toBe('Loops');
+            expect(component.analysisResult()?.inferredCompetencies?.[1].competencyTitle).toBe('Sorting');
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.instructorChecklist.competencies.discarded');
+        });
+
+        it('should reindex selected indices after discarding a competency', () => {
+            component.selectedCompetencyIndices.set(new Set([0, 2]));
+
+            component.discardCompetency(1);
+
+            // Index 0 stays, index 2 becomes 1 (shifted down)
+            expect(component.selectedCompetencyIndices()).toEqual(new Set([0, 1]));
+        });
+
+        it('should remove discarded index from selection', () => {
+            component.selectedCompetencyIndices.set(new Set([0, 1, 2]));
+
+            component.discardCompetency(1);
+
+            // Index 1 removed, index 2 shifted to 1
+            expect(component.selectedCompetencyIndices()).toEqual(new Set([0, 1]));
+        });
+
+        it('should reindex expanded competencies after discarding a competency', () => {
+            component.expandedCompetencies.set(new Set([0, 2]));
+
+            component.discardCompetency(1);
+
+            // Index 0 stays, index 2 becomes 1 (shifted down)
+            expect(component.expandedCompetencies()).toEqual(new Set([0, 1]));
+        });
+
+        it('should reindex expanded competencies when discarding selected (non-discarded surviving items stay expanded)', () => {
+            // Select indices 0 and 2 for discard; index 1 is expanded but not discarded
+            component.selectedCompetencyIndices.set(new Set([0, 2]));
+            component.expandedCompetencies.set(new Set([0, 1]));
+
+            component.discardSelectedCompetencies();
+
+            // Index 0 and 2 are removed; original index 1 shifts to index 0 and stays expanded
+            expect(component.expandedCompetencies()).toEqual(new Set([0]));
+        });
+
+        it('should discard all selected competencies and clear selection', () => {
+            const successSpy = vi.spyOn(alertService, 'success');
+            component.selectedCompetencyIndices.set(new Set([0, 2]));
+
+            component.discardSelectedCompetencies();
+
+            expect(component.analysisResult()?.inferredCompetencies).toHaveLength(1);
+            expect(component.analysisResult()?.inferredCompetencies?.[0].competencyTitle).toBe('Recursion');
+            expect(component.selectedCompetencyIndices().size).toBe(0);
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.instructorChecklist.competencies.discardedMultiple');
+        });
+
+        it('should not discard when no competencies are selected', () => {
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            component.discardSelectedCompetencies();
+
+            expect(component.analysisResult()?.inferredCompetencies).toHaveLength(3);
+            expect(successSpy).not.toHaveBeenCalled();
+        });
+
+        it('should unlink a linked competency when it is discarded individually', () => {
+            // Set up: Loops (index 0) is already linked via matchedCourseCompetencyId=1
+            const loopsLink = new CompetencyExerciseLink(
+                Object.assign(new Competency(), { id: 1, title: 'Loops' }),
+                fixture.componentRef.instance.exercise(),
+                HIGH_COMPETENCY_LINK_WEIGHT,
+            );
+            fixture.componentRef.setInput('competencyLinks', [loopsLink]);
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            component.discardCompetency(0);
+
+            expect(emitSpy).toHaveBeenCalledWith([]);
+        });
+
+        it('should not emit competencyLinksChange when discarding an unlinked competency', () => {
+            // Recursion (index 1) has no matchedCourseCompetencyId and no matching link
+            fixture.componentRef.setInput('competencyLinks', []);
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            component.discardCompetency(1);
+
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
+
+        it('should unlink linked competencies when discarding multiple selected', () => {
+            // Loops (index 0) is linked via id, Sorting (index 2) is linked via title
+            const loopsLink = new CompetencyExerciseLink(
+                Object.assign(new Competency(), { id: 1, title: 'Loops' }),
+                fixture.componentRef.instance.exercise(),
+                HIGH_COMPETENCY_LINK_WEIGHT,
+            );
+            const sortingLink = new CompetencyExerciseLink(
+                Object.assign(new Competency(), { id: 5, title: 'Sorting' }),
+                fixture.componentRef.instance.exercise(),
+                LOW_COMPETENCY_LINK_WEIGHT,
+            );
+            const recursionLink = new CompetencyExerciseLink(
+                Object.assign(new Competency(), { id: 9, title: 'Recursion' }),
+                fixture.componentRef.instance.exercise(),
+                MEDIUM_COMPETENCY_LINK_WEIGHT,
+            );
+            fixture.componentRef.setInput('competencyLinks', [loopsLink, sortingLink, recursionLink]);
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            // Discard Loops (0) and Sorting (2), keep Recursion (1)
+            component.selectedCompetencyIndices.set(new Set([0, 2]));
+            component.discardSelectedCompetencies();
+
+            expect(emitSpy).toHaveBeenCalledOnce();
+            const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
+            expect(emittedLinks).toHaveLength(1);
+            expect(emittedLinks[0].competency?.title).toBe('Recursion');
+        });
+
+        it('should update linkedCompetencyTitles when a linked competency is discarded', () => {
+            fixture.componentRef.setInput('competencyLinks', [
+                new CompetencyExerciseLink(Object.assign(new Competency(), { id: 1, title: 'Loops' }), fixture.componentRef.instance.exercise(), HIGH_COMPETENCY_LINK_WEIGHT),
+            ]);
+            component.linkedCompetencyTitles.set(new Set(['loops']));
+
+            component.discardCompetency(0);
+
+            expect(component.linkedCompetencyTitles().has('loops')).toBeFalsy();
+        });
+
+        it('should apply only selected competencies', async () => {
+            const mockCourseCompetency: CourseCompetency = Object.assign(new Competency(), {
+                id: 1,
+                title: 'Loops',
+                taxonomy: CompetencyTaxonomy.APPLY,
+            });
+            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
+
+            const createSpy = vi.spyOn(competencyService, 'create').mockImplementation((comp: Competency) => {
+                return of(new HttpResponse({ body: Object.assign(new Competency(), { ...comp, id: 99 }) })) as any;
+            });
+
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            // Select only Loops (index 0) and Sorting (index 2), skip Recursion (index 1)
+            component.selectedCompetencyIndices.set(new Set([0, 2]));
+            component.applySelectedCompetencies();
+
+            await new Promise<void>((resolve) => setTimeout(resolve));
+
+            expect(competencyService.getAllForCourse).toHaveBeenCalledWith(courseId);
+
+            // Verify create was called exactly once, for Sorting only (Loops matched an existing course competency)
+            expect(createSpy).toHaveBeenCalledOnce();
+            const createdPayload = createSpy.mock.calls[0][0] as Competency;
+            expect(createdPayload.title).toBe('Sorting');
+            expect(createdPayload.taxonomy).toBe(CompetencyTaxonomy.UNDERSTAND);
+            // Recursion was not selected, so no create call for it
+            const allCreatedTitles = createSpy.mock.calls.map((call: [Competency, number]) => call[0].title);
+            expect(allCreatedTitles).not.toContain('Recursion');
+
+            expect(emitSpy).toHaveBeenCalled();
+            const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
+            const titles = emittedLinks.map((l) => l.competency?.title).sort();
+            expect(titles).toEqual(['Loops', 'Sorting']);
+            // Recursion should NOT be in the emitted links
+            expect(titles).not.toContain('Recursion');
+        });
+
+        it('should not apply when no competencies are selected', () => {
+            const getAllSpy = vi.spyOn(competencyService, 'getAllForCourse');
+
+            component.applySelectedCompetencies();
+
+            expect(getAllSpy).not.toHaveBeenCalled();
+        });
+
+        it('should clear competency selection when full analyze is called', () => {
+            component.selectedCompetencyIndices.set(new Set([0, 1]));
+            vi.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(mockResponse) as any);
+
+            component.analyze();
+
+            expect(component.selectedCompetencyIndices().size).toBe(0);
+        });
+
+        it('should clear competency selection when competencies section is reanalyzed', () => {
+            component.selectedCompetencyIndices.set(new Set([0, 1]));
+            vi.spyOn(apiService, 'analyzeChecklistSection').mockReturnValue(of(mockResponseWithMultipleCompetencies) as any);
+
+            component.reanalyzeSection('competencies');
+
+            expect(component.selectedCompetencyIndices().size).toBe(0);
         });
     });
 });

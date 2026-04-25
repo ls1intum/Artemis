@@ -18,6 +18,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -96,6 +98,9 @@ public class HyperionChecklistService {
 
     private static final String CHECKLIST_ACTION_PIPELINE_ID = "HYPERION_CHECKLIST_ACTION";
 
+    /** Matches a JSON object wrapped in a markdown code block (```json ... ``` or ``` ... ```). */
+    private static final Pattern JSON_CODE_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(\\{.*?})\\s*```", Pattern.DOTALL);
+
     private final ObjectMapper objectMapper;
 
     private final ChatClient chatClient;
@@ -130,8 +135,8 @@ public class HyperionChecklistService {
     /** Time-to-live for the competency catalog cache. */
     private static final Duration CATALOG_CACHE_TTL = Duration.ofHours(1);
 
-    /** Maximum timeout for concurrent LLM analyses. */
-    private static final Duration ANALYSIS_TIMEOUT = Duration.ofSeconds(60);
+    /** Maximum timeout for a single LLM analysis call. */
+    private static final Duration ANALYSIS_TIMEOUT = Duration.ofMinutes(5);
 
     private final Object catalogLock = new Object();
 
@@ -197,18 +202,19 @@ public class HyperionChecklistService {
             return CompletableFuture.completedFuture(ChecklistAnalysisResponseDTO.empty());
         }
 
-        // Run three analyses concurrently
+        // Run three analyses concurrently — each with its own timeout so a slow call does not cancel the others.
         var competenciesMono = Mono.fromCallable(() -> runCompetencyInference(ctx.input(), ctx.parentObs(), ctx.taskNames(), ctx.courseId(), ctx.userId()))
-                .subscribeOn(Schedulers.boundedElastic()).doOnError(e -> log.warn("Competency inference failed (exerciseId={})", request.exerciseId(), e)).onErrorReturn(List.of());
+                .subscribeOn(Schedulers.boundedElastic()).timeout(ANALYSIS_TIMEOUT).doOnError(e -> log.warn("Competency inference failed (exerciseId={})", request.exerciseId(), e))
+                .onErrorReturn(List.of());
 
         var difficultyMono = Mono.fromCallable(() -> runDifficultyAnalysis(ctx.input(), ctx.parentObs(), ctx.declaredDifficulty(), ctx.courseId(), ctx.userId()))
-                .subscribeOn(Schedulers.boundedElastic()).doOnError(e -> log.warn("Difficulty analysis failed (exerciseId={})", request.exerciseId(), e))
+                .subscribeOn(Schedulers.boundedElastic()).timeout(ANALYSIS_TIMEOUT).doOnError(e -> log.warn("Difficulty analysis failed (exerciseId={})", request.exerciseId(), e))
                 .onErrorReturn(DifficultyAssessmentDTO.unknown("Analysis failed"));
 
         var qualityMono = Mono.fromCallable(() -> runQualityAnalysis(ctx.input(), ctx.parentObs(), ctx.courseId(), ctx.userId())).subscribeOn(Schedulers.boundedElastic())
-                .doOnError(e -> log.warn("Quality analysis failed (exerciseId={})", request.exerciseId(), e)).onErrorReturn(List.of());
+                .timeout(ANALYSIS_TIMEOUT).doOnError(e -> log.warn("Quality analysis failed (exerciseId={})", request.exerciseId(), e)).onErrorReturn(List.of());
 
-        return Mono.zip(competenciesMono, difficultyMono, qualityMono).timeout(ANALYSIS_TIMEOUT).map(resultTuple -> {
+        return Mono.zip(competenciesMono, difficultyMono, qualityMono).map(resultTuple -> {
             List<InferredCompetencyDTO> competencies = resultTuple.getT1();
             BloomRadarDTO bloomRadar = computeBloomRadar(competencies);
             return new ChecklistAnalysisResponseDTO(competencies, bloomRadar, resultTuple.getT2(), resultTuple.getT3());
@@ -573,14 +579,19 @@ public class HyperionChecklistService {
 
             String responseText = LLMTokenUsageService.extractResponseText(chatResponse);
             if (responseText == null) {
+                log.warn("Competency inference: LLM returned null response text");
                 return List.of();
             }
+            log.debug("Competency inference raw response ({} chars): {}", responseText.length(), responseText.substring(0, Math.min(500, responseText.length())));
 
-            var entity = objectMapper.readValue(responseText, StructuredOutputSchema.CompetenciesResponse.class);
+            String jsonPayload = extractJsonPayload(responseText);
+            var entity = objectMapper.readValue(jsonPayload, StructuredOutputSchema.CompetenciesResponse.class);
             if (entity == null || entity.competencies() == null) {
+                log.warn("Competency inference: parsed entity is null or has null competencies list");
                 return List.of();
             }
 
+            log.debug("Competency inference: found {} competencies", entity.competencies().size());
             return entity.competencies().stream().map(HyperionChecklistService::toInferredCompetencyDTO).toList();
         }, List.of());
     }
@@ -636,13 +647,18 @@ public class HyperionChecklistService {
 
             String responseText = LLMTokenUsageService.extractResponseText(chatResponse);
             if (responseText == null) {
+                log.warn("Difficulty analysis: LLM returned null response text");
                 return DifficultyAssessmentDTO.unknown("AI returned no response");
             }
+            log.debug("Difficulty analysis raw response ({} chars): {}", responseText.length(), responseText.substring(0, Math.min(500, responseText.length())));
 
-            var entity = objectMapper.readValue(responseText, StructuredOutputSchema.DifficultyResponse.class);
+            String jsonPayload = extractJsonPayload(responseText);
+            var entity = objectMapper.readValue(jsonPayload, StructuredOutputSchema.DifficultyResponse.class);
             if (entity == null) {
+                log.warn("Difficulty analysis: parsed entity is null");
                 return DifficultyAssessmentDTO.unknown("AI returned no response");
             }
+            log.debug("Difficulty analysis: suggested={}, confidence={}", entity.suggested(), entity.confidence());
 
             SuggestedDifficulty suggested = parseEnumSafe(SuggestedDifficulty.class, entity.suggested());
             SuggestedDifficulty declared = parseEnumSafe(SuggestedDifficulty.class, declaredDifficulty);
@@ -692,14 +708,19 @@ public class HyperionChecklistService {
 
             String responseText = LLMTokenUsageService.extractResponseText(chatResponse);
             if (responseText == null) {
+                log.warn("Quality analysis: LLM returned null response text");
                 return List.of();
             }
+            log.debug("Quality analysis raw response ({} chars): {}", responseText.length(), responseText.substring(0, Math.min(500, responseText.length())));
 
-            var entity = objectMapper.readValue(responseText, StructuredOutputSchema.QualityResponse.class);
+            String jsonPayload = extractJsonPayload(responseText);
+            var entity = objectMapper.readValue(jsonPayload, StructuredOutputSchema.QualityResponse.class);
             if (entity == null || entity.issues() == null) {
+                log.warn("Quality analysis: parsed entity is null or has null issues list");
                 return List.of();
             }
 
+            log.debug("Quality analysis: found {} issues", entity.issues().size());
             return entity.issues().stream().map(this::mapQualityIssueToDto).toList();
         }, List.of());
     }
@@ -744,6 +765,42 @@ public class HyperionChecklistService {
             log.debug("Unknown {} value: {}", enumType.getSimpleName(), value);
             return null;
         }
+    }
+
+    /**
+     * Extracts a JSON object payload from raw LLM output that may be wrapped in markdown
+     * code fences ({@code ```json ... ```}) or surrounded by explanatory text.
+     * <p>
+     * Tries, in order: (1) content inside a fenced code block, (2) the substring between
+     * the first {@code \{} and the last {@code \}}, (3) the raw text as-is.
+     *
+     * @param responseText the raw LLM response text
+     * @return the extracted JSON string ready for parsing
+     */
+    private String extractJsonPayload(String responseText) {
+        String trimmed = responseText.trim();
+
+        // 1. Try markdown code block
+        Matcher codeBlockMatcher = JSON_CODE_BLOCK_PATTERN.matcher(trimmed);
+        if (codeBlockMatcher.find()) {
+            String extracted = codeBlockMatcher.group(1).trim();
+            log.debug("Extracted JSON from code block ({} chars)", extracted.length());
+            return extracted;
+        }
+
+        // 2. Try embedded JSON object
+        int firstBrace = trimmed.indexOf('{');
+        int lastBrace = trimmed.lastIndexOf('}');
+        if (firstBrace >= 0 && lastBrace > firstBrace) {
+            String embedded = trimmed.substring(firstBrace, lastBrace + 1);
+            if (firstBrace > 0 || lastBrace < trimmed.length() - 1) {
+                log.debug("Extracted embedded JSON object ({} chars, skipped leading {} / trailing {} chars)", embedded.length(), firstBrace, trimmed.length() - 1 - lastBrace);
+            }
+            return embedded;
+        }
+
+        // 3. Fall back to raw text
+        return trimmed;
     }
 
     /**

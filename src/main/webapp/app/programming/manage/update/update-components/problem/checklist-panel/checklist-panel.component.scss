@@ -99,7 +99,8 @@
         flex-shrink: 0;
     }
 
-    .issue-toolbar {
+    .issue-toolbar,
+    .competency-toolbar {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -108,13 +109,16 @@
     }
 
     .issue-toolbar-start,
-    .issue-toolbar-end {
+    .issue-toolbar-end,
+    .competency-toolbar-start,
+    .competency-toolbar-end {
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
 
-    .issue-toolbar-label {
+    .issue-toolbar-label,
+    .competency-toolbar-label {
         font-size: 0.875rem;
         color: var(--text-color-secondary);
         margin: 0;
@@ -154,7 +158,8 @@
             border-bottom: none;
         }
 
-        &.issue-selected {
+        &.issue-selected,
+        &.competency-selected {
             background-color: color-mix(in srgb, var(--primary) 8%, transparent);
         }
     }
@@ -225,6 +230,13 @@
 
     .competency-info {
         flex: 1;
+    }
+
+    .competency-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        flex-shrink: 0;
     }
 
     .competency-tags {
