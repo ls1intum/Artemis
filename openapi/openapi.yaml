@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 9.0.0
+  version: 9.1.2
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -825,6 +825,83 @@ paths:
           content:
             text/csv:
               schema: {type: string, format: binary}
+  /api/core/calendar/subscription-token:
+    get:
+      tags: [calendar]
+      operationId: getCalendarEventSubscriptionToken
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: string}
+  /api/core/calendar/courses/{courseId}/calendar-events:
+    get:
+      tags: [calendar]
+      operationId: getCalendarEventsOverlappingMonths
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: monthKeys
+        in: query
+        required: true
+        schema:
+          type: array
+          items: {type: string}
+      - name: timeZone
+        in: query
+        required: true
+        schema: {type: string}
+      - name: language
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [ENGLISH, GERMAN]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {type: array}
+  /api/core/calendar/courses/{courseId}/calendar-events-ics:
+    get:
+      tags: [calendar]
+      operationId: getCalendarEventSubscriptionFile
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: token
+        in: query
+        required: true
+        schema: {type: string}
+      - name: filterOptions
+        in: query
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum: [LECTURES, TUTORIALS, EXAMS, EXERCISES]
+          uniqueItems: true
+      - name: language
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [ENGLISH, GERMAN]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: string}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin}:
     delete:
       tags: [tutorial-group]
@@ -1106,6 +1183,19 @@ components:
           enum: [general, exercise, lecture, exam, feedbackDiscussion]
         subTypeReferenceId: {type: integer, format: int64}
         subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
+    CalendarEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [LECTURE, TUTORIAL, EXAM, QUIZ_EXERCISE, TEXT_EXERCISE, MODELING_EXERCISE,
+            PROGRAMMING_EXERCISE, FILE_UPLOAD_EXERCISE]
+        title: {type: string}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        location: {type: string}
+        facilitator: {type: string}
+      required: [startDate, title, type]
     Student:
       type: object
       properties:
