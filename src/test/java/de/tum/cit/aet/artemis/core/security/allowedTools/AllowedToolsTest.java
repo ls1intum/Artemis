@@ -56,6 +56,51 @@ class AllowedToolsTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testArtemisExtensionRouteWithGeneralToken() throws Exception {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
+                Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+
+        String jwt = tokenProvider.createToken(authentication, 24 * 60 * 60 * 1000, null);
+        Cookie cookie = new Cookie(Constants.JWT_COOKIE_NAME, jwt);
+
+        request.performMvcRequest(get("/api/core/test/testAllowedToolTokenArtemisExtension").cookie(cookie)).andExpect(status().isOk());
+    }
+
+    @Test
+    void testAllowedToolsArtemisExtensionRouteWithArtemisExtensionToken() throws Exception {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
+                Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+
+        String jwt = tokenProvider.createToken(authentication, 24 * 60 * 60 * 1000, ToolTokenType.ARTEMIS_EXTENSION);
+        Cookie cookie = new Cookie(Constants.JWT_COOKIE_NAME, jwt);
+
+        request.performMvcRequest(get("/api/core/test/testAllowedToolTokenArtemisExtension").cookie(cookie)).andExpect(status().isOk());
+    }
+
+    @Test
+    void testArtemisExtensionTokenForbiddenOnScorpioRoute() throws Exception {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
+                Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+
+        String jwt = tokenProvider.createToken(authentication, 24 * 60 * 60 * 1000, ToolTokenType.ARTEMIS_EXTENSION);
+        Cookie cookie = new Cookie(Constants.JWT_COOKIE_NAME, jwt);
+
+        request.performMvcRequest(get("/api/core/test/testAllowedToolTokenScorpio").cookie(cookie)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testScorpioTokenForbiddenOnArtemisExtensionRoute() throws Exception {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
+                Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+
+        String jwt = tokenProvider.createToken(authentication, 24 * 60 * 60 * 1000, ToolTokenType.SCORPIO);
+        Cookie cookie = new Cookie(Constants.JWT_COOKIE_NAME, jwt);
+
+        request.performMvcRequest(get("/api/core/test/testAllowedToolTokenArtemisExtension").cookie(cookie)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAllowedToolsRouteWithDifferentToolToken() throws Exception {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
                 Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));

@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
@@ -79,6 +81,7 @@ public class IrisProgrammingExerciseChatSessionResource {
      */
     @PostMapping("{exerciseId}/sessions/current")
     @EnforceAtLeastStudentInExercise
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long exerciseId) throws URISyntaxException {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         validateExercise(exercise);
@@ -99,6 +102,7 @@ public class IrisProgrammingExerciseChatSessionResource {
      */
     @GetMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudentInExercise
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<List<IrisChatSessionResponseDTO>> getAllSessions(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         validateExercise(exercise);
@@ -121,6 +125,7 @@ public class IrisProgrammingExerciseChatSessionResource {
      */
     @PostMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudentInExercise
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<IrisChatSessionResponseDTO> createSessionForExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         validateExercise(exercise);

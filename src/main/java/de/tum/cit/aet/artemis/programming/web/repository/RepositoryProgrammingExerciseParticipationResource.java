@@ -31,6 +31,8 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -416,6 +418,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      */
     @GetMapping(value = "participations/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<List<BuildLogEntry>> getBuildLogs(@PathVariable Long participationId, @RequestParam(name = "resultId") Optional<Long> resultId) {
         log.debug("REST request to get build logs for participation {}", participationId);
 

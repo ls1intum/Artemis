@@ -22,6 +22,8 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -94,6 +96,7 @@ public class IrisChatSessionResource {
      */
     @GetMapping("{courseId}/session/{sessionId}")
     @EnforceAtLeastStudentInCourse
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<IrisChatSessionResponseDTO> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId) {
         IrisSession irisSession = irisSessionRepository.findByIdWithMessagesAndContents(sessionId);
 
@@ -120,6 +123,7 @@ public class IrisChatSessionResource {
      */
     @GetMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<List<IrisChatSessionDTO>> getAllSessionsForCourse(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findById(courseId).orElseThrow();

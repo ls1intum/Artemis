@@ -44,6 +44,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -319,6 +321,7 @@ public class StudentExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction")
     @EnforceAtLeastStudent
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             HttpServletRequest request) {
         long start = System.currentTimeMillis();

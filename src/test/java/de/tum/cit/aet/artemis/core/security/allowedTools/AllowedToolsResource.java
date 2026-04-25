@@ -24,6 +24,13 @@ public class AllowedToolsResource {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("testAllowedToolTokenArtemisExtension")
+    @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
+    public ResponseEntity<Void> testAllowedToolTokenArtemisExtension() {
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("testNoAllowedToolToken")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> testNoAllowedToolToken() {

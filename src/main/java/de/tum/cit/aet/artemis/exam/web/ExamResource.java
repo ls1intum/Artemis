@@ -71,6 +71,8 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -1171,6 +1173,7 @@ public class ExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/own-student-exam")
     @EnforceAtLeastStudent
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<StudentExam> getOwnStudentExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam {} for conduction", examId);
         StudentExam exam = examAccessService.getOrCreateStudentExamElseThrow(courseId, examId);
@@ -1187,6 +1190,7 @@ public class ExamResource {
      */
     @GetMapping("courses/{courseId}/real-exams-sidebar-data")
     @EnforceAtLeastStudentInCourse
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<Set<ExamSidebarDataDTO>> getSidebarDataForRealExams(@PathVariable long courseId) {
         log.debug("REST request to get sidebar data for exams in course {}", courseId);
         User user = userRepository.getUser();

@@ -125,7 +125,7 @@ public class CourseOverviewResource {
     // TODO: we should rename this into courses/{courseId}/details
     @GetMapping("courses/{courseId}/for-dashboard")
     @EnforceAtLeastStudent
-    @AllowedTools(ToolTokenType.SCORPIO)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId) {
         long timeNanoStart = System.nanoTime();
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
@@ -188,7 +188,7 @@ public class CourseOverviewResource {
      */
     @GetMapping("courses/for-dashboard")
     @EnforceAtLeastStudent
-    @AllowedTools(ToolTokenType.SCORPIO)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<CoursesForDashboardDTO> getCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();

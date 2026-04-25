@@ -137,7 +137,7 @@ public class ExerciseResource {
      */
     @GetMapping("exercises/{exerciseId}")
     @EnforceAtLeastStudent
-    @AllowedTools(ToolTokenType.SCORPIO)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
 
         log.debug("REST request to get Exercise : {}", exerciseId);
@@ -342,7 +342,7 @@ public class ExerciseResource {
      */
     @GetMapping("exercises/{exerciseId}/details")
     @EnforceAtLeastStudent
-    @AllowedTools(ToolTokenType.SCORPIO)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<ExerciseDetailsDTO> getExerciseDetails(@PathVariable Long exerciseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
