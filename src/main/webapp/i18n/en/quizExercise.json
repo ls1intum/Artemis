@@ -54,12 +54,17 @@
                 },
                 "errors": {
                     "invalidConfiguration": "Please provide a topic and select at least one question type.",
-                    "generationFailed": "Failed to generate quiz questions. Please try again."
+                    "generationFailed": "Failed to generate quiz questions. Please try again.",
+                    "refinementFailed": "Failed to refine quiz questions. Please try again.",
+                    "partialRefinementFailed": "{{ count }} question(s) could not be refined and were skipped."
                 },
                 "refinement": {
                     "promptPlaceholder": "Describe how to refine this question...",
+                    "globalPlaceholder": "Describe how to refine all multiple-choice questions in this quiz...",
+                    "globalRefineFabLabel": "Refine all questions with AI",
                     "changesLabel": "Changes made",
-                    "defaultReasoning": "The question was refined according to your instructions.",
+                    "dismissChanges": "Dismiss changes",
+                    "defaultReasoning": "The question was refined based on your instructions.",
                     "errors": {
                         "failed": "Failed to refine the question. Please try again."
                     }

@@ -265,6 +265,56 @@
                 }
             </div>
         </div>
+        @if (hasMcQuestionsForRefinement) {
+            <div class="global-refinement-fab-container">
+                @if (!isRefinementFabOpen()) {
+                    <button
+                        pButton
+                        type="button"
+                        class="global-refinement-fab"
+                        (click)="isRefinementFabOpen.set(true)"
+                        [attr.aria-label]="'artemisApp.quizExercise.aiGeneration.refinement.globalRefineFabLabel' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faWandMagicSparkles" />
+                    </button>
+                } @else {
+                    <div class="global-refinement-fab-expanded">
+                        <button
+                            pButton
+                            type="button"
+                            severity="secondary"
+                            class="global-refinement-fab-action-button global-refinement-fab-close-button"
+                            (click)="closeRefinementFab()"
+                        >
+                            <fa-icon [icon]="faXmark" />
+                        </button>
+                        <textarea
+                            pTextarea
+                            class="global-refinement-fab-textarea"
+                            [placeholder]="'artemisApp.quizExercise.aiGeneration.refinement.globalPlaceholder' | artemisTranslate"
+                            maxlength="2000"
+                            [ngModel]="globalRefinementPrompt()"
+                            (ngModelChange)="globalRefinementPrompt.set($any($event))"
+                            [disabled]="isGlobalRefining()"
+                            (keydown.enter)="onGlobalRefinementEnterKey($event)"
+                        ></textarea>
+                        <button
+                            pButton
+                            type="button"
+                            class="global-refinement-fab-action-button"
+                            [disabled]="!globalRefinementPrompt().trim() || isGlobalRefining()"
+                            (click)="submitGlobalRefinement()"
+                        >
+                            @if (isGlobalRefining()) {
+                                <fa-icon [icon]="faCircleNotch" animation="spin" />
+                            } @else {
+                                <fa-icon [icon]="faPaperPlane" />
+                            }
+                        </button>
+                    </div>
+                }
+            </div>
+        }
         <div class="edit-quiz-footer" [hidden]="!quizExercise.isEditable && quizExercise.id">
             <div class="container">
                 <div class="edit-quiz-footer-content">

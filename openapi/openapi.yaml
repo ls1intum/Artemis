@@ -465,7 +465,27 @@ paths:
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/QuizQuestionRefinementResponse'}
+              schema: {$ref: '#/components/schemas/QuizQuestionRefinementSuccessDTO'}
+  /api/hyperion/courses/{courseId}/quiz-exercises/refine-all-questions:
+    post:
+      tags: [hyperion-quiz-question-generation]
+      operationId: refineAllQuizQuestions
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/QuizQuestionBulkRefinementRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionBulkRefinementResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/rewrite:
     post:
       tags: [hyperion-problem-statement]
@@ -1058,14 +1078,61 @@ components:
             how the question should be changed, maxLength: 2000, minLength: 1}
       required: [question, refinementPrompt]
     QuizQuestionRefinementResponse:
+      oneOf:
+      - {$ref: '#/components/schemas/QuizQuestionRefinementSuccessDTO'}
+      - {$ref: '#/components/schemas/QuizQuestionRefinementFailureDTO'}
+      discriminator:
+        propertyName: type
+        mapping: {success: '#/components/schemas/QuizQuestionRefinementSuccessDTO',
+          failure: '#/components/schemas/QuizQuestionRefinementFailureDTO'}
+      description: Discriminated response for a single quiz question refinement, either
+        a success with the refined question or a failure with an error message
+    QuizQuestionRefinementSuccessDTO:
       type: object
-      description: Response containing the refined quiz question and a summary of
-        the changes made
+      description: Successful refinement result containing the refined question and
+        an explanation of the changes
       properties:
+        type:
+          type: string
+          enum: [success]
         question: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
         reasoning: {type: string, description: Brief explanation of what was changed
             during refinement, minLength: 1}
-      required: [reasoning, question]
+      required: [type, question, reasoning]
+    QuizQuestionRefinementFailureDTO:
+      type: object
+      description: Failed refinement result containing an error message
+      properties:
+        type:
+          type: string
+          enum: [failure]
+        error: {type: string, description: Error message describing why the refinement
+            failed, minLength: 1}
+      required: [type, error]
+    QuizQuestionBulkRefinementRequest:
+      type: object
+      description: Request to refine multiple quiz questions at once using a single
+        user prompt
+      properties:
+        questions:
+          type: array
+          description: The quiz questions to refine
+          items: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
+          minItems: 1
+          maxItems: 50
+        refinementPrompt: {type: string, description: User instructions describing
+            how all questions should be changed, maxLength: 2000, minLength: 1}
+      required: [questions, refinementPrompt]
+    QuizQuestionBulkRefinementResponse:
+      type: object
+      description: Response containing one refinement result per input question, in
+        the same order as request
+      properties:
+        refinements:
+          type: array
+          description: Refinement results, one per input question in the same order
+          items: {$ref: '#/components/schemas/QuizQuestionRefinementResponse'}
+      required: [refinements]
     ProblemStatementRewriteResponse:
       type: object
       description: Response containing rewritten problem statement

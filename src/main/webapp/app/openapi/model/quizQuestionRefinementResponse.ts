@@ -7,17 +7,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { GeneratedQuizQuestion } from './generatedQuizQuestion';
-
-
+import { QuizQuestionRefinementFailureDTO } from './quizQuestionRefinementFailureDTO';
+import { QuizQuestionRefinementSuccessDTO } from './quizQuestionRefinementSuccessDTO';
 /**
- * Response containing the refined quiz question and a summary of the changes made
+ * Discriminated response for a single quiz question refinement, either a success with the refined question or a failure with an error message
  */
-export interface QuizQuestionRefinementResponse { 
-    question: GeneratedQuizQuestion;
-    /**
-     * Brief explanation of what was changed during refinement
-     */
-    reasoning: string;
-}
+/**
+ * @type QuizQuestionRefinementResponse
+ * Discriminated response for a single quiz question refinement, either a success with the refined question or a failure with an error message
+ * @export
+ */
+export type QuizQuestionRefinementResponse = QuizQuestionRefinementFailureDTO | QuizQuestionRefinementSuccessDTO;
 
