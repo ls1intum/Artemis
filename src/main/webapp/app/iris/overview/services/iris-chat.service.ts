@@ -93,6 +93,14 @@ export class IrisChatService implements OnDestroy {
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
     chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject([]);
 
+    // Flips to true once the first session-load attempt has produced a result (success OR
+    // error). Until then, `messages` still holds its empty initial value, so subscribers
+    // that gate on "user has zero messages" (e.g. the Iris onboarding tour) cannot
+    // distinguish "no messages yet" from "haven't loaded yet". Reset to false on close()
+    // so a session switch re-arms the gate for the new session.
+    private initialLoadCompleteSubject = new BehaviorSubject<boolean>(false);
+    public initialLoadComplete$ = this.initialLoadCompleteSubject.asObservable();
+
     rateLimitInfo?: IrisRateLimitInformation;
 
     private rateLimitSubscription: Subscription;
@@ -428,10 +436,18 @@ export class IrisChatService implements OnDestroy {
                 this.citationInfo.next(newIrisSession.citationInfo || []);
                 this.messages.next(newIrisSession.messages || []);
                 this.parseLatestSuggestions(newIrisSession.latestSuggestions);
+                // Flip the gate before subscribing to the websocket: the load itself has
+                // succeeded, so consumers waiting on "messages have settled" are unblocked
+                // even if the websocket layer throws synchronously (e.g. mocked-out in tests).
+                this.initialLoadCompleteSubject.next(true);
                 this.irisWebsocketService.subscribeToSession(this.sessionId).subscribe((message) => this.handleWebsocketMessage(message));
             },
             error: (error: IrisErrorMessageKey) => {
                 this.error.next(error);
+                // Even on failure, mark the load attempt as complete so consumers gating on
+                // "messages have settled" don't wait forever (e.g. the onboarding tour would
+                // never show up if a transient session-load error left the gate closed).
+                this.initialLoadCompleteSubject.next(true);
             },
         };
     }
@@ -519,6 +535,7 @@ export class IrisChatService implements OnDestroy {
             this.citationInfo.next([]);
             this.numNewMessages.next(0);
             this.newIrisMessage.next(undefined);
+            this.initialLoadCompleteSubject.next(false);
         }
         this.error.next(undefined);
     }

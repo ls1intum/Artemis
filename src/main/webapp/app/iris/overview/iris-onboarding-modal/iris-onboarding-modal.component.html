@@ -1,0 +1,101 @@
+<div class="onboarding-container">
+    <!-- Welcome screen with full backdrop, shown before the numbered tour starts. -->
+    @if (isWelcomeStep()) {
+        <div class="full-backdrop"></div>
+        <div class="centered-modal-wrapper">
+            <div class="iris-onboarding-modal-welcome" role="dialog" aria-modal="true" aria-labelledby="onboarding-welcome-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+                <!-- Left Side: Text Content -->
+                <div class="welcome-text-section">
+                    <div class="text-content">
+                        <h2 id="onboarding-welcome-title" class="title" jhiTranslate="artemisApp.iris.onboarding.title"></h2>
+                        <p class="description" jhiTranslate="artemisApp.iris.onboarding.description"></p>
+                    </div>
+
+                    <div class="actions">
+                        <jhi-button [btnType]="ButtonType.PRIMARY" [title]="'artemisApp.iris.onboarding.getStarted'" (onClick)="onStartTour()" />
+                        <p class="note" jhiTranslate="artemisApp.iris.onboarding.note"></p>
+                    </div>
+                </div>
+
+                <!-- Right Side: Iris Chat Illustration -->
+                <div class="welcome-illustration-section">
+                    <button type="button" class="close-button" (click)="close()" [attr.aria-label]="'artemisApp.iris.onboarding.close' | artemisTranslate">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+
+                    <div class="chat-preview" aria-hidden="true">
+                        <div class="chat-widget-preview">
+                            <div class="chat-header-preview">
+                                <!-- Toolbar icons placeholder -->
+                                <div class="toolbar-icons">
+                                    <div class="icon-btn"></div>
+                                    <div class="icon-btn"></div>
+                                    <div class="icon-btn"></div>
+                                </div>
+                            </div>
+                            <div class="chat-body-preview">
+                                <p class="chat-greeting" jhiTranslate="artemisApp.iris.chat.helpOffer"></p>
+                                <div class="chat-bubble-preview"></div>
+                                <div class="chat-input-preview">
+                                    <span class="input-placeholder" jhiTranslate="artemisApp.exerciseChatbot.inputMessage"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="iris-logo-badge">
+                            <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Numbered tour steps: tooltips pointing at Iris chat UI elements. -->
+    @if (tooltipConfig(); as config) {
+        @if (isStepPositionReady()) {
+            <div class="spotlight-click-guard" [class.interactive]="isInteractiveStep()" aria-hidden="true"></div>
+            <div
+                aria-hidden="true"
+                class="spotlight-blocker rounded-cutout"
+                [class.interactive]="isInteractiveStep()"
+                [style.top.px]="config.spotlight.top"
+                [style.left.px]="config.spotlight.left"
+                [style.width.px]="config.spotlight.width"
+                [style.height.px]="config.spotlight.height"
+            ></div>
+
+            <div class="coach-mark" aria-hidden="true" [style.top.px]="config.coachMarkPosition.top" [style.left.px]="config.coachMarkPosition.left"></div>
+
+            <div
+                class="onboarding-tooltip"
+                [class.tooltip-arrow-up]="config.arrowDirection === 'up'"
+                [class.tooltip-arrow-down]="config.arrowDirection === 'down'"
+                [class.tooltip-arrow-down-left]="config.arrowDirection === 'down-left'"
+                [class.tooltip-arrow-left]="config.arrowDirection === 'left'"
+                [class.tooltip-arrow-right]="config.arrowDirection === 'right'"
+                [style.top.px]="config.tooltipPosition.top"
+                [style.left.px]="config.tooltipPosition.left"
+                role="region"
+                [attr.aria-labelledby]="'onboarding-tooltip-title-' + config.currentStep"
+                [attr.aria-describedby]="'onboarding-tooltip-desc-' + config.currentStep"
+                aria-live="polite"
+            >
+                <div class="tooltip-header">
+                    <p class="tooltip-header-text" [id]="'onboarding-tooltip-title-' + config.currentStep" [jhiTranslate]="config.titleTranslationKey"></p>
+                    <button type="button" class="tooltip-close-button" (click)="close()" [attr.aria-label]="'artemisApp.iris.onboarding.close' | artemisTranslate">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <p class="tooltip-description" [id]="'onboarding-tooltip-desc-' + config.currentStep" [jhiTranslate]="config.descriptionTranslationKey"></p>
+                <div class="tooltip-footer">
+                    <jhi-stepper [currentStep]="config.currentStep" [totalSteps]="totalTourSteps" />
+                    @if (config.currentStep < totalTourSteps) {
+                        <jhi-button [btnType]="ButtonType.PRIMARY" [title]="'artemisApp.iris.onboarding.next'" (onClick)="next()" />
+                    } @else {
+                        <jhi-button [btnType]="ButtonType.PRIMARY" [title]="'artemisApp.iris.onboarding.finish'" (onClick)="finish()" />
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>

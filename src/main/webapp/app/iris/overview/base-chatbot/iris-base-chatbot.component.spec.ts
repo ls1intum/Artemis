@@ -17,7 +17,8 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
+import { signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import {
@@ -49,6 +50,7 @@ import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { ConfirmationService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
+import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
@@ -81,6 +83,11 @@ describe('IrisBaseChatbotComponent', () => {
     const mockUserService = {
         updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
     } as any;
+    const mockOnboardingService = {
+        showOnboardingIfNeeded: vi.fn().mockResolvedValue(undefined),
+        currentStep: signal(0),
+        onboardingEvent$: new Subject<any>(),
+    } as any;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -106,6 +113,7 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
                 { provide: LLMSelectionModalService, useValue: mockLLMModalService },
+                { provide: IrisOnboardingService, useValue: mockOnboardingService },
                 MockProvider(AlertService),
                 MockProvider(DialogService),
                 MockProvider(ActivatedRoute),
@@ -124,9 +132,15 @@ describe('IrisBaseChatbotComponent', () => {
                 // Set up services BEFORE creating component
                 chatService = TestBed.inject(IrisChatService);
                 chatService.setCourseId(456);
+                // The onboarding effect gates on initialLoadComplete$. In production this flips
+                // to true once the chat service finishes its first session-load, but the
+                // mocked HTTP/WebSocket layer here never drives that, so we synthesise the
+                // signal so onboarding-related gating logic actually runs in tests.
+                Object.defineProperty(chatService, 'initialLoadComplete$', { value: of(true), configurable: true });
                 httpService = TestBed.inject(IrisChatHttpService);
                 wsMock = TestBed.inject(IrisWebsocketService);
                 accountService = TestBed.inject(AccountService);
+                mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
 
                 // Set user identity BEFORE creating component (constructor reads this)
                 accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
@@ -151,6 +165,11 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should set userAccepted to CLOUD_AI if user has accepted the external LLM usage policy', () => {
         expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
+    });
+
+    it('should trigger onboarding flow once gating signals are satisfied', () => {
+        // The effect runs during change detection, which already ran in beforeEach.
+        expect(mockOnboardingService.showOnboardingIfNeeded).toHaveBeenCalled();
     });
 
     describe('when user has not accepted LLM usage policy', () => {
@@ -1907,7 +1926,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[0].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.learnStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.learnStarter', 'artemisApp.iris.chat.suggestions.learn');
         });
 
         it('should call applyChipText with correct starter key when Quiz chip is clicked', () => {
@@ -1915,7 +1934,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[1].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizTopicStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizTopicStarter', 'artemisApp.iris.chat.suggestions.quiz');
         });
 
         it('should call applyChipText with correct starter key when Tips chip is clicked', () => {
@@ -1923,7 +1942,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[2].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.tipsStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.tipsStarter', 'artemisApp.iris.chat.suggestions.tips');
         });
 
         it('should set textarea content and focus when applyChipText is called', async () => {
@@ -1996,7 +2015,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[1].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizLectureStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizLectureStarter', 'artemisApp.iris.chat.suggestions.quiz');
         });
 
         it('should call applyChipText with exercise-specific quiz starter when Quiz chip is clicked in programming exercise mode', () => {
@@ -2004,7 +2023,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[1].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter', 'artemisApp.iris.chat.suggestions.quiz');
         });
 
         it('should call applyChipText with exercise-specific quiz starter when Quiz chip is clicked in text exercise mode', () => {
@@ -2012,7 +2031,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[1].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter', 'artemisApp.iris.chat.suggestions.quiz');
         });
     });
 

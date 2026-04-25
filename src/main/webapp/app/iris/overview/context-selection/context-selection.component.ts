@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { faChalkboardUser, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -44,6 +44,7 @@ export class ContextSelectionComponent {
     private readonly chatService = inject(IrisChatService);
 
     readonly disabled = input<boolean>(false);
+    readonly contextChanged = output<void>();
 
     readonly courseId = signal<number | undefined>(this.chatService.getCourseId());
 
@@ -133,6 +134,7 @@ export class ContextSelectionComponent {
             .find((o) => o.value === value);
         if (option) {
             this.chatService.switchToNewSession(option.mode, option.entityId);
+            this.contextChanged.emit();
         }
     }
 }
