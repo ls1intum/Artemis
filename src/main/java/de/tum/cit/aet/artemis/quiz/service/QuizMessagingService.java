@@ -65,12 +65,18 @@ public class QuizMessagingService {
             byte[] payload = objectMapper.writeValueAsBytes(exerciseDTO);
             // For each change we send the same message. The client needs to decide how to handle the date based on the quiz status
             if (quizExercise.isVisibleToStudents() && quizExercise.isCourseExercise()) {
-                // Create a group notification if actions is 'start-now'.
+                var course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
+                // Create a group notification if actions is 'start-now'. The fan-out to (potentially thousands of)
+                // students runs asynchronously so it does not block the HTTP response of the lifecycle action that
+                // triggered this broadcast (see GroupNotificationService#notifyStudentGroupAboutQuizExerciseStartAsync).
+                // Primitives are resolved here on the caller's session before the async handoff. The surrounding
+                // isCourseExercise() guard already excludes exam exercises, so no extra exam check is needed here.
                 if (quizChange == QuizAction.START_NOW) {
-                    groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
+                    groupNotificationService.notifyStudentGroupAboutQuizExerciseStartAsync(course.getId(), course.getTitle(), course.getCourseIcon(), course.getStudentGroupName(),
+                            quizExercise.getId(), quizExercise.getExerciseNotificationTitle());
                 }
                 // Send quiz via websocket.
-                String destination = "/topic/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quizExercises";
+                String destination = "/topic/courses/" + course.getId() + "/quizExercises";
                 if (quizChange == START_BATCH && quizBatch != null) {
                     destination = destination + "/" + quizBatch.getId();
                 }
