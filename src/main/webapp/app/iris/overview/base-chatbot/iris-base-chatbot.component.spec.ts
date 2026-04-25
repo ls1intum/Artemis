@@ -132,6 +132,11 @@ describe('IrisBaseChatbotComponent', () => {
                 // Set up services BEFORE creating component
                 chatService = TestBed.inject(IrisChatService);
                 chatService.setCourseId(456);
+                // The onboarding effect gates on initialLoadComplete$. In production this flips
+                // to true once the chat service finishes its first session-load, but the
+                // mocked HTTP/WebSocket layer here never drives that, so we synthesise the
+                // signal so onboarding-related gating logic actually runs in tests.
+                Object.defineProperty(chatService, 'initialLoadComplete$', { value: of(true), configurable: true });
                 httpService = TestBed.inject(IrisChatHttpService);
                 wsMock = TestBed.inject(IrisWebsocketService);
                 accountService = TestBed.inject(AccountService);

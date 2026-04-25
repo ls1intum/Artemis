@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { captureException } from '@sentry/angular';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -16,6 +17,38 @@ const ONBOARDING_TARGETS = {
     contextSelector: '[data-onboarding-target="context-selector"]',
     infoIcon: '[data-onboarding-target="info-icon"]',
 } as const;
+
+// Spotlight padding around the highlighted UI element, in pixels. Keeps the cut-out
+// from clipping the target's own border / focus ring.
+const SPOTLIGHT_HIGHLIGHT_MARGIN_PX = 8;
+// Half-size of the centred coach mark dot, used to offset its top/left so the dot is
+// centred over the spotlight rather than anchored at its top-left corner.
+const COACH_MARK_HALF_SIZE_PX = 6;
+// Tooltip card dimensions; must match .step-tooltip width/min-height in the SCSS so
+// the JS-side viewport-clamp math agrees with what the browser actually renders.
+const TOOLTIP_WIDTH_PX = 280;
+const TOOLTIP_HEIGHT_PX = 180;
+// Distance between the spotlight edge and the tooltip card.
+const TOOLTIP_GAP_PX = 16;
+// Smaller gap used directly above/below the spotlight (for `up`/`down`/`down-left`)
+// so the arrow visually touches the highlighted element without overlap.
+const TOOLTIP_VERTICAL_OFFSET_PX = 8;
+// Minimum padding kept between the tooltip card and the viewport edges.
+const TOOLTIP_VIEWPORT_PADDING_PX = 12;
+
+// Position-resolution retry budget. The target element may not be in the DOM yet
+// (e.g. PrimeNG overlay still mounting, animation in progress); poll until it appears
+// or we've waited long enough to assume something is wrong and bail out silently.
+// 20 retries × 200 ms ≈ 4 s — generous enough for slow CI / animations, short enough
+// that a genuinely broken selector still surfaces in Sentry within one tour session.
+const POSITION_RESOLUTION_MAX_RETRIES = 20;
+const POSITION_RESOLUTION_RETRY_DELAY_MS = 200;
+
+// Number of user-visible tour steps shown in the stepper indicator. The welcome
+// screen (`step` = 0) is a separate intro and is not counted here.
+const TOTAL_TOUR_STEPS = 3;
+// Step value reserved for the initial welcome screen, before the tour starts.
+const WELCOME_STEP = 0;
 
 type ArrowDirection = 'up' | 'down' | 'down-left' | 'left' | 'right';
 
@@ -54,9 +87,11 @@ export class IrisOnboardingModalComponent {
     private readonly pendingRafs = new Set<number>();
     private isDestroyed = false;
 
-    // Step management: 0 = welcome, 1-3 = tooltips
-    readonly step = signal(0);
-    readonly totalSteps = 4;
+    // Step management. `step` = WELCOME_STEP (0) is the welcome screen; `step` = 1..TOTAL_TOUR_STEPS
+    // are the numbered tour stops shown in the stepper. Exposed for the template.
+    readonly step = signal(WELCOME_STEP);
+    readonly totalTourSteps = TOTAL_TOUR_STEPS;
+    readonly isWelcomeStep = computed(() => this.step() === WELCOME_STEP);
 
     // Tooltip positioning
     readonly tooltipConfig = signal<TooltipConfig | undefined>(undefined);
@@ -147,7 +182,7 @@ export class IrisOnboardingModalComponent {
      */
     next(): void {
         const nextStep = this.step() + 1;
-        if (nextStep < this.totalSteps) {
+        if (nextStep <= TOTAL_TOUR_STEPS) {
             this.setStep(nextStep);
             this.schedulePositionCalculation(nextStep as 1 | 2 | 3);
         } else {
@@ -180,9 +215,9 @@ export class IrisOnboardingModalComponent {
     }
 
     /**
-     * Calculates tooltip position for a given step based on the target element's position.
+     * Calculates the step card's position for a given step based on the target element's position.
      */
-    private calculateTooltipPosition(step: 1 | 2 | 3): boolean {
+    private calculateStepPosition(step: 1 | 2 | 3): boolean {
         const config = this.getStepConfig(step);
         const target = this.findVisibleElement(config.selector);
         if (!target) {
@@ -190,49 +225,43 @@ export class IrisOnboardingModalComponent {
         }
 
         const rect = target.getBoundingClientRect();
-        const highlightMargin = 8;
         const spotlight = {
-            top: Math.max(0, rect.top - highlightMargin),
-            left: Math.max(0, rect.left - highlightMargin),
-            width: Math.max(0, Math.min(window.innerWidth, rect.right + highlightMargin) - Math.max(0, rect.left - highlightMargin)),
-            height: Math.max(0, Math.min(window.innerHeight, rect.bottom + highlightMargin) - Math.max(0, rect.top - highlightMargin)),
+            top: Math.max(0, rect.top - SPOTLIGHT_HIGHLIGHT_MARGIN_PX),
+            left: Math.max(0, rect.left - SPOTLIGHT_HIGHLIGHT_MARGIN_PX),
+            width: Math.max(0, Math.min(window.innerWidth, rect.right + SPOTLIGHT_HIGHLIGHT_MARGIN_PX) - Math.max(0, rect.left - SPOTLIGHT_HIGHLIGHT_MARGIN_PX)),
+            height: Math.max(0, Math.min(window.innerHeight, rect.bottom + SPOTLIGHT_HIGHLIGHT_MARGIN_PX) - Math.max(0, rect.top - SPOTLIGHT_HIGHLIGHT_MARGIN_PX)),
         };
-
-        const tooltipWidth = 280;
-        const tooltipHeight = 180;
-        const gap = 16;
-        const viewportPadding = 12;
 
         let tooltipPos: { top: number; left: number };
 
         switch (config.arrowDirection) {
             case 'up': {
                 // Tooltip below target, arrow pointing up
-                const preferredTop = spotlight.top + spotlight.height + 8;
-                const preferredLeft = spotlight.left + spotlight.width / 2 - tooltipWidth / 2;
+                const preferredTop = spotlight.top + spotlight.height + TOOLTIP_VERTICAL_OFFSET_PX;
+                const preferredLeft = spotlight.left + spotlight.width / 2 - TOOLTIP_WIDTH_PX / 2;
                 tooltipPos = {
-                    top: Math.max(viewportPadding, Math.min(preferredTop, window.innerHeight - tooltipHeight - viewportPadding)),
-                    left: Math.max(viewportPadding, Math.min(preferredLeft, window.innerWidth - tooltipWidth - viewportPadding)),
+                    top: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(preferredTop, window.innerHeight - TOOLTIP_HEIGHT_PX - TOOLTIP_VIEWPORT_PADDING_PX)),
+                    left: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(preferredLeft, window.innerWidth - TOOLTIP_WIDTH_PX - TOOLTIP_VIEWPORT_PADDING_PX)),
                 };
                 break;
             }
             case 'down': {
                 // Tooltip above target, arrow pointing down
-                const preferredTop = spotlight.top - tooltipHeight - 8;
-                const preferredLeft = spotlight.left + spotlight.width / 2 - tooltipWidth / 2;
+                const preferredTop = spotlight.top - TOOLTIP_HEIGHT_PX - TOOLTIP_VERTICAL_OFFSET_PX;
+                const preferredLeft = spotlight.left + spotlight.width / 2 - TOOLTIP_WIDTH_PX / 2;
                 tooltipPos = {
-                    top: Math.max(viewportPadding, preferredTop),
-                    left: Math.max(viewportPadding, Math.min(preferredLeft, window.innerWidth - tooltipWidth - viewportPadding)),
+                    top: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, preferredTop),
+                    left: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(preferredLeft, window.innerWidth - TOOLTIP_WIDTH_PX - TOOLTIP_VIEWPORT_PADDING_PX)),
                 };
                 break;
             }
             case 'down-left': {
                 // Tooltip above and to the right, arrow pointing down-left
-                const preferredTop = spotlight.top - tooltipHeight - 8;
+                const preferredTop = spotlight.top - TOOLTIP_HEIGHT_PX - TOOLTIP_VERTICAL_OFFSET_PX;
                 const preferredLeft = spotlight.left + spotlight.width / 2;
                 tooltipPos = {
-                    top: Math.max(viewportPadding, preferredTop),
-                    left: Math.max(viewportPadding, Math.min(preferredLeft, window.innerWidth - tooltipWidth - viewportPadding)),
+                    top: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, preferredTop),
+                    left: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(preferredLeft, window.innerWidth - TOOLTIP_WIDTH_PX - TOOLTIP_VIEWPORT_PADDING_PX)),
                 };
                 break;
             }
@@ -241,28 +270,28 @@ export class IrisOnboardingModalComponent {
                 // Prefer aligning near the top of the spotlight so the tooltip doesn't
                 // get pushed off the bottom edge when the target is low on screen.
                 const preferredTop = spotlight.top;
-                const preferredLeft = spotlight.left + spotlight.width + gap;
+                const preferredLeft = spotlight.left + spotlight.width + TOOLTIP_GAP_PX;
                 tooltipPos = {
-                    top: Math.max(viewportPadding, Math.min(preferredTop, window.innerHeight - tooltipHeight - viewportPadding)),
-                    left: Math.max(viewportPadding, Math.min(preferredLeft, window.innerWidth - tooltipWidth - viewportPadding)),
+                    top: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(preferredTop, window.innerHeight - TOOLTIP_HEIGHT_PX - TOOLTIP_VIEWPORT_PADDING_PX)),
+                    left: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(preferredLeft, window.innerWidth - TOOLTIP_WIDTH_PX - TOOLTIP_VIEWPORT_PADDING_PX)),
                 };
                 break;
             }
             case 'right': {
                 // Tooltip to the left of target, arrow pointing right from the tooltip's right edge.
-                const preferredTop = spotlight.top + spotlight.height / 2 - tooltipHeight / 2;
-                const preferredLeft = spotlight.left - tooltipWidth - gap;
+                const preferredTop = spotlight.top + spotlight.height / 2 - TOOLTIP_HEIGHT_PX / 2;
+                const preferredLeft = spotlight.left - TOOLTIP_WIDTH_PX - TOOLTIP_GAP_PX;
                 tooltipPos = {
-                    top: Math.max(viewportPadding, Math.min(preferredTop, window.innerHeight - tooltipHeight - viewportPadding)),
-                    left: Math.max(viewportPadding, preferredLeft),
+                    top: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(preferredTop, window.innerHeight - TOOLTIP_HEIGHT_PX - TOOLTIP_VIEWPORT_PADDING_PX)),
+                    left: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, preferredLeft),
                 };
                 break;
             }
         }
 
         const coachMarkPos = {
-            top: spotlight.top + spotlight.height / 2 - 6,
-            left: spotlight.left + spotlight.width / 2 - 6,
+            top: spotlight.top + spotlight.height / 2 - COACH_MARK_HALF_SIZE_PX,
+            left: spotlight.left + spotlight.width / 2 - COACH_MARK_HALF_SIZE_PX,
         };
 
         this.tooltipConfig.set({
@@ -313,11 +342,18 @@ export class IrisOnboardingModalComponent {
      * Multiple elements may match (e.g., info icon in collapsed vs expanded sidebar),
      * so we pick the one that is actually rendered on screen. Returns undefined if
      * none are visible — callers must handle that and keep the step hidden.
+     *
+     * Visibility check uses `getClientRects().length > 0` rather than `offsetParent`:
+     * `offsetParent` returns null for any descendant of a `position: fixed` ancestor
+     * (even when the element is on screen), which would falsely hide targets if the
+     * onboarding tour were ever extended to the fixed-position chat widget layout.
+     * `getClientRects` reflects "is the element rendered with a non-empty box" and
+     * works regardless of positioning context.
      */
     private findVisibleElement(selector: string): HTMLElement | undefined {
         const elements = document.querySelectorAll(selector);
         for (const el of Array.from(elements)) {
-            if (el instanceof HTMLElement && el.offsetParent !== null) {
+            if (el instanceof HTMLElement && el.getClientRects().length > 0) {
                 return el;
             }
         }
@@ -328,11 +364,12 @@ export class IrisOnboardingModalComponent {
         if (this.isDestroyed) {
             return;
         }
+        const resolve = () => this.resolveStepPosition(step, () => this.calculateStepPosition(step), POSITION_RESOLUTION_MAX_RETRIES, POSITION_RESOLUTION_RETRY_DELAY_MS);
         if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
-            this.safeRequestAnimationFrame(() => this.resolveStepPosition(step, () => this.calculateTooltipPosition(step), 20, 200));
+            this.safeRequestAnimationFrame(resolve);
             return;
         }
-        this.safeTimeout(() => this.resolveStepPosition(step, () => this.calculateTooltipPosition(step), 20, 200), 0);
+        this.safeTimeout(resolve, 0);
     }
 
     private resolveStepPosition(expectedStep: 1 | 2 | 3, calculatePosition: () => boolean, retries: number, retryDelayMs: number): void {
@@ -350,7 +387,19 @@ export class IrisOnboardingModalComponent {
             return;
         }
 
-        // Target never appeared; leave the modal in a safe state without surfacing an error.
+        // Target never appeared. Don't surface anything to the user — a missing tour highlight
+        // is recoverable — but report to Sentry so we notice quickly when the anchor selectors
+        // drift out of sync with the chat UI (e.g. after a refactor of iris-base-chatbot).
+        const config = this.getStepConfig(expectedStep);
+        captureException(new Error(`Iris onboarding: target element never appeared for step ${expectedStep}`), {
+            extra: {
+                step: expectedStep,
+                selector: config.selector,
+                retries: POSITION_RESOLUTION_MAX_RETRIES,
+                retryDelayMs: POSITION_RESOLUTION_RETRY_DELAY_MS,
+            },
+            tags: { category: 'Iris' },
+        });
         this.tooltipConfig.set(undefined);
         this.isStepPositionReady.set(false);
     }

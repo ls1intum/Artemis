@@ -1,6 +1,6 @@
 <div class="onboarding-container">
-    <!-- Step 0: Welcome Modal with full backdrop -->
-    @if (step() === 0) {
+    <!-- Welcome screen with full backdrop, shown before the numbered tour starts. -->
+    @if (isWelcomeStep()) {
         <div class="full-backdrop"></div>
         <div class="centered-modal-wrapper">
             <div class="iris-onboarding-modal-welcome" role="dialog" aria-modal="true" aria-labelledby="onboarding-welcome-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
@@ -50,7 +50,7 @@
         </div>
     }
 
-    <!-- Steps 1-3: Tooltips pointing at Iris chat UI elements -->
+    <!-- Numbered tour steps: tooltips pointing at Iris chat UI elements. -->
     @if (tooltipConfig(); as config) {
         @if (isStepPositionReady()) {
             <div class="spotlight-click-guard" [class.interactive]="isInteractiveStep()" aria-hidden="true"></div>
@@ -88,8 +88,8 @@
                 </div>
                 <p class="tooltip-description" [id]="'onboarding-tooltip-desc-' + config.currentStep" [jhiTranslate]="config.descriptionTranslationKey"></p>
                 <div class="tooltip-footer">
-                    <jhi-stepper [currentStep]="config.currentStep" [totalSteps]="3" />
-                    @if (config.currentStep < 3) {
+                    <jhi-stepper [currentStep]="config.currentStep" [totalSteps]="totalTourSteps" />
+                    @if (config.currentStep < totalTourSteps) {
                         <jhi-button [btnType]="ButtonType.PRIMARY" [title]="'artemisApp.iris.onboarding.next'" (onClick)="next()" />
                     } @else {
                         <jhi-button [btnType]="ButtonType.PRIMARY" [title]="'artemisApp.iris.onboarding.finish'" (onClick)="finish()" />

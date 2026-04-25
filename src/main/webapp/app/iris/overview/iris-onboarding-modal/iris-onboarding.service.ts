@@ -155,17 +155,16 @@ export class IrisOnboardingService {
             return undefined;
         }
 
+        // Mark on open, not on close: PrimeNG's onClose only fires when .close() is invoked
+        // explicitly. If the host component is torn down (e.g. user navigates between courses
+        // mid-tour) the dialog is destroyed without onClose emitting, the flag never gets
+        // written, and the next mount re-triggers the tour.
+        this.markOnboardingCompleted();
+
         this.pendingResult = new Promise<OnboardingResult | undefined>((resolve) => {
             this.dialogRef!.onClose.subscribe((result: OnboardingResult | undefined) => {
                 this.currentStep.set(0);
-                if (result) {
-                    this.markOnboardingCompleted();
-                    resolve({ action: 'finish' });
-                } else {
-                    // Modal was dismissed (e.g., clicked X button)
-                    this.markOnboardingCompleted();
-                    resolve(undefined);
-                }
+                resolve(result ? { action: 'finish' } : undefined);
             });
         });
 

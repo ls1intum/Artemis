@@ -124,15 +124,29 @@ describe('IrisOnboardingService', () => {
             expect(result).toEqual({ action: 'finish' });
         });
 
-        it('should mark onboarding as completed after modal closes', async () => {
+        it('should mark onboarding as completed synchronously on open', async () => {
+            // Marking on open (rather than on close) ensures the flag survives the user
+            // navigating away mid-tour: PrimeNG's onClose only fires when .close() is invoked
+            // explicitly, not when the host component is torn down.
             const closeSubject = new Subject<OnboardingResult | undefined>();
             vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
 
             const resultPromise = service.openOnboardingModal();
+
+            expect(service.hasCompletedOnboarding()).toBeTruthy();
+
             closeSubject.next({ action: 'finish' });
             closeSubject.complete();
             await resultPromise;
+        });
 
+        it('should keep onboarding marked completed even if onClose never fires (host destroyed)', async () => {
+            const closeSubject = new Subject<OnboardingResult | undefined>();
+            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
+
+            void service.openOnboardingModal();
+            // Simulate the host component being destroyed without ever calling .close():
+            // the close subject simply never emits. The completion flag must already be set.
             expect(service.hasCompletedOnboarding()).toBeTruthy();
         });
 

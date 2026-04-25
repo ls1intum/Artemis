@@ -926,26 +926,23 @@ Course Info Bar
     padding: 0.3rem 0.75rem;
 }
 
-// During onboarding, elevate the active target element above the click-guard (z-index 1049)
-// and spotlight-blocker (z-index 1050) so user clicks reach the actual UI element.
-body[data-onboarding-active-step='1'] [data-onboarding-target='context-selector'] {
-    position: relative;
-    z-index: 1053;
-}
+// Onboarding stacking context. The click-guard sits at 1049 and the spotlight blocker at 1050
+// (defined in iris-onboarding-modal.component.scss). The active target must rise above both so
+// the user's clicks reach the real UI element; PrimeNG overlays opened from that target must
+// rise above the active target so their dropdowns aren't clipped by the spotlight.
+$iris-onboarding-active-target-z-index: 1053;
+$iris-onboarding-overlay-z-index: 1060;
 
-body[data-onboarding-active-step='2'] [data-onboarding-target='suggestion-chips'] {
-    position: relative;
-    z-index: 1053;
-}
-
+body[data-onboarding-active-step='1'] [data-onboarding-target='context-selector'],
+body[data-onboarding-active-step='2'] [data-onboarding-target='suggestion-chips'],
 body[data-onboarding-active-step='3'] [data-onboarding-target='info-icon'] {
     position: relative;
-    z-index: 1053;
+    z-index: $iris-onboarding-active-target-z-index;
 }
 
-// PrimeNG p-select overlay (appended to body) during context selector step
+// PrimeNG p-select overlay (appended to body) during the context selector step.
 body[data-onboarding-active-step='1'] > .p-select-overlay {
-    z-index: 1060 !important;
+    z-index: $iris-onboarding-overlay-z-index !important;
 }
 
 .connection-status {

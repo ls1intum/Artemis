@@ -221,6 +221,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     // Messages with processing
     private readonly rawMessages = toSignal(this.chatService.currentMessages(), { initialValue: [] as IrisMessage[] });
     readonly messages = computed(() => this.processMessages(this.rawMessages()));
+    // Tracks whether the chat service has finished its first session-load attempt for the
+    // current context. Prevents downstream gates (notably the onboarding tour) from acting
+    // on the BehaviorSubject's empty initial value before the real messages arrive.
+    private readonly initialLoadComplete = toSignal(this.chatService.initialLoadComplete$, { initialValue: false });
 
     // Computed state
     readonly hasActiveStage = computed(() => this.stages()?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state)) ?? false);
@@ -660,14 +664,21 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // picked an LLM yet). A one-shot call from ngAfterViewInit would evaluate too early
         // and skip the tour forever. This effect re-fires after acceptPermission() flips
         // userAccepted, then guards against re-entry with onboardingTriggerRequested.
+        //
+        // initialLoadComplete() is the race fix: messages starts as [] (BehaviorSubject
+        // initial value), so isEmptyState() returns true on every mount before the chat
+        // service has loaded the actual session. Without this gate, returning users with
+        // existing messages would briefly look like new users and the tour could fire
+        // before the server-side message-count check finishes the round-trip.
         effect(() => {
-            const ready = this.layout() === 'client' && this.isEmptyState() && !this.error() && this.active() && this.isAIEnabled();
+            const ready = this.initialLoadComplete() && this.layout() === 'client' && this.isEmptyState() && !this.error() && this.active() && this.isAIEnabled();
             if (!ready || this.onboardingTriggerRequested) {
                 return;
             }
             this.onboardingTriggerRequested = true;
             untracked(() => {
-                const shouldShowOnboarding = () => this.layout() === 'client' && this.isEmptyState() && !this.error() && this.active() && this.isAIEnabled();
+                const shouldShowOnboarding = () =>
+                    this.initialLoadComplete() && this.layout() === 'client' && this.isEmptyState() && !this.error() && this.active() && this.isAIEnabled();
                 void this.onboardingService.showOnboardingIfNeeded(shouldShowOnboarding).catch(() => undefined);
             });
         });

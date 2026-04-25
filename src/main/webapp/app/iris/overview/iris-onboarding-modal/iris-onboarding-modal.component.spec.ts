@@ -18,23 +18,22 @@ import { signal } from '@angular/core';
 
 function createMockElement(rect: Partial<DOMRect>): HTMLElement {
     const el = document.createElement('div');
-    el.getBoundingClientRect = vi.fn(
-        () =>
-            ({
-                x: 0,
-                y: 0,
-                width: 0,
-                height: 0,
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                toJSON: () => {},
-                ...rect,
-            }) as DOMRect,
-    );
-    // Make element pass the offsetParent visibility check
-    Object.defineProperty(el, 'offsetParent', { value: document.body, configurable: true });
+    const fullRect = {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        toJSON: () => {},
+        ...rect,
+    } as DOMRect;
+    el.getBoundingClientRect = vi.fn(() => fullRect);
+    // Make the element pass findVisibleElement's getClientRects().length > 0 check.
+    // jsdom returns an empty DOMRectList for unattached nodes, so we stub it directly.
+    el.getClientRects = vi.fn(() => [fullRect] as unknown as DOMRectList);
     return el;
 }
 
@@ -52,7 +51,6 @@ describe('IrisOnboardingModalComponent', () => {
     }
 
     beforeEach(async () => {
-        vi.spyOn(console, 'warn').mockImplementation(() => {});
         onboardingEventSubject = new Subject<OnboardingEvent>();
 
         TestBed.configureTestingModule({
@@ -94,12 +92,13 @@ describe('IrisOnboardingModalComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should start at step 0', () => {
+    it('should start on the welcome screen', () => {
         expect(component.step()).toBe(0);
+        expect(component.isWelcomeStep()).toBeTruthy();
     });
 
-    it('should have 4 total steps', () => {
-        expect(component.totalSteps).toBe(4);
+    it('should expose three numbered tour steps for the stepper indicator', () => {
+        expect(component.totalTourSteps).toBe(3);
     });
 
     describe('next', () => {

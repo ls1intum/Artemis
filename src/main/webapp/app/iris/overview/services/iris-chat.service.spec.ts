@@ -113,6 +113,48 @@ describe('IrisChatService', () => {
         expect(wsStub).toHaveBeenCalledWith(id);
     });
 
+    describe('initialLoadComplete$', () => {
+        const collectInitialLoadValues = (): boolean[] => {
+            const values: boolean[] = [];
+            service.initialLoadComplete$.subscribe((value) => values.push(value));
+            return values;
+        };
+
+        it('should start false, flip to true after a successful session load, and reset on close-induced switch', async () => {
+            const values = collectInitialLoadValues();
+            expect(values).toEqual([false]);
+
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists')
+                .mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation))
+                .mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+            service.switchTo(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+
+            expect(values.at(-1)).toBe(true);
+
+            // Switching to a different context closes the previous session and rearms the gate.
+            service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id + 1);
+
+            expect(values).toContain(false);
+            // The new load completes synchronously via the mocked observable, so the latest value
+            // should be true again by the time we observe.
+            expect(values.at(-1)).toBe(true);
+        });
+
+        it('should still flip to true when the session load fails so consumers do not deadlock', async () => {
+            const values = collectInitialLoadValues();
+            expect(values).toEqual([false]);
+
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            service.switchTo(ChatServiceMode.COURSE, id);
+
+            expect(values.at(-1)).toBe(true);
+        });
+    });
+
     it('should initialize current chat context from newly loaded session', async () => {
         const relatedEntityId = 77;
         const newSession: IrisSession = { ...mockConversationWithNoMessages, id: 333, mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: relatedEntityId };
