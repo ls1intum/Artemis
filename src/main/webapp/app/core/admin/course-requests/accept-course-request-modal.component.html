@@ -1,0 +1,132 @@
+<p-dialog
+    [header]="'artemisApp.courseRequest.admin.acceptTitle' | artemisTranslate"
+    [modal]="true"
+    [visible]="visible()"
+    (visibleChange)="visible.set($event)"
+    [closable]="true"
+    [style]="{ width: '700px' }"
+    appendTo="body"
+>
+    <form [formGroup]="acceptForm" novalidate>
+        <div class="mb-3">
+            <label class="form-label fw-semibold" for="accept-title" jhiTranslate="artemisApp.courseRequest.form.title"></label>
+            <input
+                id="accept-title"
+                type="text"
+                class="form-control"
+                formControlName="title"
+                [class.is-invalid]="acceptForm.get('title')?.invalid && acceptForm.get('title')?.touched"
+                maxlength="255"
+            />
+            @if (acceptForm.get('title')?.invalid && acceptForm.get('title')?.touched) {
+                <div class="invalid-feedback" jhiTranslate="entity.validation.required"></div>
+            }
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md">
+                <label class="form-label mb-0 fw-semibold" for="accept-semester" jhiTranslate="artemisApp.courseRequest.form.semester"></label>
+                <select id="accept-semester" class="form-select" formControlName="semester">
+                    <option value="">—</option>
+                    @for (semester of semesters; track semester) {
+                        <option [value]="semester">{{ semester }}</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md">
+                <jhi-date-time-picker
+                    id="accept-startDate"
+                    labelName="{{ 'artemisApp.courseRequest.form.startDate' | artemisTranslate }}"
+                    formControlName="startDate"
+                    [error]="dateRangeInvalid()"
+                />
+            </div>
+            <div class="col-md">
+                <jhi-date-time-picker
+                    id="accept-endDate"
+                    labelName="{{ 'artemisApp.courseRequest.form.endDate' | artemisTranslate }}"
+                    formControlName="endDate"
+                    [error]="dateRangeInvalid()"
+                />
+            </div>
+        </div>
+        @if (dateRangeInvalid()) {
+            <div class="text-danger mb-3" jhiTranslate="artemisApp.courseRequest.form.dateError"></div>
+        }
+
+        <hr class="my-3" />
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold" for="accept-shortName" jhiTranslate="artemisApp.courseRequest.form.shortName"></label>
+            <input
+                id="accept-shortName"
+                type="text"
+                class="form-control"
+                formControlName="shortName"
+                [class.is-invalid]="acceptForm.get('shortName')?.invalid && acceptForm.get('shortName')?.touched"
+            />
+            <small class="form-text text-secondary" jhiTranslate="artemisApp.courseRequest.admin.shortNameHint"></small>
+            @if (acceptForm.get('shortName')?.touched) {
+                @if (acceptForm.get('shortName')?.hasError('required')) {
+                    <div class="text-danger small" jhiTranslate="entity.validation.required"></div>
+                } @else if (acceptForm.get('shortName')?.hasError('minlength')) {
+                    <div class="text-danger small" jhiTranslate="artemisApp.courseRequest.form.shortNameTooShort"></div>
+                } @else if (acceptForm.get('shortName')?.hasError('regexInvalid')) {
+                    <div class="text-danger small" jhiTranslate="artemisApp.courseRequest.form.shortNameInvalid"></div>
+                }
+            }
+        </div>
+
+        <!-- Instructor Course History Table (only shown when courses exist) -->
+        @if (loadingCourses()) {
+            <div class="text-muted mb-3" jhiTranslate="artemisApp.courseRequest.admin.loadingCourses"></div>
+        } @else if (instructorCourses().length > 0) {
+            <p class="text-secondary mb-2" jhiTranslate="artemisApp.courseRequest.admin.instructorCoursesHint"></p>
+            <div class="table-responsive mb-3">
+                <table class="table table-sm table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.courseName"></th>
+                            <th scope="col" jhiTranslate="artemisApp.courseRequest.form.shortName"></th>
+                            <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.semester"></th>
+                            <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.dates"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (course of instructorCourses(); track $index) {
+                            <tr>
+                                <td>{{ course.title }}</td>
+                                <td class="fw-semibold">{{ course.shortName }}</td>
+                                <td>{{ course.semester }}</td>
+                                <td>
+                                    @if (course.startDate) {
+                                        {{ course.startDate | artemisDate: 'short' }}
+                                    }
+                                    @if (course.startDate && course.endDate) {
+                                        –
+                                    }
+                                    @if (course.endDate) {
+                                        {{ course.endDate | artemisDate: 'short' }}
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </form>
+
+    <ng-template pTemplate="footer">
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" pButton severity="secondary" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+            <button
+                type="button"
+                pButton
+                [disabled]="isSubmitting() || acceptForm.invalid"
+                (click)="submit()"
+                jhiTranslate="artemisApp.courseRequest.admin.acceptAndCreate"
+            ></button>
+        </div>
+    </ng-template>
+</p-dialog>

@@ -45,7 +45,7 @@ public class CourseRequestResource {
     @PostMapping("course-requests")
     @EnforceAtLeastStudent
     public ResponseEntity<CourseRequestDTO> createCourseRequest(@Valid @RequestBody CourseRequestCreateDTO courseRequest) throws URISyntaxException {
-        log.debug("REST request to create course request for course {}", courseRequest.shortName());
+        log.debug("REST request to create course request for course {}", courseRequest.title());
         CourseRequestDTO result = courseRequestService.createCourseRequest(courseRequest);
         return ResponseEntity.created(new URI("/api/core/course-requests/" + result.id())).body(result);
     }

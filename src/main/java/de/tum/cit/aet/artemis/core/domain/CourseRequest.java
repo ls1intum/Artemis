@@ -28,9 +28,6 @@ public class CourseRequest extends DomainObject {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "short_name", nullable = false, unique = true)
-    private String shortName;
-
     @Column(name = "semester")
     private String semester;
 
@@ -77,14 +74,6 @@ public class CourseRequest extends DomainObject {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public String getShortName() {
-        return shortName;
-    }
-
-    public void setShortName(String shortName) {
-        this.shortName = shortName;
     }
 
     public String getSemester() {

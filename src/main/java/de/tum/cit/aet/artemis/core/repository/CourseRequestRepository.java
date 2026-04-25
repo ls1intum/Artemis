@@ -32,8 +32,6 @@ public interface CourseRequestRepository extends ArtemisJpaRepository<CourseRequ
     @EntityGraph(type = LOAD, attributePaths = { "requester" })
     Optional<CourseRequest> findOneWithEagerRelationshipsById(long id);
 
-    Optional<CourseRequest> findOneByShortNameIgnoreCase(String shortName);
-
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByCreatedCourseId(long courseId);

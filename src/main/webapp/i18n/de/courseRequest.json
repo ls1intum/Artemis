@@ -6,11 +6,8 @@
             "form": {
                 "title": "Kurstitel",
                 "shortName": "Kürzel",
-                "shortNameHint": "Muss eindeutig sein, 3-7 Zeichen empfohlen, nur Buchstaben und Zahlen.",
                 "shortNameTooShort": "Das Kürzel muss mindestens 3 Zeichen lang sein.",
                 "shortNameInvalid": "Das Kürzel darf nur Buchstaben und Zahlen enthalten, ohne Leerzeichen.",
-                "shortNameNotUnique": "Dieses Kürzel wird bereits verwendet. Wir haben \"{{ suggestedShortName }}\" als Alternative vorgeschlagen.",
-                "generate": "Generieren",
                 "semester": "Semester",
                 "startDate": "Startdatum",
                 "endDate": "Enddatum",
@@ -34,6 +31,7 @@
                 "decidedTitle": "Bearbeitete Anfragen",
                 "requester": "Anfragender",
                 "course": "Kurs",
+                "courseName": "Kursname",
                 "semester": "Semester",
                 "dates": "Daten",
                 "reason": "Grund des Nutzers",
@@ -52,13 +50,15 @@
                 "noRequests": "Aktuell liegen keine Kursanfragen vor.",
                 "noPendingRequests": "Keine offenen Anfragen.",
                 "noDecidedRequests": "Keine bearbeiteten Anfragen.",
-                "acceptSuccess": "Kursanfrage \"{{ title }}\" akzeptiert. Kurs {{ shortName }} erstellt.",
+                "acceptSuccess": "Kursanfrage \"{{ title }}\" akzeptiert und Kurs erstellt.",
                 "rejectSuccess": "Kursanfrage \"{{ title }}\" abgelehnt.",
                 "link": "Kurs öffnen",
-                "edit": "Bearbeiten",
-                "editTitle": "Kursanfrage bearbeiten",
-                "editSuccess": "Kursanfrage erfolgreich aktualisiert.",
-                "shortNameConflict": "Das Kürzel \"{{ shortName }}\" wird bereits verwendet. Bitte bearbeite die Anfrage und verwende ein eindeutiges Kürzel wie z.B. \"{{ suggestedShortName }}\"."
+                "acceptTitle": "Kursanfrage akzeptieren",
+                "shortNameHint": "Muss mit einem Buchstaben beginnen, nur Buchstaben und Zahlen, mindestens 3 Zeichen.",
+                "shortNameConflictModal": "Dieses Kürzel wird bereits verwendet. Bitte wähle ein anderes.",
+                "instructorCoursesHint": "Die folgenden Kurse werden vom Anfragenden geleitet. Nutze sie als Referenz für die Benennung.",
+                "loadingCourses": "Kurse des Kursleiters werden geladen...",
+                "acceptAndCreate": "Akzeptieren & Kurs erstellen"
             }
         }
     }

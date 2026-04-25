@@ -691,4 +691,19 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             WHERE c.instructorGroupName IN :userGroups
             """)
     long countCoursesForInstructorWithGroups(@Param("userGroups") Set<String> userGroups);
+
+    /**
+     * Finds the most recent courses where the user is an instructor, ordered by course ID descending.
+     *
+     * @param userGroups the groups the user belongs to
+     * @param pageable   pagination information (use PageRequest.of(0, 10) for top 10)
+     * @return list of courses where the user is an instructor
+     */
+    @Query("""
+            SELECT c
+            FROM Course c
+            WHERE c.instructorGroupName IN :userGroups
+            ORDER BY c.id DESC
+            """)
+    List<Course> findRecentCoursesForInstructorWithGroups(@Param("userGroups") Set<String> userGroups, Pageable pageable);
 }

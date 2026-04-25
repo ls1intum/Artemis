@@ -3,12 +3,11 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseRequest } from 'app/core/shared/entities/course-request.model';
 import dayjs from 'dayjs/esm';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 
 import { CourseRequestComponent } from 'app/core/course/request/course-request.component';
 import { CourseRequestService } from 'app/core/course/request/course-request.service';
@@ -73,7 +72,6 @@ describe('CourseRequestComponent', () => {
     it('should mark invalid date ranges and not submit', () => {
         component.form.patchValue({
             title: 'New Course',
-            shortName: 'ABC',
             reason: 'A valid reason for the request',
             startDate: dayjs('2025-01-10'),
             endDate: dayjs('2025-01-05'),
@@ -89,7 +87,6 @@ describe('CourseRequestComponent', () => {
         courseRequestService.create.mockReturnValue(of({} as CourseRequest));
         component.form.patchValue({
             title: 'New Course',
-            shortName: 'ABC',
             reason: 'A valid reason for the request',
             startDate: dayjs('2025-01-01'),
             endDate: dayjs('2025-02-01'),
@@ -102,62 +99,15 @@ describe('CourseRequestComponent', () => {
         expect(courseRequestService.create).toHaveBeenCalledWith(
             expect.objectContaining({
                 title: 'New Course',
-                shortName: 'ABC',
                 testCourse: true,
             }),
         );
         expect(alertService.success).toHaveBeenCalled();
     });
 
-    it('should handle short name conflict error and apply suggested short name', () => {
-        const suggestedShortName = 'NC2025';
-        const errorResponse = new HttpErrorResponse({
-            error: {
-                errorKey: 'courseShortNameExists',
-                params: { suggestedShortName },
-            },
-            status: 400,
-        });
-        courseRequestService.create.mockReturnValue(throwError(() => errorResponse));
-        component.form.patchValue({
-            title: 'New Course',
-            shortName: 'EXISTING',
-            reason: 'A valid reason for the request',
-        });
-
-        component.submit();
-
-        expect(alertService.warning).toHaveBeenCalledWith('artemisApp.courseRequest.form.shortNameNotUnique', { suggestedShortName });
-        expect(component.form.get('shortName')?.value).toBe(suggestedShortName);
-        expect(component.isSubmitting).toBe(false);
-    });
-
-    it('should handle course request short name conflict error', () => {
-        const suggestedShortName = 'NC2025';
-        const errorResponse = new HttpErrorResponse({
-            error: {
-                errorKey: 'courseRequestShortNameExists',
-                params: { suggestedShortName },
-            },
-            status: 400,
-        });
-        courseRequestService.create.mockReturnValue(throwError(() => errorResponse));
-        component.form.patchValue({
-            title: 'New Course',
-            shortName: 'EXISTING',
-            reason: 'A valid reason for the request',
-        });
-
-        component.submit();
-
-        expect(alertService.warning).toHaveBeenCalledWith('artemisApp.courseRequest.form.shortNameNotUnique', { suggestedShortName });
-        expect(component.form.get('shortName')?.value).toBe(suggestedShortName);
-    });
-
     it('should not submit when semester is empty', () => {
         component.form.patchValue({
             title: 'New Course',
-            shortName: 'ABC',
             semester: '',
             reason: 'A valid reason for the request',
         });
@@ -178,14 +128,12 @@ describe('CourseRequestComponent', () => {
         courseRequestService.create.mockReturnValue(of({} as CourseRequest));
         component.form.patchValue({
             title: 'New Course',
-            shortName: 'ABC',
             reason: 'A valid reason for the request',
         });
 
         component.submit();
 
         expect(component.form.get('title')?.value).toBe('');
-        expect(component.form.get('shortName')?.value).toBe('');
         expect(component.form.get('reason')?.value).toBe('');
         expect(component.isSubmitting).toBe(false);
     });
@@ -193,7 +141,6 @@ describe('CourseRequestComponent', () => {
     it('should not submit when form is invalid', () => {
         component.form.patchValue({
             title: '', // Invalid - required
-            shortName: 'ABC',
             reason: 'A valid reason',
         });
 

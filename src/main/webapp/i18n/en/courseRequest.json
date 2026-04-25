@@ -6,11 +6,8 @@
             "form": {
                 "title": "Course title",
                 "shortName": "Short name",
-                "shortNameHint": "Must be unique, 3-7 characters recommended, letters and numbers only.",
                 "shortNameTooShort": "The short name must be at least 3 characters long.",
                 "shortNameInvalid": "The short name must only contain letters and numbers, without spaces.",
-                "shortNameNotUnique": "This short name is already in use. We have suggested \"{{ suggestedShortName }}\" as an alternative.",
-                "generate": "Generate",
                 "semester": "Semester",
                 "startDate": "Start date",
                 "endDate": "End date",
@@ -34,6 +31,7 @@
                 "decidedTitle": "Decided Requests",
                 "requester": "Requester",
                 "course": "Course",
+                "courseName": "Course Name",
                 "semester": "Semester",
                 "dates": "Dates",
                 "reason": "Requester reason",
@@ -52,13 +50,15 @@
                 "noRequests": "No course requests available yet.",
                 "noPendingRequests": "No pending requests.",
                 "noDecidedRequests": "No decided requests.",
-                "acceptSuccess": "Course request \"{{ title }}\" accepted. Course {{ shortName }} created.",
+                "acceptSuccess": "Course request \"{{ title }}\" accepted and course created.",
                 "rejectSuccess": "Course request \"{{ title }}\" rejected.",
                 "link": "Open course",
-                "edit": "Edit",
-                "editTitle": "Edit course request",
-                "editSuccess": "Course request updated successfully.",
-                "shortNameConflict": "The short name \"{{ shortName }}\" is already in use. Please edit the request and use a unique short name such as \"{{ suggestedShortName }}\"."
+                "acceptTitle": "Accept course request",
+                "shortNameHint": "Must start with a letter, only letters and numbers, at least 3 characters.",
+                "shortNameConflictModal": "This short name is already in use. Please choose a different one.",
+                "instructorCoursesHint": "The following courses are taught by the requester. Use them as a reference for naming.",
+                "loadingCourses": "Loading instructor courses...",
+                "acceptAndCreate": "Accept & create course"
             }
         }
     }

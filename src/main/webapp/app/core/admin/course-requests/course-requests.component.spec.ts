@@ -1,22 +1,28 @@
 /**
  * Vitest tests for CourseRequestsComponent.
  * Tests the admin view for managing course creation requests including
- * accept, reject, edit functionality and form validation.
+ * reject functionality and form validation.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import dayjs from 'dayjs/esm';
 
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { CourseRequestsComponent } from 'app/core/admin/course-requests/course-requests.component';
+import { AcceptCourseRequestModalComponent } from 'app/core/admin/course-requests/accept-course-request-modal.component';
 import { CourseRequestService } from 'app/core/course/request/course-request.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/core/shared/entities/course-request.model';
+
+@Component({ selector: 'jhi-accept-course-request-modal', template: '' })
+class MockAcceptCourseRequestModalComponent {
+    open = vi.fn();
+}
 
 describe('CourseRequestsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -29,28 +35,15 @@ describe('CourseRequestsComponent', () => {
     const mockRequest: CourseRequest = {
         id: 1,
         title: 'Test Course',
-        shortName: 'TC',
         testCourse: false,
         reason: 'Test reason',
         status: CourseRequestStatus.PENDING,
-    };
-
-    /** Sample accepted course request */
-    const mockAcceptedRequest: CourseRequest = {
-        id: 1,
-        title: 'Test Course',
-        shortName: 'TC',
-        testCourse: false,
-        reason: 'Test reason',
-        status: CourseRequestStatus.ACCEPTED,
-        createdCourseId: 100,
     };
 
     /** Sample rejected course request */
     const mockRejectedRequest: CourseRequest = {
         id: 1,
         title: 'Test Course',
-        shortName: 'TC',
         testCourse: false,
         reason: 'Test reason',
         status: CourseRequestStatus.REJECTED,
@@ -63,7 +56,7 @@ describe('CourseRequestsComponent', () => {
         findAdminOverview: vi.fn(),
         acceptRequest: vi.fn(),
         rejectRequest: vi.fn(),
-        updateRequest: vi.fn(),
+        getInstructorCourses: vi.fn(),
     };
 
     /** Mock AlertService with spy functions */
@@ -85,7 +78,12 @@ describe('CourseRequestsComponent', () => {
                 { provide: CourseRequestService, useValue: mockCourseRequestService },
                 { provide: AlertService, useValue: mockAlertService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseRequestsComponent, {
+                remove: { imports: [AcceptCourseRequestModalComponent] },
+                add: { imports: [MockAcceptCourseRequestModalComponent] },
+            })
+            .compileComponents();
 
         courseRequestService = TestBed.inject(CourseRequestService);
         alertService = TestBed.inject(AlertService);
@@ -128,40 +126,6 @@ describe('CourseRequestsComponent', () => {
             component.load();
 
             expect(component.loading()).toBe(false);
-        });
-    });
-
-    describe('accept', () => {
-        it('should accept a request and move it to decided list', () => {
-            mockCourseRequestService.acceptRequest.mockReturnValue(of(mockAcceptedRequest));
-            component.pendingRequests.set([mockRequest]);
-            component.decidedRequests.set([]);
-            component.totalDecidedCount.set(0);
-
-            component.accept(mockRequest);
-
-            expect(courseRequestService.acceptRequest).toHaveBeenCalledWith(1);
-            expect(component.pendingRequests()).toHaveLength(0);
-            expect(component.decidedRequests()[0].status).toBe(CourseRequestStatus.ACCEPTED);
-            expect(component.totalDecidedCount()).toBe(1);
-            expect(alertService.success).toHaveBeenCalledWith('artemisApp.courseRequest.admin.acceptSuccess', { title: 'Test Course', shortName: 'TC' });
-        });
-
-        it('should not call service if request has no id', () => {
-            const requestWithoutId: CourseRequest = { title: 'Test', shortName: 'T', testCourse: false, reason: 'reason' };
-
-            component.accept(requestWithoutId);
-
-            expect(courseRequestService.acceptRequest).not.toHaveBeenCalled();
-        });
-
-        it('should handle error when accepting fails', () => {
-            const error = { status: 500, message: 'Server error' };
-            mockCourseRequestService.acceptRequest.mockReturnValue(throwError(() => error));
-
-            component.accept(mockRequest);
-
-            expect(courseRequestService.acceptRequest).toHaveBeenCalledWith(1);
         });
     });
 
@@ -220,7 +184,7 @@ describe('CourseRequestsComponent', () => {
         });
 
         it('should not call service if selectedRequest has no id', () => {
-            component.selectedRequest.set({ title: 'Test', shortName: 'T', testCourse: false, reason: 'reason' });
+            component.selectedRequest.set({ title: 'Test', testCourse: false, reason: 'reason' });
             component.decisionReason.set('Valid reason');
 
             component.reject();
@@ -277,191 +241,6 @@ describe('CourseRequestsComponent', () => {
 
         it('should return "Yes (count)" for positive count', () => {
             expect(component.formatInstructorCount(3)).toBe('Yes (3)');
-        });
-    });
-
-    describe('openEditModal', () => {
-        it('should open modal and populate form with request data', () => {
-            const requestWithDates: CourseRequest = {
-                ...mockRequest,
-                semester: 'WS25/26',
-                startDate: dayjs('2025-10-01'),
-                endDate: dayjs('2026-03-31'),
-            };
-
-            component.openEditModal(requestWithDates);
-
-            expect(component.selectedRequest()).toBe(requestWithDates);
-            expect(component.editDateRangeInvalid()).toBe(false);
-            expect(component.isSubmittingEdit()).toBe(false);
-            expect(component.editForm.get('title')?.value).toBe('Test Course');
-            expect(component.editForm.get('shortName')?.value).toBe('TC');
-            expect(component.editForm.get('semester')?.value).toBe('WS25/26');
-            expect(component.editForm.get('reason')?.value).toBe('Test reason');
-            expect(component.editModalVisible()).toBe(true);
-        });
-    });
-
-    describe('saveEdit', () => {
-        beforeEach(() => {
-            component.selectedRequest.set(mockRequest);
-            component.editModalVisible.set(true);
-        });
-
-        it('should update request and refresh list on success', () => {
-            const updatedRequest: CourseRequest = { ...mockRequest, title: 'Updated Course' };
-            mockCourseRequestService.updateRequest.mockReturnValue(of(updatedRequest));
-            component.pendingRequests.set([mockRequest]);
-            component.editForm.patchValue({
-                title: 'Updated Course',
-                shortName: 'UC1',
-                semester: 'WS25/26',
-                reason: 'Updated reason',
-            });
-
-            component.saveEdit();
-
-            expect(courseRequestService.updateRequest).toHaveBeenCalledWith(
-                1,
-                expect.objectContaining({
-                    title: 'Updated Course',
-                    shortName: 'UC1',
-                }),
-            );
-            expect(component.pendingRequests()[0].title).toBe('Updated Course');
-            expect(alertService.success).toHaveBeenCalledWith('artemisApp.courseRequest.admin.editSuccess');
-            expect(component.editModalVisible()).toBe(false);
-            expect(component.isSubmittingEdit()).toBe(false);
-            expect(component.selectedRequest()).toBeUndefined();
-        });
-
-        it('should not submit when form is invalid', () => {
-            component.editForm.patchValue({
-                title: '', // Invalid - required
-                shortName: 'TC',
-                reason: 'Valid reason',
-            });
-
-            component.saveEdit();
-
-            expect(courseRequestService.updateRequest).not.toHaveBeenCalled();
-            expect(component.editForm.get('title')?.touched).toBe(true);
-        });
-
-        it('should not submit when selectedRequest has no id', () => {
-            component.selectedRequest.set({ title: 'Test', shortName: 'T', testCourse: false, reason: 'reason' });
-            component.editForm.patchValue({
-                title: 'Test',
-                shortName: 'TST',
-                semester: 'WS25/26',
-                reason: 'Valid reason',
-            });
-
-            component.saveEdit();
-
-            expect(courseRequestService.updateRequest).not.toHaveBeenCalled();
-        });
-
-        it('should set dateRangeInvalid when end date is before start date', () => {
-            component.editForm.patchValue({
-                title: 'Test Course',
-                shortName: 'TC1',
-                semester: 'WS25/26',
-                reason: 'Valid reason',
-                startDate: dayjs('2025-02-01'),
-                endDate: dayjs('2025-01-01'),
-            });
-
-            component.saveEdit();
-
-            expect(component.editDateRangeInvalid()).toBe(true);
-            expect(courseRequestService.updateRequest).not.toHaveBeenCalled();
-        });
-
-        it('should handle short name conflict error and apply suggested short name', () => {
-            const suggestedShortName = 'TC2025';
-            const errorResponse = new HttpErrorResponse({
-                error: {
-                    errorKey: 'courseShortNameExists',
-                    params: { suggestedShortName },
-                },
-                status: 400,
-            });
-            mockCourseRequestService.updateRequest.mockReturnValue(throwError(() => errorResponse));
-            component.editForm.patchValue({
-                title: 'Test Course',
-                shortName: 'EXISTING',
-                semester: 'WS25/26',
-                reason: 'Valid reason',
-            });
-
-            component.saveEdit();
-
-            expect(alertService.warning).toHaveBeenCalledWith('artemisApp.courseRequest.form.shortNameNotUnique', { suggestedShortName });
-            expect(component.editForm.get('shortName')?.value).toBe(suggestedShortName);
-            expect(component.isSubmittingEdit()).toBe(false);
-        });
-
-        it('should handle courseRequestShortNameExists error', () => {
-            const suggestedShortName = 'TC2025';
-            const errorResponse = new HttpErrorResponse({
-                error: {
-                    errorKey: 'courseRequestShortNameExists',
-                    params: { suggestedShortName },
-                },
-                status: 400,
-            });
-            mockCourseRequestService.updateRequest.mockReturnValue(throwError(() => errorResponse));
-            component.editForm.patchValue({
-                title: 'Test Course',
-                shortName: 'EXISTING',
-                semester: 'WS25/26',
-                reason: 'Valid reason',
-            });
-
-            component.saveEdit();
-
-            expect(alertService.warning).toHaveBeenCalledWith('artemisApp.courseRequest.form.shortNameNotUnique', { suggestedShortName });
-            expect(component.editForm.get('shortName')?.value).toBe(suggestedShortName);
-        });
-
-        it('should handle other errors using onError', () => {
-            const errorResponse = new HttpErrorResponse({
-                error: { message: 'Server error' },
-                status: 500,
-            });
-            mockCourseRequestService.updateRequest.mockReturnValue(throwError(() => errorResponse));
-            component.editForm.patchValue({
-                title: 'Test Course',
-                shortName: 'TC1',
-                semester: 'WS25/26',
-                reason: 'Valid reason',
-            });
-
-            component.saveEdit();
-
-            expect(component.isSubmittingEdit()).toBe(false);
-        });
-    });
-
-    describe('accept error handling', () => {
-        it('should show warning for short name conflict on accept', () => {
-            const suggestedShortName = 'TC2025';
-            const errorResponse = new HttpErrorResponse({
-                error: {
-                    errorKey: 'courseShortNameExists',
-                    params: { suggestedShortName },
-                },
-                status: 400,
-            });
-            mockCourseRequestService.acceptRequest.mockReturnValue(throwError(() => errorResponse));
-
-            component.accept(mockRequest);
-
-            expect(alertService.warning).toHaveBeenCalledWith('artemisApp.courseRequest.admin.shortNameConflict', {
-                suggestedShortName,
-                shortName: 'TC',
-            });
         });
     });
 });

@@ -136,8 +136,17 @@ describe('ModelingAssessmentComponent', () => {
         translatePipe = TestBed.inject(ArtemisTranslatePipe);
     });
 
-    afterEach(() => {
+    afterEach(async () => {
+        // Properly clean up the Apollon editor (React-based) before test environment teardown.
+        // This prevents "document is not defined" and "Should not already be working" React scheduler errors.
+        if (comp?.apollonEditor) {
+            comp.ngOnDestroy();
+        }
+        fixture?.destroy();
         vi.restoreAllMocks();
+        // Flush React's async scheduler so no pending renders survive past teardown.
+        // React 18 schedules work via MessageChannel/setTimeout; we need multiple ticks to drain it.
+        await new Promise((resolve) => setTimeout(resolve, 10));
     });
 
     it('should show title if any', () => {

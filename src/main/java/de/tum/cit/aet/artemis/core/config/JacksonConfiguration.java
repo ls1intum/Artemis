@@ -60,6 +60,7 @@ public class JacksonConfiguration {
      * @param objectMapper the auto-configured Jackson ObjectMapper
      * @return the HTTP message converter
      */
+    @SuppressWarnings("removal") // Blocked by Jackson 2→3 migration
     @Bean
     public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter(ObjectMapper objectMapper) {
         return new MappingJackson2HttpMessageConverter(objectMapper);

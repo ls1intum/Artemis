@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
@@ -358,6 +359,8 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
             studentScoreUtilService.createStudentScore(programmingExercises[0], student1, programming1Result);
             studentScoreUtilService.createStudentScore(programmingExercises[1], student1, programming2Result);
             studentScoreUtilService.createStudentScore(programmingExercises[2], student1, programming3Result);
+            // Normalize lastModifiedDate to avoid timing-dependent recency heuristic differences
+            studentScoreUtilService.normalizeLastModifiedDates(student1, Instant.now());
 
             CompetencyProgress studentCompetencyProgress = request.get(
                     "/api/atlas/courses/" + course.getId() + "/course-competencies/" + courseCompetency.getId() + "/student-progress?refresh=true", HttpStatus.OK,

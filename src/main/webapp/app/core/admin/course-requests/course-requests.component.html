@@ -33,7 +33,6 @@
                     <tr>
                         <td>
                             <div class="fw-semibold">{{ request.title }}</div>
-                            <div class="text-muted">{{ request.shortName }}</div>
                             @if (request.testCourse) {
                                 <span class="badge bg-info" jhiTranslate="artemisApp.courseRequest.admin.testCourse"></span>
                             }
@@ -73,17 +72,10 @@
                         <td class="text-end">
                             <div class="d-flex justify-content-end gap-2">
                                 <jhi-button
-                                    [btnType]="ButtonType.SECONDARY"
-                                    [btnSize]="ButtonSize.SMALL"
-                                    [icon]="faEdit"
-                                    (click)="openEditModal(request)"
-                                    [title]="'artemisApp.courseRequest.admin.edit'"
-                                />
-                                <jhi-button
                                     [btnType]="ButtonType.SUCCESS"
                                     [btnSize]="ButtonSize.SMALL"
                                     [icon]="faCheck"
-                                    (click)="accept(request)"
+                                    (click)="openAcceptModal(request)"
                                     [title]="'artemisApp.courseRequest.admin.accept'"
                                 />
                                 <jhi-button
@@ -125,7 +117,6 @@
                     <tr>
                         <td>
                             <div class="fw-semibold">{{ request.title }}</div>
-                            <div class="text-muted">{{ request.shortName }}</div>
                             @if (request.testCourse) {
                                 <span class="badge bg-info" jhiTranslate="artemisApp.courseRequest.admin.testCourse"></span>
                             }
@@ -197,6 +188,9 @@
     }
 </div>
 
+<!-- Accept Modal -->
+<jhi-accept-course-request-modal />
+
 <p-dialog
     [(visible)]="rejectModalVisible"
     [modal]="true"
@@ -221,22 +215,5 @@
     <ng-template #footer>
         <jhi-button [btnType]="ButtonType.SECONDARY" (click)="rejectModalVisible.set(false)" [title]="'entity.action.cancel'" />
         <jhi-button [btnType]="ButtonType.ERROR" [icon]="faTimes" (click)="reject()" [title]="'artemisApp.courseRequest.admin.rejectConfirm'" />
-    </ng-template>
-</p-dialog>
-
-<p-dialog
-    [(visible)]="editModalVisible"
-    [modal]="true"
-    [draggable]="false"
-    [appendTo]="'body'"
-    [style]="{ width: '50dvw' }"
-    header="{{ 'artemisApp.courseRequest.admin.editTitle' | artemisTranslate }}"
->
-    <form [formGroup]="editForm" novalidate>
-        <jhi-course-request-form [form]="editForm" [semesters]="semesters" [dateRangeInvalid]="editDateRangeInvalid()" [showReasonPlaceholder]="false" idPrefix="edit" />
-    </form>
-    <ng-template #footer>
-        <jhi-button [btnType]="ButtonType.SECONDARY" (click)="editModalVisible.set(false)" [title]="'entity.action.cancel'" />
-        <jhi-button [btnType]="ButtonType.PRIMARY" [icon]="faCheck" (click)="saveEdit()" [disabled]="isSubmittingEdit()" [title]="'entity.action.save'" />
     </ng-template>
 </p-dialog>

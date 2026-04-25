@@ -2,10 +2,15 @@ package de.tum.cit.aet.artemis.assessment.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 
+import java.time.Instant;
+
+import jakarta.persistence.EntityManager;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
@@ -23,6 +28,12 @@ public class StudentScoreUtilService {
 
     @Autowired
     private StudentScoreRepository studentScoreRepository;
+
+    @Autowired
+    private EntityManager entityManager;
+
+    @Autowired
+    private TransactionTemplate transactionTemplate;
 
     /**
      * Creates student score for given exercise and user.
@@ -78,5 +89,22 @@ public class StudentScoreUtilService {
         }
 
         studentScoreRepository.save(studentScore);
+    }
+
+    /**
+     * Sets the lastModifiedDate of all student scores for the given user to the same instant.
+     * This is useful in tests where the recency confidence heuristic depends on timestamps
+     * and different save timings can cause non-deterministic results.
+     *
+     * @param user the user whose student scores should be normalized
+     * @param date the instant to set as lastModifiedDate for all scores
+     */
+    public void normalizeLastModifiedDates(User user, Instant date) {
+        transactionTemplate.executeWithoutResult(status -> {
+            entityManager.createQuery("UPDATE StudentScore s SET s.lastModifiedDate = :date WHERE s.user = :user").setParameter("date", date).setParameter("user", user)
+                    .executeUpdate();
+            entityManager.flush();
+            entityManager.clear();
+        });
     }
 }

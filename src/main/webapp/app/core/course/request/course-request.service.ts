@@ -2,13 +2,19 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
-import { BaseCourseRequest, CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/core/shared/entities/course-request.model';
+import {
+    BaseCourseRequest,
+    CourseRequest,
+    CourseRequestAccept,
+    CourseRequestStatus,
+    CourseRequestsAdminOverview,
+    InstructorCourse,
+} from 'app/core/shared/entities/course-request.model';
 import { User } from 'app/core/user/user.model';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/shared/util/date.utils';
 
 interface BaseCourseRequestDTO {
     title: string;
-    shortName: string;
     semester?: string;
     startDate?: string;
     endDate?: string;
@@ -16,8 +22,14 @@ interface BaseCourseRequestDTO {
     reason: string;
 }
 
-interface CourseRequestDTO extends BaseCourseRequestDTO {
+interface CourseRequestDTO {
     id?: number;
+    title: string;
+    semester?: string;
+    startDate?: string;
+    endDate?: string;
+    testCourse: boolean;
+    reason: string;
     status?: CourseRequestStatus;
     createdDate?: string;
     processedDate?: string;
@@ -31,6 +43,22 @@ interface CourseRequestsAdminOverviewDTO {
     pendingRequests: CourseRequestDTO[];
     decidedRequests: CourseRequestDTO[];
     totalDecidedCount: number;
+}
+
+interface CourseRequestAcceptDTO {
+    title: string;
+    shortName: string;
+    semester?: string;
+    startDate?: string;
+    endDate?: string;
+}
+
+interface InstructorCourseDTO {
+    title: string;
+    shortName: string;
+    semester?: string;
+    startDate?: string;
+    endDate?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -59,50 +87,62 @@ export class CourseRequestService {
             );
     }
 
-    acceptRequest(courseRequestId: number): Observable<CourseRequest> {
-        return this.http.post<CourseRequestDTO>(`${this.adminResourceUrl}/${courseRequestId}/accept`, {}).pipe(map((res) => this.convertDTOToResponse(res)));
+    acceptRequest(courseRequestId: number, acceptData: CourseRequestAccept): Observable<CourseRequest> {
+        const dto: CourseRequestAcceptDTO = {
+            title: acceptData.title,
+            shortName: acceptData.shortName,
+            semester: acceptData.semester,
+            startDate: convertDateFromClient(acceptData.startDate),
+            endDate: convertDateFromClient(acceptData.endDate),
+        };
+        return this.http.post<CourseRequestDTO>(`${this.adminResourceUrl}/${courseRequestId}/accept`, dto).pipe(map((res) => this.convertDTOToResponse(res)));
     }
 
     rejectRequest(courseRequestId: number, reason: string): Observable<CourseRequest> {
         return this.http.post<CourseRequestDTO>(`${this.adminResourceUrl}/${courseRequestId}/reject`, { reason }).pipe(map((res) => this.convertDTOToResponse(res)));
     }
 
-    updateRequest(courseRequestId: number, courseRequest: BaseCourseRequest): Observable<CourseRequest> {
-        const dto = this.convertRequestToDTO(courseRequest);
-        return this.http.put<CourseRequestDTO>(`${this.adminResourceUrl}/${courseRequestId}`, dto).pipe(map((res) => this.convertDTOToResponse(res)));
+    getInstructorCourses(userId: number): Observable<InstructorCourse[]> {
+        return this.http.get<InstructorCourseDTO[]>(`${this.adminResourceUrl}/instructor-courses/${userId}`).pipe(
+            map((dtos) =>
+                dtos.map((dto) => ({
+                    title: dto.title,
+                    shortName: dto.shortName,
+                    semester: dto.semester,
+                    startDate: convertDateStringFromServer(dto.startDate),
+                    endDate: convertDateStringFromServer(dto.endDate),
+                })),
+            ),
+        );
     }
 
     private convertRequestToDTO(courseRequest: BaseCourseRequest): BaseCourseRequestDTO {
-        const dto: BaseCourseRequestDTO = {
+        return {
             title: courseRequest.title,
-            shortName: courseRequest.shortName,
             testCourse: courseRequest.testCourse,
             reason: courseRequest.reason,
+            semester: courseRequest.semester,
+            startDate: convertDateFromClient(courseRequest.startDate),
+            endDate: convertDateFromClient(courseRequest.endDate),
         };
-        dto.semester = courseRequest.semester;
-        dto.startDate = convertDateFromClient(courseRequest.startDate);
-        dto.endDate = convertDateFromClient(courseRequest.endDate);
-        return dto;
     }
 
     private convertDTOToResponse(dto: CourseRequestDTO): CourseRequest {
-        const response: CourseRequest = {
+        return {
             title: dto.title,
-            shortName: dto.shortName,
             testCourse: dto.testCourse,
             reason: dto.reason,
+            id: dto.id,
+            semester: dto.semester,
+            startDate: convertDateStringFromServer(dto.startDate),
+            endDate: convertDateStringFromServer(dto.endDate),
+            status: dto.status,
+            createdDate: convertDateStringFromServer(dto.createdDate),
+            processedDate: convertDateStringFromServer(dto.processedDate),
+            decisionReason: dto.decisionReason,
+            requester: dto.requester,
+            createdCourseId: dto.createdCourseId,
+            instructorCourseCount: dto.instructorCourseCount,
         };
-        response.id = dto.id;
-        response.semester = dto.semester;
-        response.startDate = convertDateStringFromServer(dto.startDate);
-        response.endDate = convertDateStringFromServer(dto.endDate);
-        response.status = dto.status;
-        response.createdDate = convertDateStringFromServer(dto.createdDate);
-        response.processedDate = convertDateStringFromServer(dto.processedDate);
-        response.decisionReason = dto.decisionReason;
-        response.requester = dto.requester;
-        response.createdCourseId = dto.createdCourseId;
-        response.instructorCourseCount = dto.instructorCourseCount;
-        return response;
     }
 }

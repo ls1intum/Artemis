@@ -1,31 +1,27 @@
 import { NgClass } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { DialogModule } from 'primeng/dialog';
-import { faCheck, faEdit, faExternalLinkAlt, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExternalLinkAlt, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 
-import { BaseCourseRequest, CourseRequest, CourseRequestStatus } from 'app/core/shared/entities/course-request.model';
+import { CourseRequest, CourseRequestStatus } from 'app/core/shared/entities/course-request.model';
 import { CourseRequestService } from 'app/core/course/request/course-request.service';
-import { CourseRequestFormComponent } from 'app/core/course/request/course-request-form.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { onError } from 'app/shared/util/global.utils';
-import { regexValidator } from 'app/shared/form/shortname-validator.directive';
-import { getCurrentAndFutureSemesters } from 'app/shared/util/semester-utils';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
+import { AcceptCourseRequestModalComponent } from './accept-course-request-modal.component';
 
 /**
  * Admin component for managing course creation requests.
- * Allows administrators to review, accept, reject, or edit pending course requests.
+ * Allows administrators to review, accept, or reject pending course requests.
  */
 @Component({
     selector: 'jhi-course-requests-admin',
@@ -37,20 +33,18 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
         ArtemisDatePipe,
         ButtonComponent,
         FormsModule,
-        ReactiveFormsModule,
         RouterLink,
         FaIconComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
         NgbPagination,
-        CourseRequestFormComponent,
+        AcceptCourseRequestModalComponent,
         DialogModule,
     ],
 })
 export class CourseRequestsComponent implements OnInit {
     private readonly courseRequestService = inject(CourseRequestService);
     private readonly alertService = inject(AlertService);
-    private readonly fb = inject(FormBuilder);
 
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
@@ -59,9 +53,9 @@ export class CourseRequestsComponent implements OnInit {
     protected readonly faTimes = faTimes;
     protected readonly faExternalLinkAlt = faExternalLinkAlt;
     protected readonly faSync = faSync;
-    protected readonly faEdit = faEdit;
-    protected readonly SHORT_NAME_PATTERN = SHORT_NAME_PATTERN;
-    protected readonly semesters = getCurrentAndFutureSemesters();
+
+    /** Reference to the accept modal component */
+    readonly acceptModal = viewChild.required(AcceptCourseRequestModalComponent);
 
     /** Pending course requests */
     readonly pendingRequests = signal<CourseRequest[]>([]);
@@ -84,23 +78,6 @@ export class CourseRequestsComponent implements OnInit {
     readonly reasonInvalid = signal(false);
     /** Whether the reject modal dialog is visible */
     readonly rejectModalVisible = signal(false);
-    /** Whether the edit modal dialog is visible */
-    readonly editModalVisible = signal(false);
-
-    // Edit form
-    editForm = this.fb.group({
-        title: ['', [Validators.required, Validators.maxLength(255)]],
-        shortName: ['', [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)]],
-        semester: ['', [Validators.required]],
-        startDate: [undefined as any],
-        endDate: [undefined as any],
-        testCourse: [false],
-        reason: ['', [Validators.required]],
-    });
-    /** Whether edit date range is invalid */
-    readonly editDateRangeInvalid = signal(false);
-    /** Whether edit is being submitted */
-    readonly isSubmittingEdit = signal(false);
 
     ngOnInit() {
         this.load();
@@ -127,33 +104,13 @@ export class CourseRequestsComponent implements OnInit {
         this.load();
     }
 
-    accept(request: CourseRequest) {
-        if (!request.id) {
-            return;
-        }
-        this.courseRequestService.acceptRequest(request.id).subscribe({
-            next: (updated) => {
-                // Move from pending to decided
-                this.pendingRequests.update((reqs) => reqs.filter((req) => req.id !== updated.id));
-                this.decidedRequests.update((reqs) => [updated, ...reqs]);
-                this.totalDecidedCount.update((count) => count + 1);
-                this.alertService.success('artemisApp.courseRequest.admin.acceptSuccess', { title: updated.title, shortName: updated.shortName });
-            },
-            error: (error: HttpErrorResponse) => this.handleAcceptError(error, request),
+    openAcceptModal(request: CourseRequest) {
+        this.acceptModal().open(request, (updated) => {
+            // Move from pending to decided
+            this.pendingRequests.update((reqs) => reqs.filter((req) => req.id !== updated.id));
+            this.decidedRequests.update((reqs) => [updated, ...reqs]);
+            this.totalDecidedCount.update((count) => count + 1);
         });
-    }
-
-    private handleAcceptError(error: HttpErrorResponse, request: CourseRequest): void {
-        const errorKey = error.error?.errorKey;
-        const isShortNameConflict = errorKey === 'courseShortNameExists' || errorKey === 'courseRequestShortNameExists';
-
-        if (isShortNameConflict) {
-            const suggestedShortName = error.error?.params?.suggestedShortName;
-            this.alertService.warning('artemisApp.courseRequest.admin.shortNameConflict', { suggestedShortName: suggestedShortName ?? '', shortName: request.shortName });
-            return;
-        }
-
-        onError(this.alertService, error);
     }
 
     openRejectModal(request: CourseRequest) {
@@ -211,87 +168,5 @@ export class CourseRequestsComponent implements OnInit {
             return 'No';
         }
         return `Yes (${count})`;
-    }
-
-    openEditModal(request: CourseRequest) {
-        this.selectedRequest.set(request);
-        this.editDateRangeInvalid.set(false);
-        this.isSubmittingEdit.set(false);
-        this.editForm.reset({
-            title: request.title,
-            shortName: request.shortName,
-            semester: request.semester ?? '',
-            startDate: request.startDate,
-            endDate: request.endDate,
-            testCourse: request.testCourse ?? false,
-            reason: request.reason,
-        });
-        this.editModalVisible.set(true);
-    }
-
-    saveEdit() {
-        this.editDateRangeInvalid.set(false);
-        const currentRequest = this.selectedRequest();
-        if (this.editForm.invalid || !currentRequest?.id) {
-            this.editForm.markAllAsTouched();
-            return;
-        }
-
-        const startDate = this.editForm.get('startDate')!.value;
-        const endDate = this.editForm.get('endDate')!.value;
-        if (startDate && endDate && !startDate.isBefore(endDate)) {
-            this.editDateRangeInvalid.set(true);
-            return;
-        }
-
-        const payload: BaseCourseRequest = {
-            title: this.editForm.get('title')!.value!,
-            shortName: this.editForm.get('shortName')!.value!,
-            semester: this.editForm.get('semester')!.value ?? undefined,
-            startDate,
-            endDate,
-            testCourse: this.editForm.get('testCourse')!.value ?? false,
-            reason: this.editForm.get('reason')!.value!,
-        };
-
-        this.isSubmittingEdit.set(true);
-        this.courseRequestService.updateRequest(currentRequest.id, payload).subscribe({
-            next: (updated) => {
-                // Update the request in the list
-                this.pendingRequests.update((reqs) => {
-                    const index = reqs.findIndex((req) => req.id === updated.id);
-                    if (index !== -1) {
-                        const newReqs = [...reqs];
-                        newReqs[index] = updated;
-                        return newReqs;
-                    }
-                    return reqs;
-                });
-                this.alertService.success('artemisApp.courseRequest.admin.editSuccess');
-                this.editModalVisible.set(false);
-                this.isSubmittingEdit.set(false);
-                this.selectedRequest.set(undefined);
-            },
-            error: (error: HttpErrorResponse) => {
-                this.handleEditError(error);
-                this.isSubmittingEdit.set(false);
-            },
-        });
-    }
-
-    private handleEditError(error: HttpErrorResponse): void {
-        const errorKey = error.error?.errorKey;
-        const isShortNameConflict = errorKey === 'courseShortNameExists' || errorKey === 'courseRequestShortNameExists';
-
-        if (isShortNameConflict) {
-            const suggestedShortName = error.error?.params?.suggestedShortName;
-            this.alertService.warning('artemisApp.courseRequest.form.shortNameNotUnique', { suggestedShortName: suggestedShortName ?? '' });
-            if (suggestedShortName) {
-                this.editForm.patchValue({ shortName: suggestedShortName });
-            }
-            return;
-        }
-
-        onError(this.alertService, error);
     }
 }
