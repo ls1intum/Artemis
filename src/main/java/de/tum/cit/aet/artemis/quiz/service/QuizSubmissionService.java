@@ -604,7 +604,17 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         QuizSubmission submission = new QuizSubmission();
         Set<SubmittedAnswer> answers = new HashSet<>();
         submission.setSubmittedAnswers(answers);
-        if (dto == null || dto.submittedAnswers() == null || dto.submittedAnswers().isEmpty()) {
+        if (dto == null) {
+            return submission;
+        }
+        // Preserve the client-supplied submission id so the test-exam PUT path can UPDATE the existing row instead of
+        // INSERT-ing a new one on every auto-save (preventMultipleSubmissions returns early for test exams). Live mode
+        // and regular-exam mode overwrite this id with the server-resolved one before persisting, so a client-supplied
+        // value never propagates on those paths.
+        if (dto.id() != null) {
+            submission.setId(dto.id());
+        }
+        if (dto.submittedAnswers() == null || dto.submittedAnswers().isEmpty()) {
             return submission;
         }
         Map<Long, QuizQuestion> questionsById = quizExercise.getQuizQuestions().stream().filter(question -> question.getId() != null)

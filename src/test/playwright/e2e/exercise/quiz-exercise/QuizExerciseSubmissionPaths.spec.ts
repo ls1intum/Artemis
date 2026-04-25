@@ -25,10 +25,8 @@ test.describe('Quiz Exercise Submission Paths', { tag: '@fast' }, () => {
 
         test.beforeEach('Create an ended course quiz so it is open for practice', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
-            // Release in the past + due date in the past + duration of zero so the quiz is "ended" and the
-            // practice button becomes available to the student. SYNCHRONIZED with a past-started batch is the
-            // simplest configuration that mirrors what `quizExerciseUtilService.addCourseWithOneQuizExercise()`
-            // does on the server side (the same path the practice integration tests use).
+            // Release date in the past makes it visible to students; due date in the past makes
+            // QuizExercise.isQuizEnded() return true, which is what submitForPractice requires.
             quizExercise = await exerciseAPIRequests.createQuizExercise({
                 body: { course },
                 quizQuestions: [multipleChoiceQuizTemplate],
@@ -161,11 +159,13 @@ test.describe('Quiz Exercise Submission Paths', { tag: '@fast' }, () => {
         });
 
         /**
-         * Security regression for the course-scoped question lookup: passing a {@code quizQuestionId} from one course
-         * while addressing a different course's id in the path must 404, not return the question content (which would
-         * leak {@code QuizQuestionWithSolutionDTO} to a student outside the course).
+         * Security regression for the course-scoped question lookup: a {@code quizQuestionId} that belongs to a
+         * different course's quiz exercise than the path {@code courseId} must 404 from
+         * {@link QuizQuestionRepository#findByIdAndCourseIdElseThrow}. Without the course scope the endpoint would
+         * return {@code QuizQuestionWithSolutionDTO} for the foreign question — even though the student is enrolled
+         * in BOTH seed courses here (so the auth guard alone wouldn't prevent the lookup from succeeding).
          */
-        test('Training submit with a question id from a different course returns 404 (no solution leak)', async ({ login, page, exerciseAPIRequests }) => {
+        test('Training submit with a question id that does not belong to the path course returns 404', async ({ login, page, exerciseAPIRequests }) => {
             // Create a second quiz on the OTHER seed course (quizAssessment) so we have a question id that genuinely
             // does not belong to the course we will pass in the training path below.
             await login(admin);
@@ -187,11 +187,13 @@ test.describe('Quiz Exercise Submission Paths', { tag: '@fast' }, () => {
                 quizQuestion: { id: foreignQuestionId },
                 selectedOptions: quizInOtherCourse.quizQuestions![0].answerOptions!.filter((option) => option.isCorrect).map((option) => ({ id: option.id })),
             };
-            // Attempt to submit the foreign question using THIS describe's `course.id` in the path → must 404.
+            // Path course = THIS describe's `course.id` (quizParticipation seed) — the student IS enrolled in it,
+            // so the auth guard passes. Only the question id is foreign. The course-scoped repository lookup must
+            // reject it with 404 instead of returning the question payload (with its solutions).
             const submitResponse = await page.request.post(`/api/quiz/courses/${course.id}/training-questions/${foreignQuestionId}/submit?isRated=true`, {
                 data: trainingPayload,
             });
-            expect(submitResponse.status(), 'cross-course training submit must be rejected with 404, never leak the question').toBe(404);
+            expect(submitResponse.status(), 'course-scoped question lookup must reject a question id that belongs to a different course').toBe(404);
         });
 
         /**
