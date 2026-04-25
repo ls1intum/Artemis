@@ -121,6 +121,61 @@
     padding-left: 0.5rem;
 }
 
+.monaco-review-comment-inline-diff {
+    padding: 0 0.5rem;
+    margin-top: 0.4rem;
+}
+
+.monaco-review-comment-inline-diff-box {
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    overflow: hidden;
+    background-color: var(--body-bg);
+}
+
+.monaco-review-comment-inline-diff-labels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--body-bg);
+}
+
+.monaco-review-comment-inline-diff-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: inherit;
+    padding: 0.35rem 0.5rem;
+}
+
+.monaco-review-comment-inline-diff-label--left {
+    border-right: 1px solid var(--border-color);
+}
+
+.monaco-review-comment-inline-diff-label--right {
+    text-align: left;
+}
+
+.monaco-review-comment-inline-diff-box jhi-monaco-diff-editor {
+    display: block;
+}
+
+.monaco-review-comment-inline-diff-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.45rem 0.5rem;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--body-bg);
+}
+
+.monaco-review-comment-inline-diff-warning {
+    margin-right: auto;
+    color: var(--danger);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
 .monaco-review-comment-reply {
     margin-top: 0.75rem;
 }
@@ -253,6 +308,24 @@
     justify-content: flex-end;
     gap: 0.5rem;
     margin-top: 0.5rem;
+}
+
+.monaco-review-comment-resolve-controls {
+    display: inline-flex;
+    align-items: stretch;
+}
+
+.monaco-review-comment-resolve-main-button {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.monaco-review-comment-resolve-menu-trigger {
+    min-width: 1.9rem;
+    padding: 0 0.35rem;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 1px solid var(--border-color);
 }
 
 .monaco-review-comment-related-locations {
