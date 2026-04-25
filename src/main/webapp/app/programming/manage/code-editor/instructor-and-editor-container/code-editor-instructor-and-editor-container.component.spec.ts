@@ -1365,7 +1365,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(jumpSpy).toHaveBeenCalledWith(issue.lineNumber);
         }));
 
-        it('onEditorLoaded jumps directly when file is already selected', () => {
         it('onEditorLoaded jumps immediately when file is already selected without triggering onFileLoad', () => {
             const targetFile = 'src/tests/ExampleTest.java';
             const targetLine = 42;

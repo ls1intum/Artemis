@@ -230,31 +230,6 @@ export class ReviewCommentWidgetManager {
                 this.threadWidgetRefs.delete(threadId);
             }
         }
-        for (const thread of threads) {
-            const line = this.config.getThreadLine(thread);
-            const widgetId = this.buildThreadWidgetId(thread.id);
-            const showLocationWarning = this.config.showLocationWarning();
-            let widgetRef = this.threadWidgetRefs.get(thread.id);
-            if (!widgetRef) {
-                widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
-                widgetRef.setInput('thread', thread);
-                widgetRef.setInput('showLocationWarning', showLocationWarning);
-                widgetRef.setInput('showFeedbackAction', this.config.showFeedbackAction(thread));
-                if (!this.collapseState.has(thread.id)) {
-                    const shouldCollapse = thread.resolved || showLocationWarning;
-                    this.collapseState.set(thread.id, shouldCollapse);
-                }
-                widgetRef.setInput('initialCollapsed', this.collapseState.get(thread.id) ?? false);
-                widgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
-                widgetRef.instance.onNavigateToLocation.subscribe((location) => this.config.onNavigateToLocation?.(location));
-                this.threadWidgetRefs.set(thread.id, widgetRef);
-            } else {
-                widgetRef.setInput('thread', thread);
-                widgetRef.setInput('showLocationWarning', showLocationWarning);
-                widgetRef.setInput('showFeedbackAction', this.config.showFeedbackAction(thread));
-            }
-            this.editor.disposeWidgetsByPrefix(widgetId);
-            this.editor.addLineWidget(line + 1, widgetId, widgetRef.location.nativeElement);
     }
 
     /**
@@ -312,6 +287,7 @@ export class ReviewCommentWidgetManager {
     private setThreadWidgetInputs(widgetRef: ComponentRef<ReviewCommentThreadWidgetComponent>, thread: CommentThread, showLocationWarning: boolean): void {
         widgetRef.setInput('thread', thread);
         widgetRef.setInput('showLocationWarning', showLocationWarning);
+        widgetRef.setInput('showFeedbackAction', this.config.showFeedbackAction(thread));
     }
 
     /**

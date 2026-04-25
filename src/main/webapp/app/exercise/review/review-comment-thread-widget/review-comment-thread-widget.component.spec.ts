@@ -198,6 +198,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
         expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.selectThreadAsFeedback');
         expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.removeThreadFromFeedback');
+    });
+
     it('should resolve all threads in the group and collapse current thread', () => {
         const collapseSpy = vi.fn();
         comp.onToggleCollapse.subscribe(collapseSpy);

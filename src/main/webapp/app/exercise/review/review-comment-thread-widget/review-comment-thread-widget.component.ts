@@ -261,6 +261,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             return;
         }
         this.reviewCommentService.toggleThreadFeedbackSelection(this.thread().id);
+    }
+
+    /**
      * Resolves all threads in the current thread group.
      */
     resolveGroup(): void {

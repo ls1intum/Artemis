@@ -1626,16 +1626,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * the file-load handler is invoked directly. Otherwise, selecting
      * the file triggers the normal load workflow.
      */
-    onEditorLoaded() {
+    onEditorLoaded(): void {
         if (this.fileToJumpOn) {
-            // File already loaded: avoid re-running the file-load/sync path, which is only
-            // needed when Monaco actually switches files. We only need the deferred line jump.
-            if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
-                if (this.lineJumpOnFileLoad !== undefined) {
-                    this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
-                }
-                this.lineJumpOnFileLoad = undefined;
-                this.fileToJumpOn = undefined;
             // File already loaded, no file-load event will fire.
             // Jump directly without re-running file-sync load/rebind.
             if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
@@ -1654,7 +1646,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param {string} fileName
      *        The name of the file that was just loaded.
      */
-    onFileLoad(fileName: string) {
+    onFileLoad(fileName: string): void {
         this.onFileSyncLoad(fileName);
         this.performDeferredLineJump(fileName);
     }
