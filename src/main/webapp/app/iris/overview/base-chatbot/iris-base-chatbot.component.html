@@ -255,6 +255,20 @@
                                         </div>
                                     </div>
                                 }
+                                @if (message.sender === IrisSender.SYSTEM) {
+                                    <div class="context-switch-divider" role="separator">
+                                        <span class="divider-line"></span>
+                                        <span class="divider-label">
+                                            <fa-icon [icon]="faArrowsRotate" />
+                                            @for (content of message.content; track content.id ?? $index) {
+                                                @if (content.type === IrisMessageContentType.TEXT) {
+                                                    <span>{{ (content | as: IrisTextMessageContent).textContent }}</span>
+                                                }
+                                            }
+                                        </span>
+                                        <span class="divider-line"></span>
+                                    </div>
+                                }
                                 @if (message.sender === IrisSender.LLM) {
                                     <div class="llm-message-wrapper">
                                         @for (content of message.content; track content.id ?? $index) {
