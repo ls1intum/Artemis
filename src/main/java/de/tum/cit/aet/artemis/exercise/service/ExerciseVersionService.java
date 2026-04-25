@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTar
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
-import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
+import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewVersionChangeService;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
 import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -73,7 +73,7 @@ public class ExerciseVersionService {
 
     private final ChannelRepository channelRepository;
 
-    private final ExerciseReviewService exerciseReviewService;
+    private final ExerciseReviewVersionChangeService exerciseReviewVersionChangeService;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -82,7 +82,8 @@ public class ExerciseVersionService {
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
             Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
-            ExerciseReviewService exerciseReviewService, ApplicationEventPublisher eventPublisher, com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+            ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher,
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -93,7 +94,7 @@ public class ExerciseVersionService {
         this.userRepository = userRepository;
         this.exerciseEditorSyncService = exerciseEditorSyncService;
         this.channelRepository = channelRepository;
-        this.exerciseReviewService = exerciseReviewService;
+        this.exerciseReviewVersionChangeService = exerciseReviewVersionChangeService;
         this.eventPublisher = eventPublisher;
         this.objectMapper = objectMapper;
     }
@@ -169,7 +170,7 @@ public class ExerciseVersionService {
             log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
             previousVersion.ifPresent(prev -> {
                 try {
-                    List<CommentThreadDTO> updatedThreads = exerciseReviewService.updateThreadsForVersionChange(prev.getExerciseSnapshot(), exerciseSnapshot).stream()
+                    List<CommentThreadDTO> updatedThreads = exerciseReviewVersionChangeService.updateThreadsForVersionChange(prev.getExerciseSnapshot(), exerciseSnapshot).stream()
                             .filter(thread -> thread.getId() != null).map(thread -> new CommentThreadDTO(thread, List.of())).collect(Collectors.toUnmodifiableList());
                     for (CommentThreadDTO updatedThread : updatedThreads) {
                         exerciseEditorSyncService.broadcastReviewThreadUpdate(exercise.getId(), ReviewThreadSyncDTO.threadUpdated(updatedThread));

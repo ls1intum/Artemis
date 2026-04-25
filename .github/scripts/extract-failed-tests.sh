@@ -15,7 +15,7 @@ try:
     tree = ET.parse(sys.argv[1])
     lines = []
     for tc in tree.iter('testcase'):
-        if tc.find('failure') is not None:
+        if tc.find('failure') is not None or tc.find('error') is not None:
             name = tc.get('name', 'Unknown')
             time_s = float(tc.get('time', 0))
             m, s = divmod(int(time_s), 60)
