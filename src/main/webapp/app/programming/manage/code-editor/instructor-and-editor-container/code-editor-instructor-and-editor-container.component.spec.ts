@@ -1330,6 +1330,21 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.selectedIssue).toEqual(sorted[0]);
         });
 
+        it('should exclude resolved consistency threads from the navigation list', () => {
+            const threads = createConsistencyThreads(mockIssues);
+            threads[0].resolved = true;
+            threads[3].resolved = true;
+            reviewCommentService.threads.set(threads as any);
+
+            const sorted = comp.sortedIssues();
+            expect(sorted).toHaveLength(mockIssues.length - 2);
+            expect(sorted.some((issue) => issue.threadId === threads[0].id)).toBeFalse();
+            expect(sorted.some((issue) => issue.threadId === threads[3].id)).toBeFalse();
+
+            comp.toggleConsistencyIssuesToolbar();
+            expect(comp.selectedIssue).toEqual(sorted[0]);
+        });
+
         it('should navigate global next', () => {
             reviewCommentService.threads.set(createConsistencyThreads(mockIssues) as any);
             const sorted = comp.sortedIssues();
@@ -1381,17 +1396,24 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(jumpSpy).toHaveBeenCalledWith(issue.lineNumber);
         }));
 
-        it('onEditorLoaded calls onFileLoad immediately when file is already selected', () => {
+        it('onEditorLoaded jumps immediately when file is already selected without triggering onFileLoad', () => {
             const targetFile = 'src/tests/ExampleTest.java';
+            const targetLine = 42;
             comp.fileToJumpOn = targetFile;
+            comp.lineJumpOnFileLoad = targetLine;
             (comp as any).codeEditorContainer.selectedFile = targetFile;
 
             const onFileLoadSpy = jest.spyOn(comp, 'onFileLoad');
+            const onFileSyncLoadSpy = jest.spyOn(comp as any, 'onFileSyncLoad');
 
             comp.onEditorLoaded();
 
-            expect(onFileLoadSpy).toHaveBeenCalledWith(targetFile);
+            expect(onFileLoadSpy).not.toHaveBeenCalled();
+            expect(onFileSyncLoadSpy).not.toHaveBeenCalled();
+            expect((comp as any).codeEditorContainer.jumpToLine).toHaveBeenCalledWith(targetLine);
             expect((comp as any).codeEditorContainer.selectedFile).toBe(targetFile);
+            expect(comp.fileToJumpOn).toBeUndefined();
+            expect(comp.lineJumpOnFileLoad).toBeUndefined();
         });
 
         it('onEditorLoaded sets selectedFile when file is not selected yet', () => {
