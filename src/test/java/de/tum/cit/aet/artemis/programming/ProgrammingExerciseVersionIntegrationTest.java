@@ -95,11 +95,12 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
                 new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
         newExercise.getBuildConfig().setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
         // Act: Create the exercise via setup endpoint
-        this.programmingExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
-
-        // Assert: Verify operation succeeded
-        assertThat(programmingExercise).isNotNull();
-        assertThat(programmingExercise.getId()).isNotNull();
+        ProgrammingExercise created = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        assertThat(created).isNotNull();
+        assertThat(created.getId()).isNotNull();
+        // Reload from DB so that associations (course, buildConfig) are properly loaded
+        // for UpdateProgrammingExerciseDTO.of() which needs courseId and buildPlanConfiguration
+        this.programmingExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(created.getId());
         // wait for solution/template/test to build and generate git commits
         await().untilAsserted(() -> {
             ExerciseVersion exerciseVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",

@@ -406,6 +406,19 @@ public final class RepositoryExportTestUtil {
      * @param repo the local repository whose bare repo should be verified
      */
     public static void waitForBareRepositoryReady(LocalRepository repo) {
+        waitForBareRepositoryReady(repo, null);
+    }
+
+    /**
+     * Waits for a bare repository to be fully ready, optionally verifying a specific commit.
+     * In addition to checking HEAD, this verifies that the given commit hash (if provided) is
+     * resolvable and its tree can be walked, preventing MissingObjectException race conditions
+     * on slow CI systems.
+     *
+     * @param repo       the local repository whose bare repo should be verified
+     * @param commitHash optional commit hash to verify is fully readable (may be null)
+     */
+    public static void waitForBareRepositoryReady(LocalRepository repo, String commitHash) {
         Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             try {
                 // Try to open the bare repository and resolve HEAD
@@ -419,6 +432,15 @@ public final class RepositoryExportTestUtil {
                     // Verify we can read the commit object
                     try (RevWalk revWalk = new RevWalk(git.getRepository())) {
                         revWalk.parseCommit(headRef);
+                        // Also verify the specific commit if provided
+                        if (commitHash != null) {
+                            var commitId = git.getRepository().resolve(commitHash);
+                            if (commitId == null) {
+                                log.debug("Bare repository commit {} is not resolvable yet, waiting...", commitHash);
+                                return false;
+                            }
+                            revWalk.parseCommit(commitId);
+                        }
                     }
                     return true;
                 }

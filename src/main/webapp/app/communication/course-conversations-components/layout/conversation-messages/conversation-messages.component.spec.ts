@@ -196,6 +196,9 @@ examples.forEach((activeConversation) => {
             vi.advanceTimersByTime(0);
             expect(fetchNextPageSpy).not.toHaveBeenCalled();
 
+            // Set up state so more posts are available (triggers fetchNextPage)
+            component.posts = [{ id: 1 } as Post, { id: 2 } as Post];
+            component.totalNumberOfPosts = 100;
             const nonExistingScrollPosition = 999;
             component.goToLastSelectedElement(nonExistingScrollPosition, false);
             vi.advanceTimersByTime(0);
@@ -578,10 +581,7 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = {
-                ...component._activeConversation,
-                lastReadDate,
-            };
+            component._activeConversation = Object.assign({}, component._activeConversation, { lastReadDate });
 
             component.currentUser = currentUser;
 
@@ -600,10 +600,7 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = {
-                ...component._activeConversation,
-                lastReadDate,
-            };
+            component._activeConversation = Object.assign({}, component._activeConversation, { lastReadDate });
 
             component.currentUser = currentUser;
 
@@ -815,6 +812,155 @@ examples.forEach((activeConversation) => {
             vi.spyOn(component as any, 'getBoundingRectsForPost').mockReturnValue(rects);
             const result = (component as any).isPostVisible(postId);
             expect(result).toBe(false);
+        });
+
+        it('should scroll to first unread post when no saved scroll position exists', () => {
+            const lastReadDate = dayjs().subtract(10, 'minutes');
+            const currentUser = { id: 99, internal: false };
+            const otherUser = { id: 42, internal: false };
+
+            component._activeConversation = Object.assign({}, component._activeConversation, { lastReadDate });
+            component.currentUser = currentUser;
+            component.allPosts = [
+                { id: 1, creationDate: dayjs().subtract(15, 'minutes'), author: otherUser } as Post,
+                { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post,
+                { id: 3, creationDate: dayjs(), author: otherUser } as Post,
+            ];
+
+            const mockMessages = [
+                { post: () => ({ id: 1 }), elementRef: { nativeElement: { offsetTop: 0, getBoundingClientRect: vi.fn().mockReturnValue({ top: 0, bottom: 50 }) } } },
+                { post: () => ({ id: 2 }), elementRef: { nativeElement: { offsetTop: 200, getBoundingClientRect: vi.fn().mockReturnValue({ top: 200, bottom: 250 }) } } },
+                { post: () => ({ id: 3 }), elementRef: { nativeElement: { offsetTop: 400, getBoundingClientRect: vi.fn().mockReturnValue({ top: 400, bottom: 450 }) } } },
+            ] as unknown as PostingThreadComponent[];
+            (component as any).messages = vi.fn().mockReturnValue(mockMessages);
+
+            const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((fn: FrameRequestCallback) => {
+                fn(0);
+                return 0;
+            });
+
+            (component as any).scrollToUnreadOrBottom();
+
+            expect(component.content().nativeElement.scrollTop).toBe(Math.max(200 - 15, 0));
+            expect(component.canStartSaving).toBe(true);
+            expect((component as any).initialScrollComplete).toBe(true);
+
+            rafSpy.mockRestore();
+        });
+
+        it('should scroll to bottom when no saved position and no unread posts', () => {
+            component._activeConversation = Object.assign({}, component._activeConversation, { lastReadDate: dayjs() });
+            component.currentUser = { id: 99, internal: false } as any;
+            component.allPosts = [{ id: 1, creationDate: dayjs().subtract(15, 'minutes'), author: { id: 99, internal: false } } as Post];
+
+            const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages').mockImplementation(() => {});
+
+            (component as any).scrollToUnreadOrBottom();
+
+            expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+            expect(component.canStartSaving).toBe(true);
+            expect((component as any).initialScrollComplete).toBe(true);
+        });
+
+        it('should not trigger handleScrollOnNewMessage before initial scroll is complete', () => {
+            (component as any).initialScrollComplete = false;
+            component.posts = [{ id: 1 } as Post];
+            component.content().nativeElement.scrollTop = 0;
+            component.page = 1;
+
+            const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+            component.handleScrollOnNewMessage();
+
+            expect(scrollToBottomSpy).not.toHaveBeenCalled();
+        });
+
+        it('should trigger handleScrollOnNewMessage after initial scroll is complete', () => {
+            (component as any).initialScrollComplete = true;
+            component.posts = [{ id: 1 } as Post];
+            component.content().nativeElement.scrollTop = 0;
+            component.page = 1;
+
+            const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+            component.handleScrollOnNewMessage();
+
+            expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should reset initialScrollComplete when active conversation changes', () => {
+            (component as any).initialScrollComplete = true;
+            component.canStartSaving = true;
+
+            const newConversation = Object.assign({}, activeConversation, { id: 999 });
+            vi.spyOn(metisService, 'fetchAllPinnedPosts').mockReturnValue(of([]));
+
+            component._activeConversation = newConversation;
+            fixture.componentRef.setInput('course', course);
+            (component as any).onActiveConversationChange();
+
+            expect((component as any).initialScrollComplete).toBe(false);
+            expect(component.canStartSaving).toBe(false);
+        });
+
+        it('should set initialScrollComplete to true in goToLastSelectedElement when element is found', async () => {
+            (component as any).initialScrollComplete = false;
+            const mockMessages = [{ post: () => ({ id: 42 }), elementRef: { nativeElement: { offsetTop: 100 } } }] as unknown as PostingThreadComponent[];
+            (component as any).messages = vi.fn().mockReturnValue(mockMessages);
+
+            await component.goToLastSelectedElement(42, false);
+
+            expect((component as any).initialScrollComplete).toBe(true);
+            expect(component.canStartSaving).toBe(true);
+        });
+
+        it('should scroll to bottom when currentUser is not yet available in scrollToUnreadOrBottom', () => {
+            component.currentUser = undefined as any;
+            const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages').mockImplementation(() => {});
+
+            (component as any).scrollToUnreadOrBottom();
+
+            expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+            expect(component.canStartSaving).toBe(true);
+            expect((component as any).initialScrollComplete).toBe(true);
+        });
+
+        it('should fall back to scrollToUnreadOrBottom when stored post ID is stale and all pages are loaded', async () => {
+            (component as any).initialScrollComplete = false;
+            component.totalNumberOfPosts = 2;
+            component.posts = [{ id: 1 } as Post, { id: 2 } as Post];
+
+            const mockMessages = [
+                { post: () => ({ id: 1 }), elementRef: { nativeElement: { offsetTop: 0 } } },
+                { post: () => ({ id: 2 }), elementRef: { nativeElement: { offsetTop: 100 } } },
+            ] as unknown as PostingThreadComponent[];
+            (component as any).messages = vi.fn().mockReturnValue(mockMessages);
+
+            const scrollToUnreadOrBottomSpy = vi.spyOn(component as any, 'scrollToUnreadOrBottom').mockImplementation(() => {});
+            const fetchNextPageSpy = vi.spyOn(component, 'fetchNextPage');
+
+            await component.goToLastSelectedElement(999, false);
+
+            expect(fetchNextPageSpy).not.toHaveBeenCalled();
+            expect(scrollToUnreadOrBottomSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should fetch next page when stored post ID is stale but more posts are available', async () => {
+            (component as any).initialScrollComplete = false;
+            component.totalNumberOfPosts = 100;
+            component.posts = [{ id: 1 } as Post, { id: 2 } as Post];
+
+            const mockMessages = [
+                { post: () => ({ id: 1 }), elementRef: { nativeElement: { offsetTop: 0 } } },
+                { post: () => ({ id: 2 }), elementRef: { nativeElement: { offsetTop: 100 } } },
+            ] as unknown as PostingThreadComponent[];
+            (component as any).messages = vi.fn().mockReturnValue(mockMessages);
+
+            const fetchNextPageSpy = vi.spyOn(component, 'fetchNextPage').mockImplementation(() => {});
+
+            await component.goToLastSelectedElement(999, false);
+
+            expect(fetchNextPageSpy).toHaveBeenCalledOnce();
         });
     });
 });

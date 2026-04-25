@@ -98,6 +98,6 @@ class GroupNotificationScheduleServiceTest extends AbstractSpringIntegrationLoca
         // Use argThat matcher because the notification service reloads the exercise from the database,
         // creating a different object instance than the one we have here
         verify(singleUserNotificationService, timeout(TIMEOUT_MS)).notifyUsersAboutAssessedExerciseSubmission(argThat(ex -> ex != null && ex.getId().equals(exerciseId)));
-        verify(javaMailSender, timeout(TIMEOUT_MS)).send(any(MimeMessage.class));
+        verify(javaMailSender, timeout(TIMEOUT_MS)).send(any(MimeMessage[].class));
     }
 }

@@ -155,6 +155,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         return templatePoms;
     }
 
+    @SuppressWarnings("deprecation") // MavenXpp3Writer is deprecated in maven-model 4.x but no replacement exists yet
     private void writeProjectObjectModel(Model repositoryModel, File repositoryPom) throws IOException {
         try (OutputStream outputStream = Files.newOutputStream(repositoryPom.toPath())) {
             var pomWriter = new MavenXpp3Writer();
@@ -162,6 +163,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         }
     }
 
+    @SuppressWarnings("deprecation") // MavenXpp3Reader is deprecated in maven-model 4.x but no replacement exists yet
     private Model upgradeProjectObjectModel(Resource templatePom, File repositoryPom, boolean scaEnabled) throws IOException, XmlPullParserException {
         try (InputStream templateInput = templatePom.getInputStream(); InputStream repoInput = Files.newInputStream(repositoryPom.toPath())) {
 

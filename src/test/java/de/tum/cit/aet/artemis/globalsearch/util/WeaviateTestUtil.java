@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
@@ -35,15 +36,19 @@ public final class WeaviateTestUtil {
 
     /**
      * Returns {@code true} when Weaviate assertions should be skipped because
-     * Docker is not available on the current machine.
-     * If Docker IS available but the service is {@code null}, this method fails
-     * the test with a descriptive error instead of silently skipping.
+     * Docker is not available on the current machine or because the Weaviate
+     * Testcontainer failed to start (e.g. image pull failure).
+     * If Docker IS available and the container started successfully but the
+     * service is still {@code null}, this method fails the test with a descriptive error.
      */
     public static boolean shouldSkipWeaviateAssertions(WeaviateService weaviateService) {
         if (weaviateService != null) {
             return false;
         }
         if (!DockerClientFactory.instance().isDockerAvailable()) {
+            return true;
+        }
+        if (WeaviateTestContainerFactory.isStartupFailed()) {
             return true;
         }
         throw new AssertionError("WeaviateService is null even though Docker is available — the Weaviate Testcontainer should be running. "

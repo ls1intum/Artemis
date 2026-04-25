@@ -86,6 +86,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     scrollSubject = new Subject<number>();
     canStartSaving = false;
     createdNewMessage = false;
+    private initialScrollComplete = false;
 
     readonly openThread = output<Post>();
 
@@ -165,7 +166,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             // Read the signal to track changes
             void this.messages();
             untracked(() => {
-                if (!this.createdNewMessage && this.posts.length > 0) {
+                if (!this.createdNewMessage && !this.initialScrollComplete && this.posts.length > 0) {
                     this.scrollToStoredId();
                 }
             });
@@ -286,7 +287,42 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
         if (savedScrollId) {
             requestAnimationFrame(() => this.goToLastSelectedElement(savedScrollId, this.isOpenThreadOnFocus));
+        } else {
+            this.scrollToUnreadOrBottom();
         }
+    }
+
+    /**
+     * Scrolls the view to the first unread message if there are unread messages,
+     * otherwise scrolls to the bottom (latest messages).
+     * Also enables scroll position saving once the initial scroll is complete.
+     */
+    private scrollToUnreadOrBottom(): void {
+        if (!this.currentUser) {
+            this.completeInitialScroll();
+            return;
+        }
+        this.computeLastReadState();
+        this.setFirstUnreadPostId();
+        const unreadElement = this.firstUnreadPostId ? this.messages().find((m) => m.post().id === this.firstUnreadPostId)?.elementRef?.nativeElement : undefined;
+        if (!unreadElement) {
+            this.completeInitialScroll();
+            return;
+        }
+        requestAnimationFrame(() => {
+            this.content().nativeElement.scrollTop = Math.max(unreadElement.offsetTop - 15, 0);
+            this.canStartSaving = true;
+            this.initialScrollComplete = true;
+        });
+    }
+
+    /**
+     * Scrolls to the bottom and marks the initial scroll as complete.
+     */
+    private completeInitialScroll(): void {
+        this.scrollToBottomOfMessages();
+        this.canStartSaving = true;
+        this.initialScrollComplete = true;
     }
 
     private onActiveConversationChange() {
@@ -300,6 +336,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
         if (this.course() && this._activeConversation) {
             this.canStartSaving = false;
+            this.initialScrollComplete = false;
             this.onSearch();
             this.createEmptyPost();
             this.metisService.fetchAllPinnedPosts(this._activeConversation!.id!).subscribe({
@@ -637,6 +674,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     handleScrollOnNewMessage = () => {
+        if (!this.initialScrollComplete) {
+            return;
+        }
         if ((this.posts.length > 0 && this.content().nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
             this.scrollToBottomOfMessages();
         }
@@ -670,19 +710,25 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     async goToLastSelectedElement(lastScrollPosition: number, isOpenThread: boolean) {
         if (!lastScrollPosition) {
-            this.scrollToBottomOfMessages();
-            this.canStartSaving = true;
+            this.completeInitialScroll();
             return;
         }
         const messageArray = this.messages();
         const element = messageArray.find((message) => message.post().id === lastScrollPosition); // Suchen nach dem Post
 
         if (!element) {
-            this.fetchNextPage();
+            const hasMorePosts = this.posts.length < this.totalNumberOfPosts;
+            if (hasMorePosts) {
+                this.fetchNextPage();
+            } else {
+                this.scrollToUnreadOrBottom();
+            }
+            return;
         } else {
             // We scroll to the element with a slight buffer to ensure its fully visible (-10)
             this.content().nativeElement.scrollTop = Math.max(0, element.elementRef.nativeElement.offsetTop - 10);
             this.canStartSaving = true;
+            this.initialScrollComplete = true;
             if (isOpenThread) {
                 this.openThread.emit(element.post());
             }
