@@ -97,8 +97,8 @@ artemis:
   atlas:
     # chat-*         — used by the conversational Atlas agent (AtlasAgentService)
     # orchestrator-* — used by the competency orchestrator (CompetencyOrchestrationService)
-    chat-model: gpt-5-mini
-    chat-temperature: 1.0
+    chat-model: gpt-5.4-mini
+    chat-temperature: 0.8
     orchestrator-model: gpt-5.4
     orchestrator-temperature: 1.0
     orchestrator-reasoning-effort: medium

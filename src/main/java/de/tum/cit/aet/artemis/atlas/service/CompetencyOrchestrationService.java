@@ -97,15 +97,15 @@ public class CompetencyOrchestrationService {
 
     public CompetencyOrchestrationService(ProgrammingExerciseRepository programmingExerciseRepository, ContentExtractionService contentExtractionService,
             OrchestratorToolsService orchestratorToolsService, AtlasPromptTemplateService templateService, @Nullable ChatClient chatClient,
-            @Nullable @Qualifier("orchestratorToolCallbackProvider") ToolCallbackProvider orchestratorToolCallbackProvider,
-            @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, @Value("${artemis.atlas.orchestrator-model:gpt-5.4}") String deploymentName,
-            @Value("${artemis.atlas.orchestrator-temperature:1.0}") double temperature, @Value("${artemis.atlas.orchestrator-reasoning-effort:medium}") String reasoningEffort) {
+            AtlasAgentToolCallbackService toolCallbackFactory, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
+            @Value("${artemis.atlas.orchestrator-model:gpt-5.4}") String deploymentName, @Value("${artemis.atlas.orchestrator-temperature:1.0}") double temperature,
+            @Value("${artemis.atlas.orchestrator-reasoning-effort:medium}") String reasoningEffort) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.contentExtractionService = contentExtractionService;
         this.orchestratorToolsService = orchestratorToolsService;
         this.templateService = templateService;
         this.chatClient = chatClient;
-        this.orchestratorToolCallbackProvider = orchestratorToolCallbackProvider;
+        this.orchestratorToolCallbackProvider = toolCallbackFactory.createOrchestratorProvider();
         this.hazelcastInstance = hazelcastInstance;
         this.deploymentName = deploymentName;
         this.temperature = temperature;

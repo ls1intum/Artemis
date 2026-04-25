@@ -74,6 +74,15 @@ npm run test:one -- --test-path-pattern='src/main/webapp/app/path/to/spec\.ts$'
 ./run-e2e-tests-local-fast.sh --filter "Quiz"              # Run tests matching "Quiz"
 ./run-e2e-tests-local-fast.sh --filter "ExamAssessment|SystemHealth"  # Multiple patterns
 ./run-e2e-tests-local-fast.sh --stop                       # Stop all services
+
+# Multi-node E2E (catches Hazelcast cluster / L2 cache coherence regressions)
+# Boots the full production-faithful stack: Postgres, JHipster Registry (Eureka),
+# ActiveMQ, 3 Artemis nodes, nginx LB, containerised Playwright. Slower than the
+# single-node fast script, but the only way to reproduce multi-node bugs locally.
+./run-e2e-tests-local-multinode.sh                         # Full multi-node run (build WAR + image + stack + tests)
+./run-e2e-tests-local-multinode.sh --filter "Quiz"         # Multi-node, filtered
+./run-e2e-tests-local-multinode.sh --skip-build --skip-up  # Quick re-run against an already-running stack
+./run-e2e-tests-local-multinode.sh --stop                  # Tear everything down
 ```
 
 ## Project Structure
