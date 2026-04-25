@@ -49,13 +49,7 @@
                 <div class="monaco-review-comment-header">
                     <div class="monaco-review-comment-title">
                         @if (isConsistencyCheckComment(commentVm.comment)) {
-                            {{
-                                'artemisApp.review.requestedBy'
-                                    | artemisTranslate
-                                        : {
-                                              name: commentVm.authorName || ('artemisApp.review.systemAuthor' | artemisTranslate),
-                                          }
-                            }}
+                            {{ 'artemisApp.review.hyperionAiAuthor' | artemisTranslate }}
                         } @else if (commentVm.authorName) {
                             {{ commentVm.authorName }}
                         } @else {
@@ -128,6 +122,42 @@
                     </div>
                 } @else {
                     <div class="monaco-review-comment-text">{{ commentVm.displayText }}</div>
+                    @if (isConsistencyCheckComment(commentVm.comment) && commentVm.comment.id === firstComment()?.id && consistencySuggestedInlineFix(); as inlineFix) {
+                        <div class="monaco-review-comment-inline-diff">
+                            <div class="monaco-review-comment-inline-diff-box">
+                                <div class="monaco-review-comment-inline-diff-labels">
+                                    <span class="monaco-review-comment-inline-diff-label monaco-review-comment-inline-diff-label--left">
+                                        {{ 'artemisApp.review.inlineDiffHeader.originalCode' | artemisTranslate }}
+                                    </span>
+                                    <span class="monaco-review-comment-inline-diff-label monaco-review-comment-inline-diff-label--right">
+                                        {{ 'artemisApp.review.inlineDiffHeader.suggestedResult' | artemisTranslate }}
+                                    </span>
+                                </div>
+                                <jhi-monaco-diff-editor [allowSplitView]="true" [forceSideBySide]="true" [lineNumberOffset]="inlineFix.startLine - 1" />
+                                <div class="monaco-review-comment-inline-diff-actions">
+                                    @if (showInlineFixOutdatedWarning()) {
+                                        <span class="monaco-review-comment-inline-diff-warning">
+                                            {{ 'artemisApp.review.inlineFixOutdatedWarning' | artemisTranslate }}
+                                        </span>
+                                    }
+                                    <button
+                                        pButton
+                                        type="button"
+                                        size="small"
+                                        class="monaco-review-comment-inline-diff-apply"
+                                        [disabled]="inlineFix.applied"
+                                        (click)="applySuggestedInlineFix(inlineFix)"
+                                    >
+                                        @if (inlineFix.applied) {
+                                            {{ 'artemisApp.review.inlineFixAlreadyApplied' | artemisTranslate }}
+                                        } @else {
+                                            {{ 'artemisApp.review.applyInlineFix' | artemisTranslate }}
+                                        }
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
                 }
             </div>
         }
@@ -169,13 +199,43 @@
                 rows="1"
             ></textarea>
             <div class="monaco-review-comment-actions">
-                <button pButton type="button" severity="secondary" size="small" (click)="toggleResolved()">
-                    @if (thread().resolved) {
-                        {{ 'artemisApp.review.unresolveThread' | artemisTranslate }}
-                    } @else {
-                        {{ 'artemisApp.review.resolveThread' | artemisTranslate }}
+                <div class="monaco-review-comment-resolve-controls">
+                    <button pButton type="button" severity="secondary" size="small" class="monaco-review-comment-resolve-main-button" (click)="toggleResolved()">
+                        @if (thread().resolved) {
+                            {{ 'artemisApp.review.unresolveThread' | artemisTranslate }}
+                        } @else {
+                            {{ 'artemisApp.review.resolveThread' | artemisTranslate }}
+                        }
+                    </button>
+                    @if (resolveGroupMenuItems.length > 0) {
+                        <button
+                            pButton
+                            type="button"
+                            severity="secondary"
+                            size="small"
+                            class="monaco-review-comment-resolve-menu-trigger"
+                            [attr.aria-label]="'artemisApp.review.resolveThreadOptions' | artemisTranslate"
+                            [title]="'artemisApp.review.resolveThreadOptions' | artemisTranslate"
+                            (click)="resolveGroupMenu.toggle($event)"
+                        >
+                            <fa-icon [icon]="faChevronDown" />
+                        </button>
+                        <p-menu #resolveGroupMenu [popup]="true" appendTo="body" styleClass="monaco-review-comment-menu-overlay" [model]="resolveGroupMenuItems">
+                            <ng-template #item let-item>
+                                <button
+                                    pButton
+                                    type="button"
+                                    text
+                                    size="small"
+                                    class="monaco-review-comment-menu-item"
+                                    (click)="handleResolveGroupMenuAction(item.id); resolveGroupMenu.hide()"
+                                >
+                                    <span>{{ item.label }}</span>
+                                </button>
+                            </ng-template>
+                        </p-menu>
                     }
-                </button>
+                </div>
                 <button pButton type="button" size="small" (click)="submitReply()">
                     {{ 'artemisApp.review.replySubmit' | artemisTranslate }}
                 </button>
