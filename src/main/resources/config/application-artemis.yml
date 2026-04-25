@@ -95,8 +95,8 @@ artemis:
         input-cost-per-million-eur: 0.23
         output-cost-per-million-eur: 1.84
   atlas:
-    chat-model: gpt-4o
-    temperature: 0.2
+    chat-model: gpt-5.4-mini
+    temperature: 0.8
     atlasml:
       enabled: false # If disabled, no artifacts of the AtlasML service are accessible. This might impact the experience for instructors, i.e. some of the AI recommendations are not available.
       base-url: <your-atlasml-url> # Required address to you own AtlasML instance
@@ -117,11 +117,6 @@ artemis:
   science: # The science module is used for research purposes such as the collection of data.
     event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
-
-  nebula: # The nebula module is used for llm features such as faq-rewriting and lecture transcription
-    enabled: false
-    url: <your-nebula-url>
-    secret-token: <your-secret>
 
   iris: # The iris module is used for AI-powered features via Pyris
     enabled: false
