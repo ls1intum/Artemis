@@ -57,16 +57,18 @@ export const I18N_HASH = '${languagesHash.hash}';
 `;
 fs.writeFileSync(path.resolve(__dirname, 'src', 'main', 'webapp', 'app', 'core', 'environments', 'environment.override.ts'), environmentConfig);
 
-
 // =====================
 // i18n merging
 // =====================
 
-
 const groups = [
-    { folder: './src/main/webapp/i18n/en', output: './src/main/webapp/i18n/en.json' },
-    { folder: './src/main/webapp/i18n/de', output: './src/main/webapp/i18n/de.json' },
+    { folder: './src/main/webapp/i18n/en', output: './src/main/webapp/i18n/en.json', landingOutput: './src/main/webapp/i18n/en-landing.json' },
+    { folder: './src/main/webapp/i18n/de', output: './src/main/webapp/i18n/de.json', landingOutput: './src/main/webapp/i18n/de-landing.json' },
 ];
+
+// Landing page only needs `landing` (components) and `global` (menu/ribbon). Keep this list
+// narrow: shipping extra keys here bloats the initial i18n request that blocks LCP.
+const LANDING_NAMESPACES = ['landing', 'global'];
 
 const isObject = (obj) => obj && typeof obj === 'object';
 
@@ -78,7 +80,7 @@ function deepMerge(target, source) {
     for (const key in source) {
         // prevent prototype pollution
         if (!source.hasOwnProperty(key)) continue;
-        if (key === "__proto__" || key === "constructor") continue;
+        if (key === '__proto__' || key === 'constructor') continue;
 
         const targetValue = target[key];
         const sourceValue = source[key];
@@ -93,13 +95,12 @@ function deepMerge(target, source) {
     return target;
 }
 
-
 for (const group of groups) {
     try {
         // create output folder if it doesn't exist
         fs.mkdirSync(path.dirname(group.output), { recursive: true });
 
-        const files = fs.readdirSync(group.folder).filter(file => file.endsWith('.json'));
+        const files = fs.readdirSync(group.folder).filter((file) => file.endsWith('.json'));
 
         const mergedContent = files.reduce((acc, file) => {
             const content = JSON.parse(fs.readFileSync(path.resolve(group.folder, file)).toString());
@@ -107,6 +108,15 @@ for (const group of groups) {
         }, {});
 
         await fs.promises.writeFile(group.output, JSON.stringify(mergedContent));
+
+        // Emit a landing-only slice so the landing route can hydrate i18n in ~10 KB instead of ~600 KB.
+        const landingContent = LANDING_NAMESPACES.reduce((acc, ns) => {
+            if (mergedContent[ns] !== undefined) {
+                acc[ns] = mergedContent[ns];
+            }
+            return acc;
+        }, {});
+        await fs.promises.writeFile(group.landingOutput, JSON.stringify(landingContent));
     } catch (error) {
         console.error(`Error merging JSON files for ${group.output}:`, error);
     }
@@ -123,14 +133,14 @@ const workerEntryPoints = [
     'vs/language/css/css.worker.js',
     'vs/language/html/html.worker.js',
     'vs/language/typescript/ts.worker.js',
-    'vs/editor/editor.worker.js'
+    'vs/editor/editor.worker.js',
 ];
 await esbuild.build({
     entryPoints: workerEntryPoints.map((entry) => `node_modules/monaco-editor/esm/${entry}`),
     bundle: true,
     format: 'esm',
     outbase: 'node_modules/monaco-editor/esm',
-    outdir: 'node_modules/monaco-editor/bundles'
+    outdir: 'node_modules/monaco-editor/bundles',
 });
 
-console.log("Pre-Build complete!");
+console.log('Pre-Build complete!');

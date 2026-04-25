@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Accordion, AccordionContent, AccordionHeader, AccordionPanel } from 'primeng/accordion';
 import { FAQ_ITEMS } from 'app/core/landing/landing-data';
@@ -6,6 +6,7 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
 @Component({
     selector: 'jhi-landing-faq',
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ArtemisTranslatePipe, Accordion, AccordionPanel, AccordionHeader, AccordionContent],
     styles: `
         :host {

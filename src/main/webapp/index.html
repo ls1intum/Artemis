@@ -8,7 +8,14 @@
         <meta name="google" content="notranslate" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <meta name="theme-color" content="#000000" />
+        <meta name="color-scheme" content="light dark" />
         <base href="/" />
+        <!-- Preload the spotlight LCP poster so the browser can start fetching it before Angular
+             bootstraps (eliminates ~6.9 s resource-load delay flagged by Lighthouse).
+             Video preload is omitted here because index.html is served for every route and the
+             video is only used on the landing page. -->
+        <link rel="preload" as="image" href="/content/images/landing/demo-videos/interactive-exercise-poster.webp" type="image/webp" fetchpriority="high" />
+        <link rel="preload" as="image" href="/public/images/logo.svg" type="image/svg+xml" />
         <link rel="icon" type="image/svg+xml" sizes="any" href="logo/favicon.svg" />
         <link rel="manifest" href="manifest.webapp" />
         <link rel="apple-touch-icon" sizes="180x180" href="logo/apple-touch-icon.png" />
@@ -19,40 +26,118 @@
         <meta name="apple-mobile-web-app-title" content="Artemis" />
         <meta name="application-name" content="Artemis" />
         <meta name="msapplication-TileColor" content="#2b5797" />
+        <!-- Schema.org data to enrich search-engine understanding (Lighthouse SEO structured-data check). -->
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "EducationalOrganization",
+                "name": "Artemis",
+                "url": "https://artemis.tum.de",
+                "logo": "https://artemis.tum.de/public/images/logo.svg",
+                "description": "Artemis: Interactive Learning with Individual Feedback",
+                "parentOrganization": {
+                    "@type": "CollegeOrUniversity",
+                    "name": "Technical University of Munich",
+                    "url": "https://www.tum.de"
+                },
+                "sameAs": ["https://github.com/ls1intum/Artemis"]
+            }
+        </script>
+        <!-- Inline bootstrap skeleton + loading spinner. Paints under 1s so FCP fires before any
+             application chunk is parsed; replaced by the real shell once Angular hydrates. -->
+        <style>
+            :root {
+                color-scheme: light dark;
+            }
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                background: #e9ecef;
+                color: #212529;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                min-height: 100vh;
+            }
+            @media (prefers-color-scheme: dark) {
+                html,
+                body {
+                    background: #303030;
+                    color: #f8f9fa;
+                }
+            }
+            .app-boot {
+                position: fixed;
+                inset: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 24px;
+                background: inherit;
+                z-index: 0;
+            }
+            .app-boot__logo {
+                width: 48px;
+                height: 48px;
+            }
+            .app-boot__spinner {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                border: 3px solid rgba(255, 255, 255, 0.18);
+                border-top-color: #3e8acc;
+                animation: app-boot-spin 0.9s linear infinite;
+            }
+            @keyframes app-boot-spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                .app-boot__spinner {
+                    animation-duration: 3s;
+                }
+            }
+            /* Angular replaces the innerHTML of <jhi-app> on bootstrap, removing
+               .app-boot automatically. No CSS hide needed. */
+        </style>
     </head>
     <body>
         <jhi-app>
-            <div>
-                <div id="loading-error" style="display: none">
-                    <!-- This content is for troubleshooting purpose and will be removed when app renders -->
-                    <h1>An error has occurred while loading and displaying the Artemis website :-(</h1>
-                    <p>Troubleshooting:</p>
-                    <p>1. Try to reload the page</p>
-                    <p>
-                        2. Please <a href="https://browsehappy.com">upgrade your browser</a>: the latest version of
-                        <a href="https://www.chromium.org/getting-involved/download-chromium">Chromium</a> based browsers such as Google Chrome or Microsoft Edge is always a good
-                        choice. The latest version of Firefox and Safari is also supported.
-                    </p>
-                    <p>3. Make sure you have a stable Internet connection.</p>
-                    <p>4. Consider to switch to a different computer (try out a desktop/laptop environment, in case you experience problems on a mobile device).</p>
-                    <!-- end of troubleshooting content -->
-                </div>
+            <div class="app-boot" aria-hidden="true">
+                <img class="app-boot__logo" src="/public/images/logo.svg" alt="" width="48" height="48" />
+                <!-- Spinner's ARIA role intentionally omitted: parent .app-boot is aria-hidden
+                     (boot overlay is transient, Angular replaces it on hydrate). -->
+                <div class="app-boot__spinner"></div>
+            </div>
+            <div id="loading-error" hidden>
+                <h1>An error has occurred while loading and displaying the Artemis website :-(</h1>
+                <p>Troubleshooting:</p>
+                <p>1. Try to reload the page</p>
+                <p>
+                    2. Please <a href="https://browsehappy.com">upgrade your browser</a>: the latest version of
+                    <a href="https://www.chromium.org/getting-involved/download-chromium">Chromium</a> based browsers such as Google Chrome or Microsoft Edge is always a good
+                    choice. The latest version of Firefox and Safari is also supported.
+                </p>
+                <p>3. Make sure you have a stable Internet connection.</p>
+                <p>4. Consider to switch to a different computer (try out a desktop/laptop environment, in case you experience problems on a mobile device).</p>
             </div>
         </jhi-app>
         <noscript>
             <h1>You must enable javascript to view this page.</h1>
         </noscript>
-        <script type="text/javascript">
-            // show an error message if the app loading takes more than 5 sec
-            window.onload = function () {
-                setTimeout(showError, 5000);
-            };
-            function showError() {
-                const errorElm = document.getElementById('loading-error');
-                if (errorElm && errorElm.style) {
-                    errorElm.style.display = 'block';
-                }
-            }
+        <script>
+            // Fallback error surface: show the troubleshooting block if the app hasn't rendered after 8s.
+            window.addEventListener('load', function () {
+                setTimeout(function () {
+                    var root = document.querySelector('jhi-app');
+                    var alreadyRendered = root && root.querySelector(':scope > :not(.app-boot):not(#loading-error)');
+                    if (!alreadyRendered) {
+                        var err = document.getElementById('loading-error');
+                        if (err) err.hidden = false;
+                    }
+                }, 8000);
+            });
         </script>
     </body>
 </html>

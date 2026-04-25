@@ -1,13 +1,12 @@
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, afterNextRender, computed, inject, signal } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
 
 @Component({
     selector: 'jhi-landing-spotlight',
     standalone: true,
-    imports: [FaIconComponent, ArtemisTranslatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [ArtemisTranslatePipe],
     styles: `
         :host {
             display: block;
@@ -67,8 +66,8 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
         .stepper-nav {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            width: 160px;
+            justify-content: center;
+            gap: 8px;
         }
 
         .stepper-btn {
@@ -79,45 +78,63 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
             padding: 4px;
             display: flex;
             align-items: center;
+            justify-content: center;
             font-size: 14px;
             transition: color 0.2s;
+            min-width: 24px;
+            min-height: 24px;
         }
 
         .stepper-btn:hover {
             color: var(--primary);
         }
 
-        .stepper-dots {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-            padding: 8px;
+        .stepper-btn svg {
+            width: 16px;
+            height: 16px;
         }
 
+        .stepper-dots {
+            display: flex;
+            align-items: center;
+        }
+
+        /* WCAG 2.5.8 (AA) requires ≥ 24×24 px target size. Visual dot stays 8×8 but the
+           clickable area is expanded to 28×28 via padding + content-box clipping. */
         .dot {
+            box-sizing: content-box;
             width: 8px;
             height: 8px;
+            padding: 10px;
+            background-clip: content-box;
             border-radius: 50%;
-            background: var(--gray-300);
-            transition: all 0.3s;
+            background-color: var(--gray-300);
+            transition:
+                background-color 0.3s,
+                width 0.3s;
             border: none;
-            padding: 0;
             cursor: pointer;
         }
 
         .dot.active {
             width: 20px;
             border-radius: 16px;
-            background: var(--primary);
+            background-color: var(--primary);
         }
 
+        /* A neutral tinted background stops the per-step poster from floating on the page
+           background while loading and masks any letterboxing. */
         .spotlight-right {
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            height: 100%;
+            border-radius: 12px;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            height: auto;
             overflow: hidden;
+            background: var(--iris-secondary-background);
             transition: opacity 0.3s ease;
         }
 
@@ -128,8 +145,7 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
         .spotlight-media {
             width: 100%;
             height: 100%;
-            object-fit: contain;
-            min-height: 25rem;
+            object-fit: cover;
             border: 0;
             box-shadow: none;
         }
@@ -163,12 +179,15 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
                     }
                 </div>
                 <div class="stepper-nav">
-                    <button class="stepper-btn" (click)="prev()" [attr.aria-label]="'landing.spotlight.carousel.previous' | artemisTranslate">
-                        <fa-icon [icon]="faChevronLeft" />
+                    <button type="button" class="stepper-btn" (click)="prev()" [attr.aria-label]="'landing.spotlight.carousel.previous' | artemisTranslate">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="15 6 9 12 15 18" />
+                        </svg>
                     </button>
                     <div class="stepper-dots">
                         @for (step of steps; track step.titleKey; let i = $index) {
                             <button
+                                type="button"
                                 class="dot"
                                 [class.active]="i === activeIndex()"
                                 (click)="goTo(i)"
@@ -177,13 +196,15 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
                             ></button>
                         }
                     </div>
-                    <button class="stepper-btn" (click)="next()" [attr.aria-label]="'landing.spotlight.carousel.next' | artemisTranslate">
-                        <fa-icon [icon]="faChevronRight" />
+                    <button type="button" class="stepper-btn" (click)="next()" [attr.aria-label]="'landing.spotlight.carousel.next' | artemisTranslate">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="9 6 15 12 9 18" />
+                        </svg>
                     </button>
                 </div>
             </div>
             <div class="spotlight-right" [class.fading]="fading()">
-                @if (currentStep().videoSrc; as videoSrc) {
+                @if (videosEnabled() && currentStep().videoSrc; as videoSrc) {
                     <video
                         class="spotlight-media"
                         [src]="videoSrc"
@@ -191,22 +212,39 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
                         [muted]="true"
                         playsinline
                         preload="metadata"
+                        disablepictureinpicture
+                        disableremoteplayback
+                        width="960"
+                        height="540"
                         [attr.poster]="currentStep().imageSrc"
+                        [attr.aria-label]="currentStep().titleKey | artemisTranslate"
                         (loadeddata)="onVideoLoaded($event)"
                         (ended)="onVideoEnded()"
-                    ></video>
+                    >
+                        <track kind="captions" srclang="en" label="English" src="content/images/landing/demo-videos/no-audio.vtt" default />
+                    </video>
                 } @else {
-                    <img class="spotlight-media" [src]="currentStep().imageSrc" [alt]="currentStep().titleKey | artemisTranslate" />
+                    <img
+                        class="spotlight-media"
+                        [src]="currentStep().imageSrc"
+                        [alt]="currentStep().titleKey | artemisTranslate"
+                        width="960"
+                        height="540"
+                        decoding="async"
+                        [attr.fetchpriority]="activeIndex() === 0 ? 'high' : null"
+                        [attr.loading]="activeIndex() === 0 ? 'eager' : 'lazy'"
+                    />
                 }
             </div>
         </section>
     `,
 })
 export class LandingSpotlightComponent implements OnInit {
-    protected readonly faChevronLeft = faChevronLeft;
-    protected readonly faChevronRight = faChevronRight;
     private static readonly imageStepDurationMs = 5000;
     private static readonly fadeDurationMs = 300;
+    /* Delay video hydration until the main thread is idle so the 1 MB+ webm doesn't
+       compete with LCP-critical JS/CSS on slow networks. */
+    private static readonly videoHydrationDelayMs = 1500;
 
     private destroyRef = inject(DestroyRef);
 
@@ -214,15 +252,28 @@ export class LandingSpotlightComponent implements OnInit {
     activeIndex = signal(0);
     currentStep = computed(() => this.steps[this.activeIndex()]);
     fading = signal(false);
+    videosEnabled = signal(false);
 
     private autoAdvanceTimeoutId: ReturnType<typeof setTimeout> | undefined;
     private fadeTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    private videoHydrationTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    private videoHydrationIdleCallbackId: number | undefined;
+
+    constructor() {
+        afterNextRender(() => this.hydrateVideosWhenIdle());
+    }
 
     ngOnInit(): void {
         this.scheduleAutoAdvance();
         this.destroyRef.onDestroy(() => {
             this.clearAutoAdvanceTimeout();
             clearTimeout(this.fadeTimeoutId);
+            clearTimeout(this.videoHydrationTimeoutId);
+            if (this.videoHydrationIdleCallbackId !== undefined) {
+                const cancel = (globalThis as { cancelIdleCallback?: (handle: number) => void }).cancelIdleCallback;
+                cancel?.(this.videoHydrationIdleCallbackId);
+                this.videoHydrationIdleCallbackId = undefined;
+            }
         });
     }
 
@@ -292,5 +343,21 @@ export class LandingSpotlightComponent implements OnInit {
 
         clearTimeout(this.autoAdvanceTimeoutId);
         this.autoAdvanceTimeoutId = undefined;
+    }
+
+    private hydrateVideosWhenIdle(): void {
+        const enable = () => this.videosEnabled.set(true);
+        const ric = (globalThis as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback;
+        if (typeof ric === 'function') {
+            this.videoHydrationIdleCallbackId = ric(
+                () => {
+                    this.videoHydrationIdleCallbackId = undefined;
+                    enable();
+                },
+                { timeout: LandingSpotlightComponent.videoHydrationDelayMs },
+            );
+            return;
+        }
+        this.videoHydrationTimeoutId = setTimeout(enable, LandingSpotlightComponent.videoHydrationDelayMs);
     }
 }

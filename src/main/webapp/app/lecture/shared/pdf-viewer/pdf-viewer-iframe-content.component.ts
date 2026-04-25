@@ -203,6 +203,7 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
     }
 
     onPageChange(page: number | undefined): void {
+        // ngx-extended-pdf-viewer can emit undefined while the viewer has no active page.
         if (page === undefined) {
             return;
         }

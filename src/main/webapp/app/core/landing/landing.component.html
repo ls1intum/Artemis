@@ -1,9 +1,30 @@
+<a class="visually-hidden-focusable" href="#main">Skip to main content</a>
 <div class="landing-page">
-    <jhi-landing-navbar />
-    <jhi-landing-hero />
-    <jhi-landing-spotlight />
-    <jhi-landing-social-proof />
-    <jhi-landing-features />
-    <jhi-landing-faq />
-    <jhi-landing-footer />
+    <header>
+        <jhi-landing-navbar />
+    </header>
+    <main id="main" tabindex="-1">
+        <jhi-landing-hero />
+        <jhi-landing-spotlight />
+        <div #socialProofTrigger class="landing-defer-placeholder">
+            @defer (on viewport(socialProofTrigger); prefetch on idle) {
+                <jhi-landing-social-proof />
+            }
+        </div>
+        <div #featuresTrigger class="landing-defer-placeholder">
+            @defer (on viewport(featuresTrigger); prefetch on idle) {
+                <jhi-landing-features />
+            }
+        </div>
+        <div #faqTrigger class="landing-defer-placeholder">
+            @defer (on viewport(faqTrigger); prefetch on idle) {
+                <jhi-landing-faq />
+            }
+        </div>
+    </main>
+    <div #footerTrigger class="landing-defer-placeholder">
+        @defer (on viewport(footerTrigger); prefetch on idle) {
+            <jhi-landing-footer />
+        }
+    </div>
 </div>

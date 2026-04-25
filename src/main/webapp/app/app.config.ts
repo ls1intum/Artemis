@@ -1,19 +1,16 @@
 import './polyfills';
 import 'app/shared/util/array.extension';
 import 'app/shared/util/map.extension';
-import 'app/shared/util/string.extension';
 import 'app/core/config/dayjs';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
-import { BrowserModule, Title } from '@angular/platform-browser';
-import { Router, provideRouter, withRouterConfig } from '@angular/router';
+import { Title } from '@angular/platform-browser';
+import { provideRouter, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
 import { MissingTranslationHandler, provideTranslateService } from '@ngx-translate/core';
-import * as Sentry from '@sentry/angular';
-import { TraceService } from '@sentry/angular';
 import routes from 'app/app.routes';
 import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 import { missingTranslationHandler, translateHttpLoaderProviders } from 'app/core/config/translation.config';
@@ -38,12 +35,10 @@ export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
         DialogService,
-        importProvidersFrom(
-            // TODO: we should exclude modules here in the future
-            BrowserModule,
-            ScrollingModule,
-            OwlNativeDateTimeModule,
-        ),
+        // NB: `BrowserModule` is intentionally NOT listed here. Standalone Angular apps bootstrap
+        // via `bootstrapApplication` and don't need `BrowserModule`; its providers (notably
+        // DOM/debug helpers) otherwise pull the `_debug_node` chunk (~160 KB) into production.
+        importProvidersFrom(ScrollingModule, OwlNativeDateTimeModule),
         provideTranslateService({
             loader: translateHttpLoaderProviders,
             missingTranslationHandler: {
@@ -64,14 +59,16 @@ export const appConfig: ApplicationConfig = {
         Title,
         { provide: LOCALE_ID, useValue: 'en' },
         { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
-        { provide: Sentry.TraceService, deps: [Router] },
+        // Sentry's TraceService / BrowserTracing is no longer eagerly wired up from here. The
+        // tracing integration is attached by `SentryErrorHandler.initSentry()` once the profile
+        // is known, so production traffic keeps full Sentry performance coverage while the
+        // initial JS bundle avoids the router-instrumentation overhead.
         { provide: ErrorHandler, useClass: SentryErrorHandler },
         { provide: WINDOW_INJECTOR_TOKEN, useValue: window },
         DatePipe,
         provideAppInitializer(() => {
             const profileService = inject(ProfileService);
             const accountService = inject(AccountService);
-            inject(TraceService);
             // Ensure the service is initialized before any routing happens
             inject(ArtemisNavigationUtilService);
             // Load profile info and resolve user identity in parallel to minimize startup time.
