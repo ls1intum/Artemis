@@ -51,8 +51,9 @@ public class GradingInstruction extends DomainObject {
     @ManyToOne(fetch = FetchType.LAZY)
     private GradingCriterion gradingCriterion;
 
+    // No @Cache here on purpose: grows every time a tutor applies this grading instruction during manual assessment,
+    // same bug class as #12574 / #12584 on a clustered L2 cache.
     @OneToMany(mappedBy = "gradingInstruction", fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "gradingInstruction", allowSetters = true)
     private Set<Feedback> feedbacks = new HashSet<>();
 
