@@ -1,6 +1,11 @@
+:host {
+    display: block;
+    width: 100%;
+    scroll-margin-top: 20px;
+}
+
 .video-wrapper {
     display: flex;
-    gap: 0;
     width: 100%;
     padding: 0.5rem;
     box-sizing: border-box;
@@ -39,9 +44,20 @@
     user-select: none;
     touch-action: none;
     color: var(--gray-500);
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
 
     &:hover,
     &:active {
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
+        color: var(--primary);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: -2px;
         background-color: rgba(var(--bs-primary-rgb), 0.1);
         color: var(--primary);
     }
@@ -52,6 +68,7 @@
 }
 
 youtube-player {
+    display: block;
     position: absolute;
     top: 0;
     left: 0;
@@ -73,4 +90,65 @@ youtube-player {
         border: 0;
         border-radius: inherit;
     }
+
+    ::ng-deep > div,
+    ::ng-deep > div > div {
+        width: 100% !important;
+        height: 100% !important;
+    }
+}
+
+// Fullscreen mode styles
+:host-context(.content-container--fullscreen) {
+    height: 100%;
+}
+
+:host-context(.content-container--fullscreen) .video-wrapper {
+    height: 100%;
+    min-height: 0;
+    align-items: stretch;
+}
+
+:host-context(.content-container--fullscreen) .video-column {
+    aspect-ratio: auto;
+    min-width: 0;
+    min-height: 0;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    container-type: size;
+    background: transparent;
+}
+
+:host-context(.content-container--fullscreen) youtube-player {
+    position: static;
+    width: min(100cqw, calc(100cqh * 16 / 9)) !important;
+    height: min(100cqh, calc(100cqw * 9 / 16)) !important;
+    max-width: 100%;
+    max-height: 100%;
+    flex: 0 0 auto;
+    aspect-ratio: 16 / 9;
+    box-shadow: none;
+    background: transparent;
+
+    ::ng-deep iframe {
+        display: block;
+        position: static;
+        width: 100% !important;
+        height: 100% !important;
+        border: 0;
+        border-radius: 0;
+    }
+
+    ::ng-deep > div,
+    ::ng-deep > div > div {
+        width: 100% !important;
+        height: 100% !important;
+    }
+}
+
+:host-context(.content-container--fullscreen) .transcript-column {
+    max-height: 100% !important;
 }

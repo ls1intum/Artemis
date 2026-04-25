@@ -10,6 +10,16 @@
             (error)="onPlayerError($event)"
         />
     </div>
-    <div class="resizer-handle" #resizerHandle>⋮</div>
+    <button
+        type="button"
+        class="resizer-handle"
+        #resizerHandle
+        (dblclick)="resetSplitRatio()"
+        (keydown.enter)="resetSplitRatio()"
+        (keydown.space)="resetSplitRatio(); $event.preventDefault()"
+        [attr.aria-label]="'artemisApp.attachmentVideoUnit.videoPlayer.resetSplitRatio' | artemisTranslate"
+    >
+        <fa-icon [icon]="faGripLinesVertical" [attr.aria-hidden]="true" />
+    </button>
     <jhi-transcript-viewer [transcriptSegments]="transcriptSegments()" [currentSegmentIndex]="currentSegmentIndex()" (segmentClicked)="seekTo($event)" />
 </div>
