@@ -136,6 +136,19 @@ public class QuizExerciseResource {
             throw new BadRequestAlertException("These actions are not allowed for exam exercises", ENTITY_NAME, "notAllowedInExam");
         }
 
+        // Each case persists its state change via targeted @Modifying UPDATEs on the scalar columns it actually changes.
+        // We deliberately avoid quizExerciseRepository.save(quizExercise) / saveAndFlush(quizExercise) here: the quiz is
+        // loaded with its full question graph, and MultipleChoiceQuestion.answerOptions (and the DnD/SA siblings) use
+        // @OneToMany + @OrderColumn + orphanRemoval=true, so a full-entity save deletes and re-inserts every child row
+        // with fresh primary keys. Any student tab that was loaded before the save then hits ObjectNotFoundException on
+        // submit. The targeted UPDATEs below touch only the columns we are changing (releaseDate / dueDate / batch
+        // startTime), so existing answer-option / drag-item / spot IDs remain stable across these lifecycle actions.
+        //
+        // Exception: START_NOW additionally calls quizBatchRepository.save(quizBatch) — getOrCreateSynchronizedQuizBatch
+        // returns a transient batch (id == null) for quizzes that have never started, and a JPQL UPDATE on a null id
+        // would silently match no rows. save() handles both INSERT (transient) and UPDATE (existing). The QuizBatch
+        // entity has no @OneToMany child collections with orphanRemoval, so saving it does not cascade into the quiz
+        // question graph and child IDs stay stable.
         switch (action) {
             case START_NOW -> {
                 // only synchronized quiz exercises can be started like this
@@ -151,15 +164,31 @@ public class QuizExerciseResource {
                             .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyStarted", "Quiz has already started.")).build();
                 }
 
-                // set release date to now, truncated to seconds
                 var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+                var previousReleaseDate = quizExercise.getReleaseDate();
+                var releaseDateNeedsClamping = previousReleaseDate != null && previousReleaseDate.isAfter(now);
+                var newReleaseDate = releaseDateNeedsClamping ? now : previousReleaseDate;
+                var newDueDate = now.plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
+
+                // getOrCreateSynchronizedQuizBatch may return a transient (id == null) batch for quizzes that never
+                // started before. save() persists it; for already-existing batches it issues a plain UPDATE. Either
+                // way there is no cascade back into the quizExercise graph (QuizBatch.quizExercise is a @ManyToOne
+                // with no cascade), so child answer-option / drag-item IDs stay stable.
                 quizBatch.setStartTime(now);
                 quizBatchRepository.save(quizBatch);
-                if (quizExercise.getReleaseDate() != null && quizExercise.getReleaseDate().isAfter(now)) {
-                    // preserve null and valid releaseDates for quiz start lifecycle event
-                    quizExercise.setReleaseDate(now);
+                // Only rewrite releaseDate when it actually changes. Avoids a redundant column write in the common
+                // case where the quiz was already visible to students before Start Now.
+                if (releaseDateNeedsClamping) {
+                    quizExerciseRepository.updateReleaseAndDueDate(quizExerciseId, newReleaseDate, newDueDate);
                 }
-                quizExercise.setDueDate(now.plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
+                else {
+                    quizExerciseRepository.updateDueDate(quizExerciseId, newDueDate);
+                }
+
+                // Mirror the writes onto the in-memory entity so the downstream DTO, broadcast and version creation
+                // use the new values without needing to reload. The reload below provides an additional safety net.
+                quizExercise.setReleaseDate(newReleaseDate);
+                quizExercise.setDueDate(newDueDate);
             }
             case END_NOW -> {
                 // editors may not end the quiz
@@ -170,8 +199,12 @@ public class QuizExerciseResource {
                             .build();
                 }
 
-                // set release date to now, truncated to seconds because the database only stores seconds
+                // endQuiz mutates the in-memory entity only (its contract, relied on by several re-evaluation tests).
+                // Persist the scalar changes via targeted UPDATEs so the full-graph cascade is avoided.
                 quizExerciseService.endQuiz(quizExercise);
+                var lastStart = quizExercise.getDueDate().minusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
+                quizExerciseRepository.updateDueDate(quizExerciseId, quizExercise.getDueDate());
+                quizBatchRepository.clampBatchStartTimesForEndNow(quizExerciseId, lastStart);
             }
             case SET_VISIBLE -> {
                 // check if quiz is already visible
@@ -180,8 +213,9 @@ public class QuizExerciseResource {
                             .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyVisible", "Quiz is already visible to students.")).build();
                 }
 
-                // set quiz to visible
-                quizExercise.setReleaseDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
+                var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+                quizExerciseRepository.updateReleaseDate(quizExerciseId, now);
+                quizExercise.setReleaseDate(now);
             }
             case START_BATCH -> {
                 // Use the start-batch endpoint for starting batches instead
@@ -190,9 +224,9 @@ public class QuizExerciseResource {
             }
         }
 
-        // save quiz exercise
-        quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
-        // reload the quiz exercise with questions and statistics to prevent problems with proxy objects
+        // Reload to refresh proxy state before building the response DTO and broadcasting. Cheap (one SELECT with
+        // the existing entity graph) and — critically — no write path was invoked above that could cascade into the
+        // question graph, so child primary keys are guaranteed stable at this point.
         quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
 
         if (action == QuizAction.START_NOW) {
