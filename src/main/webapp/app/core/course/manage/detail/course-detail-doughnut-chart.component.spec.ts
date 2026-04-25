@@ -75,6 +75,19 @@ describe('CourseDetailDoughnutChartComponent', () => {
         expect(component.ngxData()[2].value).toBe(1);
     });
 
+    it('should show 0 in tooltip when currentMax is 0', () => {
+        componentRef.setInput('currentMax', 0);
+        fixture.detectChanges();
+
+        expect(component.valueFormatting({ value: 1 })).toBe('0');
+    });
+
+    it('should show data value in tooltip when currentMax is not 0', () => {
+        fixture.detectChanges();
+
+        expect(component.valueFormatting({ value: 42 })).toBe('42');
+    });
+
     it('should set the right title and link', () => {
         fixture.detectChanges();
         expect(component.doughnutChartTitle()).toBe('assessments');

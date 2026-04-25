@@ -1,9 +1,82 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
+const { MockApollonEditor } = vi.hoisted(() => {
+    const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
+
+    class MockApollonEditorClass {
+        _model: any;
+        _subscriptions = new Map<number, (model: any) => void>();
+        _assessmentSelectionSubscriptions = new Map<number, (selections: string[]) => void>();
+        _subscriptionCounter = 0;
+
+        subscribeToModelChange = vi.fn((callback: (model: any) => void) => {
+            const id = ++this._subscriptionCounter;
+            this._subscriptions.set(id, callback);
+            return id;
+        });
+
+        subscribeToAssessmentSelection = vi.fn((callback: (selections: string[]) => void) => {
+            const id = ++this._subscriptionCounter;
+            this._assessmentSelectionSubscriptions.set(id, callback);
+            return id;
+        });
+
+        unsubscribe = vi.fn((id: number) => {
+            this._subscriptions.delete(id);
+            this._assessmentSelectionSubscriptions.delete(id);
+        });
+
+        destroy = vi.fn();
+
+        addOrUpdateAssessment = vi.fn((assessment: any) => {
+            if (this._model) {
+                if (!this._model.assessments) {
+                    this._model.assessments = {};
+                }
+                this._model.assessments[assessment.modelElementId] = assessment;
+            }
+        });
+
+        nextRender = Promise.resolve();
+
+        constructor(_container: HTMLElement, options?: { model?: any }) {
+            this._model = options?.model ? deepClone(options.model) : {};
+            // Ensure v4-compatible structure with nodes/edges arrays,
+            // since the real ApollonEditor converts v2/v3 models to v4 internally.
+            if (!this._model.nodes) this._model.nodes = [];
+            if (!this._model.edges) this._model.edges = [];
+            if (!this._model.assessments) this._model.assessments = {};
+        }
+
+        get model() {
+            return this._model;
+        }
+
+        set model(value: any) {
+            this._model = value;
+        }
+    }
+
+    return { MockApollonEditor: MockApollonEditorClass };
+});
+
+// Mock the entire ApollonEditor class to prevent React initialization,
+// which causes unhandled errors from async React scheduler callbacks
+// ("Should not already be working", "document global was defined") in jsdom.
+vi.mock('@tumaet/apollon', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@tumaet/apollon')>();
+    return {
+        ...actual,
+        ApollonEditor: MockApollonEditor,
+    };
+});
+
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
@@ -57,7 +130,7 @@ function findElementById(elements: any[], id: string): any {
  * and returns empty nodes/edges. By mocking the getter, we can test the component's
  * logic for updating highlights and element counts.
  */
-function mockApollonEditorModel(apollonEditor: ApollonEditor, model: UMLModel): { getCapturedModel: () => UMLModel } {
+function mockApollonEditorModel(apollonEditor: any, model: UMLModel): { getCapturedModel: () => UMLModel } {
     let capturedModel = model;
     Object.defineProperty(apollonEditor, 'model', {
         get: () => capturedModel,
@@ -137,6 +210,7 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     afterEach(() => {
+        fixture.destroy();
         vi.restoreAllMocks();
     });
 

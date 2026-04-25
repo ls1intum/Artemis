@@ -629,6 +629,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         // Quiz submissions are now in database
         assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(1);
 
+        // Wait for async participant score processing to complete before deleting
+        await().until(() -> participantScoreScheduleService.isIdle());
+
         request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK);
         assertThat(quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
     }

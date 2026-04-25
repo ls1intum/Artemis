@@ -86,7 +86,6 @@ describe('LectureSeriesEditModal', () => {
 
         component.save();
         fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
 
         expect(component.show()).toBe(false);
         expect(component.lectureDraft).toBeUndefined();

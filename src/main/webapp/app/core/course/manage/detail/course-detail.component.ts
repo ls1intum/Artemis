@@ -1,3 +1,4 @@
+import { DecimalPipe } from '@angular/common';
 import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -36,6 +37,7 @@ import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-cha
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
 import { QuickActionsComponent } from 'app/core/course/manage/quick-actions/quick-actions.component';
 import { ControlCenterComponent } from 'app/core/course/manage/control-center/control-center.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OnboardingExploreComponent } from 'app/core/course/manage/onboarding/pages/onboarding-explore.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -61,6 +63,8 @@ export enum DoughnutChartType {
         DetailOverviewListComponent,
         QuickActionsComponent,
         ControlCenterComponent,
+        ArtemisTranslatePipe,
+        DecimalPipe,
         OnboardingExploreComponent,
         FaIconComponent,
         TranslateDirective,

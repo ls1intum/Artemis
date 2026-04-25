@@ -262,7 +262,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         }
         try {
             BuildPlanPhasesDTO phases = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildPlanConfiguration);
-            if (phases.phases() != null) {
+            if (phases.phases() != null && !phases.phases().isEmpty()) {
                 return Optional.of(phases);
             }
         }
