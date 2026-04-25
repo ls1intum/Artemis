@@ -57,6 +57,7 @@
                                     <span id="results-available-value">{{ quizExercise.dueDate | artemisDate }}</span>
                                 </div>
                             }
+                            <!-- Show the submit button only in preview mode. In live and practice modes submission is handled by the quiz flow; solution mode is read-only. -->
                             @if (mode === 'preview') {
                                 <jhi-button
                                     id="submit-quiz"
