@@ -12,9 +12,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -27,7 +24,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
  */
 @Entity
 @Table(name = "example_submission")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExampleSubmission extends DomainObject {
 
@@ -42,7 +38,6 @@ public class ExampleSubmission extends DomainObject {
     private Submission submission;
 
     @ManyToMany(mappedBy = "trainedExampleSubmissions")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties({ "trainedExampleSubmissions", "assessedExercise" })
     private Set<TutorParticipation> tutorParticipations = new HashSet<>();
 

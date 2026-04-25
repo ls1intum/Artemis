@@ -13,7 +13,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -46,14 +45,11 @@ public class UserCreationService {
 
     private final OrganizationRepository organizationRepository;
 
-    private final CacheManager cacheManager;
-
-    public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository, CacheManager cacheManager,
+    public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
             OrganizationRepository organizationRepository) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
-        this.cacheManager = cacheManager;
         this.organizationRepository = organizationRepository;
     }
 
@@ -275,13 +271,12 @@ public class UserCreationService {
     }
 
     /**
-     * saves the user and clears the cache
+     * Saves the user.
      *
      * @param user the user object that will be saved into the database
      * @return the saved and potentially updated user object
      */
     public User saveUser(User user) {
-        clearUserCaches(user);
         log.debug("Save user {}", user);
         return userRepository.save(user);
     }
@@ -299,14 +294,6 @@ public class UserCreationService {
         user.setActivated(true);
         userRepository.save(user);
         return newPassword;
-    }
-
-    // TODO: this is duplicated code, we should move it into e.g. a CacheService
-    private void clearUserCaches(User user) {
-        var userCache = cacheManager.getCache(User.class.getName());
-        if (userCache != null) {
-            userCache.evict(user.getLogin());
-        }
     }
 
     /**

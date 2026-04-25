@@ -9,8 +9,6 @@ import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Size;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.annotation.CreatedDate;
 
@@ -28,7 +26,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * Base class for messages {@link Post} and answer messages {@link AnswerPost} in the communication system.
  */
 @MappedSuperclass
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(value = { "author" }, allowGetters = true) // author field is not deserialized
 public abstract class Posting extends DomainObject {

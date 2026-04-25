@@ -26,8 +26,6 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
 import org.hibernate.Hibernate;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -51,7 +49,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
  */
 @Entity
 @Table(name = "course")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Course extends DomainObject {
 
@@ -219,7 +216,6 @@ public class Course extends DomainObject {
     @ManyToMany
     @JoinTable(name = "course_organization", joinColumns = { @JoinColumn(name = "course_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "organization_id", referencedColumnName = "id") })
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Organization> organizations = new HashSet<>();
 

@@ -13,9 +13,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
@@ -23,7 +20,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
  */
 @Entity
 @Table(name = "push_notification_device_configuration")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @IdClass(PushNotificationDeviceConfigurationId.class)
 public class PushNotificationDeviceConfiguration {
 

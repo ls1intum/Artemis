@@ -162,6 +162,22 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testNoHibernateSecondLevelCacheAnnotation() {
+        String reason = "Hibernate L2 cache is disabled cluster-wide. @Modifying queries bypass L2 invalidation and the absence of service-level @Transactional leaves no clean "
+                + "place to coordinate cache eviction within a REST call, both of which produced cross-node stale-read bugs in the multi-node cluster (#12574, #12584, #12579). "
+                + "Use Spring @Cacheable with explicit eviction for DTOs (see TitleCacheEvictionService for the canonical pattern). "
+                + "Full rationale: documentation/docs/developer/guidelines/caching.mdx.";
+
+        ArchRule noClassLevelCache = noClasses().should().beAnnotatedWith("org.hibernate.annotations.Cache").because(reason);
+        ArchRule noFieldLevelCache = noFields().should().beAnnotatedWith("org.hibernate.annotations.Cache").because(reason);
+        ArchRule noMethodLevelCache = noMethods().should().beAnnotatedWith("org.hibernate.annotations.Cache").because(reason);
+
+        noClassLevelCache.check(productionClasses);
+        noFieldLevelCache.check(productionClasses);
+        noMethodLevelCache.check(productionClasses);
+    }
+
+    @Test
     void testNullnessAnnotations() {
         // Those are non null annotations for compile time checking. We want to avoid NullPointerExceptions by using those annotations.
         var nonNullPredicate = and(not(resideInPackageAnnotation("org.jspecify.annotations")), simpleNameAnnotation("NonNull"));

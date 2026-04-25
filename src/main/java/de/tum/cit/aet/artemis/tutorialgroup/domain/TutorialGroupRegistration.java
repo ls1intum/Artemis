@@ -8,8 +8,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -20,7 +18,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 
 @Entity
 @Table(name = "tutorial_group_registration")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TutorialGroupRegistration extends DomainObject {
 

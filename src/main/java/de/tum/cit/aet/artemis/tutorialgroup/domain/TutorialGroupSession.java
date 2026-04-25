@@ -15,9 +15,6 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -25,7 +22,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Table(name = "tutorial_group_session")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TutorialGroupSession extends DomainObject {
 
@@ -80,7 +76,6 @@ public class TutorialGroupSession extends DomainObject {
      */
     @ManyToOne
     @JoinColumn(name = "tutorial_group_schedule_id")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "tutorialGroupSessions, tutorialGroup", allowSetters = true)
     private TutorialGroupSchedule tutorialGroupSchedule;
 
@@ -89,7 +84,6 @@ public class TutorialGroupSession extends DomainObject {
      */
     @ManyToOne
     @JoinColumn(name = "tutorial_group_free_period_id")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "tutorialGroupsConfiguration", allowSetters = true)
     private TutorialGroupFreePeriod tutorialGroupFreePeriod;
 
@@ -98,7 +92,6 @@ public class TutorialGroupSession extends DomainObject {
      */
     @ManyToOne
     @JoinColumn(name = "tutorial_group_id")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "tutorialGroupSessions", allowSetters = true)
     private TutorialGroup tutorialGroup;
 

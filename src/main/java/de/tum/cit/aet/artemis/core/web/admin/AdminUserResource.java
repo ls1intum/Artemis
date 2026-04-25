@@ -70,9 +70,9 @@ import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
  * <ul>
  * <li>We want to keep a lazy association between the user and the authorities, because people will quite often do relationships with the user, and we don't want them to get the
  * authorities all the time for nothing (for performance reasons). This is the #1 goal: we should not impact our users' application because of this use-case.</li>
- * <li>Not having an outer join causes n+1 requests to the database. This is not a real issue as we have by default a second-level cache. This means on the first HTTP call we do
- * the n+1 requests, but then all authorities come from the cache, so in fact it's much better than doing an outer join (which will get lots of data from the database, for each
- * HTTP call).</li>
+ * <li>Not having an outer join causes n+1 requests to the database. The {@code authorities} association uses {@code @BatchSize(20)} so the lookups are batched within a single
+ * transaction, but each HTTP call pays the database round-trip. If this becomes a measured bottleneck, consider an explicit {@code @EntityGraph} or fetch join on the auth
+ * path.</li>
  * <li>As this manages users, for security reasons, we'd rather have a DTO layer.</li>
  * </ul>
  * <p>

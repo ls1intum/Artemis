@@ -12,9 +12,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -23,7 +20,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 
 @Entity
 @Table(name = "learning_path")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class LearningPath extends DomainObject {
 
     /**
