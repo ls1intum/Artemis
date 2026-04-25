@@ -35,12 +35,16 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardSettingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardWithCurrentUserEntryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerFromLiveClientDTO;
+import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
+import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingService;
 
@@ -64,14 +68,21 @@ public class QuizTrainingResource {
 
     private final QuizTrainingService quizTrainingService;
 
+    private final QuizQuestionRepository quizQuestionRepository;
+
+    private final QuizSubmissionService quizSubmissionService;
+
     public QuizTrainingResource(QuizTrainingLeaderboardService quizTrainingLeaderboardService, UserRepository userRepository, CourseRepository courseRepository,
-            AuthorizationCheckService authCheckService, QuizQuestionProgressService quizQuestionProgressService, QuizTrainingService quizTrainingService) {
+            AuthorizationCheckService authCheckService, QuizQuestionProgressService quizQuestionProgressService, QuizTrainingService quizTrainingService,
+            QuizQuestionRepository quizQuestionRepository, QuizSubmissionService quizSubmissionService) {
         this.quizTrainingLeaderboardService = quizTrainingLeaderboardService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.quizQuestionProgressService = quizQuestionProgressService;
         this.quizTrainingService = quizTrainingService;
+        this.quizQuestionRepository = quizQuestionRepository;
+        this.quizSubmissionService = quizSubmissionService;
     }
 
     /**
@@ -99,24 +110,27 @@ public class QuizTrainingResource {
     /**
      * POST /courses/:courseId/training/:quizQuestionId/submit: Submit a new quizQuestion for training mode.
      *
-     * @param courseId        the id of the course containing the quiz question
-     * @param quizQuestionId  the id of the quiz question which is being answered
-     * @param isRated         whether the submitted answer should be rated (i.e. affect the user's progress= or not
-     * @param submittedAnswer the submitted answer by the user for the quiz question
+     * @param courseId           the id of the course containing the quiz question
+     * @param quizQuestionId     the id of the quiz question which is being answered
+     * @param isRated            whether the submitted answer should be rated (i.e. affect the user's progress) or not
+     * @param submittedAnswerDTO the submitted answer payload by the user for the quiz question (rich entity-shaped JSON)
      * @return the ResponseEntity with status 200 (OK) and the result of the evaluated submitted answer as its body
      */
     @PostMapping("courses/{courseId}/training-questions/{quizQuestionId}/submit")
     @EnforceAtLeastStudent
     public ResponseEntity<SubmittedAnswerAfterEvaluationDTO> submitForTraining(@PathVariable long courseId, @PathVariable long quizQuestionId, @RequestParam boolean isRated,
-            @Valid @RequestBody SubmittedAnswer submittedAnswer) {
-        log.debug("REST request to submit QuizQuestion for training : {}", submittedAnswer);
+            @Valid @RequestBody SubmittedAnswerFromLiveClientDTO submittedAnswerDTO) {
+        log.debug("REST request to submit QuizQuestion for training, course {} question {}", courseId, quizQuestionId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         ZonedDateTime answeredAt = TimeUtil.now();
 
-        SubmittedAnswerAfterEvaluationDTO result = quizTrainingService.submitForTraining(quizQuestionId, user.getId(), courseId, submittedAnswer, isRated, answeredAt);
+        QuizQuestion quizQuestion = quizQuestionRepository.findByIdElseThrow(quizQuestionId);
+        SubmittedAnswer submittedAnswer = quizSubmissionService.convertSubmittedAnswerForTraining(submittedAnswerDTO, quizQuestion);
+
+        SubmittedAnswerAfterEvaluationDTO result = quizTrainingService.submitForTraining(quizQuestion, user.getId(), courseId, submittedAnswer, isRated, answeredAt);
 
         return ResponseEntity.ok(result);
     }

@@ -1034,8 +1034,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
         /**
          * Regression test for #12584: a stale client-side AnswerOption id (e.g. from a tab opened before the quiz was re-imported) used to abort the whole live save with
-         * {@code ObjectNotFoundException} because Hibernate's merge cascade couldn't resolve the reference. The service now sanitizes the submission against the server-side quiz
-         * questions and silently drops unknown references.
+         * {@code ObjectNotFoundException} because Hibernate's merge cascade couldn't resolve the reference. The DTO conversion now silently drops unknown references during
+         * the request → entity build step.
          */
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -1064,6 +1064,103 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             MultipleChoiceSubmittedAnswer persistedMcAnswer = updatedSubmission.getSubmittedAnswers().stream().filter(MultipleChoiceSubmittedAnswer.class::isInstance)
                     .map(MultipleChoiceSubmittedAnswer.class::cast).findFirst().orElseThrow();
             assertThat(persistedMcAnswer.getSelectedOptions()).hasSize(validSelectionCount).allSatisfy(option -> assertThat(option.getId()).isNotEqualTo(Long.MAX_VALUE));
+        }
+
+        /**
+         * Lenient DTO conversion drops the entire submitted answer when its quizQuestion id no longer matches a question
+         * on the server-side quiz, instead of failing the whole submit. The other valid answers must still be persisted.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testQuizSubmitLiveMode_dropsAnswerWithStaleQuizQuestionId() throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
+            int validAnswerCount = quizSubmission.getSubmittedAnswers().size() - 1;
+
+            // Repoint one answer's question to a non-existent id; the conversion must silently drop this answer.
+            ShortAnswerSubmittedAnswer saAnswer = quizSubmission.getSubmittedAnswers().stream().filter(ShortAnswerSubmittedAnswer.class::isInstance)
+                    .map(ShortAnswerSubmittedAnswer.class::cast).findFirst().orElseThrow();
+            ShortAnswerQuestion staleQuestion = new ShortAnswerQuestion();
+            staleQuestion.setId(Long.MAX_VALUE);
+            saAnswer.setQuizQuestion(staleQuestion);
+
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+                    QuizSubmission.class, HttpStatus.OK);
+
+            assertThat(updatedSubmission.isSubmitted()).isTrue();
+            assertThat(updatedSubmission.getSubmittedAnswers()).hasSize(validAnswerCount).noneMatch(answer -> answer instanceof ShortAnswerSubmittedAnswer);
+        }
+
+        /**
+         * Lenient DTO conversion drops a submitted answer when its runtime type does not match the question's type
+         * (e.g. a multiple-choice answer payload bound to a short-answer question). Other valid answers survive.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testQuizSubmitLiveMode_dropsAnswerWithMismatchedType() throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
+            int validAnswerCount = quizSubmission.getSubmittedAnswers().size() - 1;
+
+            // Pair a multiple-choice answer with a short-answer question id; type mismatch must drop the answer.
+            MultipleChoiceSubmittedAnswer mcAnswer = quizSubmission.getSubmittedAnswers().stream().filter(MultipleChoiceSubmittedAnswer.class::isInstance)
+                    .map(MultipleChoiceSubmittedAnswer.class::cast).findFirst().orElseThrow();
+            QuizQuestion saQuestion = quizExercise.getQuizQuestions().stream().filter(ShortAnswerQuestion.class::isInstance).findFirst().orElseThrow();
+            mcAnswer.setQuizQuestion(saQuestion);
+
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+                    QuizSubmission.class, HttpStatus.OK);
+
+            assertThat(updatedSubmission.isSubmitted()).isTrue();
+            assertThat(updatedSubmission.getSubmittedAnswers()).hasSize(validAnswerCount);
+        }
+
+        /**
+         * Lenient DTO conversion drops a single drag-and-drop mapping whose dragItem id no longer resolves on the
+         * server-side question, instead of failing the whole submit. The other valid mappings on the same answer
+         * (and the other answers) survive.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testQuizSubmitLiveMode_ignoresStaleDragItemIds() throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
+
+            // Inject a mapping whose dragItem id does not exist; it must be silently dropped while existing valid
+            // mappings on the same answer are preserved.
+            DragAndDropSubmittedAnswer dndAnswer = quizSubmission.getSubmittedAnswers().stream().filter(DragAndDropSubmittedAnswer.class::isInstance)
+                    .map(DragAndDropSubmittedAnswer.class::cast).findFirst().orElseThrow();
+            DragAndDropQuestion dndQuestion = (DragAndDropQuestion) dndAnswer.getQuizQuestion();
+            DragAndDropMapping staleMapping = new DragAndDropMapping();
+            DragItem staleDragItem = new DragItem();
+            staleDragItem.setId(Long.MAX_VALUE);
+            staleMapping.setDragItem(staleDragItem);
+            staleMapping.setDropLocation(dndQuestion.getDropLocations().getFirst());
+            dndAnswer.getMappings().add(staleMapping);
+            int validMappingCount = dndAnswer.getMappings().size() - 1;
+
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+                    QuizSubmission.class, HttpStatus.OK);
+
+            assertThat(updatedSubmission.isSubmitted()).isTrue();
+            DragAndDropSubmittedAnswer persistedDndAnswer = updatedSubmission.getSubmittedAnswers().stream().filter(DragAndDropSubmittedAnswer.class::isInstance)
+                    .map(DragAndDropSubmittedAnswer.class::cast).findFirst().orElseThrow();
+            assertThat(persistedDndAnswer.getMappings()).hasSize(validMappingCount).allSatisfy(mapping -> assertThat(mapping.getDragItem().getId()).isNotEqualTo(Long.MAX_VALUE));
         }
     }
 }

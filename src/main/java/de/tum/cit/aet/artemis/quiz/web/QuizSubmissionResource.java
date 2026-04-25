@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.quiz.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -44,6 +43,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.result.ResultAfterEvaluationWithSubmissionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
@@ -94,30 +94,21 @@ public class QuizSubmissionResource {
     }
 
     /**
-     * TODO: Decide if we want to use this endpoint for both submit and save. If so, we may want to use PUT instead of POST
-     * TODO: Don't trust the user submitted values
      * POST /exercises/:exerciseId/submissions/live : Submit a new quizSubmission for live mode.
      *
-     * @param exerciseId     the id of the exercise for which to init a participation
-     * @param quizSubmission the quizSubmission to submit
-     * @param submit         flag to determine if the submission should be submitted or saved
-     * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
+     * @param exerciseId    the id of the exercise for which to init a participation
+     * @param submissionDTO the quizSubmission payload to save or submit (rich entity-shaped JSON sent by the live client)
+     * @param submit        flag to determine if the submission should be submitted or saved
+     * @return the ResponseEntity with status 200 (OK) and the saved submission as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("exercises/{exerciseId}/submissions/live")
     @EnforceAtLeastStudentInExercise
-    // TODO: Important, we must use a DTO here and we MUST NOT save an entity object retrieved from the client directly!
-    public ResponseEntity<QuizSubmission> saveOrSubmitForLiveMode(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission,
+    public ResponseEntity<QuizSubmission> saveOrSubmitForLiveMode(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmissionFromLiveClientDTO submissionDTO,
             @RequestParam(name = "submit", defaultValue = "false") boolean submit) {
-        log.debug("REST request to save or submit QuizSubmission for live mode : {}", quizSubmission);
+        log.debug("REST request to save or submit QuizSubmission for live mode for exercise {}", exerciseId);
         String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
         try {
-            // we set the submitted flag on the server side
-            quizSubmission.setSubmitted(submit);
-            // make sure no results are sent from client to server
-            if (quizSubmission.getResults() != null && !quizSubmission.getResults().isEmpty()) {
-                quizSubmission.setResults(List.of());
-            }
-            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, userLogin, submit);
+            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, submissionDTO, userLogin, submit);
             return ResponseEntity.ok(updatedQuizSubmission);
         }
         catch (QuizSubmissionException e) {
@@ -227,23 +218,20 @@ public class QuizSubmissionResource {
     /**
      * PUT /exercises/:exerciseId/submissions/exam : Update a QuizSubmission for exam mode
      *
-     * @param exerciseId     the id of the exercise for which to update the submission
-     * @param quizSubmission the quizSubmission to update
-     * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
+     * @param exerciseId    the id of the exercise for which to update the submission
+     * @param submissionDTO the quizSubmission payload to update (rich entity-shaped JSON sent by the exam client)
+     * @return the ResponseEntity with status 200 and body the saved submission or the appropriate error code.
      */
     @PutMapping("exercises/{exerciseId}/submissions/exam")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<QuizSubmission> submitQuizForExam(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
+    public ResponseEntity<QuizSubmission> submitQuizForExam(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmissionFromLiveClientDTO submissionDTO) {
         long start = System.currentTimeMillis();
-        log.debug("REST request to submit QuizSubmission for exam : {}", quizSubmission);
+        log.debug("REST request to submit QuizSubmission for exam for exercise {}", exerciseId);
 
-        // recreate pointers back to submission in each submitted answer
-        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-            submittedAnswer.setSubmission(quizSubmission);
-        }
-
-        QuizExercise quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        QuizSubmission quizSubmission = quizSubmissionService.buildSubmissionFromLiveClientDTO(submissionDTO, quizExercise);
 
         if (quizExercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
