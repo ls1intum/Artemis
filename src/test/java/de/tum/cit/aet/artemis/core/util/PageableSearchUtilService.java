@@ -133,6 +133,27 @@ public class PageableSearchUtilService {
     }
 
     /**
+     * Serializes a search DTO into a flat {@link LinkedMultiValueMap} of query parameters suitable for REST calls.
+     *
+     * @param search the search DTO to serialize
+     * @return a map of query parameter names to their string values
+     */
+    public LinkedMultiValueMap<String, String> searchMapping(Object search) {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            final String json = objectMapper.writeValueAsString(search);
+            final Map<String, String> params = objectMapper.readValue(json, new TypeReference<>() {
+            });
+            final LinkedMultiValueMap<String, String> paramMap = new LinkedMultiValueMap<>();
+            params.forEach((key, value) -> paramMap.add(key, value));
+            return paramMap;
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Failed to map JSON", e);
+        }
+    }
+
+    /**
      * Generates a LinkedMultiValueMap from the given PageableSearchDTO. The map is used for REST calls and maps the parameters to the values.
      * Converts a PageableSearchDTO into a LinkedMultiValueMap suitable for use with RESTful API calls.
      * This conversion facilitates the transfer of search parameters and their values in a format

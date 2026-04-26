@@ -1,184 +1,130 @@
-@if (participation) {
+@if (participation()) {
     <div>
         <h2
             jhiTranslate="artemisApp.participation.participationSubmission.submissionsForParticipation"
-            [translateValues]="{ participant: getName(), exercise: exercise?.title }"
+            [translateValues]="{ participant: getName(), exercise: exercise()?.title }"
         ></h2>
-        @if (exercise?.releaseDate) {
+        @if (exercise()?.releaseDate) {
             <h4>
-                <span class="me-2"> {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}: {{ (exercise!.releaseDate | artemisDate) || 'N/A' }} </span>
-                <span [ngClass]="exerciseStatusBadge" class="badge">{{ exercise!.releaseDate | artemisTimeAgo }} </span>
+                <span class="me-2"> {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}: {{ (exercise()!.releaseDate | artemisDate) || 'N/A' }} </span>
+                <span class="badge {{ exerciseStatusBadge() }}">{{ exercise()!.releaseDate | artemisTimeAgo }} </span>
             </h4>
         }
-        @if (dueDate) {
+        @if (dueDate()) {
             <h4>
-                <span class="me-2"> {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}: {{ (dueDate | artemisDate) || 'N/A' }} </span>
-                <span [ngClass]="exerciseStatusBadge" class="badge"> {{ dueDate | artemisTimeAgo }} </span>
+                <span class="me-2"> {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}: {{ (dueDate() | artemisDate) || 'N/A' }} </span>
+                <span class="badge {{ exerciseStatusBadge() }}"> {{ dueDate() | artemisTimeAgo }} </span>
             </h4>
         }
-        @if (exercise?.assessmentDueDate) {
+        @if (exercise()?.assessmentDueDate) {
             <h4>
-                <span class="me-2"> {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}: {{ (exercise!.assessmentDueDate | artemisDate) || 'N/A' }} </span>
-                <span [ngClass]="exerciseStatusBadge" class="badge">{{ exercise!.assessmentDueDate | artemisTimeAgo }}</span>
+                <span class="me-2"> {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}: {{ (exercise()!.assessmentDueDate | artemisDate) || 'N/A' }} </span>
+                <span class="badge {{ exerciseStatusBadge() }}">{{ exercise()!.assessmentDueDate | artemisTimeAgo }}</span>
             </h4>
         }
     </div>
 }
-<br />
-@if (submissions) {
-    <div class="table-responsive">
-        <ngx-datatable
-            id="participationSubmissionTable"
-            class="bootstrap"
-            [headerHeight]="50"
-            [limit]="20"
-            [columnMode]="'force'"
-            [footerHeight]="50"
-            [rowHeight]="'auto'"
-            [rows]="submissions"
-            [sorts]="[{ prop: 'id', dir: 'asc' }]"
-            [rowClass]=""
-            [scrollbarH]="true"
-        >
-            <ngx-datatable-column name="Id" prop="id" [minWidth]="60" [width]="60">
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    {{ value }}
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column prop="type" [minWidth]="80" [width]="80">
-                <ng-template ngx-datatable-header-template>
-                    <span jhiTranslate="artemisApp.participation.participationSubmission.submissionType"></span>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    {{ value }}
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column prop="submissionDate" [minWidth]="80" [width]="80">
-                <ng-template ngx-datatable-header-template>
-                    <span jhiTranslate="artemisApp.participation.participationSubmission.submissionDate"></span>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    {{ value | artemisDate: 'long' : true }}
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column prop="results" [minWidth]="80" [width]="80">
-                <ng-template ngx-datatable-header-template>
-                    <span jhiTranslate="artemisApp.participation.participationSubmission.resultCount"></span>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    {{ value.length || 0 }}
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column prop="results" [minWidth]="500" [width]="500">
-                <ng-template ngx-datatable-header-template>
-                    <span jhiTranslate="artemisApp.participation.participationSubmission.results"></span>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    <div class="d-flex flex-column">
-                        @for (result of value; track result) {
-                            <div>
-                                <jhi-result
-                                    [exercise]="exercise"
-                                    [result]="result"
-                                    [participation]="participation!"
-                                    [showUngradedResults]="!isTmpOrSolutionProgrParticipation"
-                                    [showBadge]="!isTmpOrSolutionProgrParticipation"
-                                />
-                                @if (exercise?.isAtLeastInstructor) {
-                                    <span
-                                        class="badge"
-                                        style="border-radius: 0px"
-                                        jhiDeleteButton
-                                        [buttonSize]="buttonSizeSmall"
-                                        [actionType]="actionTypeEmpty"
-                                        [entityTitle]="'deleteResultButton'"
-                                        deleteQuestion="artemisApp.result.delete.question2"
-                                        (delete)="deleteResult(result.submission, result)"
-                                        [dialogError]="dialogError$"
-                                    >
-                                        <fa-icon [icon]="faTrash" />
-                                        {{ 'artemisApp.result.delete.buttonText' | artemisTranslate }}
-                                    </span>
-                                    @if (result?.buildJobId) {
-                                        <a class="detail-link" (click)="viewBuildLogs(result.buildJobId)" jhiTranslate="artemisApp.result.buildLogs.viewLogs"></a>
-                                    }
-                                }
-                            </div>
-                        }
-                    </div>
-                </ng-template>
-            </ngx-datatable-column>
-            @if (isTmpOrSolutionProgrParticipation || participation?.type === ParticipationType.PROGRAMMING) {
-                <ngx-datatable-column prop="commitHash" [minWidth]="80" [width]="80">
-                    <ng-template ngx-datatable-header-template>
-                        <span jhiTranslate="artemisApp.programmingSubmission.commitHash"></span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-row="row" let-value="value">
-                        @if (value) {
-                            <div>
-                                {{ value.slice(0, 11) }}
-                            </div>
-                        } @else {
-                            {{ 'n.a' }}
-                        }
-                    </ng-template>
-                </ngx-datatable-column>
-            }
-            <ngx-datatable-column prop="results" [minWidth]="180" [width]="180">
-                <ng-template ngx-datatable-header-template>
-                    <span jhiTranslate="artemisApp.result.assessmentType"></span>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    <div class="d-flex flex-column">
-                        @for (result of value; track result) {
-                            <div>{{ result.assessmentType }}</div>
-                        }
-                    </div>
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column prop="results" [minWidth]="200" [width]="200">
-                <ng-template ngx-datatable-header-template>
-                    <span jhiTranslate="artemisApp.participation.participationSubmission.assessor"></span>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    <div class="d-flex flex-column">
-                        @for (result of value; track result) {
-                            <div>{{ result.assessor?.name || 'n.a' }}</div>
-                        }
-                    </div>
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column prop="results" [minWidth]="200" [width]="200">
-                <ng-template ngx-datatable-header-template>
-                    <span jhiTranslate="artemisApp.exercise.completionDate"></span>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    <div class="d-flex flex-column">
-                        @for (result of value; track result) {
-                            <div>{{ result.completionDate | artemisDate: 'long' : true }}</div>
-                        }
-                    </div>
-                </ng-template>
-            </ngx-datatable-column>
-            @if (exercise?.isAtLeastInstructor) {
-                <ngx-datatable-column prop="id" [minWidth]="120" [width]="120">
-                    <ng-template ngx-datatable-header-template>
-                        <span jhiTranslate="artemisApp.participation.participationSubmission.action"></span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
+
+<jhi-table-view
+    [cols]="columns()"
+    [vals]="submissions()"
+    [loading]="isLoading()"
+    [rowActions]="exercise()?.isAtLeastInstructor ? actionsTemplate : null"
+    [options]="tableOptions"
+/>
+
+<!-- Row actions: delete submission -->
+<ng-template #actionsTemplate let-submission>
+    <button
+        class="btn btn-danger btn-sm me-1"
+        id="deleteButton"
+        jhiDeleteButton
+        deleteQuestion="artemisApp.participation.participationSubmission.delete"
+        (delete)="deleteSubmission(submission.id)"
+        [dialogError]="dialogError$"
+    >
+        <fa-icon [icon]="faTrash" />
+    </button>
+</ng-template>
+
+<!-- Cell templates -->
+<ng-template #submissionDateTemplate let-params>
+    {{ params.value | artemisDate: 'long' : true }}
+</ng-template>
+
+<ng-template #resultCountTemplate let-params>
+    {{ params.value?.length || 0 }}
+</ng-template>
+
+<ng-template #resultsTemplate let-params>
+    <div class="d-flex flex-column">
+        @for (result of params.value ?? []; track result) {
+            <div>
+                <jhi-result
+                    [exercise]="exercise()"
+                    [result]="result"
+                    [participation]="participation()!"
+                    [showUngradedResults]="!isTmpOrSolutionProgrParticipation()"
+                    [showBadge]="!isTmpOrSolutionProgrParticipation()"
+                />
+                @if (exercise()?.isAtLeastInstructor) {
+                    <span
+                        class="badge"
+                        style="border-radius: 0px"
+                        jhiDeleteButton
+                        [buttonSize]="buttonSizeSmall"
+                        [actionType]="actionTypeEmpty"
+                        [entityTitle]="'deleteResultButton'"
+                        deleteQuestion="artemisApp.result.delete.question2"
+                        (delete)="deleteResult(result.submission, result)"
+                        [dialogError]="dialogError$"
+                    >
+                        <fa-icon [icon]="faTrash" />
+                        {{ 'artemisApp.result.delete.buttonText' | artemisTranslate }}
+                    </span>
+                    @if (result?.buildJobId) {
                         <button
-                            class="btn btn-danger btn-sm me-1"
-                            id="deleteButton"
-                            jhiDeleteButton
-                            deleteQuestion="artemisApp.participation.participationSubmission.delete"
-                            (delete)="deleteSubmission(value)"
-                            [dialogError]="dialogError$"
-                        >
-                            <fa-icon [icon]="faTrash" />
-                        </button>
-                    </ng-template>
-                </ngx-datatable-column>
-            }
-        </ngx-datatable>
+                            type="button"
+                            class="btn btn-link detail-link p-0"
+                            style="text-decoration: none"
+                            (click)="viewBuildLogs(result.buildJobId)"
+                            jhiTranslate="artemisApp.result.buildLogs.viewLogs"
+                        ></button>
+                    }
+                }
+            </div>
+        }
     </div>
-}
+</ng-template>
+
+<ng-template #commitHashTemplate let-params>
+    @if ($any(params.data).commitHash) {
+        <div>{{ $any(params.data).commitHash.slice(0, 11) }}</div>
+    } @else {
+        {{ 'n.a' }}
+    }
+</ng-template>
+
+<ng-template #assessmentTypeTemplate let-params>
+    <div class="d-flex flex-column">
+        @for (result of params.value ?? []; track result) {
+            <div>{{ result.assessmentType }}</div>
+        }
+    </div>
+</ng-template>
+
+<ng-template #assessorTemplate let-params>
+    <div class="d-flex flex-column">
+        @for (result of params.value ?? []; track result) {
+            <div>{{ result.assessor?.name || 'n.a' }}</div>
+        }
+    </div>
+</ng-template>
+
+<ng-template #completionDateTemplate let-params>
+    <div class="d-flex flex-column">
+        @for (result of params.value ?? []; track result) {
+            <div>{{ result.completionDate | artemisDate: 'long' : true }}</div>
+        }
+    </div>
+</ng-template>

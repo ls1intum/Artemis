@@ -1,7 +1,7 @@
 @if (buildingSummary) {
-    <div class="d-flex">
+    <div class="d-flex gap-2 align-items-center">
         @if (hasBuildingSubmissions) {
-            <div id="result-eta" class="badge bg-secondary d-flex flex-column justify-content-between me-3">
+            <div id="result-eta" class="badge bg-secondary d-flex flex-column justify-content-between">
                 <fa-icon [icon]="faClock" />
                 <span
                     [ngbTooltip]="'artemisApp.programmingExercise.resultETATooltip' | artemisTranslate"
@@ -31,15 +31,16 @@
                 Failed submissions: {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
             </span>
         </div>
-        <jhi-programming-exercise-trigger-all-button [exercise]="exercise" />
+        <jhi-programming-exercise-trigger-all-button [btnSize]="ButtonSize.SMALL" [exercise]="exercise" />
         <jhi-button
             id="trigger-failed-button"
-            class="ms-3"
+            [btnSize]="ButtonSize.SMALL"
             [disabled]="!hasFailedSubmissions"
             [isLoading]="isBuildingFailedSubmissions"
             [icon]="faRedo"
             [title]="'artemisApp.programmingExercise.resubmitFailed'"
             [tooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip'"
+            [tooltipPlacement]="TooltipPlacement.BOTTOM"
             [featureToggle]="FeatureToggle.ProgrammingExercises"
             (onClick)="triggerBuildOfFailedSubmissions()"
         />

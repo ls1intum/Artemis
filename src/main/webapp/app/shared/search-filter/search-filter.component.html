@@ -1,21 +1,16 @@
-<form [formGroup]="filterForm">
-    <div class="d-flex align-items-center border rounded-3">
-        <input
-            id="search"
-            type="text"
-            class="form-control border-0 bg-transparent shadow-none"
-            formControlName="searchFilter"
-            placeholder="{{ 'artemisApp.course.exercise.search.searchPlaceholder' | artemisTranslate }}"
-            aria-label="Filter Search Field"
-            aria-describedby="filter-search-field"
-            (input)="setSearchValue(filterForm.value.searchFilter)"
-        />
-        <div class="pe-2 text-secondary">
-            @if (filterForm.value.searchFilter) {
-                <fa-icon id="test-fa-times" class="pointer" [icon]="faTimes" (click)="resetSearchValue()" />
-            } @else {
-                <fa-icon [icon]="faMagnifyingGlass" />
-            }
-        </div>
-    </div>
-</form>
+<p-iconfield>
+    <p-inputicon class="pi pi-search" />
+    <input
+        #searchInput
+        id="search"
+        type="text"
+        pSize="small"
+        pInputText
+        [value]="searchValue()"
+        (input)="setSearchValue(searchInput.value)"
+        [placeholder]="placeholderKey() | artemisTranslate"
+        aria-label="Filter Search Field"
+        aria-describedby="filter-search-field"
+    />
+    <p-inputicon class="pi pi-times pointer" [style.display]="searchValue() ? '' : 'none'" (click)="resetSearchValue()" />
+</p-iconfield>

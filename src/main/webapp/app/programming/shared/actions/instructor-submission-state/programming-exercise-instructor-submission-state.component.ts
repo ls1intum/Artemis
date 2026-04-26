@@ -3,7 +3,7 @@ import { debounceTime, map, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
 import { faCircleNotch, faClock, faRedo } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -32,6 +32,8 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
 
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
+    ButtonSize = ButtonSize;
+    TooltipPlacement = TooltipPlacement;
     ProgrammingSubmissionState = ProgrammingSubmissionState;
 
     @Input() exercise: ProgrammingExercise;

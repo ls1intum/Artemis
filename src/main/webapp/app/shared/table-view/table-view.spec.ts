@@ -106,6 +106,10 @@ describe('TableViewComponent', () => {
                 pageSizeOptions: [10],
                 showSearch: false,
                 emptyMessageTranslation: 'custom.message',
+                scrollable: true,
+                scrollHeight: '400px',
+                rowActionsAlignment: 'start',
+                searchPlaceholder: 'custom.placeholder',
             };
             fixture.componentRef.setInput('options', fullOptions);
             const resolved = component['resolvedOptions']();
@@ -120,6 +124,30 @@ describe('TableViewComponent', () => {
             expect(resolved.pageSizeOptions).toEqual([10]);
             expect(resolved.showSearch).toBe(false);
             expect(resolved.emptyMessageTranslation).toBe('custom.message');
+            expect(resolved.scrollable).toBe(true);
+            expect(resolved.scrollHeight).toBe('400px');
+            expect(resolved.rowActionsAlignment).toBe('start');
+            expect(resolved.searchPlaceholder).toBe('custom.placeholder');
+        });
+
+        it('should use default scrollable, scrollHeight, rowActionsAlignment, searchPlaceholder', () => {
+            const resolved = component['resolvedOptions']();
+            expect(resolved.scrollable).toBe(false);
+            expect(resolved.scrollHeight).toBeUndefined();
+            expect(resolved.rowActionsAlignment).toBe('end');
+            expect(resolved.searchPlaceholder).toBe('artemisApp.course.exercise.search.searchPlaceholder');
+        });
+
+        it('should set pageSizeOptions to undefined when hidePageSizeOptions is true', () => {
+            fixture.componentRef.setInput('options', { hidePageSizeOptions: true });
+            const resolved = component['resolvedOptions']();
+            expect(resolved.pageSizeOptions).toBeUndefined();
+        });
+
+        it('should use pageSizeOptions from options when hidePageSizeOptions is false', () => {
+            fixture.componentRef.setInput('options', { hidePageSizeOptions: false, pageSizeOptions: [5, 25] });
+            const resolved = component['resolvedOptions']();
+            expect(resolved.pageSizeOptions).toEqual([5, 25]);
         });
     });
 

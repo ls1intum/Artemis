@@ -1,4 +1,4 @@
-import { Component, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Organization } from 'app/core/shared/entities/organization.model';
@@ -11,7 +11,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
-import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -37,7 +37,7 @@ export class OrganizationManagementComponent {
     totalCount = signal(0);
     isLoading = signal(false);
 
-    nameColumnTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<Organization> }>>('nameColumn');
+    nameColumnTemplate = viewChild<CellTemplateRef<Organization>>('nameColumn');
 
     columns = computed<ColumnDef<Organization>[]>(() => [
         { field: 'name', headerKey: 'artemisApp.organizationManagement.name', sort: true, width: '300px', templateRef: this.nameColumnTemplate() },

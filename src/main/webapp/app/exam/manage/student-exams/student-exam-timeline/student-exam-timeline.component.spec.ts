@@ -259,35 +259,32 @@ describe('Student Exam Timeline Component', () => {
         }
     });
 
-    it.each([0, 1, 2])(
-        'should correctly set the values onInputChange',
-        fakeAsync((index: number) => {
-            component.submissionVersions = [submissionVersion];
-            component.fileUploadSubmissions = [fileUploadSubmission1];
-            component.programmingSubmissions = [programmingSubmission1];
-            component.submissionTimeStamps = [dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')];
-            component.timestampIndex = index;
+    it.each([0, 1, 2])('should correctly set the values onInputChange', (index: number) => {
+        component.submissionVersions = [submissionVersion];
+        component.fileUploadSubmissions = [fileUploadSubmission1];
+        component.programmingSubmissions = [programmingSubmission1];
+        component.submissionTimeStamps = [dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')];
+        component.timestampIndex = index;
 
-            //when
-            component.onSliderInputChange();
-            fixture.changeDetectorRef.detectChanges();
-            //then
-            if (dayjs(component.submissionTimeStamps[component.timestampIndex]).isSame(dayjs('2023-01-07'))) {
-                expect(component.currentSubmission).toEqual(submissionVersion);
-                expect(component.exerciseIndex).toBe(0);
-                expect(component.currentExercise).toEqual(textExercise);
-            } else if (dayjs(component.submissionTimeStamps[component.timestampIndex]).isSame(dayjs('2023-02-07'))) {
-                expect(component.currentSubmission).toEqual(programmingSubmission1);
-                expect(component.exerciseIndex).toBe(1);
-                expect(component.currentExercise).toEqual(programmingExercise);
-            } else {
-                expect(component.currentSubmission).toEqual(fileUploadSubmission1);
-                expect(component.exerciseIndex).toBe(2);
-                expect(component.currentExercise).toEqual(fileUploadExercise);
-            }
-            expect(component.selectedTimestamp).toEqual(component.submissionTimeStamps[component.timestampIndex].valueOf());
-        }),
-    );
+        //when
+        component.onSliderInputChange();
+        fixture.changeDetectorRef.detectChanges();
+        //then
+        if (dayjs(component.submissionTimeStamps[component.timestampIndex]).isSame(dayjs('2023-01-07'))) {
+            expect(component.currentSubmission).toEqual(submissionVersion);
+            expect(component.exerciseIndex).toBe(0);
+            expect(component.currentExercise).toEqual(textExercise);
+        } else if (dayjs(component.submissionTimeStamps[component.timestampIndex]).isSame(dayjs('2023-02-07'))) {
+            expect(component.currentSubmission).toEqual(programmingSubmission1);
+            expect(component.exerciseIndex).toBe(1);
+            expect(component.currentExercise).toEqual(programmingExercise);
+        } else {
+            expect(component.currentSubmission).toEqual(fileUploadSubmission1);
+            expect(component.exerciseIndex).toBe(2);
+            expect(component.currentExercise).toEqual(fileUploadExercise);
+        }
+        expect(component.selectedTimestamp).toEqual(component.submissionTimeStamps[component.timestampIndex].valueOf());
+    });
     it.each([programmingSubmission1, programmingSubmission2, programmingSubmission3])(
         'should correctly determine the previous submission',
         (currentSubmission: ProgrammingSubmission) => {

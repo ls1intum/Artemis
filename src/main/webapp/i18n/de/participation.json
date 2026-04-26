@@ -26,9 +26,10 @@
                 "label": "Entferne Präsentation",
                 "error": "Die Präsentation konnte nicht entfernt werden. Bitte versuche es nochmal."
             },
+            "loadError": "Teilnahmen konnten nicht geladen werden. Bitte versuche es erneut.",
             "updateDueDates": {
-                "success": "Die individuellen Einreichungsfrist wurden für {{ count }} Teilnehmende aktualisiert.",
-                "error": "Die individuellen Einreichungsfrist konnten nicht aktualisiert werden."
+                "success": "Die individuelle Einreichungsfrist für {{ name }} wurde aktualisiert.",
+                "error": "Die individuelle Einreichungsfrist konnte nicht aktualisiert werden."
             },
             "detail": {
                 "title": "Teilnahme"
@@ -41,6 +42,8 @@
             "initializationState": "Status",
             "initializationDate": "Teilnahme Start",
             "individualDueDate": "Einreichungsfrist",
+            "noIndividualDueDate": "Keine Einreichungsfrist",
+            "editIndividualDueDate": "Einreichungsfrist bearbeiten",
             "initializationNotYetStarted": "Noch nicht gestartet",
             "presentationScore": "Präsentation",
             "presentationGrade": "Präsentationsnote",

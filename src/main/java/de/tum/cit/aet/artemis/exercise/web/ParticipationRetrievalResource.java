@@ -7,10 +7,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -28,9 +33,15 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -186,6 +197,76 @@ public class ParticipationRetrievalResource {
         checkAccessPermissionAtLeastInstructor(participation, user);
         List<Submission> submissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(participationId);
         return ResponseEntity.ok(submissions);
+    }
+
+    /**
+     * GET /exercises/:exerciseId/participations/page : get paginated participations for the participation management view.
+     *
+     * @param exerciseId the exercise to query
+     * @param search     search parameters including pagination, sorting, search term, and filter
+     * @return a paginated list of ParticipationManagementDTO with pagination headers
+     */
+    @GetMapping("exercises/{exerciseId}/participations/page")
+    @EnforceAtLeastTutor
+    public ResponseEntity<List<ParticipationManagementDTO>> getParticipationsPage(@PathVariable Long exerciseId, @Valid ParticipationSearchDTO search) {
+        log.debug("REST request to get paged Participations for Exercise {}", exerciseId);
+
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        if (exercise.isCourseExercise()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        }
+        else if (exercise.isExamExercise()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        }
+
+        Page<ParticipationManagementDTO> page = participationService.findParticipationsForExercise(exercise, search);
+
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
+    }
+
+    /**
+     * GET /exercises/:exerciseId/participations/names : get participant names for all participations of the given exercise.
+     *
+     * @param exerciseId the exercise to query
+     * @return list of {@link ParticipationNameExportDTO}, one entry per participation
+     */
+    @GetMapping("exercises/{exerciseId}/participations/names")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<ParticipationNameExportDTO>> getParticipationNamesForExport(@PathVariable Long exerciseId) {
+        log.debug("REST request to export participation names for Exercise {}", exerciseId);
+
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+        List<ParticipationNameExportDTO> result = participationService.getParticipationNamesForExport(exercise);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * GET /exercises/:exerciseId/participations/scores : get paginated participation scores for the exercise scores view.
+     *
+     * @param exerciseId the exercise to query
+     * @param search     search parameters including pagination, sorting, search term, filter, and score range
+     * @return a paginated list of ParticipationScoreDTO with pagination headers
+     */
+    @GetMapping("exercises/{exerciseId}/participations/scores")
+    @EnforceAtLeastTutor
+    public ResponseEntity<List<ParticipationScoreDTO>> getParticipationScores(@PathVariable Long exerciseId, @Valid ParticipationScoreSearchDTO search) {
+        log.debug("REST request to search Participations for Exercise {}", exerciseId);
+
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        if (exercise.isCourseExercise()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        }
+        else if (exercise.isExamExercise()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        }
+
+        Page<ParticipationScoreDTO> page = participationService.findParticipationScoresForExercise(exercise, search);
+
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
     }
 
 }

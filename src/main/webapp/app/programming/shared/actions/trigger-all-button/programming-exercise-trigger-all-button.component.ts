@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
 import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -22,11 +22,12 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
     template: `
         <jhi-button
             id="trigger-all-button"
-            class="ms-3"
             [disabled]="disabled"
+            [btnSize]="btnSize"
             [btnType]="ButtonType.ERROR"
             [isLoading]="isTriggeringBuildAll"
             [tooltip]="'artemisApp.programmingExercise.resubmitAllTooltip'"
+            [tooltipPlacement]="TooltipPlacement.BOTTOM"
             [icon]="faRedo"
             [title]="'artemisApp.programmingExercise.resubmitAll'"
             [featureToggle]="FeatureToggle.ProgrammingExercises"
@@ -42,8 +43,12 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
 
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
+    ButtonSize = ButtonSize;
+    TooltipPlacement = TooltipPlacement;
     @Input() exercise: ProgrammingExercise;
     @Input() disabled = false;
+    @Input() btnSize = ButtonSize.MEDIUM;
+
     @Output() onBuildTriggered = new EventEmitter();
     isTriggeringBuildAll = false;
     // Icons

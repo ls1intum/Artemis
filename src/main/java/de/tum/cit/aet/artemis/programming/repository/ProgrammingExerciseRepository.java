@@ -83,6 +83,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "buildConfig" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndBuildConfigById(long exerciseId);
 
+    @Query("SELECT COALESCE(bc.timeoutSeconds, 0) FROM ProgrammingExercise pe LEFT JOIN pe.buildConfig bc WHERE pe.id = :exerciseId")
+    Optional<Integer> findBuildTimeoutSecondsByExerciseId(@Param("exerciseId") long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
             "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "buildConfig" })
     Optional<ProgrammingExercise> findForCreationById(long exerciseId);

@@ -26,9 +26,10 @@
                 "label": "Remove presentation",
                 "error": "Could not remove presentation. Please try again."
             },
+            "loadError": "Could not load participations. Please try again.",
             "updateDueDates": {
-                "success": "Updated the individual due dates for {{ count }} participants.",
-                "error": "The individual due dates could not be updated."
+                "success": "Updated the individual due date for {{ name }}.",
+                "error": "The individual due date could not be updated."
             },
             "detail": {
                 "title": "Participation"
@@ -41,6 +42,8 @@
             "initializationState": "Status",
             "initializationDate": "Participation Start Date",
             "individualDueDate": "Individual Due Date",
+            "noIndividualDueDate": "No due date",
+            "editIndividualDueDate": "Edit individual due date",
             "initializationNotYetStarted": "Not yet started",
             "presentationScore": "Presentation",
             "presentationGrade": "Presentation Grade",

@@ -15,7 +15,7 @@ export interface ColumnDef<T> {
     filter?: boolean;
     filterType?: string;
     /** Render the cell using a parent-defined template. Receives {@link CellRendererParams} as `$implicit`. Takes priority over `cellRenderer`. */
-    templateRef?: TemplateRef<{ $implicit: CellRendererParams<T> }>;
+    templateRef?: CellTemplateRef<T>;
     cellRenderer?: Type<unknown>;
 }
 
@@ -25,6 +25,8 @@ export interface CellRendererParams<T> {
     value: T[keyof T] | undefined;
     rowIndex: number;
 }
+
+export type CellTemplateRef<T> = TemplateRef<{ $implicit: CellRendererParams<T> }>;
 
 /**
  * The fully-resolved configuration for the table. All fields are required.
@@ -51,12 +53,16 @@ export interface TableConfig {
     pageSizeOptions: number[] | undefined;
     /** Show the search filter in the table caption bar. Default: true */
     showSearch: boolean;
+    /** Translation key for the search input placeholder. Default: 'artemisApp.course.exercise.search.searchPlaceholder' */
+    searchPlaceholder: string;
     /** Translation key for the message shown when the table has no rows. Default: 'artemisApp.dataTable.search.noResults' */
     emptyMessageTranslation: string;
     /** Enable scrollable mode with fixed headers. Default: false */
     scrollable: boolean;
     /** Height of the scrollable data viewport. Only applies when scrollable is true. Accepts any CSS length value (e.g. '65vh', '400px'). Default: undefined */
     scrollHeight: string | undefined;
+    /** Alignment of the row actions column. Default: 'end' */
+    rowActionsAlignment: 'start' | 'end';
 }
 
 /**
@@ -78,9 +84,11 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
     pageSize: 50,
     pageSizeOptions: [10, 20, 50, 100, 200],
     showSearch: true,
+    searchPlaceholder: 'artemisApp.course.exercise.search.searchPlaceholder',
     emptyMessageTranslation: 'artemisApp.dataTable.search.noResults',
     scrollable: false,
     scrollHeight: undefined,
+    rowActionsAlignment: 'end',
 };
 
 @Component({
@@ -137,9 +145,11 @@ export class TableViewComponent<T> {
             pageSize: opts.pageSize ?? DEFAULT_TABLE_CONFIG.pageSize,
             pageSizeOptions: opts.hidePageSizeOptions ? undefined : (opts.pageSizeOptions ?? DEFAULT_TABLE_CONFIG.pageSizeOptions),
             showSearch: opts.showSearch ?? DEFAULT_TABLE_CONFIG.showSearch,
+            searchPlaceholder: opts.searchPlaceholder ?? DEFAULT_TABLE_CONFIG.searchPlaceholder,
             emptyMessageTranslation: opts.emptyMessageTranslation ?? DEFAULT_TABLE_CONFIG.emptyMessageTranslation,
             scrollable: opts.scrollable ?? DEFAULT_TABLE_CONFIG.scrollable,
             scrollHeight: opts.scrollHeight ?? DEFAULT_TABLE_CONFIG.scrollHeight,
+            rowActionsAlignment: opts.rowActionsAlignment ?? DEFAULT_TABLE_CONFIG.rowActionsAlignment,
         };
         return tableConfig;
     });

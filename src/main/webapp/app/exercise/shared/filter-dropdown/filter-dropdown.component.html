@@ -1,0 +1,25 @@
+<p-select
+    size="small"
+    appendTo="self"
+    [options]="filters()"
+    [ngModel]="activeFilter()"
+    (onChange)="filterChange.emit($event.value)"
+    [class]="isFiltered() ? 'filter-dropdown-active' : 'filter-dropdown-default'"
+    aria-label="Filter Dropdown"
+>
+    <ng-template #selectedItem>
+        <div class="d-flex align-items-center">
+            <i class="pi pi-filter"></i>
+            <span class="ms-2">
+                @if (activeFilter() === allValue()) {
+                    {{ 'artemisApp.exercise.filter' | artemisTranslate }}
+                } @else {
+                    {{ 'artemisApp.exercise.scoresFilter' | artemisTranslate: { filter: ('artemisApp.exercise.show' + activeFilter() | artemisTranslate) } }}
+                }
+            </span>
+        </div>
+    </ng-template>
+    <ng-template #item let-filter>
+        {{ 'artemisApp.exercise.show' + filter | artemisTranslate }}
+    </ng-template>
+</p-select>
