@@ -130,8 +130,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly defaultHorizontalSplitSizes: SplitSizes = [50, 50]; // [video, pdf]
     private readonly _verticalSplitSizes = signal<SplitSizes>(this.defaultVerticalSplitSizes);
     private readonly _horizontalSplitSizes = signal<SplitSizes>(this.defaultHorizontalSplitSizes);
-    readonly minVerticalSplitSizes: SplitSizes = [120, 120];
-    readonly minHorizontalSplitSizes: SplitSizes = [80, 80];
+    readonly minVerticalSplitSizes: SplitSizes = [220, 220];
+    readonly minHorizontalSplitSizes: SplitSizes = [140, 140];
 
     readonly verticalSplitSizes = this._verticalSplitSizes.asReadonly();
     readonly horizontalSplitSizes = this._horizontalSplitSizes.asReadonly();
