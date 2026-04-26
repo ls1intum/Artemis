@@ -403,7 +403,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue('https://live.rbg.tum.de/w/test/26');
         expect(attachmentVideoUnitFormComponent.urlHelperControl!.errors).toBeNull();
 
-        // Valid YouTube (parsable by js-video-url-parser)
+        // Valid YouTube (parsable by our video URL parser)
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
         expect(attachmentVideoUnitFormComponent.urlHelperControl!.errors).toBeNull();
 
@@ -420,6 +420,28 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const ytWatch = 'https://www.youtube.com/watch?v=8iU8LPEa4o0';
         const ytEmbed = attachmentVideoUnitFormComponent.extractEmbeddedUrl(ytWatch);
         expect(ytEmbed).toBe('https://www.youtube.com/embed/8iU8LPEa4o0');
+    });
+
+    it('is backwards-compatible with persisted embed URLs (YouTube embed, TUM-Live video_only, Vimeo player)', () => {
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        // Persisted YouTube embed URL must remain valid and idempotent through extractEmbeddedUrl.
+        const storedYouTubeEmbed = 'https://www.youtube.com/embed/NWNufWyVcT0';
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(storedYouTubeEmbed);
+        expect(attachmentVideoUnitFormComponent.videoSourceControl!.errors).toBeNull();
+        expect(attachmentVideoUnitFormComponent.extractEmbeddedUrl(storedYouTubeEmbed)).toBe(storedYouTubeEmbed);
+
+        // Persisted TUM-Live embed URL must remain valid and idempotent.
+        const storedTumLiveEmbed = 'https://live.rbg.tum.de/w/inhn0001/6233?video_only=1';
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(storedTumLiveEmbed);
+        expect(attachmentVideoUnitFormComponent.videoSourceControl!.errors).toBeNull();
+        expect(attachmentVideoUnitFormComponent.extractEmbeddedUrl(storedTumLiveEmbed)).toBe(storedTumLiveEmbed);
+
+        // Persisted Vimeo player URL (with unlisted hash) must remain valid and fully idempotent — the `h=` parameter is required for unlisted-video playback, so the transform must preserve it.
+        const storedVimeoPlayer = 'https://player.vimeo.com/video/228795592?h=27bef101ce';
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(storedVimeoPlayer);
+        expect(attachmentVideoUnitFormComponent.videoSourceControl!.errors).toBeNull();
+        expect(attachmentVideoUnitFormComponent.extractEmbeddedUrl(storedVimeoPlayer)).toBe(storedVimeoPlayer);
     });
 
     it('setEmbeddedVideoUrl: uses urlHelper and sets videoSource', () => {
