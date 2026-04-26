@@ -180,4 +180,4 @@
         }
     </div>
 </div>
-<jhi-setup-passkey-modal [(visible)]="showPasskeyModal" />
+<jhi-setup-passkey-modal [visible]="showPasskeyModal()" (visibleChange)="onPasskeyModalVisibleChange($event)" />
