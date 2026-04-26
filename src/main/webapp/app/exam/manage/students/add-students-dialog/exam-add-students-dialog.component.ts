@@ -6,6 +6,7 @@ import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { PasswordManagerIgnoreDirective } from 'app/shared/form/password-manager-ignore.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ButtonDirective } from 'primeng/button';
@@ -19,7 +20,18 @@ import { TableModule } from 'primeng/table';
     selector: 'jhi-exam-add-students-dialog',
     standalone: true,
     templateUrl: './exam-add-students-dialog.component.html',
-    imports: [Dialog, FormsModule, IconFieldModule, InputIconModule, InputTextModule, TableModule, ButtonDirective, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        Dialog,
+        FormsModule,
+        IconFieldModule,
+        InputIconModule,
+        InputTextModule,
+        TableModule,
+        ButtonDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        PasswordManagerIgnoreDirective,
+    ],
 })
 export class ExamAddStudentsDialogComponent {
     private readonly courseManagementService = inject(CourseManagementService);
