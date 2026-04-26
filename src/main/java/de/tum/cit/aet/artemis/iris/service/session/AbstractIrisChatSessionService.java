@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
-public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> implements IrisChatBasedFeatureInterface<S>, IrisRateLimitedFeatureInterface<S> {
+public abstract class AbstractIrisChatSessionService<S extends IrisSession> implements IrisChatBasedFeatureInterface<S>, IrisRateLimitedFeatureInterface<S> {
 
     private static final int MAX_SESSION_TITLE_LENGTH = 255;
 
@@ -124,13 +124,13 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
      * Truncates the title to 255 characters if necessary.
      * This is a utility method that can be used by services that don't extend this class.
      *
-     * @param <T>               The type of chat session (must extend IrisChatSession)
+     * @param <T>               The type of session (must extend IrisSession)
      * @param session           The session to update
      * @param sessionTitle      The title to set (can be null or blank)
      * @param sessionRepository The repository to save the session
      * @return The truncated session title if it was set, null otherwise
      */
-    public static <T extends IrisChatSession> String setSessionTitle(T session, String sessionTitle, IrisSessionRepository sessionRepository) {
+    public static <T extends IrisSession> String setSessionTitle(T session, String sessionTitle, IrisSessionRepository sessionRepository) {
         if (sessionTitle != null && !sessionTitle.isBlank()) {
             String truncatedTitle = sessionTitle.length() > MAX_SESSION_TITLE_LENGTH ? sessionTitle.substring(0, MAX_SESSION_TITLE_LENGTH) : sessionTitle;
             session.setTitle(truncatedTitle);

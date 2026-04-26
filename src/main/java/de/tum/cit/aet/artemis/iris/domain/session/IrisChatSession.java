@@ -1,28 +1,85 @@
 package de.tum.cit.aet.artemis.iris.domain.session;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 @Entity
-public abstract class IrisChatSession extends IrisSession {
+@DiscriminatorValue("CHAT")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class IrisChatSession extends IrisSession {
 
-    private long userId;
+    @JsonIgnore
+    private long courseId;
 
-    public IrisChatSession(User user) {
-        this.userId = user.getId();
-    }
+    @JsonIgnore
+    private long entityId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "chat_mode")
+    private IrisChatMode chatMode;
 
     public IrisChatSession() {
     }
 
-    public long getUserId() {
-        return userId;
+    public IrisChatSession(Course course, User user) {
+        setUserId(user.getId());
+        this.courseId = course.getId();
+        this.entityId = course.getId();
+        this.chatMode = IrisChatMode.COURSE_CHAT;
     }
 
-    public void setUserId(long userId) {
-        this.userId = userId;
+    public IrisChatSession(Exercise exercise, User user, IrisChatMode chatMode) {
+        if (chatMode != IrisChatMode.PROGRAMMING_EXERCISE_CHAT && chatMode != IrisChatMode.TEXT_EXERCISE_CHAT) {
+            throw new IllegalArgumentException("Exercise-based IrisChatSession requires an exercise chat mode (PROGRAMMING_EXERCISE_CHAT or TEXT_EXERCISE_CHAT), got: " + chatMode);
+        }
+        setUserId(user.getId());
+        this.entityId = exercise.getId();
+        this.courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        this.chatMode = chatMode;
     }
 
-    public abstract IrisChatMode getMode();
+    public IrisChatSession(Lecture lecture, User user) {
+        setUserId(user.getId());
+        this.entityId = lecture.getId();
+        this.courseId = lecture.getCourse().getId();
+        this.chatMode = IrisChatMode.LECTURE_CHAT;
+    }
+
+    public long getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(long courseId) {
+        this.courseId = courseId;
+    }
+
+    @Override
+    public Long getEntityId() {
+        return entityId;
+    }
+
+    public void setEntityId(long entityId) {
+        this.entityId = entityId;
+    }
+
+    @Override
+    public boolean shouldSelectLLMUsage() {
+        return true;
+    }
+
+    @Override
+    public IrisChatMode getMode() {
+        return chatMode;
+    }
 }

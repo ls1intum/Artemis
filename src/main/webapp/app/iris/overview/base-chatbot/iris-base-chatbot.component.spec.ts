@@ -674,7 +674,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 2,
             title: 'New chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -692,7 +692,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 3,
             title: 'Course chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -727,7 +727,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 1,
             title: 'Greeting and study support',
             creationDate: new Date('2025-10-06T10:00:00.000Z'),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -735,14 +735,14 @@ describe('IrisBaseChatbotComponent', () => {
             id: 2,
             title: 'Difference between strategy and bridge pattern',
             creationDate: new Date('2025-10-05T10:00:00.000Z'),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
         const sessionNoTitle: IrisSessionDTO = {
             id: 3,
             creationDate: new Date('2025-10-05T08:00:00.000Z'),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -799,35 +799,35 @@ describe('IrisBaseChatbotComponent', () => {
         const sessionToday: IrisSessionDTO = {
             id: 1,
             creationDate: new Date('2025-06-23T10:00:00.000Z'),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
         const sessionYesterday: IrisSessionDTO = {
             id: 2,
             creationDate: new Date('2025-06-22T12:00:00.000Z'),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
         const session7DaysAgo: IrisSessionDTO = {
             id: 3,
             creationDate: new Date('2025-06-16T12:00:00.000Z'),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
         const session8DaysAgo: IrisSessionDTO = {
             id: 4,
             creationDate: new Date('2025-06-15T12:00:00.000Z'),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
         const session30DaysAgo: IrisSessionDTO = {
             id: 5,
             creationDate: new Date('2025-05-24T12:00:00.000Z'),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -1205,7 +1205,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 10,
             title: 'Help with recursion',
             creationDate: new Date('2025-10-06T09:00:00.000Z'),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 42,
             entityName: 'Exercise 1',
         };
@@ -1213,7 +1213,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 11,
             title: 'Array sorting question',
             creationDate: new Date('2025-10-05T09:00:00.000Z'),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 42,
             entityName: 'Exercise 1',
         };
@@ -1221,7 +1221,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 12,
             title: 'Other exercise chat',
             creationDate: new Date('2025-10-06T08:00:00.000Z'),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 99,
             entityName: 'Exercise 2',
         };
@@ -1229,7 +1229,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 13,
             title: 'Lecture question',
             creationDate: new Date('2025-10-06T07:00:00.000Z'),
-            chatMode: ChatServiceMode.LECTURE,
+            mode: ChatServiceMode.LECTURE,
             entityId: 42,
             entityName: 'Lecture 1',
         };
@@ -1361,7 +1361,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 20,
             title: 'Embedded session',
             creationDate: new Date('2025-10-06T09:00:00.000Z'),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 42,
             entityName: 'Exercise 1',
         };
@@ -1369,7 +1369,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 21,
             title: 'Older embedded session',
             creationDate: new Date('2025-10-05T09:00:00.000Z'),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 42,
             entityName: 'Exercise 1',
         };
@@ -1377,7 +1377,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 22,
             title: 'Unrelated session',
             creationDate: new Date('2025-10-05T08:00:00.000Z'),
-            chatMode: ChatServiceMode.LECTURE,
+            mode: ChatServiceMode.LECTURE,
             entityId: 99,
             entityName: 'Lecture 99',
         };
@@ -1437,7 +1437,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 30,
             title: undefined,
             creationDate: new Date('2025-10-06T10:00:00.000Z'),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 7,
             entityName: '',
         };
@@ -1445,7 +1445,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 31,
             title: 'Earlier course chat',
             creationDate: new Date('2025-10-05T10:00:00.000Z'),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 7,
             entityName: 'Course 7',
         };
@@ -1535,7 +1535,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 42,
             title: 'Test session',
             creationDate: new Date('2025-06-20T10:00:00.000Z'),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -2021,7 +2021,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 10,
             title: 'Help with recursion',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 42,
             entityName: 'Sorting Arrays',
         };
@@ -2029,7 +2029,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 20,
             title: 'Lecture question',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.LECTURE,
+            mode: ChatServiceMode.LECTURE,
             entityId: 55,
             entityName: 'Data Structures',
         };

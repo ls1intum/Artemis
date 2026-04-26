@@ -12,6 +12,5 @@ export class IrisSession implements BaseEntity {
     creationDate: Date;
     mode: ChatServiceMode;
     entityId: number;
-    type?: string;
     citationInfo?: IrisCitationMetaDTO[];
 }

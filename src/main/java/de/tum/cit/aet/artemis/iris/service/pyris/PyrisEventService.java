@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisEvent;
-import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 
 /**
  * Service to handle Pyris events.
@@ -22,10 +22,10 @@ public class PyrisEventService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisEventService.class);
 
-    private final IrisExerciseChatSessionService irisExerciseChatSessionService;
+    private final IrisChatSessionService irisChatSessionService;
 
-    public PyrisEventService(IrisExerciseChatSessionService irisExerciseChatSessionService) {
-        this.irisExerciseChatSessionService = irisExerciseChatSessionService;
+    public PyrisEventService(IrisChatSessionService irisChatSessionService) {
+        this.irisChatSessionService = irisChatSessionService;
     }
 
     /**
@@ -33,7 +33,7 @@ public class PyrisEventService {
      * This method processes the event and delegates the handling to the appropriate service.
      * <p>
      * Note: It's possible that no action is triggered if the event does not fulfill all requirements.
-     * See {@link IrisExerciseChatSessionService#handleNewResultEvent(NewResultEvent)} for more details on the specific
+     * See {@link IrisChatSessionService#handleNewResultEvent(NewResultEvent)} for more details on the specific
      * actions taken for each event type.
      *
      * @param event The event object received to trigger the matching action
@@ -48,7 +48,7 @@ public class PyrisEventService {
             switch (event) {
                 case NewResultEvent newResultEvent -> {
                     log.debug("Processing NewResultEvent: {}", newResultEvent);
-                    irisExerciseChatSessionService.handleNewResultEvent(newResultEvent);
+                    irisChatSessionService.handleNewResultEvent(newResultEvent);
                     log.debug("Successfully processed NewResultEvent");
                 }
                 default -> throw new UnsupportedPyrisEventException("Unsupported event type: " + event.getClass().getSimpleName());

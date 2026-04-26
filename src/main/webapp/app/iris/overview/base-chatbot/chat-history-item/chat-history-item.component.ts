@@ -80,7 +80,7 @@ export class ChatHistoryItemComponent {
     }
 
     private computeIcon(session: IrisSessionDTO): IconProp | undefined {
-        switch (session.chatMode) {
+        switch (session.mode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
                 return faKeyboard;
             case ChatServiceMode.TEXT_EXERCISE:
@@ -94,7 +94,7 @@ export class ChatHistoryItemComponent {
 
     private computeTooltipText(session: IrisSessionDTO): string | undefined {
         let key: string | undefined;
-        switch (session.chatMode) {
+        switch (session.mode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
                 key = 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise';
                 break;
@@ -111,10 +111,10 @@ export class ChatHistoryItemComponent {
     }
 
     private computeEntityRoute(session: IrisSessionDTO): string | undefined {
-        if (!session.chatMode || !session.entityId) {
+        if (!session.mode || !session.entityId) {
             return undefined;
         }
-        switch (session.chatMode) {
+        switch (session.mode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
             case ChatServiceMode.TEXT_EXERCISE:
                 return `../exercises/${session.entityId}`;

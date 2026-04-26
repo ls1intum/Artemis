@@ -15,13 +15,13 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @Entity
 @DiscriminatorValue("TUTOR_SUGGESTION")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisTutorSuggestionSession extends IrisChatSession {
+public class IrisTutorSuggestionSession extends IrisSession {
 
     @JsonIgnore
     private Long postId;
 
     public IrisTutorSuggestionSession(Long postId, User user) {
-        super(user);
+        setUserId(user.getId());
         this.postId = postId;
     }
 
@@ -49,5 +49,10 @@ public class IrisTutorSuggestionSession extends IrisChatSession {
     @Override
     public IrisChatMode getMode() {
         return IrisChatMode.TUTOR_SUGGESTION;
+    }
+
+    @Override
+    public Long getEntityId() {
+        return postId;
     }
 }

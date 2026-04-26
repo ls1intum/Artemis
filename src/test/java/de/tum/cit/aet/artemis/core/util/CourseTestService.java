@@ -156,7 +156,7 @@ import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
-import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
@@ -332,7 +332,7 @@ public class CourseTestService {
     private Optional<IrisChatSessionUtilService> irisChatSessionUtilService;
 
     @Autowired
-    private Optional<IrisCourseChatSessionRepository> irisCourseChatSessionRepository;
+    private Optional<IrisChatSessionRepository> irisChatSessionRepository;
 
     @Autowired
     private LLMTokenUsageTraceTestRepository llmTokenUsageTraceRepository;
@@ -633,7 +633,7 @@ public class CourseTestService {
             assertThat(conversationRepository.findAllByCourseId(course.getId())).as("All Conversations are deleted").isEmpty();
 
             // Verify new data is also deleted
-            irisCourseChatSessionRepository.ifPresent(repo -> assertThat(repo.countByCourseId(course.getId())).as("All Iris chat sessions are deleted").isZero());
+            irisChatSessionRepository.ifPresent(repo -> assertThat(repo.countByCourseId(course.getId())).as("All Iris chat sessions are deleted").isZero());
 
             assertThat(llmTokenUsageTraceRepository.findAllByCourseId(course.getId())).as("All LLM token usage traces are deleted").isEmpty();
             assertThat(llmTokenUsageRequestRepository.findAllByTraceCourseId(course.getId())).as("All LLM token usage requests are deleted").isEmpty();

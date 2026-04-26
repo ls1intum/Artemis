@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Unify IrisCourseChatSession, IrisProgrammingExerciseChatSession, IrisTextExerciseChatSession,
+         and IrisLectureChatSession into a single IrisChatSession entity with a chat_mode discriminator. -->
+
+    <!-- Step 1: Add new columns entity_id and chat_mode -->
+    <changeSet id="20260410144433-1-add-columns" author="senan-aslan">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_session" columnName="entity_id"/></not>
+        </preConditions>
+        <addColumn tableName="iris_session">
+            <column name="entity_id" type="BIGINT"/>
+            <column name="chat_mode" type="VARCHAR(50)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Step 2: Migrate data — populate entity_id and chat_mode from existing columns and discriminator -->
+    <changeSet id="20260410144433-2-migrate-data" author="senan-aslan">
+        <!-- COURSE_CHAT: entity_id = course_id, chat_mode = COURSE_CHAT -->
+        <update tableName="iris_session">
+            <column name="entity_id" valueComputed="course_id"/>
+            <column name="chat_mode" value="COURSE_CHAT"/>
+            <where>discriminator = 'COURSE_CHAT'</where>
+        </update>
+
+        <!-- PROGRAMMING_EXERCISE_CHAT: entity_id = exercise_id, chat_mode = PROGRAMMING_EXERCISE_CHAT -->
+        <update tableName="iris_session">
+            <column name="entity_id" valueComputed="exercise_id"/>
+            <column name="chat_mode" value="PROGRAMMING_EXERCISE_CHAT"/>
+            <where>discriminator = 'PROGRAMMING_EXERCISE_CHAT'</where>
+        </update>
+
+        <!-- TEXT_EXERCISE_CHAT: entity_id = exercise_id, chat_mode = TEXT_EXERCISE_CHAT -->
+        <update tableName="iris_session">
+            <column name="entity_id" valueComputed="exercise_id"/>
+            <column name="chat_mode" value="TEXT_EXERCISE_CHAT"/>
+            <where>discriminator = 'TEXT_EXERCISE_CHAT'</where>
+        </update>
+
+        <!-- LECTURE_CHAT: entity_id = lecture_id, chat_mode = LECTURE_CHAT -->
+        <update tableName="iris_session">
+            <column name="entity_id" valueComputed="lecture_id"/>
+            <column name="chat_mode" value="LECTURE_CHAT"/>
+            <where>discriminator = 'LECTURE_CHAT'</where>
+        </update>
+
+        <!-- TUTOR_SUGGESTION: no entity_id needed, just set chat_mode -->
+        <update tableName="iris_session">
+            <column name="chat_mode" value="TUTOR_SUGGESTION"/>
+            <where>discriminator = 'TUTOR_SUGGESTION'</where>
+        </update>
+    </changeSet>
+
+    <!-- Step 3: Backfill course_id for exercise-based sessions (was NULL before) -->
+    <changeSet id="20260410144433-3-backfill-course-id" author="senan-aslan">
+        <!-- Programming/Text exercise sessions: get course_id from exercise table -->
+        <sql>
+            UPDATE iris_session s
+            SET course_id = (SELECT e.course_id FROM exercise e WHERE e.id = s.exercise_id)
+            WHERE s.discriminator IN ('PROGRAMMING_EXERCISE_CHAT', 'TEXT_EXERCISE_CHAT')
+              AND s.course_id IS NULL
+              AND s.exercise_id IS NOT NULL;
+        </sql>
+
+        <!-- Lecture sessions: get course_id from lecture table -->
+        <sql>
+            UPDATE iris_session s
+            SET course_id = (SELECT l.course_id FROM lecture l WHERE l.id = s.lecture_id)
+            WHERE s.discriminator = 'LECTURE_CHAT'
+              AND s.course_id IS NULL
+              AND s.lecture_id IS NOT NULL;
+        </sql>
+    </changeSet>
+
+    <!-- Step 4: Unify discriminator values to 'CHAT' -->
+    <changeSet id="20260410144433-4-unify-discriminator" author="senan-aslan">
+        <update tableName="iris_session">
+            <column name="discriminator" value="CHAT"/>
+            <where>discriminator IN ('COURSE_CHAT', 'PROGRAMMING_EXERCISE_CHAT', 'TEXT_EXERCISE_CHAT', 'LECTURE_CHAT')</where>
+        </update>
+    </changeSet>
+
+    <!-- Step 5: Drop old foreign keys -->
+    <changeSet id="20260410144433-5-drop-foreign-keys" author="senan-aslan">
+        <dropForeignKeyConstraint baseTableName="iris_session" constraintName="FK_IRIS_SESSION_ON_LECTURE"/>
+        <dropForeignKeyConstraint baseTableName="iris_session" constraintName="fk_iris_session_exercise_id"/>
+    </changeSet>
+
+    <!-- Step 6: Drop old columns and indexes -->
+    <changeSet id="20260410144433-6-drop-old-columns" author="senan-aslan">
+        <dropIndex tableName="iris_session" indexName="FK_IRIS_SESSION_ON_LECTURE"/>
+        <dropIndex tableName="iris_session" indexName="fk_iris_session_exercise_id"/>
+
+        <dropColumn tableName="iris_session" columnName="exercise_id"/>
+        <dropColumn tableName="iris_session" columnName="lecture_id"/>
+    </changeSet>
+
+    <!-- Step 7: Add indexes for the new query patterns -->
+    <changeSet id="20260410144433-7-add-indexes" author="senan-aslan">
+        <createIndex indexName="idx_iris_session_course_chatmode_user" tableName="iris_session">
+            <column name="course_id"/>
+            <column name="chat_mode"/>
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_iris_session_entity_user" tableName="iris_session">
+            <column name="entity_id"/>
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

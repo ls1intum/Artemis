@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
 
 /**
  * An IrisSession represents a list of messages of Artemis, a user, and an LLM.
- * See {@link IrisProgrammingExerciseChatSession} and {@link IrisCourseChatSession} for concrete implementations.
+ * See {@link IrisChatSession} and {@link IrisTutorSuggestionSession} for concrete implementations.
  */
 @Entity
 @Table(name = "iris_session")
@@ -43,15 +43,14 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = IrisProgrammingExerciseChatSession.class, name = "programming_exercise_chat"),
-    @JsonSubTypes.Type(value = IrisTextExerciseChatSession.class, name = "text_exercise_chat"),
-    @JsonSubTypes.Type(value = IrisCourseChatSession.class, name = "course_chat"),
-    @JsonSubTypes.Type(value = IrisLectureChatSession.class, name = "lecture_chat"),
+    @JsonSubTypes.Type(value = IrisChatSession.class, name = "chat"),
     @JsonSubTypes.Type(value = IrisTutorSuggestionSession.class, name = "tutor_suggestion"),
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisSession extends DomainObject {
+
+    private long userId;
 
     @OrderColumn(name = "iris_message_order")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -125,6 +124,24 @@ public abstract class IrisSession extends DomainObject {
         this.citationInfo = citationInfo;
     }
 
+    public long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
+    }
+
     public abstract boolean shouldSelectLLMUsage();
+
+    public abstract IrisChatMode getMode();
+
+    /**
+     * Returns the ID of the domain entity this session is associated with.
+     * For chat sessions this is the course, exercise, or lecture ID; for tutor-suggestion sessions it is the post ID.
+     *
+     * @return the entity ID associated with this session
+     */
+    public abstract Long getEntityId();
 
 }

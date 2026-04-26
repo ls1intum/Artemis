@@ -81,23 +81,24 @@ describe('IrisChatHttpService', () => {
         });
 
         it('should create a session', async () => {
+            const courseId = 1;
             const returnedFromService = { id: '1' };
             service
-                .createSession(ChatServiceMode.COURSE + '/' + 1)
+                .createSession(courseId, ChatServiceMode.COURSE, courseId)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(returnedFromService));
-            const req = httpMock.expectOne({ method: 'POST' });
+            const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === `api/iris/chat/${courseId}/sessions`);
             req.flush(returnedFromService, { status: 201, statusText: 'Created' });
         });
 
         it('should return current session', async () => {
+            const courseId = 42;
             const returnedFromService = mockConversation;
-            const expected = returnedFromService;
             service
-                .getCurrentSessionOrCreateIfNotExists(ChatServiceMode.PROGRAMMING_EXERCISE + '/' + irisExercise.id!)
+                .getCurrentSessionOrCreateIfNotExists(courseId, ChatServiceMode.PROGRAMMING_EXERCISE, irisExercise.id!)
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).toEqual(expected));
-            const req = httpMock.expectOne({ method: 'POST' });
+                .subscribe((resp) => expect(resp.body).toEqual(returnedFromService));
+            const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === `api/iris/chat/${courseId}/sessions/current`);
             req.flush(returnedFromService);
         });
 

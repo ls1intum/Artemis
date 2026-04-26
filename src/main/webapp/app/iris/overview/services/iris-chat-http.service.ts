@@ -10,6 +10,7 @@ import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { randomInt } from 'app/shared/util/utils';
+import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 
@@ -109,20 +110,26 @@ export class IrisChatHttpService {
         return this.httpClient.put<void>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/mcq-response`, response, { observe: 'response' });
     }
 
-    getCurrentSessionOrCreateIfNotExists<T extends IrisSession>(identifier: string): Response<T> {
-        return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions/current`, null, { observe: 'response' });
+    getCurrentSessionOrCreateIfNotExists(courseId: number, mode: ChatServiceMode, entityId: number): Response<IrisSession> {
+        if (mode === ChatServiceMode.TUTOR_SUGGESTION) {
+            return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/${entityId}/sessions/current`, null, { observe: 'response' });
+        }
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/${courseId}/sessions/current`, null, { observe: 'response', params: { mode, entityId } });
     }
 
-    createSession<T extends IrisSession>(identifier: string): Response<T> {
-        return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions`, null, { observe: 'response' });
+    createSession(courseId: number, mode: ChatServiceMode, entityId: number): Response<IrisSession> {
+        if (mode === ChatServiceMode.TUTOR_SUGGESTION) {
+            return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/${entityId}/sessions`, null, { observe: 'response' });
+        }
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/${courseId}/sessions`, null, { observe: 'response', params: { mode, entityId } });
     }
 
     getChatSessions(courseId: number): Observable<IrisSessionDTO[]> {
-        return this.httpClient.get<any[]>(`${this.apiPrefix}/chat-history/${courseId}/sessions`).pipe();
+        return this.httpClient.get<IrisSessionDTO[]>(`${this.apiPrefix}/chat/${courseId}/sessions/overview`);
     }
 
     getChatSessionById(courseId: number, sessionId: number): Observable<IrisSession> {
-        return this.httpClient.get<IrisSession>(`${this.apiPrefix}/chat-history/${courseId}/session/${sessionId}`).pipe();
+        return this.httpClient.get<IrisSession>(`${this.apiPrefix}/chat/${courseId}/session/${sessionId}`);
     }
 
     /**
@@ -131,7 +138,7 @@ export class IrisChatHttpService {
      */
     getSessionAndMessageCount(): Observable<{ sessions: number; messages: number }> {
         return this.httpClient
-            .get<{ sessions?: number; messages?: number }>(`${this.apiPrefix}/chat-history/sessions/count`)
+            .get<{ sessions?: number; messages?: number }>(`${this.apiPrefix}/chat/sessions/count`)
             .pipe(map((counts) => ({ sessions: counts.sessions ?? 0, messages: counts.messages ?? 0 })));
     }
 
@@ -140,7 +147,7 @@ export class IrisChatHttpService {
      * @return Observable of the HTTP response
      */
     deleteAllSessions(): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.apiPrefix}/chat-history/sessions`, { observe: 'response' });
+        return this.httpClient.delete<void>(`${this.apiPrefix}/chat/sessions`, { observe: 'response' });
     }
 
     /**
@@ -149,6 +156,6 @@ export class IrisChatHttpService {
      * @return Observable of the HTTP response
      */
     deleteSession(sessionId: number): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.apiPrefix}/chat-history/sessions/${sessionId}`, { observe: 'response' });
+        return this.httpClient.delete<void>(`${this.apiPrefix}/chat/sessions/${sessionId}`, { observe: 'response' });
     }
 }
