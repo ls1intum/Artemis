@@ -81,6 +81,8 @@ public class ConfigurationValidator {
 
     private final String weaviateGpuApiKey;
 
+    private final boolean isOpenApiDocsGeneration;
+
     public ConfigurationValidator(Environment environment,
             @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
             @Value("${artemis.user-management.internal-admin.username:#{null}}") String internalAdminUsername,
@@ -89,7 +91,8 @@ public class ConfigurationValidator {
             @Value("${artemis.weaviate.http-port:" + WeaviateConfigurationProperties.DEFAULT_HTTP_PORT + "}") int weaviatePort,
             @Value("${artemis.weaviate.grpc-port:" + WeaviateConfigurationProperties.DEFAULT_GRPC_PORT + "}") int weaviateGrpcPort,
             @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme, @Value("${artemis.weaviate.vectorizer-module:#{null}}") String weaviateVectorizerModule,
-            @Value("${artemis.weaviate.open-ai-base-url:#{null}}") String weaviateOpenAiBaseUrl, @Value("${artemis.weaviate.gpu-api-key:#{null}}") String weaviateGpuApiKey) {
+            @Value("${artemis.weaviate.open-ai-base-url:#{null}}") String weaviateOpenAiBaseUrl, @Value("${artemis.weaviate.gpu-api-key:#{null}}") String weaviateGpuApiKey,
+            @Value("${artemis.openapi-docs-generation:false}") boolean isOpenApiDocsGeneration) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
@@ -105,6 +108,7 @@ public class ConfigurationValidator {
         this.weaviateVectorizerModule = weaviateVectorizerModule;
         this.weaviateOpenAiBaseUrl = weaviateOpenAiBaseUrl;
         this.weaviateGpuApiKey = weaviateGpuApiKey;
+        this.isOpenApiDocsGeneration = isOpenApiDocsGeneration;
     }
 
     /**
@@ -202,6 +206,10 @@ public class ConfigurationValidator {
      */
     private void validateWeaviateConfiguration() {
         if (!weaviateEnabled) {
+            return;
+        }
+        if (isOpenApiDocsGeneration) {
+            log.info("Skipping Weaviate configuration validation during OpenAPI docs generation");
             return;
         }
 

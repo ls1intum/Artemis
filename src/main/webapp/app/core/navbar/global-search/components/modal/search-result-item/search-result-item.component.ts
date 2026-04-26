@@ -6,6 +6,9 @@ import { GlobalSearchResult } from '../../../services/global-search.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 
+/** Format for displaying dates in search results, e.g. "Apr 19, 14:30" */
+const SEARCH_RESULT_DATE_FORMAT = 'MMM D, HH:mm';
+
 @Component({
     selector: 'jhi-global-search-result-item',
     standalone: true,
@@ -25,15 +28,31 @@ export class SearchResultItemComponent {
 
     resultClick = output<GlobalSearchResult>();
 
-    protected formattedDueDate = computed(() => {
-        const dueDate = this.result().metadata?.['dueDate'];
-        if (!dueDate) {
-            return '';
-        }
-        return dayjs(dueDate).format('MMM D, HH:mm');
-    });
+    protected courseName = computed(() => this.result().metadata?.['courseName']);
+    protected dueDate = computed(() => this.result().metadata?.['dueDate']);
+    protected startDate = computed(() => this.result().metadata?.['startDate']);
+    protected points = computed(() => this.result().metadata?.['points']);
+    protected difficulty = computed(() => this.result().metadata?.['difficulty']);
+
+    protected hasAnyMetadata = computed(() => !!(this.courseName() || this.dueDate() || this.startDate() || this.points() || this.difficulty()));
+    protected showCourseSeparator = computed(() => !!(this.courseName() && (this.dueDate() || this.startDate() || this.points() || this.difficulty())));
+    protected showStartDateOnly = computed(() => !!(this.startDate() && !this.dueDate()));
+    protected showDatePointsSeparator = computed(() => !!(this.points() && (this.dueDate() || this.startDate())));
+    protected showDifficultySeparator = computed(() => !!(this.difficulty() && (this.dueDate() || this.startDate() || this.points())));
+
+    protected formattedDueDate = computed(() => this.formatMetadataDate('dueDate'));
+
+    protected formattedStartDate = computed(() => this.formatMetadataDate('startDate'));
 
     protected onClick() {
         this.resultClick.emit(this.result());
+    }
+
+    private formatMetadataDate(key: string): string {
+        const value = this.result().metadata?.[key];
+        if (!value) {
+            return '';
+        }
+        return dayjs(value).format(SEARCH_RESULT_DATE_FORMAT);
     }
 }

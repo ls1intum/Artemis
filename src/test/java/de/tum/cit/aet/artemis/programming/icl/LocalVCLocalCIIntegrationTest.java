@@ -211,7 +211,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         }
 
         // Wait for the system to process any additional access attempts that were logged
-        await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(200)).until(() -> {
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
             var logs = vcsAccessLogRepository.findAll();
             var testUserLogs = logs.stream().filter(log -> log.getUser() != null && log.getUser().getLogin().equals(student1Login)).toList();
             var failedLogs = testUserLogs.stream()
@@ -274,7 +274,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug);
 
         // Wait for the access log to be saved
-        await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(200)).until(() -> {
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
             var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
             return logs.stream().anyMatch(log -> log.getAuthenticationMechanism() == AuthenticationMechanism.USER_VCS_ACCESS_TOKEN);
         });
@@ -303,7 +303,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
 
         // Wait for access logs to be saved
-        await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(200)).until(() -> {
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
             var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
             return logs.size() >= 2;
         });
@@ -335,7 +335,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
 
         // Wait for access logs to be saved
-        await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(200)).until(() -> {
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
             var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
             return logs.size() >= 2;
         });

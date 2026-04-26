@@ -118,6 +118,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -183,12 +184,15 @@ public class ExamResource {
 
     private final ExamUserService examUserService;
 
+    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
             ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
             AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
-            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService) {
+            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -211,6 +215,7 @@ public class ExamResource {
         this.examLiveEventsService = examLiveEventsService;
         this.studentExamService = studentExamService;
         this.examUserService = examUserService;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
     }
 
     /**
@@ -241,6 +246,9 @@ public class ExamResource {
 
         Exam savedExam = examRepository.save(exam);
         channelService.createExamChannel(savedExam, Optional.ofNullable(examDTO.channelName()));
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertExamAsync(savedExam);
+        }
         return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }
 
@@ -315,6 +323,10 @@ public class ExamResource {
             savedExam.setChannelName(examUpdateDTO.channelName());
         }
 
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertExamAsync(savedExam);
+        }
+
         return ResponseEntity.ok(savedExam);
     }
 
@@ -352,6 +364,10 @@ public class ExamResource {
 
         // 3. Update Weaviate exercise metadata since the exam end date changed
         examService.syncExamExercisesMetadata(exam);
+
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertExamAsync(exam);
+        }
 
         return ResponseEntity.ok(exam);
     }

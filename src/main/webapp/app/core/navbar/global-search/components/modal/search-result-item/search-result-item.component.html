@@ -15,40 +15,43 @@
             </div>
 
             <!-- Metadata Row -->
-            @if (result().metadata && (result().metadata['courseName'] || result().metadata['dueDate'] || result().metadata['points'] || result().metadata['difficulty'])) {
+            @if (hasAnyMetadata()) {
                 <div class="result-metadata d-flex align-items-center gap-2 mb-2 text-secondary small">
-                    @if (result().metadata['courseName']) {
+                    @if (courseName()) {
                         <span class="d-flex align-items-center gap-1">
                             <fa-icon [icon]="faBook" size="sm" aria-hidden="true" />
-                            <span>{{ result().metadata['courseName'] }}</span>
+                            <span>{{ courseName() }}</span>
                         </span>
                     }
-                    @if (result().metadata['courseName'] && (result().metadata['dueDate'] || result().metadata['points'] || result().metadata['difficulty'])) {
+                    @if (showCourseSeparator()) {
                         <span>•</span>
                     }
-                    @if (result().metadata['dueDate']) {
+                    @if (dueDate()) {
                         <span class="d-flex align-items-center gap-1">
                             <fa-icon [icon]="faCalendarAlt" size="sm" aria-hidden="true" />
                             <span>{{ 'global.search.results.due' | artemisTranslate: { date: formattedDueDate() } }}</span>
                         </span>
                     }
-                    @if (result().metadata['dueDate'] && result().metadata['points']) {
-                        <span>•</span>
-                    }
-                    @if (result().metadata['points']) {
+                    @if (showStartDateOnly()) {
                         <span class="d-flex align-items-center gap-1">
-                            <fa-icon [icon]="faTrophy" size="sm" aria-hidden="true" />
-                            <span
-                                >{{ result().metadata['points'] }}
-                                {{ (result().metadata['points'] === 1 ? 'global.search.results.point' : 'global.search.results.points') | artemisTranslate }}</span
-                            >
+                            <fa-icon [icon]="faCalendarAlt" size="sm" aria-hidden="true" />
+                            <span>{{ formattedStartDate() }}</span>
                         </span>
                     }
-                    @if (result().metadata['difficulty'] && (result().metadata['dueDate'] || result().metadata['points'])) {
+                    @if (showDatePointsSeparator()) {
                         <span>•</span>
                     }
-                    @if (result().metadata['difficulty']) {
-                        <span class="text-capitalize">{{ result().metadata['difficulty'] }}</span>
+                    @if (points()) {
+                        <span class="d-flex align-items-center gap-1">
+                            <fa-icon [icon]="faTrophy" size="sm" aria-hidden="true" />
+                            <span>{{ points() }} {{ (points() === 1 ? 'global.search.results.point' : 'global.search.results.points') | artemisTranslate }}</span>
+                        </span>
+                    }
+                    @if (showDifficultySeparator()) {
+                        <span>•</span>
+                    }
+                    @if (difficulty()) {
+                        <span class="text-capitalize">{{ difficulty() }}</span>
                     }
                 </div>
             }

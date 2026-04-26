@@ -54,10 +54,26 @@ public class WeaviateService {
 
     private final boolean isTestProfile;
 
-    public WeaviateService(WeaviateClient client, WeaviateConfigurationProperties properties, Environment environment) {
+    private final boolean isOpenApiDocsGeneration;
+
+    private final WeaviateMigrationService migrationService;
+
+    /**
+     * The {@code WeaviateClient} bean is created lazily because the enclosing
+     * {@link WeaviateClientConfiguration} and this service are both {@code @Lazy}.
+     * <p>
+     * Note: {@code @Lazy} must <b>not</b> be placed on the {@code client} parameter
+     * itself, because the Weaviate Java client exposes {@code collections} as a
+     * <b>public field</b>. A CGLIB lazy-proxy only intercepts method calls — direct
+     * field access bypasses the proxy and returns {@code null}, which causes a
+     * {@link NullPointerException} in {@link #ensureCollectionExists}.
+     */
+    public WeaviateService(WeaviateClient client, WeaviateConfigurationProperties properties, Environment environment, WeaviateMigrationService migrationService) {
         this.client = client;
         this.properties = properties;
         this.isTestProfile = environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST));
+        this.isOpenApiDocsGeneration = Boolean.parseBoolean(environment.getProperty("artemis.openapi-docs-generation", "false"));
+        this.migrationService = migrationService;
     }
 
     /**
@@ -76,12 +92,19 @@ public class WeaviateService {
      */
     @PostConstruct
     public void initializeCollections() {
+        if (isOpenApiDocsGeneration) {
+            log.info("OpenAPI docs generation mode: skipping Weaviate collection initialization");
+            return;
+        }
+
         log.info("Initializing Weaviate collections at {}://{}:{} (gRPC: {}) with vectorizer module: {}", properties.scheme(), properties.httpHost(), properties.httpPort(),
                 properties.grpcPort(), properties.vectorizerModule());
 
         for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {
             ensureCollectionExists(schema);
         }
+
+        migrationService.runPendingMigrations();
 
         log.info("Weaviate collection initialization complete");
     }

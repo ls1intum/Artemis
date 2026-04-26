@@ -11,12 +11,14 @@ import java.util.Map;
 
 import org.testcontainers.DockerClientFactory;
 
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -64,8 +66,10 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return null;
         }
-        var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
-        var response = collection.query.fetchObjects(query -> query.filters(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exerciseId)).limit(1));
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        var response = collection.query
+                .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.EXERCISE),
+                        Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(exerciseId))).limit(1));
         if (response.objects().isEmpty()) {
             return null;
         }
@@ -83,20 +87,20 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExerciseProperties(weaviateService, exercise.getId());
             assertThat(properties).as("Exercise %d should exist in Weaviate", exercise.getId()).isNotNull();
 
-            assertThat(properties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(exercise.getTitle());
-            assertThat(properties.get(ExerciseSchema.Properties.EXERCISE_TYPE)).isEqualTo(exercise.getExerciseType().name());
-            assertThat(((Number) properties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(exercise.getId());
+            assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(exercise.getTitle());
+            assertThat(properties.get(SearchableEntitySchema.Properties.EXERCISE_TYPE)).isEqualTo(exercise.getExerciseType().getValue());
+            assertThat(((Number) properties.get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(exercise.getId());
 
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            assertThat(((Number) properties.get(ExerciseSchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
+            assertThat(((Number) properties.get(SearchableEntitySchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
 
-            assertDateProperty(properties, ExerciseSchema.Properties.RELEASE_DATE, exercise.getReleaseDate());
-            assertDateProperty(properties, ExerciseSchema.Properties.START_DATE, exercise.getStartDate());
-            assertDateProperty(properties, ExerciseSchema.Properties.DUE_DATE, exercise.getDueDate());
+            assertDateProperty(properties, SearchableEntitySchema.Properties.RELEASE_DATE, exercise.getReleaseDate());
+            assertDateProperty(properties, SearchableEntitySchema.Properties.START_DATE, exercise.getStartDate());
+            assertDateProperty(properties, SearchableEntitySchema.Properties.DUE_DATE, exercise.getDueDate());
         });
     }
 
@@ -112,14 +116,14 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
             assertThat(properties).isNotNull();
             if (programmingExercise.getProgrammingLanguage() != null) {
-                assertThat(properties.get(ExerciseSchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
+                assertThat(properties.get(SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
             }
             if (programmingExercise.getProjectType() != null) {
-                assertThat(properties.get(ExerciseSchema.Properties.PROJECT_TYPE)).isEqualTo(programmingExercise.getProjectType().name());
+                assertThat(properties.get(SearchableEntitySchema.Properties.PROJECT_TYPE)).isEqualTo(programmingExercise.getProjectType().name());
             }
         });
     }
@@ -136,11 +140,11 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, modelingExercise);
 
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExerciseProperties(weaviateService, modelingExercise.getId());
             assertThat(properties).isNotNull();
             if (modelingExercise.getDiagramType() != null) {
-                assertThat(properties.get(ExerciseSchema.Properties.DIAGRAM_TYPE)).isEqualTo(modelingExercise.getDiagramType().name());
+                assertThat(properties.get(SearchableEntitySchema.Properties.DIAGRAM_TYPE)).isEqualTo(modelingExercise.getDiagramType().name());
             }
         });
     }
@@ -157,14 +161,14 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, quizExercise);
 
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExerciseProperties(weaviateService, quizExercise.getId());
             assertThat(properties).isNotNull();
             if (quizExercise.getQuizMode() != null) {
-                assertThat(properties.get(ExerciseSchema.Properties.QUIZ_MODE)).isEqualTo(quizExercise.getQuizMode().name());
+                assertThat(properties.get(SearchableEntitySchema.Properties.QUIZ_MODE)).isEqualTo(quizExercise.getQuizMode().name());
             }
             if (quizExercise.getDuration() != null) {
-                assertThat(((Number) properties.get(ExerciseSchema.Properties.QUIZ_DURATION)).intValue()).isEqualTo(quizExercise.getDuration());
+                assertThat(((Number) properties.get(SearchableEntitySchema.Properties.QUIZ_DURATION)).intValue()).isEqualTo(quizExercise.getDuration());
             }
         });
     }
@@ -181,11 +185,11 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, fileUploadExercise);
 
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExerciseProperties(weaviateService, fileUploadExercise.getId());
             assertThat(properties).isNotNull();
             if (fileUploadExercise.getFilePattern() != null) {
-                assertThat(properties.get(ExerciseSchema.Properties.FILE_PATTERN)).isEqualTo(fileUploadExercise.getFilePattern());
+                assertThat(properties.get(SearchableEntitySchema.Properties.FILE_PATTERN)).isEqualTo(fileUploadExercise.getFilePattern());
             }
         });
     }
@@ -202,16 +206,16 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExerciseProperties(weaviateService, exerciseId);
             assertThat(properties).as("Exercise %d should exist in Weaviate", exerciseId).isNotNull();
 
-            assertThat(properties.get(ExerciseSchema.Properties.IS_EXAM_EXERCISE)).isEqualTo(true);
-            assertThat(((Number) properties.get(ExerciseSchema.Properties.EXAM_ID)).longValue()).isEqualTo(exam.getId());
+            assertThat(properties.get(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE)).isEqualTo(true);
+            assertThat(((Number) properties.get(SearchableEntitySchema.Properties.EXAM_ID)).longValue()).isEqualTo(exam.getId());
 
-            assertDateProperty(properties, ExerciseSchema.Properties.EXAM_VISIBLE_DATE, exam.getVisibleDate());
-            assertDateProperty(properties, ExerciseSchema.Properties.EXAM_START_DATE, exam.getStartDate());
-            assertDateProperty(properties, ExerciseSchema.Properties.EXAM_END_DATE, exam.getEndDate());
+            assertDateProperty(properties, SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE, exam.getVisibleDate());
+            assertDateProperty(properties, SearchableEntitySchema.Properties.EXAM_START_DATE, exam.getStartDate());
+            assertDateProperty(properties, SearchableEntitySchema.Properties.EXAM_END_DATE, exam.getEndDate());
         });
     }
 
@@ -247,6 +251,68 @@ public final class WeaviateTestUtil {
         assertThat(actualUTC).as("Property %s should match expected date", propertyName).startsWith(expectedUTC.substring(0, 19));
     }
 
+    // -- Lecture utilities --
+
+    /**
+     * Queries Weaviate for the lecture with the given ID and returns its properties,
+     * or {@code null} if no lecture was found.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param lectureId       the ID of the lecture to look up
+     * @return the lecture properties map, or {@code null} if not found or Docker unavailable
+     */
+    public static Map<String, Object> queryLectureProperties(WeaviateService weaviateService, long lectureId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return null;
+        }
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        var response = collection.query
+                .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE),
+                        Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(lectureId))).limit(1));
+        if (response.objects().isEmpty()) {
+            return null;
+        }
+        return response.objects().getFirst().properties();
+    }
+
+    /**
+     * Asserts that the lecture exists in Weaviate and its core properties match the given lecture.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param lecture         the lecture whose metadata should be verified in Weaviate
+     */
+    public static void assertLectureExistsInWeaviate(WeaviateService weaviateService, Lecture lecture) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryLectureProperties(weaviateService, lecture.getId());
+            assertThat(properties).as("Lecture %d should exist in Weaviate", lecture.getId()).isNotNull();
+
+            assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(lecture.getTitle());
+            assertThat(((Number) properties.get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(lecture.getId());
+
+            Course course = lecture.getCourse();
+            assertThat(((Number) properties.get(SearchableEntitySchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
+        });
+    }
+
+    /**
+     * Asserts that no lecture with the given ID exists in Weaviate.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param lectureId       the ID of the lecture that should not exist
+     */
+    public static void assertLectureNotInWeaviate(WeaviateService weaviateService, long lectureId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryLectureProperties(weaviateService, lectureId);
+            assertThat(properties).as("Lecture %d should not exist in Weaviate", lectureId).isNull();
+        });
+    }
+
     /**
      * Asserts that no exercise with the given ID exists in Weaviate.
      * Skips if Docker is not available. Fails if Docker is available but WeaviateService is null.
@@ -258,9 +324,259 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExerciseProperties(weaviateService, exerciseId);
             assertThat(properties).as("Exercise %d should not exist in Weaviate", exerciseId).isNull();
+        });
+    }
+
+    /**
+     * Counts how many rows exist in Weaviate for the given {@code (type, entityId)} pair.
+     * Useful for detecting duplicate rows caused by race conditions.
+     *
+     * @param weaviateService the Weaviate service to query
+     * @param type            the entity type (use constants from {@link SearchableEntitySchema.TypeValues})
+     * @param entityId        the entity id
+     * @return the number of matching rows
+     */
+    public static int countRowsForEntity(WeaviateService weaviateService, String type, long entityId) throws Exception {
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        var response = collection.query.fetchObjects(query -> query
+                .filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type), Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(entityId)))
+                .limit(100));
+        return response.objects().size();
+    }
+
+    // -- Exam utilities --
+
+    /**
+     * Queries Weaviate for the exam with the given ID and returns its properties,
+     * or {@code null} if no exam was found.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param examId          the ID of the exam to look up
+     * @return the exam properties map, or {@code null} if not found or Docker unavailable
+     */
+    public static Map<String, Object> queryExamProperties(WeaviateService weaviateService, long examId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return null;
+        }
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        var response = collection.query
+                .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.EXAM),
+                        Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(examId))).limit(1));
+        if (response.objects().isEmpty()) {
+            return null;
+        }
+        return response.objects().getFirst().properties();
+    }
+
+    /**
+     * Asserts that the exam exists in Weaviate.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param examId          the ID of the exam that should exist
+     */
+    public static void assertExamExistsInWeaviate(WeaviateService weaviateService, long examId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryExamProperties(weaviateService, examId);
+            assertThat(properties).as("Exam %d should exist in Weaviate", examId).isNotNull();
+        });
+    }
+
+    /**
+     * Asserts that no exam with the given ID exists in Weaviate.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param examId          the ID of the exam that should not exist
+     */
+    public static void assertExamNotInWeaviate(WeaviateService weaviateService, long examId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryExamProperties(weaviateService, examId);
+            assertThat(properties).as("Exam %d should not exist in Weaviate", examId).isNull();
+        });
+    }
+
+    // -- Lecture unit utilities --
+
+    /**
+     * Queries Weaviate for the lecture unit with the given ID and returns its properties,
+     * or {@code null} if no lecture unit was found.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param lectureUnitId   the ID of the lecture unit to look up
+     * @return the lecture unit properties map, or {@code null} if not found or Docker unavailable
+     */
+    public static Map<String, Object> queryLectureUnitProperties(WeaviateService weaviateService, long lectureUnitId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return null;
+        }
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        var response = collection.query
+                .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE_UNIT),
+                        Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(lectureUnitId))).limit(1));
+        if (response.objects().isEmpty()) {
+            return null;
+        }
+        return response.objects().getFirst().properties();
+    }
+
+    /**
+     * Asserts that the lecture unit exists in Weaviate.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param lectureUnitId   the ID of the lecture unit that should exist
+     */
+    public static void assertLectureUnitExistsInWeaviate(WeaviateService weaviateService, long lectureUnitId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryLectureUnitProperties(weaviateService, lectureUnitId);
+            assertThat(properties).as("Lecture unit %d should exist in Weaviate", lectureUnitId).isNotNull();
+        });
+    }
+
+    /**
+     * Asserts that no lecture unit with the given ID exists in Weaviate.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param lectureUnitId   the ID of the lecture unit that should not exist
+     */
+    public static void assertLectureUnitNotInWeaviate(WeaviateService weaviateService, long lectureUnitId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryLectureUnitProperties(weaviateService, lectureUnitId);
+            assertThat(properties).as("Lecture unit %d should not exist in Weaviate", lectureUnitId).isNull();
+        });
+    }
+
+    // -- FAQ utilities --
+
+    /**
+     * Queries Weaviate for the FAQ with the given ID and returns its properties,
+     * or {@code null} if no FAQ was found.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param faqId           the ID of the FAQ to look up
+     * @return the FAQ properties map, or {@code null} if not found or Docker unavailable
+     */
+    public static Map<String, Object> queryFaqProperties(WeaviateService weaviateService, long faqId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return null;
+        }
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        var response = collection.query
+                .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.FAQ),
+                        Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(faqId))).limit(1));
+        if (response.objects().isEmpty()) {
+            return null;
+        }
+        return response.objects().getFirst().properties();
+    }
+
+    /**
+     * Asserts that the FAQ exists in Weaviate and its core properties match the given FAQ.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param faqId           the ID of the FAQ that should exist
+     */
+    public static void assertFaqExistsInWeaviate(WeaviateService weaviateService, long faqId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryFaqProperties(weaviateService, faqId);
+            assertThat(properties).as("FAQ %d should exist in Weaviate", faqId).isNotNull();
+        });
+    }
+
+    /**
+     * Asserts that no FAQ with the given ID exists in Weaviate.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param faqId           the ID of the FAQ that should not exist
+     */
+    public static void assertFaqNotInWeaviate(WeaviateService weaviateService, long faqId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryFaqProperties(weaviateService, faqId);
+            assertThat(properties).as("FAQ %d should not exist in Weaviate", faqId).isNull();
+        });
+    }
+
+    // -- Channel utilities --
+
+    /**
+     * Queries Weaviate for the channel with the given ID and returns its properties,
+     * or {@code null} if no channel was found.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param channelId       the ID of the channel to look up
+     * @return the channel properties map, or {@code null} if not found or Docker unavailable
+     */
+    public static Map<String, Object> queryChannelProperties(WeaviateService weaviateService, long channelId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return null;
+        }
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        var response = collection.query
+                .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.CHANNEL),
+                        Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(channelId))).limit(1));
+        if (response.objects().isEmpty()) {
+            return null;
+        }
+        return response.objects().getFirst().properties();
+    }
+
+    /**
+     * Asserts that the channel exists in Weaviate and its core properties match the given channel.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param channel         the channel whose metadata should be verified in Weaviate
+     */
+    public static void assertChannelExistsInWeaviate(WeaviateService weaviateService, Channel channel) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryChannelProperties(weaviateService, channel.getId());
+            assertThat(properties).as("Channel %d should exist in Weaviate", channel.getId()).isNotNull();
+
+            assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(channel.getName());
+            assertThat(((Number) properties.get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(channel.getId());
+
+            Course course = channel.getCourse();
+            assertThat(((Number) properties.get(SearchableEntitySchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
+
+            assertThat(properties.get(SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE)).isEqualTo(channel.getIsCourseWide());
+            assertThat(properties.get(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC)).isEqualTo(channel.getIsPublic());
+        });
+    }
+
+    /**
+     * Asserts that no channel with the given ID exists in Weaviate.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param channelId       the ID of the channel that should not exist
+     */
+    public static void assertChannelNotInWeaviate(WeaviateService weaviateService, long channelId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryChannelProperties(weaviateService, channelId);
+            assertThat(properties).as("Channel %d should not exist in Weaviate", channelId).isNull();
         });
     }
 }

@@ -44,6 +44,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 
 /**
  * REST controller for managing Faqs.
@@ -69,11 +71,15 @@ public class FaqResource {
 
     private final FaqService faqService;
 
-    public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository, FaqService faqService) {
+    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+
+    public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository, FaqService faqService,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.faqRepository = faqRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.faqService = faqService;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
     }
 
     /**
@@ -101,6 +107,9 @@ public class FaqResource {
         Faq savedFaq = faqRepository.save(faqToSave);
         FaqDTO dto = new FaqDTO(savedFaq);
         faqService.autoIngestFaqIntoPyris(savedFaq);
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertFaqAsync(savedFaq);
+        }
         return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
     }
 
@@ -132,6 +141,9 @@ public class FaqResource {
         existingFaq.setCategories(updateFaqDTO.categories());
         Faq updatedFaq = faqRepository.save(existingFaq);
         faqService.autoIngestFaqIntoPyris(updatedFaq);
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertFaqAsync(updatedFaq);
+        }
         FaqDTO dto = new FaqDTO(updatedFaq);
         return ResponseEntity.ok().body(dto);
     }
@@ -174,6 +186,9 @@ public class FaqResource {
         }
         faqService.deleteFaqInPyris(existingFaq);
         faqRepository.deleteById(faqId);
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.FAQ, faqId);
+        }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, faqId.toString())).build();
     }
 

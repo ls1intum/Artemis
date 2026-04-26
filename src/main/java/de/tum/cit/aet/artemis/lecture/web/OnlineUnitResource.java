@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
@@ -70,13 +71,16 @@ public class OnlineUnitResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+
     public OnlineUnitResource(LectureRepository lectureRepository, OnlineUnitRepository onlineUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository) {
+            LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.lectureRepository = lectureRepository;
         this.onlineUnitRepository = onlineUnitRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
     }
 
     /**
@@ -137,6 +141,10 @@ public class OnlineUnitResource {
             competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingOnlineUnit);
         }
 
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertLectureUnitAsync(existingOnlineUnit);
+        }
+
         // convert into DTO
         var result = new OnlineUnitDTO(existingOnlineUnit.getId(), existingOnlineUnit.getName(), existingOnlineUnit.getReleaseDate(), existingOnlineUnit.getDescription(),
                 existingOnlineUnit.getSource(), existingOnlineUnit.getCompetencyLinks().stream()
@@ -180,6 +188,10 @@ public class OnlineUnitResource {
 
         // TODO: return a DTO instead to avoid manipulation of the entity before sending it to the client
         lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedUnit);
+
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertLectureUnitAsync(persistedUnit);
+        }
         return ResponseEntity.created(new URI("/api/online-units/" + persistedUnit.getId())).body(persistedUnit);
     }
 

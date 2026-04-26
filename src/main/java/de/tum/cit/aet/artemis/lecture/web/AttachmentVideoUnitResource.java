@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -93,12 +94,15 @@ public class AttachmentVideoUnitResource {
 
     private final LectureUnitService lectureUnitService;
 
+    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+
     private final YouTubeUrlService youTubeUrlService;
 
     public AttachmentVideoUnitResource(AttachmentVideoUnitRepository attachmentVideoUnitRepository, LectureRepository lectureRepository,
             LectureUnitProcessingService lectureUnitProcessingService, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
             AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService,
-            FileService fileService, LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, YouTubeUrlService youTubeUrlService) {
+            FileService fileService, LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -110,6 +114,7 @@ public class AttachmentVideoUnitResource {
         this.fileService = fileService;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureUnitService = lectureUnitService;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
         this.youTubeUrlService = youTubeUrlService;
     }
 
@@ -176,6 +181,10 @@ public class AttachmentVideoUnitResource {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment());
         }
 
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertLectureUnitAsync(savedAttachmentVideoUnit);
+        }
+
         return ResponseEntity.ok(savedAttachmentVideoUnit);
     }
 
@@ -228,6 +237,10 @@ public class AttachmentVideoUnitResource {
         }
         attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
+
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertLectureUnitAsync(persistedUnit);
+        }
 
         return ResponseEntity.created(new URI("/api/attachment-video-units/" + persistedUnit.getId())).body(persistedUnit);
     }
@@ -285,6 +298,9 @@ public class AttachmentVideoUnitResource {
             savedUnits.forEach(attachmentVideoUnitService::prepareAttachmentVideoUnitForClient);
 
             competencyProgressApi.ifPresent(api -> savedUnits.forEach(api::updateProgressByLearningObjectAsync));
+            if (searchableEntityWeaviateService != null) {
+                savedUnits.forEach(searchableEntityWeaviateService::upsertLectureUnitAsync);
+            }
             return ResponseEntity.ok().body(savedUnits);
         }
         catch (IOException e) {

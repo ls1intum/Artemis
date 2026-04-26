@@ -4,67 +4,85 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 
 class ExerciseSchemaTest {
 
-    private static final WeaviateCollectionSchema SCHEMA = ExerciseSchema.SCHEMA;
+    private static final WeaviateCollectionSchema SCHEMA = SearchableEntitySchema.SCHEMA;
 
     @Test
     void schema_hasCorrectCollectionName() {
-        assertThat(SCHEMA.collectionName()).isEqualTo("Exercises");
+        assertThat(SCHEMA.collectionName()).isEqualTo("SearchableEntities");
     }
 
     @Test
-    void schema_containsAllSharedProperties() {
-        assertPropertyExists(ExerciseSchema.Properties.EXERCISE_ID, WeaviateDataType.INT);
-        assertPropertyExists(ExerciseSchema.Properties.COURSE_ID, WeaviateDataType.INT);
-        assertPropertyExists(ExerciseSchema.Properties.COURSE_NAME, WeaviateDataType.TEXT);
-        assertPropertyExists(ExerciseSchema.Properties.TITLE, WeaviateDataType.TEXT);
-        assertPropertyExists(ExerciseSchema.Properties.SHORT_NAME, WeaviateDataType.TEXT);
-        assertPropertyExists(ExerciseSchema.Properties.PROBLEM_STATEMENT, WeaviateDataType.TEXT);
-        assertPropertyExists(ExerciseSchema.Properties.RELEASE_DATE, WeaviateDataType.DATE);
-        assertPropertyExists(ExerciseSchema.Properties.START_DATE, WeaviateDataType.DATE);
-        assertPropertyExists(ExerciseSchema.Properties.DUE_DATE, WeaviateDataType.DATE);
-        assertPropertyExists(ExerciseSchema.Properties.EXERCISE_TYPE, WeaviateDataType.TEXT);
-        assertPropertyExists(ExerciseSchema.Properties.DIFFICULTY, WeaviateDataType.TEXT);
-        assertPropertyExists(ExerciseSchema.Properties.MAX_POINTS, WeaviateDataType.NUMBER);
+    void schema_containsCommonProperties() {
+        assertPropertyExists(SearchableEntitySchema.Properties.TYPE, WeaviateDataType.TEXT);
+        assertPropertyExists(SearchableEntitySchema.Properties.ENTITY_ID, WeaviateDataType.INT);
+        assertPropertyExists(SearchableEntitySchema.Properties.COURSE_ID, WeaviateDataType.INT);
+        assertPropertyExists(SearchableEntitySchema.Properties.TITLE, WeaviateDataType.TEXT);
+        assertPropertyExists(SearchableEntitySchema.Properties.DESCRIPTION, WeaviateDataType.TEXT);
+    }
+
+    @Test
+    void schema_containsExerciseProperties() {
+        assertPropertyExists(SearchableEntitySchema.Properties.SHORT_NAME, WeaviateDataType.TEXT);
+        assertPropertyExists(SearchableEntitySchema.Properties.RELEASE_DATE, WeaviateDataType.DATE);
+        assertPropertyExists(SearchableEntitySchema.Properties.START_DATE, WeaviateDataType.DATE);
+        assertPropertyExists(SearchableEntitySchema.Properties.DUE_DATE, WeaviateDataType.DATE);
+        assertPropertyExists(SearchableEntitySchema.Properties.EXERCISE_TYPE, WeaviateDataType.TEXT);
+        assertPropertyExists(SearchableEntitySchema.Properties.DIFFICULTY, WeaviateDataType.TEXT);
+        assertPropertyExists(SearchableEntitySchema.Properties.MAX_POINTS, WeaviateDataType.NUMBER);
     }
 
     @Test
     void schema_containsExamProperties() {
-        assertPropertyExists(ExerciseSchema.Properties.IS_EXAM_EXERCISE, WeaviateDataType.BOOLEAN);
-        assertPropertyExists(ExerciseSchema.Properties.EXAM_ID, WeaviateDataType.INT);
-        assertPropertyExists(ExerciseSchema.Properties.EXAM_VISIBLE_DATE, WeaviateDataType.DATE);
-        assertPropertyExists(ExerciseSchema.Properties.EXAM_START_DATE, WeaviateDataType.DATE);
-        assertPropertyExists(ExerciseSchema.Properties.EXAM_END_DATE, WeaviateDataType.DATE);
-        assertPropertyExists(ExerciseSchema.Properties.TEST_EXAM, WeaviateDataType.BOOLEAN);
+        assertPropertyExists(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE, WeaviateDataType.BOOLEAN);
+        assertPropertyExists(SearchableEntitySchema.Properties.EXAM_ID, WeaviateDataType.INT);
+        assertPropertyExists(SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE, WeaviateDataType.DATE);
+        assertPropertyExists(SearchableEntitySchema.Properties.EXAM_START_DATE, WeaviateDataType.DATE);
+        assertPropertyExists(SearchableEntitySchema.Properties.EXAM_END_DATE, WeaviateDataType.DATE);
+        assertPropertyExists(SearchableEntitySchema.Properties.TEST_EXAM, WeaviateDataType.BOOLEAN);
+        assertPropertyExists(SearchableEntitySchema.Properties.VISIBLE_DATE, WeaviateDataType.DATE);
     }
 
     @Test
     void schema_containsTypeSpecificProperties() {
-        assertPropertyExists(ExerciseSchema.Properties.PROGRAMMING_LANGUAGE, WeaviateDataType.TEXT);
-        assertPropertyExists(ExerciseSchema.Properties.PROJECT_TYPE, WeaviateDataType.TEXT);
-        assertPropertyExists(ExerciseSchema.Properties.DIAGRAM_TYPE, WeaviateDataType.TEXT);
-        assertPropertyExists(ExerciseSchema.Properties.QUIZ_MODE, WeaviateDataType.TEXT);
-        assertPropertyExists(ExerciseSchema.Properties.QUIZ_DURATION, WeaviateDataType.INT);
-        assertPropertyExists(ExerciseSchema.Properties.FILE_PATTERN, WeaviateDataType.TEXT);
+        assertPropertyExists(SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE, WeaviateDataType.TEXT);
+        assertPropertyExists(SearchableEntitySchema.Properties.PROJECT_TYPE, WeaviateDataType.TEXT);
+        assertPropertyExists(SearchableEntitySchema.Properties.DIAGRAM_TYPE, WeaviateDataType.TEXT);
+        assertPropertyExists(SearchableEntitySchema.Properties.QUIZ_MODE, WeaviateDataType.TEXT);
+        assertPropertyExists(SearchableEntitySchema.Properties.QUIZ_DURATION, WeaviateDataType.INT);
+        assertPropertyExists(SearchableEntitySchema.Properties.FILE_PATTERN, WeaviateDataType.TEXT);
+    }
+
+    @Test
+    void schema_containsLectureUnitProperties() {
+        assertPropertyExists(SearchableEntitySchema.Properties.LECTURE_ID, WeaviateDataType.INT);
+        assertPropertyExists(SearchableEntitySchema.Properties.UNIT_TYPE, WeaviateDataType.TEXT);
+    }
+
+    @Test
+    void schema_containsFaqAndChannelProperties() {
+        assertPropertyExists(SearchableEntitySchema.Properties.FAQ_STATE, WeaviateDataType.TEXT);
+        assertPropertyExists(SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE, WeaviateDataType.BOOLEAN);
+        assertPropertyExists(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC, WeaviateDataType.BOOLEAN);
     }
 
     @Test
     void schema_searchablePropertiesAreCorrect() {
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.TITLE).orElseThrow().indexSearchable()).isTrue();
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.COURSE_NAME).orElseThrow().indexSearchable()).isTrue();
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.PROBLEM_STATEMENT).orElseThrow().indexSearchable()).isTrue();
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.SHORT_NAME).orElseThrow().indexSearchable()).isTrue();
+        assertThat(SCHEMA.getProperty(SearchableEntitySchema.Properties.TITLE).orElseThrow().indexSearchable()).isTrue();
+        assertThat(SCHEMA.getProperty(SearchableEntitySchema.Properties.DESCRIPTION).orElseThrow().indexSearchable()).isTrue();
+        assertThat(SCHEMA.getProperty(SearchableEntitySchema.Properties.SHORT_NAME).orElseThrow().indexSearchable()).isTrue();
     }
 
     @Test
     void schema_filterablePropertiesAreCorrect() {
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.EXERCISE_ID).orElseThrow().indexFilterable()).isTrue();
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.COURSE_ID).orElseThrow().indexFilterable()).isTrue();
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.EXERCISE_TYPE).orElseThrow().indexFilterable()).isTrue();
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.IS_EXAM_EXERCISE).orElseThrow().indexFilterable()).isTrue();
+        assertThat(SCHEMA.getProperty(SearchableEntitySchema.Properties.TYPE).orElseThrow().indexFilterable()).isTrue();
+        assertThat(SCHEMA.getProperty(SearchableEntitySchema.Properties.ENTITY_ID).orElseThrow().indexFilterable()).isTrue();
+        assertThat(SCHEMA.getProperty(SearchableEntitySchema.Properties.COURSE_ID).orElseThrow().indexFilterable()).isTrue();
+        assertThat(SCHEMA.getProperty(SearchableEntitySchema.Properties.EXERCISE_TYPE).orElseThrow().indexFilterable()).isTrue();
+        assertThat(SCHEMA.getProperty(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).orElseThrow().indexFilterable()).isTrue();
     }
 
     @Test

@@ -40,6 +40,8 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
@@ -116,6 +118,8 @@ public class CourseDeletionService {
 
     private final SubmissionRepository submissionRepository;
 
+    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+
     public CourseDeletionService(ExerciseDeletionService exerciseDeletionService, ExerciseRepository exerciseRepository, UserService userService, Optional<LectureApi> lectureApi,
             Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamDeletionApi> examDeletionApi, Optional<ExamRepositoryApi> examRepositoryApi,
             GradingScaleRepository gradingScaleRepository, Optional<CompetencyRelationApi> competencyRelationApi, Optional<PrerequisitesApi> prerequisitesApi,
@@ -126,7 +130,7 @@ public class CourseDeletionService {
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository, CourseRequestRepository courseRequestRepository,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, LLMTokenUsageRequestRepository llmTokenUsageRequestRepository,
             CourseOperationProgressService progressService, CourseAdminService courseAdminService, ParticipationRepository participationRepository,
-            SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
@@ -155,6 +159,7 @@ public class CourseDeletionService {
         this.courseAdminService = courseAdminService;
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
     }
 
     /**
@@ -300,7 +305,12 @@ public class CourseDeletionService {
             completedWeight += aiDataWeight;
             stepsCompleted++;
 
-            // Step 15: Delete the course itself
+            // Step 15: Clean up all Weaviate rows for the course (exercises, lectures, etc.)
+            if (searchableEntityWeaviateService != null) {
+                searchableEntityWeaviateService.deleteAllForCourseAsync(courseId);
+            }
+
+            // Step 16: Delete the course itself
             progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting course", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
                     calculateProgressPercent(completedWeight, totalWeight));
             courseRepository.deleteById(courseId);
@@ -536,7 +546,7 @@ public class CourseDeletionService {
 
     /**
      * Deletes all FAQs (Frequently Asked Questions) for the course.
-     * Also notifies Pyris to remove the FAQs from the Weaviate vector database.
+     * Also notifies Pyris and removes FAQs from the global search Weaviate collection.
      *
      * @param courseId the ID of the course whose FAQs should be deleted
      */
@@ -548,6 +558,9 @@ public class CourseDeletionService {
         // See: https://github.com/ls1intum/edutelligence/blob/main/iris/src/iris/pipeline/faq_ingestion_pipeline.py
         var faqs = faqRepository.findAllByCourseId(courseId);
         pyrisFaqApi.ifPresent(api -> faqs.forEach(api::deleteFaq));
+        if (searchableEntityWeaviateService != null) {
+            faqs.forEach(faq -> searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.FAQ, faq.getId()));
+        }
         faqRepository.deleteAllByCourseId(courseId);
     }
 

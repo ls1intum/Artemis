@@ -47,8 +47,8 @@ describe('GlobalSearchNavigationViewComponent', () => {
 
         describe('itemCount', () => {
             it('should equal action button count plus searchable entities when not searching', () => {
-                // actionButtonCount = 2 (iris + lecture both visible), searchableEntities.length = 7
-                expect(component.itemCount()).toBe(9);
+                // actionButtonCount = 2 (iris + lecture both visible), searchableEntities.length = 5
+                expect(component.itemCount()).toBe(7);
             });
         });
 
@@ -124,8 +124,8 @@ describe('GlobalSearchNavigationViewComponent', () => {
         });
 
         it('itemCount should equal searchableEntities count when iris is disabled', () => {
-            // actionButtonCount = 0 (iris disabled), searchableEntities.length = 7
-            expect(component.itemCount()).toBe(7);
+            // actionButtonCount = 0 (iris disabled), searchableEntities.length = 5
+            expect(component.itemCount()).toBe(5);
         });
 
         it('should not emit when Enter is pressed at index 0', () => {
