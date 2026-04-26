@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20250425000000-1" author="musaberkay">
+        <createTable tableName="exercise_athena_config">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="exercise_id" type="bigint">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="preliminary_feedback_module" type="varchar(255)"/>
+            <column name="graded_feedback_module" type="varchar(255)"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="exercise_athena_config"
+                                 baseColumnNames="exercise_id"
+                                 constraintName="fk_exercise_athena_config_exercise"
+                                 referencedTableName="exercise"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+
+        <createIndex indexName="idx_exercise_athena_config_exercise_id"
+                     tableName="exercise_athena_config">
+            <column name="exercise_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20250425000000-2" author="musaberkay">
+        <comment>Migrate existing feedback_suggestion_module to graded_feedback_module</comment>
+        <sql>
+            INSERT INTO exercise_athena_config (exercise_id, graded_feedback_module)
+            SELECT id, feedback_suggestion_module
+            FROM exercise
+            WHERE feedback_suggestion_module IS NOT NULL
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
