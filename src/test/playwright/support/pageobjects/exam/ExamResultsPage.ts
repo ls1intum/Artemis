@@ -95,10 +95,12 @@ export class ExamResultsPage {
     async checkModellingExerciseAssessment(exerciseId: number, element: string, feedback: string, points: number) {
         const exercise = getExercise(this.page, exerciseId);
         const componentFeedbacks = exercise.locator('#component-feedback-table');
-        const feedbackElement = componentFeedbacks.locator('.unified-feedback', { hasText: element });
+        const feedbackElement = componentFeedbacks
+            .locator('.unified-feedback')
+            .filter({ has: this.page.locator('.unified-feedback-reference-text', { hasText: element }) })
+            .filter({ has: this.page.locator('.unified-feedback-points', { hasText: points.toString() }) });
         await expect(feedbackElement).toBeVisible();
-        await expect(feedbackElement.locator('.unified-feedback-title', { hasText: feedback })).toBeVisible();
-        await expect(feedbackElement.locator('.unified-feedback-points', { hasText: points.toString() })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-text', { hasText: feedback })).toBeVisible();
     }
 }
 
