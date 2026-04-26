@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, flush } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -82,7 +82,6 @@ describe('ExerciseGroupUpdateComponent', () => {
 
         expect(component.isSaving()).toBe(false);
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', route.snapshot.paramMap.get('examId'), 'exercise-groups']);
-        flush();
     });
 
     it('should save exercise group without ID', async () => {
@@ -96,7 +95,6 @@ describe('ExerciseGroupUpdateComponent', () => {
         expect(component.isSaving()).toBe(false);
         expect(component.exam).toEqual(exam);
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', route.snapshot.paramMap.get('examId'), 'exercise-groups']);
-        flush();
     });
 
     it('should fail while saving with ErrorResponse', async () => {
@@ -111,6 +109,5 @@ describe('ExerciseGroupUpdateComponent', () => {
         expect(component.isSaving()).toBe(false);
         expect(component.exam).toEqual(exam);
         expect(alertServiceStub).toHaveBeenCalledOnce();
-        flush();
     });
 });

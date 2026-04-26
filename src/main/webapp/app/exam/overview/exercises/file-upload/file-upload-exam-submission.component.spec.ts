@@ -1,5 +1,5 @@
 import { ChangeDetectorRef } from '@angular/core';
-import { ComponentFixture, TestBed, flush } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By, SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -283,7 +283,6 @@ describe('FileUploadExamSubmissionComponent', () => {
 
         await Promise.resolve();
         fixture.destroy();
-        flush();
         vi.restoreAllMocks();
     });
 

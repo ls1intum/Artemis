@@ -111,9 +111,9 @@ describe('ExamStudentsComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
-        expect(component.courseId).toEqual(course.id);
-        expect(component.exam).toEqual(examWithCourse);
-        expect(component.isLoading).toBe(false);
+        expect(component.courseId()).toEqual(course.id);
+        expect(component.exam()).toEqual(examWithCourse);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should handle auto-complete for user without login', () => {
@@ -143,7 +143,7 @@ describe('ExamStudentsComponent', () => {
         expect(reloadSpy).toHaveBeenCalledOnce();
         expect(callbackSpy).not.toHaveBeenCalled();
         expect(flashSpy).toHaveBeenCalledOnce();
-        expect(component.isTransitioning).toBe(false);
+        expect(component.isTransitioning()).toBe(false);
     });
 
     it('should search for users', () => {
@@ -177,7 +177,7 @@ describe('ExamStudentsComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
-        expect(component.exam).toEqual(examWithOneUser);
+        expect(component.exam()).toEqual(examWithOneUser);
         expect(component.allRegisteredUsers()).toEqual([
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
         ]);
@@ -213,7 +213,7 @@ describe('ExamStudentsComponent', () => {
         const examServiceStub = vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();
 
-        component.exam = examWithCourse;
+        component.exam.set(examWithCourse);
         component.registerAllStudentsFromCourse();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);

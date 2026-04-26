@@ -1,12 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { SuspiciousSessionsOverviewComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('SuspiciousSessionsOverviewComponent', () => {
     setupTestBed({ zoneless: true });
@@ -59,6 +61,7 @@ describe('SuspiciousSessionsOverviewComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [SuspiciousSessionsOverviewComponent, MockComponent(SuspiciousSessionsComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         });
         history.pushState({ suspiciousSessions: [suspiciousSessions, suspiciousSessions2, suspiciousSessions3] }, '');
 
