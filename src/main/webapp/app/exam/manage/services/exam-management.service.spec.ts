@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -22,7 +22,11 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('Exam Management Service Tests', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ExamManagementService;
     let httpMock: HttpTestingController;
 
@@ -56,7 +60,7 @@ describe('Exam Management Service Tests', () => {
         httpMock.verify();
     });
 
-    it('should create an exam', fakeAsync(() => {
+    it('should create an exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expectedDto = toExamUpdateDTO({ id: 1 } as Exam);
@@ -70,10 +74,10 @@ describe('Exam Management Service Tests', () => {
 
         // CLEANUP
         req.flush(mockExam);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should update an exam', fakeAsync(() => {
+    it('should update an exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expectedDto = toExamUpdateDTO({ id: 1 } as Exam);
@@ -87,10 +91,10 @@ describe('Exam Management Service Tests', () => {
 
         // CLEANUP
         req.flush(mockExam);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should import an exam', fakeAsync(() => {
+    it('should import an exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expectedDto = ExamManagementService.convertExamToImportDTO({ id: 1 } as Exam, course.id!);
@@ -104,10 +108,10 @@ describe('Exam Management Service Tests', () => {
 
         // CLEANUP
         req.flush(mockExam);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should import an exercise group', fakeAsync(() => {
+    it('should import an exercise group', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockExerciseGroup = [{ id: 2 } as ExerciseGroup];
@@ -121,10 +125,10 @@ describe('Exam Management Service Tests', () => {
 
         // CLEANUP
         req.flush(mockExerciseGroup);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should find an exam with exercises and without course id', fakeAsync(() => {
+    it('should find an exam with exercises and without course id', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1, exerciseGroups: [{ id: 2 } as ExerciseGroup] };
         const expected: Exam = { id: 1, exerciseGroups: [{ id: 2 } as ExerciseGroup] };
@@ -140,10 +144,10 @@ describe('Exam Management Service Tests', () => {
 
         // CLEANUP
         req.flush(expected);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should find an exam with no students and no exercise groups', fakeAsync(() => {
+    it('should find an exam with no students and no exercise groups', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expected: Exam = { id: 1 };
@@ -161,10 +165,10 @@ describe('Exam Management Service Tests', () => {
 
         // CLEANUP
         req.flush(expected);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should get exam scores', fakeAsync(() => {
+    it('should get exam scores', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockExamScore: ExamScoreDTO = {
@@ -187,10 +191,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/scores`,
         });
         req.flush(mockExamScore);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should get stats for exam assessment dashboard', fakeAsync(() => {
+    it('should get stats for exam assessment dashboard', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockStatsForDashboard = new StatsForDashboard();
@@ -205,10 +209,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/stats-for-exam-assessment-dashboard`,
         });
         req.flush(mockStatsForDashboard);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should find all exams for course', fakeAsync(() => {
+    it('should find all exams for course', async () => {
         // GIVEN
         const mockExamResponse = [{ ...mockExamPopulated }];
 
@@ -218,10 +222,10 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams` });
         req.flush(mockExamResponse);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('find all exams for which the instructors have access', fakeAsync(() => {
+    it('find all exams for which the instructors have access', async () => {
         // GIVEN
         const mockExamResponse = [{ ...mockExamPopulated }];
 
@@ -231,10 +235,10 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id}/exams-for-user` });
         req.flush(mockExamResponse);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should find all current and upcoming exams', fakeAsync(() => {
+    it('should find all current and upcoming exams', async () => {
         // GIVEN
         const mockExamResponse = [{ ...mockExamPopulated }];
 
@@ -244,10 +248,10 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({ method: 'GET', url: `${service.adminResourceUrl}/upcoming-exams` });
         req.flush(mockExamResponse);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=false', fakeAsync(() => {
+    it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=false', async () => {
         // GIVEN
         const mockExamResponse = [{ ...mockExamPopulated }];
 
@@ -260,10 +264,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExamPopulated.id}/exam-for-assessment-dashboard`,
         });
         req.flush(mockExamResponse);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=true', fakeAsync(() => {
+    it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=true', async () => {
         // GIVEN
         const mockExamResponse = [{ ...mockExamPopulated }];
 
@@ -276,10 +280,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExamPopulated.id}/exam-for-test-run-assessment-dashboard`,
         });
         req.flush(mockExamResponse);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should get latest individual end date of exam', fakeAsync(() => {
+    it('should get latest individual end date of exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockResponse: ExamInformationDTO = { latestIndividualEndDate: dayjs() };
@@ -294,10 +298,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/latest-end-date`,
         });
         req.flush(mockResponse);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should delete an exam', fakeAsync(() => {
+    it('should delete an exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
 
@@ -311,10 +315,10 @@ describe('Exam Management Service Tests', () => {
         });
 
         req.flush(null);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should add student to exam', fakeAsync(() => {
+    it('should add student to exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockStudentLogin = 'studentLogin';
@@ -328,10 +332,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/students/${mockStudentLogin}`,
         });
         req.flush(null);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should add students to exam', fakeAsync(() => {
+    it('should add students to exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockStudents: StudentDTO[] = [
@@ -355,10 +359,10 @@ describe('Exam Management Service Tests', () => {
 
         // CLEAN
         req.flush(expected);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should remove student from exam with no participations and submission', fakeAsync(() => {
+    it('should remove student from exam with no participations and submission', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockStudentLogin = 'studentLogin';
@@ -372,7 +376,7 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/students/${mockStudentLogin}?withParticipationsAndSubmission=false`,
         });
         req.flush(null);
-        tick();
+        await Promise.resolve();
 
         service.removeStudentFromExam(course.id!, mockExam.id!, mockStudentLogin, true).subscribe((res) => expect(res.body).toBeNull());
 
@@ -382,10 +386,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/students/${mockStudentLogin}?withParticipationsAndSubmission=true`,
         });
         req2.flush(null);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should remove student from exam with participations and submission', fakeAsync(() => {
+    it('should remove student from exam with participations and submission', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockStudentLogin = 'studentLogin';
@@ -399,10 +403,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/students/${mockStudentLogin}?withParticipationsAndSubmission=true`,
         });
         req.flush(null);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('remove all students from an exam', fakeAsync(() => {
+    it('remove all students from an exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockResponse = {};
@@ -416,10 +420,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/students?withParticipationsAndSubmission=false`,
         });
         req.flush(mockResponse);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should generate student exams', fakeAsync(() => {
+    it('should generate student exams', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockStudentExams: StudentExam[] = [{ exam: mockExam, numberOfExamSessions: 0 }];
@@ -433,10 +437,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/generate-student-exams`,
         });
         req.flush(expected);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should create test run', fakeAsync(() => {
+    it('should create test run', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockStudentExam: StudentExam = { exam: mockExam, numberOfExamSessions: 0 };
@@ -450,10 +454,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/test-run`,
         });
         req.flush(expected);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should delete test run', fakeAsync(() => {
+    it('should delete test run', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockStudentExam: StudentExam = { exam: mockExam, id: 2, numberOfExamSessions: 0 };
@@ -467,10 +471,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/test-run/${mockStudentExam.id}`,
         });
         req.flush(expected);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should find all test runs for exam', fakeAsync(() => {
+    it('should find all test runs for exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockStudentExams: StudentExam[] = [{ exam: mockExam, id: 2, numberOfExamSessions: 0 }];
@@ -484,10 +488,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/test-runs`,
         });
         req.flush(expected);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should generate missing student for exam', fakeAsync(() => {
+    it('should generate missing student for exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockStudentExams: StudentExam[] = [{ exam: mockExam, id: 2, numberOfExamSessions: 0 }];
@@ -501,10 +505,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/generate-missing-student-exams`,
         });
         req.flush(expected);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should start exercises', fakeAsync(() => {
+    it('should start exercises', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockStudentExams: StudentExam[] = [{ exam: mockExam, id: 1, numberOfExamSessions: 0 }];
@@ -519,10 +523,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/student-exams/start-exercises`,
         });
         req.flush(expected);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should evaluate quiz exercises', fakeAsync(() => {
+    it('should evaluate quiz exercises', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockEvaluatedExercises = 1;
@@ -537,10 +541,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/student-exams/evaluate-quiz-exercises`,
         });
         req.flush(expected);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should assess unsubmitted exam modelling and text participations', fakeAsync(() => {
+    it('should assess unsubmitted exam modelling and text participations', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockUnsubmittedExercises = 1;
@@ -556,10 +560,10 @@ describe('Exam Management Service Tests', () => {
         });
 
         req.flush(expected);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should update order', fakeAsync(() => {
+    it('should update order', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockExerciseGroups: ExerciseGroup[] = [{ exam: mockExam, id: 1 }];
@@ -574,10 +578,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/exercise-groups-order`,
         });
         req.flush(expected);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should enroll all registered students to exam', fakeAsync(() => {
+    it('should enroll all registered students to exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expected: StudentDTO[] = [
@@ -592,10 +596,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/register-course-students`,
         });
         req.flush(expected);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should find all locked submissions from exam', fakeAsync(() => {
+    it('should find all locked submissions from exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockResponse = [new TextSubmission()];
@@ -610,18 +614,18 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/locked-submissions`,
         });
         req.flush(mockResponse);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should download the exam from archive', fakeAsync(() => {
+    it('should download the exam from archive', async () => {
         const mockExam: Exam = { id: 1 };
 
-        const windowSpy = jest.spyOn(window, 'open').mockImplementation();
+        const windowSpy = vi.spyOn(window, 'open').mockImplementation();
         service.downloadExamArchive(course.id!, mockExam.id!);
         expect(windowSpy).toHaveBeenCalledWith('api/exam/courses/456/exams/1/download-archive', '_blank');
-    }));
+    });
 
-    it('should archive the exam', fakeAsync(() => {
+    it('should archive the exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1, studentExams: [{ id: 1, numberOfExamSessions: 0 }] };
 
@@ -634,12 +638,12 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/archive`,
         });
         req.flush({});
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should reset an exam', fakeAsync(() => {
+    it('should reset an exam', async () => {
         const accountService = TestBed.inject(AccountService);
-        const accountServiceSpy = jest.spyOn(accountService, 'setAccessRightsForCourse').mockImplementation();
+        const accountServiceSpy = vi.spyOn(accountService, 'setAccessRightsForCourse').mockImplementation();
 
         // GIVEN
         const mockExam: Exam = { id: 1, course };
@@ -654,13 +658,13 @@ describe('Exam Management Service Tests', () => {
         });
 
         req.flush(mockExam);
-        tick();
+        await Promise.resolve();
 
         expect(accountServiceSpy).toHaveBeenCalledOnce();
         expect(accountServiceSpy).toHaveBeenCalledWith(course);
-    }));
+    });
 
-    it('should make GET request to retrieve exam exercises that potentially have plagiarism cases', fakeAsync(() => {
+    it('should make GET request to retrieve exam exercises that potentially have plagiarism cases', async () => {
         const exerciseGroup = new ExerciseGroup();
         const textExercise = new TextExercise(undefined, exerciseGroup);
         const modelingExercise = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, exerciseGroup);
@@ -670,21 +674,21 @@ describe('Exam Management Service Tests', () => {
         service.getExercisesWithPotentialPlagiarismForExam(1, 1).subscribe((resp) => expect(resp).toEqual(exercises));
         const req = httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/1/exams/1/exercises-with-potential-plagiarism' });
         req.flush(exercises);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should verify user attendance', fakeAsync(() => {
+    it('should verify user attendance', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
 
         // WHEN
-        service.isAttendanceChecked(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toBeTrue());
+        service.isAttendanceChecked(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toBe(true));
 
         // THEN
         const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/attendance` });
 
         // CLEANUP
         req.flush(true);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 });

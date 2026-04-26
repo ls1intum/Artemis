@@ -77,8 +77,9 @@ describe('ModelingExamSubmissionComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [FaIconComponent, StubModelingEditorComponent],
-            declarations: [
+            imports: [
+                FaIconComponent,
+                StubModelingEditorComponent,
                 ModelingExamSubmissionComponent,
                 TranslatePipeMock,
                 MockPipe(HtmlForMarkdownPipe, (markdown) => markdown as SafeHtml),

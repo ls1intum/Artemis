@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ExamTimerComponent } from 'app/exam/overview/timer/exam-timer.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -23,7 +23,7 @@ describe('ExamTimerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ExamTimerComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ExamTimerComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         }).compileComponents();
 
@@ -63,20 +63,20 @@ describe('ExamTimerComponent', () => {
         expect(component.updateDisplayTime(duration)).toBe('13min');
     });
 
-    it('should update time in the template correctly', fakeAsync(() => {
+    it('should update time in the template correctly', async () => {
         // 30 minutes left
         fixture.componentRef.setInput('endDate', dayjs(now).add(30, 'minutes'));
         vi.spyOn(dateService, 'now').mockReturnValueOnce(dayjs(now)).mockReturnValueOnce(dayjs(now)).mockReturnValueOnce(dayjs(now).add(5, 'minutes'));
         fixture.detectChanges();
-        tick();
+        await Promise.resolve();
         let timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
         fixture.detectChanges();
         timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
         expect(timeShownInTemplate).toBe('30min');
-        tick(100);
+        await new Promise((resolve) => setTimeout(resolve, 100));
         fixture.detectChanges();
         timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
         expect(timeShownInTemplate).toBe('25min');
         discardPeriodicTasks();
-    }));
+    });
 });

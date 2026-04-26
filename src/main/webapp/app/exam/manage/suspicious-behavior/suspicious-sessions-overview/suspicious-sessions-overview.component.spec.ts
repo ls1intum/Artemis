@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SuspiciousSessionsOverviewComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -58,7 +58,7 @@ describe('SuspiciousSessionsOverviewComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [SuspiciousSessionsOverviewComponent, MockComponent(SuspiciousSessionsComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
+            imports: [SuspiciousSessionsOverviewComponent, MockComponent(SuspiciousSessionsComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
         });
         history.pushState({ suspiciousSessions: [suspiciousSessions, suspiciousSessions2, suspiciousSessions3] }, '');
 
@@ -71,8 +71,8 @@ describe('SuspiciousSessionsOverviewComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should retrieve suspicious sessions onInit', fakeAsync(() => {
+    it('should retrieve suspicious sessions onInit', async () => {
         component.ngOnInit();
         expect(component.suspiciousSessions()).toEqual([suspiciousSessions, suspiciousSessions2, suspiciousSessions3]);
-    }));
+    });
 });

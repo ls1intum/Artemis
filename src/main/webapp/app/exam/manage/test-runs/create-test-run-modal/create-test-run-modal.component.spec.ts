@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal/create-test-run-modal.component';
@@ -12,7 +12,11 @@ import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('Create Test Run Modal Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CreateTestRunModalComponent;
     let fixture: ComponentFixture<CreateTestRunModalComponent>;
 
@@ -32,23 +36,23 @@ describe('Create Test Run Modal Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('onInit', () => {
-        it('should initialise the working time form', fakeAsync(() => {
+        it('should initialise the working time form', async () => {
             comp.exam = exam;
             // WHEN
             comp.ngOnInit();
             // THEN
             expect(!!comp.workingTimeForm).not.toBeNull();
-        }));
+        });
     });
 
     describe('creating test run workflow', () => {
         it('should create a new test run and close the modal', () => {
             const activeModal = TestBed.inject(NgbActiveModal);
-            const closeStub = jest.spyOn(activeModal, 'close');
+            const closeStub = vi.spyOn(activeModal, 'close');
             comp.exam = exam;
             fixture.detectChanges();
             comp.workingTimeForm.controls['minutes'].setValue(30);
@@ -59,7 +63,7 @@ describe('Create Test Run Modal Component', () => {
             fixture.detectChanges();
             expect(comp.testRunConfiguration[1]).toEqual(exercise);
             expect(comp.exam.exerciseGroups!).toHaveLength(1);
-            expect(comp.testRunConfigured).toBeTrue();
+            expect(comp.testRunConfigured).toBe(true);
             const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton')).nativeElement;
             createTestRunButton.click();
             expect(closeStub).toHaveBeenCalledOnce();
@@ -81,21 +85,21 @@ describe('Create Test Run Modal Component', () => {
     });
 
     describe('Exercise Selection', () => {
-        it('should highlight the exercise when pressed', fakeAsync(() => {
+        it('should highlight the exercise when pressed', async () => {
             comp.exam = exam;
             // WHEN
             // @ts-ignore
             comp.onSelectExercise(exercise, exam.exerciseGroups[0]!);
             // THEN
             expect(Object.values(comp.testRunConfiguration).length).toBeGreaterThan(0);
-        }));
-        it('should allow submit when an exercise has been selected for every exercise group', fakeAsync(() => {
+        });
+        it('should allow submit when an exercise has been selected for every exercise group', async () => {
             comp.exam = exam;
             // WHEN
             // @ts-ignore
             comp.onSelectExercise(exercise, exam.exerciseGroups[0]!);
             // THEN
             expect(comp.testRunConfigured).not.toBeNull();
-        }));
+        });
     });
 });

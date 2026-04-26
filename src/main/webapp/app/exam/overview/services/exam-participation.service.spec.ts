@@ -20,7 +20,11 @@ import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/manage/exam-sco
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('ExamParticipationService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ExamParticipationService;
     let httpMock: HttpTestingController;
     let exam: Exam;
@@ -228,7 +232,7 @@ describe('ExamParticipationService', () => {
 
     it('save examSessionToken to sessionStorage', async () => {
         service.saveExamSessionTokenToSessionStorage('token1');
-        jest.spyOn(sessionStorage, 'setItem').mockImplementation(() => {
+        vi.spyOn(sessionStorage, 'setItem').mockImplementation(() => {
             expect(sessionStorage['ExamSessionToken']).toBe('token1');
         });
     });

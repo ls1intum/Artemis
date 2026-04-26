@@ -156,8 +156,8 @@ describe('ExamStudentsComponent', () => {
         // Check if the observable output matches our expectancies
         search.subscribe((a) => {
             expect(a).toEqual([{ id: user2.id, login: user2.login }]);
-            expect(component.searchNoResults).toBe(false);
-            expect(component.searchFailed).toBe(false);
+            expect(component.searchNoResults()).toBe(false);
+            expect(component.searchFailed()).toBe(false);
         });
 
         expect(userServiceStub).toHaveBeenCalledOnce();
@@ -178,7 +178,7 @@ describe('ExamStudentsComponent', () => {
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(component.exam).toEqual(examWithOneUser);
-        expect(component.allRegisteredUsers).toEqual([
+        expect(component.allRegisteredUsers()).toEqual([
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
         ]);
     });
@@ -186,10 +186,10 @@ describe('ExamStudentsComponent', () => {
     it('should remove users from the exam', () => {
         const examServiceStub = vi.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
-        component.allRegisteredUsers = [
+        component.allRegisteredUsers.set([
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ] as ExamUser[];
+        ] as ExamUser[]);
 
         component.removeFromExam(
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
@@ -198,7 +198,7 @@ describe('ExamStudentsComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, user2.login, false);
-        expect(component.allRegisteredUsers).toEqual([
+        expect(component.allRegisteredUsers()).toEqual([
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
         ]);
     });
@@ -218,7 +218,7 @@ describe('ExamStudentsComponent', () => {
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(examServiceStubAddAll).toHaveBeenCalledWith(course.id, examWithCourse.id);
-        expect(component.allRegisteredUsers).toEqual([
+        expect(component.allRegisteredUsers()).toEqual([
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
         ]);
     });
@@ -226,31 +226,31 @@ describe('ExamStudentsComponent', () => {
     it('should remove all users from the exam', () => {
         const examServiceStub = vi.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
-        component.allRegisteredUsers = [
+        component.allRegisteredUsers.set([
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ] as ExamUser[];
+        ] as ExamUser[]);
 
         component.removeAllStudents({ deleteParticipationsAndSubmission: false });
         fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, false);
-        expect(component.allRegisteredUsers).toEqual([]);
+        expect(component.allRegisteredUsers()).toEqual([]);
     });
 
     it('should remove all users from the exam with participaations', () => {
         const examServiceStub = vi.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
-        component.allRegisteredUsers = [
+        component.allRegisteredUsers.set([
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ] as ExamUser[];
+        ] as ExamUser[]);
 
         component.removeAllStudents({ deleteParticipationsAndSubmission: true });
         fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
-        expect(component.allRegisteredUsers).toEqual([]);
+        expect(component.allRegisteredUsers()).toEqual([]);
     });
 
     it('should format search result', () => {
@@ -265,6 +265,6 @@ describe('ExamStudentsComponent', () => {
 
     it('should test on error', () => {
         component.onError('ErrorString');
-        expect(component.isTransitioning).toBe(false);
+        expect(component.isTransitioning()).toBe(false);
     });
 });

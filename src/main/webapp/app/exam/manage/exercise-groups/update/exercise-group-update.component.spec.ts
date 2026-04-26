@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, flush } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -61,16 +61,16 @@ describe('ExerciseGroupUpdateComponent', () => {
     });
 
     // Always initialized and bind before tests
-    beforeEach(fakeAsync(() => {
+    beforeEach(async () => {
         fixture.detectChanges();
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
     afterEach(() => {
         vi.restoreAllMocks();
     });
 
-    it('should save exercise group', fakeAsync(() => {
+    it('should save exercise group', async () => {
         expect(component).not.toBeNull();
         expect(component.exam).toEqual(exam);
         expect(component.exerciseGroup).toEqual(exerciseGroup);
@@ -83,9 +83,9 @@ describe('ExerciseGroupUpdateComponent', () => {
         expect(component.isSaving()).toBe(false);
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', route.snapshot.paramMap.get('examId'), 'exercise-groups']);
         flush();
-    }));
+    });
 
-    it('should save exercise group without ID', fakeAsync(() => {
+    it('should save exercise group without ID', async () => {
         component.exerciseGroup.id = undefined;
 
         const responseFakeExerciseGroup = { body: exerciseGroup } as EntityResponseType;
@@ -97,9 +97,9 @@ describe('ExerciseGroupUpdateComponent', () => {
         expect(component.exam).toEqual(exam);
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', route.snapshot.paramMap.get('examId'), 'exercise-groups']);
         flush();
-    }));
+    });
 
-    it('should fail while saving with ErrorResponse', fakeAsync(() => {
+    it('should fail while saving with ErrorResponse', async () => {
         alertServiceStub = vi.spyOn(alertService, 'error');
         const error = { status: 404 };
         component.exerciseGroup.id = undefined;
@@ -112,5 +112,5 @@ describe('ExerciseGroupUpdateComponent', () => {
         expect(component.exam).toEqual(exam);
         expect(alertServiceStub).toHaveBeenCalledOnce();
         flush();
-    }));
+    });
 });

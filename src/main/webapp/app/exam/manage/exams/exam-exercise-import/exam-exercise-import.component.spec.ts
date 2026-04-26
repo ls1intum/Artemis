@@ -74,8 +74,7 @@ describe('Exam Exercise Import Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), FontAwesomeTestingModule],
-            declarations: [MockPipe(ArtemisTranslatePipe)],
+            imports: [MockModule(FormsModule), FontAwesomeTestingModule, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },

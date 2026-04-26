@@ -96,9 +96,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
 
     beforeEach(() => {
         // Mock the ResizeObserver, which is not available in the test environment
-        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
+        global.ResizeObserver = MockResizeObserver as any;
 
         TestBed.configureTestingModule({
             imports: [ProgrammingExerciseExamDiffComponent, MockComponent(CommitsInfoComponent), MockPipe(ArtemisTranslatePipe), MockComponent(IncludedInScoreBadgeComponent)],

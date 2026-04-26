@@ -36,9 +36,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
 
         fixture = TestBed.createComponent(ExamLiveAnnouncementCreateModalComponent);
         component = fixture.componentInstance;
-        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
+        global.ResizeObserver = MockResizeObserver as any;
         mockActiveModal = TestBed.inject(NgbActiveModal);
         mockExamManagementService = TestBed.inject(ExamManagementService);
     });

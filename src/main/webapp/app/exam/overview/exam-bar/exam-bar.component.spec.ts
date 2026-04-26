@@ -28,9 +28,7 @@ describe('ExamBarComponent', () => {
             providers: [LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }, MockProvider(AlertService), provideHttpClient()],
         }).compileComponents();
         // Required because exam bar uses the ResizeObserver for height calculations
-        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
+        global.ResizeObserver = MockResizeObserver as any;
 
         fixture = TestBed.createComponent(ExamBarComponent);
         comp = fixture.componentInstance;

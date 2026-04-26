@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -73,10 +73,10 @@ describe('Exam Navigation Bar Component', () => {
         vi.restoreAllMocks();
     });
 
-    beforeEach(fakeAsync(() => {
+    beforeEach(async () => {
         fixture.detectChanges();
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
     it('should update the submissions onInit if their CommitState is UNCOMMITTED_CHANGES to isSynced false, if not in initial session', () => {
         // Given

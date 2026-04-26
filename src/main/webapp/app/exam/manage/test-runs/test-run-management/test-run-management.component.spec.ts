@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -25,13 +25,17 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { DialogService } from 'primeng/dynamicdialog';
 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('Test Run Management Component', () => {
+    setupTestBed({ zoneless: true });
+
     let component: TestRunManagementComponent;
     let fixture: ComponentFixture<TestRunManagementComponent>;
     let examManagementService: ExamManagementService;
     let accountService: AccountService;
     let modalService: NgbModal;
-    let userSpy: jest.SpyInstance;
+    let userSpy: ReturnType<typeof vi.spyOn>;
 
     const course = { id: 1, isAtLeastInstructor: true } as Course;
     const exam = { id: 1, course, started: true } as Exam;
@@ -62,23 +66,23 @@ describe('Test Run Management Component', () => {
                 examManagementService = TestBed.inject(ExamManagementService);
                 accountService = TestBed.inject(AccountService);
                 modalService = TestBed.inject(NgbModal);
-                jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
-                jest.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
-                userSpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
-                jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
-                jest.spyOn(examManagementService, 'deleteTestRun').mockReturnValue(of(new HttpResponse<void>()));
+                vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
+                vi.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
+                userSpy = vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+                vi.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
+                vi.spyOn(examManagementService, 'deleteTestRun').mockReturnValue(of(new HttpResponse<void>()));
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('onInit', () => {
-        it('should fetch exam with test runs and user on init', fakeAsync(() => {
+        it('should fetch exam with test runs and user on init', async () => {
             fixture.detectChanges();
 
-            tick();
+            await Promise.resolve();
 
             expect(examManagementService.find).toHaveBeenCalledWith(course.id!, exam.id!, false, true);
             expect(examManagementService.findAllTestRunsForExam).toHaveBeenCalledWith(course.id!, exam.id!);
@@ -89,15 +93,15 @@ describe('Test Run Management Component', () => {
             expect(component.course()).toEqual(course);
             expect(component.testRuns()).toEqual(studentExams);
             expect(component.instructor()).toEqual(user);
-        }));
+        });
     });
     describe('Delete', () => {
-        it('should call delete for test run', fakeAsync(() => {
+        it('should call delete for test run', async () => {
             fixture.detectChanges();
 
             component.deleteTestRun(studentExams[0].id!);
             expect(examManagementService.deleteTestRun).toHaveBeenCalledWith(course.id!, exam.id!, studentExams[0].id!);
-        }));
+        });
     });
 
     describe('Create test runs', () => {
@@ -106,15 +110,15 @@ describe('Test Run Management Component', () => {
             expect(component.examContainsExercises()).toBeFalsy();
         });
 
-        it('should create test run', fakeAsync(() => {
+        it('should create test run', async () => {
             const exercise = { id: 1 } as Exercise;
             const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
             exam.exerciseGroups = [exerciseGroup];
 
             const componentInstance = { title: String, text: String };
             const result = new Promise((resolve) => resolve({} as StudentExam));
-            jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
-            jest.spyOn(examManagementService, 'createTestRun').mockReturnValue(of(new HttpResponse({ body: { id: 3, user: { id: 90 }, exercises: [exercise] } as StudentExam })));
+            vi.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
+            vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(of(new HttpResponse({ body: { id: 3, user: { id: 90 }, exercises: [exercise] } as StudentExam })));
             fixture.detectChanges();
 
             expect(component.examContainsExercises()).toBeTruthy();
@@ -123,10 +127,10 @@ describe('Test Run Management Component', () => {
             expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
             createTestRunButton.nativeElement.click();
 
-            tick();
+            await Promise.resolve();
 
             expect(component.testRuns()).toHaveLength(3);
-        }));
+        });
 
         it('should correctly catch error after creating test run', () => {
             const alertService = TestBed.inject(AlertService);
@@ -137,9 +141,9 @@ describe('Test Run Management Component', () => {
 
             const componentInstance = { title: String, text: String };
             const result = new Promise((resolve) => resolve({} as StudentExam));
-            jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
-            jest.spyOn(examManagementService, 'createTestRun').mockReturnValue(throwError(() => httpError));
-            jest.spyOn(alertService, 'error');
+            vi.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
+            vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(throwError(() => httpError));
+            vi.spyOn(alertService, 'error');
             fixture.detectChanges();
 
             expect(component.examContainsExercises()).toBeTruthy();
@@ -158,23 +162,23 @@ describe('Test Run Management Component', () => {
             expect(component.testRunCanBeAssessed()).toBeFalsy();
         });
 
-        it('should be able to assess test run', fakeAsync(() => {
+        it('should be able to assess test run', async () => {
             studentExams[0].submitted = true;
             fixture.detectChanges();
-            tick();
+            await Promise.resolve();
             expect(component.testRunCanBeAssessed).toBeTruthy();
-        }));
+        });
     });
 
     describe('sort rows', () => {
-        it('should forward request to', fakeAsync(() => {
+        it('should forward request to', async () => {
             const sortService = TestBed.inject(SortService);
-            jest.spyOn(sortService, 'sortByProperty').mockReturnValue(studentExams);
+            vi.spyOn(sortService, 'sortByProperty').mockReturnValue(studentExams);
             fixture.detectChanges();
 
             component.sortRows();
-            tick();
+            await Promise.resolve();
             expect(sortService.sortByProperty).toHaveBeenCalledOnce();
-        }));
+        });
     });
 });

@@ -1,5 +1,5 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -33,7 +33,7 @@ describe('Exam Import Paging Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
     });
 
-    it('should find an exam', fakeAsync(() => {
+    it('should find an exam', async () => {
         const searchResult = { resultsOnPage: [exam], numberOfPages: 5 };
         const pageable = { pageSize: 2, page: 4, sortingOrder: SortingOrder.DESCENDING, searchTerm: 'ExamSearch', sortedColumn: 'testSortedColumn' };
         service
@@ -47,8 +47,8 @@ describe('Exam Import Paging Service', () => {
         expect(req.request.params.get('searchTerm')).toBe('ExamSearch');
         expect(req.request.params.get('sortedColumn')).toBe('testSortedColumn');
         req.flush(searchResult);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
     afterEach(() => {
         httpMock.verify();

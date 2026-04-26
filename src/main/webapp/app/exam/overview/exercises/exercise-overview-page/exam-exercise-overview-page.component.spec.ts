@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -61,10 +61,10 @@ describe('ExamExerciseOverviewPageComponent', () => {
         vi.restoreAllMocks();
     });
 
-    beforeEach(fakeAsync(() => {
+    beforeEach(async () => {
         fixture.detectChanges();
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
     it('should open the exercise', () => {
         vi.spyOn(comp.onPageChanged, 'emit');

@@ -1,5 +1,5 @@
 import { EventEmitter } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
@@ -63,8 +63,9 @@ describe('ExamParticipationCoverComponent', () => {
         studentExam.id = 1;
 
         TestBed.configureTestingModule({
-            imports: [FormsModule, FaIconComponent],
-            declarations: [
+            imports: [
+                FormsModule,
+                FaIconComponent,
                 ExamParticipationCoverComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ExamTimerComponent),
@@ -101,13 +102,13 @@ describe('ExamParticipationCoverComponent', () => {
         vi.clearAllMocks();
     });
 
-    it('should initialize accountName when identity resolves', fakeAsync(() => {
+    it('should initialize accountName when identity resolves', async () => {
         const user = { name: 'admin' } as User;
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
         flushInputs();
-        tick();
+        await Promise.resolve();
         expect(component.accountName()).toBe(user.name);
-    }));
+    });
 
     it('should update confirmation', () => {
         flushInputs();
@@ -121,7 +122,7 @@ describe('ExamParticipationCoverComponent', () => {
         expect(component.endEnabled()).toBe(false);
     });
 
-    it('should start exam', fakeAsync(() => {
+    it('should start exam', async () => {
         vi.useFakeTimers();
         const localStudentExam = new StudentExam();
         localStudentExam.testRun = true;
@@ -152,7 +153,7 @@ describe('ExamParticipationCoverComponent', () => {
         vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConduction').mockReturnValue(of(localStudentExam2));
 
         component.startExam();
-        tick();
+        await Promise.resolve();
         expect(component.studentExam()).toEqual(localStudentExam2);
 
         const startDate = dayjs();
@@ -165,7 +166,7 @@ describe('ExamParticipationCoverComponent', () => {
         fixture.componentRef.setInput('exam', examFutureStart);
         vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
         component.startExam();
-        tick();
+        await Promise.resolve();
         vi.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
         expect(component.waitingForExamStart()).toBe(true);
         const difference = Math.ceil(examFutureStart.startDate.diff(now, 'seconds') / 60);
@@ -178,7 +179,7 @@ describe('ExamParticipationCoverComponent', () => {
         examNoStart.startDate = undefined;
         fixture.componentRef.setInput('exam', examNoStart);
         component.startExam();
-        tick();
+        await Promise.resolve();
         vi.advanceTimersByTime(UI_RELOAD_TIME + 1);
         expect(component.waitingForExamStart()).toBe(true);
         expect(component.timeUntilStart()).toBe('');
@@ -201,7 +202,7 @@ describe('ExamParticipationCoverComponent', () => {
         vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConduction').mockReturnValue(of(testExamStudent));
 
         component.startExam();
-        tick();
+        await Promise.resolve();
         expect(component.studentExam()).toEqual(testExamStudent);
 
         const startDate1 = dayjs();
@@ -214,7 +215,7 @@ describe('ExamParticipationCoverComponent', () => {
         fixture.componentRef.setInput('exam', testExamFuture);
         vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now1);
         component.startExam();
-        tick();
+        await Promise.resolve();
         vi.advanceTimersByTime(UI_RELOAD_TIME + 1);
         expect(component.waitingForExamStart()).toBe(true);
         const difference1 = Math.ceil(testExamFuture.startDate.diff(now1, 's') / 60);
@@ -227,11 +228,11 @@ describe('ExamParticipationCoverComponent', () => {
         testExamNoStart.startDate = undefined;
         fixture.componentRef.setInput('exam', testExamNoStart);
         component.startExam();
-        tick();
+        await Promise.resolve();
         vi.advanceTimersByTime(UI_RELOAD_TIME + 1);
         expect(component.waitingForExamStart()).toBe(true);
         expect(component.timeUntilStart()).toBe('');
-    }));
+    });
 
     it('test run should always have already started', () => {
         const localStudentExam = new StudentExam();

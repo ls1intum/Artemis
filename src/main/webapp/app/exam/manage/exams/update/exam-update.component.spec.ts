@@ -6,7 +6,7 @@ import { Component } from '@angular/core';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, UrlSegment, provideRouter } from '@angular/router';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockDirective, MockProvider } from 'ng-mocks';
 
@@ -132,9 +132,7 @@ describe('ExamUpdateComponent', () => {
 
             router = TestBed.inject(Router);
             fixture = TestBed.createComponent(ExamUpdateComponent);
-            global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                return new MockResizeObserver(callback);
-            });
+            global.ResizeObserver = MockResizeObserver as any;
             component = fixture.componentInstance;
             examManagementService = TestBed.inject(ExamManagementService);
 
@@ -192,13 +190,13 @@ describe('ExamUpdateComponent', () => {
             expect(component.isValidConfiguration).toBe(false);
         });
 
-        it('should show channel name input for test exams', fakeAsync(() => {
+        it('should show channel name input for test exams', async () => {
             examWithoutExercises.testExam = true;
             examWithoutExercises.channelName = 'test-exam';
             component.ngOnInit();
-            tick();
+            await Promise.resolve();
             expect(component.hideChannelNameInput).toBe(false);
-        }));
+        });
 
         it('should validate the example solution publication date correctly', () => {
             const newExamWithoutExercises = new Exam();
@@ -220,7 +218,7 @@ describe('ExamUpdateComponent', () => {
             expect(component.isValidConfiguration).toBe(false);
         });
 
-        it('should update', fakeAsync(() => {
+        it('should update', async () => {
             const calendarService = TestBed.inject(CalendarService);
             const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
 
@@ -240,12 +238,12 @@ describe('ExamUpdateComponent', () => {
 
             // trigger save
             component.save();
-            tick();
+            await Promise.resolve();
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(updateSpy).toHaveBeenCalledOnce();
             expect(component.isSaving).toBe(false);
             expect(refreshSpy).toHaveBeenCalledOnce();
-        }));
+        });
 
         it('should calculate the working time for real exams correctly', () => {
             fixture.detectChanges();
@@ -443,7 +441,7 @@ describe('ExamUpdateComponent', () => {
             expect(result2).toBe(true);
         });
 
-        it('should correctly catch HTTPError when updating the examWithoutExercises', fakeAsync(() => {
+        it('should correctly catch HTTPError when updating the examWithoutExercises', async () => {
             const alertService = TestBed.inject(AlertService);
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
             fixture.detectChanges();
@@ -453,14 +451,14 @@ describe('ExamUpdateComponent', () => {
 
             // trigger save
             component.save();
-            tick();
+            await Promise.resolve();
             expect(alertServiceSpy).toHaveBeenCalledOnce();
             expect(component.isSaving).toBe(false);
 
             updateStub.mockRestore();
-        }));
+        });
 
-        it('should create', fakeAsync(() => {
+        it('should create', async () => {
             const navigateSpy = vi.spyOn(router, 'navigate');
             examWithoutExercises.id = undefined;
             fixture.changeDetectorRef.detectChanges();
@@ -478,13 +476,13 @@ describe('ExamUpdateComponent', () => {
 
             // trigger save
             component.save();
-            tick();
+            await Promise.resolve();
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(createSpy).toHaveBeenCalledOnce();
             expect(component.isSaving).toBe(false);
-        }));
+        });
 
-        it('should correctly catch HTTPError when creating the examWithoutExercises', fakeAsync(() => {
+        it('should correctly catch HTTPError when creating the examWithoutExercises', async () => {
             const alertService = TestBed.inject(AlertService);
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
             fixture.detectChanges();
@@ -500,12 +498,12 @@ describe('ExamUpdateComponent', () => {
             component.exam.workingTime = 3600;
 
             component.save();
-            tick();
+            await Promise.resolve();
             expect(alertServiceSpy).toHaveBeenCalledOnce();
             expect(component.isSaving).toBe(false);
 
             createStub.mockRestore();
-        }));
+        });
 
         it('should call the back method on the nav util service on previousState', () => {
             const navUtilService = TestBed.inject(ArtemisNavigationUtilService);
@@ -680,7 +678,7 @@ describe('ExamUpdateComponent', () => {
             expect(button.isLoading()).toBe(false);
         });
 
-        it('should toggle save button disabled state based on form validity and configuration validity', fakeAsync(() => {
+        it('should toggle save button disabled state based on form validity and configuration validity', async () => {
             const now = dayjs().startOf('minute');
             examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
             examWithoutExercises.startDate = dayjs().add(2, 'hours');
@@ -714,9 +712,9 @@ describe('ExamUpdateComponent', () => {
             expect(component.isValidConfiguration).toBe(true);
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
             expect(button.disabled()).toBe(true);
-        }));
+        });
 
-        it('should open confirmation modal when dates changed for ongoing exam', fakeAsync(() => {
+        it('should open confirmation modal when dates changed for ongoing exam', async () => {
             const modalService = TestBed.inject(NgbModal);
             const mockModalRef = {
                 componentInstance: {
@@ -739,14 +737,14 @@ describe('ExamUpdateComponent', () => {
             component['originalEndDate'] = dayjs().add(1, 'hours');
 
             fixture.detectChanges();
-            tick();
+            await Promise.resolve();
 
             // Change the dates
             examWithoutExercises.startDate = dayjs().subtract(30, 'minutes');
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
 
             component.handleSubmit();
-            tick();
+            await Promise.resolve();
 
             expect(modalSpy).toHaveBeenCalledOnce();
             expect(modalSpy).toHaveBeenCalledWith(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
@@ -754,9 +752,9 @@ describe('ExamUpdateComponent', () => {
             expect(component.confirmEntityNameValue()).toBe('');
             expect(mockModalRef.componentInstance.confirmDisabled).toBe(true);
             expect(mockModalRef.componentInstance.title).toBe('artemisApp.examManagement.dateChange.title');
-        }));
+        });
 
-        it('should set confirmDisabled to true initially when opening modal', fakeAsync(() => {
+        it('should set confirmDisabled to true initially when opening modal', async () => {
             const modalService = TestBed.inject(NgbModal);
             const mockModalRef = {
                 componentInstance: {
@@ -779,18 +777,18 @@ describe('ExamUpdateComponent', () => {
             component['originalEndDate'] = dayjs().add(1, 'hours');
 
             fixture.detectChanges();
-            tick();
+            await Promise.resolve();
 
             // Change the dates
             examWithoutExercises.startDate = dayjs().subtract(30, 'minutes');
 
             component.handleSubmit();
-            tick();
+            await Promise.resolve();
 
             expect(mockModalRef.componentInstance.confirmDisabled).toBe(true);
-        }));
+        });
 
-        it('should not open modal when dates have not changed', fakeAsync(() => {
+        it('should not open modal when dates have not changed', async () => {
             const modalService = TestBed.inject(NgbModal);
             const modalSpy = vi.spyOn(modalService, 'open');
             const navigateSpy = vi.spyOn(router, 'navigate');
@@ -814,16 +812,16 @@ describe('ExamUpdateComponent', () => {
             component['originalEndDate'] = examWithoutExercises.endDate.clone();
 
             fixture.detectChanges();
-            tick();
+            await Promise.resolve();
 
             // Don't change the dates
             component.handleSubmit();
-            tick();
+            await Promise.resolve();
 
             expect(modalSpy).not.toHaveBeenCalled();
             expect(saveSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledOnce();
-        }));
+        });
 
         it('should enable confirm button when entered value matches exam title', () => {
             examWithoutExercises.title = 'Exact Title Match';
@@ -970,9 +968,7 @@ describe('ExamUpdateComponent', () => {
             component = fixture.componentInstance;
             examManagementService = TestBed.inject(ExamManagementService);
             alertService = TestBed.inject(AlertService);
-            global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                return new MockResizeObserver(callback);
-            });
+            global.ResizeObserver = MockResizeObserver as any;
 
             profileService = TestBed.inject(ProfileService);
             getProfileInfoSub = vi.spyOn(profileService, 'getProfileInfo');

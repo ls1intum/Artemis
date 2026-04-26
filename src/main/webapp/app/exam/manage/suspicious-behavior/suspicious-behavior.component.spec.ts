@@ -76,8 +76,7 @@ describe('SuspiciousBehaviorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockRouterLinkDirective],
-            declarations: [SuspiciousBehaviorComponent, MockComponent(PlagiarismCasesOverviewComponent)],
+            imports: [MockRouterLinkDirective, SuspiciousBehaviorComponent, MockComponent(PlagiarismCasesOverviewComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },

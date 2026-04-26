@@ -28,7 +28,7 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            declarations: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
+            imports: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
             providers: [{ provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService }],
         })
             .compileComponents()
@@ -80,7 +80,7 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
         const programmingExerciseDummy = { id: 42, problemStatement: oldProblemStatement, type: ExerciseType.PROGRAMMING } as Exercise;
         beforeEach(async () => {
             return TestBed.configureTestingModule({
-                declarations: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
+                imports: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
                 providers: [{ provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService }],
             })
                 .compileComponents()

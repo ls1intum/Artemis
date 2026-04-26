@@ -1,5 +1,5 @@
 import { ChangeDetectorRef } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, flush } from '@angular/core/testing';
 import { By, SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -53,7 +53,7 @@ describe('FileUploadExamSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
+            imports: [
                 FileUploadExamSubmissionComponent,
                 FullscreenComponent,
                 MockPipe(HtmlForMarkdownPipe, (markdown) => markdown as SafeHtml),
@@ -225,12 +225,12 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
     });
 
-    it('Too big file can not be submitted', fakeAsync(() => {
+    it('Too big file can not be submitted', async () => {
         // Ignore console errors
         console.error = vi.fn();
         resetComponent();
         fixture.detectChanges();
-        tick();
+        await Promise.resolve();
 
         const submissionFile = new File([''], 'exampleSubmission.png');
         Object.defineProperty(submissionFile, 'size', { value: MAX_SUBMISSION_FILE_SIZE + 1, writable: false });
@@ -252,14 +252,14 @@ describe('FileUploadExamSubmissionComponent', () => {
         expect(fileUploadInput.nativeElement.disabled).toBe(false);
         expect(fileUploadInput.nativeElement.value).toBe('');
         vi.restoreAllMocks();
-    }));
+    });
 
-    it('Incorrect file type can not be submitted', fakeAsync(() => {
+    it('Incorrect file type can not be submitted', async () => {
         // Ignore console errors
         console.error = vi.fn();
         resetComponent();
         fixture.detectChanges();
-        tick();
+        await Promise.resolve();
 
         // Only png and pdf types are allowed
         const submissionFile = new File([''], 'exampleSubmission.jpg');
@@ -281,11 +281,11 @@ describe('FileUploadExamSubmissionComponent', () => {
         expect(fileUploadInput.nativeElement.disabled).toBe(false);
         expect(fileUploadInput.nativeElement.value).toBe('');
 
-        tick();
+        await Promise.resolve();
         fixture.destroy();
         flush();
         vi.restoreAllMocks();
-    }));
+    });
 
     describe('saveUploadedFile', () => {
         beforeEach(() => {

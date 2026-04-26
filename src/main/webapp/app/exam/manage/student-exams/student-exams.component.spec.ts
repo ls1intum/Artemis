@@ -27,7 +27,11 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('StudentExamsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let studentExamsComponentFixture: ComponentFixture<StudentExamsComponent>;
     let studentExamsComponent: StudentExamsComponent;
     let studentExams: StudentExam[] = [];
@@ -196,16 +200,16 @@ describe('StudentExamsComponent', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should initialize', () => {
         const courseManagementService = TestBed.inject(CourseManagementService);
         const studentExamService = TestBed.inject(StudentExamService);
 
-        const findCourseSpy = jest.spyOn(courseManagementService, 'find');
-        const findExamSpy = jest.spyOn(examManagementService, 'find');
-        const findAllStudentExamsSpy = jest.spyOn(studentExamService, 'findAllForExam');
+        const findCourseSpy = vi.spyOn(courseManagementService, 'find');
+        const findExamSpy = vi.spyOn(examManagementService, 'find');
+        const findAllStudentExamsSpy = vi.spyOn(studentExamService, 'findAllForExam');
 
         studentExamsComponentFixture.detectChanges();
 
@@ -216,10 +220,10 @@ describe('StudentExamsComponent', () => {
         expect(studentExamsComponent.course).toEqual(course);
         expect(studentExamsComponent.studentExams).toEqual(studentExams);
         expect(studentExamsComponent.exam).toEqual(exam);
-        expect(studentExamsComponent.hasStudentsWithoutExam).toBeFalse();
+        expect(studentExamsComponent.hasStudentsWithoutExam).toBe(false);
         expect(studentExamsComponent.longestWorkingTime).toEqual(studentExamOne!.workingTime);
-        expect(studentExamsComponent.isExamOver).toBeFalse();
-        expect(studentExamsComponent.isLoading).toBeFalse();
+        expect(studentExamsComponent.isExamOver).toBe(false);
+        expect(studentExamsComponent.isLoading).toBe(false);
     });
 
     it('should generate student exams if there are none', () => {
@@ -229,18 +233,18 @@ describe('StudentExamsComponent', () => {
         studentExams = [];
         studentExamsComponentFixture.detectChanges();
 
-        expect(studentExamsComponent.isLoading).toBeFalse();
-        expect(studentExamsComponent.isExamStarted).toBeFalse();
-        expect(studentExamsComponent.course.isAtLeastInstructor).toBeTrue();
+        expect(studentExamsComponent.isLoading).toBe(false);
+        expect(studentExamsComponent.isExamStarted).toBe(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).toBe(true);
         expect(course).toBeTruthy();
 
         studentExams = [studentExamOne!, studentExamTwo!];
 
-        const generateStudentExamsSpy = jest.spyOn(examManagementService, 'generateStudentExams');
+        const generateStudentExamsSpy = vi.spyOn(examManagementService, 'generateStudentExams');
         const generateStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateStudentExamsButton'));
         expect(generateStudentExamsButton).toBeTruthy();
-        expect(generateStudentExamsButton.nativeElement.disabled).toBeFalse();
-        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toBeFalse();
+        expect(generateStudentExamsButton.nativeElement.disabled).toBe(false);
+        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toBe(false);
         generateStudentExamsButton.nativeElement.click();
         expect(generateStudentExamsSpy).toHaveBeenCalledOnce();
         expect(studentExamsComponent.studentExams).toHaveLength(2);
@@ -259,16 +263,16 @@ describe('StudentExamsComponent', () => {
         exam.startDate = dayjs().add(120, 'seconds');
 
         studentExams = [];
-        jest.spyOn(examManagementService, 'generateStudentExams').mockReturnValue(throwError(() => httpError));
+        vi.spyOn(examManagementService, 'generateStudentExams').mockReturnValue(throwError(() => httpError));
 
         studentExamsComponentFixture.detectChanges();
 
-        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toBeFalse();
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
-        const translationSpy = jest.spyOn(artemisTranslationPipe, 'transform');
+        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toBe(false);
+        const alertServiceSpy = vi.spyOn(alertService, 'error');
+        const translationSpy = vi.spyOn(artemisTranslationPipe, 'transform');
         const generateStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateStudentExamsButton'));
         expect(generateStudentExamsButton).toBeTruthy();
-        expect(generateStudentExamsButton.nativeElement.disabled).toBeFalse();
+        expect(generateStudentExamsButton.nativeElement.disabled).toBe(false);
         generateStudentExamsButton.nativeElement.click();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(translationSpy).toHaveBeenCalledWith(errorDetailString);
@@ -281,20 +285,20 @@ describe('StudentExamsComponent', () => {
         studentExamsComponentFixture.detectChanges();
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{
+        const modalServiceOpenStub = vi.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{
             componentInstance,
             result,
         });
 
-        expect(studentExamsComponent.isLoading).toBeFalse();
-        expect(studentExamsComponent.isExamStarted).toBeFalse();
-        expect(studentExamsComponent.course.isAtLeastInstructor).toBeTrue();
+        expect(studentExamsComponent.isLoading).toBe(false);
+        expect(studentExamsComponent.isExamStarted).toBe(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).toBe(true);
         expect(course).toBeTruthy();
-        const generateStudentExamsSpy = jest.spyOn(examManagementService, 'generateStudentExams');
+        const generateStudentExamsSpy = vi.spyOn(examManagementService, 'generateStudentExams');
         const generateStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateStudentExamsButton'));
         expect(generateStudentExamsButton).toBeTruthy();
-        expect(generateStudentExamsButton.nativeElement.disabled).toBeFalse();
-        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toBeTrue();
+        expect(generateStudentExamsButton.nativeElement.disabled).toBe(false);
+        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toBe(true);
         generateStudentExamsButton.nativeElement.click();
         expect(modalServiceOpenStub).toHaveBeenCalledOnce();
         expect(generateStudentExamsSpy).toHaveBeenCalledOnce();
@@ -308,17 +312,17 @@ describe('StudentExamsComponent', () => {
         studentExamsComponentFixture.detectChanges();
         studentExams = [studentExamOne!, studentExamTwo!];
 
-        expect(studentExamsComponent.hasStudentsWithoutExam).toBeTrue();
-        expect(studentExamsComponent.isLoading).toBeFalse();
-        expect(studentExamsComponent.isExamStarted).toBeFalse();
-        expect(studentExamsComponent.course.isAtLeastInstructor).toBeTrue();
+        expect(studentExamsComponent.hasStudentsWithoutExam).toBe(true);
+        expect(studentExamsComponent.isLoading).toBe(false);
+        expect(studentExamsComponent.isExamStarted).toBe(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).toBe(true);
         expect(studentExamsComponent.studentExams).toHaveLength(1);
         expect(course).toBeTruthy();
-        const generateStudentExamsSpy = jest.spyOn(examManagementService, 'generateMissingStudentExams');
+        const generateStudentExamsSpy = vi.spyOn(examManagementService, 'generateMissingStudentExams');
         const generateMissingStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateMissingStudentExamsButton'));
         expect(generateMissingStudentExamsButton).toBeTruthy();
-        expect(generateMissingStudentExamsButton.nativeElement.disabled).toBeFalse();
-        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toBeTrue();
+        expect(generateMissingStudentExamsButton.nativeElement.disabled).toBe(false);
+        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toBe(true);
         generateMissingStudentExamsButton.nativeElement.click();
         expect(generateStudentExamsSpy).toHaveBeenCalledOnce();
         expect(studentExamsComponent.studentExams).toHaveLength(2);
@@ -331,15 +335,15 @@ describe('StudentExamsComponent', () => {
         course.isAtLeastInstructor = true;
         exam.startDate = dayjs().add(120, 'seconds');
 
-        jest.spyOn(examManagementService, 'generateMissingStudentExams').mockReturnValue(throwError(() => httpError));
+        vi.spyOn(examManagementService, 'generateMissingStudentExams').mockReturnValue(throwError(() => httpError));
         studentExams = [studentExamOne!];
         studentExamsComponentFixture.detectChanges();
 
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
-        expect(studentExamsComponent.hasStudentsWithoutExam).toBeTrue();
+        const alertServiceSpy = vi.spyOn(alertService, 'error');
+        expect(studentExamsComponent.hasStudentsWithoutExam).toBe(true);
         const generateMissingStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateMissingStudentExamsButton'));
         expect(generateMissingStudentExamsButton).toBeTruthy();
-        expect(generateMissingStudentExamsButton.nativeElement.disabled).toBeFalse();
+        expect(generateMissingStudentExamsButton.nativeElement.disabled).toBe(false);
         generateMissingStudentExamsButton.nativeElement.click();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
@@ -349,15 +353,15 @@ describe('StudentExamsComponent', () => {
         exam.startDate = dayjs().add(120, 'seconds');
         studentExamsComponentFixture.detectChanges();
 
-        expect(studentExamsComponent.isLoading).toBeFalse();
-        expect(studentExamsComponent.isExamStarted).toBeFalse();
-        expect(studentExamsComponent.course.isAtLeastInstructor).toBeTrue();
+        expect(studentExamsComponent.isLoading).toBe(false);
+        expect(studentExamsComponent.isExamStarted).toBe(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).toBe(true);
         expect(course).toBeTruthy();
 
-        const startExercisesSpy = jest.spyOn(examManagementService, 'startExercises');
+        const startExercisesSpy = vi.spyOn(examManagementService, 'startExercises');
         const startExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#startExercisesButton'));
         expect(startExercisesButton).toBeTruthy();
-        expect(startExercisesButton.nativeElement.disabled).toBeFalse();
+        expect(startExercisesButton.nativeElement.disabled).toBe(false);
 
         startExercisesButton.nativeElement.click();
         expect(startExercisesSpy).toHaveBeenCalledOnce();
@@ -370,13 +374,13 @@ describe('StudentExamsComponent', () => {
         course.isAtLeastInstructor = true;
         exam.startDate = dayjs().add(120, 'seconds');
 
-        jest.spyOn(examManagementService, 'startExercises').mockReturnValue(throwError(() => httpError));
+        vi.spyOn(examManagementService, 'startExercises').mockReturnValue(throwError(() => httpError));
         studentExamsComponentFixture.detectChanges();
 
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        const alertServiceSpy = vi.spyOn(alertService, 'error');
         const startExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#startExercisesButton'));
         expect(startExercisesButton).toBeTruthy();
-        expect(startExercisesButton.nativeElement.disabled).toBeFalse();
+        expect(startExercisesButton.nativeElement.disabled).toBe(false);
         startExercisesButton.nativeElement.click();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
@@ -389,11 +393,11 @@ describe('StudentExamsComponent', () => {
         { status: { finished: 90, failed: 10, overall: 1000, startedAt: referenceDateNow.subtract(100, 's') }, expected: { running: true, percentage: 10, eta: '15m0s' } },
         { status: { finished: 990, failed: 10, overall: 1000, startedAt: referenceDateNow.subtract(100, 's') }, expected: { running: false, percentage: 100, eta: undefined } },
     ])('should correctly calculate exam preparation progress', ({ status, expected }) => {
-        jest.useFakeTimers().setSystemTime(referenceDateNow.toDate());
+        vi.useFakeTimers().setSystemTime(referenceDateNow.toDate());
         studentExamsComponent.setExercisePreparationStatus(status);
         expect(studentExamsComponent.exercisePreparationRunning).toBe(expected.running);
         expect(studentExamsComponent.exercisePreparationPercentage).toBe(expected.percentage);
         expect(studentExamsComponent.exercisePreparationEta).toBe(expected.eta);
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 });

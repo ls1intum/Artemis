@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -71,10 +71,10 @@ describe('ExamNavigationSidebarComponent', () => {
         vi.restoreAllMocks();
     });
 
-    beforeEach(fakeAsync(() => {
+    beforeEach(async () => {
         fixture.detectChanges();
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
     it('should update the submissions onInit if their CommitState is UNCOMMITTED_CHANGES to isSynced false, if not in initial session', () => {
         // Given

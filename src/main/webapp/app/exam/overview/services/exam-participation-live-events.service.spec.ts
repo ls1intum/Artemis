@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { Observable, Subject, firstValueFrom } from 'rxjs';
@@ -9,7 +9,11 @@ import dayjs from 'dayjs/esm';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { provideHttpClient } from '@angular/common/http';
 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('ExamParticipationLiveEventsService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ExamParticipationLiveEventsService;
     let httpMock: HttpTestingController;
     let mockWebsocketService: MockWebsocketService;
@@ -24,8 +28,8 @@ describe('ExamParticipationLiveEventsService', () => {
         } as unknown as ExamParticipationService;
 
         mockLocalStorageService = {
-            store: jest.fn(),
-            retrieve: jest.fn(),
+            store: vi.fn(),
+            retrieve: vi.fn(),
         } as unknown as LocalStorageService;
 
         mockWebsocketService = new MockWebsocketService();
@@ -66,9 +70,9 @@ describe('ExamParticipationLiveEventsService', () => {
         [false, false],
     ])(
         'should correctly react to websocket connection state and refetch events for connected=%s, wasEverConnectedBefore=%s',
-        fakeAsync((connected: boolean, wasEverConnectedBefore: boolean) => {
+        async (connected: boolean, wasEverConnectedBefore: boolean) => {
             // @ts-ignore
-            const fetchPreviousExamEventsSpy = jest.spyOn(service, 'fetchPreviousExamEvents');
+            const fetchPreviousExamEventsSpy = vi.spyOn(service, 'fetchPreviousExamEvents');
 
             // Simulate the connection state change (e.g., network drop then recovery)
             mockWebsocketService.setConnectionState(new ConnectionState(connected, wasEverConnectedBefore));
@@ -82,7 +86,7 @@ describe('ExamParticipationLiveEventsService', () => {
             ];
 
             // The reconnection fetch happens synchronously (no setTimeout delay)
-            tick(0);
+            await new Promise((resolve) => setTimeout(resolve, 0));
 
             if (connected && wasEverConnectedBefore) {
                 // Only on a genuine reconnection should we fetch events to backfill the gap
@@ -95,19 +99,19 @@ describe('ExamParticipationLiveEventsService', () => {
                 // Initial connection, disconnection, or disconnected+wasEverConnected — no fetch
                 expect(fetchPreviousExamEventsSpy).not.toHaveBeenCalled();
             }
-        }),
+        },
     );
 
     // Verifies the two-phase initialization when a new student exam loads:
     //   Phase 1 (immediate): WebSocket subscription is set up so no real-time events are missed
     //   Phase 2 (after 2s): REST fetch backfills any events created before the subscription
     // Previously both phases were delayed by 5 seconds, creating a window for event loss.
-    it('should subscribe to websocket immediately and fetch events after delay on student exam change', fakeAsync(async () => {
+    it('should subscribe to websocket immediately and fetch events after delay on student exam change', async () => {
         // @ts-ignore
-        const unsubscribeFromExamLiveEventsSpy = jest.spyOn(service, 'unsubscribeFromExamLiveEvents');
-        const unsubscribeSpy = jest.fn();
+        const unsubscribeFromExamLiveEventsSpy = vi.spyOn(service, 'unsubscribeFromExamLiveEvents');
+        const unsubscribeSpy = vi.fn();
         const websocketStreamSubject = new Subject<any>();
-        const websocketSubscribeSpy = jest.spyOn(mockWebsocketService, 'subscribe').mockReturnValue(
+        const websocketSubscribeSpy = vi.spyOn(mockWebsocketService, 'subscribe').mockReturnValue(
             new Observable((observer) => {
                 const innerSub = websocketStreamSubject.subscribe(observer);
                 return () => {
@@ -118,13 +122,13 @@ describe('ExamParticipationLiveEventsService', () => {
         );
 
         // @ts-ignore: accessing private method for testing
-        const fetchPreviousExamEventsSpy = jest.spyOn(service, 'fetchPreviousExamEvents').mockReturnValue(undefined);
+        const fetchPreviousExamEventsSpy = vi.spyOn(service, 'fetchPreviousExamEvents').mockReturnValue(undefined);
 
         // @ts-ignore: accessing private method for testing
-        const replayEventsSpy = jest.spyOn(service, 'replayEvents');
+        const replayEventsSpy = vi.spyOn(service, 'replayEvents');
 
         // Mock localStorage to return acknowledgement data for student exam 2
-        const retrieveSpy = jest.spyOn(mockLocalStorageService, 'retrieve').mockReturnValue(
+        const retrieveSpy = vi.spyOn(mockLocalStorageService, 'retrieve').mockReturnValue(
             JSON.stringify({
                 2: {
                     lastChange: 1,
@@ -139,7 +143,7 @@ describe('ExamParticipationLiveEventsService', () => {
         );
 
         // Set up existing subscriptions that should be cleaned up when a new student exam loads
-        service['currentWebsocketReceiveSubscriptions'] = [{ unsubscribe: jest.fn() } as any, { unsubscribe: jest.fn() } as any];
+        service['currentWebsocketReceiveSubscriptions'] = [{ unsubscribe: vi.fn() } as any, { unsubscribe: vi.fn() } as any];
         service['currentWebsocketChannels'] = ['123', '456'];
 
         // Emit a new student exam — this triggers the full initialization flow
@@ -178,7 +182,7 @@ describe('ExamParticipationLiveEventsService', () => {
         expect(fetchPreviousExamEventsSpy).not.toHaveBeenCalled();
 
         // After 2 seconds, the historical fetch fires to backfill events
-        tick(2000);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         expect(fetchPreviousExamEventsSpy).toHaveBeenCalledOnce();
 
         // Simulate a WebSocket event arriving after subscription is active
@@ -199,23 +203,23 @@ describe('ExamParticipationLiveEventsService', () => {
         const systemEvents = firstValueFrom(service.observeNewEventsAsSystem());
         const allEvents = firstValueFrom(service.observeAllEvents());
 
-        tick(); // flush the microtask-deferred replayEvents() in observeNewEventsAs*
+        await Promise.resolve(); // flush the microtask-deferred replayEvents() in observeNewEventsAs*
         await expect(userEvents).resolves.toEqual(mockEvent);
         await expect(systemEvents).resolves.toEqual(mockEvent);
         await expect(allEvents).resolves.toEqual([mockEvent]);
 
         // replayEvents was called 2x: once each by observeNewEventsAsUser and observeNewEventsAsSystem
         expect(replayEventsSpy).toHaveBeenCalledTimes(2);
-    }));
+    });
 
     // Regression test: previously fetchPreviousExamEvents() overwrote the entire events array
     // with the HTTP response (this.events = fetchedEvents), which silently discarded any events
     // that had already arrived via WebSocket. This caused intermittent event loss: if an instructor
     // sent an announcement and it arrived via WebSocket before the REST fetch completed, the fetch
     // response would erase it. This test verifies that events from both sources are merged.
-    it('should merge fetched events with existing websocket events instead of overwriting', fakeAsync(() => {
+    it('should merge fetched events with existing websocket events instead of overwriting', async () => {
         const websocketStreamSubject = new Subject<any>();
-        jest.spyOn(mockWebsocketService, 'subscribe').mockReturnValue(websocketStreamSubject.asObservable());
+        vi.spyOn(mockWebsocketService, 'subscribe').mockReturnValue(websocketStreamSubject.asObservable());
 
         // Loading a new student exam triggers: immediate WS subscription + 2s delayed REST fetch
         currentlyLoadedStudentExamSubject.next({ id: 3, exam: { id: 3, course: { id: 3 } } });
@@ -235,7 +239,7 @@ describe('ExamParticipationLiveEventsService', () => {
         expect(service['events'][0].id).toBe(42);
 
         // After 2 seconds, the REST fetch fires
-        tick(2000);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         const req = httpMock.expectOne({ method: 'GET', url: `/api/exam/courses/3/exams/3/student-exams/live-events` });
 
         // The server returns the same event (42) that we already got via WebSocket,
@@ -252,20 +256,20 @@ describe('ExamParticipationLiveEventsService', () => {
         const eventIds = service['events'].map((e: any) => e.id);
         expect(eventIds).toContain(42);
         expect(eventIds).toContain(10);
-    }));
+    });
 
     // Regression test for the race condition where a WebSocket event arrives while an HTTP
     // request is in flight. The HTTP response does NOT contain the WS event (it was created
     // after the server processed the GET request). Previously, the HTTP response would overwrite
     // this.events, erasing the WS event. With the merge fix, both events are retained.
-    it('should not lose websocket events when fetch response arrives later', fakeAsync(() => {
+    it('should not lose websocket events when fetch response arrives later', async () => {
         const websocketStreamSubject = new Subject<any>();
-        jest.spyOn(mockWebsocketService, 'subscribe').mockReturnValue(websocketStreamSubject.asObservable());
+        vi.spyOn(mockWebsocketService, 'subscribe').mockReturnValue(websocketStreamSubject.asObservable());
 
         currentlyLoadedStudentExamSubject.next({ id: 4, exam: { id: 4, course: { id: 4 } } });
 
         // Advance to trigger the delayed REST fetch
-        tick(2000);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         const req = httpMock.expectOne({ method: 'GET', url: `/api/exam/courses/4/exams/4/student-exams/live-events` });
 
         // While the HTTP request is in flight (sent but response not yet received),
@@ -289,7 +293,7 @@ describe('ExamParticipationLiveEventsService', () => {
         const eventIds = service['events'].map((e: any) => e.id);
         expect(eventIds).toContain(99);
         expect(eventIds).toContain(5);
-    }));
+    });
 
     it('acknowledgeEvent should set the correct timestamp and store it', () => {
         // Mock initial status

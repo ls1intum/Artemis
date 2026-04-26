@@ -343,7 +343,8 @@ describe('ExamResultSummaryComponent', () => {
         // Switch to a different studentExam — the effect propagates the new value to studentExamGradeInfoDTO and reloads plagiarism cases with the new courseId
         const studentExam3 = { id: 3, exam: studentExam.exam, user, exercises } as StudentExam;
         fixture.componentRef.setInput('studentExam', studentExam3);
-        TestBed.tick();
+        fixture.detectChanges();
+        await Promise.resolve();
         expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam3);
         expect(component.studentExam().id).toBe(studentExam3.id);
         expect(plagiarismServiceSpy).toHaveBeenCalledOnce();

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
 import { SuspiciousExamSessions, SuspiciousSessionReason, SuspiciousSessionsAnalysisOptions } from 'app/exam/shared/entities/exam-session.model';
@@ -49,7 +49,7 @@ describe('SuspiciousSessionsService', () => {
         vi.restoreAllMocks();
     });
 
-    it('should make GET request to retrieve suspicious sessions', fakeAsync(() => {
+    it('should make GET request to retrieve suspicious sessions', async () => {
         const options = new SuspiciousSessionsAnalysisOptions(true, true, true, true, false);
         service.getSuspiciousSessions(1, 2, options).subscribe((resp) => expect(resp).toEqual(suspiciousSessions));
         const req = httpMock.expectOne({
@@ -57,10 +57,10 @@ describe('SuspiciousSessionsService', () => {
             url: 'api/exam/courses/1/exams/2/suspicious-sessions?differentStudentExamsSameIPAddress=true&differentStudentExamsSameBrowserFingerprint=true&sameStudentExamDifferentIPAddresses=true&sameStudentExamDifferentBrowserFingerprints=true&ipOutsideOfRange=false',
         });
         req.flush(suspiciousSessions);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('should make GET request to retrieve suspicious sessions with subnet', fakeAsync(() => {
+    it('should make GET request to retrieve suspicious sessions with subnet', async () => {
         const options = new SuspiciousSessionsAnalysisOptions(true, true, true, true, true, '127.0.0.1/28');
         service.getSuspiciousSessions(1, 2, options).subscribe((resp) => expect(resp).toEqual(suspiciousSessions));
         const req = httpMock.expectOne({
@@ -68,6 +68,6 @@ describe('SuspiciousSessionsService', () => {
             url: 'api/exam/courses/1/exams/2/suspicious-sessions?differentStudentExamsSameIPAddress=true&differentStudentExamsSameBrowserFingerprint=true&sameStudentExamDifferentIPAddresses=true&sameStudentExamDifferentBrowserFingerprints=true&ipOutsideOfRange=true&ipSubnet=127.0.0.1/28',
         });
         req.flush(suspiciousSessions);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 });
