@@ -903,7 +903,7 @@ paths:
         '200':
           description: OK
           content:
-            application/json:
+            text/calendar:
               schema: {type: string}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin}:
     delete:
