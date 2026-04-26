@@ -2,6 +2,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Component, Input, OnInit } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { faAngleDown, faAngleUp, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
@@ -32,6 +33,18 @@ export class FeedbackNodeComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
+
+    getCreditsBadgeClasses(feedbackItem: FeedbackItem) {
+        const credits = feedbackItem.credits ?? 0;
+        const isAthenaNonGradedSuggestion = Feedback.isNonGradedFeedbackSuggestion(feedbackItem.feedbackReference);
+
+        return {
+            badge: true,
+            'bg-success': credits > 0,
+            'bg-danger': credits < 0 || (isAthenaNonGradedSuggestion && credits === 0),
+            'bg-warning': credits === 0 && !isAthenaNonGradedSuggestion,
+        };
+    }
 
     ngOnInit(): void {
         if (isFeedbackGroup(this.feedbackItemNode)) {

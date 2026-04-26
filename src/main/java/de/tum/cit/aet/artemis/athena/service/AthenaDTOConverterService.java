@@ -2,12 +2,14 @@ package de.tum.cit.aet.artemis.athena.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 
+import java.net.URI;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
@@ -46,6 +48,9 @@ public class AthenaDTOConverterService {
     @Value("${server.url}")
     private String artemisServerUrl;
 
+    @Value("${server.port}")
+    private int artemisServerPort;
+
     private final Optional<TextRepositoryApi> textRepositoryApi;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -66,6 +71,7 @@ public class AthenaDTOConverterService {
      * @return *ExerciseDTO for Athena
      */
     public ExerciseBaseDTO ofExercise(Exercise exercise) {
+        var athenaRepositoryBaseUrl = getAthenaRepositoryBaseUrl();
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 // Fetch text exercise with grade criteria
@@ -75,7 +81,7 @@ public class AthenaDTOConverterService {
             case PROGRAMMING -> {
                 // Fetch programming exercise with grading criteria
                 var programmingExercise = programmingExerciseRepository.findByIdWithGradingCriteriaElseThrow(exercise.getId());
-                return ProgrammingExerciseDTO.of(programmingExercise, artemisServerUrl);
+                return ProgrammingExerciseDTO.of(programmingExercise, athenaRepositoryBaseUrl);
             }
             case MODELING -> {
                 // Fetch grading criteria for modeling exercise
@@ -98,11 +104,12 @@ public class AthenaDTOConverterService {
         if (submission == null) {
             return null;
         }
+        var athenaRepositoryBaseUrl = getAthenaRepositoryBaseUrl();
         if (submission instanceof TextSubmission textSubmission) {
             return TextSubmissionDTO.of(exerciseId, textSubmission);
         }
         else if (submission instanceof ProgrammingSubmission programmingSubmission) {
-            return ProgrammingSubmissionDTO.of(exerciseId, programmingSubmission, artemisServerUrl);
+            return ProgrammingSubmissionDTO.of(exerciseId, programmingSubmission, athenaRepositoryBaseUrl);
         }
         else if (submission instanceof ModelingSubmission modelingSubmission) {
             return ModelingSubmissionDTO.of(exerciseId, modelingSubmission);
@@ -135,5 +142,18 @@ public class AthenaDTOConverterService {
             }
         }
         throw new IllegalArgumentException("Feedback type not supported: " + exercise.getId());
+    }
+
+    private String getAthenaRepositoryBaseUrl() {
+        URI serverUri = URI.create(artemisServerUrl);
+        if (serverUri.getPort() != -1 || !isLoopbackHost(serverUri.getHost())) {
+            return artemisServerUrl;
+        }
+
+        return UriComponentsBuilder.fromUri(serverUri).port(artemisServerPort).build(false).toUriString();
+    }
+
+    private static boolean isLoopbackHost(String host) {
+        return host != null && ("localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host) || "::1".equals(host));
     }
 }

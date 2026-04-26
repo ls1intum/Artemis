@@ -57,6 +57,9 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     @Value("${server.url}")
     private String serverUrl;
 
+    @Value("${server.port}")
+    private int serverPort;
+
     private TextExercise textExercise;
 
     private TextSubmission textSubmission;
@@ -143,7 +146,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.submission.id").value(programmingSubmission.getId()),
                 jsonPath("$.submission.repositoryUri")
-                        .value(serverUrl + "/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/submissions/3/repository"));
+                        .value(serverUrl + ":" + serverPort + "/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/submissions/3/repository"));
         List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, true);
         assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
         assertThat(suggestions.getFirst().lineStart()).isEqualTo(3);

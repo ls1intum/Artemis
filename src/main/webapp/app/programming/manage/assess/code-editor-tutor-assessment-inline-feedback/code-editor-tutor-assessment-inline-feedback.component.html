@@ -2,10 +2,10 @@
     id="code-editor-inline-feedback-{{ codeLine }}"
     class="alert p-0 mb-0 border rounded"
     [style.max-width.%]="95"
-    [class.alert-success]="feedback.credits! > 0 && feedback.isSubsequent === undefined"
-    [class.alert-danger]="feedback.credits! < 0 && feedback.isSubsequent === undefined"
+    [class.alert-success]="(feedback.credits! > 0 && feedback.isSubsequent === undefined && !isAthenaNonGradedFeedback(feedback)) || isPositiveAthenaNonGradedFeedback(feedback)"
+    [class.alert-danger]="(feedback.credits! < 0 && feedback.isSubsequent === undefined) || isNegativeAthenaNonGradedFeedback(feedback)"
     [class.alert-warning]="!feedback.credits && feedback.isSubsequent === undefined && !Feedback.isNonGradedFeedbackSuggestion(feedback)"
-    [class.alert-info]="Feedback.isNonGradedFeedbackSuggestion(feedback)"
+    [class.alert-info]="Feedback.isNonGradedFeedbackSuggestion(feedback) && !isPositiveAthenaNonGradedFeedback(feedback) && !isNegativeAthenaNonGradedFeedback(feedback)"
     [class.alert-secondary]="readOnly && feedback.isSubsequent"
 >
     @if (Feedback.isFeedbackSuggestion(feedback) && !readOnly) {
@@ -95,12 +95,15 @@
             <div class="row flex-nowrap align-items-top m-1">
                 <div class="col flex-grow-0 ps-0">
                     <h5 class="d-inline">
-                        @if (!Feedback.isNonGradedFeedbackSuggestion(feedback)) {
+                        @if (feedback.credits !== undefined) {
                             <span
                                 class="badge"
-                                [class.bg-success]="feedback.credits! > 0 && feedback.isSubsequent === undefined"
-                                [class.bg-danger]="feedback.credits! < 0 && feedback.isSubsequent === undefined"
-                                [class.bg-warning]="feedback.credits === 0 && feedback.isSubsequent === undefined"
+                                [class.bg-success]="
+                                    (feedback.credits! > 0 && feedback.isSubsequent === undefined && !isAthenaNonGradedFeedback(feedback)) ||
+                                    isPositiveAthenaNonGradedFeedback(feedback)
+                                "
+                                [class.bg-danger]="(feedback.credits! < 0 && feedback.isSubsequent === undefined) || isNegativeAthenaNonGradedFeedback(feedback)"
+                                [class.bg-warning]="feedback.credits === 0 && feedback.isSubsequent === undefined && !isAthenaNonGradedFeedback(feedback)"
                                 [class.bg-secondary]="readOnly && feedback.isSubsequent"
                                 >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, course) + 'P' }}</span
                             >

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
@@ -57,6 +58,12 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Value("${server.url}")
+    private String serverUrl;
+
+    @Value("${server.port}")
+    private int serverPort;
 
     private AthenaSubmissionSendingService athenaSubmissionSendingService;
 
@@ -119,27 +126,36 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.verify();
     }
 
-    private void createProgrammingSubmissionForSubmissionSending() {
+    private long createProgrammingSubmissionForSubmissionSending() {
         var studentParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, programmingExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         studentParticipation.setExercise(programmingExercise);
         studentParticipationRepository.save(studentParticipation);
         var submission = ParticipationFactory.generateProgrammingSubmission(true);
         submission.setParticipation(studentParticipation);
-        submissionRepository.save(submission);
+        submission = submissionRepository.save(submission);
         athenaRequestMockProvider.verify();
+        return submission.getId();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSendSubmissionsSuccessProgramming() {
-        createProgrammingSubmissionForSubmissionSending();
+        long submissionId = createProgrammingSubmissionForSubmissionSending();
         athenaRequestMockProvider.mockSendSubmissionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.exercise.maxPoints").value(programmingExercise.getMaxPoints()),
                 jsonPath("$.exercise.bonusPoints").value(programmingExercise.getBonusPoints()),
                 jsonPath("$.exercise.gradingInstructions").value(programmingExercise.getGradingInstructions()),
                 jsonPath("$.exercise.problemStatement").value(programmingExercise.getProblemStatement()),
-                jsonPath("$.submissions[0].exerciseId").value(programmingExercise.getId()), jsonPath("$.submissions[0].repositoryUri").isString());
+                jsonPath("$.submissions[0].exerciseId").value(programmingExercise.getId()),
+                jsonPath("$.exercise.solutionRepositoryUri")
+                        .value(serverUrl + ":" + serverPort + "/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/repository/solution"),
+                jsonPath("$.exercise.templateRepositoryUri")
+                        .value(serverUrl + ":" + serverPort + "/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/repository/template"),
+                jsonPath("$.exercise.testsRepositoryUri")
+                        .value(serverUrl + ":" + serverPort + "/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/repository/tests"),
+                jsonPath("$.submissions[0].repositoryUri").value(serverUrl + ":" + serverPort + "/api/athena/internal/programming-exercises/" + programmingExercise.getId()
+                        + "/submissions/" + submissionId + "/repository"));
 
         athenaSubmissionSendingService.sendSubmissions(programmingExercise);
         athenaRequestMockProvider.verify();

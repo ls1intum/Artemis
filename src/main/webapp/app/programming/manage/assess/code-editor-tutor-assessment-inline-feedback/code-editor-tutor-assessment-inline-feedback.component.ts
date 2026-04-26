@@ -83,6 +83,18 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    protected isAthenaNonGradedFeedback(feedback: Feedback): boolean {
+        return Feedback.isNonGradedFeedbackSuggestion(feedback);
+    }
+
+    protected isPositiveAthenaNonGradedFeedback(feedback: Feedback): boolean {
+        return this.isAthenaNonGradedFeedback(feedback) && (feedback.credits ?? 0) > 0;
+    }
+
+    protected isNegativeAthenaNonGradedFeedback(feedback: Feedback): boolean {
+        return this.isAthenaNonGradedFeedback(feedback) && (feedback.credits ?? 0) === 0;
+    }
+
     /**
      * Updates the current feedback and sets props and emits the feedback to parent component
      */
