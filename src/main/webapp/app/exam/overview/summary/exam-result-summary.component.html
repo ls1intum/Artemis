@@ -10,6 +10,9 @@
             <fa-icon [icon]="faPrint" />
             <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
         </button>
+        @if (studentExam) {
+            <jhi-exam-request-ai-feedback-button [courseId]="courseId" [studentExam]="studentExam" [testExamConduction]="testExamConduction" />
+        }
     </h2>
 </div>
 @if (studentExam && !studentExam.submitted) {

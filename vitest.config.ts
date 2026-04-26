@@ -49,6 +49,7 @@ export default defineConfig({
             'src/main/webapp/app/atlas/**/*.spec.ts', // include atlas tests
             'src/main/webapp/app/iris/**/*.spec.ts', // include iris tests
             'src/main/webapp/app/exam/manage/students/**/*.spec.ts', // include exam manage students tests
+            'src/main/webapp/app/exam/overview/summary/exam-request-ai-feedback-button/**/*.spec.ts', // include exam request AI feedback button tests
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
             'src/main/webapp/app/shared/table-view/**/*.spec.ts', // include shared table view
             'src/main/webapp/app/shared/feature-toggle/**/*.spec.ts', // include feature-toggle service tests
@@ -94,6 +95,7 @@ export default defineConfig({
                 'src/main/webapp/app/atlas/**/*.ts', // include atlas for code coverage
                 'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
                 'src/main/webapp/app/exam/manage/students/**/*.ts', // include exam manage students for code coverage
+                'src/main/webapp/app/exam/overview/summary/exam-request-ai-feedback-button/**/*.ts', // include exam request AI feedback button for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
                 'src/main/webapp/app/shared/feature-toggle/**/*.ts', // include feature-toggle service for code coverage
                 'src/main/webapp/app/shared/user-import/util/**/*.ts', // include user import utils for code coverage

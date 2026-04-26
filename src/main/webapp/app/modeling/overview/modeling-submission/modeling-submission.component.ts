@@ -520,6 +520,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private handleAthenaAssessment(result: Result): void {
         if (result.completionDate) {
             this.assessmentResult = this.modelingAssessmentService.convertResult(result);
+            this.result = this.assessmentResult;
             this.prepareAssessmentData();
 
             if (result.successful) {

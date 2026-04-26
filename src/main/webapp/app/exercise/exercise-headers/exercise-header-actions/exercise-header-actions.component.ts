@@ -43,7 +43,11 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
-import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import {
+    DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT,
+    RequestFeedbackButtonComponent,
+    countSuccessfulAthenaFeedbackRequests,
+} from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -503,6 +507,10 @@ export class ExerciseHeaderActionsComponent {
 
     submitAndShowPopover() {
         this.onSubmitExercise()?.();
+        const participation = this._practiceParticipation() ?? this._gradedParticipation();
+        if (countSuccessfulAthenaFeedbackRequests(participation) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
+            return;
+        }
         this.submitPopoverRef()?.open();
     }
 

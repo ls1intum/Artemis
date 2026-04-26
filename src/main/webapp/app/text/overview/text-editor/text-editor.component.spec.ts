@@ -494,6 +494,26 @@ describe('TextEditorComponent', () => {
         expect(comp.submission.id).toBe(4);
     });
 
+    it('should hide the textarea when there is an Athena result and isExamSummary is true', () => {
+        comp.textExercise = textExercise;
+        comp.result = { id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result;
+        fixture.componentRef.setInput('isExamSummary', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        const textarea = fixture.debugElement.query(By.css('#text-editor'));
+        expect(textarea).toBeFalsy();
+    });
+
+    it('should render the textarea when there is an Athena result and isExamSummary is false', () => {
+        comp.textExercise = textExercise;
+        comp.result = { id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result;
+        fixture.componentRef.setInput('isExamSummary', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        const textarea = fixture.debugElement.query(By.css('#text-editor'));
+        expect(textarea).toBeTruthy();
+    });
+
     it('should not render the submit button when isReadOnlyWithShowResult is true', () => {
         comp.isReadOnlyWithShowResult = true;
         comp.textExercise = textExercise;
