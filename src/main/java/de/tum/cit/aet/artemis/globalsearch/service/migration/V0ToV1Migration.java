@@ -33,7 +33,7 @@ public class V0ToV1Migration implements WeaviateMigration {
      * The collection name used in schema v0 (the {@code develop} branch before the
      * unified-search PR).
      */
-    static final String LEGACY_EXERCISES_COLLECTION = "Exercises";
+    public static final String LEGACY_EXERCISES_COLLECTION = "Exercises";
 
     private static final int PAGE_SIZE = 100;
 
