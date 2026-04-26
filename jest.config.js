@@ -167,6 +167,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module uses Vitest
         '<rootDir>/src/main/webapp/app/atlas/', // atlas module uses Vitest
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // buttons module uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/components/unified-feedback/', // unified-feedback component uses Vitest
         '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/overview/summary/exam-request-ai-feedback-button/', // exam request AI feedback button uses Vitest
         '<rootDir>/src/main/webapp/app/exam/manage/student-exams/', // exam manage student-exams module uses Vitest
