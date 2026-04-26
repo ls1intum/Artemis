@@ -15,7 +15,17 @@
                     [isEditable]="currentUser !== undefined && authorOfPosting.id === currentUser.id"
                 />
                 <span class="fs-small d-inline-flex flex-column align-items-start">
-                    <span class="fw-semibold" [ngClass]="{ clickable: !isAuthorOfPosting && posting()?.authorRole }" (click)="userNameClicked()">{{ authorOfPosting.name }}</span>
+                    <span class="d-inline-flex align-items-center gap-2">
+                        <span class="fw-semibold" [ngClass]="{ clickable: !isAuthorOfPosting && posting()?.authorRole }" (click)="userNameClicked()">{{
+                            authorOfPosting.name
+                        }}</span>
+                        @if (isUnverifiedIris()) {
+                            <span class="badge bg-warning text-dark d-inline-flex align-items-center gap-1">
+                                <fa-icon [icon]="faTriangleExclamation" />
+                                <span jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.badge"></span>
+                            </span>
+                        }
+                    </span>
                     <span class="fs-x-small mt-1 text-body-secondary d-inline-flex align-items-center gap-2 flex-wrap">
                         <span class="d-inline-flex align-items-center">
                             <span class="me-1 fs-x-small" [ngClass]="'post-authority-icon-' + userAuthority" id="role-badge">
@@ -23,12 +33,6 @@
                             </span>
                             <span ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}" [jhiTranslate]="userRoleBadge"></span>
                         </span>
-                        @if (isUnverifiedIris()) {
-                            <span class="badge bg-warning text-dark d-inline-flex align-items-center gap-1">
-                                <fa-icon [icon]="faTriangleExclamation" />
-                                <span jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.badge"></span>
-                            </span>
-                        }
                     </span>
                 </span>
             </span>

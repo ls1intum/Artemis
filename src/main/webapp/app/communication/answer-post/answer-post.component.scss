@@ -54,6 +54,84 @@
 
 .answer-post {
     border-radius: 7px;
+
+    &.unverified-iris {
+        background-color: rgba(var(--bs-warning-rgb), 0.08);
+        border-left: 3px solid var(--bs-warning);
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+
+        &:hover {
+            background-color: rgba(var(--bs-warning-rgb), 0.14);
+        }
+    }
+}
+
+.iris-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.65rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.15rem;
+    background: #fff;
+
+    :root[prime-ng-use-dark-theme='true'] & {
+        background: var(--bs-body-bg);
+    }
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+    &--approve {
+        --iris-accent: var(--bs-success);
+
+        color: var(--iris-accent);
+        border-color: var(--iris-accent);
+
+        &:not(:disabled):hover {
+            background: var(--iris-accent);
+            color: var(--bs-white);
+        }
+    }
+
+    &--edit {
+        --iris-accent: var(--bs-primary);
+
+        color: var(--iris-accent);
+        border-color: var(--iris-accent);
+
+        &:not(:disabled):hover {
+            background: var(--iris-accent);
+            color: var(--bs-white);
+        }
+    }
+
+    &--reject {
+        --iris-accent: var(--bs-danger);
+
+        color: var(--iris-accent);
+        border-color: var(--iris-accent);
+
+        &:not(:disabled):hover {
+            background: var(--iris-accent);
+            color: var(--bs-white);
+        }
+    }
+
+    &--cancel {
+        color: var(--bs-secondary-color);
+
+        &:not(:disabled):hover {
+            background: var(--bs-secondary-bg);
+        }
+    }
 }
 
 @include media-breakpoint-down(sm) {

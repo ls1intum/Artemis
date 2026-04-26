@@ -1,7 +1,12 @@
 <div
     [id]="'item-' + posting()?.id"
     class="answer-post hover-container"
-    [ngClass]="{ 'module-bg rounded-2': isCommunicationPage(), 'is-saved': !isConsecutive() && posting()?.isSaved, 'non-consecutive': !isConsecutive() }"
+    [ngClass]="{
+        'module-bg rounded-2': isCommunicationPage(),
+        'is-saved': !isConsecutive() && posting()?.isSaved,
+        'non-consecutive': !isConsecutive(),
+        'unverified-iris': isUnverifiedIris,
+    }"
 >
     @if (posting()?.isSaved) {
         <div class="post-is-saved-message post-content-padding fs-xx-small py-1" [ngClass]="{ 'is-saved': isConsecutive() && posting()?.isSaved }">
@@ -38,18 +43,17 @@
                         <div class="d-flex gap-2">
                             <button
                                 type="button"
-                                class="btn btn-sm btn-success"
+                                class="iris-action-btn iris-action-btn--approve"
                                 (click)="approveAnswer(editedIrisContent)"
                                 [disabled]="isVerifying || !editedIrisContent.trim()"
-                                jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.saveAndApprove"
-                            ></button>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-outline-secondary"
-                                (click)="cancelEditAnswer()"
-                                [disabled]="isVerifying"
-                                jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.cancelEdit"
-                            ></button>
+                            >
+                                <fa-icon [icon]="faCheck" />
+                                <span jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.saveAndApprove"></span>
+                            </button>
+                            <button type="button" class="iris-action-btn iris-action-btn--cancel" (click)="cancelEditAnswer()" [disabled]="isVerifying">
+                                <fa-icon [icon]="faXmark" />
+                                <span jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.cancelEdit"></span>
+                            </button>
                         </div>
                     </div>
                 } @else {
@@ -67,27 +71,18 @@
                     />
                     @if (isUnverifiedIris && mayVerify) {
                         <div class="iris-verify-actions mt-1 d-flex gap-2">
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-success"
-                                (click)="approveAnswer()"
-                                [disabled]="isVerifying"
-                                jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.approve"
-                            ></button>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-outline-primary"
-                                (click)="editAnswer()"
-                                [disabled]="isVerifying"
-                                jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.edit"
-                            ></button>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-outline-danger"
-                                (click)="rejectAnswer()"
-                                [disabled]="isVerifying"
-                                jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.reject"
-                            ></button>
+                            <button type="button" class="iris-action-btn iris-action-btn--approve" (click)="approveAnswer()" [disabled]="isVerifying">
+                                <fa-icon [icon]="faCheck" />
+                                <span jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.approve"></span>
+                            </button>
+                            <button type="button" class="iris-action-btn iris-action-btn--edit" (click)="editAnswer()" [disabled]="isVerifying">
+                                <fa-icon [icon]="faPencilAlt" />
+                                <span jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.edit"></span>
+                            </button>
+                            <button type="button" class="iris-action-btn iris-action-btn--reject" (click)="rejectAnswer()" [disabled]="isVerifying">
+                                <fa-icon [icon]="faTrash" />
+                                <span jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.reject"></span>
+                            </button>
                         </div>
                     }
                 }

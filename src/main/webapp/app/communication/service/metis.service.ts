@@ -409,6 +409,7 @@ export class MetisService implements OnDestroy {
      */
     deleteAnswerPost(answerPost: AnswerPost): Observable<void> {
         return this.answerPostService.delete(this.courseId, answerPost).pipe(
+            map(() => undefined),
             tap(() => {
                 const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === answerPost.post?.id);
                 if (indexOfCachedPost > -1) {
