@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.exercise.repository;
 
+import java.util.Collection;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,4 +34,22 @@ public interface ExerciseAthenaConfigRepository extends ArtemisJpaRepository<Exe
     @Modifying
     @Transactional // ok because of delete
     void deleteByExerciseId(Long exerciseId);
+
+    /**
+     * Revokes access to restricted Athena modules by nulling out the preliminary and graded
+     * feedback module fields for all exercises in the given course that reference a restricted module.
+     *
+     * @param courseId         the ID of the course
+     * @param restrictedModules the list of restricted module names
+     */
+    @Modifying
+    @Transactional // ok because of bulk update
+    @Query("""
+            UPDATE ExerciseAthenaConfig c
+            SET c.preliminaryFeedbackModule = CASE WHEN c.preliminaryFeedbackModule IN :restrictedModules THEN NULL ELSE c.preliminaryFeedbackModule END,
+                c.gradedFeedbackModule = CASE WHEN c.gradedFeedbackModule IN :restrictedModules THEN NULL ELSE c.gradedFeedbackModule END
+            WHERE c.exercise.id IN (SELECT e.id FROM Exercise e WHERE e.course.id = :courseId)
+                  AND (c.preliminaryFeedbackModule IN :restrictedModules OR c.gradedFeedbackModule IN :restrictedModules)
+            """)
+    void revokeRestrictedModulesByCourseId(@Param("courseId") Long courseId, @Param("restrictedModules") Collection<String> restrictedModules);
 }

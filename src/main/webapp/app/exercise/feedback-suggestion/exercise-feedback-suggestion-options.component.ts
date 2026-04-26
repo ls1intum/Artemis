@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@ang
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseAthenaConfig, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
@@ -34,6 +34,8 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     modulesAvailable: boolean;
     availableAthenaModules: string[];
     initialAthenaModule?: string;
+    initialPreliminaryModule?: string;
+    initialGradedModule?: string;
 
     ngOnInit(): void {
         const courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
@@ -43,13 +45,43 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
         });
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
         this.initialAthenaModule = this.exercise.feedbackSuggestionModule;
+        this.initialPreliminaryModule = this.exercise.athenaConfig?.preliminaryFeedbackModule;
+        this.initialGradedModule = this.exercise.athenaConfig?.gradedFeedbackModule;
     }
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.dueDate && !changes.dueDate.isFirstChange()) {
             if (this.inputControlsDisabled()) {
                 this.exercise.feedbackSuggestionModule = this.initialAthenaModule;
+                if (this.exercise.athenaConfig) {
+                    this.exercise.athenaConfig.preliminaryFeedbackModule = this.initialPreliminaryModule;
+                    this.exercise.athenaConfig.gradedFeedbackModule = this.initialGradedModule;
+                }
             }
+        }
+    }
+
+    get preliminaryFeedbackModule(): string | undefined {
+        return this.exercise.athenaConfig?.preliminaryFeedbackModule;
+    }
+
+    set preliminaryFeedbackModule(value: string | undefined) {
+        this.ensureAthenaConfig();
+        this.exercise.athenaConfig!.preliminaryFeedbackModule = value;
+    }
+
+    get gradedFeedbackModule(): string | undefined {
+        return this.exercise.athenaConfig?.gradedFeedbackModule;
+    }
+
+    set gradedFeedbackModule(value: string | undefined) {
+        this.ensureAthenaConfig();
+        this.exercise.athenaConfig!.gradedFeedbackModule = value;
+    }
+
+    private ensureAthenaConfig(): void {
+        if (!this.exercise.athenaConfig) {
+            this.exercise.athenaConfig = {} as ExerciseAthenaConfig;
         }
     }
 

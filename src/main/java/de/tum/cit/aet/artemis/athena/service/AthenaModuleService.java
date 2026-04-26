@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
 /**
@@ -54,11 +55,14 @@ public class AthenaModuleService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final ExerciseAthenaConfigRepository exerciseAthenaConfigRepository;
+
     public AthenaModuleService(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper objectMapper,
-            ExerciseRepository exerciseRepository) {
+            ExerciseRepository exerciseRepository, ExerciseAthenaConfigRepository exerciseAthenaConfigRepository) {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.objectMapper = objectMapper;
         this.exerciseRepository = exerciseRepository;
+        this.exerciseAthenaConfigRepository = exerciseAthenaConfigRepository;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -220,5 +224,8 @@ public class AthenaModuleService {
      */
     public void revokeAccessToRestrictedFeedbackModules(Course course) {
         exerciseRepository.revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(course.getId(), restrictedModules);
+        if (!restrictedModules.isEmpty()) {
+            exerciseAthenaConfigRepository.revokeRestrictedModulesByCourseId(course.getId(), restrictedModules);
+        }
     }
 }

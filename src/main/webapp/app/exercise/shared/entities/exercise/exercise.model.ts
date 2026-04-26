@@ -1,4 +1,12 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
+
+export interface ExerciseAthenaConfig {
+    id?: number;
+    exerciseId?: number;
+    preliminaryFeedbackModule?: string;
+    gradedFeedbackModule?: string;
+}
+
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -129,6 +137,7 @@ export abstract class Exercise implements BaseEntity {
     // helper attributes
     public secondCorrectionEnabled = false;
     public feedbackSuggestionModule?: string;
+    public athenaConfig?: ExerciseAthenaConfig;
     public isAtLeastTutor?: boolean;
     public isAtLeastEditor?: boolean;
     public isAtLeastInstructor?: boolean;
