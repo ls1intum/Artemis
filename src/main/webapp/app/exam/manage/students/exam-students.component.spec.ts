@@ -3,24 +3,19 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { User } from 'app/core/user/user.model';
-import { UserService } from 'app/core/user/shared/user.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
-import { StudentsUploadImagesButtonComponent } from 'app/exam/manage/students/upload-images/students-upload-images-button.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -28,6 +23,15 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { MockProvider } from 'ng-mocks';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
+import { throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 // Stub component for UsersImportButtonComponent to avoid signal viewChild issues with ng-mocks
 @Component({
@@ -66,23 +70,32 @@ describe('ExamStudentsComponent', () => {
     const route = {
         snapshot: { paramMap: convertToParamMap({ courseId: course.id }) },
         url: new Observable<UrlSegment[]>(),
-        data: { subscribe: (fn: (value: any) => void) => fn({ exam: examWithCourse }) },
+        data: of({ exam: examWithCourse }),
     } as any as ActivatedRoute;
+
+    const studentExams: StudentExam[] = [
+        Object.assign(new StudentExam(), {
+            id: 123,
+            user: user1,
+            workingTime: 3600,
+            started: true,
+            submitted: false,
+            examSessions: [{}, {}],
+        }),
+    ];
 
     let component: ExamStudentsComponent;
     let fixture: ComponentFixture<ExamStudentsComponent>;
     let examManagementService: ExamManagementService;
-    let userService: UserService;
+    let router: Router;
+    let alertService: AlertService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
-                NgxDatatableModule,
                 FaIconComponent,
                 UsersImportButtonStubComponent,
                 ExamStudentsComponent,
-                MockComponent(StudentsUploadImagesButtonComponent),
-                MockComponent(DataTableComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
@@ -93,6 +106,25 @@ describe('ExamStudentsComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: DeleteDialogService, useClass: MockDialogService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                MockProvider(StudentExamService, {
+                    findAllForExam: () => of(new HttpResponse({ body: studentExams })),
+                }),
+                MockProvider(ExamChecklistService, {
+                    getExamStatistics: (_exam: Exam) =>
+                        of({
+                            numberOfExamsSubmitted: 0,
+                            numberOfExamsStarted: 0,
+                            numberOfTotalParticipationsForAssessment: 0,
+                            existsUnassessedQuizzes: false,
+                            existsUnsubmittedExercises: false,
+                            allExamExercisesAllStudentsPrepared: false,
+                        }),
+                }),
+                MockProvider(AlertService, {
+                    success: vi.fn(),
+                    error: vi.fn(),
+                }),
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
@@ -100,67 +132,27 @@ describe('ExamStudentsComponent', () => {
         fixture = TestBed.createComponent(ExamStudentsComponent);
         component = fixture.componentInstance;
         examManagementService = TestBed.inject(ExamManagementService);
-        userService = TestBed.inject(UserService);
+        vi.spyOn(examManagementService, 'getExerciseStartStatus').mockReturnValue(of(new HttpResponse({ body: {} })));
+
+        router = TestBed.inject(Router);
+        alertService = TestBed.inject(AlertService);
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        fixture.destroy();
+        fixture?.destroy();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
-        expect(component.courseId).toEqual(course.id);
-        expect(component.exam).toEqual(examWithCourse);
-        expect(component.isLoading).toBe(false);
-    });
-
-    it('should handle auto-complete for user without login', () => {
-        const callbackSpy = vi.fn();
-        fixture.detectChanges();
-
-        component.onAutocompleteSelect(user1, callbackSpy);
-        fixture.changeDetectorRef.detectChanges();
-
-        expect(callbackSpy).toHaveBeenCalledWith(user1);
-    });
-
-    it('should handle auto-complete for unregistered user', () => {
-        const user3 = { id: 3, login: 'user3' } as User;
-        const student3 = { login: 'user3', firstName: 'student2', lastName: 'student2', registrationNumber: '1234567' } as ExamUserDTO;
-        const callbackSpy = vi.fn();
-        const flashSpy = vi.spyOn(component, 'flashRowClass');
-        const reloadSpy = vi.spyOn(component, 'reloadExamWithRegisteredUsers');
-        const examServiceStub = vi.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(of(new HttpResponse({ body: student3 })));
-        fixture.detectChanges();
-
-        component.onAutocompleteSelect(user3, callbackSpy);
-        fixture.changeDetectorRef.detectChanges();
-
-        expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, user3.login);
-        expect(examServiceStub).toHaveBeenCalledOnce();
-        expect(reloadSpy).toHaveBeenCalledOnce();
-        expect(callbackSpy).not.toHaveBeenCalled();
-        expect(flashSpy).toHaveBeenCalledOnce();
-        expect(component.isTransitioning).toBe(false);
-    });
-
-    it('should search for users', () => {
-        const userServiceStub = vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user2] })));
-        fixture.detectChanges();
-
-        const search = component.searchAllUsers(of({ text: user2.login!, entities: [user2] }));
-        fixture.changeDetectorRef.detectChanges();
-
-        // Check if the observable output matches our expectancies
-        search.subscribe((a) => {
-            expect(a).toEqual([{ id: user2.id, login: user2.login }]);
-            expect(component.searchNoResults).toBe(false);
-            expect(component.searchFailed).toBe(false);
-        });
-
-        expect(userServiceStub).toHaveBeenCalledOnce();
+        expect(component.courseId()).toEqual(course.id);
+        expect(component.exam()).toEqual(examWithCourse);
+        expect(component.allRegisteredUsers()[0].studentExamId).toBe(123);
+        expect(component.allRegisteredUsers()[0].numberOfExamSessions).toBe(2);
+        expect(component.allRegisteredUsers()[0].progress.status).toBe('started');
+        expect(component.allRegisteredUsers()[1].studentExamId).toBeUndefined();
+        expect(component.allRegisteredUsers()[1].progress.status).toBe('examMissing');
     });
 
     it('should reload with only registered users', () => {
@@ -177,19 +169,28 @@ describe('ExamStudentsComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
-        expect(component.exam).toEqual(examWithOneUser);
-        expect(component.allRegisteredUsers).toEqual([
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ]);
+        expect(component.exam()).toEqual(examWithOneUser);
+        expect(component.allRegisteredUsers()).toHaveLength(1);
+        expect(component.allRegisteredUsers()[0].user?.id).toBe(user2.id);
+        expect(component.allRegisteredUsers()[0].studentExamId).toBeUndefined();
+        expect(component.allRegisteredUsers()[0].progress.status).toBe('examMissing');
     });
 
     it('should remove users from the exam', () => {
         const examServiceStub = vi.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
-        component.allRegisteredUsers = [
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ] as ExamUser[];
+        component.exam.set({
+            ...examWithCourse,
+            examUsers: [
+                { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
+                { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
+            ],
+        } as Exam);
+        const examAfterRemoval = {
+            ...examWithCourse,
+            examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 } as ExamUser],
+        } as Exam;
+        vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examAfterRemoval })));
 
         component.removeFromExam(
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
@@ -198,9 +199,8 @@ describe('ExamStudentsComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, user2.login, false);
-        expect(component.allRegisteredUsers).toEqual([
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
-        ]);
+        expect(component.allRegisteredUsers()).toHaveLength(1);
+        expect(component.allRegisteredUsers()[0].user?.id).toBe(user1.id);
     });
 
     it('should register all enrolled students of the course to the exam', () => {
@@ -213,58 +213,94 @@ describe('ExamStudentsComponent', () => {
         const examServiceStub = vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();
 
-        component.exam = examWithCourse;
+        component.exam.set(examWithCourse);
         component.registerAllStudentsFromCourse();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(examServiceStubAddAll).toHaveBeenCalledWith(course.id, examWithCourse.id);
-        expect(component.allRegisteredUsers).toEqual([
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ]);
+        expect(component.allRegisteredUsers()).toHaveLength(1);
+        expect(component.allRegisteredUsers()[0].user?.id).toBe(user2.id);
     });
 
     it('should remove all users from the exam', () => {
         const examServiceStub = vi.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
-        component.allRegisteredUsers = [
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ] as ExamUser[];
+        component.exam.set({
+            ...examWithCourse,
+            examUsers: [
+                { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
+                { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
+            ],
+        } as Exam);
+        const examAfterRemoval = { ...examWithCourse, examUsers: [] } as Exam;
+        vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examAfterRemoval })));
 
         component.removeAllStudents({ deleteParticipationsAndSubmission: false });
         fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, false);
-        expect(component.allRegisteredUsers).toEqual([]);
+        expect(component.allRegisteredUsers()).toEqual([]);
     });
 
-    it('should remove all users from the exam with participaations', () => {
-        const examServiceStub = vi.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
+    it('should navigate to attendance verification when exam started and id exists', () => {
         fixture.detectChanges();
-        component.allRegisteredUsers = [
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ] as ExamUser[];
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        component.hasExamStarted.set(true);
+        component.exam.set({ ...examWithCourse, id: 42 } as Exam);
 
-        component.removeAllStudents({ deleteParticipationsAndSubmission: true });
-        fixture.changeDetectorRef.detectChanges();
+        component.openVerifyAttendance();
 
-        expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
-        expect(component.allRegisteredUsers).toEqual([]);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'exams', 42, 'students', 'verify-attendance']);
     });
 
-    it('should format search result', () => {
-        const resultString = component.searchResultFormatter(user1);
-        expect(resultString).toBe('name (login)');
+    it('should not navigate to attendance verification when exam has not started', () => {
+        fixture.detectChanges();
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        component.hasExamStarted.set(false);
+        component.exam.set({ ...examWithCourse, id: 42 } as Exam);
+
+        component.openVerifyAttendance();
+
+        expect(navigateSpy).not.toHaveBeenCalled();
     });
 
-    it('should format search text from user', () => {
-        const resultString = component.searchTextFromUser(user1);
-        expect(resultString).toBe('login');
+    it('should generate missing student exams and reload exam data', () => {
+        fixture.detectChanges();
+        const generateSpy = vi.spyOn(examManagementService, 'generateMissingStudentExams').mockReturnValue(of(new HttpResponse({ body: [{} as StudentExam] })));
+        const reloadSpy = vi.spyOn(component, 'reloadExamWithRegisteredUsers').mockImplementation(() => {});
+        const successSpy = vi.spyOn(alertService, 'success');
+        component.exam.set({ ...examWithCourse, id: 2 } as Exam);
+
+        component.generateMissingStudentExams();
+
+        expect(generateSpy).toHaveBeenCalledWith(course.id, 2);
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.studentExams.missingStudentExamGenerationSuccess', { number: 1 });
+        expect(reloadSpy).toHaveBeenCalled();
     });
 
-    it('should test on error', () => {
-        component.onError('ErrorString');
-        expect(component.isTransitioning).toBe(false);
+    it('should handle errors when generating missing student exams', () => {
+        fixture.detectChanges();
+        vi.spyOn(examManagementService, 'generateMissingStudentExams').mockReturnValue(
+            throwError(() => new HttpErrorResponse({ error: { message: 'generation failed' }, status: 500 })),
+        );
+        const errorSpy = vi.spyOn(alertService, 'error');
+        component.exam.set({ ...examWithCourse, id: 2 } as Exam);
+
+        component.generateMissingStudentExams();
+
+        expect(component.isLoading()).toBe(false);
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.studentExams.missingStudentExamGenerationError', { message: 'generation failed' });
+    });
+
+    it('should set loading back to false when starting exercises fails', () => {
+        fixture.detectChanges();
+        vi.spyOn(examManagementService, 'startExercises').mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'start failed' }, status: 500 })));
+        const errorSpy = vi.spyOn(alertService, 'error');
+        component.exam.set({ ...examWithCourse, id: 2 } as Exam);
+
+        component.startExercises();
+
+        expect(component.isLoading()).toBe(false);
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.studentExams.startExerciseFailure', { message: 'start failed' });
     });
 });

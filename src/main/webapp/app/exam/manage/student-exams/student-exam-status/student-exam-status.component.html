@@ -1,20 +1,16 @@
-<h5 class="d-flex mt-0 mb-0">
+<p-tag
+    class="d-flex gap-2 align-items-center"
+    [severity]="isTestExam() ? 'info' : hasStudentsWithoutExam() ? 'warn' : 'success'"
+    [title]="!isTestExam() && hasStudentsWithoutExam() ? ('artemisApp.studentExams.studentExamStatusWarningTooltip' | artemisTranslate) : ''"
+>
     @if (isTestExam()) {
-        <div class="d-flex badge bg-info">
-            <fa-icon class="me-1 text-white" [icon]="faInfoCircle" />
-            <span class="ms-1" jhiTranslate="artemisApp.studentExams.studentExamStatusTestExam"></span>
-        </div>
+        <i class="pi pi-info-circle"></i>
+        <span jhiTranslate="artemisApp.studentExams.studentExamStatusTestExam"></span>
+    } @else if (hasStudentsWithoutExam()) {
+        <i class="pi pi-exclamation-triangle"></i>
+        <span jhiTranslate="artemisApp.studentExams.studentExamStatusWarning"></span>
     } @else {
-        @if (hasStudentsWithoutExam()) {
-            <div class="d-flex badge bg-warning">
-                <fa-icon class="me-1 text-white" [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.studentExams.studentExamStatusWarningTooltip' | artemisTranslate" />
-                <span class="ms-1" jhiTranslate="artemisApp.studentExams.studentExamStatusWarning"></span>
-            </div>
-        } @else {
-            <div class="d-flex badge bg-success">
-                <fa-icon class="me-1 text-white" [icon]="faCheckCircle" />
-                <span class="ms-1" jhiTranslate="artemisApp.studentExams.studentExamStatusSuccess"></span>
-            </div>
-        }
+        <i class="pi pi-check"></i>
+        <span jhiTranslate="artemisApp.studentExams.studentExamStatusSuccess"></span>
     }
-</h5>
+</p-tag>

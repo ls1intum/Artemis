@@ -18,15 +18,9 @@
                             <fa-icon [icon]="faListAlt" />
                             <span jhiTranslate="artemisApp.examManagement.exerciseGroups"></span>
                         </a>
-                        @if (!exam.testExam) {
-                            <a id="students-button" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info mt-1">
-                                <fa-icon [icon]="faUser" />
-                                <span jhiTranslate="artemisApp.examManagement.students"></span>
-                            </a>
-                        }
-                        <a id="studentExamsButton" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-info mt-1">
-                            <fa-icon [icon]="faEye" />
-                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
+                        <a id="students-button" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info mt-1">
+                            <fa-icon [icon]="faUser" />
+                            <span jhiTranslate="artemisApp.examManagement.students"></span>
                         </a>
                         <a id="testrun-button" [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info mt-1">
                             <fa-icon [icon]="faFlaskVial" />

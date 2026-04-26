@@ -1,0 +1,117 @@
+<p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [closable]="true"
+    [dismissableMask]="true"
+    (onHide)="closeDialog()"
+    [style]="{ width: '50rem', maxWidth: '95vw', height: '45rem', maxHeight: '95vh' }"
+    [draggable]="false"
+    appendTo="body"
+    contentStyleClass="py-0"
+>
+    <ng-template pTemplate="header">
+        <h4 class="m-0" jhiTranslate="artemisApp.examManagement.examStudents.addDialog.title"></h4>
+    </ng-template>
+
+    <div class="d-flex flex-column gap-3 h-100">
+        <p class="m-0 text-body-secondary" jhiTranslate="artemisApp.examManagement.examStudents.addDialog.description"></p>
+
+        <p-iconfield>
+            <p-inputicon class="pi pi-search" />
+            <input
+                pInputText
+                class="w-100"
+                type="text"
+                [placeholder]="'artemisApp.examManagement.examStudents.addDialog.searchPlaceholder' | artemisTranslate"
+                [ngModel]="searchText()"
+                (ngModelChange)="searchText.set($event)"
+            />
+        </p-iconfield>
+
+        <div class="d-flex flex-column flex-grow-1" style="min-height: 12rem">
+            @if (isLoading()) {
+                <div class="d-flex align-items-center justify-content-center p-4 text-body-secondary">
+                    <i class="pi pi-spin pi-spinner me-2"></i>
+                    <span jhiTranslate="artemisApp.examManagement.examStudents.addDialog.loadingStudents"></span>
+                </div>
+            } @else if (noSearchResults()) {
+                <div
+                    class="d-flex align-items-center justify-content-center p-4 text-body-secondary"
+                    jhiTranslate="artemisApp.examManagement.examStudents.addDialog.noUnregisteredStudents"
+                ></div>
+            } @else {
+                <p-table
+                    [value]="userSearchResults()"
+                    [scrollable]="true"
+                    scrollHeight="flex"
+                    [paginator]="true"
+                    [rows]="10"
+                    size="small"
+                    [currentPageReportTemplate]="'artemisApp.examManagement.examStudents.table.currentPageReport' | artemisTranslate"
+                    showCurrentPageReport
+                    class="border border-1 rounded-4 overflow-hidden flex-grow-1 h-100"
+                    style="height: 100%; min-height: 0"
+                >
+                    <ng-template #header>
+                        <tr>
+                            <th style="min-width: 12rem">
+                                <span jhiTranslate="artemisApp.examManagement.examStudents.table.studentDetails"></span>
+                            </th>
+                            <th style="min-width: 8rem">
+                                <span jhiTranslate="artemisApp.examManagement.examStudents.table.matriculationNumber"></span>
+                            </th>
+                            <th pFrozenColumn alignFrozen="right" style="min-width: 7rem">
+                                <span jhiTranslate="artemisApp.examManagement.examStudents.table.actions"></span>
+                            </th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-student>
+                        <tr>
+                            <td style="min-width: 12rem">
+                                <div class="d-flex flex-column gap-1">
+                                    <div class="d-flex align-items-center gap-1">
+                                        <i class="pi pi-id-card text-body-secondary"></i>
+                                        <span class="fw-semibold text-truncate">{{ student.name || '-' }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <i class="pi pi-user text-body-secondary"></i>
+                                        <span class="text-body-secondary text-truncate">{{ student.login || '-' }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="min-width: 8rem">
+                                <span>{{ student.visibleRegistrationNumber || '-' }}</span>
+                            </td>
+                            <td alignFrozen="right" pFrozenColumn style="min-width: 7rem">
+                                <button
+                                    pButton
+                                    type="button"
+                                    class="p-button-sm align-items-center justify-content-center"
+                                    [disabled]="isRegistering(student) || isAlreadyRegistered(student)"
+                                    (click)="registerStudent(student)"
+                                >
+                                    @if (isRegistering(student)) {
+                                        <i class="pi pi-spin pi-spinner"></i>
+                                        <span jhiTranslate="artemisApp.examManagement.examStudents.addDialog.registering"></span>
+                                    } @else if (isAlreadyRegistered(student)) {
+                                        <i class="pi pi-check-circle"></i>
+                                        <span jhiTranslate="artemisApp.examManagement.examStudents.addDialog.registered"></span>
+                                    } @else {
+                                        <i class="pi pi-plus"></i>
+                                        <span jhiTranslate="artemisApp.examManagement.examStudents.addDialog.register"></span>
+                                    }
+                                </button>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            }
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="pt-3">
+            <button pButton type="button" class="p-button-secondary" (click)="closeDialog()" jhiTranslate="artemisApp.examManagement.examStudents.addDialog.close"></button>
+        </div>
+    </ng-template>
+</p-dialog>
