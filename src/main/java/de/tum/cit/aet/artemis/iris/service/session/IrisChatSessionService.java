@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.iris.service.session;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -385,7 +384,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     /**
      * Updates the context (chatMode + entityId) of an existing Iris chat session in place.
      * <p>
-     * Persists a {@link IrisMessageSender#SYSTEM SYSTEM} marker message into the chat history
+     * Persists a {@link IrisMessageSender#CTXSWAP CTXSWAP} marker message into the chat history
      * so the LLM can interpret previous messages against the old context and focus subsequent
      * replies on the new context. The session is <b>not</b> recreated; its id and websocket
      * subscription remain valid.
@@ -449,13 +448,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         session.setEntityId(newEntityId);
         irisChatSessionRepository.save(session);
 
-        String langKey = user.getLangKey();
-        Locale locale = langKey == null || langKey.isBlank() ? Locale.ENGLISH : Locale.forLanguageTag(langKey);
-        Object[] args = { newEntityName };
-        String markerContent = messageSource.getMessage("iris.chat.session.contextSwitch.marker", args, "Context changed to " + newEntityName, locale);
         IrisMessage markerMessage = new IrisMessage();
-        markerMessage.addContent(new IrisTextMessageContent(markerContent));
-        irisMessageService.saveMessage(markerMessage, session, IrisMessageSender.SYSTEM);
+        markerMessage.addContent(new IrisTextMessageContent(newEntityName));
+        irisMessageService.saveMessage(markerMessage, session, IrisMessageSender.CTXSWAP);
 
         // Re-fetch with messages to return the up-to-date history (including the marker)
         return (IrisChatSession) irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);

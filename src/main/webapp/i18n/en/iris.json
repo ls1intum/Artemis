@@ -182,7 +182,8 @@
                 "placeholder": "Select context...",
                 "courseGroup": "Course",
                 "lecturesGroup": "Lectures",
-                "exercisesGroup": "Exercises"
+                "exercisesGroup": "Exercises",
+                "divider": "Context changed to"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",

@@ -178,7 +178,8 @@
                 "placeholder": "Kontext auswählen...",
                 "courseGroup": "Kurs",
                 "lecturesGroup": "Vorlesungen",
-                "exercisesGroup": "Aufgaben"
+                "exercisesGroup": "Aufgaben",
+                "divider": "Kontext gewechselt zu"
             },
             "citation": {
                 "unitLabel": "Einheit:",
