@@ -28,9 +28,11 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.dto.AnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.ParentPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
@@ -690,6 +692,38 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
                     .anyMatch(notification -> notification.getType() == 3);
 
             assertThat(hasMentionNotification).isTrue();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void shouldSendMentionNotificationWhenVerifyingEditedIrisAnswerWithMention() throws Exception {
+
+        User mentionedUser = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+
+        var channel = createChannelWithTwoStudents();
+        var post = existingConversationPostsWithAnswers.getFirst();
+        post.setConversation(channel);
+        Post savedMessage = conversationMessageRepository.save(post);
+
+        AnswerPost answerPostToVerify = createAnswerPost(savedMessage);
+        answerPostToVerify.setAuthor(irisBot);
+        answerPostToVerify.setVerified(false);
+        AnswerPost savedAnswerPost = answerPostRepository.save(answerPostToVerify);
+
+        long mentionNotificationsBefore = courseNotificationRepository.findAll().stream()
+                .filter(notification -> notification.getCourse().getId().equals(courseId) && notification.getType() == 3).count();
+
+        String editedContent = "[user]" + mentionedUser.getName() + "(" + mentionedUser.getLogin() + ")[/user] Check this Iris reply!";
+        request.patchWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + savedAnswerPost.getId() + "/verify",
+                new VerifyAnswerMessageDTO(editedContent), AnswerMessageDTO.class, HttpStatus.OK);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            long mentionNotificationsAfter = courseNotificationRepository.findAll().stream()
+                    .filter(notification -> notification.getCourse().getId().equals(courseId) && notification.getType() == 3).count();
+
+            assertThat(mentionNotificationsAfter).isEqualTo(mentionNotificationsBefore + 1);
         });
     }
 

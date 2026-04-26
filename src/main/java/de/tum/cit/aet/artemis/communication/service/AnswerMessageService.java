@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -298,6 +299,10 @@ public class AnswerMessageService extends PostingService {
         return answerPostRepository.findAnswerMessageByIdElseThrow(answerMessageId);
     }
 
+    public AnswerPost findByIdWithPessimisticWriteLock(Long answerMessageId) {
+        return answerPostRepository.findAnswerMessageByIdWithPessimisticWriteLockElseThrow(answerMessageId);
+    }
+
     public List<AnswerPost> findByIdIn(List<Long> answerMessageIds) {
         return answerPostRepository.findByIdIn(answerMessageIds);
     }
@@ -331,12 +336,13 @@ public class AnswerMessageService extends PostingService {
      * @param verifyDto       optional updated content; if null or blank, the existing content is kept
      * @return the persisted, verified answer message
      */
+    @Transactional
     public AnswerPost verifyAnswerMessage(Long courseId, Long answerMessageId, VerifyAnswerMessageDTO verifyDto) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         var course = preCheckUserAndCourseForMessaging(user, courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
-        AnswerPost existingAnswerMessage = this.findById(answerMessageId);
+        AnswerPost existingAnswerMessage = this.findByIdWithPessimisticWriteLock(answerMessageId);
         if (!existingAnswerMessage.getPost().getConversation().getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("Answer message does not belong to the specified course", METIS_ANSWER_POST_ENTITY_NAME, "invalidCourse");
         }
@@ -347,8 +353,9 @@ public class AnswerMessageService extends PostingService {
             throw new BadRequestAlertException("Answer message is already verified", METIS_ANSWER_POST_ENTITY_NAME, "alreadyVerified");
         }
 
+        Set<User> mentionedUsers = Set.of();
         if (verifyDto != null && verifyDto.content() != null && !verifyDto.content().isBlank()) {
-            parseUserMentions(course, verifyDto.content());
+            mentionedUsers = parseUserMentions(course, verifyDto.content());
             existingAnswerMessage.setContent(verifyDto.content());
             existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
         }
@@ -363,8 +370,26 @@ public class AnswerMessageService extends PostingService {
         // Strip any other unverified Iris siblings before broadcast so students never receive their content via the post update.
         savedAnswerMessage.getPost().getAnswers().removeIf(answer -> !Objects.equals(answer.getId(), savedAnswerMessage.getId()) && answer.isUnverifiedIrisReply());
 
+        sendMentionNotificationForAnswerMessage(course, conversation, savedAnswerMessage, mentionedUsers);
         this.preparePostAndBroadcast(savedAnswerMessage, course);
         return savedAnswerMessage;
+    }
+
+    private void sendMentionNotificationForAnswerMessage(Course course, Conversation conversation, AnswerPost answerMessage, Set<User> mentionedUsers) {
+        var mentionedUserRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(mentionedUsers, conversation)
+                .filter(mentionedUser -> !Objects.equals(mentionedUser.getId(), answerMessage.getAuthor().getId())).toList();
+
+        if (mentionedUserRecipients.isEmpty()) {
+            return;
+        }
+
+        var post = answerMessage.getPost();
+        var mentionCourseNotification = new NewMentionNotification(course.getId(), conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(),
+                answerMessage.getContent(), post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), answerMessage.getContent(),
+                answerMessage.getCreationDate().toString(), answerMessage.getAuthor().getName(), answerMessage.getAuthor().getId(), answerMessage.getAuthor().getImageUrl(),
+                answerMessage.getId(), conversation.getHumanReadableNameForReceiver(answerMessage.getAuthor()), conversation.getId(), answerMessage.getAuthor().isBot());
+
+        this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
     }
 
     /**

@@ -4,11 +4,15 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+
+import jakarta.persistence.LockModeType;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -72,6 +76,28 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
     default AnswerPost findAnswerMessageByIdElseThrow(long answerPostId) {
         return getValueElseThrow(findById(answerPostId).filter(answerPost -> answerPost.getPost().getConversation() != null), answerPostId);
     }
+
+    /**
+     * Retrieves an {@link AnswerPost} by ID that is part of a conversation while acquiring a pessimistic write lock.
+     *
+     * @param answerPostId the ID of the answer message
+     * @return the answer message if found and linked to a conversation
+     */
+    @NonNull
+    default AnswerPost findAnswerMessageByIdWithPessimisticWriteLockElseThrow(long answerPostId) {
+        return getValueElseThrow(findAnswerMessageByIdWithPessimisticWriteLock(answerPostId), answerPostId);
+    }
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT answerPost
+            FROM AnswerPost answerPost
+                JOIN FETCH answerPost.author
+                JOIN FETCH answerPost.post post
+                JOIN FETCH post.conversation
+            WHERE answerPost.id = :answerPostId
+            """)
+    Optional<AnswerPost> findAnswerMessageByIdWithPessimisticWriteLock(@Param("answerPostId") long answerPostId);
 
     /**
      * Retrieves an {@link AnswerPost} by ID, regardless of whether it is linked to a conversation.
