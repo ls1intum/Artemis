@@ -466,6 +466,10 @@ dependencies {
     implementation "org.apache.pdfbox:pdfbox:3.0.7"
     implementation "org.apache.commons:commons-csv:1.14.1"
     implementation "org.commonmark:commonmark:0.28.0"
+    implementation "org.webjars.npm:katex:0.16.44"
+    implementation "org.commonmark:commonmark-ext-gfm-tables:0.28.0"
+    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.28.0"
+
     implementation "commons-fileupload:commons-fileupload:1.6.0"
     implementation "net.lingala.zip4j:zip4j:2.11.6"
 
@@ -605,6 +609,7 @@ tasks.register("stage") {
 tasks.register("npmSetCacheDockerfile", NpmTask) {
     args = ["set", "cache", "/opt/artemis/.npm"]
 }
+
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
