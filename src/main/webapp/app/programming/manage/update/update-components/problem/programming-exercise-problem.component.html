@@ -143,6 +143,15 @@
                     [forceRender]="programmingExerciseCreationConfig().rerenderSubject"
                     class="form__editable-instructions"
                 />
+                <div class="d-flex justify-content-end mt-1">
+                    <small [class.text-danger]="isProblemStatementTooLong()"> {{ problemStatementLength() }}/{{ maxProblemStatementLength }} </small>
+                </div>
+
+                @if (isProblemStatementTooLong()) {
+                    <p-message severity="error" styleClass="w-100 mt-2" [closable]="false">
+                        <span [jhiTranslate]="'artemisApp.programmingExercise.problemStatement.tooLong'" [translateValues]="{ max: maxProblemStatementLength }"></span>
+                    </p-message>
+                }
             }
         </div>
 

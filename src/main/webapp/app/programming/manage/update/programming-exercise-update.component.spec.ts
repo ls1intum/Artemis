@@ -29,7 +29,7 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
-import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/shared/constants/input.constants';
+import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/shared/constants/input.constants';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -1421,6 +1421,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 translateValues: {},
             });
         });
+
+        it('should add validation error when problem statement exceeds max length', () => {
+            comp.programmingExercise.problemStatement = 'a'.repeat(MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH + 1);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.problemStatement.tooLong',
+                translateValues: { max: MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH },
+            });
+        });
+
+        it('should not add validation error when problem statement is within max length', () => {
+            comp.programmingExercise.problemStatement = 'a'.repeat(MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.problemStatement.tooLong',
+                translateValues: { max: MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH },
+            });
+        });
     });
 
     describe('disable features based on selected language and project type', () => {
@@ -1561,6 +1583,17 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.exerciseCategories).toEqual([]);
         expect(comp.programmingExercise.categories).toBe(comp.exerciseCategories);
     }));
+
+    it('should mark the problem section as invalid when problem statement exceeds max length', () => {
+        comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+        comp.programmingExercise.problemStatement = 'a'.repeat(MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH + 1);
+
+        comp.calculateFormStatusSections();
+
+        const problemSection = comp.formStatusSections().find((section) => section.title === 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle');
+
+        expect(problemSection?.valid).toBeFalse();
+    });
 
     it('should validate form sections', () => {
         const calculateFormValidSectionsSpy = jest.spyOn(comp, 'calculateFormStatusSections');
