@@ -171,7 +171,10 @@ export class AttachmentVideoUnitsComponent implements OnInit {
                     this.isLoading = false;
                 },
                 error: (res: HttpErrorResponse) => {
-                    onError(this.alertService, res);
+                    const errorMessage = this.translateService.instant('artemisApp.lectureUnit.pdfOnlyError');
+                    this.alertService.error(errorMessage);
+                    this.isLoading = false;
+                    this.router.navigate(['course-management', this.courseId.toString(), 'lectures', this.lectureId.toString(), 'edit']);
                 },
             });
         }
