@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import java.util.Optional;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +51,20 @@ public class ExerciseAthenaConfigService {
             config.setGradedFeedbackModule(gradedModule);
         }
 
-        return configRepository.save(config);
+        try {
+            return configRepository.save(config);
+        }
+        catch (DataIntegrityViolationException e) {
+            // Another transaction created the config between our lookup and save
+            // Retry the lookup and update the existing config
+            existingConfig = configRepository.findByExerciseId(exercise.getId());
+            if (existingConfig.isPresent()) {
+                config = existingConfig.get();
+                config.setPreliminaryFeedbackModule(preliminaryModule);
+                config.setGradedFeedbackModule(gradedModule);
+                return configRepository.save(config);
+            }
+            throw e;
+        }
     }
 }
