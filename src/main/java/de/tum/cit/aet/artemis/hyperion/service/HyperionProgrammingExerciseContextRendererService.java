@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -103,6 +106,7 @@ public class HyperionProgrammingExerciseContextRendererService {
     private static final Set<String> EXCLUDED_FILES = Set.of(".DS_Store", "Thumbs.db", ".gitkeep");
 
     private static final Set<String> BUILD_ENVIRONMENT_FILES = Set.of("pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts", "gradle.properties",
+            "requirements.txt", "pyproject.toml", "setup.py", "Pipfile", "Pipfile.lock", "CMakeLists.txt", "Makefile", "Package.swift", "Cargo.toml", "Gemfile", "package.json",
             ".java-version", ".tool-versions");
 
     private static final int MAX_BUILD_ENVIRONMENT_FILE_CONTENT_LENGTH = 4000;
@@ -290,7 +294,8 @@ public class HyperionProgrammingExerciseContextRendererService {
         }
 
         try (var walk = Files.walk(repositoryPath)) {
-            Map<String, String> buildFiles = walk.filter(Files::isRegularFile).filter(path -> isRelevantBuildEnvironmentFile(repositoryPath, path))
+            Map<String, String> buildFiles = walk.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))
+                    .filter(path -> isRelevantBuildEnvironmentFile(repositoryPath, path))
                     .sorted(Comparator.comparing(path -> repositoryPath.relativize(path).toString(), String.CASE_INSENSITIVE_ORDER)).collect(TreeMap::new,
                             (files, path) -> files.put(repositoryPath.relativize(path).toString().replace('\\', '/'), readBuildEnvironmentFile(path)), TreeMap::putAll);
 
@@ -299,7 +304,7 @@ public class HyperionProgrammingExerciseContextRendererService {
             }
             return renderRepository(buildFiles, "Build Environment Files");
         }
-        catch (IOException e) {
+        catch (IOException | UncheckedIOException e) {
             log.warn("Failed to render build environment context for repository {}: {}", repositoryPath, e.getMessage());
             return "Build environment files could not be determined.";
         }
@@ -353,6 +358,10 @@ public class HyperionProgrammingExerciseContextRendererService {
     }
 
     private boolean isRelevantBuildEnvironmentFile(Path repositoryRoot, Path path) {
+        if (Files.isSymbolicLink(path) || !Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) {
+            return false;
+        }
+
         Path relativePath = repositoryRoot.relativize(path);
         if (relativePath.getNameCount() == 0) {
             return false;
@@ -369,8 +378,18 @@ public class HyperionProgrammingExerciseContextRendererService {
     }
 
     private String readBuildEnvironmentFile(Path path) {
-        try {
-            String content = Files.readString(path);
+        int maxCharsToRead = MAX_BUILD_ENVIRONMENT_FILE_CONTENT_LENGTH + 1;
+        try (BufferedReader reader = Files.newBufferedReader(path)) {
+            char[] buffer = new char[maxCharsToRead];
+            int offset = 0;
+            while (offset < buffer.length) {
+                int read = reader.read(buffer, offset, buffer.length - offset);
+                if (read == -1) {
+                    break;
+                }
+                offset += read;
+            }
+            String content = new String(buffer, 0, offset);
             if (content.length() <= MAX_BUILD_ENVIRONMENT_FILE_CONTENT_LENGTH) {
                 return content;
             }

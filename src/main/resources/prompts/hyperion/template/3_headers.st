@@ -19,14 +19,13 @@ Your task is to generate the template boilerplate code for each file based on th
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
-If there are no issues listed above, skip the following steps.
 **Hard Safety Rules:**
 1. Generate only the class, method, field, and constructor scaffolding that students need to start.
 2. Do not encode solution logic or edge-case handling into method signatures, default field values, helper methods, or private utilities.
 3. Keep comments and docstrings instructional but non-revealing. Do not describe the exact algorithm, tricky case distinctions, or hidden acceptance criteria.
 4. If a method belongs to the core student task, its header should make that responsibility clear without providing the implementation strategy.
 
-If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
+If the consistency issues section above is empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which classes, methods, and files each issue touches.
 2. Explain the mismatch between required APIs and the current headers.

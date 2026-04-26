@@ -16,7 +16,7 @@ import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-
 import { Subject, of, throwError } from 'rxjs';
 import { FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
@@ -98,7 +98,7 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
         { provide: TranslateService, useClass: MockTranslateService },
         { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: jest.fn() } },
         { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: jest.fn(), isLoading: () => false } },
-        { provide: ExerciseEditorSyncService, useValue: { connect: jest.fn(), disconnect: jest.fn(), subscribeToUpdates: jest.fn() } },
+        { provide: ExerciseEditorSyncService, useValue: { connect: jest.fn(), disconnect: jest.fn(), subscribeToUpdates: jest.fn(() => of()) } },
         ...additionalProviders,
     ];
 }
@@ -312,11 +312,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         // Mock codeEditorContainer and editableInstructions
         (comp as any).codeEditorContainer = {
-            actions: { executeRefresh: jest.fn() },
+            actions: { executeRefresh: jest.fn(), onSave: jest.fn() },
             selectedFile: undefined as string | undefined,
             selectedRepository: jest.fn().mockReturnValue('SOLUTION'),
             problemStatementIdentifier: 'problem_statement.md',
             jumpToLine: jest.fn(),
+            initializeProperties: jest.fn(),
             monacoEditor: {
                 clearReviewCommentDrafts: jest.fn(),
             },
@@ -897,15 +898,40 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         it('should auto-start generation for all three repositories when requested by navigation state', () => {
             window.history.replaceState({ [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true }, '', window.location.href);
 
+            const route = TestBed.inject(ActivatedRoute) as any;
+            route.params = of({ exerciseId: '42', repositoryType: RepositoryType.SOLUTION, repositoryId: '2' });
+
             fixture.destroy();
             fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
             comp = fixture.componentInstance;
-            comp.exercise = createMockExercise();
+            comp.exercise = createMockExercise({
+                templateParticipation: { id: 1, repositoryUri: 'template-repository' } as any,
+                solutionParticipation: { id: 2, repositoryUri: 'solution-repository' } as any,
+            });
+
+            (comp as any).codeEditorContainer = {
+                actions: { executeRefresh: jest.fn(), onSave: jest.fn() },
+                selectedFile: undefined as string | undefined,
+                selectedRepository: jest.fn().mockReturnValue('SOLUTION'),
+                problemStatementIdentifier: 'problem_statement.md',
+                jumpToLine: jest.fn(),
+                initializeProperties: jest.fn(),
+                monacoEditor: {
+                    clearReviewCommentDrafts: jest.fn(),
+                },
+            };
+            (comp as any).editableInstructions = jest.fn().mockReturnValue({
+                jumpToLine: jest.fn(),
+                clearReviewCommentDrafts: jest.fn(),
+            });
 
             const startCodeGenerationSpy = jest.spyOn(comp as any, 'startCodeGeneration').mockImplementation(() => {});
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({}));
 
-            (comp as any).maybeAutoStartCodeGenerationFromNavigation();
-            (comp as any).maybeAutoStartCodeGenerationFromNavigation();
+            fixture.detectChanges();
+            (comp as any).applyDomainChange(DomainType.PARTICIPATION, comp.exercise.solutionParticipation);
+            fixture.detectChanges();
+            fixture.detectChanges();
 
             expect(startCodeGenerationSpy).toHaveBeenCalledOnce();
             expect(startCodeGenerationSpy).toHaveBeenCalledWith([RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS], true);

@@ -19,8 +19,6 @@ Your task is to create a detailed plan for generating template code that provide
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
-If there are no issues listed above, skip the following steps.
-
 **Hard Safety Rules:**
 1. The template must compile, but it must not already solve the exercise.
 2. Do not implement core business logic, algorithms, validation, or edge-case handling that students are expected to write themselves.
@@ -29,7 +27,7 @@ If there are no issues listed above, skip the following steps.
 5. Keep guidance high-level. Do not reveal solution strategies, key edge cases, or algorithmic steps that remove the core learning task.
 6. Only include scaffolding that is necessary for structure, compilation, and a clear student starting point.
 
-If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
+If the consistency issues section above is empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which requirements, files, and repository artifacts each issue touches.
 2. Explain the likely root cause or mismatch implied by the issue.

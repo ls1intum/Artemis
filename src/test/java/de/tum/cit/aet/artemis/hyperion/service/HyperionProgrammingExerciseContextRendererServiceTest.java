@@ -103,6 +103,8 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
     @Test
     void getBuildEnvironmentContext_withRelevantFiles_returnsFormattedContext() throws IOException {
         FileUtils.writeStringToFile(tempDir.resolve("pom.xml").toFile(), "<project>JUnit Jupiter</project>", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(tempDir.resolve("requirements.txt").toFile(), "pytest==8.3.5", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(tempDir.resolve("package.json").toFile(), "{\"name\":\"sample-exercise\"}", StandardCharsets.UTF_8);
         Files.createDirectories(tempDir.resolve("module"));
         FileUtils.writeStringToFile(tempDir.resolve("module/build.gradle").toFile(), "dependencies { testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0' }",
                 StandardCharsets.UTF_8);
@@ -116,8 +118,41 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
 
         assertThat(result).contains("Build Environment Files");
         assertThat(result).contains("pom.xml");
+        assertThat(result).contains("requirements.txt");
+        assertThat(result).contains("package.json");
         assertThat(result).contains("module/build.gradle");
         assertThat(result).contains("JUnit Jupiter");
+        assertThat(result).contains("pytest==8.3.5");
+        assertThat(result).contains("\"name\":\"sample-exercise\"");
         assertThat(result).doesNotContain("ignored.gradle");
+    }
+
+    @Test
+    void getBuildEnvironmentContext_withSymlinkedBuildFile_skipsSymlinkTarget() throws IOException {
+        Path externalBuildFile = Files.createTempFile("hyperion-external-build-file", ".xml");
+        FileUtils.writeStringToFile(externalBuildFile.toFile(), "<project>outside</project>", StandardCharsets.UTF_8);
+        Files.createSymbolicLink(tempDir.resolve("pom.xml"), externalBuildFile);
+
+        Repository repository = mock(Repository.class);
+        when(repository.getLocalPath()).thenReturn(tempDir);
+
+        String result = contextRendererService.getBuildEnvironmentContext(repository);
+
+        assertThat(result).isEqualTo("No build environment files found.");
+    }
+
+    @Test
+    void getBuildEnvironmentContext_withOversizedBuildFile_truncatesContent() throws IOException {
+        String largeContent = "dependency=sample\n" + "x".repeat(4500);
+        FileUtils.writeStringToFile(tempDir.resolve("requirements.txt").toFile(), largeContent, StandardCharsets.UTF_8);
+
+        Repository repository = mock(Repository.class);
+        when(repository.getLocalPath()).thenReturn(tempDir);
+
+        String result = contextRendererService.getBuildEnvironmentContext(repository);
+
+        assertThat(result).contains("requirements.txt");
+        assertThat(result).contains("... [truncated]");
+        assertThat(result).doesNotContain("x".repeat(4100));
     }
 }

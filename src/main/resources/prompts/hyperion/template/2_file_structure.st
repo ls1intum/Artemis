@@ -16,14 +16,13 @@ Based on the following template plan and programming language, determine the nec
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
-If there are no issues listed above, skip the following steps.
 **Hard Safety Rules:**
 1. Create only the files needed for a compilable starter project.
 2. Do not add helper classes that hide core logic from students or pre-package important behavior.
 3. Do not add utility classes, validators, or convenience wrappers unless they are explicitly required by the exercise structure and do not solve the task.
 4. Keep the template structure conservative and minimal so the core implementation work remains with the student.
 
-If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
+If the consistency issues section above is empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which files, packages, and repository artifacts each issue touches.
 2. Explain the mismatch between the required structure and the current or planned structure.

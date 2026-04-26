@@ -19,7 +19,6 @@ Your task is to complete the template code based on the template plan and existi
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
-If there are no issues listed above, skip the following steps.
 **Hard Safety Rules:**
 1. The template must compile, but it must not contain a hidden or partial solution to the exercise.
 2. Do not implement core algorithms, business rules, validation rules, or edge-case handling that students are supposed to discover and write.
@@ -28,7 +27,7 @@ If there are no issues listed above, skip the following steps.
 5. Do not add convenience behavior that makes tests pass before the student has implemented the exercise.
 6. Keep comments high-level and non-revealing. Do not include algorithmic hints, edge-case recipes, or near-solution pseudocode.
 
-If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
+If the consistency issues section above is empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which methods, files, and repository artifacts each issue touches.
 2. Explain the likely root cause in the current code, headers, or plan.

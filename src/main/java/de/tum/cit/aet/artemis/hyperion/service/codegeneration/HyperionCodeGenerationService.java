@@ -56,7 +56,22 @@ public abstract class HyperionCodeGenerationService {
 
     private static final Pattern CHANNEL_TIMEOUT_MESSAGE_PATTERN = Pattern.compile("Channel response timed out after \\d+ milliseconds");
 
-    private static final String USER_FRIENDLY_CHANNEL_TIMEOUT_MESSAGE = "The AI took too long to respond and this generation request timed out after 5 minutes. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.";
+    private static final String REDACTED_PLACEHOLDER = "[REDACTED]";
+
+    private static final Pattern PRIVATE_KEY_BLOCK_PATTERN = Pattern.compile("-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----.*?-----END [A-Z0-9 ]*PRIVATE KEY-----",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+
+    private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("(?i)(\\bBearer\\s+)([A-Za-z0-9._\\-+/=]+)");
+
+    private static final Pattern CREDENTIAL_URL_PATTERN = Pattern.compile("(?i)(https?://[^\\s:@/]+:)([^@\\s/]+)(@)");
+
+    private static final Pattern XML_SECRET_TAG_PATTERN = Pattern.compile(
+            "(?is)(<\\s*(?:password|passwd|pwd|token|secret|secretKey|apiKey|accessKey|clientSecret|privateKey)\\s*>)(.*?)(<\\s*/\\s*(?:password|passwd|pwd|token|secret|secretKey|apiKey|accessKey|clientSecret|privateKey)\\s*>)");
+
+    private static final Pattern SENSITIVE_KEY_VALUE_PATTERN = Pattern.compile(
+            "(?im)^(\\s*(?:export\\s+)?[\"']?[A-Za-z0-9_.-]*?(?:api[_-]?key|access[_-]?key|secret|secret[_-]?key|token|password|passwd|pwd|client[_-]?secret|private[_-]?key|ssh[_-]?key|credentials?|auth[_-]?token|bearer[_-]?token|aws_access_key_id|aws_secret_access_key|x-api-key)[A-Za-z0-9_.-]*[\"']?\\s*[:=]\\s*)(.+?)\\s*$");
+
+    private static final String USER_FRIENDLY_CHANNEL_TIMEOUT_MESSAGE = "The AI took too long to respond and this generation request timed out after 15 minutes. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.";
 
     /**
      * Maximum number of characters kept when passing consistency issues into AI prompts.
@@ -123,18 +138,7 @@ public abstract class HyperionCodeGenerationService {
     }
 
     private String normalizeBuildEnvironmentContext(String buildEnvironmentContext) {
-        if (buildEnvironmentContext == null) {
-            throw new IllegalArgumentException("buildEnvironmentContext must not be null");
-        }
-        String trimmed = buildEnvironmentContext.trim();
-        if (trimmed.isEmpty()) {
-            return DEFAULT_BUILD_ENVIRONMENT_CONTEXT;
-        }
-        String sanitized = trimmed.replaceAll(CONTROL_CHARS_PATTERN, "").trim();
-        if (sanitized.length() > MAX_BUILD_ENVIRONMENT_CONTEXT_LENGTH) {
-            return sanitized.substring(0, MAX_BUILD_ENVIRONMENT_CONTEXT_LENGTH);
-        }
-        return sanitized;
+        return normalizePromptContext(buildEnvironmentContext, "buildEnvironmentContext must not be null", DEFAULT_BUILD_ENVIRONMENT_CONTEXT, MAX_BUILD_ENVIRONMENT_CONTEXT_LENGTH);
     }
 
     /**
@@ -144,18 +148,34 @@ public abstract class HyperionCodeGenerationService {
      * @return trimmed, control-character-free text truncated to the configured limit
      */
     private String normalizeConsistencyIssues(String consistencyIssues) {
-        if (consistencyIssues == null) {
-            throw new IllegalArgumentException("consistencyIssues must not be null");
+        return normalizePromptContext(consistencyIssues, "consistencyIssues must not be null", "", MAX_CONSISTENCY_ISSUES_LENGTH);
+    }
+
+    private String normalizePromptContext(String input, String nullMessage, String emptyFallback, int maxLength) {
+        if (input == null) {
+            throw new IllegalArgumentException(nullMessage);
         }
-        String trimmed = consistencyIssues.trim();
+        String trimmed = input.trim();
         if (trimmed.isEmpty()) {
-            return "";
+            return emptyFallback;
         }
         String sanitized = trimmed.replaceAll(CONTROL_CHARS_PATTERN, "").trim();
-        if (sanitized.length() > MAX_CONSISTENCY_ISSUES_LENGTH) {
-            return sanitized.substring(0, MAX_CONSISTENCY_ISSUES_LENGTH);
+        String redacted = redactSecrets(sanitized).trim();
+        if (redacted.isEmpty()) {
+            return emptyFallback;
         }
-        return sanitized;
+        if (redacted.length() > maxLength) {
+            return redacted.substring(0, maxLength);
+        }
+        return redacted;
+    }
+
+    private String redactSecrets(String input) {
+        String redacted = PRIVATE_KEY_BLOCK_PATTERN.matcher(input).replaceAll(REDACTED_PLACEHOLDER);
+        redacted = BEARER_TOKEN_PATTERN.matcher(redacted).replaceAll("$1" + REDACTED_PLACEHOLDER);
+        redacted = CREDENTIAL_URL_PATTERN.matcher(redacted).replaceAll("$1" + REDACTED_PLACEHOLDER + "$3");
+        redacted = XML_SECRET_TAG_PATTERN.matcher(redacted).replaceAll("$1" + REDACTED_PLACEHOLDER + "$3");
+        return SENSITIVE_KEY_VALUE_PATTERN.matcher(redacted).replaceAll("$1" + REDACTED_PLACEHOLDER);
     }
 
     /**

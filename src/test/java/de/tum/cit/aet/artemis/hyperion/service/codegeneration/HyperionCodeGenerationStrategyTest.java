@@ -125,6 +125,62 @@ class HyperionCodeGenerationServiceTest {
     }
 
     @Test
+    void generateCode_withSensitivePromptContext_redactsSecretsBeforePassingThemToGenerationStages() throws Exception {
+        String buildEnvironmentContext = """
+                gradle.properties
+                apiKey=abc123-secret
+                Authorization: Bearer bearer-token-value
+                repositoryUrl=https://ci-user:super-secret@example.org/repo.git
+                <password>xml-secret</password>
+                -----BEGIN PRIVATE KEY-----
+                private-key-material
+                -----END PRIVATE KEY-----
+                safe.property=value
+                """;
+        String consistencyIssues = """
+                password: another-secret
+                export GH_TOKEN=ghp_1234567890abcdef
+                credentials=build-user:hunter2
+                Keep this diagnostic detail visible
+                """;
+
+        setupMockTemplateAndChatResponses("{\"solutionPlan\":\"plan\",\"files\":[]}");
+
+        strategy.generateCode(user, exercise, 1L, "logs", "repo structure", buildEnvironmentContext, consistencyIssues);
+
+        assertThat(strategy.getLastBuildEnvironmentContext()).contains("apiKey=[REDACTED]").contains("Authorization: Bearer [REDACTED]")
+                .contains("repositoryUrl=https://ci-user:[REDACTED]@example.org/repo.git").contains("<password>[REDACTED]</password>").contains("[REDACTED]")
+                .contains("safe.property=value").doesNotContain("abc123-secret").doesNotContain("bearer-token-value").doesNotContain("super-secret").doesNotContain("xml-secret")
+                .doesNotContain("private-key-material").doesNotContain("BEGIN PRIVATE KEY");
+        assertThat(strategy.getLastConsistencyIssues()).contains("password: [REDACTED]").contains("export GH_TOKEN=[REDACTED]").contains("credentials=[REDACTED]")
+                .contains("Keep this diagnostic detail visible").doesNotContain("another-secret").doesNotContain("ghp_1234567890abcdef").doesNotContain("hunter2");
+    }
+
+    @Test
+    void generateCode_withBlankBuildEnvironmentContext_usesDefaultAndTrimsConsistencyIssues() throws Exception {
+        setupMockTemplateAndChatResponses("{\"solutionPlan\":\"plan\",\"files\":[]}");
+
+        strategy.generateCode(user, exercise, 1L, "logs", "repo structure", "   \n\t  ", "  diagnostic detail  ");
+
+        assertThat(strategy.getLastBuildEnvironmentContext()).isEqualTo("No build environment files found.");
+        assertThat(strategy.getLastConsistencyIssues()).isEqualTo("diagnostic detail");
+    }
+
+    @Test
+    void generateCode_withLongPromptContext_keepsRedactionAndAppliesLengthLimits() throws Exception {
+        String filler = "visible-context-".repeat(900);
+        String buildEnvironmentContext = "password=secret-value\n" + filler.repeat(2);
+        String consistencyIssues = "token=secret-value\n" + filler.repeat(2);
+
+        setupMockTemplateAndChatResponses("{\"solutionPlan\":\"plan\",\"files\":[]}");
+
+        strategy.generateCode(user, exercise, 1L, "logs", "repo structure", buildEnvironmentContext, consistencyIssues);
+
+        assertThat(strategy.getLastBuildEnvironmentContext()).startsWith("password=[REDACTED]").hasSize(12000).doesNotContain("secret-value");
+        assertThat(strategy.getLastConsistencyIssues()).startsWith("token=[REDACTED]").hasSize(10000).doesNotContain("secret-value");
+    }
+
+    @Test
     void callChatClient_withValidInput_returnsResponse() throws Exception {
         String expectedPlan = "Generated solution plan";
         String jsonResponse = "{\"solutionPlan\":\"" + expectedPlan + "\",\"files\":[]}";
@@ -341,7 +397,7 @@ class HyperionCodeGenerationServiceTest {
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException(new TimeoutException("Channel response timed out after 60000 milliseconds.")));
 
         assertThatThrownBy(() -> strategy.testCallChatClient(user, exercise, "test-template", templateVariables)).isInstanceOf(NetworkingException.class).hasMessageContaining(
-                "The AI took too long to respond and this generation request timed out after 5 minutes. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.");
+                "The AI took too long to respond and this generation request timed out after 15 minutes. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.");
     }
 
     private void setupMockTemplateAndChatResponses(String finalResponse) {
@@ -369,6 +425,10 @@ class HyperionCodeGenerationServiceTest {
 
     private static class TestCodeGenerationStrategy extends HyperionCodeGenerationService {
 
+        private String lastBuildEnvironmentContext;
+
+        private String lastConsistencyIssues;
+
         public TestCodeGenerationStrategy(ChatClient chatClient, HyperionPromptTemplateService templates, LLMTokenUsageService llmTokenUsageService) {
             super(chatClient, templates, llmTokenUsageService);
         }
@@ -376,6 +436,8 @@ class HyperionCodeGenerationServiceTest {
         @Override
         protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
                 String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+            lastBuildEnvironmentContext = buildEnvironmentContext;
+            lastConsistencyIssues = consistencyIssues;
             Map<String, Object> variables = Map.of("test", "plan");
             return callChatClient(user, exercise, courseId, "test-plan-template", variables);
         }
@@ -415,6 +477,14 @@ class HyperionCodeGenerationServiceTest {
         public CodeGenerationResponseDTO testCallChatClient(User user, ProgrammingExercise exercise, String prompt, Map<String, Object> templateVariables)
                 throws NetworkingException {
             return testCallChatClient(user, exercise, 1L, prompt, templateVariables);
+        }
+
+        public String getLastBuildEnvironmentContext() {
+            return lastBuildEnvironmentContext;
+        }
+
+        public String getLastConsistencyIssues() {
+            return lastConsistencyIssues;
         }
     }
 }

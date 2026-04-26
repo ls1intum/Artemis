@@ -28,7 +28,7 @@ If there are no issues listed above, skip the following steps.
 5. Ensure every referenced symbol is imported or defined in the generated file. Do not leave unresolved symbols.
 6. Prefer direct, compile-safe tests over abstraction-heavy designs.
 
-If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
+If the Consistency Check Issues section above is empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which methods, files, and repository artifacts each issue touches.
 2. Explain the likely root cause in the current code, headers, or plan.
