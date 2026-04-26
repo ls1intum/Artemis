@@ -219,6 +219,34 @@ class CourseNotificationEmailServiceTest {
         });
     }
 
+    @Test
+    void shouldRenderMarkdownWithLineBreaks() {
+        var recipient = createUser("user1", "en");
+        String markdownInput = "line1\nline2";
+        Map<String, Object> parameters = Map.of("postMarkdownContent", markdownInput);
+
+        CourseNotificationDTO notification = createNotification("ANNOUNCEMENT", 123L);
+        notification = new CourseNotificationDTO(notification.notificationType(), notification.notificationId(), notification.courseId(), notification.creationDate(),
+                notification.category(), parameters, notification.relativeWebAppUrl());
+
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Test Subject");
+        when(templateEngine.process(anyString(), any(Context.class))).thenReturn("Test Content");
+        when(markdownCustomLinkRendererService.render(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(markdownCustomReferenceRendererService.render(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        courseNotificationEmailService.sendCourseNotification(notification, List.of(recipient));
+
+        Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+            verify(templateEngine).process(anyString(), contextCaptor.capture());
+
+            Context capturedContext = contextCaptor.getValue();
+            @SuppressWarnings("unchecked")
+            Map<String, Object> renderedParameters = (Map<String, Object>) capturedContext.getVariable("parameters");
+            String renderedContent = (String) renderedParameters.get("postMarkdownContent");
+            assertThat(renderedContent).isEqualToIgnoringWhitespace("<p>line1<br>line2</p>");
+        });
+    }
+
     @ParameterizedTest
     @CsvSource({ "QUIZ_RELEASED, email.courseNotification.QUIZ_RELEASED.title, mail/course_notification/QUIZ_RELEASED",
             "EXERCISE_DUE_SOON, email.courseNotification.EXERCISE_DUE_SOON.title, mail/course_notification/EXERCISE_DUE_SOON",
