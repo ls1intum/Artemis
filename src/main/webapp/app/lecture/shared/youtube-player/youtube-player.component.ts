@@ -43,6 +43,9 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     private interactInstance: ReturnType<typeof interact> | undefined;
     private resizeHandler: (() => void) | undefined;
     private resizeObserver: ResizeObserver | undefined;
+    private readonly MIN_VIDEO_WIDTH = 200;
+    private readonly MIN_TRANSCRIPT_WIDTH = 200;
+    protected readonly isResizing = signal<boolean>(false);
 
     constructor() {
         // Resync the active segment when transcript segments arrive asynchronously
@@ -71,6 +74,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         this.interactInstance?.unset();
         if (this.resizeHandler) window.removeEventListener('resize', this.resizeHandler);
         this.resizeObserver?.disconnect();
+        this.isResizing.set(false);
     }
 
     private initResizer(): void {
@@ -80,31 +84,46 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         if (!videoColumnEl || !wrapperEl || !resizerEl) {
             return;
         }
+        let currentWidth = 0;
+        let maxWidth = 0;
         this.interactInstance = interact(resizerEl).draggable({
             listeners: {
+                start: () => {
+                    currentWidth = videoColumnEl.getBoundingClientRect().width;
+                    maxWidth = Math.max(this.MIN_VIDEO_WIDTH, wrapperEl.getBoundingClientRect().width - this.MIN_TRANSCRIPT_WIDTH);
+                    this.isResizing.set(true);
+                },
                 move: (event) => {
-                    // Constrain to horizontal axis — only use event.dx, ignore dy
-                    const wrapperRect = wrapperEl.getBoundingClientRect();
-                    const currentWidth = videoColumnEl.getBoundingClientRect().width;
-                    const newWidth = currentWidth + event.dx;
-                    const minWidth = 200;
-                    const maxWidth = wrapperRect.width - 200;
-                    const clamped = Math.max(minWidth, Math.min(newWidth, maxWidth));
-                    videoColumnEl.style.flex = `0 0 ${clamped}px`;
+                    currentWidth = this.clampWidth(currentWidth + event.dx, this.MIN_VIDEO_WIDTH, maxWidth);
+                    this.applyVideoWidth(videoColumnEl, currentWidth);
+                },
+                end: () => {
+                    this.isResizing.set(false);
                 },
             },
             cursorChecker: () => 'col-resize',
         });
         this.resizeHandler = () => {
             videoColumnEl.style.flex = '';
+            videoColumnEl.style.width = '';
         };
         window.addEventListener('resize', this.resizeHandler);
         this.resizeObserver = new ResizeObserver(() => {
             if (wrapperEl.getBoundingClientRect().width < 992) {
                 videoColumnEl.style.flex = '';
+                videoColumnEl.style.width = '';
             }
         });
         this.resizeObserver.observe(wrapperEl);
+    }
+
+    private clampWidth(width: number, minWidth: number, maxWidth: number): number {
+        return Math.max(minWidth, Math.min(maxWidth, width));
+    }
+
+    private applyVideoWidth(videoColumnEl: HTMLDivElement, width: number): void {
+        videoColumnEl.style.flex = `0 0 ${width}px`;
+        videoColumnEl.style.width = `${width}px`;
     }
 
     onPlayerReady(event: any): void {
