@@ -1,11 +1,9 @@
-import { DecimalPipe, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faExclamationTriangle, faGripLines, faTimeline } from '@fortawesome/free-solid-svg-icons';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/angular';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
@@ -16,7 +14,6 @@ import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessme
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
@@ -39,6 +36,7 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/butto
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
@@ -54,6 +52,7 @@ import { ModelingAssessmentComponent } from '../../manage/assess/modeling-assess
 import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/assess/modeling-assessment.util';
 import { countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-submit-button/exercise-submit-button.component';
 
 @Component({
@@ -73,14 +72,11 @@ import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-subm
         TeamSubmissionSyncComponent,
         ModelingAssessmentComponent,
         TranslateDirective,
-        NgClass,
-        NgbTooltip,
-        AdditionalFeedbackComponent,
         RatingComponent,
         ComplaintsStudentViewComponent,
-        DecimalPipe,
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
+        UnifiedFeedbackComponent,
         ExerciseSubmitButtonComponent,
     ],
 })

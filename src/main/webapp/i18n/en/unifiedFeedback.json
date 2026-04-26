@@ -1,0 +1,14 @@
+{
+    "artemisApp": {
+        "feedback": {
+            "reference": "Reference:",
+            "points": "points",
+            "type": {
+                "correct": "Correct",
+                "needsRevision": "Needs Revision",
+                "notAttempted": "Not Attempted",
+                "nonCompliant": "Non Compliant"
+            }
+        }
+    }
+}

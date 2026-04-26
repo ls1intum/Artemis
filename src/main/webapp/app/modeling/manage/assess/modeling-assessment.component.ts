@@ -1,7 +1,13 @@
 import { AfterViewInit, Component, OnDestroy, effect, inject, input, output } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { captureException } from '@sentry/angular';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import {
+    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_IDENTIFIER,
+    Feedback,
+    FeedbackType,
+} from 'app/assessment/shared/entities/feedback.model';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -45,6 +51,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     course = input<Course>();
 
     elementFeedback: Map<string, Feedback> = new Map<string, Feedback>(); // map element.id --> Feedback
+    private shownInApollon: Map<string, string> = new Map<string, string>(); // map element.id --> feedback content last passed to Apollon
     referencedFeedbacks: Feedback[] = [];
     unreferencedFeedbacks: Feedback[] = [];
     firstCorrectionRoundColor = '#3e8acc';
@@ -182,7 +189,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * Returns an array containing all feedback entries from the mapping.
      */
     generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
-        const newElementFeedback = new Map();
         for (const assessment of assessments) {
             // Apollon stores the GradingInstruction flat on dropInfo (not nested under dropInfo.instruction)
             // Support both: dropInfo.instruction (expected shape) and dropInfo directly (actual Apollon shape)
@@ -194,7 +200,27 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                     feedback.gradingInstruction = undefined;
                 }
                 feedback.credits = assessment.score;
-                feedback.text = assessment.feedback;
+                if (Feedback.isFeedbackSuggestion(feedback)) {
+                    const alreadyAdapted = feedback.text?.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
+                    if (alreadyAdapted) {
+                        // Title is already stored in text; only update detailText with Apollon's new content
+                        if (assessment.feedback !== undefined) {
+                            feedback.detailText = assessment.feedback;
+                        }
+                    } else {
+                        const lastShown = this.shownInApollon.get(assessment.modelElementId);
+                        if (assessment.feedback !== undefined && lastShown !== undefined && assessment.feedback !== lastShown) {
+                            // Instructor changed the content — preserve original title in text, update detailText
+                            const originalTitle = this.stripSuggestionPrefix(feedback.text ?? '');
+                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + originalTitle;
+                            feedback.detailText = assessment.feedback;
+                            this.shownInApollon.set(assessment.modelElementId, assessment.feedback);
+                        }
+                    }
+                    // else: auto-emit or unchanged content, keep original ACCEPTED/IDENTIFIER prefix
+                } else {
+                    feedback.text = assessment.feedback;
+                }
                 if (instruction?.id) {
                     feedback.gradingInstruction = instruction;
                 }
@@ -202,12 +228,14 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                     feedback.gradingInstruction = undefined;
                 }
             } else {
+                // elementFeedback is pre-populated by updateElementFeedbackMapping; a missing entry means
+                // Apollon emitted this element before we processed it — create and register it now
                 feedback = Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo as DropInfo);
+                this.elementFeedback.set(assessment.modelElementId, feedback);
             }
-            newElementFeedback.set(assessment.modelElementId, feedback);
         }
-        this.elementFeedback = newElementFeedback;
-        return [...this.elementFeedback.values()];
+        // Return only the feedbacks currently reported by Apollon (not stale entries)
+        return assessments.map((a) => this.elementFeedback.get(a.modelElementId)!).filter(Boolean);
     }
 
     /**
@@ -310,11 +338,13 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
 
         feedbacks.forEach((feedback) => {
+            const feedbackContent = Feedback.isFeedbackSuggestion(feedback) ? (feedback.detailText ?? '') : (feedback.text ?? '');
+            this.shownInApollon.set(feedback.referenceId!, feedbackContent);
             const newAssessment: Assessment = {
                 modelElementId: feedback.referenceId!,
                 elementType: feedback.referenceType!,
                 score: feedback.credits ?? 0,
-                feedback: feedback.text ?? '',
+                feedback: feedbackContent,
                 label: this.calculateLabel(feedback),
                 labelColor: this.calculateLabelColor(feedback),
                 correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
@@ -391,6 +421,15 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             description: correctionStatusDescription,
             status: correctionStatus,
         };
+    }
+
+    private stripSuggestionPrefix(text: string): string {
+        for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
+            if (text.startsWith(prefix)) {
+                return text.slice(prefix.length);
+            }
+        }
+        return text;
     }
 
     private calculateDropInfo(feedback: Feedback) {

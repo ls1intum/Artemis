@@ -142,12 +142,11 @@
                                     <hr />
                                 </div>
                                 @if (unreferencedFeedback && unreferencedFeedback!.length > 0) {
-                                    <jhi-additional-feedback
-                                        class="col-xl-8 alert unreferencedFeedback"
-                                        [feedback]="unreferencedFeedback || []"
-                                        [additional]="true"
-                                        [course]="course"
-                                    />
+                                    <div id="additional-feedback" class="col-xl-8">
+                                        @for (feedback of unreferencedFeedback; track feedback.id) {
+                                            <jhi-unified-feedback [feedbackContent]="feedback.detailText || ''" [points]="feedback.credits || 0" />
+                                        }
+                                    </div>
                                 }
                                 @if (isOwnerOfParticipation) {
                                     <jhi-rating class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result" [participation]="participation" />

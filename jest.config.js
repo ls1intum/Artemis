@@ -209,6 +209,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts',    // migrated to Vitest
         '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',               // migrated to Vitest
+        '<rootDir>/src/main/webapp/app/shared/components/unified-feedback/',                          // migrated to Vitest
         '<rootDir>/src/main/webapp/app/exercise/exercise-headers/', // exercise headers module
         '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module
         '<rootDir>/src/main/webapp/app/exercise/version-history/', // exercise version history module

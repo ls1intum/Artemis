@@ -1,59 +1,47 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, effect, input, signal } from '@angular/core';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextResultBlock } from './text-result-block';
-import { TranslateService } from '@ngx-translate/core';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
-import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { NgClass } from '@angular/common';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
 @Component({
     selector: 'jhi-text-result',
     templateUrl: './text-result.component.html',
     styleUrls: ['./text-result.component.scss'],
-    imports: [NgClass, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
+    imports: [NgClass, UnifiedFeedbackComponent],
 })
 export class TextResultComponent {
-    private translateService = inject(TranslateService);
-    private localeConversionService = inject(LocaleConversionService);
-
-    public submissionText = signal('');
-    public textResults = signal<TextResultBlock[]>([]);
-    private submission: TextSubmission;
-
-    // Icons
-    faExclamationTriangle = faExclamationTriangle;
-
-    readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
-
-    private readonly SHA1_REGEX = /^[a-f0-9]{40}$/i;
-
     result = input<Result>();
     course = input<Course>();
 
+    submissionText = signal('');
+    textResults = signal<TextResultBlock[]>([]);
+    private submission: TextSubmission;
+
+    readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
+    private readonly SHA1_REGEX = /^[a-f0-9]{40}$/i;
+
     constructor() {
-        // Effect to process result when it changes
         effect(() => {
-            const resultValue = this.result();
-            if (!resultValue || !resultValue.submission) {
+            const result = this.result();
+            if (!result?.submission) {
+                this.submissionText.set('');
+                this.textResults.set([]);
                 return;
             }
 
-            this.submission = resultValue.submission as TextSubmission;
+            this.submission = result.submission as TextSubmission;
             this.submissionText.set(this.submission.text || '');
-            this.convertTextToResultBlocks(resultValue.feedbacks);
+            this.convertTextToResultBlocks(result.feedbacks);
         });
     }
 
     private convertTextToResultBlocks(feedbacks: Feedback[] = []): void {
         checkSubsequentFeedbackInAssessment(feedbacks);
-
         const [referenceBasedFeedback, blockBasedFeedback]: [Feedback[], Feedback[]] = feedbacks.reduce(
             ([refBased, blockBased], elem) => (this.SHA1_REGEX.test(elem.reference!) ? [refBased, [...blockBased, elem]] : [[...refBased, elem], blockBased]),
             [[], []],
@@ -71,6 +59,7 @@ export class TextResultComponent {
         const submissionTextValue = this.submissionText();
         const endIndex = submissionTextValue.length;
         const newTextResults: TextResultBlock[] = [];
+
         while (startIndex < endIndex) {
             if (nextBlock && nextBlock.startIndex === startIndex) {
                 newTextResults.push(nextBlock);
@@ -92,43 +81,46 @@ export class TextResultComponent {
     }
 
     private feedbackToTextResultBlock(feedback: Feedback): TextResultBlock | undefined {
-        const reference = feedback.reference;
-        if (!reference) {
+        if (!feedback.reference) {
             return undefined;
         }
 
-        const indexOfReference = this.submissionText().indexOf(reference);
+        // Strictly validate numeric reference before parsing
+        if (/^\d+$/.test(feedback.reference)) {
+            const startIndex = parseInt(feedback.reference, 10);
+            if (!isNaN(startIndex) && startIndex >= 0 && startIndex < this.submissionText().length) {
+                const textBlock = new TextBlock();
+                textBlock.startIndex = startIndex;
+                textBlock.endIndex = startIndex + 1;
+                textBlock.text = this.submissionText().charAt(startIndex);
+                return new TextResultBlock(textBlock, feedback);
+            }
+        }
 
-        const textBlock = new TextBlock();
-        textBlock.text = reference;
-        textBlock.startIndex = indexOfReference;
-        textBlock.endIndex = indexOfReference + reference.length;
+        const indexOfReference = this.submissionText().indexOf(feedback.reference);
+        if (indexOfReference !== -1) {
+            const textBlock = new TextBlock();
+            textBlock.text = feedback.reference;
+            textBlock.startIndex = indexOfReference;
+            textBlock.endIndex = indexOfReference + feedback.reference.length;
+            return new TextResultBlock(textBlock, feedback);
+        }
 
-        return new TextResultBlock(textBlock, feedback);
+        return undefined;
     }
 
     private textBlockToTextResultBlock(feedback: Feedback): TextResultBlock | undefined {
+        if (!feedback.reference) {
+            return undefined;
+        }
+
         if (this.submission.blocks) {
             const result = this.submission.blocks.find((block) => block.id === feedback.reference);
             if (result) {
                 return new TextResultBlock(result, feedback);
             }
         }
-    }
 
-    public repeatForEachCredit(textResultBlock: TextResultBlock): number[] {
-        if (!textResultBlock.feedback || textResultBlock.feedback.credits === 0) {
-            return [];
-        }
-
-        const value = Math.ceil(Math.abs(textResultBlock.feedback.credits || 0));
-        return new Array(value).fill(1);
-    }
-
-    public creditsTranslationForTextResultBlock(textResultBlock: TextResultBlock): string {
-        const singular = Math.abs(textResultBlock.feedback!.credits || 0) === 1;
-        return this.translateService.instant(`artemisApp.assessment.detail.points.${singular ? 'one' : 'many'}`, {
-            points: this.localeConversionService.toLocaleString(textResultBlock.feedback?.credits || 0, this.course()?.accuracyOfScores),
-        });
+        return undefined;
     }
 }

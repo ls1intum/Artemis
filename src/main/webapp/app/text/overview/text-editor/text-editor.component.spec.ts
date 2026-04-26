@@ -14,7 +14,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from 'test/helpers/mocks/service/mock-text-editor.service';
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
 import { BehaviorSubject } from 'rxjs';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
@@ -38,7 +38,7 @@ import { ResizeableContainerComponent } from 'app/shared/resizeable-container/re
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
@@ -49,7 +49,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
@@ -122,7 +121,7 @@ describe('TextEditorComponent', () => {
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(TeamParticipateInfoBoxComponent),
                 MockComponent(TeamSubmissionSyncComponent),
-                MockComponent(AdditionalFeedbackComponent),
+                MockComponent(UnifiedFeedbackComponent),
                 MockComponent(RatingComponent),
                 MockDirective(TranslateDirective),
             ],
@@ -135,7 +134,6 @@ describe('TextEditorComponent', () => {
                 { provide: TextSubmissionService, useClass: MockTextSubmissionService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                MockProvider(IrisSettingsService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -533,5 +531,64 @@ describe('TextEditorComponent', () => {
         vi.spyOn(textSubmissionService, 'update');
         comp.ngOnDestroy();
         expect(textSubmissionService.update).toHaveBeenCalled();
+    });
+
+    it('isAutomaticResult reflects automatic Athena result', () => {
+        comp.result = { assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result;
+        expect(comp.isAutomaticResult).toBe(true);
+        comp.result = { assessmentType: AssessmentType.MANUAL } as Result;
+        expect(comp.isAutomaticResult).toBe(false);
+    });
+
+    it('submitButtonTooltip covers all branches', () => {
+        comp.textExercise = {} as TextExercise;
+        // Due date missed allowed
+        comp.isAllowedToSubmitAfterDueDate = true;
+        expect(comp.submitButtonTooltip).toBe('entity.action.submitDueDateMissedTooltip');
+
+        // Active without due date
+        comp.isAllowedToSubmitAfterDueDate = false;
+        comp.isAlwaysActive = true;
+        comp.result = undefined as any;
+        comp.textExercise = { dueDate: undefined } as any;
+        expect(comp.submitButtonTooltip).toBe('entity.action.submitNoDueDateTooltip');
+
+        // Active with due date
+        comp.textExercise = { dueDate: dayjs().add(1, 'hour') } as any;
+        expect(comp.submitButtonTooltip).toBe('entity.action.submitTooltip');
+
+        // Not active
+        comp.isAlwaysActive = false;
+        comp.result = { assessmentType: AssessmentType.MANUAL } as any;
+        expect(comp.submitButtonTooltip).toBe('entity.action.dueDateMissedTooltip');
+    });
+
+    it('canDeactivate true when no submission or unchanged; false when changed', () => {
+        // no submission
+        // @ts-ignore
+        delete comp.submission;
+        expect(comp.canDeactivate()).toBe(true);
+        // unchanged
+        comp.submission = { text: 'same' } as TextSubmission;
+        comp.answer = 'same';
+        expect(comp.canDeactivate()).toBe(true);
+        // changed
+        comp.answer = 'different';
+        expect(comp.canDeactivate()).toBe(false);
+        // cleanup to avoid ngOnDestroy side-effects
+        comp.submission = undefined as any;
+    });
+
+    it('unloadNotification returns translation key when there are unsaved changes', () => {
+        const translate = TestBed.inject(TranslateService) as any;
+        vi.spyOn(translate, 'instant');
+        comp.submission = { text: 'before' } as TextSubmission;
+        comp.answer = 'after';
+        const event = new Event('beforeunload') as unknown as BeforeUnloadEvent;
+        const res = comp.unloadNotification(event);
+        expect(translate.instant).toHaveBeenCalledWith('pendingChanges');
+        expect(res).toBe('pendingChanges');
+        // cleanup to avoid ngOnDestroy side-effects
+        comp.submission = undefined as any;
     });
 });

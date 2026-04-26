@@ -1,0 +1,26 @@
+<div class="alert unified-feedback" [ngClass]="inferredAlertClass()">
+    <div class="unified-feedback-content">
+        @if (inferredReference() && showReference()) {
+            <div class="unified-feedback-reference">
+                <span class="unified-feedback-reference-label" jhiTranslate="artemisApp.feedback.reference"></span>
+                <span class="unified-feedback-reference-text">{{ inferredReference() }}</span>
+            </div>
+        }
+
+        <div class="unified-feedback-main">
+            <div class="unified-feedback-header">
+                <div class="unified-feedback-header-left">
+                    <fa-icon [icon]="inferredIcon()" class="unified-feedback-icon" />
+                    @if (inferredTitle()) {
+                        <span class="unified-feedback-title">{{ inferredTitle() }}</span>
+                    }
+                </div>
+                <div class="unified-feedback-points">{{ points() }} {{ 'artemisApp.feedback.points' | artemisTranslate }}</div>
+            </div>
+
+            @if (feedbackContent()) {
+                <div class="unified-feedback-text" [innerHTML]="feedbackContent()"></div>
+            }
+        </div>
+    </div>
+</div>

@@ -15,7 +15,7 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ResultService } from 'app/exercise/result/result.service';
@@ -174,7 +174,7 @@ describe('ModelingSubmissionComponent', () => {
                 MockComponent(TeamSubmissionSyncComponent),
                 MockComponent(ModelingAssessmentComponent),
                 MockComponent(FullscreenComponent),
-                MockComponent(AdditionalFeedbackComponent),
+                MockComponent(UnifiedFeedbackComponent),
                 MockComponent(RatingComponent),
                 MockComponent(ComplaintsStudentViewComponent),
             ],
