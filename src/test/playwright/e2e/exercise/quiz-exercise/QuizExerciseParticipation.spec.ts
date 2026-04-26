@@ -40,6 +40,119 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 2);
             await quizExerciseMultipleChoice.submit();
         });
+
+        /**
+         * Regression test for https://github.com/ls1intum/Artemis/issues/12574: after ending and evaluating an MC quiz,
+         * every refresh of the participation page must return the complete set of answer options the student selected. Previously,
+         * Hibernate's EAGER fetch of MultipleChoiceSubmittedAnswer.selectedOptions (combined with second-level caching) could
+         * yield partial collections, so options appeared deselected and the per-question score flipped between 0 and its true value.
+         */
+        test('Selected MC options stay fully populated across reloads after quiz evaluation', async ({ login, exerciseAPIRequests, page, quizExerciseMultipleChoice }) => {
+            const quizDurationSeconds = 10;
+            await login(admin);
+            const shortQuiz = await exerciseAPIRequests.createQuizExercise({
+                body: { course },
+                quizQuestions: [multipleChoiceQuizTemplate],
+                duration: quizDurationSeconds,
+            });
+            await exerciseAPIRequests.setQuizVisible(shortQuiz.id!);
+            await exerciseAPIRequests.startQuizNow(shortQuiz.id!);
+
+            // Pick answer-option indices to tick explicitly — the assertion below must compare against what the student ticked, not against the (unrelated) `isCorrect` property.
+            const tickedOptionIndices = [0, 1];
+            await login(studentOne, `/courses/${course.id}/exercises/${shortQuiz.id!}`);
+            for (const index of tickedOptionIndices) {
+                await quizExerciseMultipleChoice.tickAnswerOption(shortQuiz.id!, index);
+            }
+            await quizExerciseMultipleChoice.submit();
+
+            const mcQuestionId = shortQuiz.quizQuestions![0].id!;
+            const expectedTickedOptionIds = tickedOptionIndices.map((index) => shortQuiz.quizQuestions![0].answerOptions![index].id);
+            expect(expectedTickedOptionIds).toHaveLength(tickedOptionIndices.length);
+
+            /**
+             * Reload the participation page and read the server's response to `/start-participation`. Returns the set of selected option ids for
+             * the MC question on this response, or null when evaluation has not yet populated a rated result (e.g. the `results` array is still empty).
+             */
+            async function reloadAndReadSelectedOptionIds(): Promise<number[] | null> {
+                const responsePromise = page.waitForResponse(
+                    (response) =>
+                        response.url().includes(`/api/quiz/quiz-exercises/${shortQuiz.id}/start-participation`) && response.request().method() === 'POST' && response.ok(),
+                );
+                await page.goto(`/courses/${course.id}/exercises/${shortQuiz.id!}`);
+                const body = await (await responsePromise).json();
+                const submission = (body.submissions ?? [])[0];
+                if (!submission || !(submission.results ?? []).length) {
+                    return null;
+                }
+                const mcAnswer = (submission.submittedAnswers ?? []).find((submittedAnswer: any) => submittedAnswer.quizQuestion?.id === mcQuestionId);
+                return mcAnswer ? (mcAnswer.selectedOptions ?? []).map((option: any) => option.id).sort((a: number, b: number) => a - b) : [];
+            }
+
+            // Poll the refresh endpoint until the scheduled evaluation job has created a rated result — more robust than a fixed sleep on loaded CI workers.
+            const evaluationTimeoutMs = (quizDurationSeconds + 30) * 1000;
+            await expect
+                .poll(() => reloadAndReadSelectedOptionIds().then((ids) => ids !== null), {
+                    message: 'evaluation did not produce a rated result within the expected window',
+                    timeout: evaluationTimeoutMs,
+                    intervals: [1000, 2000, 3000],
+                })
+                .toBe(true);
+
+            const expectedSortedOptionIds = [...expectedTickedOptionIds].sort((a, b) => a - b);
+            // Reload several times after evaluation completes; the bug manifested non-deterministically, so the loop amplifies any remaining flakiness.
+            for (let iteration = 0; iteration < 5; iteration++) {
+                const selectedOptionIds = await reloadAndReadSelectedOptionIds();
+                expect(selectedOptionIds, `iteration ${iteration}: server must return exactly the answer options the student ticked`).toEqual(expectedSortedOptionIds);
+            }
+        });
+
+        /**
+         * Regression test for https://github.com/ls1intum/Artemis/issues/12584: clicking "Set visible" / "Start now"
+         * on a quiz must not regenerate the primary keys of the child rows (answer options, drag items, drop
+         * locations, short-answer spots). Before the fix, the REST handler called {@code saveAndFlush} on the
+         * eagerly-loaded quiz graph and the unowned {@code @OneToMany + @OrderColumn + orphanRemoval} child
+         * collections were DELETE+INSERTed with fresh auto-generated IDs, so any in-flight student submit carrying
+         * the old IDs produced an {@code ObjectNotFoundException}. This test pins the fix by snapshotting the MC
+         * answer-option IDs before and after each lifecycle action and asserting equality.
+         */
+        test('Lifecycle actions preserve answer-option IDs', async ({ login, exerciseAPIRequests, page }) => {
+            await login(admin);
+            const createdQuiz = await exerciseAPIRequests.createQuizExercise({
+                body: { course },
+                quizQuestions: [multipleChoiceQuizTemplate],
+                releaseDate: dayjs().add(1, 'hour'),
+            });
+
+            // Capture the IDs that the client will send back on submit.
+            const initialOptionIds = (createdQuiz.quizQuestions![0] as any).answerOptions!.map((opt: any) => opt.id).sort((a: number, b: number) => a - b);
+            expect(initialOptionIds.length).toBeGreaterThan(0);
+
+            const readOptionIdsFromServer = async (): Promise<number[]> => {
+                const response = await page.request.get(`/api/quiz/quiz-exercises/${createdQuiz.id}`);
+                expect(response.ok()).toBeTruthy();
+                const body = await response.json();
+                return (body.quizQuestions ?? [])
+                    .filter((q: any) => q.type === 'multiple-choice')
+                    .flatMap((q: any) => (q.answerOptions ?? []).map((opt: any) => opt.id))
+                    .sort((a: number, b: number) => a - b);
+            };
+
+            // Sanity check: IDs in the creation response match what the server now holds.
+            expect(await readOptionIdsFromServer()).toEqual(initialOptionIds);
+
+            await exerciseAPIRequests.setQuizVisible(createdQuiz.id!);
+            expect(await readOptionIdsFromServer(), 'SET_VISIBLE must not regenerate AnswerOption ids').toEqual(initialOptionIds);
+
+            const startNowResponse = await page.request.put(`/api/quiz/quiz-exercises/${createdQuiz.id}/start-now`);
+            expect(startNowResponse.ok()).toBeTruthy();
+            const startNowBody = await startNowResponse.json();
+            // Guard against a regression where START_NOW silently skips persisting the batch startTime (e.g. an UPDATE
+            // on a transient batch whose id is null would match no rows and the quiz would stay in "Waiting for Start"
+            // for students, even though the child-id assertion below still passes).
+            expect(startNowBody.startDate, 'START_NOW must return a persisted batch startTime').toBeTruthy();
+            expect(await readOptionIdsFromServer(), 'START_NOW must not regenerate AnswerOption ids').toEqual(initialOptionIds);
+        });
     });
 
     test.describe('Quiz exercise scheduled participation', () => {

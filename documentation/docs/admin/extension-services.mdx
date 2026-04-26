@@ -24,14 +24,16 @@ EduTelligence is a comprehensive suite of AI-powered microservices designed to e
 
 **Compatibility**: EduTelligence maintains compatibility with different versions of Artemis. Please refer to the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions for optimal integration and functionality.
 
-**Repository**: <a href="https://github.com/ls1intum/edutelligence">https://github.com/ls1intum/edutelligence</a>
+**Repository**: <a href="https://github.com/ls1intum/edutelligence">github.com/ls1intum/edutelligence</a>
 
 ---
 
 ## Iris & Pyris Setup Guide
 
 <Callout variant={CalloutVariant.info}>
-  <p>Pyris is part of the <a href="https://github.com/ls1intum/edutelligence">EduTelligence</a> suite. Always check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure your Artemis version matches the EduTelligence version you deploy.</p>
+
+  Pyris is part of the <a href="https://github.com/ls1intum/edutelligence">EduTelligence</a> suite. Always check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure your Artemis version matches the EduTelligence version you deploy.
+
 </Callout>
 
 ### Overview
@@ -55,7 +57,9 @@ artemis:
 ```
 
 <Callout variant={CalloutVariant.info}>
-  <p>The `secret-token` value must exactly match one of the tokens under `api_keys` in the Pyris `application.yml`. If they don't match, Artemis will receive 401 errors when calling Pyris.</p>
+
+  The `secret-token` value must exactly match one of the tokens under `api_keys` in the Pyris `application.yml`. If they don't match, Artemis will receive 401 errors when calling Pyris.
+
 </Callout>
 
 #### 1.2 Optional: Configure rate limiting
@@ -107,7 +111,9 @@ env_vars:
 ```
 
 <Callout variant={CalloutVariant.warning}>
-  <p>When running inside Docker, set `weaviate.host` to `"weaviate"` (the Docker service name), not `"localhost"`. The containers communicate over an internal Docker network.</p>
+
+  When running inside Docker, set `weaviate.host` to `"weaviate"` (the Docker service name), not `"localhost"`. The containers communicate over an internal Docker network.
+
 </Callout>
 
 Edit `llm_config.yml` with your model configurations. Pyris needs **three types of models**:
@@ -117,7 +123,9 @@ Edit `llm_config.yml` with your model configurations. Pyris needs **three types 
 - **Reranker models** (optional) — improves retrieval quality
 
 <Callout variant={CalloutVariant.warning}>
-  <p>The examples below use Azure OpenAI, which is recommended for production (GDPR-compliant). For local development, you can also use direct OpenAI entries — see `llm_config.example.yml` for examples.</p>
+
+  The examples below use Azure OpenAI, which is recommended for production (GDPR-compliant). For local development, you can also use direct OpenAI entries — see `llm_config.example.yml` for examples.
+
 </Callout>
 
 **Azure OpenAI chat model example:**
@@ -166,7 +174,9 @@ See `llm_config.example.yml` for the complete list of model types, including Ope
 - `cost_per_million_input_token` / `cost_per_million_output_token`: Pricing info used for model routing decisions.
 
 <Callout variant={CalloutVariant.info}>
-  <p>Most Iris pipelines require the GPT-5 model family (`gpt-5.2`, `gpt-5-mini`, `gpt-5-nano`) plus at least one embedding model. Monitor Pyris logs for warnings about missing models.</p>
+
+  Most Iris pipelines require the GPT-5 model family (`gpt-5.2`, `gpt-5-mini`, `gpt-5-nano`) plus at least one embedding model. Monitor Pyris logs for warnings about missing models.
+
 </Callout>
 
 **3. Choose a Docker Compose profile and start**
@@ -199,7 +209,9 @@ docker compose -f docker/pyris-production-internal.yml up -d
 ```
 
 <Callout variant={CalloutVariant.info}>
-  <p>Instead of passing environment variables inline, you can create a `docker.env` file and use `--env-file docker.env` with `docker compose`. This is the recommended approach for production servers.</p>
+
+  Instead of passing environment variables inline, you can create a `docker.env` file and use `--env-file docker.env` with `docker compose`. This is the recommended approach for production servers.
+
 </Callout>
 
 **Environment variable reference:**
@@ -327,7 +339,9 @@ If Iris does not respond, check:
 The semi-automatic text assessment relies on the <a href="https://github.com/ls1intum/edutelligence/tree/main/athena">Athena</a> service, which is part of the EduTelligence suite. To enable automatic text assessments, special configuration is required:
 
 <Callout variant={CalloutVariant.info}>
-  <p>Athena is now part of the EduTelligence suite. Please check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions of Artemis and EduTelligence.</p>
+
+  Athena is now part of the EduTelligence suite. Please check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions of Artemis and EduTelligence.
+
 </Callout>
 
 ### Enable the athena Spring profile
@@ -437,7 +451,9 @@ artemis:
 ### Hyperion Service
 
 <Callout variant={CalloutVariant.info}>
-  <p>This documentation has been migrated to the new documentation system. Please refer to the <a href="/admin/hyperion">Hyperion Setup Guide</a>.</p>
+
+  This documentation has been migrated to the new documentation system. Please refer to the <a href="/admin/hyperion">Hyperion Setup Guide</a>.
+
 </Callout>
 
 ---
@@ -534,8 +550,8 @@ If the health status is not **`up`**, check the error message in the details. If
 
 #### Conclusion
 
-Once everything is set up correctly, you should see the <Image src={sharingButton1} alt={"Sharing button Artemis"} size={ImageSize.inline} /> button in the **Programming Exercise Details** dialog in Artemis.
+Once everything is set up correctly, you should see the <Image src={sharingButton1} alt={"Sharing button Artemis"} inline /> button in the **Programming Exercise Details** dialog in Artemis.
 
-Similarly, the <Image src={sharingButton2} alt={"Sharing button Sharing"} size={ImageSize.inline} /> button should appear on the sharing platform for any programming exercise available there.
+Similarly, the <Image src={sharingButton2} alt={"Sharing button Sharing"} inline /> button should appear on the sharing platform for any programming exercise available there.
 
 Before testing the import and export functionality, refer to the user documentation for further details.

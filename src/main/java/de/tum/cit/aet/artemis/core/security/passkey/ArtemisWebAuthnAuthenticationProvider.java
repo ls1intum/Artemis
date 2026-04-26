@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
@@ -33,6 +35,8 @@ import de.tum.cit.aet.artemis.core.service.RateLimitService;
  * @see org.springframework.security.web.webauthn.authentication.WebAuthnAuthenticationProvider
  */
 public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(ArtemisWebAuthnAuthenticationProvider.class);
 
     private final WebAuthnRelyingPartyOperations relyingPartyOperations;
 
@@ -69,6 +73,11 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
         try {
             String credentialId = webAuthnRequest.getWebAuthnRequest().getPublicKey().getId();
 
+            PasskeyCredential credential = this.passkeyCredentialsRepository.findByCredentialId(credentialId).orElseThrow(() -> {
+                log.warn("Passkey login attempt with unregistered credential id '{}'", credentialId);
+                return new NoPasskeyFoundException("No passkey credential found for id " + credentialId);
+            });
+
             PublicKeyCredentialUserEntity userEntity = this.relyingPartyOperations.authenticate(webAuthnRequest.getWebAuthnRequest());
             String username = userEntity.getName();
             Optional<User> user = this.userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
@@ -79,7 +88,7 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
                 throw new UserNotActivatedException("User " + username + " is not activated");
             }
 
-            Map<String, Object> details = createAuthenticationDetailsWithPasskeyApprovalStatus(credentialId);
+            Map<String, Object> details = createAuthenticationDetailsWithPasskeyApprovalStatus(credential);
 
             WebAuthnAuthentication auth = new WebAuthnAuthentication(userEntity, user.get().getGrantedAuthorities());
             auth.setDetails(details);
@@ -102,14 +111,12 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
     /**
      * Creates authentication details containing the passkey super admin approval status.
      *
-     * @param credentialId to check for super admin approval
+     * @param credential the passkey credential to check for super admin approval
      * @return a map containing the authentication details with the passkey super admin approval status
      */
-    private Map<String, Object> createAuthenticationDetailsWithPasskeyApprovalStatus(String credentialId) {
-        Optional<PasskeyCredential> credential = this.passkeyCredentialsRepository.findByCredentialId(credentialId);
-        boolean isPasskeyApproved = credential.map(PasskeyCredential::isSuperAdminApproved).orElse(false);
+    private Map<String, Object> createAuthenticationDetailsWithPasskeyApprovalStatus(PasskeyCredential credential) {
         Map<String, Object> details = new HashMap<>();
-        details.put(TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED, isPasskeyApproved);
+        details.put(TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED, credential.isSuperAdminApproved());
         return details;
     }
 }

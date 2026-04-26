@@ -87,7 +87,6 @@ jobs:
       PLAYWRIGHT_REPORT_PHASE: phase1
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
     outputs:
-      phase1_status: ${{ job.status }}
       reporter_failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
     steps:
       # workflow_run events do not create check runs, so we set a status manually
@@ -231,7 +230,7 @@ jobs:
             body += `<!-- OVERALL -->\n\n`;
             body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
             if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
-              body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
+              body += ` · 📊 [Test Report Phase 1](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
             }
             body += `\n`;
             body += `<!-- E2E Test Results -->`;
@@ -396,14 +395,14 @@ jobs:
 
             const phase2Row = `| **Phase 2** (Remaining) | ${emoji} ${status} | ${details} |`;
 
-            // Pass Phase 2 notes as output so the report-results job can insert them
-            // alongside the overall status when it replaces <!-- OVERALL -->.
-            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote);
-
             // Fetch flakiness scores for Phase 2 failed tests
             const failedTests = parseFailedTests('phase2-test-results/results.xml');
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
             const flakinessTable = buildFlakinessTable(flakinessResults);
+
+            // Pass Phase 2 notes as output so the report-results job can insert them
+            // alongside the overall status when it replaces <!-- OVERALL -->.
+            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote + flakinessTable);
 
             if (existingCommentId) {
               let body = (await github.rest.issues.getComment({
@@ -416,15 +415,12 @@ jobs:
               // is left untouched for the report-results job to handle.
               body = body.replace(/<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s, phase2Row);
 
-              // Replace or insert Phase 2 flakiness table using idempotent markers
-              const phase2FlakinessMarker = /<!-- PHASE2_FLAKINESS -->[\s\S]*?<!-- \/PHASE2_FLAKINESS -->\n?/;
-              const phase2FlakinessBlock = flakinessTable
-                ? `<!-- PHASE2_FLAKINESS -->${flakinessTable}\n<!-- /PHASE2_FLAKINESS -->\n`
-                : '';
-              if (phase2FlakinessMarker.test(body)) {
-                body = body.replace(phase2FlakinessMarker, phase2FlakinessBlock);
-              } else if (flakinessTable) {
-                body = body.replace('<!-- OVERALL -->', phase2FlakinessBlock + '<!-- OVERALL -->');
+              // Append Phase 2 report link to the footer (idempotent).
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                const phase2ReportUrl = `${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase2`;
+                if (!body.includes(phase2ReportUrl)) {
+                  body = body.replace('\n<!-- E2E Test Results -->', ` · 📊 [Test Report Phase 2](${phase2ReportUrl})\n<!-- E2E Test Results -->`);
+                }
               }
 
               await github.rest.issues.updateComment({
@@ -436,18 +432,17 @@ jobs:
               console.log(`Updated comment ${existingCommentId} with Phase 2 results`);
             } else {
               // Fallback: create new comment if Phase 1 comment not found.
-              // Notes are omitted here — the report-results job will insert them
-              // when it replaces <!-- OVERALL --> with the final status.
+              // Failures and flakiness are omitted here — the report-results job will
+              // insert them via phase2_notes when it replaces <!-- OVERALL -->.
               let body = `## End-to-End Test Results\n\n`;
               body += `| Phase | Status | Details |\n`;
               body += `|-------|--------|---------|\n`;
               body += `| **Phase 1** (Relevant) | ✅ Passed | *(completed in previous step)* |\n`;
               body += `${phase2Row}\n`;
-              body += flakinessTable;
               body += `<!-- OVERALL -->\n\n`;
               body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
               if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
-                body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase2)`;
+                body += ` · 📊 [Test Report Phase 2](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase2)`;
               }
               body += `\n`;
               body += `<!-- E2E Test Results -->`;
@@ -864,7 +859,7 @@ jobs:
               body += `**Overall: ${overallEmoji} ${description}**\n\n`;
               body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
               if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
-                body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
+                body += ` · 📊 [Test Report Phase 1](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
               }
               body += `\n`;
               body += marker;

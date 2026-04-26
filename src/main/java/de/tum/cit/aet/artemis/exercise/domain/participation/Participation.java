@@ -97,9 +97,9 @@ public abstract class Participation extends DomainObject implements Participatio
      * have to use the save function and not the saveAndFlush function because otherwise an exception is thrown. We can think about adding orphanRemoval=true here, after adding the
      * participationId to all submissions.
      */
+    // No @Cache: grows on every submit; NONSTRICT produced stale submission lists for concurrent readers, same class of bug as #12574.
     @OneToMany(mappedBy = "participation", fetch = FetchType.LAZY)
     @JsonIgnoreProperties({ "participation" })
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Submission> submissions = new HashSet<>();
 
     /**

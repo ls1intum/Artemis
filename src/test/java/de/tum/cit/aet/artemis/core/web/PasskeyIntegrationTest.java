@@ -800,7 +800,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         @WithAnonymousUser
-        void testPasskeyAuthentication_FailsForUnregisteredCredential() throws Exception {
+        void testPasskeyAuthentication_NotFoundForUnregisteredCredential() throws Exception {
             String rpId = getRpId();
             String origin = getOrigin();
 
@@ -822,10 +822,63 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             AuthenticationResponse authResponse = webAuthnClientSimulator.createAuthenticationResponse(unregisteredAuthenticator, (String) authOptions.get("challenge"), origin,
                     rpId, webAuthnClientSimulator.encodeUserHandle(999999L));
 
-            // Authentication should fail
+            // Authentication should fail with 404 because the credential ID is not registered in the passkey repository
             request.performMvcRequest(
                     post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(authResponse)).cookie(challengeCookie))
-                    .andExpect(status().isUnauthorized());
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testPasskeyAuthentication_ForbiddenForDeactivatedUser() throws Exception {
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            String rpId = getRpId();
+            String origin = getOrigin();
+
+            // Step 1: Register a passkey for the user
+            MockHttpServletResponse regOptionsResponse = request.performMvcRequest(post("/webauthn/register/options").contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk()).andReturn().getResponse();
+
+            Map<String, Object> regOptions = objectMapper.readValue(regOptionsResponse.getContentAsString(), new TypeReference<>() {
+            });
+            VirtualAuthenticator authenticator = webAuthnClientSimulator.createVirtualAuthenticator();
+            RegistrationResponse registrationResponse = webAuthnClientSimulator.createRegistrationResponse(authenticator, (String) regOptions.get("challenge"), origin, rpId);
+
+            request.performMvcRequest(post("/webauthn/register").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(Map.of("publicKey", Map.of("credential", registrationResponse, "label", "Deactivation Test Passkey")))))
+                    .andExpect(status().isOk());
+
+            // Step 2: Deactivate the user
+            user.setActivated(false);
+            userTestRepository.save(user);
+
+            try {
+                // Step 3: Get authentication options (as anonymous)
+                MockHttpServletResponse authOptionsResponse = request
+                        .performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON).with(anonymous())).andExpect(status().isOk()).andReturn()
+                        .getResponse();
+
+                Map<String, Object> authOptions = objectMapper.readValue(authOptionsResponse.getContentAsString(), new TypeReference<>() {
+                });
+                String authChallenge = (String) authOptions.get("challenge");
+                Cookie challengeCookie = authOptionsResponse.getCookie("webauthn-challenge");
+                assertThat(challengeCookie).as("webauthn-challenge cookie should be set").isNotNull();
+
+                // Step 4: Create authentication response
+                String userHandle = webAuthnClientSimulator.encodeUserHandle(user.getId());
+                VirtualAuthenticator authenticatorWithIncrementedCount = authenticator.withIncrementedCount();
+                AuthenticationResponse authResponse = webAuthnClientSimulator.createAuthenticationResponse(authenticatorWithIncrementedCount, authChallenge, origin, rpId,
+                        userHandle);
+
+                // Step 5: Authentication should fail with 403 because the user is deactivated
+                request.performMvcRequest(post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(authResponse))
+                        .cookie(challengeCookie).with(anonymous())).andExpect(status().isForbidden());
+            }
+            finally {
+                // Restore user activation to avoid polluting other tests
+                user.setActivated(true);
+                userTestRepository.save(user);
+            }
         }
     }
 }
