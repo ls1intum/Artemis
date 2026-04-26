@@ -23,7 +23,12 @@
                 "attachmentVersion": "Dateiversion: "
             },
             "completedTooltip": "Klicke hier, um diesen Inhalt als unerledigt zu markieren",
-            "uncompletedTooltip": "Klicke hier, um diesen Inhalt als erledigt zu markieren"
+            "uncompletedTooltip": "Klicke hier, um diesen Inhalt als erledigt zu markieren",
+            "openFullscreen": "Vollbild öffnen",
+            "closeFullscreen": "Vollbild schließen",
+            "fullscreenView": "Vollbildansicht von {{ title }}",
+            "irisSidebarLabel": "Iris KI-Assistent Chat",
+            "lectureUnit": "Vorlesungsinhalt"
         },
         "textUnit": {
             "created": "Neuer Textinhalt erstellt",
@@ -222,7 +227,8 @@
                 "nextResult": "Nächstes Ergebnis",
                 "noResults": "Keine Ergebnisse",
                 "noMatchingTranscript": "Kein passendes Transkript gefunden",
-                "loading": "Lädt..."
+                "loading": "Lädt...",
+                "resetSplitRatio": "Aufteilung zurücksetzen"
             },
             "pdfViewer": {
                 "title": "PDF-Betrachter",

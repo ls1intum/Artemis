@@ -7,6 +7,8 @@ import { faVideo } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockComponent } from 'ng-mocks';
+import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
@@ -53,11 +55,17 @@ describe('LectureUnitComponent', () => {
                     useValue: mockProfileService,
                 },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(LectureUnitComponent, {
+                remove: { imports: [CompetencyContributionComponent] },
+                add: { imports: [MockComponent(CompetencyContributionComponent)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(LectureUnitComponent);
         component = fixture.componentInstance;
 
+        fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('lectureUnit', lectureUnit);
         fixture.componentRef.setInput('showViewIsolatedButton', true);
         fixture.componentRef.setInput('isPresentationMode', false);
@@ -66,6 +74,7 @@ describe('LectureUnitComponent', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.restoreAllMocks();
     });
 
@@ -128,6 +137,16 @@ describe('LectureUnitComponent', () => {
 
         expect(handleOriginalVersionViewSpy).toHaveBeenCalledTimes(1);
         expect(onShowOriginalVersionEmitSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('handleFullscreen emits and stops propagation', () => {
+        const emitSpy = vi.spyOn(component.onFullscreen, 'emit');
+        const event = { stopPropagation: vi.fn() } as unknown as Event;
+
+        component.handleFullscreen(event);
+
+        expect(event.stopPropagation).toHaveBeenCalled();
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 
     describe('Deeplinking scroll behavior', () => {

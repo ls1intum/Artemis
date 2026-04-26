@@ -317,9 +317,9 @@ describe('VideoPlayerComponent', () => {
             // Simulate drag to position 600px from left
             moveListener({ clientX: 600 });
 
-            // Browser normalizes 'none' to '0 0 auto'
-            expect(videoColumnEl.style.flex).toBe('0 0 auto');
-            expect(videoColumnEl.style.width).toBe('600px');
+            // Now uses percentage-based flex (600/1000 = 60%)
+            expect(videoColumnEl.style.flex).toBe('0 0 60%');
+            expect(videoColumnEl.style.width).toBe('');
         });
 
         it('clamps video column width to minimum', async () => {
@@ -347,7 +347,9 @@ describe('VideoPlayerComponent', () => {
             // Try to drag below minimum (300px)
             moveListener({ clientX: 100 });
 
-            expect(videoColumnEl.style.width).toBe('300px');
+            // Clamped to 300px, which is 30% of 1000px wrapper
+            expect(videoColumnEl.style.flex).toBe('0 0 30%');
+            expect(videoColumnEl.style.width).toBe('');
         });
 
         it('clamps video column width to maximum', async () => {
@@ -375,7 +377,9 @@ describe('VideoPlayerComponent', () => {
             // Try to drag beyond maximum (1000 - 250 = 750px)
             moveListener({ clientX: 900 });
 
-            expect(videoColumnEl.style.width).toBe('750px');
+            // Clamped to 750px, which is 75% of 1000px wrapper
+            expect(videoColumnEl.style.flex).toBe('0 0 75%');
+            expect(videoColumnEl.style.width).toBe('');
         });
 
         it('resets video column styles on window resize', async () => {
@@ -401,15 +405,15 @@ describe('VideoPlayerComponent', () => {
             const draggableConfig = getMockInteractInstance().draggable.mock.calls[0][0];
             draggableConfig.listeners.move({ clientX: 500 });
 
-            // Browser normalizes 'none' to '0 0 auto'
-            expect(videoColumnEl.style.flex).toBe('0 0 auto');
-            expect(videoColumnEl.style.width).toBe('500px');
+            // Now uses percentage-based flex (500/1000 = 50%)
+            expect(videoColumnEl.style.flex).toBe('0 0 50%');
+            expect(videoColumnEl.style.width).toBe('');
 
             // Trigger window resize
             window.dispatchEvent(new Event('resize'));
 
-            // Styles should be reset to empty
-            expect(videoColumnEl.style.flex).toBe('');
+            // Percentage-based flex is maintained (allows proportional scaling)
+            expect(videoColumnEl.style.flex).toBe('0 0 50%');
             expect(videoColumnEl.style.width).toBe('');
         });
 

@@ -1,4 +1,19 @@
-import { Component, DestroyRef, OnDestroy, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import {
+    Component,
+    DestroyRef,
+    ElementRef,
+    Injector,
+    OnDestroy,
+    ViewEncapsulation,
+    afterNextRender,
+    computed,
+    effect,
+    inject,
+    input,
+    signal,
+    untracked,
+    viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -23,6 +38,7 @@ import {
     faFilePowerpoint,
     faFileVideo,
     faFileWord,
+    faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -35,22 +51,55 @@ import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MessageModule } from 'primeng/message';
+import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
+import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { LectureUnitFullscreenLayoutComponent } from 'app/lecture/shared/lecture-unit-fullscreen-layout/lecture-unit-fullscreen-layout.component';
+
+type SplitSizes = [number, number];
+
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, YouTubePlayerComponent, PdfViewerComponent, MessageModule],
+    imports: [
+        LectureUnitComponent,
+        ArtemisDatePipe,
+        TranslateDirective,
+        SafeResourceUrlPipe,
+        VideoPlayerComponent,
+        YouTubePlayerComponent,
+        PdfViewerComponent,
+        MessageModule,
+        LectureChatbotComponent,
+        FaIconComponent,
+        LectureUnitFullscreenLayoutComponent,
+    ],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
+    encapsulation: ViewEncapsulation.None,
 })
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> implements OnDestroy {
     protected readonly faDownload = faDownload;
+    protected readonly faXmark = faXmark;
     private readonly destroyRef = inject(DestroyRef);
+    private readonly hostElement = inject(ElementRef<HTMLElement>);
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
+    private readonly injector = inject(Injector);
+    private readonly translateService = inject(TranslateService);
+    private readonly themeService = inject(ThemeService);
 
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
+    irisSettings = input<IrisCourseSettingsWithRateLimitDTO | undefined>(undefined);
+
+    readonly lectureUnitCard = viewChild(LectureUnitComponent);
+    readonly fullscreenLayout = viewChild(LectureUnitFullscreenLayoutComponent);
+    readonly videoContainerElement = viewChild<ElementRef>('videoContainer');
+    readonly pdfContainerElement = viewChild<ElementRef>('pdfContainer');
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
@@ -70,18 +119,22 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return this.rawVideoSource();
     });
 
-    // Reset the fallback latch whenever the lecture unit changes (panel reopen, new
-    // unit selected). Without this, one transient YouTube init failure sticks this
-    // component instance on iframe fallback for its whole lifetime.
-    constructor() {
-        super();
-        effect(() => {
-            const id = this.lectureUnit()?.id;
-            // read id to create the dependency; then schedule reset
-            void id;
-            untracked(() => this.youtubePlayerFailed.set(false));
-        });
-    }
+    private readonly _hasPdfFullscreen = signal<boolean>(false);
+    readonly hasPdfFullscreen = this._hasPdfFullscreen.asReadonly();
+
+    private readonly _isFullscreen = signal<boolean>(false);
+    readonly isFullscreen = this._isFullscreen.asReadonly();
+
+    // Split panel sizes (percentage values)
+    readonly defaultVerticalSplitSizes: SplitSizes = [66.67, 33.33]; // [content, iris]
+    readonly defaultHorizontalSplitSizes: SplitSizes = [50, 50]; // [video, pdf]
+    private readonly _verticalSplitSizes = signal<SplitSizes>(this.defaultVerticalSplitSizes);
+    private readonly _horizontalSplitSizes = signal<SplitSizes>(this.defaultHorizontalSplitSizes);
+    readonly minVerticalSplitSizes: SplitSizes = [120, 120];
+    readonly minHorizontalSplitSizes: SplitSizes = [80, 80];
+
+    readonly verticalSplitSizes = this._verticalSplitSizes.asReadonly();
+    readonly horizontalSplitSizes = this._horizontalSplitSizes.asReadonly();
 
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
@@ -103,6 +156,69 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         const candidate = attachment?.studentVersion ?? attachment?.link ?? attachment?.name;
         return this.hasAttachment() && candidate ? candidate.toLowerCase().endsWith('.pdf') : false;
     });
+
+    readonly hasRenderableVideo = computed(() => !!this.rawVideoSource() || !!this.youtubeVideoId());
+
+    readonly hasFullscreenContent = computed(() => (this.hasRenderableVideo() || this.hasPdf()) && this.shouldShowIrisSidebarInFullscreen());
+
+    readonly lectureId = computed(() => this.lectureUnit().lecture?.id);
+
+    readonly isCollapsed = computed(() => {
+        const card = this.lectureUnitCard();
+        return card ? card.isCollapsed() : true;
+    });
+
+    readonly showIrisSidebar = computed(() => this.isFullscreen() && this.shouldShowIrisSidebarInFullscreen());
+
+    readonly verticalSplitConfig = computed(() => ({
+        sizes: this.verticalSplitSizes(),
+        minSizes: this.minVerticalSplitSizes,
+        defaultSizes: this.defaultVerticalSplitSizes,
+    }));
+
+    readonly horizontalSplitConfig = computed(() => ({
+        enabled: this.isFullscreen() && this.hasRenderableVideo() && this.hasPdf(),
+        sizes: this.horizontalSplitSizes(),
+        minSizes: this.minHorizontalSplitSizes,
+        defaultSizes: this.defaultHorizontalSplitSizes,
+        topElement: this.videoContainerElement(),
+        bottomElement: this.pdfContainerElement(),
+    }));
+
+    readonly fullscreenAriaLabel = computed(() => {
+        if (!this.isFullscreen()) {
+            return undefined;
+        }
+        const unitName = this.lectureUnit().name ?? this.translateService.instant('artemisApp.lectureUnit.lectureUnit');
+        return this.translateService.instant('artemisApp.lectureUnit.fullscreenView', { title: unitName });
+    });
+
+    readonly irisSidebarAriaLabel = computed(() => {
+        return this.isFullscreen() ? this.translateService.instant('artemisApp.lectureUnit.irisSidebarLabel') : undefined;
+    });
+
+    readonly closeFullscreenAriaLabel = computed(() => {
+        return this.isFullscreen() ? this.translateService.instant('artemisApp.lectureUnit.closeFullscreen') : undefined;
+    });
+
+    constructor() {
+        super();
+
+        // Reset the fallback latch whenever the lecture unit changes (panel reopen, new
+        // unit selected). Without this, one transient YouTube init failure sticks this
+        // component instance on iframe fallback for its whole lifetime.
+        effect(() => {
+            const id = this.lectureUnit()?.id;
+            // read id to create the dependency; then schedule reset
+            void id;
+            untracked(() => this.youtubePlayerFailed.set(false));
+        });
+
+        // Update dark-mode class based on theme
+        effect(() => {
+            this.hostElement.nativeElement.classList.toggle('dark-mode', this.themeService.currentTheme() === Theme.DARK);
+        });
+    }
 
     protected onPdfLoadError(event: { pdfUrl: string }): void {
         const failedUrl = event.pdfUrl;
@@ -203,18 +319,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     private fetchTranscript(): void {
-        const id = this.lectureUnit().id!;
+        const id = this.lectureUnit().id;
+        if (id === undefined) {
+            this.transcriptSegments.set([]);
+            return;
+        }
 
         this.lectureTranscriptionService
             .getTranscription(id)
             .pipe(
-                map((dto) => {
-                    if (!dto || !dto.segments) {
-                        return [];
-                    }
-                    // Filter and map to ensure all required fields are present
-                    return dto.segments.filter((seg): seg is TranscriptSegment => seg.startTime != null && seg.endTime != null && seg.text != null) as TranscriptSegment[];
-                }),
+                map((dto) => dto?.segments?.filter((segment): segment is TranscriptSegment => this.isValidTranscriptSegment(segment)) ?? []),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({
@@ -226,6 +340,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     this.transcriptSegments.set([]);
                 },
             });
+    }
+
+    private isValidTranscriptSegment(segment: Partial<TranscriptSegment> | undefined): segment is TranscriptSegment {
+        return !!segment && segment.startTime != null && segment.endTime != null && segment.text != null;
     }
 
     /** Loads PDF via direct URL for streaming and HTTP caching. Falls back to blob on error. */
@@ -283,6 +401,65 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.revokePdfUrl();
     }
 
+    /**
+     * Opens the lecture unit in fullscreen.
+     * If the card is collapsed, it is expanded first so the fullscreen content can render.
+     */
+    openFullscreen(): void {
+        if (!this.hasFullscreenContent()) {
+            return;
+        }
+
+        const card = this.lectureUnitCard();
+        const layout = this.fullscreenLayout();
+
+        if (!layout) {
+            return;
+        }
+
+        // Auto-expand if collapsed
+        if (card && card.isCollapsed()) {
+            card.toggleCollapse();
+            afterNextRender(
+                () => {
+                    // Re-check state before opening to prevent desync if user closed/re-toggled
+                    if (layout && this.hasFullscreenContent() && card && !card.isCollapsed()) {
+                        layout.open();
+                    }
+                },
+                { injector: this.injector },
+            );
+        } else {
+            layout.open();
+        }
+    }
+
+    protected onVerticalSplitSizesChange(sizes: SplitSizes): void {
+        this._verticalSplitSizes.set(sizes);
+    }
+
+    protected onHorizontalSplitSizesChange(sizes: SplitSizes): void {
+        this._horizontalSplitSizes.set(sizes);
+    }
+
+    protected onFullscreenChange(isFullscreen: boolean): void {
+        this._isFullscreen.set(isFullscreen);
+    }
+
+    private shouldShowIrisSidebarInFullscreen(): boolean {
+        const settings = this.irisSettings();
+        const lecId = this.lectureId();
+        const isTutorial = this.lectureUnit().lecture?.isTutorialLecture;
+        return !!settings?.settings?.enabled && lecId !== undefined && !isTutorial;
+    }
+
+    /**
+     * Closes fullscreen.
+     */
+    closeFullscreen(): void {
+        this.fullscreenLayout()?.close();
+    }
+
     private cancelPdfLoad(): void {
         this.blobLoadSubscription?.unsubscribe();
         this.blobLoadSubscription = undefined;
@@ -300,6 +477,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (url && url.startsWith('blob:')) {
             URL.revokeObjectURL(url);
         }
+    }
+
+    /**
+     * Tracks fullscreen state of the nested PDF viewer to avoid conflicting Escape handling.
+     */
+    protected onPdfFullscreenChange(isFullscreen: boolean): void {
+        this._hasPdfFullscreen.set(isFullscreen);
     }
 
     /**

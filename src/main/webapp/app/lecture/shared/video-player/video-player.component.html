@@ -4,9 +4,17 @@
         <video #videoRef id="video-player" class="video-player" controls preload="auto" playsinline></video>
     </div>
 
-    <div class="resizer-handle" #resizerHandle>
-        <fa-icon [icon]="faGripLinesVertical" />
-    </div>
+    <button
+        type="button"
+        class="resizer-handle"
+        #resizerHandle
+        (dblclick)="resetSplitRatio()"
+        (keydown.enter)="resetSplitRatio()"
+        (keydown.space)="resetSplitRatio(); $event.preventDefault()"
+        [attr.aria-label]="'artemisApp.attachmentVideoUnit.videoPlayer.resetSplitRatio' | artemisTranslate"
+    >
+        <fa-icon [icon]="faGripLinesVertical" [attr.aria-hidden]="true" />
+    </button>
 
     <jhi-transcript-viewer #transcriptViewer [transcriptSegments]="transcriptSegments()" [currentSegmentIndex]="currentSegmentIndex()" (segmentClicked)="seekTo($event)" />
 </div>

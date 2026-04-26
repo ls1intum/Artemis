@@ -1,76 +1,143 @@
-.video-wrapper {
-    display: flex;
-    gap: 0;
+.youtube-player-host {
+    display: block;
     width: 100%;
-    padding: 0.5rem;
-    box-sizing: border-box;
-    align-items: center;
+    scroll-margin-top: 20px;
 
-    @media (max-width: 992px) {
-        flex-direction: column;
-        gap: 1rem;
-    }
-}
-
-.video-column {
-    flex: 3;
-    position: relative;
-    aspect-ratio: 16 / 9;
-    background: #000;
-    min-width: 300px;
-
-    @media (max-width: 992px) {
-        flex: none;
+    .video-wrapper {
+        display: flex;
         width: 100%;
-        min-width: 100%;
-    }
-}
+        padding: 0.5rem;
+        box-sizing: border-box;
+        align-items: center;
 
-.resizer-handle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    align-self: stretch;
-    width: 16px;
-    cursor: col-resize;
-    background: transparent;
-    transition: background-color 0.2s;
-    flex-shrink: 0;
-    user-select: none;
-    touch-action: none;
-    color: var(--gray-500);
-
-    &:hover,
-    &:active {
-        background-color: rgba(var(--bs-primary-rgb), 0.1);
-        color: var(--primary);
+        @media (max-width: 992px) {
+            flex-direction: column;
+            gap: 1rem;
+        }
     }
 
-    @media (max-width: 992px) {
-        display: none;
+    .video-column {
+        flex: 3;
+        position: relative;
+        aspect-ratio: 16 / 9;
+        background: #000;
+        min-width: 300px;
+
+        @media (max-width: 992px) {
+            flex: none;
+            width: 100%;
+            min-width: 100%;
+        }
     }
-}
 
-youtube-player {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100% !important;
-    height: 100% !important;
-    border-radius: 0.5rem;
-    box-shadow: 0 0 0.625rem rgba(0, 0, 0, 0.2);
-    background: #000;
+    .resizer-handle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        align-self: stretch;
+        width: 16px;
+        cursor: col-resize;
+        background: transparent;
+        transition: background-color 0.2s;
+        flex-shrink: 0;
+        user-select: none;
+        touch-action: none;
+        color: var(--gray-500);
+        border: none;
+        padding: 0;
+        margin: 0;
+        font: inherit;
 
-    // The YouTube IFrame API injects the <iframe> with fixed pixel width/height
-    // attributes (defaulting to 640x390). It lives outside our emulated-scope
-    // attribute, so we must pierce encapsulation to make it fill the host.
-    ::ng-deep iframe {
+        &:hover,
+        &:active {
+            background-color: rgba(var(--bs-primary-rgb), 0.1);
+            color: var(--primary);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: -2px;
+            background-color: rgba(var(--bs-primary-rgb), 0.1);
+            color: var(--primary);
+        }
+
+        @media (max-width: 992px) {
+            display: none;
+        }
+    }
+
+    .video-column > youtube-player {
+        display: block;
         position: absolute;
         top: 0;
         left: 0;
         width: 100% !important;
         height: 100% !important;
+        border-radius: 0.5rem;
+        box-shadow: 0 0 0.625rem rgba(0, 0, 0, 0.2);
+        background: #000;
+    }
+
+    // The YouTube IFrame API injects inline pixel dimensions into nested wrapper
+    // elements and the iframe. With ViewEncapsulation.None we can scope these
+    // overrides to this component selector instead of relying on ::ng-deep.
+    .video-column > youtube-player > div,
+    .video-column > youtube-player > div > div,
+    .video-column > youtube-player iframe {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .video-column > youtube-player iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
         border: 0;
         border-radius: inherit;
+    }
+}
+
+.content-container--fullscreen .youtube-player-host {
+    height: 100%;
+
+    .video-wrapper {
+        height: 100%;
+        min-height: 0;
+        align-items: stretch;
+    }
+
+    .video-column {
+        aspect-ratio: auto;
+        min-width: 0;
+        min-height: 0;
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        container-type: size;
+        background: transparent;
+    }
+
+    .video-column > youtube-player {
+        position: static;
+        width: min(100cqw, calc(100cqh * 16 / 9)) !important;
+        height: min(100cqh, calc(100cqw * 9 / 16)) !important;
+        max-width: 100%;
+        max-height: 100%;
+        flex: 0 0 auto;
+        aspect-ratio: 16 / 9;
+        box-shadow: none;
+        background: transparent;
+    }
+
+    .video-column > youtube-player iframe {
+        display: block;
+        position: static;
+        border-radius: 0;
+    }
+
+    .video-wrapper .transcript-column {
+        max-height: 100% !important;
     }
 }

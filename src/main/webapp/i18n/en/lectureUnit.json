@@ -23,7 +23,12 @@
                 "attachmentVersion": "Attachment version: "
             },
             "completedTooltip": "Click to mark this content as uncompleted",
-            "uncompletedTooltip": "Click to mark this content as completed"
+            "uncompletedTooltip": "Click to mark this content as completed",
+            "openFullscreen": "Open fullscreen",
+            "closeFullscreen": "Close fullscreen",
+            "fullscreenView": "Fullscreen view of {{ title }}",
+            "irisSidebarLabel": "Iris AI Assistant Chat",
+            "lectureUnit": "Lecture Content"
         },
         "textUnit": {
             "created": "New text content created",
@@ -222,7 +227,8 @@
                 "nextResult": "Next result",
                 "noResults": "No results",
                 "noMatchingTranscript": "No matching transcript found",
-                "loading": "Loading..."
+                "loading": "Loading...",
+                "resetSplitRatio": "Reset split layout"
             },
             "pdfViewer": {
                 "title": "PDF Viewer",

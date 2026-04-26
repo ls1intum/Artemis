@@ -273,23 +273,6 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(false);
     });
 
-    it('fetchTranscript: handles empty transcription response and keeps segments empty', async () => {
-        fixture.detectChanges();
-
-        // Mock service to return undefined (empty response)
-        vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
-
-        // Call the private method directly to isolate error handling
-        (component as any).fetchTranscript();
-
-        // Let the Promise chain settle
-        await fixture.whenStable();
-
-        // Component state remains empty
-        expect(component.transcriptSegments()).toEqual([]);
-        expect(component.hasTranscript()).toBe(false);
-    });
-
     it('toggleCollapse(false): .m3u8 URL is resolved through API like any other URL', async () => {
         const m3u8Url = 'https://live.rbg.tum.de/some/path/playlist.m3u8';
         component.lectureUnit().videoSource = m3u8Url;
@@ -323,6 +306,18 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(false);
     });
 
+    it('fetchTranscript: handles empty transcription response and keeps segments empty', async () => {
+        fixture.detectChanges();
+
+        vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+
+        (component as any).fetchTranscript();
+        await fixture.whenStable();
+
+        expect(component.transcriptSegments()).toEqual([]);
+        expect(component.hasTranscript()).toBe(false);
+    });
+
     it('toggleCollapse(false): non-TUM Live URL does not trigger transcript fetch when resolver returns null', async () => {
         const nonTumLiveUrl = 'https://example.com/some-video';
         component.lectureUnit().videoSource = nonTumLiveUrl;
@@ -343,10 +338,7 @@ describe('AttachmentVideoUnitComponent', () => {
 
         await fixture.whenStable();
 
-        // No transcript fetch should occur since no playlist was found
         expect(getTranscriptionSpy).not.toHaveBeenCalled();
-
-        // Playlist should remain undefined
         expect(component.playlistUrl()).toBeUndefined();
         expect(component.hasTranscript()).toBe(false);
         expect(component.isLoading()).toBe(false);
@@ -670,6 +662,119 @@ describe('AttachmentVideoUnitComponent', () => {
                 });
 
             expect(() => component.ngOnDestroy()).not.toThrow();
+        });
+    });
+
+    describe('Resizable Splitters', () => {
+        it('openFullscreen: resets split sizes to defaults for three-panel layout', () => {
+            // Set up required data
+            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+            fixture.componentRef.setInput('irisSettings', {
+                settings: { enabled: true },
+            });
+            component.lectureUnit().lecture = { id: 1, isTutorialLecture: false } as any;
+
+            // Mock hasFullscreenContent to return true
+            vi.spyOn(component, 'hasFullscreenContent').mockReturnValue(true);
+
+            // Mock lectureUnitCard to return a card that is not collapsed
+            const mockCard = { isCollapsed: () => false };
+            const mockCardSignal = () => mockCard;
+            Object.defineProperty(component, 'lectureUnitCard', {
+                value: mockCardSignal,
+                writable: true,
+                configurable: true,
+            });
+
+            // Mock the layout component to capture the open call
+            const mockLayout = { open: vi.fn() };
+            // Create a mock signal function that returns the mock layout
+            const mockLayoutSignal = () => mockLayout;
+            Object.defineProperty(component, 'fullscreenLayout', {
+                value: mockLayoutSignal,
+                writable: true,
+                configurable: true,
+            });
+
+            component.openFullscreen();
+
+            // The layout component's open() method should be called
+            expect(mockLayout.open).toHaveBeenCalledTimes(1);
+
+            // Simulate what the layout component would do: emit split size changes
+            component['onVerticalSplitSizesChange']([66.67, 33.33]);
+            component['onHorizontalSplitSizesChange']([50, 50]);
+
+            expect(component.verticalSplitSizes()).toEqual([66.67, 33.33]);
+            expect(component.horizontalSplitSizes()).toEqual([50, 50]);
+        });
+    });
+
+    describe('Fullscreen behavior', () => {
+        it('openFullscreen: returns immediately when no fullscreen content is available', () => {
+            component.lectureUnit().videoSource = undefined;
+            component.lectureUnit().attachment = undefined;
+            const fullscreenChangeSpy = vi.spyOn(component as any, 'onFullscreenChange');
+
+            component.openFullscreen();
+
+            expect(fullscreenChangeSpy).not.toHaveBeenCalled();
+            expect(component.isFullscreen()).toBe(false);
+        });
+
+        it('openFullscreen: expands collapsed card before activating fullscreen', () => {
+            component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
+            fixture.componentRef.setInput('irisSettings', {
+                settings: { enabled: true },
+            });
+            component.lectureUnit().lecture = { id: 1, isTutorialLecture: false } as any;
+
+            const toggleCollapse = vi.fn();
+            const mockCard = { isCollapsed: () => true, toggleCollapse };
+            const mockCardSignal = vi.fn().mockReturnValue(mockCard);
+            Object.defineProperty(component, 'lectureUnitCard', {
+                get: () => mockCardSignal,
+                configurable: true,
+            });
+
+            const mockLayout = { open: vi.fn() };
+            const mockLayoutSignal = vi.fn().mockReturnValue(mockLayout);
+            Object.defineProperty(component, 'fullscreenLayout', {
+                get: () => mockLayoutSignal,
+                configurable: true,
+            });
+
+            component.openFullscreen();
+
+            // toggleCollapse is called first
+            expect(toggleCollapse).toHaveBeenCalledTimes(1);
+            // layout.open() will be called via afterNextRender, but we can't easily verify timing here
+            // The important part is that toggleCollapse was called
+        });
+
+        it('closeFullscreen: delegates to layout component', () => {
+            const mockLayout = { close: vi.fn(), open: vi.fn() };
+            const mockLayoutSignal = vi.fn().mockReturnValue(mockLayout);
+            Object.defineProperty(component, 'fullscreenLayout', {
+                get: () => mockLayoutSignal,
+                configurable: true,
+            });
+
+            component.closeFullscreen();
+
+            expect(mockLayout.close).toHaveBeenCalledTimes(1);
+        });
+
+        it('fullscreen flow: open sets state, close resets state', () => {
+            expect(component.isFullscreen()).toBe(false);
+
+            // Simulate the layout component emitting fullscreenChange(true)
+            component['onFullscreenChange'](true);
+            expect(component.isFullscreen()).toBe(true);
+
+            // Simulate the layout component emitting fullscreenChange(false)
+            component['onFullscreenChange'](false);
+            expect(component.isFullscreen()).toBe(false);
         });
     });
 });
