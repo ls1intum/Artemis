@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -366,8 +367,10 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
             Channel createdChannel = channelService.createChannel(course, channel, Optional.of(instructor));
 
-            // Wait for channel to be indexed
+            // Wait for channel to be indexed — capture security context for awaitility thread
+            var securityContext = SecurityContextHolder.getContext();
             await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                SecurityContextHolder.setContext(securityContext);
                 var results = request.getList("/api/search?q=weaviate-archive-search&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
                 var titles = getResultTitles(results);
                 assertThat(titles).contains("weaviate-archive-search");
@@ -378,6 +381,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
             // Verify the archived channel no longer appears in search
             await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                SecurityContextHolder.setContext(securityContext);
                 var results = request.getList("/api/search?q=weaviate-archive-search&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
                 var titles = getResultTitles(results);
                 assertThat(titles).doesNotContain("weaviate-archive-search");
