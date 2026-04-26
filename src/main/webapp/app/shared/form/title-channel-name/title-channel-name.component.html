@@ -15,8 +15,7 @@
                 [minlength]="minTitleLength() ?? null"
                 [pattern]="titlePattern() ?? ''"
                 type="text"
-                class="w-100"
-                pInputText
+                class="form-control"
                 name="title"
                 id="field_title"
                 [ngModel]="title()"
@@ -47,8 +46,7 @@
                 #field_channel_name="ngModel"
                 required
                 type="text"
-                class="w-100"
-                pInputText
+                class="form-control"
                 name="channelName"
                 id="field_channel_name"
                 [ngModel]="channelName()"
