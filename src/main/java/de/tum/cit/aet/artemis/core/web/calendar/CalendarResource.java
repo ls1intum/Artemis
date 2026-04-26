@@ -6,7 +6,6 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -188,10 +187,6 @@ public class CalendarResource {
             return Collections.emptySet();
         }
         return apiOptional.map(supplier).orElseGet(Collections::emptySet);
-    }
-
-    @Schema(name = "CalendarEventsResponse")
-    public class CalendarEventsResponse extends HashMap<String, List<CalendarEventDTO>> {
     }
 
     /**
