@@ -128,9 +128,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
      * @param submission the submission to be viewed, used in the exam timeline
      */
     changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean, submission?: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission): void {
-        const exerciseIndexValue = this.exerciseIndex();
         if (!overviewPage) {
-            // out of index -> do nothing
             if (exerciseIndex > this.exercises().length - 1 || exerciseIndex < 0) {
                 return;
             }
@@ -140,10 +138,11 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
                 forceSave: !!forceSave,
                 submission: submission,
             });
-        } else if (overviewPage) {
+            this.setExerciseButtonStatus(exerciseIndex);
+        } else {
             this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
+            this.setExerciseButtonStatus(this.EXERCISE_OVERVIEW_INDEX);
         }
-        this.setExerciseButtonStatus(exerciseIndexValue);
     }
 
     /**

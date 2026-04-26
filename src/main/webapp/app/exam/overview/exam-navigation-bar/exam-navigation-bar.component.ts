@@ -137,17 +137,16 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
      * @param submission the submission to be viewed, used in the exam timeline
      */
     changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean, submission?: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission): void {
-        const exerciseIndexValue = this.exerciseIndex();
         if (!overviewPage) {
-            // out of index -> do nothing
             if (exerciseIndex > this.exercises().length - 1 || exerciseIndex < 0) {
                 return;
             }
             this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises()[exerciseIndex], forceSave: !!forceSave, submission: submission });
-        } else if (overviewPage) {
+            this.setExerciseButtonStatus(exerciseIndex);
+        } else {
             this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
+            this.setExerciseButtonStatus(-1);
         }
-        this.setExerciseButtonStatus(exerciseIndexValue);
     }
 
     /**
