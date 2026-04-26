@@ -137,6 +137,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "feedback_suggestion_module") // Athena module name (Athena enabled) or null
     private String feedbackSuggestionModule;
 
+    @OneToOne(mappedBy = "exercise", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private ExerciseAthenaConfig athenaConfig;
+
     @ManyToOne
     private Course course;
 
@@ -674,6 +677,42 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setFeedbackSuggestionModule(String feedbackSuggestionModule) {
         this.feedbackSuggestionModule = feedbackSuggestionModule;
+    }
+
+    public ExerciseAthenaConfig getAthenaConfig() {
+        return athenaConfig;
+    }
+
+    public void setAthenaConfig(ExerciseAthenaConfig athenaConfig) {
+        this.athenaConfig = athenaConfig;
+    }
+
+    /**
+     * Gets the preliminary feedback module for this exercise.
+     * This method retrieves the module from the associated ExerciseAthenaConfig.
+     *
+     * @return the preliminary feedback module, or null if not configured
+     */
+    @Transient
+    public String getPreliminaryFeedbackModule() {
+        if (athenaConfig != null) {
+            return athenaConfig.getPreliminaryFeedbackModule();
+        }
+        return null;
+    }
+
+    /**
+     * Gets the graded feedback module for this exercise.
+     * This method retrieves the module from the associated ExerciseAthenaConfig.
+     *
+     * @return the graded feedback module, or null if not configured
+     */
+    @Transient
+    public String getGradedFeedbackModule() {
+        if (athenaConfig != null) {
+            return athenaConfig.getGradedFeedbackModule();
+        }
+        return null;
     }
 
     public boolean areFeedbackSuggestionsEnabled() {
