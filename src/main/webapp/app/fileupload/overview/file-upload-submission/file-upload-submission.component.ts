@@ -22,7 +22,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { addParticipationToResult, getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
-import { checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
+import { buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
@@ -70,6 +70,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
     private accountService = inject(AccountService);
 
     readonly addParticipationToResult = addParticipationToResult;
+    readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
     readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
     readonly participationId = input<number>();

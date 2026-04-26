@@ -15,7 +15,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -88,6 +88,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     protected readonly Result = Result;
     protected readonly hasExerciseDueDatePassed = hasExerciseDueDatePassed;
     protected readonly isAthenaAIResult = isAthenaAIResult;
+    protected readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
     participationId = input<number>();
     displayHeader = input<boolean>(true);

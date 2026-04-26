@@ -154,7 +154,7 @@
                                                         <div id="additional-feedback">
                                                             @for (feedback of unreferencedFeedback; track feedback.id) {
                                                                 <jhi-unified-feedback
-                                                                    [feedbackContent]="feedback.detailText || ''"
+                                                                    [feedbackContent]="buildFeedbackTextForReview(feedback)"
                                                                     [points]="feedback.credits || 0"
                                                                     [feedback]="feedback"
                                                                 />
