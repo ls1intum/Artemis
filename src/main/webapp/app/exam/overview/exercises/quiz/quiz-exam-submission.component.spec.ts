@@ -36,6 +36,8 @@ import * as QuizStepWizardUtil from 'app/quiz/shared/questions/quiz-stepwizard.u
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 vi.mock('@sentry/angular', () => ({
     captureException: vi.fn(),
 }));
@@ -77,7 +79,7 @@ describe('QuizExamSubmissionComponent', () => {
                 MockComponent(ExerciseSaveButtonComponent),
                 MockDirective(TranslateDirective),
             ],
-            providers: [provideRouter([]), MockProvider(ArtemisQuizService)],
+            providers: [provideRouter([]), MockProvider(ArtemisQuizService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(QuizExamSubmissionComponent);
