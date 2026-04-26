@@ -303,7 +303,7 @@ describe('PostingDirective', () => {
     });
 
     it('should call metisService.deleteAnswerPost for answer post', () => {
-        const deleteAnswerPostSpy = vi.spyOn(mockMetisService, 'deleteAnswerPost');
+        const deleteAnswerPostSpy = vi.spyOn(mockMetisService, 'deleteAnswerPost').mockReturnValue(of(undefined));
         vi.useFakeTimers();
 
         component.isAnswerPost = true;

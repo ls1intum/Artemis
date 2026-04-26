@@ -324,7 +324,7 @@ describe('Metis Service', () => {
             answerPost = { ...answerPost, post };
             const createdAnswerPostSub = metisService.createAnswerPost(answerPost).subscribe();
 
-            metisService.deleteAnswerPost(answerPost);
+            metisService.deleteAnswerPost(answerPost).subscribe();
             const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, answers: [] }]));
 
             expect(answerPostServiceSpy).toHaveBeenCalledOnce();
