@@ -36,6 +36,9 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
     @TempDir
     Path tempDir;
 
+    @TempDir
+    Path externalTempDir;
+
     private HyperionProgrammingExerciseContextRendererService contextRendererService;
 
     private ProgrammingExercise exercise;
@@ -129,7 +132,7 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
 
     @Test
     void getBuildEnvironmentContext_withSymlinkedBuildFile_skipsSymlinkTarget() throws IOException {
-        Path externalBuildFile = Files.createTempFile("hyperion-external-build-file", ".xml");
+        Path externalBuildFile = externalTempDir.resolve("hyperion-external-build-file.xml");
         FileUtils.writeStringToFile(externalBuildFile.toFile(), "<project>outside</project>", StandardCharsets.UTF_8);
         Files.createSymbolicLink(tempDir.resolve("pom.xml"), externalBuildFile);
 
