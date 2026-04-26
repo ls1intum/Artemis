@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseAthenaConfigRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -25,12 +26,15 @@ class ExerciseAthenaConfigServiceTest extends AbstractSpringIntegrationIndepende
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
     private ModelingExercise exercise;
 
     @BeforeEach
     void init() {
         var course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        exercise = modelingExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
+        exercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
     }
 
     @Test

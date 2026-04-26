@@ -123,29 +123,52 @@ public class AthenaModuleService {
     }
 
     /**
+     * Resolves the Athena module name for the given exercise and mode.
+     * Checks the mode-specific module from {@link de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig}
+     * first, then falls back to the legacy {@code feedbackSuggestionModule} field.
+     *
+     * @param exercise   the exercise
+     * @param moduleMode the mode (PRELIMINARY or GRADED)
+     * @return the resolved module name, or {@code null} if none is configured
+     */
+    private String resolveModuleForMode(Exercise exercise, AthenaModuleMode moduleMode) {
+        String module = moduleMode == AthenaModuleMode.PRELIMINARY ? exercise.getPreliminaryFeedbackModule() : exercise.getGradedFeedbackModule();
+        return module != null ? module : exercise.getFeedbackSuggestionModule();
+    }
+
+    /**
+     * Get the URL for an Athena module for the given mode.
+     * Uses the mode-specific module from {@link de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig}
+     * if set, otherwise falls back to the legacy {@code feedbackSuggestionModule}.
+     *
+     * @param exercise   The exercise for which the URL to Athena should be returned
+     * @param moduleMode The module mode (PRELIMINARY or GRADED)
+     * @return The URL prefix to access the Athena module
+     * @throws BadRequestAlertException if no module is configured for the exercise and mode
+     */
+    public String getAthenaModuleUrl(Exercise exercise, AthenaModuleMode moduleMode) {
+        String module = resolveModuleForMode(exercise, moduleMode);
+        if (module == null) {
+            throw new BadRequestAlertException("Exercise does not have a feedback suggestion module configured", ENTITY_NAME, "missingFeedbackSuggestionModule");
+        }
+        return switch (exercise.getExerciseType()) {
+            case TEXT -> athenaUrl + "/modules/text/" + module;
+            case PROGRAMMING -> athenaUrl + "/modules/programming/" + module;
+            case MODELING -> athenaUrl + "/modules/modeling/" + module;
+            default -> throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());
+        };
+    }
+
+    /**
      * Get the URL for an Athena module, depending on the type of exercise.
+     * Uses the legacy {@code feedbackSuggestionModule} field. Prefer {@link #getAthenaModuleUrl(Exercise, AthenaModuleMode)}.
      *
      * @param exercise The exercise for which the URL to Athena should be returned
      * @return The URL prefix to access the Athena module. Example: <a href="http://athena.example.com/modules/text/module_text_cofee"></a>
      * @throws BadRequestAlertException if the exercise has no feedback suggestion module configured
      */
     public String getAthenaModuleUrl(Exercise exercise) {
-        if (exercise.getFeedbackSuggestionModule() == null) {
-            throw new BadRequestAlertException("Exercise does not have a feedback suggestion module configured", ENTITY_NAME, "missingFeedbackSuggestionModule");
-        }
-
-        switch (exercise.getExerciseType()) {
-            case TEXT -> {
-                return athenaUrl + "/modules/text/" + exercise.getFeedbackSuggestionModule();
-            }
-            case PROGRAMMING -> {
-                return athenaUrl + "/modules/programming/" + exercise.getFeedbackSuggestionModule();
-            }
-            case MODELING -> {
-                return athenaUrl + "/modules/modeling/" + exercise.getFeedbackSuggestionModule();
-            }
-            default -> throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());
-        }
+        return getAthenaModuleUrl(exercise, AthenaModuleMode.GRADED);
     }
 
     /**
@@ -179,8 +202,13 @@ public class AthenaModuleService {
      */
     public void checkValidAthenaModuleChange(Exercise originalExercise, Exercise updatedExercise, String entityName) throws BadRequestAlertException {
         var dueDate = originalExercise.getDueDate();
-        if (!Objects.equals(originalExercise.getFeedbackSuggestionModule(), updatedExercise.getFeedbackSuggestionModule()) && dueDate != null
-                && dueDate.isBefore(ZonedDateTime.now())) {
+        if (dueDate == null || !dueDate.isBefore(ZonedDateTime.now())) {
+            return;
+        }
+        boolean anyModuleChanged = !Objects.equals(originalExercise.getFeedbackSuggestionModule(), updatedExercise.getFeedbackSuggestionModule())
+                || !Objects.equals(originalExercise.getPreliminaryFeedbackModule(), updatedExercise.getPreliminaryFeedbackModule())
+                || !Objects.equals(originalExercise.getGradedFeedbackModule(), updatedExercise.getGradedFeedbackModule());
+        if (anyModuleChanged) {
             throw new BadRequestAlertException("Athena module can't be changed after due date has passed", entityName, "athenaModuleChangeAfterDueDate");
         }
     }

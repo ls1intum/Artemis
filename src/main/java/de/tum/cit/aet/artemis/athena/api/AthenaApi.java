@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.athena.domain.AthenaModuleMode;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaScheduleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaSubmissionSelectionService;
@@ -47,7 +48,9 @@ public class AthenaApi extends AbstractAthenaApi {
     }
 
     public void checkHasAccessToAthenaModule(Exercise exercise, Course course, String entityName) throws BadRequestAlertException {
-        athenaModuleService.checkHasAccessToAthenaModule(exercise, course, entityName);
+        // Check both preliminary and graded modules for backward compatibility
+        athenaModuleService.checkHasAccessToAthenaModule(exercise, course, AthenaModuleMode.PRELIMINARY, entityName);
+        athenaModuleService.checkHasAccessToAthenaModule(exercise, course, AthenaModuleMode.GRADED, entityName);
     }
 
     public void checkValidAthenaModuleChange(Exercise originalExercise, Exercise updatedExercise, String entityName) throws BadRequestAlertException {
@@ -55,6 +58,6 @@ public class AthenaApi extends AbstractAthenaApi {
     }
 
     public void revokeAccessToRestrictedFeedbackSuggestionModules(Course course) {
-        athenaModuleService.revokeAccessToRestrictedFeedbackSuggestionModules(course);
+        athenaModuleService.revokeAccessToRestrictedFeedbackModules(course);
     }
 }
