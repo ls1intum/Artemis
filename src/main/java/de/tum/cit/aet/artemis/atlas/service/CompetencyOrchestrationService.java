@@ -4,14 +4,13 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-
-import jakarta.annotation.PostConstruct;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -21,16 +20,15 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
@@ -64,12 +62,31 @@ public class CompetencyOrchestrationService {
     private static final String RUN_MAP_NAME = "atlas-orchestrator-runs";
 
     /**
-     * Upper bound after which a stale Hazelcast run entry is evicted automatically. The lock is
-     * always released explicitly in the {@code finally} block; the TTL only catches the case
-     * where the JVM dies mid-run. Must be longer than the longest plausible LLM session (the
-     * GPT-5.4 + medium-reasoning runs observed so far took ~5 min).
+     * Length caps applied to instructor-controlled strings before they are interpolated into the
+     * system prompt. Instructor input is untrusted ground truth — without caps, hallucinated 4 kB
+     * titles or pasted code dumps could blow up the prompt budget AND give an injection attempt
+     * more room to maneuver. Hard truncation produces a clear marker the LLM can recognize.
      */
-    private static final int RUN_TTL_SECONDS = 30 * 60;
+    private static final int EXERCISE_TITLE_MAX = 200;
+
+    private static final int PROBLEM_STATEMENT_MAX = 8_000;
+
+    private static final int COMPETENCY_TITLE_MAX = 200;
+
+    private static final int LECTURE_UNIT_NAME_MAX = 200;
+
+    private static final int EXERCISE_TYPE_MAX = 50;
+
+    private static final String TRUNCATION_MARKER = " …[truncated]";
+
+    /**
+     * Markers used in {@link #orchestrator_execute_prompt.st} to delimit the untrusted-data sections.
+     * Any literal occurrence inside user content is neutralized so the model cannot be tricked
+     * into believing user-supplied text has closed the fence and reverted to instruction mode.
+     */
+    private static final String USER_DATA_BEGIN = "<<<USER_DATA>>>";
+
+    private static final String USER_DATA_END = "<<<END_USER_DATA>>>";
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -91,32 +108,24 @@ public class CompetencyOrchestrationService {
 
     private final String reasoningEffort;
 
-    private final HazelcastInstance hazelcastInstance;
-
-    private IMap<Long, RunInfo> runMap;
+    private final IMap<Long, RunInfo> runMap;
 
     public CompetencyOrchestrationService(ProgrammingExerciseRepository programmingExerciseRepository, ContentExtractionService contentExtractionService,
             OrchestratorToolsService orchestratorToolsService, AtlasPromptTemplateService templateService, @Nullable ChatClient chatClient,
-            AtlasAgentToolCallbackService toolCallbackFactory, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
-            @Value("${artemis.atlas.orchestrator-model:gpt-5.4}") String deploymentName, @Value("${artemis.atlas.orchestrator-temperature:1.0}") double temperature,
-            @Value("${artemis.atlas.orchestrator-reasoning-effort:medium}") String reasoningEffort) {
+            AtlasAgentToolCallbackService toolCallbackFactory, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AtlasOrchestratorProperties properties) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.contentExtractionService = contentExtractionService;
         this.orchestratorToolsService = orchestratorToolsService;
         this.templateService = templateService;
         this.chatClient = chatClient;
         this.orchestratorToolCallbackProvider = toolCallbackFactory.createOrchestratorProvider();
-        this.hazelcastInstance = hazelcastInstance;
-        this.deploymentName = deploymentName;
-        this.temperature = temperature;
-        this.reasoningEffort = reasoningEffort;
-    }
-
-    @PostConstruct
-    void init() {
-        MapConfig mapConfig = hazelcastInstance.getConfig().getMapConfig(RUN_MAP_NAME);
-        mapConfig.setTimeToLiveSeconds(RUN_TTL_SECONDS);
-        runMap = hazelcastInstance.getMap(RUN_MAP_NAME);
+        this.deploymentName = properties.orchestratorModel();
+        this.temperature = properties.orchestratorTemperature();
+        this.reasoningEffort = properties.orchestratorReasoningEffort();
+        // TTL for this map is configured at Hazelcast bean construction time in
+        // HazelcastConfiguration#registerCustomMaps — setting it here via @PostConstruct would be
+        // a no-op once the map proxy is built.
+        this.runMap = hazelcastInstance.getMap(RUN_MAP_NAME);
     }
 
     /**
@@ -125,13 +134,35 @@ public class CompetencyOrchestrationService {
      * immediately and appends to the applied-actions list returned in the result.
      *
      * @param exerciseId the programming exercise to orchestrate competencies for
-     * @return a {@link CompetencyOrchestrationResultDTO.Status#SUCCESS} result with the LLM's
-     *         summary message and the list of applied actions, or a
-     *         {@link CompetencyOrchestrationResultDTO.Status#FAILED} result when the LLM call fails
-     *         or no ChatClient is configured
+     * @return one of:
+     *         <ul>
+     *         <li>{@link CompetencyOrchestrationResultDTO.Status#SUCCESS} with the LLM's summary message and the applied actions;</li>
+     *         <li>{@link CompetencyOrchestrationResultDTO.Status#PARTIAL} when the LLM threw after committing at least one action — the partial audit trail is included so the
+     *         caller can review/revert;</li>
+     *         <li>{@link CompetencyOrchestrationResultDTO.Status#FAILED} with {@link CompetencyOrchestrationResultDTO.FailureReason#LLM_ERROR} if the call failed before any action
+     *         committed, or {@link CompetencyOrchestrationResultDTO.FailureReason#NO_CHAT_CLIENT} if no ChatClient is configured;</li>
+     *         <li>{@link CompetencyOrchestrationResultDTO.Status#IN_PROGRESS} if a run is already active for the same course.</li>
+     *         </ul>
      */
     public CompetencyOrchestrationResultDTO run(long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        // Reject exam exercises BEFORE acquiring the Hazelcast lock or doing any work. For an exam
+        // exercise, getCourseViaExerciseGroupOrCourseMember() resolves to the underlying course,
+        // so the orchestrator would silently mutate course-wide competencies — never desired.
+        if (exercise.isExamExercise()) {
+            log.info("Atlas orchestrator rejected for exam exercise {}", exerciseId);
+            return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator only operates on course exercises.",
+                    CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_EXERCISE);
+        }
+        // Fail fast (and without acquiring the per-course Hazelcast lock) when the chat client is
+        // not configured — keeps the no-chat-client path orthogonal to the "ok-but-empty content"
+        // path inside callChatClient.
+        if (chatClient == null) {
+            log.info("Atlas orchestrator requested for exercise {} but no ChatClient is available", exerciseId);
+            return CompetencyOrchestrationResultDTO.failed("Atlas chat model is not configured.", CompetencyOrchestrationResultDTO.FailureReason.NO_CHAT_CLIENT);
+        }
+        // Exam exercises were rejected above, so the utility resolves to the directly-attached
+        // course without walking the lazy exerciseGroup.exam.course chain.
         long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
         String runId = UUID.randomUUID().toString();
@@ -141,29 +172,38 @@ public class CompetencyOrchestrationService {
                     existing.exerciseId());
             return CompetencyOrchestrationResultDTO.inProgress("Another Atlas orchestrator run is already in progress for this course. Please wait for it to finish.");
         }
+        // Synchronized list: Spring AI's roadmap supports parallel tool calls; the orchestrator's
+        // write tools all go through OrchestratorToolsService.appendAction which only adds.
+        List<AppliedActionDTO> appliedActions = Collections.synchronizedList(new ArrayList<>());
         try {
-            ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
-            CompetencyIndexResponseDTO competencyIndex = orchestratorToolsService.listCompetencyIndex(courseId);
-            String renderedIndex = renderCompetencyIndex(competencyIndex);
-            String renderedChanges = renderExerciseChangeBatch(exerciseId, extracted.title(), extracted.extractedLearningText());
-            String systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
-
-            List<AppliedActionDTO> appliedActions = new ArrayList<>();
             String content;
             try {
+                // Pre-LLM helpers (extractContent / listCompetencyIndex / templateService.render)
+                // are inside the try so a failure becomes FAILED instead of bubbling a 500 to the
+                // resource — and so the finally block's lock release is symmetric with all paths.
+                ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
+                CompetencyIndexResponseDTO competencyIndex = orchestratorToolsService.listCompetencyIndex(courseId);
+                String renderedIndex = renderCompetencyIndex(competencyIndex);
+                String renderedChanges = renderExerciseChangeBatch(exerciseId, extracted.title(), extracted.extractedLearningText());
+                // Map.of key order is irrelevant: the prompt template references both placeholders
+                // by name, and the fence sanitization in renderExerciseChangeBatch /
+                // renderCompetencyIndex guarantees neither user-supplied string can break out and
+                // reposition the other.
+                String systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
+
                 content = callChatClient(systemPrompt, courseId, appliedActions);
             }
             catch (Exception ex) {
-                log.warn("Atlas orchestrator chat call failed for exercise {}: {}", exerciseId, ex.getMessage());
-                return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.");
-            }
-            if (content == null) {
-                log.info("Atlas orchestrator requested for exercise {} but no ChatClient is available", exerciseId);
-                return CompetencyOrchestrationResultDTO.failed("Atlas chat model is not configured.");
+                log.warn("Atlas orchestrator failed for exercise {} after applying {} action(s): {}", exerciseId, appliedActions.size(), ex.getMessage());
+                if (appliedActions.isEmpty()) {
+                    return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
+                }
+                return CompetencyOrchestrationResultDTO.partial("Atlas orchestrator run failed after applying " + appliedActions.size() + " action(s).",
+                        List.copyOf(appliedActions), CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
             }
             log.info("Atlas orchestrator completed for exercise {} (course {}) with {} applied actions", exerciseId, courseId, appliedActions.size());
             String message = content.isBlank() ? "Atlas orchestrator run completed." : content;
-            return CompetencyOrchestrationResultDTO.success(message, appliedActions);
+            return CompetencyOrchestrationResultDTO.success(message, List.copyOf(appliedActions));
         }
         finally {
             // Only clear if the stored run is still ours — TTL eviction followed by a new run would
@@ -175,15 +215,17 @@ public class CompetencyOrchestrationService {
         }
     }
 
-    @Nullable
+    /**
+     * Drive the Spring AI tool-calling loop. {@link #run(long)} guarantees {@link #chatClient} is
+     * non-null before we get here, so no null check is needed and no null is returned. Returns the
+     * (possibly empty) final assistant message; the orchestrator's mutations have already been
+     * appended to {@code appliedActions} via the typed buffer in the tool context.
+     */
     private String callChatClient(String systemPrompt, long courseId, List<AppliedActionDTO> appliedActions) {
-        if (chatClient == null) {
-            return null;
-        }
-        ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).reasoningEffort(reasoningEffort).build();
+        ToolCallingChatOptions options = buildChatOptions();
         Map<String, Object> toolContext = new HashMap<>();
         toolContext.put(OrchestratorToolsService.COURSE_ID_KEY, courseId);
-        toolContext.put(OrchestratorToolsService.APPLIED_ACTIONS_KEY, appliedActions);
+        toolContext.put(OrchestratorToolsService.APPLIED_ACTIONS_KEY, new OrchestratorToolsService.AppliedActionsBuffer(appliedActions));
         var promptSpec = chatClient.prompt().system(systemPrompt).user("Plan and execute the competency-management actions required by the listed exercise change.")
                 .options(options).toolContext(toolContext);
         if (orchestratorToolCallbackProvider != null) {
@@ -193,9 +235,59 @@ public class CompetencyOrchestrationService {
         return Objects.requireNonNullElse(content, "");
     }
 
+    /**
+     * Build {@link AzureOpenAiChatOptions} for the orchestrator call. GPT-5 reasoning models reject
+     * an explicit {@code temperature} alongside {@code reasoningEffort} (only the default 1.0 is
+     * accepted), so we omit temperature whenever a reasoning effort is configured. Older / non-
+     * reasoning deployments still get the temperature.
+     */
+    private ToolCallingChatOptions buildChatOptions() {
+        var builder = AzureOpenAiChatOptions.builder().deploymentName(deploymentName);
+        if (reasoningEffort != null && !reasoningEffort.isBlank()) {
+            builder.reasoningEffort(reasoningEffort);
+        }
+        else {
+            builder.temperature(temperature);
+        }
+        return builder.build();
+    }
+
     private static String renderExerciseChangeBatch(long exerciseId, String title, String problemStatement) {
-        String body = problemStatement == null || problemStatement.isBlank() ? "(no problem statement available)" : problemStatement.strip();
-        return "1. [UPDATE id=" + exerciseId + "] " + title + "\n" + body;
+        String safeTitle = sanitizeForPrompt(title, EXERCISE_TITLE_MAX);
+        String safeBody = problemStatement == null || problemStatement.isBlank() ? "(no problem statement available)" : sanitizeForPrompt(problemStatement, PROBLEM_STATEMENT_MAX);
+        return "1. [UPDATE id=" + exerciseId + "] " + safeTitle + "\n" + safeBody;
+    }
+
+    /**
+     * Neutralize instructor-controlled text before it is concatenated into the orchestrator's
+     * system prompt. Three concerns:
+     * <ol>
+     * <li>Strip control characters and normalize whitespace so injected ANSI / zero-width tricks
+     * cannot reposition tokens within the prompt.</li>
+     * <li>Hard-truncate at {@code maxChars} with an explicit marker so a hallucinated or pasted
+     * code-dump cannot blow up the prompt budget — and so the LLM can see the truncation
+     * happened.</li>
+     * <li>Neutralize literal occurrences of the user-data fence delimiters so user content
+     * cannot pretend to close the fence and revert to instruction mode.</li>
+     * </ol>
+     */
+    static String sanitizeForPrompt(@Nullable String raw, int maxChars) {
+        if (raw == null || raw.isBlank()) {
+            return "(empty)";
+        }
+        String normalized = raw.replace(' ', ' ').replace('​', ' ').replace('‌', ' ').replace('‍', ' ').replace('﻿', ' ');
+        normalized = normalized.replaceAll("[\\p{Cntrl}&&[^\\n\\t]]", "");
+        normalized = normalized.replaceAll("\\n{3,}", "\n\n").strip();
+        if (normalized.isEmpty()) {
+            return "(empty)";
+        }
+        // Defuse fence delimiters so user content cannot break out of the fenced data section.
+        normalized = normalized.replace(USER_DATA_BEGIN, "<<<USER_DATA_LITERAL>>>").replace(USER_DATA_END, "<<<END_USER_DATA_LITERAL>>>");
+        if (normalized.length() > maxChars) {
+            int cut = Math.max(0, maxChars - TRUNCATION_MARKER.length());
+            normalized = normalized.substring(0, cut) + TRUNCATION_MARKER;
+        }
+        return normalized;
     }
 
     private static String renderCompetencyIndex(CompetencyIndexResponseDTO index) {
@@ -225,29 +317,32 @@ public class CompetencyOrchestrationService {
     }
 
     private static String formatUnassignedLine(CompetencyIndexResponseDTO.UnassignedExerciseRef exercise) {
-        String title = exercise.title() != null ? exercise.title() : "(untitled)";
-        String type = exercise.type() != null ? exercise.type() : "unknown";
+        String title = sanitizeForPrompt(exercise.title() != null ? exercise.title() : "(untitled)", EXERCISE_TITLE_MAX);
+        String type = sanitizeForPrompt(exercise.type() != null ? exercise.type() : "unknown", EXERCISE_TYPE_MAX);
         return "[" + exercise.id() + "] " + title + " (" + type + ")";
     }
 
     private static void appendCompetencyBranch(StringBuilder sb, CompetencyIndexDTO entry, boolean lastCompetency) {
         String taxonomy = entry.taxonomy() != null ? entry.taxonomy().name() : "UNSPECIFIED";
-        sb.append(lastCompetency ? "└── " : "├── ").append('[').append(entry.id()).append("] ").append(entry.title()).append(" (").append(entry.type()).append(", ")
-                .append(taxonomy).append(")\n");
+        String safeTitle = sanitizeForPrompt(entry.title(), COMPETENCY_TITLE_MAX);
+        sb.append(lastCompetency ? "└── " : "├── ").append('[').append(entry.id()).append("] ").append(safeTitle).append(" (").append(entry.type()).append(", ").append(taxonomy)
+                .append(")\n");
         String childIndent = lastCompetency ? "    " : "│   ";
         boolean hasLectureUnits = !entry.lectureUnitNames().isEmpty();
         List<String> exerciseLines = entry.exercises().stream().map(CompetencyOrchestrationService::formatExerciseLine).toList();
         appendLeafGroup(sb, childIndent, "exercises", exerciseLines, !hasLectureUnits);
         if (hasLectureUnits) {
-            appendLeafGroup(sb, childIndent, "lecture units", entry.lectureUnitNames(), true);
+            List<String> safeLectureNames = entry.lectureUnitNames().stream().map(name -> sanitizeForPrompt(name, LECTURE_UNIT_NAME_MAX)).toList();
+            appendLeafGroup(sb, childIndent, "lecture units", safeLectureNames, true);
         }
     }
 
     private static String formatExerciseLine(CompetencyIndexDTO.ExerciseLinkRef exercise) {
+        String safeTitle = sanitizeForPrompt(exercise.title(), EXERCISE_TITLE_MAX);
         if (exercise.weight() == null) {
-            return exercise.title();
+            return safeTitle;
         }
-        return exercise.title() + " (w=" + String.format(Locale.ROOT, "%.1f", exercise.weight()) + ")";
+        return safeTitle + " (w=" + String.format(Locale.ROOT, "%.1f", exercise.weight()) + ")";
     }
 
     /**

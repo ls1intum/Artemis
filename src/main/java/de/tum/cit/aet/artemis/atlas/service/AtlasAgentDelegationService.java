@@ -10,12 +10,12 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 
 /**
  * Service for delegating messages to AI agents.
@@ -38,12 +38,12 @@ public class AtlasAgentDelegationService {
     private final double temperature;
 
     public AtlasAgentDelegationService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ChatMemory chatMemory,
-            @Value("${artemis.atlas.chat-model:gpt-5.4-mini}") String deploymentName, @Value("${artemis.atlas.chat-temperature:0.8}") double temperature) {
+            AtlasOrchestratorProperties properties) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.chatMemory = chatMemory;
-        this.deploymentName = deploymentName;
-        this.temperature = temperature;
+        this.deploymentName = properties.chatModel();
+        this.temperature = properties.chatTemperature();
     }
 
     /**

@@ -97,6 +97,14 @@ artemis:
   atlas:
     # chat-*         — used by the conversational Atlas agent (AtlasAgentService)
     # orchestrator-* — used by the competency orchestrator (CompetencyOrchestrationService)
+    # NOTE: chat-model / orchestrator-model are Azure deployment aliases — replace with the deployment
+    # names registered in your own Azure OpenAI resource.
+    # BREAKING (commit c5408b6c, post-9.1.x):
+    #   artemis.atlas.model       -> artemis.atlas.chat-model
+    #   artemis.atlas.temperature -> artemis.atlas.chat-temperature
+    # Operators upgrading from 9.1.x must rename these overrides in application-prod.yml; the
+    # AtlasOrchestratorProperties record uses strict @ConfigurationProperties binding so unknown
+    # atlas-prefixed keys will fail loudly at boot rather than silently fall back to defaults.
     chat-model: gpt-5.4-mini
     chat-temperature: 0.8
     orchestrator-model: gpt-5.4

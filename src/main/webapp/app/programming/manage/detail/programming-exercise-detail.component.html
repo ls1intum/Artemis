@@ -115,10 +115,23 @@
                                 <fa-icon [icon]="faCheckDouble" />
                                 <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
                             </button>
-                            @if (programmingExercise.isAtLeastInstructor) {
-                                <button [jhiFeatureToggle]="FeatureToggle.AtlasAgent" (click)="triggerAtlasOrchestrator()" class="btn btn-outline-primary btn-sm me-1 mb-2">
+                            @if (atlasModuleActive && programmingExercise.isAtLeastInstructor) {
+                                <button
+                                    type="button"
+                                    [jhiFeatureToggleHide]="FeatureToggle.AtlasAgent"
+                                    (click)="triggerAtlasOrchestrator()"
+                                    [disabled]="orchestrationRunning()"
+                                    pTooltip="{{ 'artemisApp.atlasOrchestrator.tooltip' | artemisTranslate }}"
+                                    class="btn btn-outline-primary btn-sm me-1 mb-2"
+                                >
+                                    <fa-icon [icon]="faWandMagicSparkles" />
                                     <span jhiTranslate="artemisApp.programmingExercise.atlasOrchestrator.button"></span>
                                 </button>
+                                <jhi-orchestration-result-dialog
+                                    [(visible)]="orchestrationDialogVisible"
+                                    [summaryMessage]="orchestrationDialogMessage()"
+                                    [appliedActions]="orchestrationDialogActions()"
+                                />
                             }
                             <button
                                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -178,5 +191,3 @@
         }
     </div>
 </div>
-
-<jhi-orchestration-result-dialog [(visible)]="orchestrationDialogVisible" [summaryMessage]="orchestrationDialogMessage()" [appliedActions]="orchestrationDialogActions()" />

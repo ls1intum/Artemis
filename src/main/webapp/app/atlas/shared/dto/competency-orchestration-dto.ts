@@ -1,8 +1,13 @@
 export enum CompetencyOrchestrationStatus {
     Success = 'SUCCESS',
-    Preview = 'PREVIEW',
+    Partial = 'PARTIAL',
     Failed = 'FAILED',
     InProgress = 'IN_PROGRESS',
+}
+
+export enum CompetencyOrchestrationFailureReason {
+    NoChatClient = 'NO_CHAT_CLIENT',
+    LlmError = 'LLM_ERROR',
 }
 
 export enum AppliedActionType {
@@ -15,16 +20,17 @@ export enum AppliedActionType {
 
 export interface AppliedActionDTO {
     type: AppliedActionType;
-    competencyId?: number;
-    competencyTitle?: string;
+    competencyId: number;
+    competencyTitle: string;
     exerciseId?: number;
     weight?: number;
-    detail?: string;
-    justification?: string;
+    detail: string;
+    justification: string;
 }
 
 export interface CompetencyOrchestrationResultDTO {
     status: CompetencyOrchestrationStatus;
     message?: string;
     appliedActions?: AppliedActionDTO[];
+    failureReason?: CompetencyOrchestrationFailureReason;
 }

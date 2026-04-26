@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,6 +31,8 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 @RequestMapping("api/atlas/orchestrator/")
 public class CompetencyOrchestrationResource {
 
+    private static final Logger log = LoggerFactory.getLogger(CompetencyOrchestrationResource.class);
+
     private final CompetencyOrchestrationService competencyOrchestrationService;
 
     public CompetencyOrchestrationResource(CompetencyOrchestrationService competencyOrchestrationService) {
@@ -38,7 +43,26 @@ public class CompetencyOrchestrationResource {
     @EnforceAtLeastInstructorInExercise
     @FeatureToggle(Feature.AtlasAgent)
     public ResponseEntity<CompetencyOrchestrationResultDTO> runForProgrammingExercise(@PathVariable Long exerciseId) {
+        log.info("REST request to run Atlas orchestrator for programming exercise: {}", exerciseId);
         CompetencyOrchestrationResultDTO result = competencyOrchestrationService.run(exerciseId);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.status(httpStatusFor(result)).body(result);
+    }
+
+    /**
+     * Map orchestration result to HTTP status so the transport layer reflects the actual outcome
+     * — keeps frontend error handling honest and makes production triage possible without parsing
+     * the response body.
+     */
+    private static HttpStatus httpStatusFor(CompetencyOrchestrationResultDTO result) {
+        return switch (result.status()) {
+            case SUCCESS -> HttpStatus.OK;
+            case PARTIAL -> HttpStatus.MULTI_STATUS;
+            case IN_PROGRESS -> HttpStatus.CONFLICT;
+            case FAILED -> switch (result.failureReason() == null ? CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR : result.failureReason()) {
+                case NO_CHAT_CLIENT -> HttpStatus.SERVICE_UNAVAILABLE;
+                case LLM_ERROR -> HttpStatus.BAD_GATEWAY;
+                case UNSUPPORTED_EXERCISE -> HttpStatus.UNPROCESSABLE_CONTENT;
+            };
+        };
     }
 }

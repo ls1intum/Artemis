@@ -29,6 +29,7 @@ import org.springframework.core.env.Profiles;
 
 import com.hazelcast.spring.HazelcastObjectExtractionConfiguration;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
@@ -46,7 +47,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 // See: https://github.com/hazelcast/hazelcast/issues/26553
 @SpringBootApplication(exclude = HazelcastObjectExtractionConfiguration.class)
 @EnableConfigurationProperties({ LiquibaseProperties.class, ProgrammingLanguageConfiguration.class, TheiaConfiguration.class, LicenseConfiguration.class,
-        ArtemisCompatibleVersionsConfiguration.class, ArtemisProperties.class })
+        ArtemisCompatibleVersionsConfiguration.class, ArtemisProperties.class, AtlasOrchestratorProperties.class })
 public class ArtemisApp {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisApp.class);

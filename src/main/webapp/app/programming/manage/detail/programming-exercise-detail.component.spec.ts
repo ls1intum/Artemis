@@ -31,13 +31,16 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
-import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { By } from '@angular/platform-browser';
+import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { HttpHeaders } from '@angular/common/http';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import dayjs from 'dayjs/esm';
 
 // Mock the diff.utils module to avoid Monaco Editor issues in tests
 jest.mock('app/programming/shared/utils/diff.utils', () => ({
@@ -436,7 +439,35 @@ describe('ProgrammingExerciseDetailComponent', () => {
         });
     });
 
+    /**
+     * Builds an exercise that satisfies the parent template's render path so the dialog
+     * directive query has something to find. Sets a future releaseDate to skip the doughnut
+     * statistics block (which crashes on missing course context).
+     */
+    const buildInstructorExerciseForDialog = () =>
+        ({
+            ...mockProgrammingExercise,
+            isAtLeastEditor: true,
+            isAtLeastInstructor: true,
+            releaseDate: dayjs().add(1, 'day'),
+        }) as ProgrammingExercise;
+
+    /**
+     * atlasModuleActive is read in the component's field initializer, so the profile info
+     * must be in place before the component is constructed for the dialog to render.
+     */
+    const recreateFixtureWithAtlasModule = () => {
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+            activeProfiles: [],
+            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM],
+        } as unknown as ProfileInfo);
+        fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
+        comp = fixture.componentInstance;
+    };
+
     it('should open the orchestration result dialog with applied actions when the run succeeds', async () => {
+        recreateFixtureWithAtlasModule();
+
         const apiService = TestBed.inject(CompetencyOrchestrationApiService);
         jest.spyOn(apiService, 'runForProgrammingExercise').mockResolvedValue({
             status: CompetencyOrchestrationStatus.Success,
@@ -447,38 +478,49 @@ describe('ProgrammingExerciseDetailComponent', () => {
                     competencyId: 42,
                     competencyTitle: 'Recursion',
                     exerciseId: 123,
+                    weight: 1.0,
                     detail: 'Linked exercise to Recursion (weight 1.00).',
+                    justification: 'Exercise tests recursion patterns.',
                 },
             ],
         });
-        comp.programmingExercise = mockProgrammingExercise;
+        comp.programmingExercise = buildInstructorExerciseForDialog();
         await comp.triggerAtlasOrchestrator();
-        expect(comp['orchestrationDialogVisible']()).toBeTrue();
-        expect(comp['orchestrationDialogMessage']()).toBe('Assigned this exercise to Recursion.');
-        expect(comp['orchestrationDialogActions']()).toHaveLength(1);
-        expect(comp['orchestrationDialogActions']()[0].type).toBe(AppliedActionType.Assign);
+        fixture.detectChanges();
+
+        const dialog = fixture.debugElement.query(By.directive(OrchestrationResultDialogComponent)).componentInstance as OrchestrationResultDialogComponent;
+        expect(dialog.visible()).toBeTrue();
+        expect(dialog.summaryMessage()).toBe('Assigned this exercise to Recursion.');
+        expect(dialog.appliedActions()).toHaveLength(1);
+        expect(dialog.appliedActions()[0].type).toBe(AppliedActionType.Assign);
     });
 
     it('should error when Atlas orchestrator returns FAILED', async () => {
-        const errorSpy = jest.spyOn(alertService, 'error');
+        recreateFixtureWithAtlasModule();
+
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         const apiService = TestBed.inject(CompetencyOrchestrationApiService);
         jest.spyOn(apiService, 'runForProgrammingExercise').mockResolvedValue({
             status: CompetencyOrchestrationStatus.Failed,
             message: 'model not configured',
         });
-        comp.programmingExercise = mockProgrammingExercise;
+        comp.programmingExercise = buildInstructorExerciseForDialog();
         await comp.triggerAtlasOrchestrator();
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.atlasOrchestrator.error');
-        expect(comp['orchestrationDialogVisible']()).toBeFalse();
+        fixture.detectChanges();
+
+        expect(addAlertSpy).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'model not configured', disableTranslation: true });
+        const dialog = fixture.debugElement.query(By.directive(OrchestrationResultDialogComponent)).componentInstance as OrchestrationResultDialogComponent;
+        expect(dialog.visible()).toBeFalse();
     });
 
     it('should error when Atlas orchestrator request throws', async () => {
-        const errorSpy = jest.spyOn(alertService, 'error');
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         const apiService = TestBed.inject(CompetencyOrchestrationApiService);
         jest.spyOn(apiService, 'runForProgrammingExercise').mockRejectedValue(new Error('boom'));
         comp.programmingExercise = mockProgrammingExercise;
         await comp.triggerAtlasOrchestrator();
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.atlasOrchestrator.error');
+        // The catch path uses onError(), which addAlerts the underlying error message.
+        expect(addAlertSpy).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'boom', disableTranslation: true });
     });
 
     it('should error on generate structure oracle', () => {

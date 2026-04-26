@@ -18,11 +18,13 @@ import {
     faUndo,
     faUserCheck,
     faUsers,
+    faWandMagicSparkles,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
+import { TooltipModule } from 'primeng/tooltip';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -49,12 +51,14 @@ import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialo
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { Detail, ProgrammingDiffReportDetail } from 'app/shared/detail-overview-list/detail.model';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { onError } from 'app/shared/util/global.utils';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
@@ -83,6 +87,7 @@ import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestrati
         NgbTooltip,
         ProgrammingExerciseInstructorExerciseDownloadComponent,
         FeatureToggleDirective,
+        FeatureToggleHideDirective,
         ProgrammingExerciseResetButtonDirective,
         DeleteButtonDirective,
         ExerciseDetailStatisticsComponent,
@@ -91,6 +96,7 @@ import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestrati
         FeatureOverlayComponent,
         ProgrammingExerciseInstructorExerciseSharingComponent,
         OrchestrationResultDialogComponent,
+        TooltipModule,
     ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
@@ -116,6 +122,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly orchestrationDialogVisible = signal(false);
     protected readonly orchestrationDialogMessage = signal('');
     protected readonly orchestrationDialogActions = signal<AppliedActionDTO[]>([]);
+    protected readonly orchestrationRunning = signal(false);
+    protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
 
     protected readonly dayjs = dayjs;
     protected readonly ActionType = ActionType;
@@ -142,6 +150,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly faEye = faEye;
     protected readonly faHistory = faHistory;
     protected readonly faUserCheck = faUserCheck;
+    protected readonly faWandMagicSparkles = faWandMagicSparkles;
 
     programmingExercise: ProgrammingExercise;
     programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
@@ -785,22 +794,37 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     async triggerAtlasOrchestrator() {
         const exerciseId = this.programmingExercise?.id;
-        if (!exerciseId) {
+        if (!exerciseId || this.orchestrationRunning()) {
             return;
         }
+        this.orchestrationRunning.set(true);
         try {
             const result = await this.competencyOrchestrationApiService.runForProgrammingExercise(exerciseId);
-            if (result.status === CompetencyOrchestrationStatus.Success) {
-                this.orchestrationDialogMessage.set(result.message?.trim() ?? '');
+            const backendMessage = result.message?.trim() || '';
+            if (result.status === CompetencyOrchestrationStatus.Success || result.status === CompetencyOrchestrationStatus.Partial) {
+                this.orchestrationDialogMessage.set(backendMessage);
                 this.orchestrationDialogActions.set(result.appliedActions ?? []);
                 this.orchestrationDialogVisible.set(true);
+                if (result.status === CompetencyOrchestrationStatus.Partial) {
+                    this.alertService.addAlert({
+                        type: AlertType.WARNING,
+                        message: backendMessage || 'artemisApp.atlasOrchestrator.partial',
+                        disableTranslation: backendMessage.length > 0,
+                    });
+                }
             } else if (result.status === CompetencyOrchestrationStatus.InProgress) {
-                this.alertService.warning('artemisApp.programmingExercise.atlasOrchestrator.inProgress');
+                this.alertService.warning('artemisApp.atlasOrchestrator.inProgress');
             } else {
-                this.alertService.error('artemisApp.programmingExercise.atlasOrchestrator.error');
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: backendMessage || 'artemisApp.atlasOrchestrator.error',
+                    disableTranslation: backendMessage.length > 0,
+                });
             }
-        } catch {
-            this.alertService.error('artemisApp.programmingExercise.atlasOrchestrator.error');
+        } catch (err) {
+            onError(this.alertService, err as HttpErrorResponse);
+        } finally {
+            this.orchestrationRunning.set(false);
         }
     }
 

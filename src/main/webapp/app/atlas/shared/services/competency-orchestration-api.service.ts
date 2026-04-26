@@ -7,6 +7,6 @@ export class CompetencyOrchestrationApiService extends BaseApiHttpService {
     private readonly basePath = 'atlas/orchestrator';
 
     async runForProgrammingExercise(exerciseId: number): Promise<CompetencyOrchestrationResultDTO> {
-        return await this.post<CompetencyOrchestrationResultDTO>(`${this.basePath}/programming-exercises/${exerciseId}/run`, {});
+        return await this.post<CompetencyOrchestrationResultDTO>(`${this.basePath}/programming-exercises/${exerciseId}/run`);
     }
 }

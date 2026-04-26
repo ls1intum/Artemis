@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.dto;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -13,7 +15,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * mutation and is shown in the result dialog.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record AppliedActionDTO(ActionType type, Long competencyId, String competencyTitle, Long exerciseId, Double weight, String detail, String justification) {
+public record AppliedActionDTO(ActionType type, Long competencyId, String competencyTitle, @Nullable Long exerciseId, @Nullable Double weight, String detail,
+        String justification) {
 
     public enum ActionType {
         CREATE, EDIT, ASSIGN, UNASSIGN, DELETE

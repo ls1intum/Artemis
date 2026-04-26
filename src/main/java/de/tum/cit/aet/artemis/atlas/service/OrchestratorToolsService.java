@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -18,6 +20,7 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -35,11 +38,16 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyDetailDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyAtlasMLNotificationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidator;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -64,9 +72,52 @@ public class OrchestratorToolsService {
 
     private static final Logger log = LoggerFactory.getLogger(OrchestratorToolsService.class);
 
-    public static final String COURSE_ID_KEY = "courseId";
+    /**
+     * Tool-context key carrying the course id the orchestrator is operating on. Package-private:
+     * only {@link CompetencyOrchestrationService} (same package) populates the context, the LLM
+     * cannot inject this key because tool-context parameters are stripped from the JSON schema
+     * exposed to the model.
+     */
+    static final String COURSE_ID_KEY = "courseId";
 
-    public static final String APPLIED_ACTIONS_KEY = "appliedActions";
+    /**
+     * Tool-context key carrying the per-run {@link AppliedActionsBuffer}. The buffer wraps a
+     * {@link java.util.Collections#synchronizedList synchronized list} so concurrent tool calls
+     * (Spring AI's parallel-tool-call roadmap) cannot race on append. Package-private for the
+     * same reason as {@link #COURSE_ID_KEY}.
+     */
+    static final String APPLIED_ACTIONS_KEY = "appliedActions";
+
+    /**
+     * Hard cap on the number of write tool calls per orchestrator run. Mirrors the limit declared
+     * in the system prompt; enforced here so a hallucinating model cannot spend more than this
+     * many writes regardless of what the prompt says. {@link AppliedActionsBuffer#actions size}
+     * counts all five write tool types.
+     */
+    private static final int MAX_WRITE_CALLS = 8;
+
+    /**
+     * Allowed weight bands for {@link #assignExerciseToCompetency}. The system prompt forbids any
+     * other value; enforced here too because LLMs occasionally output {@code 0.7} or
+     * {@code 0.30000001}. Comparison uses a small epsilon to absorb float-formatting drift from
+     * the model.
+     */
+    private static final Set<Double> ALLOWED_WEIGHTS = Set.of(1.0, 0.5, 0.3);
+
+    /**
+     * Match tolerance for {@link #ALLOWED_WEIGHTS}. The bands are at least 0.2 apart from one
+     * another, so even a generous tolerance cannot blur two bands together. Sized to absorb
+     * realistic LLM rounding (e.g. {@code 0.30000001}) without admitting actual drift like
+     * {@code 0.7}.
+     */
+    private static final double WEIGHT_TOLERANCE = 1e-6;
+
+    /**
+     * Soft cap on the LLM-supplied justification text shown verbatim in the audit log. One full
+     * sentence rarely exceeds this; longer values are almost always model hallucination or copy-
+     * pasted prompt text and would bloat the per-action JSON returned to the UI.
+     */
+    private static final int MAX_JUSTIFICATION_LENGTH = 500;
 
     private final ObjectMapper objectMapper;
 
@@ -86,9 +137,14 @@ public class OrchestratorToolsService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
+    private final CompetencyValidator competencyValidator;
+
+    private final CompetencyAtlasMLNotificationService atlasMLNotificationService;
+
     public OrchestratorToolsService(ObjectMapper objectMapper, CourseRepository courseRepository, CourseCompetencyRepository courseCompetencyRepository,
             ExerciseRepository exerciseRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository, ContentExtractionService contentExtractionService,
-            CompetencyService competencyService, CourseCompetencyService courseCompetencyService, Optional<CompetencyProgressApi> competencyProgressApi) {
+            CompetencyService competencyService, CourseCompetencyService courseCompetencyService, Optional<CompetencyProgressApi> competencyProgressApi,
+            CompetencyValidator competencyValidator, CompetencyAtlasMLNotificationService atlasMLNotificationService) {
         this.objectMapper = objectMapper;
         this.courseRepository = courseRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
@@ -98,6 +154,8 @@ public class OrchestratorToolsService {
         this.competencyService = competencyService;
         this.courseCompetencyService = courseCompetencyService;
         this.competencyProgressApi = competencyProgressApi;
+        this.competencyValidator = competencyValidator;
+        this.atlasMLNotificationService = atlasMLNotificationService;
     }
 
     // -----------------------------------------------------------------------------------------------
@@ -193,7 +251,7 @@ public class OrchestratorToolsService {
         try {
             exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         }
-        catch (Exception ex) {
+        catch (EntityNotFoundException ex) {
             return toJson(Map.of("error", "Exercise not found: " + exerciseId));
         }
         if (!exerciseBelongsToCourse(exercise, courseId)) {
@@ -209,9 +267,11 @@ public class OrchestratorToolsService {
             ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
             return toJson(extracted);
         }
-        catch (Exception ex) {
+        catch (IllegalArgumentException ex) {
+            // Generic message back to the LLM — raw exception text could leak Hibernate/SQL detail
+            // into the instructor-facing summary the model writes at the end of the run.
             log.debug("getExerciseContent failed for exercise {}: {}", exerciseId, ex.getMessage());
-            return toJson(Map.of("error", ex.getMessage() == null ? "Failed to extract content." : ex.getMessage()));
+            return toJson(Map.of("error", "Failed to extract content for exercise " + exerciseId + "."));
         }
     }
 
@@ -222,10 +282,11 @@ public class OrchestratorToolsService {
     /**
      * LLM tool: creates a new competency in the current course and appends a CREATE action to the run log.
      *
-     * @param title       concise title for the competency
-     * @param description one-to-three sentence description
-     * @param taxonomy    Bloom taxonomy level as a string
-     * @param toolContext Spring AI tool context carrying the current course id and applied-actions list
+     * @param title         concise title for the competency
+     * @param description   one-to-three sentence description
+     * @param taxonomy      Bloom taxonomy level as a string
+     * @param justification one-sentence reason this competency needs to exist (shown to the instructor in the audit log)
+     * @param toolContext   Spring AI tool context carrying the current course id and applied-actions list
      * @return JSON with the new competency id and title, or a JSON error
      */
     @Tool(description = "Create a new competency in the current course. Returns the created competency id and title as JSON. "
@@ -240,11 +301,15 @@ public class OrchestratorToolsService {
         if (courseId == null) {
             return missingCourseContextError();
         }
+        if (writeQuotaReached(toolContext)) {
+            return writeQuotaError();
+        }
         if (isBlank(title)) {
             return toJson(Map.of("error", "title is required."));
         }
-        if (isBlank(justification)) {
-            return toJson(Map.of("error", "justification is required."));
+        String justificationError = validateJustification(justification);
+        if (justificationError != null) {
+            return justificationError;
         }
         CompetencyTaxonomy parsedTaxonomy;
         try {
@@ -260,18 +325,22 @@ public class OrchestratorToolsService {
         Course course = courseOpt.get();
         Competency competency = new Competency(title.trim(), description == null ? "" : description.trim(), null, CourseCompetency.DEFAULT_MASTERY_THRESHOLD, parsedTaxonomy,
                 false);
+        try {
+            competencyValidator.checkForCreation(competency);
+        }
+        catch (BadRequestAlertException ex) {
+            return toJson(Map.of("error", ex.getMessage()));
+        }
         List<Competency> created;
         try {
             created = competencyService.createCompetencies(List.of(competency), course);
         }
-        catch (Exception ex) {
+        catch (DataAccessException ex) {
             log.warn("createCompetency failed for course {}: {}", courseId, ex.getMessage());
-            return toJson(Map.of("error", "Failed to create competency: " + safeMessage(ex)));
-        }
-        if (created.isEmpty()) {
-            return toJson(Map.of("error", "Failed to create competency: no competency returned."));
+            return toJson(Map.of("error", "Failed to create competency."));
         }
         Competency persisted = created.get(0);
+        atlasMLNotificationService.notifyAtlasML(List.of(persisted), OperationTypeDTO.UPDATE, "orchestrator competency creation");
         String detail = "Created competency " + persisted.getTitle() + " (" + parsedTaxonomy.name() + ").";
         appendAction(toolContext, AppliedActionDTO.create(persisted.getId(), persisted.getTitle(), detail, justification.trim()));
         return toJson(Map.of("id", persisted.getId(), "title", persisted.getTitle(), "taxonomy", parsedTaxonomy.name()));
@@ -280,11 +349,12 @@ public class OrchestratorToolsService {
     /**
      * LLM tool: updates selected fields of an existing competency and appends an EDIT action.
      *
-     * @param competencyId id of the competency to edit
-     * @param title        new title (or null to keep the current value)
-     * @param description  new description (or null to keep the current value)
-     * @param taxonomy     new Bloom taxonomy level (or null to keep the current value)
-     * @param toolContext  Spring AI tool context
+     * @param competencyId  id of the competency to edit
+     * @param title         new title (or null to keep the current value)
+     * @param description   new description (or null to keep the current value)
+     * @param taxonomy      new Bloom taxonomy level (or null to keep the current value)
+     * @param justification one-sentence reason this edit is necessary (shown to the instructor in the audit log)
+     * @param toolContext   Spring AI tool context
      * @return JSON with the updated id and list of changed fields, or a JSON error / noop
      */
     @Tool(description = "Update selected fields of an existing competency in the current course. Only the non-null arguments are applied; pass null for fields you want "
@@ -299,12 +369,21 @@ public class OrchestratorToolsService {
         if (courseId == null) {
             return missingCourseContextError();
         }
+        if (writeQuotaReached(toolContext)) {
+            return writeQuotaError();
+        }
         if (competencyId == null) {
             return toJson(Map.of("error", "competencyId is required."));
         }
-        if (isBlank(justification)) {
-            return toJson(Map.of("error", "justification is required."));
+        String justificationError = validateJustification(justification);
+        if (justificationError != null) {
+            return justificationError;
         }
+        // Non-fetch-joining findById is intentional — editCompetency only mutates scalar columns
+        // (title, description, taxonomy). Lazy collections (exerciseLinks, lectureUnitLinks) are
+        // never read or written here, so there is no LazyInitializationException risk and no
+        // merge() can wipe collections. Use the fetch-joining variant only when collections are
+        // touched (see deleteCompetency / getCompetencyDetails).
         Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findById(competencyId);
         if (competencyOpt.isEmpty()) {
             return toJson(Map.of("error", "Competency not found: " + competencyId));
@@ -318,9 +397,12 @@ public class OrchestratorToolsService {
             existing.setTitle(title.trim());
             changes.add("title");
         }
-        if (description != null && !description.equals(existing.getDescription())) {
-            existing.setDescription(description);
-            changes.add("description");
+        if (description != null) {
+            String trimmed = description.trim();
+            if (!trimmed.equals(existing.getDescription())) {
+                existing.setDescription(trimmed);
+                changes.add("description");
+            }
         }
         if (!isBlank(taxonomy)) {
             CompetencyTaxonomy parsedTaxonomy;
@@ -338,13 +420,27 @@ public class OrchestratorToolsService {
         if (changes.isEmpty()) {
             return toJson(Map.of("status", "noop", "message", "No fields changed for competency " + competencyId + "."));
         }
+        try {
+            competencyValidator.checkForUpdate(existing);
+        }
+        catch (BadRequestAlertException ex) {
+            return toJson(Map.of("error", ex.getMessage()));
+        }
         CourseCompetency saved;
+        // Direct repository.save instead of CourseCompetencyService.updateCourseCompetency on
+        // purpose: the service's update path overwrites softDueDate, masteryThreshold and
+        // isOptional from a "values" entity and would zero them out here (the orchestrator only
+        // edits title / description / taxonomy). Neither path triggers progress recalc, so the
+        // consistency cost is a code comment, not behavioural drift.
         try {
             saved = courseCompetencyRepository.save(existing);
         }
-        catch (Exception ex) {
+        catch (DataAccessException ex) {
             log.warn("editCompetency failed for competency {}: {}", competencyId, ex.getMessage());
-            return toJson(Map.of("error", "Failed to update competency: " + safeMessage(ex)));
+            return toJson(Map.of("error", "Failed to update competency."));
+        }
+        if (saved instanceof Competency persisted) {
+            atlasMLNotificationService.notifyAtlasML(List.of(persisted), OperationTypeDTO.UPDATE, "orchestrator competency update");
         }
         String detail = "Updated " + String.join(", ", changes) + " for competency " + saved.getTitle() + ".";
         appendAction(toolContext, AppliedActionDTO.edit(saved.getId(), saved.getTitle(), detail, justification.trim()));
@@ -373,20 +469,27 @@ public class OrchestratorToolsService {
         if (courseId == null) {
             return missingCourseContextError();
         }
+        if (writeQuotaReached(toolContext)) {
+            return writeQuotaError();
+        }
         if (competencyId == null || exerciseId == null) {
             return toJson(Map.of("error", "competencyId and exerciseId are required."));
         }
         if (weight == null) {
             return toJson(Map.of("error", "weight is required: pick 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental)."));
         }
-        if (weight <= 0.0 || weight > 1.0) {
-            return toJson(Map.of("error", "weight must be greater than 0.0 and at most 1.0. If the evidence is too weak to link, do not call this tool."));
+        Double matchedBand = matchAllowedBand(weight);
+        if (matchedBand == null) {
+            return toJson(
+                    Map.of("error", "weight must be one of 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental). If the evidence is too weak to link, do not call this tool."));
         }
-        if (isBlank(justification)) {
-            return toJson(Map.of("error", "justification is required."));
+        String justificationError = validateJustification(justification);
+        if (justificationError != null) {
+            return justificationError;
         }
-        double effectiveWeight = weight;
+        double effectiveWeight = matchedBand;
 
+        // See editCompetency: scalar-only mutation, no fetch-join needed.
         Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findById(competencyId);
         if (competencyOpt.isEmpty()) {
             return toJson(Map.of("error", "Competency not found: " + competencyId));
@@ -400,7 +503,7 @@ public class OrchestratorToolsService {
         try {
             exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         }
-        catch (Exception ex) {
+        catch (EntityNotFoundException ex) {
             return toJson(Map.of("error", "Exercise not found: " + exerciseId));
         }
         if (!exerciseBelongsToCourse(exercise, courseId)) {
@@ -433,9 +536,10 @@ public class OrchestratorToolsService {
     /**
      * LLM tool: removes the link between an exercise and a competency and appends an UNASSIGN action.
      *
-     * @param competencyId id of the competency
-     * @param exerciseId   id of the exercise
-     * @param toolContext  Spring AI tool context
+     * @param competencyId  id of the competency
+     * @param exerciseId    id of the exercise
+     * @param justification one-sentence reason stating why the current link fails the evidence test and which competency is the better home
+     * @param toolContext   Spring AI tool context
      * @return JSON status on success or noop, or a JSON error
      */
     @Tool(description = "Remove the link between an exercise and a competency in the current course. Only call this when BOTH (a) passing the exercise would not credibly "
@@ -448,12 +552,17 @@ public class OrchestratorToolsService {
         if (courseId == null) {
             return missingCourseContextError();
         }
+        if (writeQuotaReached(toolContext)) {
+            return writeQuotaError();
+        }
         if (competencyId == null || exerciseId == null) {
             return toJson(Map.of("error", "competencyId and exerciseId are required."));
         }
-        if (isBlank(justification)) {
-            return toJson(Map.of("error", "justification is required."));
+        String justificationError = validateJustification(justification);
+        if (justificationError != null) {
+            return justificationError;
         }
+        // See editCompetency: scalar-only mutation, no fetch-join needed.
         Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findById(competencyId);
         if (competencyOpt.isEmpty()) {
             return toJson(Map.of("error", "Competency not found: " + competencyId));
@@ -482,8 +591,9 @@ public class OrchestratorToolsService {
     /**
      * LLM tool: deletes a competency from the current course and appends a DELETE action.
      *
-     * @param competencyId id of the competency to delete
-     * @param toolContext  Spring AI tool context
+     * @param competencyId  id of the competency to delete
+     * @param justification one-sentence reason this competency is obsolete (shown to the instructor in the audit log)
+     * @param toolContext   Spring AI tool context
      * @return JSON status on success, or a JSON error
      */
     @Tool(description = "Delete a competency from the current course. Cascades to competency relations, progress records, and exercise/lecture-unit links. "
@@ -495,11 +605,15 @@ public class OrchestratorToolsService {
         if (courseId == null) {
             return missingCourseContextError();
         }
+        if (writeQuotaReached(toolContext)) {
+            return writeQuotaError();
+        }
         if (competencyId == null) {
             return toJson(Map.of("error", "competencyId is required."));
         }
-        if (isBlank(justification)) {
-            return toJson(Map.of("error", "justification is required."));
+        String justificationError = validateJustification(justification);
+        if (justificationError != null) {
+            return justificationError;
         }
         Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(competencyId);
         if (competencyOpt.isEmpty()) {
@@ -512,12 +626,17 @@ public class OrchestratorToolsService {
 
         String title = competency.getTitle();
         Course course = competency.getCourse();
+        if (competency instanceof Competency competencyToDelete) {
+            Competency competencyForAtlasMl = new Competency(competencyToDelete);
+            competencyForAtlasMl.setId(competencyToDelete.getId());
+            atlasMLNotificationService.notifyAtlasML(List.of(competencyForAtlasMl), OperationTypeDTO.DELETE, "orchestrator competency deletion");
+        }
         try {
             courseCompetencyService.deleteCourseCompetency(competency, course);
         }
-        catch (Exception ex) {
+        catch (DataAccessException ex) {
             log.warn("deleteCompetency failed for competency {}: {}", competencyId, ex.getMessage());
-            return toJson(Map.of("error", "Failed to delete competency: " + safeMessage(ex)));
+            return toJson(Map.of("error", "Failed to delete competency."));
         }
         appendAction(toolContext, AppliedActionDTO.delete(competencyId, title, "Deleted competency " + title + ".", justification.trim()));
         return toJson(Map.of("status", "ok", "deletedId", competencyId));
@@ -563,9 +682,36 @@ public class OrchestratorToolsService {
         return competency.getCourse() != null && courseId == competency.getCourse().getId();
     }
 
+    /**
+     * Defense-in-depth course check: rejects exam exercises outright (the orchestrator's entry
+     * point in {@link CompetencyOrchestrationService#run(long)} already rejects them, but a tool
+     * call with an exam exercise id would otherwise walk the lazy
+     * {@code exerciseGroup.exam.course} chain outside any transaction). Once exam exercises are
+     * filtered out, {@link Exercise#getCourseViaExerciseGroupOrCourseMember()} returns the
+     * directly-attached course without any lazy navigation.
+     */
     private static boolean exerciseBelongsToCourse(Exercise exercise, long courseId) {
+        if (exercise.isExamExercise()) {
+            return false;
+        }
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         return course != null && courseId == course.getId();
+    }
+
+    /**
+     * Match {@code weight} to one of the {@link #ALLOWED_WEIGHTS} bands within
+     * {@link #WEIGHT_TOLERANCE}. Returns the canonical band value (so callers persist exactly
+     * {@code 1.0} / {@code 0.5} / {@code 0.3}, not {@code 0.30000001}) or {@code null} when the
+     * value falls outside every band.
+     */
+    @Nullable
+    private static Double matchAllowedBand(double weight) {
+        for (Double band : ALLOWED_WEIGHTS) {
+            if (Math.abs(weight - band) < WEIGHT_TOLERANCE) {
+                return band;
+            }
+        }
+        return null;
     }
 
     private static CompetencyTaxonomy parseTaxonomyOrThrow(String taxonomy) {
@@ -581,8 +727,34 @@ public class OrchestratorToolsService {
         return value == null || value.isBlank();
     }
 
-    private static String safeMessage(Exception ex) {
-        return ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+    /**
+     * Validate the LLM-supplied audit-log justification. Returns {@code null} on success or a
+     * pre-serialized JSON error to return to the model. Centralized so all five write tools
+     * share the exact same wording / cap.
+     */
+    @Nullable
+    private String validateJustification(@Nullable String justification) {
+        if (isBlank(justification)) {
+            return toJson(Map.of("error", "justification is required."));
+        }
+        if (justification.length() > MAX_JUSTIFICATION_LENGTH) {
+            return toJson(Map.of("error", "justification must be at most " + MAX_JUSTIFICATION_LENGTH + " characters."));
+        }
+        return null;
+    }
+
+    private String writeQuotaError() {
+        return toJson(Map.of("error", "Write tool call cap (" + MAX_WRITE_CALLS + ") reached for this run; finalize and return."));
+    }
+
+    /**
+     * True when {@link #MAX_WRITE_CALLS} successful write tool calls have already been recorded
+     * for this run. Each write tool checks this before doing any work so a hallucinating model
+     * cannot exceed the cap regardless of the prompt wording.
+     */
+    private static boolean writeQuotaReached(@Nullable ToolContext toolContext) {
+        AppliedActionsBuffer buffer = appliedActionsBufferFromContext(toolContext);
+        return buffer != null && buffer.actions().size() >= MAX_WRITE_CALLS;
     }
 
     private static String formatWeight(double weight) {
@@ -601,15 +773,24 @@ public class OrchestratorToolsService {
         return value instanceof Long longValue ? longValue : null;
     }
 
-    private static void appendAction(ToolContext toolContext, AppliedActionDTO action) {
+    @Nullable
+    private static AppliedActionsBuffer appliedActionsBufferFromContext(@Nullable ToolContext toolContext) {
         if (toolContext == null || toolContext.getContext() == null) {
-            return;
+            return null;
         }
         Object value = toolContext.getContext().get(APPLIED_ACTIONS_KEY);
-        if (value instanceof List<?> rawList) {
-            @SuppressWarnings("unchecked")
-            List<AppliedActionDTO> list = (List<AppliedActionDTO>) rawList;
-            list.add(action);
+        return value instanceof AppliedActionsBuffer buffer ? buffer : null;
+    }
+
+    /**
+     * Append an action to the per-run audit buffer. The list inside
+     * {@link AppliedActionsBuffer} is a {@link java.util.Collections#synchronizedList synchronized
+     * list}, so concurrent tool callbacks (Spring AI's parallel-tool-call support) cannot race.
+     */
+    private static void appendAction(ToolContext toolContext, AppliedActionDTO action) {
+        AppliedActionsBuffer buffer = appliedActionsBufferFromContext(toolContext);
+        if (buffer != null) {
+            buffer.actions().add(action);
         }
     }
 
@@ -620,5 +801,19 @@ public class OrchestratorToolsService {
         catch (JsonProcessingException e) {
             return "{\"error\": \"Failed to serialize response\"}";
         }
+    }
+
+    /**
+     * Typed wrapper for the per-run applied-actions list passed through Spring AI's
+     * {@link ToolContext}. Replaces the previous raw {@code List<?>} cast so the unchecked-cast
+     * warning is gone and so callers cannot accidentally drop a non-{@link AppliedActionDTO}
+     * element into the buffer. The contained list MUST be a synchronized list — Spring AI's
+     * roadmap includes parallel tool-call execution, and {@link #appendAction} is the only path
+     * that mutates it.
+     */
+    record AppliedActionsBuffer(List<AppliedActionDTO> actions) implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
     }
 }

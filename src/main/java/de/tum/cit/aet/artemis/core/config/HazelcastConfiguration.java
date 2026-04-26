@@ -1391,6 +1391,12 @@ public class HazelcastConfiguration {
         config.getMapConfigs().put("atlas-session-preview-history", createAtlasSessionMapConfig(artemisProperties));
         // Node metrics snapshots for multi-node admin metrics page (pushed every 15s, expire after 60s)
         config.getMapConfigs().put("nodeMetrics", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(60));
+        // Atlas competency-orchestrator per-course locks. The lock is normally released explicitly
+        // in CompetencyOrchestrationService.run()'s finally block; this TTL only catches the case
+        // where the JVM dies mid-run. Configured here (not via @PostConstruct on the service) because
+        // MapConfig changes after the proxy is built are silently ignored on most cluster topologies.
+        // Must be longer than the longest plausible LLM session (GPT-5.4 + medium reasoning ~5min).
+        config.getMapConfigs().put("atlas-orchestrator-runs", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(30 * 60));
 
         // JCache (ICache) configuration for Hibernate L2 entity/collection caches.
         // JCacheRegionFactory creates ICaches (not IMaps) — CacheSimpleConfig is the Hazelcast
