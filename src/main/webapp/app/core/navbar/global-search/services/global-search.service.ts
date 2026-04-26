@@ -42,7 +42,7 @@ export class GlobalSearchService {
         let params = new HttpParams().set('q', query);
 
         if (options?.type) {
-            params = params.set('type', options.type);
+            params = params.set('types', options.type);
         }
         if (options?.courseId !== undefined) {
             params = params.set('courseId', options.courseId.toString());
