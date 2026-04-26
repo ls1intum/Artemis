@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 /**
  * Test configuration to eagerly initialize Jackson deserializers.
@@ -54,6 +55,9 @@ public class JacksonDeserializerInitializationConfig {
 
         // Initialize Exam with nested relationships (exercise groups, student exams, etc.)
         initializeExam();
+
+        // Initialize TutorialGroup with registrations → TutorialGroupRegistration → student → User["id"]
+        initializeTutorialGroup();
 
         log.debug("Successfully initialized Jackson deserializers");
     }
@@ -138,6 +142,37 @@ public class JacksonDeserializerInitializationConfig {
         }
         catch (Exception e) {
             log.warn("Failed to pre-initialize Exam deserializer: {}", e.getMessage());
+        }
+    }
+
+    private void initializeTutorialGroup() {
+        try {
+            String sampleJson = """
+                    {
+                        "id": 1,
+                        "title": "Test Group",
+                        "isOnline": false,
+                        "registrations": [{
+                            "id": 1,
+                            "student": {
+                                "id": 1,
+                                "login": "student1",
+                                "firstName": "Student",
+                                "lastName": "One"
+                            }
+                        }],
+                        "teachingAssistant": {
+                            "id": 2,
+                            "login": "tutor1",
+                            "firstName": "Tutor",
+                            "lastName": "One"
+                        }
+                    }
+                    """;
+            objectMapper.readValue(sampleJson, TutorialGroup.class);
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-initialize TutorialGroup deserializer: {}", e.getMessage());
         }
     }
 }
