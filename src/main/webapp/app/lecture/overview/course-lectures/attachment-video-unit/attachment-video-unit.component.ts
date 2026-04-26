@@ -121,22 +121,22 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return this.rawVideoSource();
     });
 
-    private readonly _hasPdfFullscreen = signal<boolean>(false);
-    readonly hasPdfFullscreen = this._hasPdfFullscreen.asReadonly();
+    private readonly pdfFullscreenState = signal<boolean>(false);
+    readonly hasPdfFullscreen = this.pdfFullscreenState.asReadonly();
 
-    private readonly _isFullscreen = signal<boolean>(false);
-    readonly isFullscreen = this._isFullscreen.asReadonly();
+    private readonly fullscreenState = signal<boolean>(false);
+    readonly isFullscreen = this.fullscreenState.asReadonly();
 
     // Split panel sizes (percentage values)
     readonly defaultVerticalSplitSizes: SplitSizes = [66.67, 33.33]; // [content, iris]
     readonly defaultHorizontalSplitSizes: SplitSizes = [50, 50]; // [video, pdf]
-    private readonly _verticalSplitSizes = signal<SplitSizes>(this.defaultVerticalSplitSizes);
-    private readonly _horizontalSplitSizes = signal<SplitSizes>(this.defaultHorizontalSplitSizes);
+    private readonly verticalSplitSizesState = signal<SplitSizes>(this.defaultVerticalSplitSizes);
+    private readonly horizontalSplitSizesState = signal<SplitSizes>(this.defaultHorizontalSplitSizes);
     readonly minVerticalSplitSizes: SplitSizes = [220, 220];
     readonly minHorizontalSplitSizes: SplitSizes = [140, 140];
 
-    readonly verticalSplitSizes = this._verticalSplitSizes.asReadonly();
-    readonly horizontalSplitSizes = this._horizontalSplitSizes.asReadonly();
+    readonly verticalSplitSizes = this.verticalSplitSizesState.asReadonly();
+    readonly horizontalSplitSizes = this.horizontalSplitSizesState.asReadonly();
 
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
@@ -437,15 +437,15 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     protected onVerticalSplitSizesChange(sizes: SplitSizes): void {
-        this._verticalSplitSizes.set(sizes);
+        this.verticalSplitSizesState.set(sizes);
     }
 
     protected onHorizontalSplitSizesChange(sizes: SplitSizes): void {
-        this._horizontalSplitSizes.set(sizes);
+        this.horizontalSplitSizesState.set(sizes);
     }
 
     protected onFullscreenChange(isFullscreen: boolean): void {
-        this._isFullscreen.set(isFullscreen);
+        this.fullscreenState.set(isFullscreen);
     }
 
     private shouldShowIrisSidebarInFullscreen(): boolean {
@@ -485,7 +485,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      * Tracks fullscreen state of the nested PDF viewer to avoid conflicting Escape handling.
      */
     protected onPdfFullscreenChange(isFullscreen: boolean): void {
-        this._hasPdfFullscreen.set(isFullscreen);
+        this.pdfFullscreenState.set(isFullscreen);
     }
 
     /**
