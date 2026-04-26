@@ -20,7 +20,7 @@ import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/manage/exam-sco
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('ExamParticipationService', () => {
     setupTestBed({ zoneless: true });
