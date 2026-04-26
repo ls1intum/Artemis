@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
  * @param participation the participation DTO, the submission belongs to
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SubmissionWithParticipationDTO(long id, ParticipationWithExerciseDTO participation) {
+public record SubmissionWithParticipationDTO(Long id, ParticipationWithExerciseDTO participation) {
 
     /**
      * Converts a submission to a submission DTO.
@@ -20,6 +20,7 @@ public record SubmissionWithParticipationDTO(long id, ParticipationWithExerciseD
      * @return the submission DTO
      */
     public static SubmissionWithParticipationDTO of(Submission submission) {
-        return new SubmissionWithParticipationDTO(submission.getId(), ParticipationWithExerciseDTO.of(submission.getParticipation()));
+        return new SubmissionWithParticipationDTO(submission.getId(),
+                submission.getParticipation() != null ? ParticipationWithExerciseDTO.of(submission.getParticipation()) : null);
     }
 }

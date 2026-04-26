@@ -7,19 +7,24 @@ import { ComplaintResponseService } from 'app/assessment/manage/services/complai
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { map } from 'rxjs/operators';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { User } from 'app/core/user/user.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
 
 export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
+export type ComplaintDTOResponseType = HttpResponse<ComplaintDTO>;
+export type ComplaintDTOArrayResponseType = HttpResponse<ComplaintDTO[]>;
 
 export interface IComplaintService {
     isComplaintLockedForLoggedInUser: (complaint: Complaint, exercise: Exercise) => boolean | undefined;
     isComplaintLockedByLoggedInUser: (complaint: Complaint) => boolean | undefined;
     isComplaintLocked: (complaint: Complaint) => boolean | undefined;
-    create: (complaint: Complaint, examId: number) => Observable<EntityResponseType>;
+    create: (complaintRequest: ComplaintRequestDTO) => Observable<EntityResponseType>;
     findBySubmissionId: (participationId: number) => Observable<EntityResponseType>;
     getComplaintsForTestRun: (exerciseId: number) => Observable<EntityResponseTypeArray>;
     findAllByTutorIdForCourseId: (tutorId: number, courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
@@ -82,8 +87,8 @@ export class ComplaintService implements IComplaintService {
      */
     create(complaintRequest: ComplaintRequestDTO): Observable<EntityResponseType> {
         return this.http
-            .post<Complaint>(this.resourceUrl, complaintRequest, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
+            .post<ComplaintDTO>(this.resourceUrl, complaintRequest, { observe: 'response' })
+            .pipe(map((res: ComplaintDTOResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
     }
 
     /**
@@ -92,22 +97,22 @@ export class ComplaintService implements IComplaintService {
      */
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Complaint>(`${this.resourceUrl}?submissionId=${submissionId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
+            .get<ComplaintDTO>(`${this.resourceUrl}?submissionId=${submissionId}`, { observe: 'response' })
+            .pipe(map((res: ComplaintDTOResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
     }
 
     /**
-     * Find complaints for instructor for specified test run exercise (complaintType == 'COMPLAINT').
+     * Find complaints for the instructor for a specified test run exercise (complaintType == 'COMPLAINT').
      * @param exerciseId
      */
     getComplaintsForTestRun(exerciseId: number): Observable<EntityResponseTypeArray> {
         return this.http
-            .get<Complaint[]>(`${this.resourceUrl}?exerciseId=${exerciseId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseTypeArray) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
+            .get<ComplaintDTO[]>(`${this.resourceUrl}?exerciseId=${exerciseId}`, { observe: 'response' })
+            .pipe(map((res: ComplaintDTOArrayResponseType) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
     }
 
     /**
-     * Find all complaints by tutor id, course id and complaintType.
+     * Find all complaints by tutor id, course id, and complaintType.
      * @param tutorId
      * @param courseId
      * @param complaintType
@@ -128,7 +133,7 @@ export class ComplaintService implements IComplaintService {
     }
 
     /**
-     * Find all complaints by tutor id, exercise id and complaintType.
+     * Find all complaints by tutor id, exercise id, and complaintType.
      * @param tutorId
      * @param exerciseId
      * @param complaintType
@@ -240,28 +245,94 @@ export class ComplaintService implements IComplaintService {
     }
 
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {
-        return this.http.get<Complaint[]>(url, { observe: 'response' }).pipe(map((res: EntityResponseTypeArray) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
+        return this.http
+            .get<ComplaintDTO[]>(url, { observe: 'response' })
+            .pipe(map((res: ComplaintDTOArrayResponseType) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
     }
 
-    private convertComplaintEntityResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            res.body.submittedTime = res.body.submittedTime ? dayjs(res.body.submittedTime) : undefined;
-            if (res.body?.complaintResponse) {
-                this.complaintResponseService.convertComplaintResponseDatesFromServer(res.body.complaintResponse);
+    private convertComplaintEntityResponseArrayDateFromServer(res: ComplaintDTOArrayResponseType): EntityResponseTypeArray {
+        return res.clone({
+            body: res.body ? res.body.map((dto) => this.convertComplaintFromServer(dto)) : undefined,
+        });
+    }
+
+    private convertComplaintEntityResponseDatesFromServer(res: ComplaintDTOResponseType): HttpResponse<Complaint> {
+        return res.clone({ body: res.body ? this.convertComplaintFromServer(res.body) : undefined });
+    }
+
+    private convertComplaintFromServer(dto: ComplaintDTO): Complaint {
+        const complaint = new Complaint();
+        complaint.id = dto.id;
+        complaint.complaintText = dto.complaintText;
+        complaint.complaintType = dto.complaintType;
+        complaint.accepted = dto.complaintIsAccepted;
+        complaint.submittedTime = dto.submittedTime ? dayjs(dto.submittedTime) : undefined;
+
+        if (dto.complaintResponse) {
+            complaint.complaintResponse = this.complaintResponseService.convertComplaintResponseFromServer(dto.complaintResponse);
+        }
+
+        if (dto.result) {
+            const result = new Result();
+            result.id = dto.result.id;
+            result.completionDate = dto.result.completionDate ? dayjs(dto.result.completionDate) : undefined;
+            result.score = dto.result.score;
+            result.rated = dto.result.rated;
+            result.assessmentType = dto.result.assessmentType;
+
+            if (dto.result.assessorId !== undefined) {
+                result.assessor = {
+                    id: dto.result.assessorId,
+                } as User;
+            }
+
+            if (dto.result.feedbacks) {
+                result.feedbacks = dto.result.feedbacks.map((feedbackDTO) => ({
+                    id: feedbackDTO.id,
+                    text: feedbackDTO.text,
+                    detailText: feedbackDTO.detailText,
+                    hasLongFeedbackText: feedbackDTO.hasLongFeedbackText,
+                    reference: feedbackDTO.reference,
+                    credits: feedbackDTO.credits,
+                    positive: feedbackDTO.positive,
+                    type: feedbackDTO.type,
+                    visibility: feedbackDTO.visibility,
+                    testCase: feedbackDTO.testCaseName ? { testName: feedbackDTO.testCaseName } : undefined,
+                })) as any;
+            }
+
+            if (dto.result.submission) {
+                const submission = {
+                    id: dto.result.submission.id,
+                } as Submission;
+
+                if (dto.result.submission.participation) {
+                    submission.participation = {
+                        id: dto.result.submission.participation.id,
+                        exercise: dto.result.submission.participation.exercise
+                            ? ({
+                                  id: dto.result.submission.participation.exercise.id,
+                                  type: dto.result.submission.participation.exercise.type,
+                              } as Exercise)
+                            : undefined,
+                    } as StudentParticipation;
+                }
+
+                result.submission = submission;
+            }
+            complaint.result = result;
+        }
+        if (dto.participant) {
+            if (dto.participant.isStudent === true) {
+                complaint.student = {
+                    id: dto.participant.id,
+                } as User;
+            } else if (dto.participant.isStudent === false) {
+                complaint.team = {
+                    id: dto.participant.id,
+                } as Team;
             }
         }
-        return res;
-    }
-
-    private convertComplaintEntityResponseArrayDateFromServer(res: EntityResponseTypeArray): EntityResponseTypeArray {
-        if (res.body) {
-            res.body.forEach((complaint) => {
-                complaint.submittedTime = convertDateFromServer(complaint.submittedTime);
-                if (complaint.complaintResponse) {
-                    this.complaintResponseService.convertComplaintResponseDatesFromServer(complaint.complaintResponse);
-                }
-            });
-        }
-        return res;
+        return complaint;
     }
 }

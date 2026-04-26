@@ -1,8 +1,8 @@
 import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Submission, SubmissionWithParticipationDTO } from 'app/exercise/shared/entities/submission/submission.model';
+import { Feedback, FeedbackDTO } from 'app/assessment/shared/entities/feedback.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -13,7 +13,7 @@ export class Result implements BaseEntity {
     public successful?: boolean;
 
     /**
-     * Current score in percent i.e. between 1 - 100
+     * Current score in percent i.e., between 1 - 100
      * - Can be larger than 100 if bonus points are available
      */
     public score?: number;
@@ -50,7 +50,7 @@ export class Result implements BaseEntity {
 }
 /**
  * Checks whether the given result is a practice result.
- * A practice result is a result that belongs to a test run of a student participation.
+ * A practice result is a result that belongs to a test run of student participation.
  * @param result the result to check
  * @return true if the result is a practice result, false otherwise
  */
@@ -60,4 +60,18 @@ export function isPracticeResult(result: Result | undefined): boolean {
         studentParticipation = result.submission.participation as StudentParticipation;
     }
     return studentParticipation?.testRun ?? false;
+}
+
+/**
+ * DTO representing a simple result which is used in complaint dto.
+ */
+export class ResultSimpleDTO {
+    public id?: number;
+    public completionDate?: dayjs.Dayjs;
+    public score?: number;
+    public rated?: boolean;
+    public assessmentType?: AssessmentType;
+    public submission?: SubmissionWithParticipationDTO;
+    public assessorId?: number;
+    public feedbacks?: FeedbackDTO[];
 }
