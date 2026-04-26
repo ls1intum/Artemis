@@ -1,4 +1,4 @@
-@if (quizParticipation().quizQuestions && quizParticipation().quizQuestions.length > 0) {
+@if (quizParticipation().quizQuestions && quizParticipation().quizQuestions!.length > 0) {
     <div class="quiz-container">
         @if (showMissingResultsNotice) {
             <div class="alert alert-info mb-2" jhiTranslate="artemisApp.exam.examSummary.missingResultNotice"></div>

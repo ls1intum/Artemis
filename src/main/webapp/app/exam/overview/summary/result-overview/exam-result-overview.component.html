@@ -124,11 +124,11 @@
                         }
                         @if (studentExamWithGrade().studentResult.gradeWithBonus !== undefined) {
                             {{
-                                'artemisApp.exam.examSummary.points.youAchievedFromBonus.' + studentExamWithGrade().studentResult.gradeWithBonus.bonusStrategy
+                                'artemisApp.exam.examSummary.points.youAchievedFromBonus.' + studentExamWithGrade().studentResult.gradeWithBonus!.bonusStrategy
                                     | artemisTranslate
                                         : {
-                                              achievedBonus: studentExamWithGrade().studentResult.gradeWithBonus.bonusGrade,
-                                              bonusFromTitle: studentExamWithGrade().studentResult.gradeWithBonus.bonusFromTitle,
+                                              achievedBonus: studentExamWithGrade().studentResult.gradeWithBonus!.bonusGrade,
+                                              bonusFromTitle: studentExamWithGrade().studentResult.gradeWithBonus!.bonusFromTitle,
                                           }
                             }}
                         }
