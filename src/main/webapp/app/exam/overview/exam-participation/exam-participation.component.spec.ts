@@ -161,6 +161,14 @@ describe('ExamParticipationComponent', () => {
         courseService = TestBed.inject(CourseManagementService);
         courseStorageService = TestBed.inject(CourseStorageService);
         examManagementService = TestBed.inject(ExamManagementService);
+        // Stub ngOnInit-triggered service calls so we can call ngOnInit safely
+        const studentExamStub = { exam: new Exam() } as StudentExam;
+        const loadTestRunSpy = vi.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExamStub));
+        vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamStub));
+        vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExamStub));
+        comp.ngOnInit();
+        // Reset call history so per-test toHaveBeenCalledOnce assertions are not skewed by the beforeEach call
+        loadTestRunSpy.mockClear();
         comp.exam = new Exam();
     });
 
@@ -774,7 +782,7 @@ describe('ExamParticipationComponent', () => {
         it('should call translateService', () => {
             const translateServiceSpy = vi.spyOn(translateService, 'instant');
             const canDeactivate = comp.canDeactivateWarning;
-            expect(canDeactivate).toBeUndefined();
+            expect(canDeactivate).toBe('artemisApp.examParticipation.pendingChanges');
             expect(translateServiceSpy).toHaveBeenCalledOnce();
         });
     });
