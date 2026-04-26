@@ -78,9 +78,10 @@
         background: #000;
     }
 
-    // The YouTube IFrame API injects inline pixel dimensions into nested wrapper
-    // elements and the iframe. With ViewEncapsulation.None we can scope these
-    // overrides to this component selector instead of relying on ::ng-deep.
+    /* The YouTube IFrame API injects inline pixel dimensions into nested wrapper
+     * elements and the iframe. With ViewEncapsulation.None we can scope these
+     * overrides to this component selector instead of relying on ::ng-deep.
+     */
     .video-column > youtube-player > div,
     .video-column > youtube-player > div > div,
     .video-column > youtube-player iframe {

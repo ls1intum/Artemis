@@ -72,6 +72,10 @@ jhi-attachment-video-unit {
 }
 
 .content-container--fullscreen {
+    jhi-lecture-chatbot {
+        --iris-chat-shell-border-radius: var(--lecture-combined-view-radius);
+    }
+
     .video-player-container,
     .pdf-viewer-spacing {
         padding-block: 0;

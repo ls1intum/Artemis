@@ -133,6 +133,7 @@ describe('VideoPlayerComponent', () => {
                             <video #videoRef></video>
                         </div>
                         <div #resizerHandle class="resizer-handle"></div>
+                        <div class="transcript-column"></div>
                     </div>
                 `,
             },
@@ -317,7 +318,7 @@ describe('VideoPlayerComponent', () => {
             // Simulate drag to position 600px from left
             moveListener({ clientX: 600 });
 
-            // Now uses percentage-based flex (600/1000 = 60%)
+            // Uses percentage-based flex (600/1000 = 60%)
             expect(videoColumnEl.style.flex).toBe('0 0 60%');
             expect(videoColumnEl.style.width).toBe('');
         });
@@ -405,7 +406,7 @@ describe('VideoPlayerComponent', () => {
             const draggableConfig = getMockInteractInstance().draggable.mock.calls[0][0];
             draggableConfig.listeners.move({ clientX: 500 });
 
-            // Now uses percentage-based flex (500/1000 = 50%)
+            // Uses percentage-based flex (500/1000 = 50%)
             expect(videoColumnEl.style.flex).toBe('0 0 50%');
             expect(videoColumnEl.style.width).toBe('');
 
@@ -415,6 +416,59 @@ describe('VideoPlayerComponent', () => {
             // Percentage-based flex is maintained (allows proportional scaling)
             expect(videoColumnEl.style.flex).toBe('0 0 50%');
             expect(videoColumnEl.style.width).toBe('');
+        });
+
+        it('skips resizing when the wrapper is too narrow for both columns', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            const videoColumnEl = component.videoColumn()!.nativeElement;
+            const wrapperEl = component.videoWrapper()!.nativeElement;
+
+            vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
+                left: 0,
+                width: 540,
+                top: 0,
+                right: 540,
+                bottom: 500,
+                height: 500,
+                x: 0,
+                y: 0,
+                toJSON: () => ({}),
+            } as DOMRect);
+
+            const draggableConfig = getMockInteractInstance().draggable.mock.calls[0][0];
+            draggableConfig.listeners.move({ clientX: 400 });
+
+            expect(videoColumnEl.style.flex).toBe('');
+            expect(videoColumnEl.style.width).toBe('');
+        });
+
+        it('resetSplitRatio clears custom sizing on the video column', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            const videoColumnEl = component.videoColumn()!.nativeElement;
+            videoColumnEl.style.flex = '0 0 65%';
+            videoColumnEl.style.width = '650px';
+
+            component.resetSplitRatio();
+
+            expect(videoColumnEl.style.flex).toBe('');
+            expect(videoColumnEl.style.width).toBe('');
+        });
+
+        it('syncTranscriptHeight enforces the minimum transcript height', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            const videoColumnEl = component.videoColumn()!.nativeElement;
+            const transcriptColumnEl = fixture.nativeElement.querySelector('.transcript-column') as HTMLElement;
+            Object.defineProperty(videoColumnEl, 'offsetHeight', { configurable: true, value: 320 });
+
+            component['syncTranscriptHeight']();
+
+            expect(transcriptColumnEl.style.maxHeight).toBe('500px');
         });
 
         it('cleans up interact instance on destroy', async () => {
