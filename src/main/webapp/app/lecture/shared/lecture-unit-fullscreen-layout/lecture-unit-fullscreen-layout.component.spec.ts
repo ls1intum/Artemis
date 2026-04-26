@@ -58,18 +58,6 @@ describe('LectureUnitFullscreenLayoutComponent', () => {
         expect(initSplitterSpy).toHaveBeenCalled();
     });
 
-    it('splitSizesChange emits when vertical split is resized', () => {
-        const splitSizesChangeSpy = vi.fn();
-        component.splitSizesChange.subscribe(splitSizesChangeSpy);
-
-        // Call the private method that emits the event (simulating a drag end)
-        component['ngZone'].run(() => {
-            component.splitSizesChange.emit([60, 40]);
-        });
-
-        expect(splitSizesChangeSpy).toHaveBeenCalledWith([60, 40]);
-    });
-
     it('calls initHorizontalSplitter when horizontal split is enabled', async () => {
         const topEl = document.createElement('div');
         const bottomEl = document.createElement('div');
@@ -97,18 +85,6 @@ describe('LectureUnitFullscreenLayoutComponent', () => {
             topEl.remove();
             bottomEl.remove();
         }
-    });
-
-    it('horizontalSplitSizesChange emits when horizontal split is resized', () => {
-        const horizontalSplitSizesChangeSpy = vi.fn();
-        component.horizontalSplitSizesChange.subscribe(horizontalSplitSizesChangeSpy);
-
-        // Call the private method that emits the event (simulating a drag end)
-        component['ngZone'].run(() => {
-            component.horizontalSplitSizesChange.emit([70, 30]);
-        });
-
-        expect(horizontalSplitSizesChangeSpy).toHaveBeenCalledWith([70, 30]);
     });
 
     it('window resize updates top offset in fullscreen', () => {
@@ -178,7 +154,7 @@ describe('LectureUnitFullscreenLayoutComponent', () => {
         expect(clearFullscreenTopOffsetSpy).toHaveBeenCalled();
     });
 
-    it('focus trap prevents tab navigation outside container', async () => {
+    it('focus trap wraps focus at both tab boundaries', async () => {
         component.open();
         await fixture.whenStable();
         fixture.detectChanges();
@@ -191,18 +167,39 @@ describe('LectureUnitFullscreenLayoutComponent', () => {
         container!.appendChild(button1);
         container!.appendChild(button2);
 
-        // Simulate tab at last element
-        const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true });
-        const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
+        const setActiveElement = (element: HTMLElement) => {
+            Object.defineProperty(document, 'activeElement', {
+                writable: true,
+                configurable: true,
+                value: element,
+            });
+        };
 
-        Object.defineProperty(document, 'activeElement', {
-            writable: true,
-            configurable: true,
-            value: button2,
-        });
+        // Mock getFocusableElements to return the buttons so they survive filtering
+        vi.spyOn(component as any, 'getFocusableElements').mockReturnValue([button1, button2]);
+        const focusButton1Spy = vi.spyOn(button1, 'focus').mockImplementation(() => setActiveElement(button1));
+        const focusButton2Spy = vi.spyOn(button2, 'focus').mockImplementation(() => setActiveElement(button2));
 
-        container!.dispatchEvent(event);
+        // Test Tab wrapping: button2 -> button1
+        const tabEvent = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true });
+        const preventDefaultTabSpy = vi.spyOn(tabEvent, 'preventDefault');
+        setActiveElement(button2);
 
-        expect(preventDefaultSpy).toHaveBeenCalled();
+        container!.dispatchEvent(tabEvent);
+
+        expect(preventDefaultTabSpy).toHaveBeenCalled();
+        expect(focusButton1Spy).toHaveBeenCalledOnce();
+        expect(document.activeElement).toBe(button1);
+
+        // Test Shift+Tab wrapping: button1 -> button2
+        const shiftTabEvent = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true });
+        const preventDefaultShiftTabSpy = vi.spyOn(shiftTabEvent, 'preventDefault');
+        setActiveElement(button1);
+
+        container!.dispatchEvent(shiftTabEvent);
+
+        expect(preventDefaultShiftTabSpy).toHaveBeenCalled();
+        expect(focusButton2Spy).toHaveBeenCalledOnce();
+        expect(document.activeElement).toBe(button2);
     });
 });

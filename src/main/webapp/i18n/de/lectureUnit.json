@@ -228,7 +228,8 @@
                 "noResults": "Keine Ergebnisse",
                 "noMatchingTranscript": "Kein passendes Transkript gefunden",
                 "loading": "Lädt...",
-                "resetSplitRatio": "Aufteilung zurücksetzen"
+                "resetSplitRatio": "Aufteilung zurücksetzen",
+                "iframeTitle": "Vorlesungsvideo"
             },
             "pdfViewer": {
                 "title": "PDF-Betrachter",

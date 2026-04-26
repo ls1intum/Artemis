@@ -41,6 +41,7 @@ import {
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
@@ -65,6 +66,7 @@ type SplitSizes = [number, number];
     imports: [
         LectureUnitComponent,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
         TranslateDirective,
         SafeResourceUrlPipe,
         VideoPlayerComponent,

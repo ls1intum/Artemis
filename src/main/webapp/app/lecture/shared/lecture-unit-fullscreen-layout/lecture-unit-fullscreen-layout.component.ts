@@ -312,7 +312,7 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
 
     private getFocusableElements(container: HTMLElement): HTMLElement[] {
         return Array.from(container.querySelectorAll<HTMLElement>(this.focusableSelector)).filter(
-            (el) => el.offsetParent !== null && !el.hasAttribute('disabled') && el.tabIndex >= 0,
+            (el) => (el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0) && !el.hasAttribute('disabled') && el.tabIndex >= 0,
         );
     }
 

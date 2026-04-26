@@ -228,7 +228,8 @@
                 "noResults": "No results",
                 "noMatchingTranscript": "No matching transcript found",
                 "loading": "Loading...",
-                "resetSplitRatio": "Reset split layout"
+                "resetSplitRatio": "Reset split layout",
+                "iframeTitle": "Lecture video"
             },
             "pdfViewer": {
                 "title": "PDF Viewer",

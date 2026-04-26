@@ -91,6 +91,7 @@
                                 [class]="isFullscreen() ? 'video-iframe' : 'rounded w-100 h-100 border-0'"
                                 [src]="iframeFallbackUrl() | safeResourceUrl"
                                 allow="fullscreen"
+                                [title]="lectureUnit().name || ('artemisApp.attachmentVideoUnit.videoPlayer.iframeTitle' | artemisTranslate)"
                             ></iframe>
                         </div>
                     </div>
