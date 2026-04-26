@@ -13,7 +13,6 @@ import { faComments } from '@fortawesome/free-solid-svg-icons';
 import { firstValueFrom } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-
 describe('CourseNotificationService', () => {
     setupTestBed({ zoneless: true });
 

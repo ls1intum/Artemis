@@ -123,6 +123,15 @@ artemis:
     url: <your-pyris-url>
     secret-token: <your-secret>
 
+  deimos:
+    enabled: true
+    llm:
+      base-url: https://gpu.aet.cit.tum.de
+      api-key: dummy-key
+      model: openai/gpt-oss-120b
+      completions-path: /api/chat/completions
+      temperature: 0.3
+
   weaviate:
     enabled: false
 

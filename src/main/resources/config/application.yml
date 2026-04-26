@@ -162,6 +162,15 @@ artemis:
             default-limit: -1
             default-timeframe-hours: -1
 
+    deimos:
+        enabled: false
+        llm:
+            base-url: https://gpu.aet.cit.tum.de
+            api-key: dummy
+            model: openai/gpt-oss-120b
+            completions-path: /api/chat/completions
+            temperature: 0.3
+
     weaviate:
         enabled: false
 

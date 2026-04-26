@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title th:text="#{email.deimos.analysisComplete.title}">Malicious participation analysis finished</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}"/>
+
+<div id="message-body">
+    <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}"/>
+
+    <p>
+        <span
+            th:text="#{email.deimos.analysisComplete.text(${scopeTitle}, ${courseTitle})}"
+        >
+            Malicious participation analysis finished.
+        </span>
+    </p>
+
+    <p th:text="#{email.deimos.analysisComplete.llmDisclaimer}">This assessment is LLM-generated and may be inaccurate.</p>
+
+    <p class="bold-text" th:text="#{email.deimos.analysisComplete.summary}">Summary</p>
+    <ul>
+        <li>
+            <span th:text="#{email.deimos.analysisComplete.analyzed}">Analyzed participations</span>: <span th:text="${analyzed}">0</span>
+        </li>
+        <li>
+            <span th:text="#{email.deimos.analysisComplete.maliciousCount}">Malicious</span>: <span th:text="${maliciousCount}">0</span>
+        </li>
+        <li>
+            <span th:text="#{email.deimos.analysisComplete.benignCount}">Benign</span>: <span th:text="${benignCount}">0</span>
+        </li>
+        <li>
+            <span th:text="#{email.deimos.analysisComplete.failed}">Failed analyses</span>: <span th:text="${failed}">0</span>
+        </li>
+    </ul>
+
+    <th:block th:if="${maliciousParticipationLinks != null and !maliciousParticipationLinks.isEmpty()}">
+        <p class="bold-text" th:text="#{email.deimos.analysisComplete.maliciousLinksHeading}">Flagged participations</p>
+        <ul>
+            <li th:each="link : ${maliciousParticipationLinks}">
+                <div>
+                    <a th:href="${link.url}" th:text="#{email.deimos.analysisComplete.maliciousParticipationLinkLabel(${link.participationId})}">Participation</a>
+                </div>
+                <p class="rationale-block" th:if="${link.rationale != null and !link.rationale.isEmpty()}"
+                   style="white-space: pre-wrap; margin: 0.35em 0 0.75em 0;"
+                   th:text="${link.rationale}">Rationale</p>
+            </li>
+        </ul>
+    </th:block>
+
+    <th:block th:replace="~{mail/notification/fragments :: openInArtemisButton}"/>
+    <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
+</div>
+
+<th:block th:replace="~{mail/notification/fragments :: footer}"/>
+</body>
+</html>

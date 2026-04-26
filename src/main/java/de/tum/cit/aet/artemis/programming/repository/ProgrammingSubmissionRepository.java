@@ -207,4 +207,41 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             """)
     Set<ParticipationCommitHashDTO> findLatestValidCommitHashForParticipations(@Param("loadedParticipationIds") Set<Long> loadedParticipationIds,
             @Param("filterLateSubmissionsIndividualDueDate") ZonedDateTime filterLateSubmissionsIndividualDueDate, @Param("exerciseDueDate") ZonedDateTime exerciseDueDate);
+
+    @Query("""
+            SELECT DISTINCT p.id
+            FROM ProgrammingSubmission s
+                JOIN s.participation p
+                JOIN p.exercise e
+                LEFT JOIN e.exerciseGroup eg
+                LEFT JOIN eg.exam ex
+            WHERE s.submissionDate IS NOT NULL
+                AND s.submissionDate >= :from
+                AND s.submissionDate <= :to
+                AND COALESCE(e.course.id, ex.course.id) = :courseId
+            ORDER BY p.id ASC
+            """)
+    Slice<Long> findParticipationIdsForCourseInRange(@Param("courseId") long courseId, @Param("from") ZonedDateTime from, @Param("to") ZonedDateTime to, Pageable pageable);
+
+    @Query("""
+            SELECT DISTINCT p.id
+            FROM ProgrammingSubmission s
+                JOIN s.participation p
+                JOIN p.exercise e
+            WHERE s.submissionDate IS NOT NULL
+                AND s.submissionDate >= :from
+                AND s.submissionDate <= :to
+                AND e.id = :exerciseId
+            ORDER BY p.id ASC
+            """)
+    Slice<Long> findParticipationIdsForExerciseInRange(@Param("exerciseId") long exerciseId, @Param("from") ZonedDateTime from, @Param("to") ZonedDateTime to, Pageable pageable);
+
+    @Query("""
+            SELECT s
+            FROM ProgrammingSubmission s
+            WHERE s.participation.id = :participationId
+                AND s.commitHash IS NOT NULL
+            ORDER BY s.submissionDate ASC, s.id ASC
+            """)
+    List<ProgrammingSubmission> findByParticipationIdOrderBySubmissionDateAsc(@Param("participationId") long participationId);
 }

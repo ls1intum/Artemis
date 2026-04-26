@@ -51,7 +51,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load all feature toggles', () => {
             expect(comp.featureToggles()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.featureToggles()).toHaveLength(15);
+            expect(comp.featureToggles()).toHaveLength(17);
         });
 
         it('ngOnInit should set isActive based on active toggles', () => {

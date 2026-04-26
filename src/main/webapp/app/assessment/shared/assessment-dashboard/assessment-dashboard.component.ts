@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { User } from 'app/core/user/user.model';
@@ -16,7 +16,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AssessmentDashboardInformationComponent, AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { faClipboard, faHeartBroken, faSort, faTable } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard, faHeartBroken, faShieldAlt, faSort, faTable } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -40,6 +40,11 @@ import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/f
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { DeimosDateRangeModalComponent, DeimosDateRangeSelection } from 'app/shared/deimos/deimos-date-range-modal.component';
+import { DeimosService } from 'app/programming/shared/services/deimos.service';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -68,6 +73,8 @@ import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
+        DeimosDateRangeModalComponent,
+        FeatureToggleHideDirective,
     ],
 })
 export class AssessmentDashboardComponent implements OnInit {
@@ -79,6 +86,7 @@ export class AssessmentDashboardComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private sortService = inject(SortService);
     private profileService = inject(ProfileService);
+    private deimosService = inject(DeimosService);
 
     readonly TeamFilterProp = TeamFilterProp;
     readonly documentationType: DocumentationType = 'Assessment';
@@ -124,11 +132,16 @@ export class AssessmentDashboardComponent implements OnInit {
 
     isTogglingSecondCorrection: Map<number, boolean> = new Map<number, boolean>();
 
+    readonly FeatureToggle = FeatureToggle;
+    readonly deimosDateRangeModal = viewChild<DeimosDateRangeModalComponent>('deimosDateRangeModal');
+    protected deimosSubmitting = signal(false);
+
     // Icons
     faSort = faSort;
     faTable = faTable;
     faClipboard = faClipboard;
     faHeartBroken = faHeartBroken;
+    faShieldAlt = faShieldAlt;
 
     /**
      * On init set the courseID, load all exercises and statistics for tutors and set the identity for the AccountService.
@@ -450,6 +463,28 @@ export class AssessmentDashboardComponent implements OnInit {
         } else {
             return ['/course-management', this.courseId.toString(), 'assessment-dashboard', exercise.id!.toString()];
         }
+    }
+
+    openDeimosBatchDialog(): void {
+        this.deimosDateRangeModal()?.open(dayjs().subtract(7, 'day'), dayjs());
+    }
+
+    triggerCourseDeimosBatch(selection: DeimosDateRangeSelection): void {
+        if (!this.courseId) {
+            return;
+        }
+
+        this.deimosSubmitting.set(true);
+        this.deimosService.triggerCourseBatch(this.courseId, selection.from, selection.to).subscribe({
+            next: () => {
+                this.deimosSubmitting.set(false);
+                this.alertService.success('artemisApp.deimos.trigger.success');
+            },
+            error: () => {
+                this.deimosSubmitting.set(false);
+                this.alertService.error('artemisApp.deimos.trigger.error');
+            },
+        });
     }
 
     asQuizExercise(exercise: Exercise): QuizExercise {

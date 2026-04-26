@@ -26,6 +26,8 @@ export enum FeatureToggle {
     RateLimit = 'RateLimit',
     AutonomousTutor = 'AutonomousTutor',
     GlobalSearch = 'GlobalSearch',
+    ApollonQuizDragAndDrop = 'ApollonQuizDragAndDrop',
+    Deimos = 'Deimos',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 
