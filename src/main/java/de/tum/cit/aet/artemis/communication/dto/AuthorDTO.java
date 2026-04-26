@@ -6,10 +6,10 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AuthorDTO(Long id, String name, String imageUrl) {
+public record AuthorDTO(Long id, String name, String imageUrl, boolean bot) {
 
     public AuthorDTO(User user) {
-        this(user.getId(), user.getName(), user.getImageUrl());
+        this(user.getId(), user.getName(), user.getImageUrl(), user.isBot());
     }
 
     /**

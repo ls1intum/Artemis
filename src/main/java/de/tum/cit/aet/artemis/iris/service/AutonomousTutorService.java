@@ -253,6 +253,7 @@ public class AutonomousTutorService {
         conversation.hideDetails();
         broadcastPost.getAnswers().forEach(answer -> answer.setPost(new Post(answer.getPost().getId())));
 
+        broadcastPost.getAnswers().removeIf(answer -> !answer.getId().equals(answerPost.getId()) && answer.isUnverifiedIrisReply());
         PostDTO postDTO = new PostDTO(broadcastPost, MetisCrudAction.UPDATE);
 
         if (broadcastToStudents && conversation instanceof Channel channel && channel.getIsCourseWide()) {

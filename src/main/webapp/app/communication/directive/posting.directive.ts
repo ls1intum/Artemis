@@ -187,7 +187,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
             return;
         }
         if (this.isAnswerPost) {
-            this.metisService.deleteAnswerPost(posting);
+            this.metisService.deleteAnswerPost(posting).subscribe();
         } else {
             this.metisService.deletePost(posting);
         }

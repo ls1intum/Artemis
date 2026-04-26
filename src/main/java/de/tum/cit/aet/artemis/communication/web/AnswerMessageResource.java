@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.dto.AnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
@@ -149,12 +150,12 @@ public class AnswerMessageResource {
      */
     @PatchMapping("courses/{courseId}/answer-messages/{answerMessageId}/verify")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<AnswerPost> verifyAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId,
+    public ResponseEntity<AnswerMessageDTO> verifyAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId,
             @RequestBody(required = false) VerifyAnswerMessageDTO verifyDto) {
         log.debug("PATCH verifyAnswerMessage invoked for course {} on message {}", courseId, answerMessageId);
         long start = System.nanoTime();
         AnswerPost verifiedAnswer = answerMessageService.verifyAnswerMessage(courseId, answerMessageId, verifyDto);
         log.debug("verifyAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.ok(verifiedAnswer);
+        return ResponseEntity.ok(new AnswerMessageDTO(verifiedAnswer));
     }
 }

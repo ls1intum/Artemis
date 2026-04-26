@@ -78,6 +78,6 @@ public class IrisResponseNeedsReviewNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        return "/courses/" + courseId + "/communication?conversationId=" + channelId + "&focusPostId=" + postId + "&openThreadOnFocus=1&postInThread=" + replyId;
+        return "/courses/" + courseId + "/communication?conversationId=" + channelId + "&focusPostId=" + postId + "&openThreadOnFocus=1&messageId=" + replyId;
     }
 }

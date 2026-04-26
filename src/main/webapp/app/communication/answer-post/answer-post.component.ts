@@ -18,7 +18,7 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { PostingDirective } from 'app/communication/directive/posting.directive';
 import dayjs from 'dayjs/esm';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrash, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -86,6 +86,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     readonly faTrash = faTrash;
     readonly faCheck = faCheck;
     readonly faTriangleExclamation = faTriangleExclamation;
+    readonly faXmark = faXmark;
     static activeDropdownPost: AnswerPostComponent | undefined = undefined;
     mayEdit = false;
     mayDelete = false;
@@ -226,8 +227,16 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
             return;
         }
         this.isVerifying = true;
-        this.metisService.deleteAnswerPost(posting);
-        this.isVerifying = false;
+        this.metisService.deleteAnswerPost(posting).subscribe({
+            next: () => {
+                this.isVerifying = false;
+                this.changeDetector.detectChanges();
+            },
+            error: () => {
+                this.isVerifying = false;
+                this.changeDetector.detectChanges();
+            },
+        });
     }
 
     /**
