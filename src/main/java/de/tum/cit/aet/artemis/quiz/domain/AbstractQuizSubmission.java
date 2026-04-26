@@ -11,9 +11,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.validation.Valid;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -25,8 +22,8 @@ public abstract class AbstractQuizSubmission extends Submission {
     @Column(name = "score_in_points")
     private Double scoreInPoints;
 
+    // No @Cache: actively mutated on every autosave / submit / evaluation; NONSTRICT reads caused #12574.
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @Valid
     private Set<SubmittedAnswer> submittedAnswers = new HashSet<>();
 
