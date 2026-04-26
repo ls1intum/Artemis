@@ -266,6 +266,18 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             childList: true,
             subtree: true,
         });
+
+        const resizeObserver = new ResizeObserver((event, observer) => {
+            const entry = event.first();
+            if (entry && entry.contentRect.height) {
+                // Stop observing as soon as height is non-zero
+                observer.unobserve(el);
+            }
+            if (!this.createdNewMessage && this.posts.length > 0) {
+                this.scrollToStoredId();
+            }
+        });
+        resizeObserver.observe(el);
     }
 
     ngOnDestroy(): void {
@@ -286,6 +298,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
         if (savedScrollId) {
             requestAnimationFrame(() => this.goToLastSelectedElement(savedScrollId, this.isOpenThreadOnFocus));
+        } else {
+            this.scrollToBottomOfMessages();
         }
     }
 
