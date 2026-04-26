@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.exercise.repository;
 
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
@@ -26,5 +28,7 @@ public interface ExerciseAthenaConfigRepository extends ArtemisJpaRepository<Exe
      *
      * @param exerciseId the ID of the exercise
      */
+    @Modifying
+    @Transactional // ok because of delete
     void deleteByExerciseId(Long exerciseId);
 }
