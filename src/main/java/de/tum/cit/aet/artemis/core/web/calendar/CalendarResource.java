@@ -6,6 +6,7 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,6 +51,11 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Lazy
 @Profile(PROFILE_CORE)
@@ -185,6 +191,10 @@ public class CalendarResource {
         return apiOptional.map(supplier).orElseGet(Collections::emptySet);
     }
 
+    @Schema(name = "CalendarEventsResponse")
+    public class CalendarEventsResponse extends HashMap<String, List<CalendarEventDTO>> {
+    }
+
     /**
      * GET api/core/calendar/course/:courseId/calendar-events : gets all {@link CalendarEventDTO}s associated to the given course falling into the requested month
      * that are visible to the logged-in user.
@@ -199,6 +209,8 @@ public class CalendarResource {
      * @throws BadRequestException      {@code 400 (Bad Request)} if the monthKeys are empty or formatted incorrectly or if the timeZone is formatted incorrectly.
      */
     @GetMapping("courses/{courseId}/calendar-events")
+    @Operation(summary = "Get calendar events grouped by month", responses = {
+            @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/json", schema = @Schema(type = "object", additionalProperties = Schema.AdditionalPropertiesValue.USE_ADDITIONAL_PROPERTIES_ANNOTATION, additionalPropertiesSchema = CalendarEventDTO[].class))) })
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, List<CalendarEventDTO>>> getCalendarEventsOverlappingMonths(@PathVariable long courseId, @RequestParam List<String> monthKeys,
             @RequestParam String timeZone, @RequestParam Language language) {

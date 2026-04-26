@@ -838,6 +838,7 @@ paths:
   /api/core/calendar/courses/{courseId}/calendar-events:
     get:
       tags: [calendar]
+      summary: Get calendar events grouped by month
       operationId: getCalendarEventsOverlappingMonths
       parameters:
       - name: courseId
@@ -867,7 +868,9 @@ paths:
             application/json:
               schema:
                 type: object
-                additionalProperties: {type: array}
+                additionalProperties:
+                  type: array
+                  items: {$ref: '#/components/schemas/CalendarEvent'}
   /api/core/calendar/courses/{courseId}/calendar-events-ics:
     get:
       tags: [calendar]
