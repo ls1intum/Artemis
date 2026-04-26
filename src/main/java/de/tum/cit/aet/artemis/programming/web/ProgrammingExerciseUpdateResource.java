@@ -27,6 +27,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.athena.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
@@ -100,11 +101,14 @@ public class ProgrammingExerciseUpdateResource {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
-            ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository, CompetencyExerciseLinkService competencyExerciseLinkService,
+            ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -120,6 +124,7 @@ public class ProgrammingExerciseUpdateResource {
         this.exerciseVersionService = exerciseVersionService;
         this.participationRepository = participationRepository;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -301,6 +306,12 @@ public class ProgrammingExerciseUpdateResource {
         // Only save after checking for errors
         ProgrammingExercise savedProgrammingExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(updatedProgrammingExercise, notificationText,
                 originalCompetencyIds, originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalProblemStatement);
+
+        // Update Athena config if provided
+        if (updatedProgrammingExercise.getAthenaConfig() != null) {
+            var athenaConfig = updatedProgrammingExercise.getAthenaConfig();
+            exerciseAthenaConfigService.createOrUpdateConfig(savedProgrammingExercise, athenaConfig.getPreliminaryFeedbackModule(), athenaConfig.getGradedFeedbackModule());
+        }
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, updatedProgrammingExercise);

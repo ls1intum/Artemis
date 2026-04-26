@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.athena.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
@@ -80,10 +81,12 @@ public class ProgrammingExerciseCreationResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     public ProgrammingExerciseCreationResource(AuthorizationCheckService authCheckService, CourseService courseService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             StaticCodeAnalysisService staticCodeAnalysisService, Optional<AthenaApi> athenaApi, ProgrammingExerciseRepository programmingExerciseRepository,
-            UserRepository userRepository, ExerciseVersionService exerciseVersionService) {
+            UserRepository userRepository, ExerciseVersionService exerciseVersionService, ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.courseService = courseService;
@@ -93,6 +96,7 @@ public class ProgrammingExerciseCreationResource {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.exerciseVersionService = exerciseVersionService;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -127,6 +131,12 @@ public class ProgrammingExerciseCreationResource {
             // Create default static code analysis categories
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
+            }
+
+            // Create or update Athena config if modules are provided
+            if (programmingExercise.getAthenaConfig() != null) {
+                var athenaConfig = programmingExercise.getAthenaConfig();
+                exerciseAthenaConfigService.createOrUpdateConfig(newProgrammingExercise, athenaConfig.getPreliminaryFeedbackModule(), athenaConfig.getGradedFeedbackModule());
             }
 
             exerciseVersionService.createExerciseVersion(newProgrammingExercise);
