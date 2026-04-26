@@ -63,6 +63,7 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 describe('ExamParticipationComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -97,8 +98,8 @@ describe('ExamParticipationComponent', () => {
         };
     }
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [
                 MockComponent(ExamExerciseOverviewPageComponent),
                 ExamParticipationComponent,
@@ -137,34 +138,30 @@ describe('ExamParticipationComponent', () => {
                 MockProvider(TextSubmissionService),
                 MockProvider(FileUploadSubmissionService),
                 MockProvider(ArtemisServerDateService),
-                MockProvider(TranslateService),
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 MockProvider(CourseExerciseService),
                 MockProvider(ArtemisDatePipe),
                 MockProvider(ExamManagementService),
                 { provide: ProfileService, useClass: MockProfileService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExamParticipationComponent);
-                comp = fixture.componentInstance;
-                examParticipationService = TestBed.inject(ExamParticipationService);
-                programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
-                courseExerciseService = TestBed.inject(CourseExerciseService);
-                textSubmissionService = TestBed.inject(TextSubmissionService);
-                modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
-                alertService = TestBed.inject(AlertService);
-                artemisServerDateService = TestBed.inject(ArtemisServerDateService);
-                examParticipationLiveEventsService = TestBed.inject(ExamParticipationLiveEventsService);
-                examExerciseUpdateService = TestBed.inject(ExamExerciseUpdateService);
-                translateService = TestBed.inject(TranslateService);
-                courseService = TestBed.inject(CourseManagementService);
-                courseStorageService = TestBed.inject(CourseStorageService);
-                examManagementService = TestBed.inject(ExamManagementService);
-                fixture.detectChanges();
-                comp.exam = new Exam();
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(ExamParticipationComponent);
+        comp = fixture.componentInstance;
+        examParticipationService = TestBed.inject(ExamParticipationService);
+        programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
+        courseExerciseService = TestBed.inject(CourseExerciseService);
+        textSubmissionService = TestBed.inject(TextSubmissionService);
+        modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
+        alertService = TestBed.inject(AlertService);
+        artemisServerDateService = TestBed.inject(ArtemisServerDateService);
+        examParticipationLiveEventsService = TestBed.inject(ExamParticipationLiveEventsService);
+        examExerciseUpdateService = TestBed.inject(ExamExerciseUpdateService);
+        translateService = TestBed.inject(TranslateService);
+        courseService = TestBed.inject(CourseManagementService);
+        courseStorageService = TestBed.inject(CourseStorageService);
+        examManagementService = TestBed.inject(ExamManagementService);
+        comp.exam = new Exam();
     });
 
     afterEach(() => {
@@ -719,9 +716,7 @@ describe('ExamParticipationComponent', () => {
         const httpError = new Error();
         httpError.message = 'artemisApp.studentExam.alreadySubmitted';
         const submitSpy = vi.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
-        const loadTestRunWithExercisesForConductionSpy = jest
-            .spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction')
-            .mockReturnValue(throwError(() => new Error()));
+        const loadTestRunWithExercisesForConductionSpy = vi.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(throwError(() => new Error()));
         const alertErrorSpy = vi.spyOn(alertService, 'error');
         comp.exam = new Exam();
         comp.onExamEndConfirmed();

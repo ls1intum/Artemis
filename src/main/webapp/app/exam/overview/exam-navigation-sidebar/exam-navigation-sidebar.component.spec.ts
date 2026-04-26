@@ -103,8 +103,7 @@ describe('ExamNavigationSidebarComponent', () => {
         comp.changePage(false, exerciseIndex, force);
 
         expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
-        // setExerciseButtonStatus is called with the previous exerciseIndex (0)
-        expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(0);
+        expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(exerciseIndex);
     });
 
     it('should not change the exercise with invalid index', () => {

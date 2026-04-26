@@ -325,7 +325,7 @@ describe('ExamResultSummaryComponent', () => {
         expect(submission).toEqual(expectedResult);
     });
 
-    it('should update student exam correctly', () => {
+    it('should update student exam correctly', async () => {
         const plagiarismService = TestBed.inject(PlagiarismCasesService);
         const plagiarismServiceSpy = vi.spyOn(plagiarismService, 'getPlagiarismCaseInfosForStudent');
 

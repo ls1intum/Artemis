@@ -12,9 +12,11 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 let fixture: ComponentFixture<ExamStartInformationComponent>;
 let component: ExamStartInformationComponent;
@@ -51,7 +53,7 @@ describe('ExamStartInformationComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisDurationFromSecondsPipe),
             ],
-            providers: [provideRouter([])],
+            providers: [provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
