@@ -3,3 +3,12 @@
         border: none;
     }
 }
+
+/* ensure the user selection dropdown lives on top of the create conversation dialog */
+body ngb-typeahead-window.dropdown-menu {
+    $dialog-content-z-index: 1102;
+
+    z-index: $dialog-content-z-index + 1 !important;
+    max-height: 20rem;
+    overflow-y: auto;
+}
