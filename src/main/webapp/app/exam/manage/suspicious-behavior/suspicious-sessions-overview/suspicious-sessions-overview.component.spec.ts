@@ -14,17 +14,21 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 describe('SuspiciousSessionsOverviewComponent', () => {
     setupTestBed({ zoneless: true });
 
+    const stubStudentExam = { id: 1, exam: { id: 1, course: { id: 1 } }, user: { login: 'tester' } } as any;
+
     const suspiciousSessions = {
         examSessions: [
             {
                 id: 1,
                 ipAddress: '192.168.0.0',
                 suspiciousReasons: [SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS, SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT],
+                studentExam: stubStudentExam,
             },
             {
                 id: 2,
                 suspiciousReasons: [SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS, SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT],
                 ipAddress: '192.168.0.0',
+                studentExam: stubStudentExam,
             },
         ],
     } as SuspiciousExamSessions;
@@ -36,12 +40,14 @@ describe('SuspiciousSessionsOverviewComponent', () => {
                 ipAddress: '127.0.0.1',
                 browserFingerprintHash: 'abc',
                 suspiciousReasons: [SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES, SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS],
+                studentExam: stubStudentExam,
             },
             {
                 id: 2,
                 ipAddress: '127.0.0.2',
                 browserFingerprintHash: 'def',
                 suspiciousReasons: [SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES, SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS],
+                studentExam: stubStudentExam,
             },
         ],
     } as SuspiciousExamSessions;
@@ -53,6 +59,7 @@ describe('SuspiciousSessionsOverviewComponent', () => {
                 ipAddress: '127.0.0.1',
                 browserFingerprintHash: 'abc',
                 suspiciousReasons: [SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE],
+                studentExam: stubStudentExam,
             },
         ],
     } as SuspiciousExamSessions;
