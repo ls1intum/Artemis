@@ -59,7 +59,7 @@
                             [ngbTooltip]="!examTimeLineView() ? ('artemisApp.examParticipation.' + getExerciseButtonTooltip(exercise) | artemisTranslate) : ''"
                             (click)="changePage(false, i, false)"
                         >
-                            <fa-icon [icon]="icon()" />
+                            <fa-icon [icon]="icon" />
                         </button>
                         <div class="exerciseIndex">{{ i + 1 }}</div>
                     </div>

@@ -142,7 +142,7 @@ describe('ExamNavigationSidebarComponent', () => {
 
         const result = comp.setExerciseButtonStatus(0);
 
-        expect(comp.icon()).toEqual(facSaveWarning);
+        expect(comp.icon).toEqual(facSaveWarning);
         expect(result).toBe('notSynced');
     });
 
@@ -150,7 +150,7 @@ describe('ExamNavigationSidebarComponent', () => {
         exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
         const result = comp.setExerciseButtonStatus(0);
-        expect(comp.icon()).toEqual(facSaveSuccess);
+        expect(comp.icon).toEqual(facSaveSuccess);
         expect(result).toBe('synced saved');
     });
 
@@ -211,14 +211,14 @@ describe('ExamNavigationSidebarComponent', () => {
         fixture.componentRef.setInput('examTimeLineView', true);
         fixture.componentRef.setInput('exerciseIndex', 0);
         expect(comp.setExerciseButtonStatus(0)).toBe('synced saved');
-        expect(comp.icon()).toEqual(facSaveSuccess);
+        expect(comp.icon).toEqual(facSaveSuccess);
     });
 
     it('should set exercise button status to synced if it is not the active exercise in the exam timeline view', () => {
         fixture.componentRef.setInput('examTimeLineView', true);
         fixture.componentRef.setInput('exerciseIndex', 0);
         expect(comp.setExerciseButtonStatus(1)).toBe('synced');
-        expect(comp.icon()).toEqual(facSaveSuccess);
+        expect(comp.icon).toEqual(facSaveSuccess);
     });
 
     it('should toggle sidebar based on isCollapsed', () => {

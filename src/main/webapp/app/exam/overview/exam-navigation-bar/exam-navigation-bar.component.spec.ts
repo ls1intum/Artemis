@@ -115,8 +115,7 @@ describe('Exam Navigation Bar Component', () => {
         comp.changePage(false, exerciseIndex, force);
 
         expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
-        // setExerciseButtonStatus is called with the previous exerciseIndex (0)
-        expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(0);
+        expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(exerciseIndex);
     });
 
     it('should not change the exercise with invalid index', () => {
@@ -190,7 +189,7 @@ describe('Exam Navigation Bar Component', () => {
 
         const result = comp.setExerciseButtonStatus(0);
 
-        expect(comp.icon()).toEqual(faEdit);
+        expect(comp.icon).toEqual(faEdit);
         expect(result).toBe('notSynced');
     });
 
@@ -259,14 +258,14 @@ describe('Exam Navigation Bar Component', () => {
         fixture.componentRef.setInput('examTimeLineView', true);
         fixture.componentRef.setInput('exerciseIndex', 0);
         expect(comp.setExerciseButtonStatus(0)).toBe('synced active');
-        expect(comp.icon()).toEqual(faCheck);
+        expect(comp.icon).toEqual(faCheck);
     });
 
     it('should set exercise button status to synced if it is not the active exercise in the exam timeline view', () => {
         fixture.componentRef.setInput('examTimeLineView', true);
         fixture.componentRef.setInput('exerciseIndex', 0);
         expect(comp.setExerciseButtonStatus(1)).toBe('synced');
-        expect(comp.icon()).toEqual(faCheck);
+        expect(comp.icon).toEqual(faCheck);
     });
 
     describe('isOnlyOfflineIDE', () => {

@@ -59,6 +59,7 @@ export default defineConfig({
             'src/main/webapp/app/exam/manage/exam-status/**/*.spec.ts', // include exam status tests
             'src/main/webapp/app/exam/manage/exams/**/*.spec.ts', // include exams (detail/import/update/checklist/mode-picker) tests
             'src/main/webapp/app/exam/shared/**/*.spec.ts', // include exam shared tests
+            'src/main/webapp/app/exam/overview/**/*.spec.ts', // include exam overview tests
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
             'src/main/webapp/app/shared/table-view/**/*.spec.ts', // include shared table view
             'src/main/webapp/app/shared/feature-toggle/**/*.spec.ts', // include feature-toggle service tests
@@ -109,6 +110,8 @@ export default defineConfig({
                 'src/main/webapp/app/exam/manage/exercise-groups/**/*.ts', // include exam manage exercise groups for code coverage
                 'src/main/webapp/app/exam/manage/suspicious-behavior/**/*.ts', // include exam manage suspicious behavior for code coverage
                 'src/main/webapp/app/exam/manage/services/**/*.ts', // include exam manage services for code coverage
+                'src/main/webapp/app/exam/overview/**/*.ts', // include exam overview for code coverage
+                'src/main/webapp/app/exam/shared/**/*.ts', // include exam shared for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
                 'src/main/webapp/app/shared/feature-toggle/**/*.ts', // include feature-toggle service for code coverage
                 'src/main/webapp/app/shared/user-import/util/**/*.ts', // include user import utils for code coverage

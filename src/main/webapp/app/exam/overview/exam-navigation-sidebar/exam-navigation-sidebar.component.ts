@@ -63,7 +63,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     subscriptionToLiveExamExerciseUpdates: Subscription;
 
     // Icons
-    readonly icon = signal<IconProp>(facSaveSuccess);
+    icon: IconProp = facSaveSuccess;
     readonly faFileLines = faFileLines;
     readonly faChevronRight = faChevronRight;
 
@@ -175,7 +175,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
     setExerciseButtonStatus(exerciseIndex: number): ExerciseButtonStatus {
-        this.icon.set(facSaveSuccess);
+        this.icon = facSaveSuccess;
         // If we are in the exam timeline we do not use not synced as not synced shows
         // that the current submission is not saved which doesn't make sense in the timeline.
         if (this.examTimeLineView()) {
@@ -185,7 +185,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         // start with a yellow status (save warning icon)
         // TODO: it's a bit weird, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
-        this.icon.set(faHourglassHalf);
+        this.icon = faHourglassHalf;
         const exercise = this.exercises()[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         if (!submission) {
@@ -194,7 +194,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             return ExerciseButtonStatus.Synced;
         }
         if (submission.submitted && submission.isSynced) {
-            this.icon.set(facSaveSuccess);
+            this.icon = facSaveSuccess;
             this.refreshExerciseSaveCount();
             return ExerciseButtonStatus.SyncedSaved;
         }
@@ -203,7 +203,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             return ExerciseButtonStatus.Synced;
         } else {
             // make save icon yellow except for programming exercises with only offline IDE
-            this.icon.set(facSaveWarning);
+            this.icon = facSaveWarning;
             return ExerciseButtonStatus.NotSynced;
         }
     }
