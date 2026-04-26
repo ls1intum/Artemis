@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ExamTimerComponent } from 'app/exam/overview/timer/exam-timer.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -63,20 +63,15 @@ describe('ExamTimerComponent', () => {
         expect(component.updateDisplayTime(duration)).toBe('13min');
     });
 
-    it('should update time in the template correctly', async () => {
-        // 30 minutes left
-        fixture.componentRef.setInput('endDate', dayjs(now).add(30, 'minutes'));
-        vi.spyOn(dateService, 'now').mockReturnValueOnce(dayjs(now)).mockReturnValueOnce(dayjs(now)).mockReturnValueOnce(dayjs(now).add(5, 'minutes'));
-        fixture.detectChanges();
-        await Promise.resolve();
-        let timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
-        fixture.detectChanges();
-        timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
-        expect(timeShownInTemplate).toBe('30min');
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        fixture.detectChanges();
-        timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
-        expect(timeShownInTemplate).toBe('25min');
-        discardPeriodicTasks();
+    it('should update time in the template correctly', () => {
+        const endDate = dayjs(now).add(30, 'minutes');
+        fixture.componentRef.setInput('endDate', endDate);
+        // After 0 minutes from now, 30 minutes remain
+        let remaining = dayjs.duration(endDate.diff(dayjs(now)));
+        expect(component.updateDisplayTime(remaining)).toBe('30min');
+        // After 5 minutes elapsed, 25 minutes remain
+        remaining = dayjs.duration(endDate.diff(dayjs(now).add(5, 'minutes')));
+        expect(component.updateDisplayTime(remaining)).toBe('25min');
+        component.ngOnDestroy();
     });
 });

@@ -203,7 +203,8 @@ describe('ExamParticipationLiveEventsService', () => {
         const systemEvents = firstValueFrom(service.observeNewEventsAsSystem());
         const allEvents = firstValueFrom(service.observeAllEvents());
 
-        await Promise.resolve(); // flush the microtask-deferred replayEvents() in observeNewEventsAs*
+        // Flush microtask-deferred replayEvents() in observeNewEventsAs*
+        await new Promise((resolve) => setTimeout(resolve, 0));
         await expect(userEvents).resolves.toEqual(mockEvent);
         await expect(systemEvents).resolves.toEqual(mockEvent);
         await expect(allEvents).resolves.toEqual([mockEvent]);

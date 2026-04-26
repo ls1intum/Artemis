@@ -44,7 +44,7 @@ dragAndDropQuestion.correctMappings = [correctDragAndDropMapping];
 dragAndDropQuestion.dragItems = [dragItem];
 dragAndDropQuestion.dropLocations = [dropLocation];
 
-const shortAnswerQuestion = { id: 3, type: QuizQuestionType.SHORT_ANSWER } as ShortAnswerQuestion;
+const shortAnswerQuestion = { id: 3, type: QuizQuestionType.SHORT_ANSWER, text: 'short answer text' } as ShortAnswerQuestion;
 const shortAnswerSpot = { id: 1, width: 1, spotNr: 1, question: shortAnswerQuestion, posX: 1, posY: 1, tempID: 1 } as ShortAnswerSpot;
 const shortAnswerSolution = { id: 1, text: 'solution', question: shortAnswerQuestion, posX: 1, posY: 1, tempID: 1 } as ShortAnswerSolution;
 const correctShortAnswerMapping = {
