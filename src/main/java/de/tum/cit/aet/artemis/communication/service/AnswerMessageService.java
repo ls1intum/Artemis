@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
+import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
@@ -249,8 +250,16 @@ public class AnswerMessageService extends PostingService {
 
         // checks
         AnswerPost answerMessage = this.findById(answerMessageId);
-        Conversation conversation = mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
+
+        // Tutors are allowed to reject (delete) unverified Iris replies even if they are not the author
+        Conversation conversation;
+        if (answerMessage.isUnverifiedIrisReply() && authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            conversation = conversationService.getConversationById(answerMessage.getPost().getConversation().getId());
+        }
+        else {
+            conversation = mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user);
+        }
 
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         Post updatedMessage = answerMessage.getPost();
@@ -291,6 +300,68 @@ public class AnswerMessageService extends PostingService {
 
     public List<AnswerPost> findByIdIn(List<Long> answerMessageIds) {
         return answerPostRepository.findByIdIn(answerMessageIds);
+    }
+
+    /**
+     * Same as {@link #findByIdIn(List)} but filters out unverified Iris-generated answers when the
+     * requesting user is not at least a tutor in the given course. Used to prevent students from
+     * resolving unverified Iris content via direct id lookup (e.g. when following a forwarded link).
+     *
+     * @param courseId         id of the course used for the role check
+     * @param answerMessageIds requested answer post ids
+     * @return list of visible answer posts
+     */
+    public List<AnswerPost> findVisibleByIdIn(Long courseId, List<Long> answerMessageIds) {
+        List<AnswerPost> answerPosts = answerPostRepository.findByIdIn(answerMessageIds);
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId)) {
+            return answerPosts;
+        }
+        return answerPosts.stream().filter(answerPost -> !answerPost.isUnverifiedIrisReply()).toList();
+    }
+
+    /**
+     * Approves an Iris-generated answer message so that it becomes visible to students. The tutor may
+     * optionally provide updated content to edit-and-approve in a single request. The answer is
+     * marked as verified, the verifier and verification timestamp are recorded, and the post is
+     * re-broadcast to all participants of the conversation so student clients receive the now-visible
+     * reply.
+     *
+     * @param courseId        id of the course the answer message belongs to
+     * @param answerMessageId id of the answer message to verify
+     * @param verifyDto       optional updated content; if null or blank, the existing content is kept
+     * @return the persisted, verified answer message
+     */
+    public AnswerPost verifyAnswerMessage(Long courseId, Long answerMessageId, VerifyAnswerMessageDTO verifyDto) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+
+        AnswerPost existingAnswerMessage = this.findById(answerMessageId);
+        if (!existingAnswerMessage.getAuthor().isBot()) {
+            throw new BadRequestAlertException("Only Iris-generated answers can be verified", METIS_ANSWER_POST_ENTITY_NAME, "notIrisAnswer");
+        }
+        if (existingAnswerMessage.isVerified()) {
+            throw new BadRequestAlertException("Answer message is already verified", METIS_ANSWER_POST_ENTITY_NAME, "alreadyVerified");
+        }
+
+        if (verifyDto != null && verifyDto.content() != null && !verifyDto.content().isBlank()) {
+            parseUserMentions(course, verifyDto.content());
+            existingAnswerMessage.setContent(verifyDto.content());
+            existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
+        }
+        existingAnswerMessage.setVerified(true);
+        existingAnswerMessage.setVerifiedBy(user);
+        existingAnswerMessage.setVerifiedAt(ZonedDateTime.now());
+
+        AnswerPost savedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
+        Conversation conversation = conversationService.getConversationById(savedAnswerMessage.getPost().getConversation().getId());
+        savedAnswerMessage.getPost().setConversation(conversation);
+
+        // Strip any other unverified Iris siblings before broadcast so students never receive their content via the post update.
+        savedAnswerMessage.getPost().getAnswers().removeIf(answer -> !Objects.equals(answer.getId(), savedAnswerMessage.getId()) && answer.isUnverifiedIrisReply());
+
+        this.preparePostAndBroadcast(savedAnswerMessage, course);
+        return savedAnswerMessage;
     }
 
     /**

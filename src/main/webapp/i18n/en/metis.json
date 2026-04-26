@@ -96,6 +96,7 @@
                 "filterToUnresolved": "Unresolved",
                 "filterToOwn": "Own",
                 "filterToAnsweredOrReacted": "Reacted",
+                "filterToUnverifiedIris": "Iris to verify",
                 "sortPostsBy": "Sort by:",
                 "sortDescending": "Descending",
                 "sortAscending": "Ascending",
@@ -166,7 +167,15 @@
             "answerPost": {
                 "created": "New reply successfully created",
                 "deleted": "Reply successfully deleted",
-                "deleteAnswer": "Delete answer"
+                "deleteAnswer": "Delete answer",
+                "unverifiedIris": {
+                    "badge": "Awaiting tutor review",
+                    "approve": "Approve",
+                    "edit": "Edit",
+                    "reject": "Reject",
+                    "saveAndApprove": "Save & Approve",
+                    "cancelEdit": "Cancel"
+                }
             },
             "userRoles": {
                 "instructor": "Instructor",

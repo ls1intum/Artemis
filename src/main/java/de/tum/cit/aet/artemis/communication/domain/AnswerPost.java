@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.communication.domain;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -7,6 +8,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -22,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * An AnswerPost.
@@ -52,6 +55,20 @@ public class AnswerPost extends Posting {
 
     @Column(name = "has_forwarded_messages")
     private boolean hasForwardedMessages;
+
+    @Column(name = "confidence_score")
+    private Double confidenceScore;
+
+    @Column(name = "verified", nullable = false)
+    private boolean verified = true;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "verified_by_id")
+    @JsonIncludeProperties({ "id", "login", "firstName", "lastName" })
+    private User verifiedBy;
+
+    @Column(name = "verified_at")
+    private ZonedDateTime verifiedAt;
 
     public boolean getHasForwardedMessages() {
         return hasForwardedMessages;
@@ -105,6 +122,48 @@ public class AnswerPost extends Posting {
     @JsonIgnore
     public Conversation getConversation() {
         return getPost().getConversation();
+    }
+
+    public Double getConfidenceScore() {
+        return confidenceScore;
+    }
+
+    public void setConfidenceScore(Double confidenceScore) {
+        this.confidenceScore = confidenceScore;
+    }
+
+    public boolean isVerified() {
+        return verified;
+    }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
+    }
+
+    public User getVerifiedBy() {
+        return verifiedBy;
+    }
+
+    public void setVerifiedBy(User verifiedBy) {
+        this.verifiedBy = verifiedBy;
+    }
+
+    public ZonedDateTime getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(ZonedDateTime verifiedAt) {
+        this.verifiedAt = verifiedAt;
+    }
+
+    /**
+     * @return true if this is an Iris-generated reply whose confidence fell below the auto-publish
+     *         threshold and which has not yet been approved by a tutor. Such replies must not be
+     *         shown to students.
+     */
+    @JsonIgnore
+    public boolean isUnverifiedIrisReply() {
+        return !verified && getAuthor() != null && getAuthor().isBot();
     }
 
     /**

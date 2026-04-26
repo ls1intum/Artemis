@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { of, throwError } from 'rxjs';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
@@ -41,6 +42,7 @@ describe('AnswerPostComponent', () => {
     let fixture: ComponentFixture<AnswerPostComponent>;
     let debugElement: DebugElement;
     let mainContainer: HTMLElement;
+    let metisService: MetisService;
 
     beforeEach(async () => {
         mainContainer = document.createElement('div');
@@ -80,6 +82,7 @@ describe('AnswerPostComponent', () => {
         fixture = TestBed.createComponent(AnswerPostComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
+        metisService = TestBed.inject(MetisService);
     });
 
     afterEach(() => {
@@ -305,5 +308,196 @@ describe('AnswerPostComponent', () => {
 
         forwardButton.nativeElement.click();
         expect(forwardMessageSpy).toHaveBeenCalled();
+    });
+
+    it('should return true for isUnverifiedIris when posting is from a bot and unverified', () => {
+        const botPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: false });
+        component.posting.set(botPost);
+        expect(component.isUnverifiedIris).toBe(true);
+    });
+
+    it('should return false for isUnverifiedIris when posting is from a human author', () => {
+        const humanPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, author: { id: 1, bot: false }, verified: false });
+        component.posting.set(humanPost);
+        expect(component.isUnverifiedIris).toBe(false);
+    });
+
+    it('should return false for isUnverifiedIris when posting is verified', () => {
+        const verifiedBotPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: true });
+        component.posting.set(verifiedBotPost);
+        expect(component.isUnverifiedIris).toBe(false);
+    });
+
+    it('should return false for isUnverifiedIris when posting is undefined', () => {
+        component.posting.set(undefined as any);
+        expect(component.isUnverifiedIris).toBe(false);
+    });
+
+    it('should delegate mayVerify to metisService.metisUserIsAtLeastTutorInCourse', () => {
+        const spy = vi.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse').mockReturnValue(false);
+        expect(component.mayVerify).toBe(false);
+        expect(spy).toHaveBeenCalled();
+    });
+
+    it('should set mayDelete when onMayDelete is called', () => {
+        component.onMayDelete(true);
+        expect(component.mayDelete).toBe(true);
+        component.onMayDelete(false);
+        expect(component.mayDelete).toBe(false);
+    });
+
+    it('should set mayEdit when onMayEdit is called', () => {
+        component.onMayEdit(true);
+        expect(component.mayEdit).toBe(true);
+        component.onMayEdit(false);
+        expect(component.mayEdit).toBe(false);
+    });
+
+    it('should call metisService.verifyAnswerPost on approveAnswer and update posting on success', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1 });
+        const verifiedPost = Object.assign(new AnswerPost(), { ...answerPost, verified: true });
+        component.posting.set(answerPost);
+        const verifySpy = vi.spyOn(metisService, 'verifyAnswerPost').mockReturnValue(of(verifiedPost));
+
+        component.approveAnswer();
+
+        expect(verifySpy).toHaveBeenCalledWith(answerPost, undefined);
+        expect(component.isVerifying).toBe(false);
+        expect(component.isEditingIrisReply).toBe(false);
+        expect(component.posting()!.verified).toBe(true);
+    });
+
+    it('should pass trimmed content to verifyAnswerPost when content is provided', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1 });
+        component.posting.set(answerPost);
+        const verifySpy = vi.spyOn(metisService, 'verifyAnswerPost').mockReturnValue(of(answerPost));
+
+        component.approveAnswer('  edited content  ');
+
+        expect(verifySpy).toHaveBeenCalledWith(answerPost, 'edited content');
+    });
+
+    it('should reset isVerifying on approveAnswer error', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1 });
+        component.posting.set(answerPost);
+        vi.spyOn(metisService, 'verifyAnswerPost').mockReturnValue(throwError(() => new Error('network error')));
+
+        component.approveAnswer();
+
+        expect(component.isVerifying).toBe(false);
+    });
+
+    it('should not call verifyAnswerPost when posting has no id', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: undefined });
+        component.posting.set(answerPost);
+        const verifySpy = vi.spyOn(metisService, 'verifyAnswerPost');
+
+        component.approveAnswer();
+
+        expect(verifySpy).not.toHaveBeenCalled();
+    });
+
+    it('should not call verifyAnswerPost when already verifying', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1 });
+        component.posting.set(answerPost);
+        component.isVerifying = true;
+        const verifySpy = vi.spyOn(metisService, 'verifyAnswerPost');
+
+        component.approveAnswer();
+
+        expect(verifySpy).not.toHaveBeenCalled();
+    });
+
+    it('should set isEditingIrisReply and copy content on editAnswer', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, content: 'iris content' });
+        component.posting.set(answerPost);
+
+        component.editAnswer();
+
+        expect(component.isEditingIrisReply).toBe(true);
+        expect(component.editedIrisContent).toBe('iris content');
+    });
+
+    it('should use empty string in editAnswer when posting content is undefined', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, content: undefined });
+        component.posting.set(answerPost);
+
+        component.editAnswer();
+
+        expect(component.editedIrisContent).toBe('');
+    });
+
+    it('should reset editing state on cancelEditAnswer', () => {
+        component.isEditingIrisReply = true;
+        component.editedIrisContent = 'some text';
+
+        component.cancelEditAnswer();
+
+        expect(component.isEditingIrisReply).toBe(false);
+        expect(component.editedIrisContent).toBe('');
+    });
+
+    it('should call deleteAnswerPost on rejectAnswer', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1 });
+        component.posting.set(answerPost);
+        const deleteSpy = vi.spyOn(metisService, 'deleteAnswerPost');
+
+        component.rejectAnswer();
+
+        expect(deleteSpy).toHaveBeenCalledWith(answerPost);
+        expect(component.isVerifying).toBe(false);
+    });
+
+    it('should not call deleteAnswerPost when posting has no id', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: undefined });
+        component.posting.set(answerPost);
+        const deleteSpy = vi.spyOn(metisService, 'deleteAnswerPost');
+
+        component.rejectAnswer();
+
+        expect(deleteSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not call deleteAnswerPost when already verifying', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1 });
+        component.posting.set(answerPost);
+        component.isVerifying = true;
+        const deleteSpy = vi.spyOn(metisService, 'deleteAnswerPost');
+
+        component.rejectAnswer();
+
+        expect(deleteSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not update reactions when posting is undefined', () => {
+        component.posting.set(undefined as any);
+        component.onReactionsUpdated([{ id: 1 } as Reaction]);
+
+        expect(component.posting()).toBeUndefined();
+    });
+
+    it('should clean up activeDropdownPost on ngOnDestroy when this component is active', () => {
+        component.posting.set(metisResolvingAnswerPostUser1);
+        fixture.changeDetectorRef.detectChanges();
+        AnswerPostComponent.activeDropdownPost = component;
+        component.showDropdown = true;
+
+        component.ngOnDestroy();
+
+        expect(AnswerPostComponent.activeDropdownPost).toBeUndefined();
+        expect(component.showDropdown).toBe(false);
+    });
+
+    it('should not clean up activeDropdownPost on ngOnDestroy when another component is active', () => {
+        const otherComponent = {
+            showDropdown: true,
+            enableBodyScroll: vi.fn(),
+            changeDetector: { detectChanges: vi.fn() },
+        } as any as AnswerPostComponent;
+        AnswerPostComponent.activeDropdownPost = otherComponent;
+
+        component.ngOnDestroy();
+
+        expect(AnswerPostComponent.activeDropdownPost).toBe(otherComponent);
     });
 });

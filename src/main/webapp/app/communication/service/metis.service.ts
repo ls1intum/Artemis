@@ -396,6 +396,14 @@ export class MetisService implements OnDestroy {
     }
 
     /**
+     * Approves an Iris-generated answer post (optionally with edited content). The websocket update
+     * triggered server-side will refresh cached posts so no manual cache mutation is needed here.
+     */
+    verifyAnswerPost(answerPost: AnswerPost, content?: string): Observable<AnswerPost> {
+        return this.answerPostService.verify(this.courseId, answerPost.id!, content).pipe(map((res) => res.body!));
+    }
+
+    /**
      * deletes an answer post by invoking the post service
      * @param {AnswerPost} answerPost to be deleted
      */

@@ -68,6 +68,10 @@ export class MockMetisService {
 
     deleteAnswerPost(answerPost: AnswerPost): void {}
 
+    verifyAnswerPost(answerPost: AnswerPost, content?: string): Observable<AnswerPost> {
+        return of(answerPost);
+    }
+
     deleteReaction(reaction: Reaction): void {}
 
     resetCachedPosts(): void {}

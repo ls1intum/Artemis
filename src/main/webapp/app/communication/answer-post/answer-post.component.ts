@@ -18,8 +18,9 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { PostingDirective } from 'app/communication/directive/posting.directive';
 import dayjs from 'dayjs/esm';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { faBookmark, faPencilAlt, faShare, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PostingHeaderComponent } from '../posting-header/posting-header.component';
@@ -41,6 +42,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         NgClass,
+        FormsModule,
         FaIconComponent,
         TranslateDirective,
         NgbTooltip,
@@ -82,9 +84,14 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     readonly faShare = faShare;
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
+    readonly faCheck = faCheck;
+    readonly faTriangleExclamation = faTriangleExclamation;
     static activeDropdownPost: AnswerPostComponent | undefined = undefined;
     mayEdit = false;
     mayDelete = false;
+    isVerifying = false;
+    isEditingIrisReply = false;
+    editedIrisContent = '';
 
     constructor() {
         super();
@@ -163,6 +170,64 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     /** Updates internal flag for edit permission */
     onMayEdit(value: boolean) {
         this.mayEdit = value;
+    }
+
+    /** True when the current answer is an Iris-generated reply that has not yet been verified by a tutor. */
+    get isUnverifiedIris(): boolean {
+        const posting = this.posting();
+        return !!posting && posting.author?.bot === true && posting.verified === false;
+    }
+
+    /** True for users who are allowed to approve, edit, or reject unverified Iris replies. */
+    get mayVerify(): boolean {
+        return this.metisService.metisUserIsAtLeastTutorInCourse();
+    }
+
+    /**
+     * Approves the current Iris answer, optionally replacing its content. The websocket update
+     * broadcast by the server will refresh the cached post and remove the badge from the UI.
+     */
+    approveAnswer(content?: string): void {
+        const posting = this.posting();
+        if (!posting?.id || this.isVerifying) {
+            return;
+        }
+        this.isVerifying = true;
+        this.metisService.verifyAnswerPost(posting, content?.trim() || undefined).subscribe({
+            next: (verified) => {
+                this.posting.set(Object.assign(new AnswerPost(), verified));
+                this.isEditingIrisReply = false;
+                this.isVerifying = false;
+                this.changeDetector.detectChanges();
+            },
+            error: () => {
+                this.isVerifying = false;
+                this.changeDetector.detectChanges();
+            },
+        });
+    }
+
+    /** Switches to inline-edit mode so the tutor can adjust the Iris content before approving. */
+    editAnswer(): void {
+        this.editedIrisContent = this.posting()?.content ?? '';
+        this.isEditingIrisReply = true;
+    }
+
+    /** Cancels inline editing without making any changes. */
+    cancelEditAnswer(): void {
+        this.isEditingIrisReply = false;
+        this.editedIrisContent = '';
+    }
+
+    /** Rejects an unverified Iris answer by deleting it directly (no undo timer). */
+    rejectAnswer(): void {
+        const posting = this.posting();
+        if (!posting?.id || this.isVerifying) {
+            return;
+        }
+        this.isVerifying = true;
+        this.metisService.deleteAnswerPost(posting);
+        this.isVerifying = false;
     }
 
     /**
