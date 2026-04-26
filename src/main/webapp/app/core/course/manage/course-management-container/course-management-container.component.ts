@@ -263,7 +263,24 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             return;
         }
 
-        this.studentViewLink.set(matchedRoute ? matchedRoute.targetPath : defaultPath);
+        if (!matchedRoute) {
+            this.studentViewLink.set(defaultPath);
+            return;
+        }
+
+        const targetPath = matchedRoute.urlPart === 'exercises' ? this.addExerciseIdToPath(routerUrl, matchedRoute.targetPath) : matchedRoute.targetPath;
+
+        this.studentViewLink.set(targetPath);
+    }
+
+    private addExerciseIdToPath(routerUrl: string, targetPath: string[]) {
+        const routerPath = routerUrl.split(/[?#]/)[0];
+        const pathNumbers = routerPath.match(/\d+/g);
+        const exerciseId = pathNumbers?.[1];
+        if (exerciseId) {
+            return [...targetPath, exerciseId];
+        }
+        return targetPath;
     }
 
     private subscribeToCourseUpdates(courseId: number) {

@@ -8,7 +8,7 @@ import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import dayjs from 'dayjs/esm';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ImageComponent } from 'app/shared/image/image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef, viewChild } from '@angular/core';
@@ -73,6 +73,7 @@ const visibleDate1 = dayjs().subtract(1, 'days');
 const dueDateStat1: DueDateStat = { inTime: 1, late: 0, total: 1 };
 const exercise1: Exercise = {
     id: 5,
+    type: ExerciseType.PROGRAMMING,
     numberOfAssessmentsOfCorrectionRounds: [dueDateStat1],
     studentAssignedTeamIdComputed: false,
     dueDate: dayjs().add(2, 'days'),
@@ -80,6 +81,7 @@ const exercise1: Exercise = {
 };
 const exercise2: Exercise = {
     id: 6,
+    type: ExerciseType.TEXT,
     numberOfAssessmentsOfCorrectionRounds: [dueDateStat1],
     studentAssignedTeamIdComputed: false,
     dueDate: dayjs().add(1, 'days'),
@@ -758,6 +760,96 @@ describe('CourseOverviewComponent', () => {
             vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exercises/new');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'exercises']);
+        });
+
+        it('should set exercise detail link when URL includes exercise details', () => {
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/exercises/5');
+            component.course.set({
+                isAtLeastTutor: true,
+                exercises: [
+                    {
+                        id: 5,
+                        type: ExerciseType.PROGRAMMING,
+                        numberOfAssessmentsOfCorrectionRounds: [],
+                        studentAssignedTeamIdComputed: false,
+                        secondCorrectionEnabled: false,
+                    },
+                ],
+            });
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'programming-exercises', '5']);
+        });
+
+        it('should set modeling exercise detail link when URL includes modeling exercise details', () => {
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/exercises/6');
+            component.course.set({
+                isAtLeastTutor: true,
+                exercises: [
+                    {
+                        id: 6,
+                        type: ExerciseType.MODELING,
+                        numberOfAssessmentsOfCorrectionRounds: [],
+                        studentAssignedTeamIdComputed: false,
+                        secondCorrectionEnabled: false,
+                    },
+                ],
+            });
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'modeling-exercises', '6']);
+        });
+
+        it('should set quiz exercise detail link when URL includes quiz exercise details', () => {
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/exercises/7');
+            component.course.set({
+                isAtLeastTutor: true,
+                exercises: [
+                    {
+                        id: 7,
+                        type: ExerciseType.QUIZ,
+                        numberOfAssessmentsOfCorrectionRounds: [],
+                        studentAssignedTeamIdComputed: false,
+                        secondCorrectionEnabled: false,
+                    },
+                ],
+            });
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'quiz-exercises', '7']);
+        });
+
+        it('should set text exercise detail link when URL includes text exercise details', () => {
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/exercises/8');
+            component.course.set({
+                isAtLeastTutor: true,
+                exercises: [
+                    {
+                        id: 8,
+                        type: ExerciseType.TEXT,
+                        numberOfAssessmentsOfCorrectionRounds: [],
+                        studentAssignedTeamIdComputed: false,
+                        secondCorrectionEnabled: false,
+                    },
+                ],
+            });
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'text-exercises', '8']);
+        });
+
+        it('should set file upload exercise detail link when URL includes file upload exercise details', () => {
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/exercises/9');
+            component.course.set({
+                isAtLeastTutor: true,
+                exercises: [
+                    {
+                        id: 9,
+                        type: ExerciseType.FILE_UPLOAD,
+                        numberOfAssessmentsOfCorrectionRounds: [],
+                        studentAssignedTeamIdComputed: false,
+                        secondCorrectionEnabled: false,
+                    },
+                ],
+            });
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'file-upload-exercises', '9']);
         });
 
         it('should set lectures link when URL includes "lectures"', () => {

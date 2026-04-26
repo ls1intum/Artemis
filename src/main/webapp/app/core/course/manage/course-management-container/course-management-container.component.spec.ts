@@ -812,6 +812,42 @@ describe('CourseManagementContainerComponent', () => {
             expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises']);
         });
 
+        it('should set exercise detail link for programming exercise detail pages', () => {
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/programming-exercises/5');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises', '5']);
+        });
+
+        it('should set exercise detail link for text exercise detail pages', () => {
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/text-exercises/5');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises', '5']);
+        });
+
+        it('should set exercise detail link for modeling exercise detail pages', () => {
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/modeling-exercises/5');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises', '5']);
+        });
+
+        it('should set exercise detail link for file upload exercise detail pages', () => {
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/file-upload-exercises/5');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises', '5']);
+        });
+
+        it('should set exercise detail link for quiz exercise detail pages', () => {
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/quiz-exercises/5');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises', '5']);
+        });
+
+        it('should keep exercise detail link on nested management subpages', () => {
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/programming-exercises/5/exercise-statistics');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises', '5']);
+        });
+
         it('should set lectures link when URL includes "lectures"', () => {
             vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/lectures/1/details');
             component.determineStudentViewLink();
