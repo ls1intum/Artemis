@@ -14,6 +14,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
+//Novo
+import static org.apache.commons.math3.util.Precision.round;
 
 @MappedSuperclass
 public abstract class BaseExercise extends DomainObject {
@@ -86,7 +88,7 @@ public abstract class BaseExercise extends DomainObject {
     }
 
     public Double getMaxPoints() {
-        return maxPoints;
+       return Math.round(maxPoints * 100.0) / 100.0;
     }
 
     public void setMaxPoints(Double maxPoints) {
