@@ -795,39 +795,6 @@ public class ParticipationService {
     }
 
     /**
-     * Finds all student participations for a given exercise with the latest submission and result, including the assessment note.
-     *
-     * @param exerciseId   the id of the exercise
-     * @param teamExercise true if the exercise is a team exercise, false otherwise
-     * @return a set of student participations with the latest submission and result, including the assessment note
-     */
-    public Set<StudentParticipation> findByExerciseIdWithLatestSubmissionResultAndAssessmentNote(long exerciseId, boolean teamExercise) {
-        Set<StudentParticipation> participations = teamExercise ? studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithTeamInformation(exerciseId)
-                : studentParticipationRepository.findByExerciseIdWithLatestSubmission(exerciseId);
-        Set<Long> submissionIds = participations.stream().flatMap(p -> p.getSubmissions().stream()).map(Submission::getId).filter(Objects::nonNull).collect(Collectors.toSet());
-
-        if (submissionIds.isEmpty()) {
-            return participations;
-        }
-        Set<Result> results = resultRepository.findLatestResultsWithAssessmentNoteBySubmissionIds(submissionIds);
-        Map<Long, Result> resultBySubmissionId = results.stream().collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity()));
-        for (StudentParticipation participation : participations) {
-            if (!participation.getSubmissions().isEmpty()) {
-                Submission latestSubmission = participation.getSubmissions().iterator().next();
-                Result latest = resultBySubmissionId.get(latestSubmission.getId());
-                if (latest != null) {
-                    latestSubmission.setResults(List.of(latest));
-                }
-                else {
-                    latestSubmission.setResults(Collections.emptyList());
-                }
-            }
-        }
-
-        return participations;
-    }
-
-    /**
      * Returns a paginated list of {@link ParticipationManagementDTO} for the participation management view.
      * Uses a 3-step approach: paginated ID query → full entity load → DTO mapping.
      *

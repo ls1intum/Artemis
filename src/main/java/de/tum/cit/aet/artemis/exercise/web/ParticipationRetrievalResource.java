@@ -3,9 +3,6 @@ package de.tum.cit.aet.artemis.exercise.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -20,11 +17,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -83,52 +78,6 @@ public class ParticipationRetrievalResource {
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.submissionRepository = submissionRepository;
-    }
-
-    /**
-     * GET /exercises/:exerciseId/participations : get all the participations for an exercise
-     *
-     * @param exerciseId        The participationId of the exercise
-     * @param withLatestResults Whether the manual and latest {@link Result results} for the participations should also be fetched
-     * @return A list of all participations for the exercise
-     */
-    @GetMapping("exercises/{exerciseId}/participations")
-    @EnforceAtLeastTutor
-    public ResponseEntity<Set<StudentParticipation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
-            @RequestParam(defaultValue = "false") boolean withLatestResults) {
-        log.debug("REST request to get all Participations for Exercise {}", exerciseId);
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (exercise.isCourseExercise()) {
-            // teaching assistants can access scores and participations in course exercises
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        }
-        else if (exercise.isExamExercise()) {
-            // only instructors can access scores and participations in exam exercises
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        }
-        Set<StudentParticipation> participations;
-        if (withLatestResults) {
-            participations = participationService.findByExerciseIdWithLatestSubmissionResultAndAssessmentNote(exercise.getId(), exercise.isTeamMode());
-        }
-        else {
-            if (exercise.isTeamMode()) {
-                participations = studentParticipationRepository.findWithTeamInformationByExerciseId(exerciseId);
-            }
-            else {
-                participations = studentParticipationRepository.findByExerciseId(exerciseId);
-            }
-
-            Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
-            participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
-        }
-        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
-        participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
-        participations = participations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
-            // remove unnecessary data to reduce response size
-            participation.setExercise(null);
-        }).collect(Collectors.toSet());
-
-        return ResponseEntity.ok(participations);
     }
 
     /**

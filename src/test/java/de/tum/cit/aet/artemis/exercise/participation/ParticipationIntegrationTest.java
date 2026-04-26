@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +35,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
@@ -1132,145 +1130,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationRepo.save(participation);
         request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getAllParticipationsForExercise() throws Exception {
-        participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-        participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
-        StudentParticipation testParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
-        testParticipation.setPracticeMode(true);
-        participationRepo.save(testParticipation);
-        var participations = request.getList("/api/exercise/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
-        assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
-                .allMatch(participation -> participation.getStudent().isPresent()).as("No submissions should exist for participations")
-                .allMatch(participation -> participation.getSubmissionCount() == null || participation.getSubmissionCount() == 0);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getAllParticipationsForExercise_withLatestSubmissionResult() throws Exception {
-        List<User> students = IntStream.range(1, 5).mapToObj(i -> userUtilService.getUserByLogin(TEST_PREFIX + "student" + i)).toList();
-        participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-
-        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
-        Result result1 = participationUtilService.createSubmissionAndResult(participation, 42, true);
-        Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
-        result2.setAssessmentType(AssessmentType.MANUAL);
-        resultRepository.save(result2);
-        Result result3 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
-
-        Submission onlySubmission = textExerciseUtilService.createSubmissionForTextExercise(textExercise, students.get(2), "asdf");
-
-        StudentParticipation testParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student4");
-        testParticipation.setPracticeMode(true);
-        participationRepo.save(testParticipation);
-
-        final var params = new LinkedMultiValueMap<String, String>();
-        params.add("withLatestResults", "true");
-        var participations = request.getList("/api/exercise/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
-        assertThat(participations).as("Exactly 4 participations are returned").hasSize(4).as("Only participation that has student are returned")
-                .allMatch(p -> p.getStudent().isPresent());
-        StudentParticipation receivedOnlyParticipation = participations.stream().filter(p -> p.getParticipant().equals(students.getFirst())).findFirst().orElseThrow();
-        StudentParticipation receivedParticipationWithResult = participations.stream().filter(p -> p.getParticipant().equals(students.get(1))).findFirst().orElseThrow();
-        StudentParticipation receivedParticipationWithOnlySubmission = participations.stream().filter(p -> p.getParticipant().equals(students.get(2))).findFirst().orElseThrow();
-        StudentParticipation receivedTestParticipation = participations.stream().filter(p -> p.getParticipant().equals(students.get(3))).findFirst().orElseThrow();
-        assertThat(receivedOnlyParticipation.getSubmissions()).isEmpty();
-        assertThat(receivedOnlyParticipation.getSubmissionCount()).isZero();
-
-        assertThat(participationUtilService.getResultsForParticipation(receivedParticipationWithResult)).containsExactlyInAnyOrder(result3);
-        assertThat(receivedParticipationWithResult.getSubmissions()).containsExactly(result1.getSubmission());
-        assertThat(receivedParticipationWithResult.getSubmissionCount()).isEqualTo(1);
-
-        assertThat(receivedParticipationWithOnlySubmission.getSubmissions().iterator().next().getResults()).isEmpty();
-        assertThat(receivedParticipationWithOnlySubmission.getSubmissions()).containsExactlyInAnyOrder(onlySubmission);
-        assertThat(receivedParticipationWithOnlySubmission.getSubmissionCount()).isEqualTo(1);
-
-        assertThat(receivedTestParticipation.getSubmissions()).isEmpty();
-        assertThat(receivedTestParticipation.getSubmissionCount()).isZero();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getAllParticipationsForExercise_withLatestResults_forQuizExercise() throws Exception {
-        var quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), QuizMode.INDIVIDUAL, course);
-        course.addExercises(quizExercise);
-        courseRepository.save(course);
-        exerciseRepository.save(quizExercise);
-
-        final var login = TEST_PREFIX + "student1";
-        var participation = participationUtilService.createAndSaveParticipationForExercise(quizExercise, login);
-        var result1 = participationUtilService.createSubmissionAndResult(participation, 42, true);
-        var notGradedResult = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
-        notGradedResult.setRated(false);
-        resultRepository.save(notGradedResult);
-
-        final var params = new LinkedMultiValueMap<String, String>();
-        params.add("withLatestResults", "true");
-        var participations = request.getList("/api/exercise/exercises/" + quizExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
-
-        var receivedParticipation = participations.stream().filter(p -> p.getParticipantIdentifier().equals(login)).findFirst().orElseThrow();
-
-        assertThat(participationUtilService.getResultsForParticipation(receivedParticipation)).containsOnly(notGradedResult);
-        assertThat(receivedParticipation.getSubmissions()).containsOnly(result1.getSubmission());
-        assertThat(receivedParticipation.getSubmissionCount()).isEqualTo(1);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getAllParticipationsForExercise_withLatestResult_multipleAssessments() throws Exception {
-        var participation1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-        var participation2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
-        var participation3 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
-        var submission1 = participationUtilService.addSubmission(participation1, new TextSubmission());
-        var submission2 = participationUtilService.addSubmission(participation2, new TextSubmission());
-        var submission3 = participationUtilService.addSubmission(participation3, new TextSubmission());
-        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission1);
-        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, submission1);
-        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, submission2);
-        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, submission2);
-        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, submission3);
-        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission3);
-        final var params = new LinkedMultiValueMap<String, String>();
-        params.add("withLatestResults", "true");
-        var participations = request.getList("/api/exercise/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
-        assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
-                .allMatch(p -> p.getStudent().isPresent()).as("Each participation should have 1 submission").allMatch(p -> p.getSubmissionCount() == 1);
-        var recievedParticipation1 = participations.stream().filter(participation -> participation.getParticipant().equals(participation1.getParticipant())).findAny();
-        var recievedParticipation2 = participations.stream().filter(participation -> participation.getParticipant().equals(participation2.getParticipant())).findAny();
-        var recievedParticipation3 = participations.stream().filter(participation -> participation.getParticipant().equals(participation3.getParticipant())).findAny();
-        assertThat(recievedParticipation1).hasValueSatisfying(participation -> assertThat(participationUtilService.getResultsForParticipation(participation)).hasSize(1));
-        assertThat(recievedParticipation2).hasValueSatisfying(participation -> assertThat(participationUtilService.getResultsForParticipation(participation)).hasSize(1));
-        assertThat(recievedParticipation3).hasValueSatisfying(participation -> assertThat(participationUtilService.getResultsForParticipation(participation)).hasSize(1));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
-    void getAllParticipationsForExercise_NotTutorInCourse() throws Exception {
-        request.getList("/api/exercise/exercises/" + textExercise.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getAllParticipationsForExamExercise_asTutor_forbidden() throws Exception {
-        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
-        TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
-        examTextExercise = exerciseRepository.save(examTextExercise);
-        request.getList("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getAllParticipationsForExamExercise_asInstructor_success() throws Exception {
-        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
-        TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
-        examTextExercise = exerciseRepository.save(examTextExercise);
-        participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student1");
-        var participations = request.getList("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
-        assertThat(participations).hasSize(1);
     }
 
     @Test

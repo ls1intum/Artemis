@@ -5,7 +5,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { map, take } from 'rxjs/operators';
+import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
@@ -183,31 +183,6 @@ describe('Participation Service', () => {
             .subscribe((resp) => expect(resp.body).toMatchObject({ ...expected }));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
-    });
-
-    it('should return a list of Participation', () => {
-        const returnedFromService = Object.assign(
-            {
-                repositoryUri: 'BBBBBB',
-                buildPlanId: 'BBBBBB',
-                initializationState: 'BBBBBB',
-                initializationDate: currentDate,
-                presentationScore: 1,
-                results: [],
-                submissions: [],
-            },
-            participationDefault,
-        );
-        const expected = Object.assign({}, returnedFromService);
-        service
-            .findAllParticipationsByExercise(1)
-            .pipe(
-                take(1),
-                map((resp) => resp.body),
-            )
-            .subscribe((body) => expect(body).toContainEqual(expected));
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush([returnedFromService]);
     });
 
     it('should delete a Participation', () => {

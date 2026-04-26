@@ -434,52 +434,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacksTestCases(@Param("exerciseId") long exerciseId,
             @Param("testRun") boolean testRun);
 
-    /**
-     * Get all participations for an exercise with the latest submission
-     *
-     * @param exerciseId Exercise id.
-     * @return participations for exercise.
-     */
-    @Query("""
-
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT  JOIN FETCH p.submissions s
-            WHERE  p.exercise.id = :exerciseId
-               AND ( s.id IS NULL
-                   OR s.id = (
-                    SELECT MAX(s2.id)
-                    FROM   Submission s2
-                    WHERE  s2.participation = p
-                        )
-                      )
-            """)
-    Set<StudentParticipation> findByExerciseIdWithLatestSubmission(@Param("exerciseId") long exerciseId);
-
-    /**
-     * Get all participations for a team exercise with the latest submission and team information.
-     * As the students of a team are lazy loaded, they are explicitly included into the query
-     *
-     * @param exerciseId Exercise id.
-     * @return participations for exercise.
-     */
-    @Query("""
-             SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT  JOIN FETCH p.team t
-                LEFT  JOIN FETCH t.students
-                LEFT  JOIN FETCH p.submissions s
-            WHERE  p.exercise.id = :exerciseId
-               AND ( s.id IS NULL
-                   OR s.id = (
-                    SELECT MAX(s2.id)
-                    FROM   Submission s2
-                    WHERE  s2.participation = p
-                        )
-                      )
-            """)
-    Set<StudentParticipation> findByExerciseIdWithLatestSubmissionWithTeamInformation(@Param("exerciseId") long exerciseId);
-
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
@@ -1035,21 +989,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<StudentParticipation> findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
 
     /**
-     * Count the number of submissions for each participation in a given exercise.
-     *
-     * @param exerciseId the id of the exercise for which to consider participations
-     * @return Tuples of participation ids and number of submissions per participation
-     */
-    @Query("""
-            SELECT p.id, COUNT(s)
-            FROM StudentParticipation p
-                LEFT JOIN p.submissions s
-            WHERE p.exercise.id = :exerciseId
-            GROUP BY p.id
-            """)
-    List<long[]> countSubmissionsPerParticipationByExerciseId(@Param("exerciseId") long exerciseId);
-
-    /**
      * Count the number of submissions for each participation for a given team in a course
      *
      * @param courseId      the id of the course for which to consider participations
@@ -1164,16 +1103,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     default List<StudentParticipation> findByStudentExamWithEagerSubmissions(StudentExam studentExam) {
         return findByStudentExamWithEagerSubmissions(studentExam, studentExam.getExercises());
-    }
-
-    /**
-     * Get a mapping of participation ids to the number of submission for each participation.
-     *
-     * @param exerciseId the id of the exercise for which to consider participations
-     * @return a map of submissions per participation in the given exercise
-     */
-    default Map<Long, Integer> countSubmissionsPerParticipationByExerciseIdAsMap(long exerciseId) {
-        return convertListOfCountsIntoMap(countSubmissionsPerParticipationByExerciseId(exerciseId));
     }
 
     /**

@@ -96,16 +96,6 @@ export class ParticipationService {
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
-    findAllParticipationsByExercise(exerciseId: number, withLatestResults = false): Observable<EntityArrayResponseType> {
-        const options = createRequestOption({ withLatestResults });
-        return this.http
-            .get<StudentParticipation[]>(`api/exercise/exercises/${exerciseId}/participations`, {
-                params: options,
-                observe: 'response',
-            })
-            .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
-    }
-
     searchParticipations(exerciseId: number, search: ParticipationSearch): Observable<PageableResult<ParticipationManagementDTO>> {
         const params: Record<string, string | number> = {
             page: search.page,
