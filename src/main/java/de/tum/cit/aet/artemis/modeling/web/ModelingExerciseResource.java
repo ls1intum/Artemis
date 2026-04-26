@@ -58,9 +58,11 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -132,13 +134,15 @@ public class ModelingExerciseResource {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
-            Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService, ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -160,6 +164,7 @@ public class ModelingExerciseResource {
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -203,6 +208,13 @@ public class ModelingExerciseResource {
             savedExercise = modelingExerciseRepository.save(savedExercise);
         }
         final ModelingExercise result = savedExercise;
+
+        // Handle athenaConfig if provided
+        if (modelingExercise.getAthenaConfig() != null) {
+            ExerciseAthenaConfig athenaConfig = exerciseAthenaConfigService.createOrUpdateConfig(result, modelingExercise.getAthenaConfig().getPreliminaryFeedbackModule(),
+                    modelingExercise.getAthenaConfig().getGradedFeedbackModule());
+            result.setAthenaConfig(athenaConfig);
+        }
 
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
@@ -295,6 +307,13 @@ public class ModelingExerciseResource {
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
         ModelingExercise persistedExercise = modelingExerciseRepository.save(updatedExercise);
+
+        // Handle athenaConfig if provided
+        if (updatedExercise.getAthenaConfig() != null) {
+            ExerciseAthenaConfig athenaConfig = exerciseAthenaConfigService.createOrUpdateConfig(persistedExercise,
+                    updatedExercise.getAthenaConfig().getPreliminaryFeedbackModule(), updatedExercise.getAthenaConfig().getGradedFeedbackModule());
+            persistedExercise.setAthenaConfig(athenaConfig);
+        }
 
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
