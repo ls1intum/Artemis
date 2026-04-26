@@ -11,12 +11,19 @@
             </button>
             <div class="form-group question-title">
                 <input
+                    #titleInput="ngModel"
                     id="short-answer-question-title"
                     class="form-control"
+                    [class.is-invalid]="titleInput.errors?.maxlength"
                     [(ngModel)]="shortAnswerQuestion.title"
                     (ngModelChange)="questionUpdated.emit()"
+                    [maxlength]="MAX_QUESTION_TITLE_LENGTH"
+                    name="short-answer-question-title-{{ questionIndex() }}"
                     placeholder="{{ 'artemisApp.quizExercise.placeholder.questionTitle' | artemisTranslate }}"
                 />
+                @if (titleInput.errors?.maxlength) {
+                    <small class="form-text text-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: MAX_QUESTION_TITLE_LENGTH }"></small>
+                }
             </div>
             <div class="question-card-header-inputs">
                 <div class="form-group question-score">
@@ -54,12 +61,19 @@
                     <div class="input-group row">
                         <div class="col-10 col-lg-11">
                             <input
+                                #reEvaluateTitleInput="ngModel"
                                 class="form-control"
+                                [class.is-invalid]="reEvaluateTitleInput.errors?.maxlength"
                                 [(ngModel)]="shortAnswerQuestion.title"
+                                [maxlength]="MAX_QUESTION_TITLE_LENGTH"
+                                name="short-answer-question-title-reevaluate-{{ questionIndex() }}"
                                 placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                                 attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                                 style="width: 100%"
                             />
+                            @if (reEvaluateTitleInput.errors?.maxlength) {
+                                <small class="form-text text-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: MAX_QUESTION_TITLE_LENGTH }"></small>
+                            }
                         </div>
                         <div class="col-2 col-lg-1">
                             <span class="input-group-btn">
