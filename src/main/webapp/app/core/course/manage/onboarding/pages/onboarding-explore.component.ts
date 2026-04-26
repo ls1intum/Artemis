@@ -27,7 +27,7 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
 
             .explore-card {
                 border: 1px solid var(--bs-border-color);
-                border-radius: 0.75rem;
+                border-radius: 0.5rem;
                 text-align: center;
                 padding: 1.75rem 1.25rem;
                 transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -54,8 +54,8 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
                 }
 
                 &:hover {
-                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-                    transform: translateY(-2px);
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+                    transform: translateY(-1px);
                     border-color: transparent;
 
                     &::before {
@@ -99,14 +99,14 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
             .explore-icon-wrapper {
                 width: 56px;
                 height: 56px;
-                border-radius: 14px;
+                border-radius: 0.5rem;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
                 margin-bottom: 1rem;
                 color: var(--bs-white);
                 background: var(--card-accent, var(--bs-primary));
-                box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
                 font-size: 1.25rem;
             }
 

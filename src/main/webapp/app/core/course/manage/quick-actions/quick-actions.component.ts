@@ -70,7 +70,7 @@ export enum CourseManagementSection {
                 gap: 0.5rem;
                 padding: 0.5rem 0.875rem;
                 border: 1px solid var(--bs-border-color);
-                border-radius: 0.625rem;
+                border-radius: 0.5rem;
                 background: var(--overview-card-nested-bg, var(--bs-body-bg));
                 color: var(--bs-body-color);
                 font-weight: 500;
@@ -104,7 +104,7 @@ export enum CourseManagementSection {
                 gap: 0.5rem;
                 padding: 0.4rem 0.75rem;
                 border: 1px solid var(--bs-border-color);
-                border-radius: 0.75rem;
+                border-radius: 0.5rem;
                 background: var(--overview-card-nested-bg, var(--bs-body-bg));
                 cursor: pointer;
                 transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
