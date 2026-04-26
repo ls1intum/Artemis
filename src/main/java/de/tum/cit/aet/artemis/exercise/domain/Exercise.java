@@ -716,7 +716,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     public boolean areFeedbackSuggestionsEnabled() {
-        return feedbackSuggestionModule != null;
+        if (feedbackSuggestionModule != null) {
+            return true;
+        }
+        return athenaConfig != null
+                && (athenaConfig.getPreliminaryFeedbackModule() != null || athenaConfig.getGradedFeedbackModule() != null);
     }
 
     public Set<GradingCriterion> getGradingCriteria() {

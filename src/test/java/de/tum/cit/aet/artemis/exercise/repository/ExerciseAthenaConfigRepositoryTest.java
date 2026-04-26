@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -72,5 +73,41 @@ class ExerciseAthenaConfigRepositoryTest extends AbstractSpringIntegrationIndepe
         exerciseAthenaConfigRepository.deleteByExerciseId(textExercise.getId());
 
         assertThat(exerciseAthenaConfigRepository.findByExerciseId(textExercise.getId())).isEmpty();
+    }
+
+    @Test
+    @Transactional
+    void testRevokeRestrictedModulesByCourseId_clearsOnlyRestrictedModules() {
+        ExerciseAthenaConfig config = new ExerciseAthenaConfig();
+        config.setExercise(textExercise);
+        config.setPreliminaryFeedbackModule("restricted-module");
+        config.setGradedFeedbackModule("allowed-module");
+        exerciseAthenaConfigRepository.save(config);
+
+        Long courseId = textExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        exerciseAthenaConfigRepository.revokeRestrictedModulesByCourseId(courseId, List.of("restricted-module"));
+
+        Optional<ExerciseAthenaConfig> result = exerciseAthenaConfigRepository.findByExerciseId(textExercise.getId());
+        assertThat(result).isPresent();
+        assertThat(result.get().getPreliminaryFeedbackModule()).isNull();
+        assertThat(result.get().getGradedFeedbackModule()).isEqualTo("allowed-module");
+    }
+
+    @Test
+    @Transactional
+    void testRevokeRestrictedModulesByCourseId_noMatchLeavesConfigUnchanged() {
+        ExerciseAthenaConfig config = new ExerciseAthenaConfig();
+        config.setExercise(textExercise);
+        config.setPreliminaryFeedbackModule("allowed-preliminary");
+        config.setGradedFeedbackModule("allowed-graded");
+        exerciseAthenaConfigRepository.save(config);
+
+        Long courseId = textExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        exerciseAthenaConfigRepository.revokeRestrictedModulesByCourseId(courseId, List.of("other-restricted-module"));
+
+        Optional<ExerciseAthenaConfig> result = exerciseAthenaConfigRepository.findByExerciseId(textExercise.getId());
+        assertThat(result).isPresent();
+        assertThat(result.get().getPreliminaryFeedbackModule()).isEqualTo("allowed-preliminary");
+        assertThat(result.get().getGradedFeedbackModule()).isEqualTo("allowed-graded");
     }
 }

@@ -5,7 +5,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseAthenaConfig, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { SimpleChange } from '@angular/core';
 
@@ -223,4 +223,52 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         expect(component.modulesAvailable).toBeTrue();
         expect(component.isAthenaEnabled).toBeTrue();
     }));
+
+    it('should capture initial athenaConfig modules in ngOnInit', fakeAsync(() => {
+        component.exercise.athenaConfig = { preliminaryFeedbackModule: 'pre-module', gradedFeedbackModule: 'graded-module' } as ExerciseAthenaConfig;
+        athenaService.getAvailableModules.mockReturnValue(of(['moduleA']));
+        profileService.isProfileActive.mockReturnValue(true);
+
+        component.ngOnInit();
+        tick();
+
+        expect(component.initialPreliminaryModule).toBe('pre-module');
+        expect(component.initialGradedModule).toBe('graded-module');
+    }));
+
+    it('should restore athenaConfig modules when due date locks inputs', () => {
+        component.initialAthenaModule = 'initial-module';
+        component.initialPreliminaryModule = 'initial-pre';
+        component.initialGradedModule = 'initial-graded';
+        component.exercise.athenaConfig = { preliminaryFeedbackModule: 'changed-pre', gradedFeedbackModule: 'changed-graded' } as ExerciseAthenaConfig;
+        component.exercise.feedbackSuggestionModule = 'changed-module';
+        component.exercise.dueDate = dayjs().subtract(1, 'day');
+        component.dueDate = dayjs().subtract(1, 'day');
+
+        component.ngOnChanges({
+            dueDate: new SimpleChange(dayjs().add(1, 'day'), component.dueDate, false),
+        });
+
+        expect(component.exercise.feedbackSuggestionModule).toBe('initial-module');
+        expect(component.exercise.athenaConfig!.preliminaryFeedbackModule).toBe('initial-pre');
+        expect(component.exercise.athenaConfig!.gradedFeedbackModule).toBe('initial-graded');
+    });
+
+    it('should get and set preliminaryFeedbackModule via athenaConfig', () => {
+        component.exercise.athenaConfig = { preliminaryFeedbackModule: 'pre-module' } as ExerciseAthenaConfig;
+
+        expect(component.preliminaryFeedbackModule).toBe('pre-module');
+
+        component.preliminaryFeedbackModule = 'new-pre-module';
+        expect(component.exercise.athenaConfig!.preliminaryFeedbackModule).toBe('new-pre-module');
+    });
+
+    it('should create athenaConfig when setting gradedFeedbackModule on exercise without config', () => {
+        component.exercise.athenaConfig = undefined;
+
+        component.gradedFeedbackModule = 'graded-module';
+
+        expect(component.exercise.athenaConfig).toBeDefined();
+        expect(component.exercise.athenaConfig!.gradedFeedbackModule).toBe('graded-module');
+    });
 });
