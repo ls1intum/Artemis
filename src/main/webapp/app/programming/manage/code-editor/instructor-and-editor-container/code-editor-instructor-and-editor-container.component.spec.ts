@@ -1379,7 +1379,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect((comp as any).codeEditorContainer.jumpToLine).toHaveBeenCalledWith(targetLine);
             expect(onFileLoadSpy).not.toHaveBeenCalled();
-            expect(onFileLoadSpy).not.toHaveBeenCalled();
             expect(onFileSyncLoadSpy).not.toHaveBeenCalled();
             expect((comp as any).codeEditorContainer.jumpToLine).toHaveBeenCalledWith(targetLine);
             expect((comp as any).codeEditorContainer.selectedFile).toBe(targetFile);
