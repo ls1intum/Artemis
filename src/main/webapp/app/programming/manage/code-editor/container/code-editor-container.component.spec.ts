@@ -373,6 +373,33 @@ describe('CodeEditorContainerComponent', () => {
         expect((component.monacoEditor as any).storeAnnotations).toHaveBeenCalledWith(['a.java']);
     });
 
+    it('should set commit state to clean and emit events after inline-fix commit when no unsaved files remain', () => {
+        component.unsavedFiles = {};
+        component.commitState = CommitState.UNCOMMITTED_CHANGES;
+        const commitStateSpy = jest.fn();
+        const commitSpy = jest.fn();
+        component.onCommitStateChange.subscribe(commitStateSpy);
+        component.onCommit.subscribe(commitSpy);
+
+        component.onInlineFixCommitted();
+
+        expect(component.commitState).toBe(CommitState.CLEAN);
+        expect(commitStateSpy).toHaveBeenCalledWith(CommitState.CLEAN);
+        expect(commitSpy).toHaveBeenCalled();
+    });
+
+    it('should keep uncommitted state after inline-fix commit when new unsaved files exist', () => {
+        component.unsavedFiles = { 'src/main/App.java': 'local changes' };
+        component.commitState = CommitState.UNCOMMITTED_CHANGES;
+        const commitStateSpy = jest.fn();
+        component.onCommitStateChange.subscribe(commitStateSpy);
+
+        component.onInlineFixCommitted();
+
+        expect(component.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
+        expect(commitStateSpy).toHaveBeenCalledWith(CommitState.UNCOMMITTED_CHANGES);
+    });
+
     it('should forward annotations and compute error files', () => {
         component.onAnnotations([{ fileName: 'A.java', type: 'warning' } as any, { fileName: 'B.java', type: 'error' } as any, { fileName: 'B.java', type: 'error' } as any]);
 
