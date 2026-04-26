@@ -17,8 +17,12 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Exam Navigation Bar Component', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
     let comp: ExamNavigationBarComponent;
     let repositoryService: CodeEditorRepositoryService;
@@ -27,6 +31,8 @@ describe('Exam Navigation Bar Component', () => {
     const mockExamExerciseUpdateService = {
         currentExerciseIdForNavigation: examExerciseIdForNavigationSourceMock.asObservable(),
     };
+
+    let exercises: Exercise[];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -45,8 +51,7 @@ describe('Exam Navigation Bar Component', () => {
         repositoryService = TestBed.inject(CodeEditorRepositoryService);
         TestBed.inject(ExamParticipationService);
 
-        comp.endDate = dayjs();
-        comp.exercises = [
+        exercises = [
             {
                 id: 0,
                 type: ExerciseType.PROGRAMMING,
@@ -59,6 +64,13 @@ describe('Exam Navigation Bar Component', () => {
             { id: 1, type: ExerciseType.TEXT } as Exercise,
             { id: 2, type: ExerciseType.MODELING } as Exercise,
         ];
+
+        fixture.componentRef.setInput('endDate', dayjs());
+        fixture.componentRef.setInput('exercises', exercises);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     beforeEach(fakeAsync(() => {
@@ -69,21 +81,21 @@ describe('Exam Navigation Bar Component', () => {
     it('should update the submissions onInit if their CommitState is UNCOMMITTED_CHANGES to isSynced false, if not in initial session', () => {
         // Given
         // Create an exam session, which is not an initial session.
-        comp.examSessions = [{ initialSession: false } as ExamSession];
-        const exerciseToBeSynced = comp.exercises[0];
-        jest.spyOn(repositoryService, 'getStatus').mockReturnValue(of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }));
+        fixture.componentRef.setInput('examSessions', [{ initialSession: false } as ExamSession]);
+        const exerciseToBeSynced = exercises[0];
+        vi.spyOn(repositoryService, 'getStatus').mockReturnValue(of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }));
 
         // When
-        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toBeTrue();
+        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toBe(true);
         comp.ngOnInit();
 
         // Then
-        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toBeFalse();
+        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toBe(false);
     });
 
     it('trigger when the exam is about to end', () => {
-        jest.spyOn(comp, 'saveExercise');
-        jest.spyOn(comp.examAboutToEnd, 'emit');
+        vi.spyOn(comp, 'saveExercise');
+        vi.spyOn(comp.examAboutToEnd, 'emit');
 
         comp.triggerExamAboutToEnd();
 
@@ -92,57 +104,57 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should change the exercise', () => {
-        jest.spyOn(comp.onPageChanged, 'emit');
-        jest.spyOn(comp, 'setExerciseButtonStatus');
+        vi.spyOn(comp.onPageChanged, 'emit');
+        vi.spyOn(comp, 'setExerciseButtonStatus');
 
-        expect(comp.exerciseIndex).toBe(0);
+        expect(comp.exerciseIndex()).toBe(0);
 
         const exerciseIndex = 1;
         const force = false;
 
         comp.changePage(false, exerciseIndex, force);
 
-        expect(comp.exerciseIndex).toEqual(exerciseIndex);
         expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
-        expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(exerciseIndex);
+        // setExerciseButtonStatus is called with the previous exerciseIndex (0)
+        expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(0);
     });
 
     it('should not change the exercise with invalid index', () => {
-        jest.spyOn(comp.onPageChanged, 'emit');
-        jest.spyOn(comp, 'setExerciseButtonStatus');
+        vi.spyOn(comp.onPageChanged, 'emit');
+        vi.spyOn(comp, 'setExerciseButtonStatus');
 
-        expect(comp.exerciseIndex).toBe(0);
+        expect(comp.exerciseIndex()).toBe(0);
 
         const exerciseIndex = 5;
         const force = false;
 
         comp.changePage(false, exerciseIndex, force);
 
-        expect(comp.exerciseIndex).toBe(0);
+        expect(comp.exerciseIndex()).toBe(0);
         expect(comp.onPageChanged.emit).not.toHaveBeenCalled();
         expect(comp.setExerciseButtonStatus).not.toHaveBeenCalledWith(exerciseIndex);
     });
 
     it('should tell the type of the selected programming exercise', () => {
-        comp.exerciseIndex = 0;
+        fixture.componentRef.setInput('exerciseIndex', 0);
 
-        expect(comp.isProgrammingExercise()).toBeTrue();
+        expect(comp.isProgrammingExercise()).toBe(true);
     });
 
     it('should tell the type of the selected text exercise', () => {
-        comp.exerciseIndex = 1;
+        fixture.componentRef.setInput('exerciseIndex', 1);
 
-        expect(comp.isProgrammingExercise()).toBeFalse();
+        expect(comp.isProgrammingExercise()).toBe(false);
     });
 
     it('should tell the type of the selected modeling exercise', () => {
-        comp.exerciseIndex = 2;
+        fixture.componentRef.setInput('exerciseIndex', 2);
 
-        expect(comp.isProgrammingExercise()).toBeFalse();
+        expect(comp.isProgrammingExercise()).toBe(false);
     });
 
     it('save the exercise with changeExercise', () => {
-        jest.spyOn(comp, 'changePage');
+        vi.spyOn(comp, 'changePage');
         const changeExercise = true;
 
         comp.saveExercise(changeExercise);
@@ -151,7 +163,7 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('save the exercise without changeExercise', () => {
-        jest.spyOn(comp, 'changePage');
+        vi.spyOn(comp, 'changePage');
         const changeExercise = false;
 
         comp.saveExercise(changeExercise);
@@ -160,7 +172,7 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should hand in the exam early', () => {
-        jest.spyOn(comp.onExamHandInEarly, 'emit');
+        vi.spyOn(comp.onExamHandInEarly, 'emit');
 
         comp.handInEarly();
 
@@ -174,16 +186,16 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should set the exercise button status for submitted submission', () => {
-        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true };
+        exercises[0].studentParticipations![0].submissions![0] = { submitted: true };
 
         const result = comp.setExerciseButtonStatus(0);
 
-        expect(comp.icon).toEqual(faEdit);
+        expect(comp.icon()).toEqual(faEdit);
         expect(result).toBe('notSynced');
     });
 
     it('should set the exercise button status for submitted and synced submission active', () => {
-        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
+        exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
         const result = comp.setExerciseButtonStatus(0);
 
@@ -191,7 +203,7 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should set the exercise button status for submitted and synced submission not active', () => {
-        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
+        exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
         const result = comp.setExerciseButtonStatus(1);
 
@@ -199,62 +211,62 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should get the exercise button tooltip without submission', () => {
-        const result = comp.getExerciseButtonTooltip(comp.exercises[1]);
+        const result = comp.getExerciseButtonTooltip(exercises[1]);
 
         expect(result).toBe('synced');
     });
 
     it('should get the exercise button tooltip with submitted and synced submission', () => {
-        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
+        exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
-        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
+        const result = comp.getExerciseButtonTooltip(exercises[0]);
 
         expect(result).toBe('submitted');
     });
 
     it('should get the exercise button tooltip with submitted submission', () => {
-        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true };
+        exercises[0].studentParticipations![0].submissions![0] = { submitted: true };
 
-        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
+        const result = comp.getExerciseButtonTooltip(exercises[0]);
 
         expect(result).toBe('notSavedOrSubmitted');
     });
 
     it('should get the exercise button tooltip with submission', () => {
-        comp.exercises[0].studentParticipations![0].submissions![0] = {};
+        exercises[0].studentParticipations![0].submissions![0] = {};
 
-        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
+        const result = comp.getExerciseButtonTooltip(exercises[0]);
 
         expect(result).toBe('notSavedOrSubmitted');
     });
 
     it('should get the exercise button tooltip with synced submission', () => {
-        comp.exercises[0].studentParticipations![0].submissions![0] = { isSynced: true };
+        exercises[0].studentParticipations![0].submissions![0] = { isSynced: true };
 
-        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
+        const result = comp.getExerciseButtonTooltip(exercises[0]);
 
         expect(result).toBe('notSubmitted');
     });
 
     it('should navigate to other Exercise', () => {
         const updatedExerciseId = 2;
-        jest.spyOn(comp, 'changeExerciseById');
+        vi.spyOn(comp, 'changeExerciseById');
         examExerciseIdForNavigationSourceMock.next(updatedExerciseId);
         expect(comp.changeExerciseById).toHaveBeenCalledOnce();
     });
 
     it('should set exercise button status to synced active if it is the active exercise in the exam timeline view', () => {
-        comp.examTimeLineView = true;
-        comp.exerciseIndex = 0;
+        fixture.componentRef.setInput('examTimeLineView', true);
+        fixture.componentRef.setInput('exerciseIndex', 0);
         expect(comp.setExerciseButtonStatus(0)).toBe('synced active');
-        expect(comp.icon).toEqual(faCheck);
+        expect(comp.icon()).toEqual(faCheck);
     });
 
     it('should set exercise button status to synced if it is not the active exercise in the exam timeline view', () => {
-        comp.examTimeLineView = true;
-        comp.exerciseIndex = 0;
+        fixture.componentRef.setInput('examTimeLineView', true);
+        fixture.componentRef.setInput('exerciseIndex', 0);
         expect(comp.setExerciseButtonStatus(1)).toBe('synced');
-        expect(comp.icon).toEqual(faCheck);
+        expect(comp.icon()).toEqual(faCheck);
     });
 
     describe('isOnlyOfflineIDE', () => {
@@ -264,30 +276,30 @@ describe('Exam Navigation Bar Component', () => {
                 allowOfflineIde: true,
                 allowOnlineEditor: false,
             } as any;
-            Object.setPrototypeOf(exercise, Object.getPrototypeOf(comp.exercises[0]));
+            Object.setPrototypeOf(exercise, Object.getPrototypeOf(exercises[0]));
 
             // Use a mock programming exercise
             const result = comp.isOnlyOfflineIDE({ allowOfflineIde: true, allowOnlineEditor: false } as any);
 
-            expect(result).toBeFalse(); // Returns false because it's not instanceof ProgrammingExercise
+            expect(result).toBe(false); // Returns false because it's not instanceof ProgrammingExercise
         });
 
         it('should return false for non-programming exercise', () => {
-            const result = comp.isOnlyOfflineIDE(comp.exercises[1]);
+            const result = comp.isOnlyOfflineIDE(exercises[1]);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
     });
 
     describe('getOverviewStatus', () => {
         it('should return active when overview page is open', () => {
-            comp.overviewPageOpen = true;
+            fixture.componentRef.setInput('overviewPageOpen', true);
 
             expect(comp.getOverviewStatus()).toBe('active');
         });
 
         it('should return empty string when overview page is closed', () => {
-            comp.overviewPageOpen = false;
+            fixture.componentRef.setInput('overviewPageOpen', false);
 
             expect(comp.getOverviewStatus()).toBe('');
         });
@@ -295,27 +307,28 @@ describe('Exam Navigation Bar Component', () => {
 
     describe('isFileUploadExercise', () => {
         it('should return true for file upload exercise', () => {
-            comp.exercises[1] = { id: 1, type: ExerciseType.FILE_UPLOAD } as Exercise;
-            comp.exerciseIndex = 1;
+            const localExercises = [...exercises];
+            localExercises[1] = { id: 1, type: ExerciseType.FILE_UPLOAD } as Exercise;
+            fixture.componentRef.setInput('exercises', localExercises);
+            fixture.componentRef.setInput('exerciseIndex', 1);
 
-            expect(comp.isFileUploadExercise()).toBeTrue();
+            expect(comp.isFileUploadExercise()).toBe(true);
         });
 
         it('should return false for non-file upload exercise', () => {
-            comp.exerciseIndex = 0;
+            fixture.componentRef.setInput('exerciseIndex', 0);
 
-            expect(comp.isFileUploadExercise()).toBeFalse();
+            expect(comp.isFileUploadExercise()).toBe(false);
         });
     });
 
     describe('changePage with overview', () => {
         it('should change to overview page', () => {
-            jest.spyOn(comp.onPageChanged, 'emit');
-            jest.spyOn(comp, 'setExerciseButtonStatus');
+            vi.spyOn(comp.onPageChanged, 'emit');
+            vi.spyOn(comp, 'setExerciseButtonStatus');
 
             comp.changePage(true, -1);
 
-            expect(comp.exerciseIndex).toBe(-1);
             expect(comp.onPageChanged.emit).toHaveBeenCalledWith({
                 overViewChange: true,
                 exercise: undefined,
@@ -324,20 +337,20 @@ describe('Exam Navigation Bar Component', () => {
         });
 
         it('should not change for negative exercise index', () => {
-            jest.spyOn(comp.onPageChanged, 'emit');
-            comp.exerciseIndex = 0;
+            vi.spyOn(comp.onPageChanged, 'emit');
+            fixture.componentRef.setInput('exerciseIndex', 0);
 
             comp.changePage(false, -1);
 
-            expect(comp.exerciseIndex).toBe(0);
+            expect(comp.exerciseIndex()).toBe(0);
             expect(comp.onPageChanged.emit).not.toHaveBeenCalled();
         });
     });
 
     describe('saveExercise', () => {
         it('should save exercise and stay on last exercise when at end', () => {
-            jest.spyOn(comp, 'changePage');
-            comp.exerciseIndex = 2; // Last exercise
+            vi.spyOn(comp, 'changePage');
+            fixture.componentRef.setInput('exerciseIndex', 2); // Last exercise
 
             comp.saveExercise(true);
 

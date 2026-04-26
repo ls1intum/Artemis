@@ -41,6 +41,8 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 import { By } from '@angular/platform-browser';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @Component({
     template: '',
@@ -48,12 +50,14 @@ import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-
 class DummyComponent {}
 
 describe('ExamUpdateComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExamUpdateComponent;
     let fixture: ComponentFixture<ExamUpdateComponent>;
     let examManagementService: ExamManagementService;
     let router: Router;
     let profileService: ProfileService;
-    let getProfileInfoSub: jest.SpyInstance;
+    let getProfileInfoSub: ReturnType<typeof vi.spyOn>;
 
     let examWithoutExercises: Exam;
     let course: Course;
@@ -64,7 +68,7 @@ describe('ExamUpdateComponent', () => {
     ];
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('create and edit exams', () => {
@@ -128,14 +132,14 @@ describe('ExamUpdateComponent', () => {
 
             router = TestBed.inject(Router);
             fixture = TestBed.createComponent(ExamUpdateComponent);
-            global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
                 return new MockResizeObserver(callback);
             });
             component = fixture.componentInstance;
             examManagementService = TestBed.inject(ExamManagementService);
 
             profileService = TestBed.inject(ProfileService);
-            getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+            getProfileInfoSub = vi.spyOn(profileService, 'getProfileInfo');
             getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] });
         });
 
@@ -146,7 +150,7 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam.course).toEqual(course);
             expect(component.exam.gracePeriod).toBe(180);
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
-            expect(component.exam.testExam).toBeFalse();
+            expect(component.exam.testExam).toBe(false);
             expect(component.exam.workingTime).toBe(0);
         });
 
@@ -156,36 +160,36 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.endDate = dayjs().add(3, 'hours');
             examWithoutExercises.workingTime = 3600;
             fixture.changeDetectorRef.detectChanges();
-            expect(component.isValidConfiguration).toBeTrue();
+            expect(component.isValidConfiguration).toBe(true);
 
             examWithoutExercises.publishResultsDate = dayjs().add(4, 'hours');
             examWithoutExercises.exampleSolutionPublicationDate = dayjs().add(5, 'hours');
             examWithoutExercises.examStudentReviewStart = dayjs().add(5, 'hours');
             examWithoutExercises.examStudentReviewEnd = dayjs().add(6, 'hours');
             fixture.changeDetectorRef.detectChanges();
-            expect(component.isValidConfiguration).toBeTrue();
+            expect(component.isValidConfiguration).toBe(true);
 
             examWithoutExercises.visibleDate = undefined;
             examWithoutExercises.startDate = undefined;
             examWithoutExercises.endDate = undefined;
             fixture.changeDetectorRef.detectChanges();
-            expect(component.isValidConfiguration).toBeFalse();
+            expect(component.isValidConfiguration).toBe(false);
 
             examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
             examWithoutExercises.startDate = dayjs().add(2, 'hours');
             examWithoutExercises.endDate = dayjs().add(3, 'hours');
             examWithoutExercises.examStudentReviewEnd = undefined;
             fixture.changeDetectorRef.detectChanges();
-            expect(component.isValidConfiguration).toBeFalse();
+            expect(component.isValidConfiguration).toBe(false);
 
             examWithoutExercises.examStudentReviewStart = dayjs().add(6, 'hours');
             examWithoutExercises.examStudentReviewEnd = dayjs().add(5, 'hours');
             fixture.changeDetectorRef.detectChanges();
-            expect(component.isValidConfiguration).toBeFalse();
+            expect(component.isValidConfiguration).toBe(false);
 
             examWithoutExercises.examStudentReviewStart = undefined;
             fixture.changeDetectorRef.detectChanges();
-            expect(component.isValidConfiguration).toBeFalse();
+            expect(component.isValidConfiguration).toBe(false);
         });
 
         it('should show channel name input for test exams', fakeAsync(() => {
@@ -193,7 +197,7 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.channelName = 'test-exam';
             component.ngOnInit();
             tick();
-            expect(component.hideChannelNameInput).toBeFalse();
+            expect(component.hideChannelNameInput).toBe(false);
         }));
 
         it('should validate the example solution publication date correctly', () => {
@@ -207,23 +211,23 @@ describe('ExamUpdateComponent', () => {
             newExamWithoutExercises.endDate = now.add(4, 'hours');
             newExamWithoutExercises.workingTime = 3600;
             newExamWithoutExercises.exampleSolutionPublicationDate = undefined;
-            expect(component.isValidConfiguration).toBeTrue();
+            expect(component.isValidConfiguration).toBe(true);
 
             newExamWithoutExercises.exampleSolutionPublicationDate = now.add(4, 'hours');
-            expect(component.isValidConfiguration).toBeTrue();
+            expect(component.isValidConfiguration).toBe(true);
 
             newExamWithoutExercises.exampleSolutionPublicationDate = now.add(2, 'hours');
-            expect(component.isValidConfiguration).toBeFalse();
+            expect(component.isValidConfiguration).toBe(false);
         });
 
         it('should update', fakeAsync(() => {
             const calendarService = TestBed.inject(CalendarService);
-            const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
+            const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
 
-            const navigateSpy = jest.spyOn(router, 'navigate');
+            const navigateSpy = vi.spyOn(router, 'navigate');
             fixture.detectChanges();
 
-            const updateSpy = jest.spyOn(examManagementService, 'update').mockReturnValue(
+            const updateSpy = vi.spyOn(examManagementService, 'update').mockReturnValue(
                 of(
                     new HttpResponse<Exam>({
                         body: {
@@ -239,7 +243,7 @@ describe('ExamUpdateComponent', () => {
             tick();
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(updateSpy).toHaveBeenCalledOnce();
-            expect(component.isSaving).toBeFalse();
+            expect(component.isSaving).toBe(false);
             expect(refreshSpy).toHaveBeenCalledOnce();
         }));
 
@@ -286,25 +290,25 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.testExam = true;
             examWithoutExercises.workingTime = undefined;
             fixture.changeDetectorRef.detectChanges();
-            expect(component.validateWorkingTime).toBeFalse();
+            expect(component.validateWorkingTime).toBe(false);
 
             examWithoutExercises.startDate = undefined;
             examWithoutExercises.endDate = undefined;
-            expect(component.validateWorkingTime).toBeFalse();
+            expect(component.validateWorkingTime).toBe(false);
 
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.workingTime = 3600;
             examWithoutExercises.endDate = dayjs().subtract(2, 'hours');
-            expect(component.validateWorkingTime).toBeFalse();
+            expect(component.validateWorkingTime).toBe(false);
 
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
-            expect(component.validateWorkingTime).toBeTrue();
+            expect(component.validateWorkingTime).toBe(true);
 
             examWithoutExercises.workingTime = 7200;
-            expect(component.validateWorkingTime).toBeTrue();
+            expect(component.validateWorkingTime).toBe(true);
 
             examWithoutExercises.workingTime = 10800;
-            expect(component.validateWorkingTime).toBeFalse();
+            expect(component.validateWorkingTime).toBe(false);
         });
 
         it('validates the working time for real exams correctly', () => {
@@ -314,16 +318,16 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.startDate = undefined;
             examWithoutExercises.endDate = undefined;
             fixture.changeDetectorRef.detectChanges();
-            expect(component.validateWorkingTime).toBeFalse();
+            expect(component.validateWorkingTime).toBe(false);
 
             examWithoutExercises.workingTime = 3600;
-            expect(component.validateWorkingTime).toBeFalse();
+            expect(component.validateWorkingTime).toBe(false);
 
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
-            expect(component.validateWorkingTime).toBeFalse();
+            expect(component.validateWorkingTime).toBe(false);
 
             examWithoutExercises.endDate = dayjs().add(1, 'hours');
-            expect(component.validateWorkingTime).toBeTrue();
+            expect(component.validateWorkingTime).toBe(true);
         });
 
         it('validates the visible from for real exams correctly', () => {
@@ -332,10 +336,10 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.visibleDate = undefined;
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.isVisibleDateSet).toBeFalse();
+            expect(component.isVisibleDateSet).toBe(false);
 
             examWithoutExercises.visibleDate = dayjs().add(2, 'hours');
-            expect(component.isVisibleDateSet).toBeTrue();
+            expect(component.isVisibleDateSet).toBe(true);
         });
 
         it('validates the start of working time for real exams correctly', () => {
@@ -345,16 +349,16 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.visibleDate = undefined;
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.isStartDateSet).toBeFalse();
+            expect(component.isStartDateSet).toBe(false);
 
             examWithoutExercises.startDate = dayjs().add(2, 'hours');
-            expect(component.isStartDateSet).toBeTrue();
+            expect(component.isStartDateSet).toBe(true);
 
             examWithoutExercises.visibleDate = dayjs().add(3, 'hours');
-            expect(component.isValidStartDate).toBeFalse();
+            expect(component.isValidStartDate).toBe(false);
 
             examWithoutExercises.visibleDate = dayjs().subtract(3, 'hours');
-            expect(component.isValidStartDate).toBeTrue();
+            expect(component.isValidStartDate).toBe(true);
         });
 
         it('validates the end of working time for real exams correctly', () => {
@@ -364,16 +368,16 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.endDate = undefined;
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.isEndDateSet).toBeFalse();
+            expect(component.isEndDateSet).toBe(false);
 
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
-            expect(component.isEndDateSet).toBeTrue();
+            expect(component.isEndDateSet).toBe(true);
 
             examWithoutExercises.startDate = dayjs().add(3, 'hours');
-            expect(component.isValidEndDate).toBeFalse();
+            expect(component.isValidEndDate).toBe(false);
 
             examWithoutExercises.startDate = dayjs().subtract(3, 'hours');
-            expect(component.isValidEndDate).toBeTrue();
+            expect(component.isValidEndDate).toBe(true);
         });
 
         it('validates the visible from value for real exams correctly', () => {
@@ -382,10 +386,10 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.visibleDate = dayjs('this is not a date');
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.isValidVisibleDateValue).toBeFalse();
+            expect(component.isValidVisibleDateValue).toBe(false);
 
             examWithoutExercises.visibleDate = dayjs().add(2, 'hours');
-            expect(component.isValidVisibleDateValue).toBeTrue();
+            expect(component.isValidVisibleDateValue).toBe(true);
         });
 
         it('validates the start of working time value for real exams correctly', () => {
@@ -394,10 +398,10 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.startDate = dayjs('this is not a date');
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.isValidStartDateValue).toBeFalse();
+            expect(component.isValidStartDateValue).toBe(false);
 
             examWithoutExercises.startDate = dayjs().add(2, 'hours');
-            expect(component.isValidStartDateValue).toBeTrue();
+            expect(component.isValidStartDateValue).toBe(true);
         });
 
         it('validates the end of working time value for real exams correctly', () => {
@@ -406,10 +410,10 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.endDate = dayjs('this is not a date');
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.isValidEndDateValue).toBeFalse();
+            expect(component.isValidEndDateValue).toBe(false);
 
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
-            expect(component.isValidEndDateValue).toBeTrue();
+            expect(component.isValidEndDateValue).toBe(true);
         });
 
         it('exam visibility check returns false if the dates are not set', () => {
@@ -417,12 +421,12 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.visibleDate = dayjs('this is not a date');
             fixture.changeDetectorRef.detectChanges();
             const result = component.checkExamVisibilityTime;
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
 
             examWithoutExercises.visibleDate = dayjs();
             examWithoutExercises.startDate = dayjs('this is not a date');
             const result2 = component.checkExamVisibilityTime;
-            expect(result2).toBeFalse();
+            expect(result2).toBe(false);
         });
 
         it('exam visibility check returns true if the difference between dates are more than 4 hours', () => {
@@ -431,12 +435,12 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.startDate = dayjs().add(240, 'minute');
             fixture.changeDetectorRef.detectChanges();
             const result = component.checkExamVisibilityTime;
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
 
             examWithoutExercises.startDate = dayjs().add(241, 'minute');
             fixture.changeDetectorRef.detectChanges();
             const result2 = component.checkExamVisibilityTime;
-            expect(result2).toBeTrue();
+            expect(result2).toBe(true);
         });
 
         it('should correctly catch HTTPError when updating the examWithoutExercises', fakeAsync(() => {
@@ -444,24 +448,24 @@ describe('ExamUpdateComponent', () => {
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
             fixture.detectChanges();
 
-            const alertServiceSpy = jest.spyOn(alertService, 'error');
-            const updateStub = jest.spyOn(examManagementService, 'update').mockReturnValue(throwError(() => httpError));
+            const alertServiceSpy = vi.spyOn(alertService, 'error');
+            const updateStub = vi.spyOn(examManagementService, 'update').mockReturnValue(throwError(() => httpError));
 
             // trigger save
             component.save();
             tick();
             expect(alertServiceSpy).toHaveBeenCalledOnce();
-            expect(component.isSaving).toBeFalse();
+            expect(component.isSaving).toBe(false);
 
             updateStub.mockRestore();
         }));
 
         it('should create', fakeAsync(() => {
-            const navigateSpy = jest.spyOn(router, 'navigate');
+            const navigateSpy = vi.spyOn(router, 'navigate');
             examWithoutExercises.id = undefined;
             fixture.changeDetectorRef.detectChanges();
 
-            const createSpy = jest.spyOn(examManagementService, 'create').mockReturnValue(
+            const createSpy = vi.spyOn(examManagementService, 'create').mockReturnValue(
                 of(
                     new HttpResponse<Exam>({
                         body: {
@@ -477,7 +481,7 @@ describe('ExamUpdateComponent', () => {
             tick();
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(createSpy).toHaveBeenCalledOnce();
-            expect(component.isSaving).toBeFalse();
+            expect(component.isSaving).toBe(false);
         }));
 
         it('should correctly catch HTTPError when creating the examWithoutExercises', fakeAsync(() => {
@@ -485,8 +489,8 @@ describe('ExamUpdateComponent', () => {
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
             fixture.detectChanges();
 
-            const alertServiceSpy = jest.spyOn(alertService, 'error');
-            const createStub = jest.spyOn(examManagementService, 'create').mockReturnValue(throwError(() => httpError));
+            const alertServiceSpy = vi.spyOn(alertService, 'error');
+            const createStub = vi.spyOn(examManagementService, 'create').mockReturnValue(throwError(() => httpError));
 
             component.exam.id = undefined;
             const now = dayjs();
@@ -498,14 +502,14 @@ describe('ExamUpdateComponent', () => {
             component.save();
             tick();
             expect(alertServiceSpy).toHaveBeenCalledOnce();
-            expect(component.isSaving).toBeFalse();
+            expect(component.isSaving).toBe(false);
 
             createStub.mockRestore();
         }));
 
         it('should call the back method on the nav util service on previousState', () => {
             const navUtilService = TestBed.inject(ArtemisNavigationUtilService);
-            const spy = jest.spyOn(navUtilService, 'navigateBackWithOptional').mockImplementation();
+            const spy = vi.spyOn(navUtilService, 'navigateBackWithOptional').mockImplementation();
             component.course = course;
             component.exam = examWithoutExercises;
             examWithoutExercises.id = 1;
@@ -523,7 +527,7 @@ describe('ExamUpdateComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(0);
-            expect(component.isValidNumberOfCorrectionRounds).toBeTrue();
+            expect(component.isValidNumberOfCorrectionRounds).toBe(true);
         });
 
         it('should correctly validate the number of correction rounds in a realExam', () => {
@@ -533,62 +537,62 @@ describe('ExamUpdateComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
-            expect(component.isValidNumberOfCorrectionRounds).toBeTrue();
+            expect(component.isValidNumberOfCorrectionRounds).toBe(true);
 
             examWithoutExercises.numberOfCorrectionRoundsInExam = 1;
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
-            expect(component.isValidNumberOfCorrectionRounds).toBeTrue();
+            expect(component.isValidNumberOfCorrectionRounds).toBe(true);
 
             examWithoutExercises.numberOfCorrectionRoundsInExam = 2;
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(2);
-            expect(component.isValidNumberOfCorrectionRounds).toBeTrue();
+            expect(component.isValidNumberOfCorrectionRounds).toBe(true);
 
             examWithoutExercises.numberOfCorrectionRoundsInExam = 3;
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(3);
-            expect(component.isValidNumberOfCorrectionRounds).toBeFalse();
+            expect(component.isValidNumberOfCorrectionRounds).toBe(false);
         });
 
         it('should correctly validate number of exercises', () => {
             fixture.detectChanges();
             expect(component.exam.numberOfExercisesInExam).toBeUndefined();
-            expect(component.isValidNumberOfExercises).toBeTrue();
+            expect(component.isValidNumberOfExercises).toBe(true);
 
             examWithoutExercises.numberOfExercisesInExam = 0;
             fixture.changeDetectorRef.detectChanges();
             expect(component.exam.numberOfExercisesInExam).toBe(0);
-            expect(component.isValidNumberOfExercises).toBeFalse();
+            expect(component.isValidNumberOfExercises).toBe(false);
 
             examWithoutExercises.numberOfExercisesInExam = 1;
             fixture.changeDetectorRef.detectChanges();
             expect(component.exam.numberOfExercisesInExam).toBe(1);
-            expect(component.isValidNumberOfExercises).toBeTrue();
+            expect(component.isValidNumberOfExercises).toBe(true);
 
             examWithoutExercises.numberOfExercisesInExam = -20;
             fixture.changeDetectorRef.detectChanges();
             expect(component.exam.numberOfExercisesInExam).toBe(-20);
-            expect(component.isValidNumberOfExercises).toBeFalse();
+            expect(component.isValidNumberOfExercises).toBe(false);
 
             examWithoutExercises.numberOfExercisesInExam = 40;
             fixture.changeDetectorRef.detectChanges();
             expect(component.exam.numberOfExercisesInExam).toBe(40);
-            expect(component.isValidNumberOfExercises).toBeTrue();
+            expect(component.isValidNumberOfExercises).toBe(true);
 
             // Test max limit of 100
             examWithoutExercises.numberOfExercisesInExam = 100;
             fixture.changeDetectorRef.detectChanges();
             expect(component.exam.numberOfExercisesInExam).toBe(100);
-            expect(component.isValidNumberOfExercises).toBeTrue();
+            expect(component.isValidNumberOfExercises).toBe(true);
 
             examWithoutExercises.numberOfExercisesInExam = 101;
             fixture.changeDetectorRef.detectChanges();
             expect(component.exam.numberOfExercisesInExam).toBe(101);
-            expect(component.isValidNumberOfExercises).toBeFalse();
+            expect(component.isValidNumberOfExercises).toBe(false);
         });
 
         it('should correctly validate max points with upper limit of 9999', () => {
@@ -597,17 +601,17 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.examMaxPoints = 100;
             fixture.changeDetectorRef.detectChanges();
             expect(component.exam.examMaxPoints).toBe(100);
-            expect(component.isValidMaxPoints).toBeTrue();
+            expect(component.isValidMaxPoints).toBe(true);
 
             examWithoutExercises.examMaxPoints = 9999;
             fixture.changeDetectorRef.detectChanges();
             expect(component.exam.examMaxPoints).toBe(9999);
-            expect(component.isValidMaxPoints).toBeTrue();
+            expect(component.isValidMaxPoints).toBe(true);
 
             examWithoutExercises.examMaxPoints = 10000;
             fixture.changeDetectorRef.detectChanges();
             expect(component.exam.examMaxPoints).toBe(10000);
-            expect(component.isValidMaxPoints).toBeFalse();
+            expect(component.isValidMaxPoints).toBe(false);
         });
 
         it('should correctly validate grace period with upper limit of 3600 seconds', () => {
@@ -616,17 +620,17 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.gracePeriod = 180;
             fixture.changeDetectorRef.detectChanges();
             expect(component.exam.gracePeriod).toBe(180);
-            expect(component.isValidGracePeriod).toBeTrue();
+            expect(component.isValidGracePeriod).toBe(true);
 
             examWithoutExercises.gracePeriod = 3600;
             fixture.changeDetectorRef.detectChanges();
             expect(component.exam.gracePeriod).toBe(3600);
-            expect(component.isValidGracePeriod).toBeTrue();
+            expect(component.isValidGracePeriod).toBe(true);
 
             examWithoutExercises.gracePeriod = 3601;
             fixture.changeDetectorRef.detectChanges();
             expect(component.exam.gracePeriod).toBe(3601);
-            expect(component.isValidGracePeriod).toBeFalse();
+            expect(component.isValidGracePeriod).toBe(false);
         });
 
         it('should correctly validate working time with upper limit of 30 days (2592000 seconds)', () => {
@@ -640,17 +644,17 @@ describe('ExamUpdateComponent', () => {
             // Valid working time
             examWithoutExercises.workingTime = 86400; // 1 day
             expect(component.exam.workingTime).toBe(86400);
-            expect(component.validateWorkingTime).toBeTrue();
+            expect(component.validateWorkingTime).toBe(true);
 
             // Working time at limit (30 days = 2592000 seconds)
             examWithoutExercises.workingTime = 2592000;
             expect(component.exam.workingTime).toBe(2592000);
-            expect(component.validateWorkingTime).toBeTrue();
+            expect(component.validateWorkingTime).toBe(true);
 
             // Working time exceeds limit
             examWithoutExercises.workingTime = 2592001;
             expect(component.exam.workingTime).toBe(2592001);
-            expect(component.validateWorkingTime).toBeFalse();
+            expect(component.validateWorkingTime).toBe(false);
         });
 
         it('should bind correct title into jhi-button and compute correct save title text', () => {
@@ -667,13 +671,13 @@ describe('ExamUpdateComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.isLoading()).toBeTrue();
+            expect(button.isLoading()).toBe(true);
 
             component.isSaving = false;
             fixture.changeDetectorRef.detectChanges();
 
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.isLoading()).toBeFalse();
+            expect(button.isLoading()).toBe(false);
         });
 
         it('should toggle save button disabled state based on form validity and configuration validity', fakeAsync(() => {
@@ -685,21 +689,21 @@ describe('ExamUpdateComponent', () => {
 
             fixture.changeDetectorRef.detectChanges();
             const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
-            const invalidSpy = jest.spyOn(ngForm.form, 'invalid', 'get').mockReturnValue(false);
+            const invalidSpy = vi.spyOn(ngForm.form, 'invalid', 'get').mockReturnValue(false);
             fixture.changeDetectorRef.detectChanges();
 
             //Step 1: Test case where the configuration and the form are valid
-            expect(component.isValidConfiguration).toBeTrue();
+            expect(component.isValidConfiguration).toBe(true);
             let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.disabled()).toBeFalse();
+            expect(button.disabled()).toBe(false);
 
             // Step 2: Test case where the configuration is invalid
             examWithoutExercises.startDate = now.add(5, 'hours');
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.isValidConfiguration).toBeFalse();
+            expect(component.isValidConfiguration).toBe(false);
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.disabled()).toBeTrue();
+            expect(button.disabled()).toBe(true);
 
             // Step 3: Test case where the configuration is valid again, but the form is invalid
             examWithoutExercises.startDate = now.add(2, 'hours');
@@ -707,9 +711,9 @@ describe('ExamUpdateComponent', () => {
             invalidSpy.mockReturnValue(true);
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.isValidConfiguration).toBeTrue();
+            expect(component.isValidConfiguration).toBe(true);
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.disabled()).toBeTrue();
+            expect(button.disabled()).toBe(true);
         }));
 
         it('should open confirmation modal when dates changed for ongoing exam', fakeAsync(() => {
@@ -724,7 +728,7 @@ describe('ExamUpdateComponent', () => {
                 result: new Promise<void>(() => {}),
             } as any;
 
-            const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+            const modalSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
 
             // Set up an ongoing exam
             examWithoutExercises.id = 1;
@@ -748,7 +752,7 @@ describe('ExamUpdateComponent', () => {
             expect(modalSpy).toHaveBeenCalledWith(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
             expect(component['activeModalRef']).toBe(mockModalRef);
             expect(component.confirmEntityNameValue()).toBe('');
-            expect(mockModalRef.componentInstance.confirmDisabled).toBeTrue();
+            expect(mockModalRef.componentInstance.confirmDisabled).toBe(true);
             expect(mockModalRef.componentInstance.title).toBe('artemisApp.examManagement.dateChange.title');
         }));
 
@@ -764,7 +768,7 @@ describe('ExamUpdateComponent', () => {
                 result: new Promise<void>(() => {}),
             } as any;
 
-            jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
 
             // Set up an ongoing exam
             examWithoutExercises.id = 1;
@@ -783,14 +787,14 @@ describe('ExamUpdateComponent', () => {
             component.handleSubmit();
             tick();
 
-            expect(mockModalRef.componentInstance.confirmDisabled).toBeTrue();
+            expect(mockModalRef.componentInstance.confirmDisabled).toBe(true);
         }));
 
         it('should not open modal when dates have not changed', fakeAsync(() => {
             const modalService = TestBed.inject(NgbModal);
-            const modalSpy = jest.spyOn(modalService, 'open');
-            const navigateSpy = jest.spyOn(router, 'navigate');
-            const saveSpy = jest.spyOn(examManagementService, 'update').mockReturnValue(
+            const modalSpy = vi.spyOn(modalService, 'open');
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            const saveSpy = vi.spyOn(examManagementService, 'update').mockReturnValue(
                 of(
                     new HttpResponse<Exam>({
                         body: {
@@ -836,7 +840,7 @@ describe('ExamUpdateComponent', () => {
             component.onConfirmNameChange('Exact Title Match');
 
             expect(component.confirmEntityNameValue()).toBe('Exact Title Match');
-            expect(mockModalRef.componentInstance.confirmDisabled).toBeFalse();
+            expect(mockModalRef.componentInstance.confirmDisabled).toBe(false);
         });
 
         it('should disable confirm button when entered value does not match exam title', () => {
@@ -854,7 +858,7 @@ describe('ExamUpdateComponent', () => {
             component.onConfirmNameChange('Wrong Title');
 
             expect(component.confirmEntityNameValue()).toBe('Wrong Title');
-            expect(mockModalRef.componentInstance.confirmDisabled).toBeTrue();
+            expect(mockModalRef.componentInstance.confirmDisabled).toBe(true);
         });
 
         it('should handle onConfirmNameChange when no modal is active', () => {
@@ -871,7 +875,7 @@ describe('ExamUpdateComponent', () => {
     describe('import exams', () => {
         let alertService: AlertService;
         let profileService: ProfileService;
-        let getProfileInfoSub: jest.SpyInstance;
+        let getProfileInfoSub: ReturnType<typeof vi.spyOn>;
 
         const course2 = new Course();
         course2.id = 2;
@@ -966,23 +970,23 @@ describe('ExamUpdateComponent', () => {
             component = fixture.componentInstance;
             examManagementService = TestBed.inject(ExamManagementService);
             alertService = TestBed.inject(AlertService);
-            global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
                 return new MockResizeObserver(callback);
             });
 
             profileService = TestBed.inject(ProfileService);
-            getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+            getProfileInfoSub = vi.spyOn(profileService, 'getProfileInfo');
             getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] });
         });
 
         it('should initialize without id and dates set', () => {
             fixture.detectChanges();
             expect(fixture).not.toBeNull();
-            expect(component.isImport).toBeTrue();
+            expect(component.isImport).toBe(true);
             expect(component.exam).not.toBeNull();
             expect(component.exam.id).toBeUndefined();
             expect(component.exam.title).toBe('RealExam for Testing');
-            expect(component.exam.testExam).toBeFalse();
+            expect(component.exam.testExam).toBe(false);
             expect(component.exam.examiner).toBe('Bruegge');
             expect(component.exam.moduleNumber).toBe('IN0006');
             expect(component.exam.courseName).toBe('Artemis');
@@ -993,7 +997,7 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam.gracePeriod).toBe(90);
             expect(component.exam.examMaxPoints).toBe(15);
             expect(component.exam.numberOfExercisesInExam).toBe(5);
-            expect(component.exam.randomizeExerciseOrder).toBeTrue();
+            expect(component.exam.randomizeExerciseOrder).toBe(true);
             expect(component.exam.publishResultsDate).toBeUndefined();
             expect(component.exam.examStudentReviewStart).toBeUndefined();
             expect(component.exam.examStudentReviewEnd).toBeUndefined();
@@ -1012,9 +1016,9 @@ describe('ExamUpdateComponent', () => {
         it('should perform import of an examWithoutExercises with exercises successfully', () => {
             const expectedExam = prepareExamForImport(examForImport);
             expectedExam.course = course;
-            const alertSpy = jest.spyOn(alertService, 'error');
-            const navigateSpy = jest.spyOn(router, 'navigate');
-            const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
+            const alertSpy = vi.spyOn(alertService, 'error');
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(
                 of(
                     new HttpResponse({
                         status: 200,
@@ -1039,9 +1043,9 @@ describe('ExamUpdateComponent', () => {
             expectedExam.course = course;
             // Only import one of two exercises
             component.examExerciseImportComponent().selectedExercises = new Map([[exerciseGroup1, new Set([textExercise])]]);
-            const alertSpy = jest.spyOn(alertService, 'error');
-            const navigateSpy = jest.spyOn(router, 'navigate');
-            const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
+            const alertSpy = vi.spyOn(alertService, 'error');
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(
                 of(
                     new HttpResponse({
                         status: 200,
@@ -1063,7 +1067,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should trigger an alarm for a wrong user input in the examWithoutExercises exercises', () => {
-            const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
+            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(
                 of(
                     new HttpResponse({
                         status: 200,
@@ -1071,7 +1075,7 @@ describe('ExamUpdateComponent', () => {
                     }),
                 ),
             );
-            const alertSpy = jest.spyOn(alertService, 'error');
+            const alertSpy = vi.spyOn(alertService, 'error');
 
             fixture.detectChanges();
 
@@ -1109,8 +1113,8 @@ describe('ExamUpdateComponent', () => {
                     },
                     status: 400,
                 });
-                const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(throwError(() => preCheckError));
-                const alertSpy = jest.spyOn(alertService, 'error');
+                const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(throwError(() => preCheckError));
+                const alertSpy = vi.spyOn(alertService, 'error');
 
                 fixture.detectChanges();
                 component.save();
@@ -1131,8 +1135,8 @@ describe('ExamUpdateComponent', () => {
             const error = new HttpErrorResponse({
                 status: 400,
             });
-            const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(throwError(() => error));
-            const alertSpy = jest.spyOn(alertService, 'error');
+            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(throwError(() => error));
+            const alertSpy = vi.spyOn(alertService, 'error');
 
             fixture.detectChanges();
             component.save();

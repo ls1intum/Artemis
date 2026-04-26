@@ -12,8 +12,12 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamLiveAnnouncementCreateModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExamLiveAnnouncementCreateModalComponent;
     let fixture: ComponentFixture<ExamLiveAnnouncementCreateModalComponent>;
     let mockActiveModal: NgbActiveModal;
@@ -22,7 +26,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             providers: [
-                { provide: NgbActiveModal, useValue: { dismiss: jest.fn() } },
+                { provide: NgbActiveModal, useValue: { dismiss: vi.fn() } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -32,11 +36,15 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
 
         fixture = TestBed.createComponent(ExamLiveAnnouncementCreateModalComponent);
         component = fixture.componentInstance;
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
         mockActiveModal = TestBed.inject(NgbActiveModal);
         mockExamManagementService = TestBed.inject(ExamManagementService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should initialize component with default properties', () => {
@@ -56,7 +64,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
 
     it('should handle successful announcement submission', () => {
         const testingSubject = new Subject<ExamWideAnnouncementEvent>();
-        jest.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(testingSubject.asObservable());
+        vi.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(testingSubject.asObservable());
         component.submitAnnouncement();
         expect(component.status).toBe('submitting');
         fixture.changeDetectorRef.detectChanges();
@@ -76,7 +84,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
     });
 
     it('should handle failed announcement submission', () => {
-        jest.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(throwError(() => new Error('Error')));
+        vi.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(throwError(() => new Error('Error')));
         component.submitAnnouncement();
         expect(component.status).toBe('not_submitted');
         expect(mockExamManagementService.createAnnouncement).toHaveBeenCalled();

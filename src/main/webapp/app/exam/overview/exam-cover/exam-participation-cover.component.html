@@ -25,11 +25,11 @@
                     class="form-check-input me-2"
                     [class.ms-0]="!this.exam().confirmationStartText"
                     [required]="inserted"
-                    [disabled]="waitingForExamStart"
+                    [disabled]="waitingForExamStart()"
                 />
-                <label for="confirmBox" id="formatted-confirmation-text" class="form-check-label" [innerHTML]="formattedConfirmationText"></label>
+                <label for="confirmBox" id="formatted-confirmation-text" class="form-check-label" [innerHTML]="formattedConfirmationText()"></label>
             </div>
-            @if (!formattedConfirmationText) {
+            @if (!formattedConfirmationText()) {
                 <div class="login-form">
                     <label class="font-weight-bold" for="confirmBox" jhiTranslate="{{ 'artemisApp.exam.startCheckBoxText' }}"></label>
                 </div>
@@ -49,13 +49,13 @@
                         [placeholder]="'artemisApp.examParticipation.namePlaceholder' | artemisTranslate"
                         [(ngModel)]="enteredName"
                         [ngModelOptions]="{ updateOn: 'change' }"
-                        [disabled]="waitingForExamStart"
+                        [disabled]="waitingForExamStart()"
                     />
                 </div>
             </div>
             <div class="row">
                 <div id="your-name" class="md-6 fw-lighter">
-                    <span jhiTranslate="artemisApp.examParticipation.nameDisplay" [translateValues]="{ fullName: accountName }"></span>
+                    <span jhiTranslate="artemisApp.examParticipation.nameDisplay" [translateValues]="{ fullName: accountName() }"></span>
                 </div>
             </div>
             <div class="row">
@@ -76,7 +76,7 @@
             </div>
         </div>
         <ng-container #startButton>
-            <button id="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart || isFetching" type="submit" (click)="startExam()" class="btn btn-primary">
+            <button id="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart() || isFetching()" type="submit" (click)="startExam()" class="btn btn-primary">
                 <span jhiTranslate="artemisApp.exam.startExam"></span>
             </button>
             @if (!startButtonEnabled) {
@@ -85,14 +85,14 @@
                 </div>
             }
         </ng-container>
-        @if (waitingForExamStart) {
+        @if (waitingForExamStart()) {
             <div class="exam-waiting-for-start-overlay alert alert-info">
                 <span jhiTranslate="artemisApp.examParticipation.waitForStart" [translateValues]="{ title: exam().title }"></span>
                 @if (exam().startDate) {
                     <div>
                         <hr />
                         <span jhiTranslate="artemisApp.examParticipation.timeUntilPlannedStart"></span>
-                        <span class="text-bold">{{ timeUntilStart }}</span>
+                        <span class="text-bold">{{ timeUntilStart() }}</span>
                         <br />
                         <span>({{ exam().startDate | artemisDate: 'time' }})</span>
                     </div>
@@ -111,7 +111,7 @@
             </h4>
         </div>
         <hr class="mt-2" />
-        <div [innerHTML]="formattedGeneralInformation"></div>
+        <div [innerHTML]="formattedGeneralInformation()"></div>
         <br />
         <div class="mb-1">
             <span class="fw-bold" jhiTranslate="artemisApp.examParticipation.submitFinalExam"></span>
@@ -123,7 +123,7 @@
                     <span jhiTranslate="artemisApp.examParticipation.handInEarly"> </span>
                 </div>
                 <span jhiTranslate="artemisApp.examParticipation.handInEarlyNotice"></span>
-                @if (!isAttendanceChecked) {
+                @if (!isAttendanceChecked()) {
                     <div class="mb-1 mt-3 fw-bold text-danger">
                         <fa-icon [icon]="faCircleExclamation" />
                         <span jhiTranslate="artemisApp.examParticipation.attendanceCheck"></span>
@@ -143,9 +143,9 @@
                     [class.ms-0]="!this.exam().confirmationEndText"
                     [required]="inserted"
                 />
-                <label for="confirmBox" id="formatted-confirmation-text" class="form-check-label" [innerHTML]="formattedConfirmationText"></label>
+                <label for="confirmBox" id="formatted-confirmation-text" class="form-check-label" [innerHTML]="formattedConfirmationText()"></label>
             </div>
-            @if (!formattedConfirmationText) {
+            @if (!formattedConfirmationText()) {
                 <div class="login-form">
                     <label class="font-weight-bold" for="confirmBox" jhiTranslate="{{ 'artemisApp.exam.endCheckBoxText' }}"></label>
                 </div>
@@ -164,13 +164,13 @@
                         [placeholder]="'artemisApp.examParticipation.namePlaceholder' | artemisTranslate"
                         [(ngModel)]="enteredName"
                         [ngModelOptions]="{ updateOn: 'change' }"
-                        [disabled]="waitingForExamStart"
+                        [disabled]="waitingForExamStart()"
                     />
                 </div>
             </div>
             <div class="row">
                 <div id="your-name" class="md-6 fw-lighter">
-                    <span jhiTranslate="artemisApp.examParticipation.nameDisplay" [translateValues]="{ fullName: accountName }"></span>
+                    <span jhiTranslate="artemisApp.examParticipation.nameDisplay" [translateValues]="{ fullName: accountName() }"></span>
                 </div>
             </div>
             <div class="row">

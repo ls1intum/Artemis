@@ -29,16 +29,15 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamParticipationCoverComponent', () => {
+    setupTestBed({ zoneless: true });
+
     const course = { id: 456 } as Course;
-    const exam: Exam = new Exam();
-    exam.course = course;
-    exam.id = 123;
-    exam.testExam = false;
-    const studentExam: StudentExam = new StudentExam();
-    studentExam.testRun = false;
-    studentExam.id = 1;
+    let exam: Exam;
+    let studentExam: StudentExam;
 
     let component: ExamParticipationCoverComponent;
     let fixture: ComponentFixture<ExamParticipationCoverComponent>;
@@ -46,7 +45,23 @@ describe('ExamParticipationCoverComponent', () => {
     let accountService: AccountService;
     let artemisServerDateService: ArtemisServerDateService;
 
+    /**
+     * Helper that mutates the input objects (no setInput re-call), then forces
+     * a re-render to flush effects.
+     */
+    function flushInputs() {
+        fixture.detectChanges();
+    }
+
     beforeEach(() => {
+        exam = new Exam();
+        exam.course = course;
+        exam.id = 123;
+        exam.testExam = false;
+        studentExam = new StudentExam();
+        studentExam.testRun = false;
+        studentExam.id = 1;
+
         TestBed.configureTestingModule({
             imports: [FormsModule, FaIconComponent],
             declarations: [
@@ -66,135 +81,183 @@ describe('ExamParticipationCoverComponent', () => {
                 { provide: ExamParticipationService, useClass: MockExamParticipationService },
                 { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExamParticipationCoverComponent);
-                component = fixture.componentInstance;
-                examParticipationService = TestBed.inject(ExamParticipationService);
-                accountService = TestBed.inject(AccountService);
-                artemisServerDateService = TestBed.inject(ArtemisServerDateService);
+        }).compileComponents();
+        fixture = TestBed.createComponent(ExamParticipationCoverComponent);
+        component = fixture.componentInstance;
+        examParticipationService = TestBed.inject(ExamParticipationService);
+        accountService = TestBed.inject(AccountService);
+        artemisServerDateService = TestBed.inject(ArtemisServerDateService);
 
-                component.startView = false;
-                component.exam = exam;
-                component.studentExam = studentExam;
-                component.handInEarly = false;
-                component.handInPossible = true;
-                component.testRunStartTime = undefined;
-            });
+        fixture.componentRef.setInput('startView', false);
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('studentExam', studentExam);
+        fixture.componentRef.setInput('handInEarly', false);
+        fixture.componentRef.setInput('handInPossible', true);
+        fixture.componentRef.setInput('testRunStartTime', undefined);
     });
 
     afterEach(() => {
         component.ngOnDestroy();
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
-    it('should initialize with ngOnInit', fakeAsync(() => {
+    it('should initialize accountName when identity resolves', fakeAsync(() => {
         const user = { name: 'admin' } as User;
-        jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
-        component.ngOnChanges();
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+        flushInputs();
         tick();
-        expect(component.accountName).toBe(user.name);
+        expect(component.accountName()).toBe(user.name);
     }));
 
     it('should update confirmation', () => {
-        fixture.detectChanges();
-        component.ngOnChanges();
+        flushInputs();
 
-        component.startView = true;
+        fixture.componentRef.setInput('startView', true);
         component.updateConfirmation();
-        expect(component.startEnabled).toBeFalse();
+        expect(component.startEnabled()).toBe(false);
 
-        component.startView = false;
+        fixture.componentRef.setInput('startView', false);
         component.updateConfirmation();
-        expect(component.endEnabled).toBeFalse();
+        expect(component.endEnabled()).toBe(false);
     });
 
     it('should start exam', fakeAsync(() => {
-        jest.useFakeTimers();
-        component.testRun = true;
+        vi.useFakeTimers();
+        const localStudentExam = new StudentExam();
+        localStudentExam.testRun = true;
+        localStudentExam.id = 1;
         const exercise = { id: 99, type: ExerciseType.MODELING } as Exercise;
-        component.studentExam.exercises = [exercise];
-        const saveStudentExamSpy = jest.spyOn(examParticipationService, 'saveStudentExamToLocalStorage');
+        localStudentExam.exercises = [exercise];
+        fixture.componentRef.setInput('studentExam', localStudentExam);
+
+        const saveStudentExamSpy = vi.spyOn(examParticipationService, 'saveStudentExamToLocalStorage');
 
         component.startExam();
 
         expect(saveStudentExamSpy).toHaveBeenCalledOnce();
-        expect(saveStudentExamSpy).toHaveBeenCalledWith(exam!.course!.id, exam!.id, studentExam);
+        expect(saveStudentExamSpy).toHaveBeenCalledWith(exam!.course!.id, exam!.id, localStudentExam);
 
-        component.testRun = false;
-        jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConduction').mockReturnValue(of(studentExam));
-        component.exam.startDate = dayjs().subtract(1, 'days');
+        const localStudentExam2 = new StudentExam();
+        localStudentExam2.testRun = false;
+        localStudentExam2.id = 1;
+        fixture.componentRef.setInput('studentExam', localStudentExam2);
+
+        const examWithStartDate = new Exam();
+        examWithStartDate.course = course;
+        examWithStartDate.id = 123;
+        examWithStartDate.testExam = false;
+        examWithStartDate.startDate = dayjs().subtract(1, 'days');
+        fixture.componentRef.setInput('exam', examWithStartDate);
+
+        vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConduction').mockReturnValue(of(localStudentExam2));
 
         component.startExam();
         tick();
-        expect(component.studentExam).toEqual(studentExam);
+        expect(component.studentExam()).toEqual(localStudentExam2);
 
-        component.testRun = false;
         const startDate = dayjs();
         const now = dayjs();
-        component.exam.startDate = startDate.add(1, 'hours');
-        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
+        const examFutureStart = new Exam();
+        examFutureStart.course = course;
+        examFutureStart.id = 123;
+        examFutureStart.testExam = false;
+        examFutureStart.startDate = startDate.add(1, 'hours');
+        fixture.componentRef.setInput('exam', examFutureStart);
+        vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
         component.startExam();
         tick();
-        jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
-        expect(component.waitingForExamStart).toBeTrue();
-        const difference = Math.ceil(component.exam.startDate.diff(now, 'seconds') / 60);
-        expect(component.timeUntilStart).toBe(difference + ' min');
+        vi.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
+        expect(component.waitingForExamStart()).toBe(true);
+        const difference = Math.ceil(examFutureStart.startDate.diff(now, 'seconds') / 60);
+        expect(component.timeUntilStart()).toBe(difference + ' min');
 
-        component.exam.startDate = undefined;
+        const examNoStart = new Exam();
+        examNoStart.course = course;
+        examNoStart.id = 123;
+        examNoStart.testExam = false;
+        examNoStart.startDate = undefined;
+        fixture.componentRef.setInput('exam', examNoStart);
         component.startExam();
         tick();
-        jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
-        expect(component.waitingForExamStart).toBeTrue();
-        expect(component.timeUntilStart).toBe('');
+        vi.advanceTimersByTime(UI_RELOAD_TIME + 1);
+        expect(component.waitingForExamStart()).toBe(true);
+        expect(component.timeUntilStart()).toBe('');
 
         // Case test exam
-        component.testRun = false;
-        component.testExam = true;
-        component.exam.testExam = true;
+        const testExamStudent = new StudentExam();
+        testExamStudent.testRun = false;
+        testExamStudent.id = 1;
         const exercise1 = { id: 87, type: ExerciseType.TEXT } as Exercise;
-        component.studentExam.exercises = [exercise1];
+        testExamStudent.exercises = [exercise1];
+        fixture.componentRef.setInput('studentExam', testExamStudent);
 
-        jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConduction').mockReturnValue(of(studentExam));
+        const testExam = new Exam();
+        testExam.course = course;
+        testExam.id = 123;
+        testExam.testExam = true;
+        testExam.startDate = dayjs().subtract(1, 'days');
+        fixture.componentRef.setInput('exam', testExam);
 
-        component.exam.startDate = dayjs().subtract(1, 'days');
+        vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConduction').mockReturnValue(of(testExamStudent));
 
         component.startExam();
         tick();
-        expect(component.studentExam).toEqual(studentExam);
+        expect(component.studentExam()).toEqual(testExamStudent);
 
         const startDate1 = dayjs();
         const now1 = dayjs();
-        component.exam.startDate = startDate1.add(2, 'hours');
-        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now1);
+        const testExamFuture = new Exam();
+        testExamFuture.course = course;
+        testExamFuture.id = 123;
+        testExamFuture.testExam = true;
+        testExamFuture.startDate = startDate1.add(2, 'hours');
+        fixture.componentRef.setInput('exam', testExamFuture);
+        vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now1);
         component.startExam();
         tick();
-        jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
-        expect(component.waitingForExamStart).toBeTrue();
-        const difference1 = Math.ceil(component.exam.startDate.diff(now1, 's') / 60);
-        expect(component.timeUntilStart).toBe(difference1 + ' min');
+        vi.advanceTimersByTime(UI_RELOAD_TIME + 1);
+        expect(component.waitingForExamStart()).toBe(true);
+        const difference1 = Math.ceil(testExamFuture.startDate.diff(now1, 's') / 60);
+        expect(component.timeUntilStart()).toBe(difference1 + ' min');
 
-        component.exam.startDate = undefined;
+        const testExamNoStart = new Exam();
+        testExamNoStart.course = course;
+        testExamNoStart.id = 123;
+        testExamNoStart.testExam = true;
+        testExamNoStart.startDate = undefined;
+        fixture.componentRef.setInput('exam', testExamNoStart);
         component.startExam();
         tick();
-        jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
-        expect(component.waitingForExamStart).toBeTrue();
-        expect(component.timeUntilStart).toBe('');
+        vi.advanceTimersByTime(UI_RELOAD_TIME + 1);
+        expect(component.waitingForExamStart()).toBe(true);
+        expect(component.timeUntilStart()).toBe('');
     }));
 
     it('test run should always have already started', () => {
-        component.testRun = true;
-        expect(component.hasStarted()).toBeTrue();
+        const localStudentExam = new StudentExam();
+        localStudentExam.testRun = true;
+        localStudentExam.id = 1;
+        fixture.componentRef.setInput('studentExam', localStudentExam);
+        expect(component.hasStarted()).toBe(true);
     });
 
     it('should update displayed times if exam suddenly started', () => {
-        component.testRun = true;
-        component.exam.startDate = dayjs();
-        component.onExamStarted = new EventEmitter<StudentExam>();
-        const eventSpy = jest.spyOn(component.onExamStarted, 'emit');
+        const localStudentExam = new StudentExam();
+        localStudentExam.testRun = true;
+        localStudentExam.id = 1;
+        fixture.componentRef.setInput('studentExam', localStudentExam);
 
-        component.updateDisplayedTimes(studentExam);
+        const examWithDate = new Exam();
+        examWithDate.course = course;
+        examWithDate.id = 123;
+        examWithDate.testExam = false;
+        examWithDate.startDate = dayjs();
+        fixture.componentRef.setInput('exam', examWithDate);
+
+        (component as any).onExamStarted = new EventEmitter<StudentExam>();
+        const eventSpy = vi.spyOn(component.onExamStarted, 'emit');
+
+        component.updateDisplayedTimes(localStudentExam);
         expect(eventSpy).toHaveBeenCalledOnce();
     });
 
@@ -206,53 +269,77 @@ describe('ExamParticipationCoverComponent', () => {
     });
 
     it('should submit exam', () => {
-        component.onExamEnded = new EventEmitter<StudentExam>();
-        const saveStudentExamSpy = jest.spyOn(component.onExamEnded, 'emit');
+        (component as any).onExamEnded = new EventEmitter<StudentExam>();
+        const saveStudentExamSpy = vi.spyOn(component.onExamEnded, 'emit');
         component.submitExam();
         expect(saveStudentExamSpy).toHaveBeenCalledOnce();
     });
 
     it('should continue after handing in early', () => {
-        component.onExamContinueAfterHandInEarly = new EventEmitter<void>();
-        const saveStudentExamSpy = jest.spyOn(component.onExamContinueAfterHandInEarly, 'emit');
+        (component as any).onExamContinueAfterHandInEarly = new EventEmitter<void>();
+        const saveStudentExamSpy = vi.spyOn(component.onExamContinueAfterHandInEarly, 'emit');
         component.continueAfterHandInEarly();
         expect(saveStudentExamSpy).toHaveBeenCalledOnce();
     });
 
     it('should get start button enabled and end button enabled', () => {
-        fixture.detectChanges();
-        component.ngOnChanges();
-        component.testRun = true;
-        expect(component.startButtonEnabled).toBeFalse();
+        flushInputs();
+
+        const trStudentExam = new StudentExam();
+        trStudentExam.testRun = true;
+        trStudentExam.id = 1;
+        fixture.componentRef.setInput('studentExam', trStudentExam);
+        expect(component.startButtonEnabled).toBe(false);
 
         const now = dayjs();
-        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
-        component.testRun = false;
-        component.enteredName = 'admin';
-        component.accountName = 'admin';
-        component.confirmed = true;
-        component.exam.visibleDate = dayjs().subtract(1, 'hours');
-        expect(component.startButtonEnabled).toBeTrue();
+        vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
 
-        component.handInPossible = true;
-        expect(component.endButtonEnabled).toBeTrue();
+        const realStudentExam = new StudentExam();
+        realStudentExam.testRun = false;
+        realStudentExam.id = 1;
+        fixture.componentRef.setInput('studentExam', realStudentExam);
+
+        component.enteredName = 'admin';
+        component.accountName.set('admin');
+        component.confirmed = true;
+
+        const examVisible = new Exam();
+        examVisible.course = course;
+        examVisible.id = 123;
+        examVisible.testExam = false;
+        examVisible.visibleDate = dayjs().subtract(1, 'hours');
+        fixture.componentRef.setInput('exam', examVisible);
+        expect(component.startButtonEnabled).toBe(true);
+
+        fixture.componentRef.setInput('handInPossible', true);
+        expect(component.endButtonEnabled).toBe(true);
     });
 
     it('should get end button enabled', () => {
         component.enteredName = 'admin';
-        expect(component.inserted).toBeTrue();
+        expect(component.inserted).toBe(true);
     });
 
     it('should disable exam button', () => {
-        component.ngOnChanges();
-        component.testRun = false;
+        flushInputs();
+
+        const realStudentExam = new StudentExam();
+        realStudentExam.testRun = false;
+        realStudentExam.id = 1;
+        fixture.componentRef.setInput('studentExam', realStudentExam);
+
         const now = dayjs();
-        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
+        vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
         component.enteredName = 'user';
-        component.accountName = 'user';
+        component.accountName.set('user');
         component.confirmed = true;
-        component.exam.visibleDate = dayjs().subtract(1, 'hours');
-        component.exam.visibleDate = dayjs().add(1, 'hours');
-        expect(component.startButtonEnabled).toBeFalse();
+
+        const examFuture = new Exam();
+        examFuture.course = course;
+        examFuture.id = 123;
+        examFuture.testExam = false;
+        examFuture.visibleDate = dayjs().add(1, 'hours');
+        fixture.componentRef.setInput('exam', examFuture);
+        expect(component.startButtonEnabled).toBe(false);
     });
 });

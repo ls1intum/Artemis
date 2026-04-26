@@ -1,4 +1,4 @@
-import { Component, OnChanges, inject, input } from '@angular/core';
+import { Component, effect, inject, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
@@ -24,7 +24,7 @@ import { captureException } from '@sentry/angular';
     templateUrl: './quiz-exam-summary.component.html',
     imports: [TranslateDirective, MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, ShortAnswerQuestionComponent],
 })
-export class QuizExamSummaryComponent implements OnChanges {
+export class QuizExamSummaryComponent {
     private serverDateService = inject(ArtemisServerDateService);
 
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
@@ -42,17 +42,25 @@ export class QuizExamSummaryComponent implements OnChanges {
 
     result?: Result;
 
-    ngOnChanges() {
+    constructor() {
+        effect(() => {
+            this.quizParticipation();
+            this.submission();
+            this.updateResult();
+        });
+    }
+
+    private updateResult() {
         this.updateViewFromSubmission();
         const quizParticipation = this.quizParticipation();
-        if (quizParticipation.studentParticipations) {
+        if (quizParticipation?.studentParticipations) {
             this.result =
                 quizParticipation.studentParticipations.length > 0 && quizParticipation?.studentParticipations?.[0]?.submissions?.[0]?.results?.length
                     ? quizParticipation.studentParticipations[0].submissions[0].results[0]
                     : undefined;
         } else {
             const submission = this.submission();
-            this.result = submission.results?.length ? submission.results[0] : undefined;
+            this.result = submission?.results?.length ? submission.results[0] : undefined;
         }
     }
 

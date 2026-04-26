@@ -9,8 +9,12 @@ import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams
 import { of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamLiveAnnouncementCreateButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExamLiveAnnouncementCreateButtonComponent;
     let fixture: ComponentFixture<ExamLiveAnnouncementCreateButtonComponent>;
     let mockModalService: NgbModal;
@@ -19,8 +23,8 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             providers: [
-                { provide: NgbModal, useValue: { open: jest.fn() } },
-                { provide: AlertService, useValue: { closeAll: jest.fn() } },
+                { provide: NgbModal, useValue: { open: vi.fn() } },
+                { provide: AlertService, useValue: { closeAll: vi.fn() } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
@@ -38,6 +42,10 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
         fixture.componentRef.setInput('exam', exam);
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it.each([
         [dayjs().subtract(1, 'day'), true],
         [dayjs().add(1, 'day'), false],
@@ -51,7 +59,7 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
     });
 
     it('should open dialog when button is clicked', () => {
-        jest.spyOn(mockModalService, 'open').mockReturnValue({ componentInstance: {}, result: of() } as any);
+        vi.spyOn(mockModalService, 'open').mockReturnValue({ componentInstance: {}, result: of() } as any);
         const button = fixture.debugElement.query(By.css('.btn-warning'));
         button.triggerEventHandler('click', new MouseEvent('click'));
 
@@ -69,7 +77,7 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
         fixture.detectChanges();
 
         const button = fixture.debugElement.query(By.css('.btn-warning'));
-        expect(button.properties.disabled).toBeTrue();
+        expect(button.properties.disabled).toBe(true);
         button.nativeElement.click();
 
         expect(mockAlertService.closeAll).not.toHaveBeenCalled();

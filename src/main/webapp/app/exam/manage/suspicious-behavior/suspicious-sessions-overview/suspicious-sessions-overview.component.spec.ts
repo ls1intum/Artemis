@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { SuspiciousSessionsOverviewComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
@@ -7,6 +9,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('SuspiciousSessionsOverviewComponent', () => {
+    setupTestBed({ zoneless: true });
+
     const suspiciousSessions = {
         examSessions: [
             {
@@ -63,8 +67,12 @@ describe('SuspiciousSessionsOverviewComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should retrieve suspicious sessions onInit', fakeAsync(() => {
         component.ngOnInit();
-        expect(component.suspiciousSessions).toEqual([suspiciousSessions, suspiciousSessions2, suspiciousSessions3]);
+        expect(component.suspiciousSessions()).toEqual([suspiciousSessions, suspiciousSessions2, suspiciousSessions3]);
     }));
 });

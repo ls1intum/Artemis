@@ -6,8 +6,12 @@ import { ExamExerciseUpdate, ExamExerciseUpdateService } from 'app/exam/manage/s
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamExerciseUpdateHighlighterComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ExamExerciseUpdateHighlighterComponent>;
     let component: ExamExerciseUpdateHighlighterComponent;
 
@@ -41,6 +45,10 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
             });
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should update problem statement', () => {
         const result = component.updatedProblemStatement;
         expect(result).toEqual(updatedProblemStatement);
@@ -55,7 +63,7 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
 
     it('should display different problem statement after toggle method is called', () => {
         const mouseEvent = new MouseEvent('click');
-        const stopPropagationSpy = jest.spyOn(mouseEvent, 'stopPropagation');
+        const stopPropagationSpy = vi.spyOn(mouseEvent, 'stopPropagation');
         const problemStatementBeforeClick = htmlForMarkdown(component.exercise().problemStatement);
         expect((component.updatedProblemStatementHTML as any).changingThisBreaksApplicationSecurity).toEqual(problemStatementBeforeClick);
 
@@ -92,7 +100,7 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
             // For programming exercises, the highlighting of differences is handled in the programming-exercise-instruction.component.ts.
             // Therefore, the highlightProblemStatementDifferences method is not called and updatedProblemStatementWithHighlightedDifferencesHTML
             // and updatedProblemStatementHTML remain undefined
-            const highlightDifferencesSpy = jest.spyOn(component, 'highlightProblemStatementDifferences');
+            const highlightDifferencesSpy = vi.spyOn(component, 'highlightProblemStatementDifferences');
             expect(highlightDifferencesSpy).not.toHaveBeenCalled();
             expect(component.updatedProblemStatementWithHighlightedDifferencesHTML).toBeUndefined();
             expect(component.updatedProblemStatementHTML).toBeUndefined();

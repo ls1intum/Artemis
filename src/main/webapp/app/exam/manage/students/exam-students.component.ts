@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';
@@ -70,26 +70,26 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
 
     dataTable = viewChild.required(DataTableComponent);
 
-    courseId: number;
-    exam: Exam;
-    isTestExam: boolean;
-    allRegisteredUsers: ExamUser[] = [];
-    filteredUsersSize = 0;
-    paramSub: Subscription;
+    courseId = signal<number | undefined>(undefined);
+    exam = signal<Exam | undefined>(undefined);
+    isTestExam = signal(false);
+    allRegisteredUsers = signal<ExamUser[]>([]);
+    filteredUsersSize = signal(0);
+    paramSub?: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    isLoading = false;
-    hasExamStarted = false;
-    hasExamEnded = false;
-    isSearching = false;
-    searchFailed = false;
-    searchNoResults = false;
-    isTransitioning = false;
-    rowClass: string | undefined = undefined;
+    isLoading = signal(false);
+    hasExamStarted = signal(false);
+    hasExamEnded = signal(false);
+    isSearching = signal(false);
+    searchFailed = signal(false);
+    searchNoResults = signal(false);
+    isTransitioning = signal(false);
+    rowClass = signal<string | undefined>(undefined);
 
-    isAdmin = false;
+    isAdmin = signal(false);
 
     // Icons
     protected readonly faPlus = faPlus;
@@ -104,30 +104,30 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     protected readonly faFileExport = faFileExport;
 
     ngOnInit() {
-        this.isLoading = true;
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.isAdmin = this.accountService.isAdmin();
+        this.isLoading.set(true);
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
+        this.isAdmin.set(this.accountService.isAdmin());
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
             this.setUpExamInformation(exam);
         });
     }
 
     reloadExamWithRegisteredUsers() {
-        this.isLoading = true;
-        this.examManagementService.find(this.courseId, this.exam.id!, true).subscribe((examResponse: HttpResponse<Exam>) => {
+        this.isLoading.set(true);
+        this.examManagementService.find(this.courseId()!, this.exam()!.id!, true).subscribe((examResponse: HttpResponse<Exam>) => {
             this.setUpExamInformation(examResponse.body!);
         });
     }
 
     private setUpExamInformation(exam: Exam) {
-        this.exam = exam;
-        this.hasExamStarted = exam.startDate?.isBefore(dayjs()) || false;
-        this.hasExamEnded = exam.endDate?.isBefore(dayjs()) || false;
+        this.exam.set(exam);
+        this.hasExamStarted.set(exam.startDate?.isBefore(dayjs()) || false);
+        this.hasExamEnded.set(exam.endDate?.isBefore(dayjs()) || false);
 
-        if (this.hasExamEnded) {
-            this.studentExamService.findAllForExam(this.courseId, exam.id!).subscribe((res) => {
+        if (this.hasExamEnded()) {
+            this.studentExamService.findAllForExam(this.courseId()!, exam.id!).subscribe((res) => {
                 const studentExams = res.body;
-                this.allRegisteredUsers =
+                this.allRegisteredUsers.set(
                     exam.examUsers?.map((examUser) => {
                         const studentExam = studentExams?.filter((studentExam) => studentExam.user?.id === examUser.user!.id).first();
                         return {
@@ -135,19 +135,21 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                             ...examUser,
                             didExamUserAttendExam: !!studentExam?.started,
                         };
-                    }) || [];
+                    }) || [],
+                );
             });
         } else {
-            this.allRegisteredUsers =
+            this.allRegisteredUsers.set(
                 exam.examUsers?.map((examUser) => {
                     return {
                         ...examUser.user!,
                         ...examUser,
                     };
-                }) || [];
+                }) || [],
+            );
         }
-        this.isTestExam = this.exam.testExam!;
-        this.isLoading = false;
+        this.isTestExam.set(exam.testExam!);
+        this.isLoading.set(false);
     }
 
     ngOnDestroy() {
@@ -163,34 +165,36 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     searchAllUsers = (stream$: Observable<{ text: string; entities: User[] }>): Observable<User[]> => {
         return stream$.pipe(
             switchMap(({ text: loginOrName }) => {
-                this.searchFailed = false;
-                this.searchNoResults = false;
+                this.searchFailed.set(false);
+                this.searchNoResults.set(false);
                 if (loginOrName.length < 3) {
                     return of([]);
                 }
-                this.isSearching = true;
+                this.isSearching.set(true);
                 return this.userService
                     .search(loginOrName)
                     .pipe(map((usersResponse) => usersResponse.body!))
                     .pipe(
                         tap((users) => {
                             if (users.length === 0) {
-                                this.searchNoResults = true;
+                                this.searchNoResults.set(true);
                             }
                         }),
                         catchError(() => {
-                            this.searchFailed = true;
+                            this.searchFailed.set(true);
                             return of([]);
                         }),
                     );
             }),
             tap(() => {
-                this.isSearching = false;
+                this.isSearching.set(false);
             }),
             tap((users) => {
                 setTimeout(() => {
                     for (let i = 0; i < this.dataTable().typeaheadButtons.length; i++) {
-                        const isAlreadyInCourseGroup = this.allRegisteredUsers.map((user) => user.id).includes(users[i].id);
+                        const isAlreadyInCourseGroup = this.allRegisteredUsers()
+                            .map((user) => user.id)
+                            .includes(users[i].id);
                         const button = this.dataTable().typeaheadButtons[i];
                         const hasIcon = button.querySelector('fa-icon');
                         if (!hasIcon) {
@@ -214,11 +218,16 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      */
     onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
         // If the user is not registered for this exam yet, perform the server call to add them
-        if (!this.allRegisteredUsers.map((eu) => eu.user!.id).includes(user.id) && user.login) {
-            this.isTransitioning = true;
-            this.examManagementService.addStudentToExam(this.courseId, this.exam.id!, user.login).subscribe({
+        if (
+            !this.allRegisteredUsers()
+                .map((eu) => eu.user!.id)
+                .includes(user.id) &&
+            user.login
+        ) {
+            this.isTransitioning.set(true);
+            this.examManagementService.addStudentToExam(this.courseId()!, this.exam()!.id!, user.login).subscribe({
                 next: () => {
-                    this.isTransitioning = false;
+                    this.isTransitioning.set(false);
                     this.reloadExamWithRegisteredUsers();
                     // Flash green background color to signal to the user that this student was registered
                     this.flashRowClass(cssClasses.newlyRegistered);
@@ -227,7 +236,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                     if (error.status === 403) {
                         this.onError(`artemisApp.exam.error.${error.error.errorKey}`);
                     }
-                    this.isTransitioning = false;
+                    this.isTransitioning.set(false);
                 },
             });
         } else {
@@ -243,9 +252,9 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      * @param event generated by the jhiDeleteButton. Has the property deleteParticipationsAndSubmission, reflecting the checkbox choice of the user
      */
     removeFromExam(examUser: ExamUser, event: { [key: string]: boolean }) {
-        this.examManagementService.removeStudentFromExam(this.courseId, this.exam.id!, examUser.user!.login!, event.deleteParticipationsAndSubmission).subscribe({
+        this.examManagementService.removeStudentFromExam(this.courseId()!, this.exam()!.id!, examUser.user!.login!, event.deleteParticipationsAndSubmission).subscribe({
             next: () => {
-                this.allRegisteredUsers = this.allRegisteredUsers.filter((eu) => eu.user!.login !== examUser.user!.login);
+                this.allRegisteredUsers.update((users) => users.filter((eu) => eu.user!.login !== examUser.user!.login));
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -256,9 +265,9 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      * Unregister all students from the exam
      */
     removeAllStudents(event: { [key: string]: boolean }) {
-        this.examManagementService.removeAllStudentsFromExam(this.courseId, this.exam.id!, event.deleteParticipationsAndSubmission).subscribe({
+        this.examManagementService.removeAllStudentsFromExam(this.courseId()!, this.exam()!.id!, event.deleteParticipationsAndSubmission).subscribe({
             next: () => {
-                this.allRegisteredUsers = [];
+                this.allRegisteredUsers.set([]);
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -271,7 +280,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      * @param filteredUsersSize Total number of users after filters have been applied
      */
     handleUsersSizeChange = (filteredUsersSize: number) => {
-        this.filteredUsersSize = filteredUsersSize;
+        this.filteredUsersSize.set(filteredUsersSize);
     };
 
     /**
@@ -300,8 +309,8 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      * @param className Name of the class to be applied to all rows
      */
     flashRowClass = (className: string) => {
-        this.rowClass = className;
-        setTimeout(() => (this.rowClass = undefined), 500);
+        this.rowClass.set(className);
+        setTimeout(() => this.rowClass.set(undefined), 500);
     };
 
     /**
@@ -311,15 +320,16 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      */
     onError(error: string) {
         this.alertService.error(error);
-        this.isTransitioning = false;
+        this.isTransitioning.set(false);
     }
 
     /**
      * Registers all students who are enrolled in the course for the exam
      */
     registerAllStudentsFromCourse() {
-        if (this.exam?.id) {
-            this.examManagementService.addAllStudentsOfCourseToExam(this.courseId, this.exam.id).subscribe({
+        const exam = this.exam();
+        if (exam?.id) {
+            this.examManagementService.addAllStudentsOfCourseToExam(this.courseId()!, exam.id).subscribe({
                 next: () => {
                     this.reloadExamWithRegisteredUsers();
                 },

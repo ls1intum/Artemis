@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { SidebarEventService } from 'app/shared/sidebar/service/sidebar-event.service';
 import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
@@ -63,13 +63,13 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     subscriptionToLiveExamExerciseUpdates: Subscription;
 
     // Icons
-    icon: IconProp;
+    readonly icon = signal<IconProp>(facSaveSuccess);
     readonly faFileLines = faFileLines;
     readonly faChevronRight = faChevronRight;
 
-    isCollapsed = false;
+    readonly isCollapsed = signal(false);
     exerciseId: string;
-    numberOfSavedExercises: number = 0;
+    readonly numberOfSavedExercises = signal(0);
 
     ngOnInit(): void {
         if (!this.examTimeLineView()) {
@@ -156,13 +156,14 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     }
 
     refreshExerciseSaveCount() {
-        this.numberOfSavedExercises = 0;
+        let count = 0;
         this.exercises().forEach((exercise) => {
             const submission = ExamParticipationService.getSubmissionForExercise(exercise);
             if (submission && submission.submitted) {
-                this.numberOfSavedExercises++;
+                count++;
             }
         });
+        this.numberOfSavedExercises.set(count);
     }
 
     /**
@@ -175,7 +176,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
     setExerciseButtonStatus(exerciseIndex: number): ExerciseButtonStatus {
-        this.icon = facSaveSuccess;
+        this.icon.set(facSaveSuccess);
         // If we are in the exam timeline we do not use not synced as not synced shows
         // that the current submission is not saved which doesn't make sense in the timeline.
         if (this.examTimeLineView()) {
@@ -185,7 +186,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         // start with a yellow status (save warning icon)
         // TODO: it's a bit weird, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
-        this.icon = faHourglassHalf;
+        this.icon.set(faHourglassHalf);
         const exercise = this.exercises()[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         if (!submission) {
@@ -194,7 +195,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             return ExerciseButtonStatus.Synced;
         }
         if (submission.submitted && submission.isSynced) {
-            this.icon = facSaveSuccess;
+            this.icon.set(facSaveSuccess);
             this.refreshExerciseSaveCount();
             return ExerciseButtonStatus.SyncedSaved;
         }
@@ -203,7 +204,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             return ExerciseButtonStatus.Synced;
         } else {
             // make save icon yellow except for programming exercises with only offline IDE
-            this.icon = facSaveWarning;
+            this.icon.set(facSaveWarning);
             return ExerciseButtonStatus.NotSynced;
         }
     }
@@ -217,7 +218,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     }
 
     toggleCollapseState() {
-        this.isCollapsed = !this.isCollapsed;
+        this.isCollapsed.update((value) => !value);
     }
 
     @HostListener('window:keydown.Control.m', ['$event'])

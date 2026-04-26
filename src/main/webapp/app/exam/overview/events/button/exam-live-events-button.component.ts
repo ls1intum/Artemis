@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, signal } from '@angular/core';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/shared/service/alert.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -31,7 +31,7 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
     private modalRef?: NgbModalRef;
     private liveEventsSubscription?: Subscription;
     private allEventsSubscription?: Subscription;
-    eventCount = 0;
+    readonly eventCount = signal(0);
     readonly examStartDate = input<dayjs.Dayjs>(undefined!);
 
     // Icons
@@ -41,7 +41,7 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
         this.allEventsSubscription = this.liveEventsService.observeAllEvents(USER_DISPLAY_RELEVANT_EVENTS_REOPEN).subscribe((events: ExamLiveEvent[]) => {
             // do not count the problem statements events that are made before the start of the exam
             const filteredEvents = events.filter((event) => !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(this.examStartDate())));
-            this.eventCount = filteredEvents.length;
+            this.eventCount.set(filteredEvents.length);
         });
 
         this.liveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate()).subscribe(() => {

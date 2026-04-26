@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, computed, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
@@ -18,7 +18,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './exam-bar.component.html',
     styleUrl: './exam-bar.component.scss',
 })
-export class ExamBarComponent implements AfterViewInit, OnInit, OnDestroy {
+export class ExamBarComponent implements AfterViewInit, OnDestroy {
     private readonly elementRef = inject(ElementRef);
 
     protected readonly faDoorClosed = faDoorClosed;
@@ -38,20 +38,13 @@ export class ExamBarComponent implements AfterViewInit, OnInit, OnDestroy {
 
     criticalTime = dayjs.duration(5, 'minutes');
     criticalTimeEndView = dayjs.duration(30, 'seconds');
-    testExam: boolean;
-    isTestRun: boolean;
+    readonly testExam = computed(() => this.exam()?.testExam ?? false);
+    readonly isTestRun = computed(() => this.studentExam()?.testRun ?? false);
+    readonly examTitle = computed(() => this.exam()?.title ?? '');
+    readonly exercises = computed<Exercise[]>(() => this.studentExam()?.exercises ?? []);
 
     private previousHeight: number;
     private resizeObserver: ResizeObserver | undefined;
-    examTitle: string;
-    exercises: Exercise[] = [];
-
-    ngOnInit(): void {
-        this.examTitle = this.exam().title ?? '';
-        this.exercises = this.studentExam().exercises ?? [];
-        this.testExam = this.exam().testExam ?? false;
-        this.isTestRun = this.studentExam().testRun ?? false;
-    }
 
     /**
      * It sets up a ResizeObserver to monitor changes in the height of the exam bar element.
@@ -84,9 +77,10 @@ export class ExamBarComponent implements AfterViewInit, OnInit, OnDestroy {
      * Save the currently active exercise
      */
     saveExercise() {
-        const submission = ExamParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex()]);
+        const exercises = this.exercises();
+        const submission = ExamParticipationService.getSubmissionForExercise(exercises[this.exerciseIndex()]);
         // we do not submit programming exercises on a save
-        if (submission && this.exercises[this.exerciseIndex()].type !== ExerciseType.PROGRAMMING) {
+        if (submission && exercises[this.exerciseIndex()].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
         }
     }

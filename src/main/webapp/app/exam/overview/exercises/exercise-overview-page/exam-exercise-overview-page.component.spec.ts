@@ -15,8 +15,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamExerciseOverviewPageComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ExamExerciseOverviewPageComponent>;
     let comp: ExamExerciseOverviewPageComponent;
     let studentExam: StudentExam;
@@ -53,13 +57,17 @@ describe('ExamExerciseOverviewPageComponent', () => {
         fixture.componentRef.setInput('studentExam', studentExam);
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     beforeEach(fakeAsync(() => {
         fixture.detectChanges();
         tick();
     }));
 
     it('should open the exercise', () => {
-        jest.spyOn(comp.onPageChanged, 'emit');
+        vi.spyOn(comp.onPageChanged, 'emit');
 
         comp.openExercise(studentExam.exercises![0]);
 

@@ -1,4 +1,4 @@
-import { Component, OnChanges, input } from '@angular/core';
+import { Component, effect, input } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { endTime, examWorkingTime, getAdditionalWorkingTime, isExamOverMultipleDays } from 'app/exam/overview/exam.utils';
@@ -16,7 +16,7 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
     templateUrl: './exam-general-information.component.html',
     imports: [TranslateDirective, StudentExamWorkingTimeComponent, TestExamWorkingTimeComponent, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe],
 })
-export class ExamGeneralInformationComponent implements OnChanges {
+export class ExamGeneralInformationComponent {
     readonly exam = input<Exam>(undefined!);
     readonly studentExam = input<StudentExam>(undefined!);
     readonly reviewIsOpen = input(false);
@@ -34,14 +34,18 @@ export class ExamGeneralInformationComponent implements OnChanges {
     isTestExam?: boolean;
     currentDate?: dayjs.Dayjs;
 
-    ngOnChanges() {
-        this.examEndDate = endTime(this.exam(), this.studentExam());
-        this.normalWorkingTime = examWorkingTime(this.exam());
-        this.additionalWorkingTime = getAdditionalWorkingTime(this.exam(), this.studentExam());
-        this.isExamOverMultipleDays = isExamOverMultipleDays(this.exam(), this.studentExam());
-        this.isTestExam = this.exam()?.testExam;
-        if (this.isTestExam) {
-            this.currentDate = dayjs();
-        }
+    constructor() {
+        effect(() => {
+            const exam = this.exam();
+            const studentExam = this.studentExam();
+            this.examEndDate = endTime(exam, studentExam);
+            this.normalWorkingTime = examWorkingTime(exam);
+            this.additionalWorkingTime = getAdditionalWorkingTime(exam, studentExam);
+            this.isExamOverMultipleDays = isExamOverMultipleDays(exam, studentExam);
+            this.isTestExam = exam?.testExam;
+            if (this.isTestExam) {
+                this.currentDate = dayjs();
+            }
+        });
     }
 }

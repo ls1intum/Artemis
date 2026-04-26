@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -37,6 +39,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 
 describe('Exercise Groups Component', () => {
+    setupTestBed({ zoneless: true });
+
     const course = new Course();
     course.id = 456;
 
@@ -117,10 +121,14 @@ describe('Exercise Groups Component', () => {
             });
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('loads the exercise groups', fakeAsync(() => {
         const mockResponse = new HttpResponse<Exam>({ body: exam });
 
-        jest.spyOn(examManagementService, 'find').mockReturnValue(of(mockResponse));
+        vi.spyOn(examManagementService, 'find').mockReturnValue(of(mockResponse));
 
         comp.loadExerciseGroups().subscribe((response) => {
             expect(response.body).not.toBeNull();
@@ -134,7 +142,7 @@ describe('Exercise Groups Component', () => {
         const latestIndividualEndDate = dayjs();
         const mockResponse = new HttpResponse<ExamInformationDTO>({ body: { latestIndividualEndDate } });
 
-        jest.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(of(mockResponse));
+        vi.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(of(mockResponse));
 
         comp.loadLatestIndividualEndDateOfExam().subscribe((response) => {
             expect(response).not.toBeNull();
@@ -156,8 +164,8 @@ describe('Exercise Groups Component', () => {
     it('deletes an exercise group', fakeAsync(() => {
         comp.exerciseGroups = groups;
 
-        jest.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
-        jest.spyOn(eventManager, 'broadcast');
+        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        vi.spyOn(eventManager, 'broadcast');
 
         comp.deleteExerciseGroup(0, {});
         tick();
@@ -206,8 +214,8 @@ describe('Exercise Groups Component', () => {
         fakeAsync((exerciseType: ExerciseType) => {
             const onCloseSubject = new Subject<Exercise | undefined>();
             const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
-            jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-            jest.spyOn(router, 'navigate');
+            vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+            vi.spyOn(router, 'navigate');
 
             comp.openImportModal(groups[0], exerciseType);
 
@@ -226,8 +234,8 @@ describe('Exercise Groups Component', () => {
         fakeAsync((exerciseType: ExerciseType) => {
             const onCloseSubject = new Subject<Exercise | undefined>();
             const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
-            jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-            jest.spyOn(router, 'navigate');
+            vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+            vi.spyOn(router, 'navigate');
 
             comp.openImportModal(groups[0], exerciseType);
 
@@ -279,7 +287,7 @@ describe('Exercise Groups Component', () => {
         const expectedResult = [ExerciseType.TEXT, ExerciseType.PROGRAMMING];
 
         comp.setupExerciseGroupToExerciseTypesDict();
-        const map = comp.exerciseGroupToExerciseTypesDict;
+        const map = comp.exerciseGroupToExerciseTypesDict();
 
         expect(map).toBeDefined();
         expect(map.size).toBe(groups.length);
@@ -287,12 +295,12 @@ describe('Exercise Groups Component', () => {
     });
 
     it('opens the import modal for exercise groups', fakeAsync(() => {
-        const alertSpy = jest.spyOn(alertService, 'success');
+        const alertSpy = vi.spyOn(alertService, 'success');
         const exerciseGroup = { id: 1 } as ExerciseGroup;
 
         const onCloseSubject = new Subject<ExerciseGroup[] | undefined>();
         const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
-        jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
 
         comp.openExerciseGroupImportModal();
 

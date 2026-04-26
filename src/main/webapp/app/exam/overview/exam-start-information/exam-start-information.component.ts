@@ -1,4 +1,4 @@
-import { Component, OnInit, input } from '@angular/core';
+import { Component, effect, input } from '@angular/core';
 
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared/information-box/information-box.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -13,7 +13,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     imports: [InformationBoxComponent, StudentExamWorkingTimeComponent, ArtemisDatePipe],
     templateUrl: './exam-start-information.component.html',
 })
-export class ExamStartInformationComponent implements OnInit {
+export class ExamStartInformationComponent {
     examInformationBoxData: InformationBox[] = [];
 
     readonly exam = input<Exam>(undefined!);
@@ -31,19 +31,26 @@ export class ExamStartInformationComponent implements OnInit {
     endDate?: dayjs.Dayjs;
     gracePeriodInMinutes?: number;
 
-    ngOnInit(): void {
-        this.totalPoints = this.exam().examMaxPoints;
-        this.totalWorkingTimeInMinutes = Math.floor(this.exam().workingTime! / 60);
-        this.moduleNumber = this.exam().moduleNumber;
-        this.courseName = this.exam().courseName;
-        this.examiner = this.exam().examiner;
-        this.numberOfExercisesInExam = this.exam().numberOfExercisesInExam;
-        this.examinedStudent = this.studentExam().user?.name;
-        this.startDate = this.exam().startDate;
-        this.endDate = this.exam().endDate;
-        this.gracePeriodInMinutes = Math.floor(this.exam().gracePeriod! / 60);
-
-        this.prepareInformationBoxData();
+    constructor() {
+        effect(() => {
+            const exam = this.exam();
+            const studentExam = this.studentExam();
+            if (!exam || !studentExam) {
+                return;
+            }
+            this.totalPoints = exam.examMaxPoints;
+            this.totalWorkingTimeInMinutes = exam.workingTime !== undefined ? Math.floor(exam.workingTime / 60) : undefined;
+            this.moduleNumber = exam.moduleNumber;
+            this.courseName = exam.courseName;
+            this.examiner = exam.examiner;
+            this.numberOfExercisesInExam = exam.numberOfExercisesInExam;
+            this.examinedStudent = studentExam.user?.name;
+            this.startDate = exam.startDate;
+            this.endDate = exam.endDate;
+            this.gracePeriodInMinutes = exam.gracePeriod !== undefined ? Math.floor(exam.gracePeriod / 60) : undefined;
+            this.examInformationBoxData = [];
+            this.prepareInformationBoxData();
+        });
     }
 
     buildInformationBox(boxTitle: string, boxContent: InformationBoxContent, isContentComponent = false): InformationBox {

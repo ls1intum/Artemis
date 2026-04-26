@@ -1,5 +1,5 @@
 import { UMLModel, importDiagram } from '@tumaet/apollon';
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -48,7 +48,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     studentSubmission = input.required<ModelingSubmission>();
-    problemStatementHtml: SafeHtml;
+    readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
 
     exercise = input.required<ModelingExercise>();
     umlModel: UMLModel; // input model for Apollon+
@@ -67,7 +67,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     ngOnInit(): void {
         // show submission answers in UI
-        this.problemStatementHtml = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement);
+        this.problemStatementHtml.set(this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement));
         this.updateViewFromSubmission();
     }
 
@@ -76,7 +76,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      * @param newProblemStatementHtml is the updated problem statement html that should be displayed to the user.
      */
     updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
-        this.problemStatementHtml = newProblemStatementHtml;
+        this.problemStatementHtml.set(newProblemStatementHtml);
         this.changeDetectorReference.detectChanges();
     }
 

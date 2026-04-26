@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -68,13 +68,13 @@ describe('StudentsUploadImagesDialogComponent', () => {
     });
 
     it('should reset dialog when selecting pdf file', async () => {
-        component.notFoundUsers = { numberOfUsersNotFound: 1, numberOfImagesSaved: 10 };
-        component.hasParsed = true;
+        component.notFoundUsers.set({ numberOfUsersNotFound: 1, numberOfImagesSaved: 10 });
+        component.hasParsed.set(true);
 
         const event = { target: { files: [{ file: new File([''], 'testFile.pdf', { type: 'application/pdf' }), fileName: 'testFile' }] } };
         await component.onPDFFileSelect(event);
 
-        expect(component.notFoundUsers).toBeUndefined();
+        expect(component.notFoundUsers()).toBeUndefined();
     });
 
     it('should call the function to cancel the dialog', () => {
@@ -100,9 +100,9 @@ describe('StudentsUploadImagesDialogComponent', () => {
         component.parsePDFFile();
 
         expect(examServiceStub).toHaveBeenCalledOnce();
-        expect(component.isParsing).toBe(false);
-        expect(component.hasParsed).toBe(true);
-        expect(component.notFoundUsers).toBeDefined();
-        expect(component.notFoundUsers?.numberOfUsersNotFound).toBe(1);
+        expect(component.isParsing()).toBe(false);
+        expect(component.hasParsed()).toBe(true);
+        expect(component.notFoundUsers()).toBeDefined();
+        expect(component.notFoundUsers()?.numberOfUsersNotFound).toBe(1);
     });
 });

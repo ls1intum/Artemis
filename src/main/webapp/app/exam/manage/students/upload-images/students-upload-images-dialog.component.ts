@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, OnDestroy, ViewEncapsulation, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -33,14 +33,14 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
 
     readonly ActionType = ActionType;
 
-    notFoundUsers?: NotFoundExamUserType;
-    file: File;
+    notFoundUsers = signal<NotFoundExamUserType | undefined>(undefined);
+    file = signal<File | undefined>(undefined);
 
     courseId = input.required<number>();
     exam = input.required<Exam>();
 
-    isParsing = false;
-    hasParsed = false;
+    isParsing = signal(false);
+    hasParsed = signal(false);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -66,15 +66,15 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     }
 
     private resetDialog() {
-        this.isParsing = false;
-        this.notFoundUsers = undefined;
-        this.hasParsed = false;
+        this.isParsing.set(false);
+        this.notFoundUsers.set(undefined);
+        this.hasParsed.set(false);
     }
 
     onPDFFileSelect(event: any) {
         if (event.target.files.length > 0) {
             this.resetDialog();
-            this.file = event.target.files[0];
+            this.file.set(event.target.files[0]);
         }
     }
 
@@ -82,18 +82,18 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
      * Parse pdf file and save images of registered students
      */
     parsePDFFile() {
-        this.isParsing = true;
+        this.isParsing.set(true);
         const exam = this.exam();
         if (exam?.id) {
             const formData: FormData = new FormData();
-            formData.append('file', this.file);
+            formData.append('file', this.file()!);
 
             this.examManagementService.saveImages(this.courseId(), exam.id, formData).subscribe({
                 next: (res: any) => {
                     if (res) {
-                        this.notFoundUsers = res.body;
-                        this.isParsing = false;
-                        this.hasParsed = true;
+                        this.notFoundUsers.set(res.body);
+                        this.isParsing.set(false);
+                        this.hasParsed.set(true);
                     }
                 },
                 error: (res: HttpErrorResponse) => {
@@ -102,8 +102,8 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
                     } else {
                         onError(this.alertService, res);
                     }
-                    this.isParsing = false;
-                    this.hasParsed = false;
+                    this.isParsing.set(false);
+                    this.hasParsed.set(false);
                 },
             });
         }

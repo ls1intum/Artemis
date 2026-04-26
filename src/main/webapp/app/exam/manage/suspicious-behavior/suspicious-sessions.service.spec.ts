@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
@@ -6,6 +8,8 @@ import { SuspiciousExamSessions, SuspiciousSessionReason, SuspiciousSessionsAnal
 import { provideHttpClient } from '@angular/common/http';
 
 describe('SuspiciousSessionsService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: SuspiciousSessionsService;
     let httpMock: HttpTestingController;
     const suspiciousSessions = {
@@ -39,6 +43,10 @@ describe('SuspiciousSessionsService', () => {
         });
         service = TestBed.inject(SuspiciousSessionsService);
         httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should make GET request to retrieve suspicious sessions', fakeAsync(() => {

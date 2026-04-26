@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { Observable, Subject, timer } from 'rxjs';
 import { distinctUntilChanged, first, map, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
@@ -28,7 +28,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
 
     readonly timerAboutToEnd = output<void>();
 
-    isCriticalTime: boolean;
+    readonly isCriticalTime = signal(false);
 
     destroy$: Subject<boolean> = new Subject<boolean>();
     private timer: Observable<plugin.Duration> = timer(0, 100).pipe(map(() => dayjs.duration(this.endDate().diff(this.serverDateService.now()))));
@@ -80,7 +80,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
         const clonedTimeDiff = cloneDeep(timeDiff);
         const criticalTime = this.criticalTime();
         if (criticalTime && clonedTimeDiff.subtract(criticalTime).asMilliseconds() < 0) {
-            this.isCriticalTime = true;
+            this.isCriticalTime.set(true);
         }
     }
 }

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -18,6 +20,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ExerciseGroupUpdateComponent', () => {
+    setupTestBed({ zoneless: true });
+
     const course = { id: 456 } as Course;
     const exam: Exam = new Exam();
     const exerciseGroup: ExerciseGroup = new ExerciseGroup();
@@ -30,12 +34,12 @@ describe('ExerciseGroupUpdateComponent', () => {
     let fixture: ComponentFixture<ExerciseGroupUpdateComponent>;
     let service: ExerciseGroupService;
     const mockRouter = new MockRouter();
-    let alertServiceStub: jest.SpyInstance;
+    let alertServiceStub: ReturnType<typeof vi.spyOn>;
     let alertService: AlertService;
 
     const data = of({ exam, exerciseGroup });
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) }, data } as any as ActivatedRoute;
-    const navigateSpy = jest.spyOn(mockRouter, 'navigate');
+    const navigateSpy = vi.spyOn(mockRouter, 'navigate');
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -63,7 +67,7 @@ describe('ExerciseGroupUpdateComponent', () => {
     }));
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should save exercise group', fakeAsync(() => {
@@ -72,11 +76,11 @@ describe('ExerciseGroupUpdateComponent', () => {
         expect(component.exerciseGroup).toEqual(exerciseGroup);
 
         const responseFakeExerciseGroup = { body: exerciseGroup } as EntityResponseType;
-        jest.spyOn(service, 'update').mockReturnValue(of(responseFakeExerciseGroup));
+        vi.spyOn(service, 'update').mockReturnValue(of(responseFakeExerciseGroup));
 
         component.save();
 
-        expect(component.isSaving).toBeFalse();
+        expect(component.isSaving()).toBe(false);
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', route.snapshot.paramMap.get('examId'), 'exercise-groups']);
         flush();
     }));
@@ -85,26 +89,26 @@ describe('ExerciseGroupUpdateComponent', () => {
         component.exerciseGroup.id = undefined;
 
         const responseFakeExerciseGroup = { body: exerciseGroup } as EntityResponseType;
-        jest.spyOn(service, 'create').mockReturnValue(of(responseFakeExerciseGroup));
+        vi.spyOn(service, 'create').mockReturnValue(of(responseFakeExerciseGroup));
 
         component.save();
 
-        expect(component.isSaving).toBeFalse();
+        expect(component.isSaving()).toBe(false);
         expect(component.exam).toEqual(exam);
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', route.snapshot.paramMap.get('examId'), 'exercise-groups']);
         flush();
     }));
 
     it('should fail while saving with ErrorResponse', fakeAsync(() => {
-        alertServiceStub = jest.spyOn(alertService, 'error');
+        alertServiceStub = vi.spyOn(alertService, 'error');
         const error = { status: 404 };
         component.exerciseGroup.id = undefined;
 
-        jest.spyOn(service, 'create').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        vi.spyOn(service, 'create').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
 
         component.save();
 
-        expect(component.isSaving).toBeFalse();
+        expect(component.isSaving()).toBe(false);
         expect(component.exam).toEqual(exam);
         expect(alertServiceStub).toHaveBeenCalledOnce();
         flush();

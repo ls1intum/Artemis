@@ -3,25 +3,25 @@
         <div class="mb-0">
             <h3>
                 <span jhiTranslate="artemisApp.examManagement.students"></span>
-                <span class="text-body-secondary">({{ exam.title }})</span>
+                <span class="text-body-secondary">({{ exam()?.title }})</span>
             </h3>
         </div>
         <div>
             <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span>:
-            <span class="badge bg-primary text-white" id="#registered-users"> {{ allRegisteredUsers.length }}</span>
-            @if (filteredUsersSize < allRegisteredUsers.length) {
+            <span class="badge bg-primary text-white" id="#registered-users"> {{ allRegisteredUsers().length }}</span>
+            @if (filteredUsersSize() < allRegisteredUsers().length) {
                 <span class="text-body-secondary">
-                    (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize }}
+                    (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize() }}
                     )
                 </span>
             }
-            @if (!isTestExam) {
-                <jhi-user-import-button class="ms-4" [courseId]="courseId" [exam]="exam" [examUserMode]="true" (importDone)="reloadExamWithRegisteredUsers()" />
+            @if (!isTestExam()) {
+                <jhi-user-import-button class="ms-4" [courseId]="courseId()!" [exam]="exam()!" [examUserMode]="true" (importDone)="reloadExamWithRegisteredUsers()" />
                 <button class="btn btn-primary ms-auto" (click)="studentsExportDialog.openDialog()">
                     <fa-icon [icon]="faFileExport" />
                     <span jhiTranslate="artemisApp.exam.examUsers.export.buttonTitle"></span>
                 </button>
-                <jhi-student-upload-images-button [courseId]="courseId" [exam]="exam" (uploadDone)="reloadExamWithRegisteredUsers()" />
+                <jhi-student-upload-images-button [courseId]="courseId()!" [exam]="exam()!" (uploadDone)="reloadExamWithRegisteredUsers()" />
                 <button class="btn btn-primary ms-auto" (click)="studentsRoomDistributionDialog.openDialog()">
                     <fa-icon [icon]="faThLarge" />
                     <span jhiTranslate="artemisApp.exam.examUsers.roomDistribute"></span>
@@ -36,9 +36,9 @@
                     <span jhiTranslate="artemisApp.examManagement.examStudents.registerAllFromCourse"></span>
                 </button>
             }
-            @if (!isTestExam && hasExamStarted) {
+            @if (!isTestExam() && hasExamStarted()) {
                 <a
-                    [routerLink]="['/course-management', courseId, 'exams', exam.id, 'students', 'verify-attendance']"
+                    [routerLink]="['/course-management', courseId(), 'exams', exam()?.id, 'students', 'verify-attendance']"
                     class="btn btn-info ms-auto"
                     title="{{ 'artemisApp.examManagement.examStudents.verifyAttendanceTooltip' | artemisTranslate }}"
                 >
@@ -46,11 +46,11 @@
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.examStudents.verifyAttendanceBtn"></span>
                 </a>
             }
-            @if (!isTestExam) {
+            @if (!isTestExam()) {
                 <button
-                    [disabled]="isLoading"
+                    [disabled]="isLoading()"
                     [actionType]="ActionType.Remove"
-                    [entityTitle]="exam.title || ''"
+                    [entityTitle]="exam()?.title || ''"
                     [renderButtonText]="false"
                     [buttonSize]="ButtonSize.MEDIUM"
                     jhiDeleteButton
@@ -70,13 +70,13 @@
         </div>
     </div>
     <jhi-data-table
-        [isLoading]="isLoading"
-        [isSearching]="isSearching"
-        [searchFailed]="searchFailed"
-        [searchNoResults]="searchNoResults"
-        [isTransitioning]="isTransitioning"
+        [isLoading]="isLoading()"
+        [isSearching]="isSearching()"
+        [searchFailed]="searchFailed()"
+        [searchNoResults]="searchNoResults()"
+        [isTransitioning]="isTransitioning()"
         entityType="examStudents"
-        [allEntities]="allRegisteredUsers"
+        [allEntities]="allRegisteredUsers()"
         entitiesPerPageTranslation="artemisApp.examManagement.examStudents.usersPerPage"
         showAllEntitiesTranslation="artemisApp.examManagement.examStudents.showAllUsers"
         searchNoResultsTranslation="artemisApp.examManagement.examStudents.searchNoResults"
@@ -110,7 +110,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        @if (isAdmin) {
+                        @if (isAdmin()) {
                             <a routerLink="/admin/user-management/{{ value?.login }}">{{ value?.id }}</a>
                         } @else {
                             {{ value?.id }}
@@ -131,7 +131,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        @if (isAdmin) {
+                        @if (isAdmin()) {
                             <a routerLink="/admin/user-management/{{ value?.login }}">{{ value?.login }}</a>
                         } @else {
                             {{ value?.login }}
@@ -220,7 +220,7 @@
                         </button>
                     </ng-template>
                 </ngx-datatable-column>
-                @if (hasExamEnded) {
+                @if (hasExamEnded()) {
                     <ngx-datatable-column prop="" [minWidth]="70" [width]="70">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" title="{{ 'artemisApp.exam.examUsers.attendanceStatusTitle' | artemisTranslate }}">
@@ -230,7 +230,7 @@
                         <ng-template ngx-datatable-cell-template let-value="value">
                             @if (
                                 value.didExamUserAttendExam &&
-                                hasExamEnded &&
+                                hasExamEnded() &&
                                 (!value.didCheckLogin || !value.didCheckImage || !value.didCheckName || !value.didCheckRegistrationNumber || !value.signingImagePath)
                             ) {
                                 <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}">
@@ -244,7 +244,7 @@
                                 value.didCheckName &&
                                 value.didCheckRegistrationNumber &&
                                 value.signingImagePath &&
-                                hasExamEnded
+                                hasExamEnded()
                             ) {
                                 <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate }}">
                                     <fa-icon [icon]="faCheck" style="color: green" class="fa-2x" />
@@ -258,7 +258,7 @@
                         </ng-template>
                     </ngx-datatable-column>
                 }
-                @if (!isTestExam) {
+                @if (!isTestExam()) {
                     <ngx-datatable-column prop="" [minWidth]="100" [width]="100">
                         <ng-template ngx-datatable-header-template />
                         <ng-template ngx-datatable-cell-template let-value="value">
@@ -288,10 +288,10 @@
 </div>
 
 <jhi-students-room-distribution-dialog
-    [courseId]="courseId"
-    [exam]="exam"
+    [courseId]="courseId()!"
+    [exam]="exam()!"
     (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()"
     #studentsRoomDistributionDialog
 />
-<jhi-students-export-dialog [courseId]="courseId" [exam]="exam" #studentsExportDialog />
-<jhi-students-reseating-dialog [courseId]="courseId" [exam]="exam" (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()" #reseatingDialog />
+<jhi-students-export-dialog [courseId]="courseId()!" [exam]="exam()!" #studentsExportDialog />
+<jhi-students-reseating-dialog [courseId]="courseId()!" [exam]="exam()!" (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()" #reseatingDialog />

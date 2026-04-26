@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -26,38 +28,43 @@ import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.uti
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 
 // Mock the diff.utils module to avoid Monaco Editor issues in tests
-jest.mock('app/programming/shared/utils/diff.utils', () => ({
-    ...jest.requireActual('app/programming/shared/utils/diff.utils'),
-    processRepositoryDiff: jest.fn().mockImplementation((templateFiles, solutionFiles) => {
-        // Handle the case where files are undefined (when repository fetch fails)
-        if (!templateFiles || !solutionFiles) {
-            return Promise.resolve(undefined);
-        }
-        return Promise.resolve({
-            diffInformations: [
-                {
-                    originalFileContent: 'testing line differences',
-                    modifiedFileContent: 'testing line diff\nnew line',
-                    originalPath: 'Example.java',
-                    modifiedPath: 'Example.java',
-                    diffReady: true,
-                    fileStatus: 'unchanged',
-                    lineChange: {
-                        addedLineCount: 2,
-                        removedLineCount: 1,
+vi.mock('app/programming/shared/utils/diff.utils', async () => {
+    const actual = await vi.importActual<typeof import('app/programming/shared/utils/diff.utils')>('app/programming/shared/utils/diff.utils');
+    return {
+        ...actual,
+        processRepositoryDiff: vi.fn().mockImplementation((templateFiles, solutionFiles) => {
+            // Handle the case where files are undefined (when repository fetch fails)
+            if (!templateFiles || !solutionFiles) {
+                return Promise.resolve(undefined);
+            }
+            return Promise.resolve({
+                diffInformations: [
+                    {
+                        originalFileContent: 'testing line differences',
+                        modifiedFileContent: 'testing line diff\nnew line',
+                        originalPath: 'Example.java',
+                        modifiedPath: 'Example.java',
+                        diffReady: true,
+                        fileStatus: 'unchanged',
+                        lineChange: {
+                            addedLineCount: 2,
+                            removedLineCount: 1,
+                        },
+                        title: 'Example.java',
                     },
-                    title: 'Example.java',
+                ],
+                totalLineChange: {
+                    addedLineCount: 2,
+                    removedLineCount: 1,
                 },
-            ],
-            totalLineChange: {
-                addedLineCount: 2,
-                removedLineCount: 1,
-            },
-        } as RepositoryDiffInformation);
-    }),
-}));
+            } as RepositoryDiffInformation);
+        }),
+    };
+});
 
 describe('ProgrammingExerciseExamDiffComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ProgrammingExerciseExamDiffComponent;
     let fixture: ComponentFixture<ProgrammingExerciseExamDiffComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
@@ -89,12 +96,12 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
 
     beforeEach(() => {
         // Mock the ResizeObserver, which is not available in the test environment
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
 
         TestBed.configureTestingModule({
-            declarations: [ProgrammingExerciseExamDiffComponent, MockComponent(CommitsInfoComponent), MockPipe(ArtemisTranslatePipe), MockComponent(IncludedInScoreBadgeComponent)],
+            imports: [ProgrammingExerciseExamDiffComponent, MockComponent(CommitsInfoComponent), MockPipe(ArtemisTranslatePipe), MockComponent(IncludedInScoreBadgeComponent)],
             providers: [
                 { provide: NgbModal, useValue: new MockNgbModalService() },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -118,15 +125,19 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should call getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView when fetching repository if previous submission is defined', fakeAsync(() => {
-        const getRepositoryFilesSpy = jest
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should call getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView when fetching repository if previous submission is defined', async () => {
+        const getRepositoryFilesSpy = vi
             .spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
             .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].originalPath, mockDiffInformation.diffInformations[0].originalFileContent || '']])))
             .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].modifiedPath, mockDiffInformation.diffInformations[0].modifiedFileContent || '']])));
-        const getTemplateRepositorySpy = jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent');
+        const getTemplateRepositorySpy = vi.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent');
 
         // Spy on the processRepositoryDiff method to ensure it sets the diff information
-        const processRepositoryDiffSpy = jest.spyOn(component, 'processRepositoryDiff').mockImplementation(async () => {
+        const processRepositoryDiffSpy = vi.spyOn(component, 'processRepositoryDiff').mockImplementation(async () => {
             component.diffInformation.set(mockDiffInformation);
         });
 
@@ -137,7 +148,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         component.fetchRepositoriesAndProcessDiff();
 
         // Wait for async operations to complete
-        tick();
+        await new Promise((resolve) => setTimeout(resolve, 0));
 
         expect(getRepositoryFilesSpy).toHaveBeenCalledTimes(2);
         expect(getRepositoryFilesSpy).toHaveBeenNthCalledWith(1, 3, 1, 'abc', RepositoryType.USER);
@@ -146,13 +157,13 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         expect(processRepositoryDiffSpy).toHaveBeenCalled();
         expect(component.diffInformation()?.totalLineChange?.addedLineCount).toBe(mockDiffInformation.totalLineChange.addedLineCount);
         expect(component.diffInformation()?.totalLineChange?.removedLineCount).toBe(mockDiffInformation.totalLineChange.removedLineCount);
-    }));
+    });
 
     it('should call getTemplateRepositoryTestFilesWithContent when loading diff report if previous submission is undefined', () => {
-        const getRepositoryFilesSpy = jest
+        const getRepositoryFilesSpy = vi
             .spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
             .mockReturnValue(of(new Map<string, string>()));
-        const getTemplateRepositorySpy = jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(of(new Map<string, string>()));
+        const getTemplateRepositorySpy = vi.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(of(new Map<string, string>()));
         component.previousSubmission.update(() => undefined);
         const currentSubmission = { commitHash: 'def', participation: { id: 2 } };
         component.currentSubmission.update(() => currentSubmission);
@@ -164,7 +175,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     });
 
     it('should open the modal when showGitDiff is called', () => {
-        const modalServiceSpy = jest.spyOn(modal, 'open');
+        const modalServiceSpy = vi.spyOn(modal, 'open');
         const exercise = { id: 1 } as ProgrammingExercise;
         component.exercise.update(() => exercise);
 
@@ -179,16 +190,17 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         cachedDiffInfo.set(key, { someDiffInfo: 'test' });
 
         // Directly set the cached diff information instead of using input()
-        (component as any).cachedDiffInformation = jest.fn().mockReturnValue(cachedDiffInfo);
+        (component as any).cachedDiffInformation = vi.fn().mockReturnValue(cachedDiffInfo);
 
         component.fetchRepositoriesAndProcessDiff();
         component.showGitDiff();
         expect(modalServiceSpy).toHaveBeenCalledWith(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
     });
 
-    it('should use diffInformation from cache if available', fakeAsync(() => {
-        const getRepositoryFilesSpy = jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView');
-        const getTemplateRepositorySpy = jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent');
+    it('should use diffInformation from cache if available', async () => {
+        vi.useFakeTimers();
+        const getRepositoryFilesSpy = vi.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView');
+        const getTemplateRepositorySpy = vi.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent');
         const previousSubmission = { id: 1, commitHash: 'abc' };
         component.previousSubmission.update(() => previousSubmission);
         const currentSubmission = { id: 2, commitHash: 'def' };
@@ -199,28 +211,29 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         cachedDiffInformation.set(JSON.stringify([1, 2]), mockDiffInformation);
 
         // Mock signal to return cached diff information instead of using input()
-        (component as any).cachedDiffInformation = jest.fn().mockReturnValue(cachedDiffInformation);
+        (component as any).cachedDiffInformation = vi.fn().mockReturnValue(cachedDiffInformation);
 
         component.ngOnInit();
         component.exerciseIdSubject.update((subject) => {
             subject.next(1);
             return subject;
         });
-        // tick 200 is needed because the observable uses debounceTime(200)
-        tick(200);
+        // advance 200 is needed because the observable uses debounceTime(200)
+        vi.advanceTimersByTime(200);
         expect(component.diffInformation()).toEqual(mockDiffInformation);
         expect(getRepositoryFilesSpy).not.toHaveBeenCalled();
         expect(getTemplateRepositorySpy).not.toHaveBeenCalled();
-    }));
+        vi.useRealTimers();
+    });
 
-    it('should load report if not in cache', fakeAsync(() => {
-        const getRepositoryFilesSpy = jest
+    it('should load report if not in cache', async () => {
+        const getRepositoryFilesSpy = vi
             .spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
             .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].originalPath, mockDiffInformation.diffInformations[0].originalFileContent || '']])))
             .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].modifiedPath, mockDiffInformation.diffInformations[0].modifiedFileContent || '']])));
 
         // Spy on the processRepositoryDiff method to ensure it sets the diff information
-        const processRepositoryDiffSpy = jest.spyOn(component, 'processRepositoryDiff').mockImplementation(async () => {
+        const processRepositoryDiffSpy = vi.spyOn(component, 'processRepositoryDiff').mockImplementation(async () => {
             component.diffInformation.set(mockDiffInformation);
         });
 
@@ -233,25 +246,25 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         const cachedDiffInformation = new Map<string, RepositoryDiffInformation>();
 
         // Directly set the cached diff information instead of using input()
-        (component as any).cachedDiffInformation = jest.fn().mockReturnValue(cachedDiffInformation);
+        (component as any).cachedDiffInformation = vi.fn().mockReturnValue(cachedDiffInformation);
 
         // Don't call ngOnInit, just test the direct method call
         component.fetchRepositoriesAndProcessDiff();
 
         // Wait for async operations to complete
-        tick();
+        await new Promise((resolve) => setTimeout(resolve, 0));
 
         expect(component.diffInformation()).toEqual(mockDiffInformation);
         expect(getRepositoryFilesSpy).toHaveBeenCalledTimes(2);
         expect(getRepositoryFilesSpy).toHaveBeenNthCalledWith(1, 3, 1, 'abc', RepositoryType.USER);
         expect(getRepositoryFilesSpy).toHaveBeenNthCalledWith(2, 3, 2, 'def', RepositoryType.USER);
         expect(processRepositoryDiffSpy).toHaveBeenCalled();
-    }));
+    });
 
     it('should subscribe to CachedRepositoryFilesChange event', () => {
         const cachedFiles = new Map<string, Map<string, string>>();
         cachedFiles.set('abc', new Map<string, string>());
-        const cachedRepositoryFilesServiceSpy = jest.spyOn(cachedRepositoryFilesService, 'getCachedRepositoryFilesObservable').mockReturnValue(of(cachedFiles));
+        const cachedRepositoryFilesServiceSpy = vi.spyOn(cachedRepositoryFilesService, 'getCachedRepositoryFilesObservable').mockReturnValue(of(cachedFiles));
         component.ngOnInit();
         expect(cachedRepositoryFilesServiceSpy).toHaveBeenCalled();
         expect(component.cachedRepositoryFiles).toEqual(cachedFiles);
@@ -264,9 +277,9 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         component.cachedRepositoryFiles.set('leftKey', leftFiles);
         component.cachedRepositoryFiles.set('rightKey', rightFiles);
 
-        const processRepositoryDiffSpy = jest.spyOn(component, 'processRepositoryDiff').mockImplementation(async () => {});
-        const getRepositoryFilesSpy = jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView');
-        const getTemplateRepositorySpy = jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent');
+        const processRepositoryDiffSpy = vi.spyOn(component, 'processRepositoryDiff').mockImplementation(async () => {});
+        const getRepositoryFilesSpy = vi.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView');
+        const getTemplateRepositorySpy = vi.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent');
 
         const previousSubmission = { commitHash: 'leftKey', participation: { id: 1 } };
         const currentSubmission = { commitHash: 'rightKey', participation: { id: 2 } };
@@ -281,11 +294,11 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     });
 
     it('should handle error when repository files cannot be fetched', () => {
-        const alertServiceSpy = jest.spyOn(component['alertService'], 'error');
+        const alertServiceSpy = vi.spyOn((component as any).alertService, 'error');
 
         // Mock the service calls to return undefined to trigger error handling
-        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(of(undefined));
-        jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(of(undefined));
+        vi.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(of(undefined));
+        vi.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(of(undefined));
 
         const currentSubmission = { commitHash: 'def', participation: { id: 2 } };
         component.previousSubmission.update(() => undefined);
@@ -297,7 +310,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     });
 
     it('should not open modal when cached diff information is not available', () => {
-        const modalServiceSpy = jest.spyOn(modal, 'open');
+        const modalServiceSpy = vi.spyOn(modal, 'open');
 
         // Set up component without cached diff information
         const previousSubmission = { id: 1, commitHash: 'abc' };
@@ -306,7 +319,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         component.currentSubmission.update(() => currentSubmission);
 
         const emptyCachedDiffInfo = new Map<string, any>();
-        (component as any).cachedDiffInformation = jest.fn().mockReturnValue(emptyCachedDiffInfo);
+        (component as any).cachedDiffInformation = vi.fn().mockReturnValue(emptyCachedDiffInfo);
 
         component.showGitDiff();
 
@@ -326,7 +339,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     });
 
     it('should return false for hasUnsavedChanges', () => {
-        expect(component.hasUnsavedChanges()).toBeFalse();
+        expect(component.hasUnsavedChanges()).toBe(false);
     });
 
     it('should set submission version', () => {
@@ -354,11 +367,11 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         component.cachedRepositoryFiles.set('leftKey', leftFiles);
 
         const rightFiles = new Map([['test.java', 'content2']]);
-        const getRepositoryFilesSpy = jest
+        const getRepositoryFilesSpy = vi
             .spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
             .mockReturnValue(of(rightFiles));
 
-        const processRepositoryDiffSpy = jest.spyOn(component, 'processRepositoryDiff').mockImplementation(async () => {});
+        const processRepositoryDiffSpy = vi.spyOn(component, 'processRepositoryDiff').mockImplementation(async () => {});
 
         const previousSubmission = { commitHash: 'leftKey', participation: { id: 1 } };
         const currentSubmission = { commitHash: 'rightKey', participation: { id: 2 } };
@@ -372,8 +385,8 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     });
 
     it('should properly unsubscribe in ngOnDestroy', () => {
-        const unsubscribeSpy = jest.fn();
-        component['exerciseIdSubscription'] = { unsubscribe: unsubscribeSpy } as any;
+        const unsubscribeSpy = vi.fn();
+        (component as any).exerciseIdSubscription = { unsubscribe: unsubscribeSpy } as any;
 
         component.ngOnDestroy();
 
@@ -381,17 +394,17 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     });
 
     it('should handle ngOnDestroy when subscription is undefined', () => {
-        component['exerciseIdSubscription'] = undefined as any;
+        (component as any).exerciseIdSubscription = undefined as any;
 
         expect(() => component.ngOnDestroy()).not.toThrow();
     });
 
     it('should handle error when left repository files fail to fetch', () => {
-        const alertServiceSpy = jest.spyOn(component['alertService'], 'error');
+        const alertServiceSpy = vi.spyOn((component as any).alertService, 'error');
 
         // Mock the service calls to return undefined to trigger error handling
-        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(of(undefined));
-        jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(of(undefined));
+        vi.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(of(undefined));
+        vi.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(of(undefined));
 
         const currentSubmission = { commitHash: 'def', participation: { id: 2 } };
         component.previousSubmission.update(() => undefined);
@@ -403,15 +416,15 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     });
 
     it('should call cachedDiffReportsChange.emit when processing diff', async () => {
-        const emitSpy = jest.spyOn(component.cachedDiffInformationChange, 'emit');
+        const emitSpy = vi.spyOn(component.cachedDiffInformationChange, 'emit');
         const leftFiles = new Map([['test.java', 'content1']]);
         const rightFiles = new Map([['test.java', 'content2']]);
 
         await component.processRepositoryDiff(leftFiles, rightFiles);
 
         expect(emitSpy).toHaveBeenCalled();
-        expect(component.diffReady()).toBeTrue();
-        expect(component.isLoadingDiffReport).toBeFalse();
+        expect(component.diffReady()).toBe(true);
+        expect(component.isLoadingDiffReport).toBe(false);
     });
 
     it('should return correct addedLineCount from computed property', () => {

@@ -8,8 +8,12 @@ import { of } from 'rxjs';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MockExamParticipationLiveEventsService } from 'test/helpers/mocks/service/mock-exam-participation-live-events.service';
 import { ExamLiveEventsOverlayComponent } from 'app/exam/overview/events/overlay/exam-live-events-overlay.component';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamLiveEventsButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExamLiveEventsButtonComponent;
     let fixture: ComponentFixture<ExamLiveEventsButtonComponent>;
     let mockModalService: NgbModal;
@@ -31,17 +35,21 @@ describe('ExamLiveEventsButtonComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should initialize eventCount based on all observed events', () => {
         // @ts-ignore
         const mockEvents: ExamLiveEvent[] = [{ eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT }, { eventType: ExamLiveEventType.WORKING_TIME_UPDATE }];
-        jest.spyOn(mockLiveEventsService, 'observeAllEvents').mockReturnValue(of(mockEvents));
+        vi.spyOn(mockLiveEventsService, 'observeAllEvents').mockReturnValue(of(mockEvents));
         component.ngOnInit();
-        expect(component.eventCount).toBe(2);
+        expect(component.eventCount()).toBe(2);
     });
 
     it('should open dialog when new events are observed', () => {
-        const mockModalSpy = jest.spyOn(mockModalService, 'open').mockReturnValue({ componentInstance: {} } as any);
-        jest.spyOn(mockLiveEventsService, 'observeNewEventsAsUser').mockReturnValue(of({} as any as ExamLiveEvent));
+        const mockModalSpy = vi.spyOn(mockModalService, 'open').mockReturnValue({ componentInstance: {} } as any);
+        vi.spyOn(mockLiveEventsService, 'observeNewEventsAsUser').mockReturnValue(of({} as any as ExamLiveEvent));
         component.ngOnInit();
         expect(mockModalSpy).toHaveBeenCalledExactlyOnceWith(ExamLiveEventsOverlayComponent, {
             size: 'lg',

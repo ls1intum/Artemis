@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail/student-exam-detail.component';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -27,6 +29,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 describe('StudentExamDetailComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
     let studentExamDetailComponent: StudentExamDetailComponent;
     let course: Course;
@@ -158,124 +162,128 @@ describe('StudentExamDetailComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('initialize', () => {
         studentExamDetailComponentFixture.detectChanges();
 
         expect(course.id).toBe(1);
-        expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
+        expect(studentExamDetailComponent.achievedTotalPoints()).toBe(40);
     });
 
     it('should save working time', () => {
-        const studentExamSpy = jest.spyOn(studentExamService, 'updateWorkingTime');
+        const studentExamSpy = vi.spyOn(studentExamService, 'updateWorkingTime');
         studentExamDetailComponentFixture.detectChanges();
 
         studentExamDetailComponent.saveWorkingTime();
         expect(studentExamSpy).toHaveBeenCalledOnce();
-        expect(studentExamDetailComponent.isSavingWorkingTime).toBeFalse();
+        expect(studentExamDetailComponent.isSavingWorkingTime()).toBe(false);
         expect(course.id).toBe(1);
-        expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
-        expect(studentExamDetailComponent.maxTotalPoints).toBe(100);
+        expect(studentExamDetailComponent.achievedTotalPoints()).toBe(40);
+        expect(studentExamDetailComponent.maxTotalPoints()).toBe(100);
     });
 
     it('should not increase points when save working time is called more than once', () => {
-        const studentExamSpy = jest.spyOn(studentExamService, 'updateWorkingTime');
+        const studentExamSpy = vi.spyOn(studentExamService, 'updateWorkingTime');
         studentExamDetailComponentFixture.detectChanges();
         studentExamDetailComponent.saveWorkingTime();
         studentExamDetailComponent.saveWorkingTime();
         studentExamDetailComponent.saveWorkingTime();
         expect(studentExamSpy).toHaveBeenCalledTimes(3);
-        expect(studentExamDetailComponent.isSavingWorkingTime).toBeFalse();
+        expect(studentExamDetailComponent.isSavingWorkingTime()).toBe(false);
         expect(course.id).toBe(1);
-        expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
-        expect(studentExamDetailComponent.maxTotalPoints).toBe(100);
+        expect(studentExamDetailComponent.achievedTotalPoints()).toBe(40);
+        expect(studentExamDetailComponent.maxTotalPoints()).toBe(100);
     });
 
     it('should disable the working time form while saving', () => {
-        studentExamDetailComponent.isSavingWorkingTime = true;
-        expect(studentExamDetailComponent.isWorkingTimeFormDisabled).toBeTrue();
+        studentExamDetailComponent.studentExam.set(studentExam);
+        studentExamDetailComponent.isSavingWorkingTime.set(true);
+        expect(studentExamDetailComponent.isWorkingTimeFormDisabled()).toBe(true);
     });
 
     it('should disable the working time form after a test run is submitted', () => {
-        studentExamDetailComponent.isTestRun = true;
-        studentExamDetailComponent.studentExam = studentExam;
+        studentExamDetailComponent.isTestRun.set(true);
+        studentExamDetailComponent.studentExam.set(studentExam);
 
-        studentExamDetailComponent.studentExam.submitted = false;
-        expect(studentExamDetailComponent.isWorkingTimeFormDisabled).toBeFalse();
+        studentExamDetailComponent.studentExam.update((s) => ({ ...s!, submitted: false }));
+        expect(studentExamDetailComponent.isWorkingTimeFormDisabled()).toBe(false);
 
-        studentExamDetailComponent.studentExam.submitted = true;
-        expect(studentExamDetailComponent.isWorkingTimeFormDisabled).toBeTrue();
+        studentExamDetailComponent.studentExam.update((s) => ({ ...s!, submitted: true }));
+        expect(studentExamDetailComponent.isWorkingTimeFormDisabled()).toBe(true);
     });
 
     it('should disable the working time form if there is no exam', () => {
-        studentExamDetailComponent.isTestRun = false;
-        studentExamDetailComponent.studentExam = studentExam;
+        studentExamDetailComponent.isTestRun.set(false);
+        studentExamDetailComponent.studentExam.set(studentExam);
 
-        studentExamDetailComponent.studentExam.exam = undefined;
-        expect(studentExamDetailComponent.isWorkingTimeFormDisabled).toBeTrue();
+        studentExamDetailComponent.studentExam.update((s) => ({ ...s!, exam: undefined }));
+        expect(studentExamDetailComponent.isWorkingTimeFormDisabled()).toBe(true);
     });
 
     it('should get isExamOver', () => {
-        studentExamDetailComponent.studentExam = studentExam;
+        studentExamDetailComponent.studentExam.set(studentExam);
         studentExam.exam!.gracePeriod = 100;
-        expect(studentExamDetailComponent.isExamOver).toBeFalse();
+        expect(studentExamDetailComponent.isExamOver()).toBe(false);
         studentExam.exam!.startDate = dayjs().add(-20, 'seconds');
-        expect(studentExamDetailComponent.isExamOver).toBeFalse();
+        // Re-set to refresh signal-based computation
+        studentExamDetailComponent.studentExam.set({ ...studentExam });
+        expect(studentExamDetailComponent.isExamOver()).toBe(false);
         studentExam.exam!.startDate = dayjs().add(-7400, 'seconds');
-        expect(studentExamDetailComponent.isExamOver).toBeTrue();
-        studentExam.exam = undefined;
-        expect(studentExamDetailComponent.isExamOver).toBeFalse();
+        studentExamDetailComponent.studentExam.set({ ...studentExam });
+        expect(studentExamDetailComponent.isExamOver()).toBe(true);
+        studentExamDetailComponent.studentExam.set({ ...studentExam, exam: undefined });
+        expect(studentExamDetailComponent.isExamOver()).toBe(false);
     });
 
     it('should toggle to unsubmitted', () => {
-        const toggleSubmittedStateSpy = jest.spyOn(studentExamService, 'toggleSubmittedState');
+        const toggleSubmittedStateSpy = vi.spyOn(studentExamService, 'toggleSubmittedState');
         studentExamDetailComponentFixture.detectChanges();
-        expect(studentExamDetailComponent.studentExam.submitted).toBeUndefined();
-        expect(studentExamDetailComponent.studentExam.submissionDate).toBeUndefined();
+        expect(studentExamDetailComponent.studentExam()!.submitted).toBeUndefined();
+        expect(studentExamDetailComponent.studentExam()!.submissionDate).toBeUndefined();
 
         studentExamDetailComponent.toggle();
 
         expect(toggleSubmittedStateSpy).toHaveBeenCalledOnce();
-        expect(studentExamDetailComponent.studentExam.submitted).toBeTrue();
+        expect(studentExamDetailComponent.studentExam()!.submitted).toBe(true);
         // the toggle uses the current time as submission date,
         // therefore no useful assertion about a concrete value is possible here
-        expect(studentExamDetailComponent.studentExam.submissionDate).toBeDefined();
+        expect(studentExamDetailComponent.studentExam()!.submissionDate).toBeDefined();
     });
 
-    it('should open confirmation modal', fakeAsync(() => {
+    it('should open confirmation modal', async () => {
         const modalService = TestBed.inject(NgbModal);
 
         const mockReturnValue = { result: Promise.resolve('confirm') } as NgbModalRef;
-        const modalServiceSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+        const modalServiceSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
-        const toggleSpy = jest.spyOn(studentExamDetailComponent, 'toggle').mockImplementation();
+        const toggleSpy = vi.spyOn(studentExamDetailComponent, 'toggle').mockImplementation(() => {});
 
         const content = 'Modal content';
         studentExamDetailComponent.openConfirmationModal(content);
 
-        tick();
+        await mockReturnValue.result;
 
         expect(modalServiceSpy).toHaveBeenCalledOnce();
         expect(modalServiceSpy).toHaveBeenCalledWith(content);
         expect(toggleSpy).toHaveBeenCalledOnce();
-    }));
+    });
 
     it.each([
         [true, undefined, 'artemisApp.studentExams.bonus'],
         [false, '2.0', 'artemisApp.studentExams.gradeBeforeBonus'],
         [false, undefined, 'artemisApp.studentExams.grade'],
     ])('should get the correct grade explanation label', (isBonus: boolean, gradeAfterBonus: string | undefined, gradeExplanation: string) => {
-        studentExamDetailComponent.isBonus = isBonus;
-        studentExamDetailComponent.gradeAfterBonus = gradeAfterBonus;
-        expect(studentExamDetailComponent.gradeExplanation).toBe(gradeExplanation);
+        studentExamDetailComponent.isBonus.set(isBonus);
+        studentExamDetailComponent.gradeAfterBonus.set(gradeAfterBonus);
+        expect(studentExamDetailComponent.gradeExplanation()).toBe(gradeExplanation);
     });
 
     it('should set exam grade', () => {
-        studentExamDetailComponent.gradingScaleExists = false;
-        studentExamDetailComponent.passed = false;
-        studentExamDetailComponent.isBonus = true;
+        studentExamDetailComponent.gradingScaleExists.set(false);
+        studentExamDetailComponent.passed.set(false);
+        studentExamDetailComponent.isBonus.set(true);
 
         const studentExamWithGradeFromServer = {
             ...studentExamWithGrade,
@@ -292,11 +300,11 @@ describe('StudentExamDetailComponent', () => {
 
         studentExamDetailComponent.setExamGrade(studentExamWithGradeFromServer);
 
-        expect(studentExamDetailComponent.gradingScaleExists).toBeTrue();
-        expect(studentExamDetailComponent.passed).toBeTrue();
-        expect(studentExamDetailComponent.isBonus).toBeFalse();
-        expect(studentExamDetailComponent.grade).toBe(studentExamWithGradeFromServer.studentResult.overallGrade);
-        expect(studentExamDetailComponent.gradeAfterBonus).toBe(studentExamWithGradeFromServer.studentResult.gradeWithBonus.finalGrade.toString());
+        expect(studentExamDetailComponent.gradingScaleExists()).toBe(true);
+        expect(studentExamDetailComponent.passed()).toBe(true);
+        expect(studentExamDetailComponent.isBonus()).toBe(false);
+        expect(studentExamDetailComponent.grade()).toBe(studentExamWithGradeFromServer.studentResult.overallGrade);
+        expect(studentExamDetailComponent.gradeAfterBonus()).toBe(studentExamWithGradeFromServer.studentResult.gradeWithBonus.finalGrade.toString());
     });
 
     describe('change student exam to submitted button', () => {
@@ -306,26 +314,52 @@ describe('StudentExamDetailComponent', () => {
 
         const ADJUST_SUBMITTED_STATE_BUTTON_ID = '#adjust-submitted-state-button';
 
-        it('should NOT be disabled when individual working time is over', () => {
-            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver', 'get').mockReturnValue(true);
+        it('should NOT be disabled when individual working time is over', async () => {
+            // Trigger ngOnInit via detectChanges first
+            studentExamDetailComponentFixture.detectChanges();
+            await studentExamDetailComponentFixture.whenStable();
 
+            // Make exam over by setting old start date and instructor permissions
+            studentExam.exam!.startDate = dayjs().add(-7400, 'seconds');
+            studentExam.exam!.gracePeriod = 0;
+            studentExam.workingTime = 60;
+            const courseWithInstructor = { ...course, isAtLeastInstructor: true };
+            studentExamDetailComponent.course.set(courseWithInstructor);
+            studentExamDetailComponent.student.set(student);
+            studentExamDetailComponent.studentExam.set({ ...studentExam });
+            studentExamDetailComponent.isTestExam.set(false);
+
+            studentExamDetailComponentFixture.detectChanges();
+            await studentExamDetailComponentFixture.whenStable();
             studentExamDetailComponentFixture.detectChanges();
 
             const buttonElement = studentExamDetailComponentFixture.nativeElement.querySelector(ADJUST_SUBMITTED_STATE_BUTTON_ID);
             expect(buttonElement).toBeTruthy();
-            expect(examIsOverSpy).toHaveBeenCalled();
-            expect(buttonElement.disabled).toBeFalse();
+            expect(buttonElement.disabled).toBe(false);
         });
 
-        it('should be disabled when individual working time is NOT over', () => {
-            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver', 'get').mockReturnValue(false);
+        it('should be disabled when individual working time is NOT over', async () => {
+            // Trigger ngOnInit via detectChanges first
+            studentExamDetailComponentFixture.detectChanges();
+            await studentExamDetailComponentFixture.whenStable();
 
+            // Future start date, exam not over
+            studentExam.exam!.startDate = dayjs().add(7400, 'seconds');
+            studentExam.exam!.gracePeriod = 0;
+            studentExam.workingTime = 60;
+            const courseWithInstructor = { ...course, isAtLeastInstructor: true };
+            studentExamDetailComponent.course.set(courseWithInstructor);
+            studentExamDetailComponent.student.set(student);
+            studentExamDetailComponent.studentExam.set({ ...studentExam });
+            studentExamDetailComponent.isTestExam.set(false);
+
+            studentExamDetailComponentFixture.detectChanges();
+            await studentExamDetailComponentFixture.whenStable();
             studentExamDetailComponentFixture.detectChanges();
 
             const buttonElement = studentExamDetailComponentFixture.nativeElement.querySelector(ADJUST_SUBMITTED_STATE_BUTTON_ID);
             expect(buttonElement).toBeTruthy();
-            expect(examIsOverSpy).toHaveBeenCalled();
-            expect(buttonElement.disabled).toBeTrue();
+            expect(buttonElement.disabled).toBe(true);
         });
     });
 
@@ -333,10 +367,10 @@ describe('StudentExamDetailComponent', () => {
      * Sets up the component to be in a state where the button should be displayed when not considering {@link StudentExamDetailComponent#isExamOver}
      */
     function setupComponentToDisplayExamSubmittedButton() {
-        studentExamDetailComponent.student = student;
-        studentExamDetailComponent.studentExam = studentExam;
-        studentExamDetailComponent.course = course;
-        studentExamDetailComponent.course.isAtLeastInstructor = true;
-        studentExamDetailComponent.isTestExam = false;
+        studentExamDetailComponent.student.set(student);
+        studentExamDetailComponent.studentExam.set(studentExam);
+        const courseWithInstructor = { ...course, isAtLeastInstructor: true };
+        studentExamDetailComponent.course.set(courseWithInstructor);
+        studentExamDetailComponent.isTestExam.set(false);
     }
 });

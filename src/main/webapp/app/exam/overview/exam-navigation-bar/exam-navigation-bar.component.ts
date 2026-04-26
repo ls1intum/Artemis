@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, inject, input, output } from '@angular/core';
+import { AfterViewInit, Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
@@ -58,7 +58,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
 
     criticalTime = dayjs.duration(5, 'minutes');
 
-    icon: IconProp;
+    readonly icon = signal<IconProp>(faCheck);
 
     subscriptionToLiveExamExerciseUpdates: Subscription;
 
@@ -204,7 +204,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
     setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
-        this.icon = faCheck;
+        this.icon.set(faCheck);
         // If we are in the exam timeline we do not use not synced as not synced shows
         // that the current submission is not saved which doesn't make sense in the timeline.
         if (this.examTimeLineView()) {
@@ -214,7 +214,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
         // start with a yellow status (edit icon)
         // TODO: it's a bit weird, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
-        this.icon = faEdit;
+        this.icon.set(faEdit);
         const exercise = this.exercises()[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         if (!submission) {
@@ -223,7 +223,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
             return 'synced';
         }
         if (submission.submitted) {
-            this.icon = faCheck;
+            this.icon.set(faCheck);
         }
         if (submission.isSynced || this.isOnlyOfflineIDE(exercise)) {
             // make button blue (except for the current page)
@@ -234,7 +234,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
             }
         } else {
             // make button yellow except for programming exercises with only offline IDE
-            this.icon = faEdit;
+            this.icon.set(faEdit);
             return 'notSynced';
         }
     }

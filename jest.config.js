@@ -109,6 +109,11 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/shared/table-view/**',          // table view module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/components/buttons/**',  // buttons module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/students/**', // exam manage students module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exam/manage/student-exams/**', // exam manage student-exams module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exam/manage/test-runs/**', // exam manage test-runs module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exam/manage/exercise-groups/**', // exam manage exercise groups module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exam/manage/suspicious-behavior/**', // exam manage suspicious behavior module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exam/manage/services/**', // exam manage services module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/feature-toggle/**', // feature-toggle service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/sort/**', // sort directives use vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/user-import/util/**', // user import utils use Vitest (see vitest.config.ts)
@@ -142,6 +147,11 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/atlas/',             // atlas module uses Vitest
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // buttons module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module uses Vitest
+        '<rootDir>/src/main/webapp/app/exam/manage/student-exams/', // exam manage student-exams module uses Vitest
+        '<rootDir>/src/main/webapp/app/exam/manage/test-runs/', // exam manage test-runs module uses Vitest
+        '<rootDir>/src/main/webapp/app/exam/manage/exercise-groups/', // exam manage exercise groups module uses Vitest
+        '<rootDir>/src/main/webapp/app/exam/manage/suspicious-behavior/', // exam manage suspicious behavior module uses Vitest
+        '<rootDir>/src/main/webapp/app/exam/manage/services/', // exam manage services module uses Vitest
         '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives use Vitest
         '<rootDir>/src/main/webapp/app/shared/user-import/util/', // user import utils use Vitest
         '<rootDir>/src/main/webapp/app/shared/table-view/', // table view module uses Vitest
@@ -201,6 +211,11 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module
         '<rootDir>/src/main/webapp/app/atlas/',         // atlas module
         '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module
+        '<rootDir>/src/main/webapp/app/exam/manage/student-exams/', // exam manage student-exams module
+        '<rootDir>/src/main/webapp/app/exam/manage/test-runs/', // exam manage test-runs module
+        '<rootDir>/src/main/webapp/app/exam/manage/exercise-groups/', // exam manage exercise groups module
+        '<rootDir>/src/main/webapp/app/exam/manage/suspicious-behavior/', // exam manage suspicious behavior module
+        '<rootDir>/src/main/webapp/app/exam/manage/services/', // exam manage services module
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
         '<rootDir>/src/main/webapp/app/shared/table-view/', // shared/table-view component
         '<rootDir>/src/main/webapp/app/shared/feature-toggle/', // feature-toggle service (vitest)

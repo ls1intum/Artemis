@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,7 +28,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     styleUrls: ['./exam-participation-cover.scss'],
     imports: [NgClass, ExamLiveEventsButtonComponent, ExamStartInformationComponent, FormsModule, TranslateDirective, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
-export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, OnInit {
+export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private translateService = inject(TranslateService);
     private accountService = inject(AccountService);
@@ -51,24 +51,24 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     readonly onExamEnded = output<StudentExam>();
     readonly onExamContinueAfterHandInEarly = output<void>();
     course?: Course;
-    startEnabled: boolean;
-    endEnabled: boolean;
-    confirmed: boolean;
-    isAttendanceChecked: boolean;
+    readonly startEnabled = signal(false);
+    readonly endEnabled = signal(false);
+    confirmed = false;
+    readonly isAttendanceChecked = signal(false);
 
-    testRun?: boolean;
-    testExam?: boolean;
+    readonly testRun = computed(() => this.studentExam()?.testRun);
+    readonly testExam = computed(() => this.exam()?.testExam);
 
-    formattedGeneralInformation?: SafeHtml;
-    formattedConfirmationText?: SafeHtml;
+    readonly formattedGeneralInformation = signal<SafeHtml | undefined>(undefined);
+    readonly formattedConfirmationText = signal<SafeHtml | undefined>(undefined);
 
     interval: number;
-    waitingForExamStart = false;
-    isFetching = false;
+    readonly waitingForExamStart = signal(false);
+    readonly isFetching = signal(false);
     loadExamSubscription?: Subscription;
-    timeUntilStart = '0';
+    readonly timeUntilStart = signal('0');
 
-    accountName = '';
+    readonly accountName = signal('');
     enteredName = '';
 
     // Icons
@@ -77,37 +77,38 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     faCircleExclamation = faCircleExclamation;
     faDoorClosed = faDoorClosed;
 
-    ngOnInit(): void {
-        const exam = this.exam();
-        this.isAttendanceChecked = exam.testExam || !exam.examWithAttendanceCheck || this.attendanceChecked();
+    constructor() {
+        // mirror previous ngOnChanges behavior reactively
+        effect(() => {
+            const exam = this.exam();
+            const studentExam = this.studentExam();
+            if (!exam || !studentExam) {
+                return;
+            }
+            this.confirmed = false;
+            this.startEnabled.set(false);
+
+            if (this.startView()) {
+                this.examParticipationService.setEndView(false);
+                this.formattedGeneralInformation.set(this.artemisMarkdown.safeHtmlForMarkdown(exam.startText));
+                this.formattedConfirmationText.set(this.artemisMarkdown.safeHtmlForMarkdown(exam.confirmationStartText));
+            } else {
+                this.examParticipationService.setEndView(true);
+                this.formattedGeneralInformation.set(this.artemisMarkdown.safeHtmlForMarkdown(exam.endText));
+                this.formattedConfirmationText.set(this.artemisMarkdown.safeHtmlForMarkdown(exam.confirmationEndText));
+            }
+
+            this.accountService.identity().then((user) => {
+                if (user && user.name) {
+                    this.accountName.set(user.name);
+                }
+            });
+        });
     }
 
-    /**
-     * on changes uses the correct information to display in either start or final view
-     * changes in the exam and subscription is handled in the exam-participation.component
-     * if the student exam changes, we need to update the displayed times
-     */
-    ngOnChanges() {
-        this.confirmed = false;
-        this.startEnabled = false;
-        this.testRun = this.studentExam().testRun;
-        this.testExam = this.exam().testExam;
-
-        if (this.startView()) {
-            this.examParticipationService.setEndView(false);
-            this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam().startText);
-            this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam().confirmationStartText);
-        } else {
-            this.examParticipationService.setEndView(true);
-            this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam().endText);
-            this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam().confirmationEndText);
-        }
-
-        this.accountService.identity().then((user) => {
-            if (user && user.name) {
-                this.accountName = user.name;
-            }
-        });
+    ngOnInit(): void {
+        const exam = this.exam();
+        this.isAttendanceChecked.set(exam.testExam || !exam.examWithAttendanceCheck || this.attendanceChecked());
     }
 
     ngOnDestroy() {
@@ -124,9 +125,9 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      */
     updateConfirmation() {
         if (this.startView()) {
-            this.startEnabled = this.confirmed;
+            this.startEnabled.set(this.confirmed);
         } else {
-            this.endEnabled = this.confirmed;
+            this.endEnabled.set(this.confirmed);
         }
     }
 
@@ -134,7 +135,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      * check if exam already started
      */
     hasStarted(): boolean {
-        if (this.testRun) {
+        if (this.testRun()) {
             return true;
         }
         const exam = this.exam();
@@ -145,21 +146,21 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      * displays popup or start exam participation immediately
      */
     startExam() {
-        if (this.testRun) {
+        if (this.testRun()) {
             const studentExam = this.studentExam();
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam().course!.id!, this.exam().id!, studentExam);
             this.onExamStarted.emit(studentExam);
         } else {
-            this.isFetching = true;
+            this.isFetching.set(true);
             this.loadExamSubscription = this.examParticipationService
                 .loadStudentExamWithExercisesForConduction(this.exam().course!.id!, this.exam().id!, this.studentExam().id!)
                 .subscribe((studentExam: StudentExam) => {
-                    this.isFetching = false;
+                    this.isFetching.set(false);
                     this.examParticipationService.saveStudentExamToLocalStorage(this.exam().course!.id!, this.exam().id!, studentExam);
                     if (this.hasStarted()) {
                         this.onExamStarted.emit(studentExam);
                     } else {
-                        this.waitingForExamStart = true;
+                        this.waitingForExamStart.set(true);
                         if (this.interval) {
                             clearInterval(this.interval);
                         }
@@ -180,13 +181,13 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
         const exam = this.exam();
         if (exam && exam.startDate) {
             if (this.hasStarted()) {
-                this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
+                this.timeUntilStart.set(this.translateService.instant(translationBasePath + 'now'));
                 this.onExamStarted.emit(studentExam);
             } else {
-                this.timeUntilStart = this.relativeTimeText(exam.startDate.diff(this.serverDateService.now(), 'seconds'));
+                this.timeUntilStart.set(this.relativeTimeText(exam.startDate.diff(this.serverDateService.now(), 'seconds')));
             }
         } else {
-            this.timeUntilStart = '';
+            this.timeUntilStart.set('');
         }
     }
 
@@ -222,7 +223,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     }
 
     get startButtonEnabled(): boolean {
-        if (this.testRun) {
+        if (this.testRun()) {
             return this.nameIsCorrect && this.confirmed && !!this.exam();
         }
         const now = this.serverDateService.now();
@@ -238,11 +239,11 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     }
 
     get endButtonEnabled(): boolean {
-        return this.nameIsCorrect && this.confirmed && this.exam() && this.handInPossible();
+        return this.nameIsCorrect && this.confirmed && !!this.exam() && this.handInPossible();
     }
 
     get nameIsCorrect(): boolean {
-        return this.enteredName.trim() === this.accountName.trim();
+        return this.enteredName.trim() === this.accountName().trim();
     }
 
     get inserted(): boolean {

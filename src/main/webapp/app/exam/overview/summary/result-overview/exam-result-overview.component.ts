@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnChanges, OnInit, inject, input } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, effect, inject, input } from '@angular/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -34,7 +34,7 @@ type ResultOverviewSection = 'grading-table' | 'grading-key' | 'bonus-grading-ke
     templateUrl: './exam-result-overview.component.html',
     imports: [TranslateDirective, CollapsibleCardComponent, NgClass, FaIconComponent, NoDataComponent, GradingKeyTableComponent, ArtemisTranslatePipe],
 })
-export class ExamResultOverviewComponent implements OnInit, OnChanges {
+export class ExamResultOverviewComponent implements OnInit {
     private serverDateService = inject(ArtemisServerDateService);
     exerciseService = inject(ExerciseService);
     private changeDetector = inject(ChangeDetectorRef);
@@ -82,15 +82,21 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         'bonus-grading-key': true,
     };
 
+    constructor() {
+        effect(() => {
+            // Re-run whenever any signal input changes
+            this.studentExamWithGrade();
+            this.exerciseInfos();
+            this.isTestRun();
+            this.updateLocalVariables();
+        });
+    }
+
     ngOnInit() {
         if (this.areResultsPublished()) {
             this.setExamGrade();
         }
 
-        this.updateLocalVariables();
-    }
-
-    ngOnChanges() {
         this.updateLocalVariables();
     }
 
