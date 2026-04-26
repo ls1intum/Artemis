@@ -1,0 +1,4 @@
+- name: maven
+  script: mvn clean test
+  resultPaths:
+    - '**/target/surefire-reports/*.xml'

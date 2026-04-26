@@ -151,8 +151,20 @@ public class ProgrammingExerciseFactory {
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(programmingLanguage);
-        programmingExercise.getBuildConfig().setBuildScript("Some script");
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration("{\"api\":\"v0.0.1\",\"metadata\":{},\"actions\":[]}");
+        programmingExercise.getBuildConfig().setBuildScript(null);
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration("""
+                {
+                    "phases": [
+                        {
+                            "name": "gradle",
+                            "script": "chmod +x ./gradlew\\n./gradlew clean test",
+                            "condition": "ALWAYS",
+                            "forceRun": false,
+                            "resultPaths": ["**/test-results/test/*.xml"]
+                        }
+                    ]
+                }
+                """);
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
         }
@@ -198,6 +210,18 @@ public class ProgrammingExerciseFactory {
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {
         ProgrammingExercise toBeImported = new ProgrammingExercise();
         var buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setBuildPlanConfiguration("""
+                {
+                    "phases": [
+                        {
+                            "name": "import exercise",
+                            "script": "echo hello",
+                            "forceRun": false,
+                            "resultPaths": ["somepath"]
+                        }
+                    ]
+                }
+                """);
         toBeImported.setCourse(targetCourse);
         toBeImported.setTitle(title);
         toBeImported.setShortName(shortName);
@@ -478,6 +502,18 @@ public class ProgrammingExerciseFactory {
         programmingExercise.setTitle(title);
         if (programmingExercise.getBuildConfig() == null) {
             programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+            programmingExercise.getBuildConfig().setBuildPlanConfiguration("""
+                    {
+                        "phases": [
+                            {
+                                "name": "test",
+                                "script": "echo hi",
+                                "forceRun": false,
+                                "resultPaths": []
+                            }
+                        ]
+                    }
+                    """);
         }
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);

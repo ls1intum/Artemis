@@ -2,10 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { BuildAction, PlatformAction, ScriptAction } from 'app/programming/shared/entities/build.action';
-import { WindFile } from 'app/programming/shared/entities/wind.file';
-import { WindMetadata } from 'app/programming/shared/entities/wind.metadata';
-import { DockerConfiguration } from 'app/programming/shared/entities/docker.configuration';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities/build-plan-checkout-directories-dto';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -17,11 +13,6 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
     const course = { id: 123 } as Course;
 
     let programmingExercise = new ProgrammingExercise(course, undefined);
-    let windFile: WindFile = new WindFile();
-    let actions: BuildAction[] = [];
-    let gradleBuildAction: ScriptAction = new ScriptAction();
-    let cleanBuildAction: ScriptAction = new ScriptAction();
-    let platformAction: PlatformAction = new PlatformAction();
 
     const submissionBuildPlanCheckoutRepositories: BuildPlanCheckoutDirectoriesDTO = {
         exerciseCheckoutDirectory: '/assignment',
@@ -31,27 +22,7 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
 
     beforeEach(async () => {
         programmingExercise = new ProgrammingExercise(course, undefined);
-        programmingExercise.customizeBuildPlanWithAeolus = true;
-        windFile = new WindFile();
-        const metadata = new WindMetadata();
-        metadata.docker = new DockerConfiguration();
-        metadata.docker.image = 'testImage';
-        windFile.metadata = metadata;
-        actions = [];
-        gradleBuildAction = new ScriptAction();
-        gradleBuildAction.name = 'gradle';
-        gradleBuildAction.script = './gradlew clean test';
-        platformAction = new PlatformAction();
-        platformAction.name = 'platform';
-        platformAction.kind = 'junit';
-        cleanBuildAction = new ScriptAction();
-        cleanBuildAction.name = 'clean';
-        cleanBuildAction.script = `chmod -R 777 .`;
-        actions.push(gradleBuildAction);
-        actions.push(cleanBuildAction);
-        actions.push(platformAction);
-        windFile.actions = actions;
-        programmingExercise.buildConfig!.windfile = windFile;
+        programmingExercise.customizeBuildPlan = true;
 
         await TestBed.configureTestingModule({
             imports: [ProgrammingExerciseEditCheckoutDirectoriesComponent],

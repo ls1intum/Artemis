@@ -49,7 +49,7 @@ export class ProgrammingExercise extends Exercise {
     public templateParticipation?: TemplateProgrammingExerciseParticipation;
     public solutionParticipation?: SolutionProgrammingExerciseParticipation;
     public testRepositoryUri?: string;
-    public customizeBuildPlanWithAeolus?: boolean;
+    public customizeBuildPlan?: boolean;
     public allowOnlineEditor?: boolean;
     public staticCodeAnalysisEnabled?: boolean;
     /**
@@ -115,7 +115,6 @@ export function copyBuildConfigFromExerciseJson(exerciseJson: ProgrammingExercis
     buildConfig.buildPlanConfiguration = exerciseJson.buildPlanConfiguration ?? '';
     buildConfig.checkoutSolutionRepository = exerciseJson.checkoutSolutionRepository ?? false;
     buildConfig.timeoutSeconds = exerciseJson.timeoutSeconds ?? 0;
-    buildConfig.windfile = exerciseJson.windfile ?? undefined;
     buildConfig.buildScript = exerciseJson.buildScript ?? '';
     buildConfig.dockerFlags = exerciseJson.dockerFlags ?? '';
     return buildConfig;

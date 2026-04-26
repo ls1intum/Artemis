@@ -1,0 +1,10 @@
+- name: structural_tests
+  script: |-
+    chmod +x ./gradlew
+    ./gradlew clean structuralTests
+  resultPaths:
+    - '**/test-results/structuralTests/*.xml'
+- name: behavior_tests
+  script: ./gradlew behaviorTests
+  resultPaths:
+    - '**/test-results/behaviorTests/*.xml'

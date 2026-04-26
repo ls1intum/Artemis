@@ -1,0 +1,13 @@
+- name: gradle
+  script: |-
+    chmod +x ./gradlew
+    ./gradlew clean test
+- name: static_code_analysis
+  script: './gradlew check -x test'
+  forceRun: true
+  resultPaths:
+    - target/spotbugsXml.xml
+    - 'target/checkstyle-result.xml'
+    - target/pmd.xml
+    - target/cpd.xml
+    - '**/test-results/test/*.xml'

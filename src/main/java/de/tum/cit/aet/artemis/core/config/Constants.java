@@ -325,11 +325,6 @@ public final class Constants {
     public static final String PROFILE_APOLLON = "apollon";
 
     /**
-     * The name of the Spring profile used for the external Aeolus system.
-     */
-    public static final String PROFILE_AEOLUS = "aeolus";
-
-    /**
      * The name of the Spring profile used for the external LDAP system.
      * Use this profile if you want to synchronize users with an external LDAP system, but you want to route the authentication through another system
      */

@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
-import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -40,7 +39,6 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -50,7 +48,6 @@ import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
@@ -78,11 +75,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final DistributedDataAccessService distributedDataAccessService;
 
-    private final AeolusTemplateService aeolusTemplateService;
+    private final BuildPhasesTemplateService buildPhasesTemplateService;
 
     private final BuildScriptProviderService buildScriptProviderService;
-
-    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
@@ -91,6 +86,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
+
+    private final LegacyBuildPlanConverterService legacyBuildPlanConverterService;
 
     private final GitService gitService;
 
@@ -111,21 +108,21 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     // Arbitrary value to ensure that the build duration is always a bit higher than the actual build duration
     private static final double BUILD_DURATION_SAFETY_FACTOR = 1.1;
 
-    public LocalCITriggerService(DistributedDataAccessService distributedDataAccessService, AeolusTemplateService aeolusTemplateService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, GitService gitService, ExerciseDateService exerciseDateService,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            LocalCIBuildConfigurationService localCIBuildConfigurationService, ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
+    public LocalCITriggerService(DistributedDataAccessService distributedDataAccessService, BuildPhasesTemplateService buildPhasesTemplateService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, GitService gitService,
+            ExerciseDateService exerciseDateService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            LocalCIBuildConfigurationService localCIBuildConfigurationService, LegacyBuildPlanConverterService legacyBuildPlanConverterService,
+            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
             ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository,
             BuildPhaseEvaluationService buildPhaseEvaluationService) {
         this.distributedDataAccessService = distributedDataAccessService;
-        this.aeolusTemplateService = aeolusTemplateService;
-        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+        this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
+        this.legacyBuildPlanConverterService = legacyBuildPlanConverterService;
         this.gitService = gitService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.exerciseDateService = exerciseDateService;
@@ -255,10 +252,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     // -------Helper methods for triggerBuild()-------
 
-    private List<String> getTestResultPaths(Windfile windfile) {
-        return windfile.results().stream().map(result -> LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + result.path()).toList();
-    }
-
     /**
      * Collects all necessary information regarding the repositories involved in the build job processing.
      *
@@ -333,73 +326,37 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
 
-        // Try the new build phases format first
+        programmingExercise.setBuildConfig(buildConfig);
         Optional<BuildPlanPhasesDTO> buildPlanPhasesDTO = buildConfig.getBuildPlanPhases();
-        if (buildPlanPhasesDTO.isPresent()) {
-            return getBuildConfigFromPhases(buildPlanPhasesDTO.orElseThrow(), participation, programmingExercise, buildConfig, commitHashToBuild, assignmentCommitHash,
-                    testCommitHash, branch, programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, dockerRunConfig);
+
+        // legacy exercise handling
+        final boolean shouldFallBackToLegacyHandling = buildPlanPhasesDTO.isEmpty() && buildConfig.getBuildPlanConfiguration() != null && buildConfig.getBuildScript() != null;
+        if (shouldFallBackToLegacyHandling) {
+            LegacyBuildPlanConverterService.DataFromLegacyFormat dataFromLegacyFormat = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise)
+                    .orElse(null);
+            if (dataFromLegacyFormat != null) {
+                return new BuildConfig(dataFromLegacyFormat.buildScript(), dataFromLegacyFormat.dockerImage(), commitHashToBuild, assignmentCommitHash, testCommitHash, branch,
+                        programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, dataFromLegacyFormat.resultPaths(), buildConfig.getTimeoutSeconds(),
+                        buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+            }
+            log.error("The build config with id {} has a build script and plan but the legacy exercise was not able to be interpreted", buildConfig.getId());
         }
 
-        // Fall back to existing windfile path
-        return getBuildConfigFromWindfile(programmingExercise, buildConfig, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
-                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, dockerRunConfig);
-    }
+        final boolean isMissingDefaultPhases = buildPlanPhasesDTO.isEmpty() || buildPlanPhasesDTO.orElseThrow().phases() == null;
+        final List<BuildPhaseDTO> phases = isMissingDefaultPhases ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise)
+                : buildPlanPhasesDTO.orElseThrow().phases();
 
-    /**
-     * Creates a BuildConfig from the new BuildPlanPhases format.
-     * Evaluates phase conditions, assembles the build script from active phases,
-     * and extracts result paths only from active phases.
-     */
-    private BuildConfig getBuildConfigFromPhases(BuildPlanPhasesDTO buildPlanPhasesDTO, ProgrammingExerciseParticipation participation, ProgrammingExercise programmingExercise,
-            ProgrammingExerciseBuildConfig buildConfig, String commitHashToBuild, String assignmentCommitHash, String testCommitHash, String branch,
-            ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean staticCodeAnalysisEnabled, boolean sequentialTestRunsEnabled,
-            DockerRunConfig dockerRunConfig) {
+        final boolean isMissingDefaultDockerImage = buildPlanPhasesDTO.isEmpty() || buildPlanPhasesDTO.orElseThrow().dockerImage() == null;
+        final String dockerImage = isMissingDefaultDockerImage ? buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise)
+                : buildPlanPhasesDTO.orElseThrow().dockerImage();
 
-        final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(buildPlanPhasesDTO, participation);
-
-        // Docker image: use the one stored in BuildPlanPhases, or fall back to language default
-        String dockerImage = buildPlanPhasesDTO.dockerImage();
-        if (dockerImage == null || dockerImage.isBlank()) {
-            dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
-        }
+        final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
 
         final Set<String> gatheredGlobResultPaths = BuildPhaseEvaluationService.gatherResultPaths(activePhases);
         List<String> resultPaths = gatheredGlobResultPaths.stream().map(path -> LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + path).toList();
         resultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
 
-        programmingExercise.setBuildConfig(buildConfig);
-        String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases);
-
-        return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
-                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
-                buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
-    }
-
-    /**
-     * Creates a BuildConfig from the existing Windfile format (backwards compatibility).
-     */
-    private BuildConfig getBuildConfigFromWindfile(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig, String commitHashToBuild,
-            String assignmentCommitHash, String testCommitHash, String branch, ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean staticCodeAnalysisEnabled,
-            boolean sequentialTestRunsEnabled, DockerRunConfig dockerRunConfig) {
-
-        Windfile windfile;
-        String dockerImage;
-        try {
-            windfile = buildConfig.getWindfile();
-            dockerImage = windfile.metadata().docker().getFullImageName();
-        }
-        catch (NullPointerException e) {
-            log.warn("Could not retrieve windfile for programming exercise {}. Using default windfile instead.", programmingExercise.getId());
-            programmingExercise.setBuildConfig(buildConfig); // getDefaultWindfileFor could fail to lazy load build config
-            windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
-            dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
-        }
-
-        List<String> resultPaths = getTestResultPaths(windfile);
-        resultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
-
-        programmingExercise.setBuildConfig(buildConfig);
-        String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
+        final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),

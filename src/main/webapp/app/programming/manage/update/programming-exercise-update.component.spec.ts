@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { WindFile } from 'app/programming/shared/entities/wind.file';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
@@ -664,14 +663,12 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             // WHEN
             fixture.detectChanges();
             comp.programmingExercise.buildConfig!.buildPlanConfiguration = 'some custom build definition';
-            comp.programmingExercise.buildConfig!.windfile = new WindFile();
             tick();
             comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
             comp.onProjectTypeChange(ProjectType.FACT);
 
             // THEN
             expect(comp.programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
-            expect(comp.programmingExercise.buildConfig?.windfile).toBeUndefined();
         }));
     });
 

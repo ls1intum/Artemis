@@ -1,14 +1,9 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins.build_plan;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,24 +23,17 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
-import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusRepository;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.WindfileMetadata;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsEndpoints;
@@ -79,20 +67,9 @@ public class JenkinsBuildPlanService {
 
     private final BuildPlanRepository buildPlanRepository;
 
-    private final Optional<AeolusBuildPlanService> aeolusBuildPlanService;
-
-    @Value("${server.url}")
-    private URL artemisServerUrl;
-
-    @Value("${artemis.continuous-integration.artemis-authentication-token-key}")
-    private String artemisAuthenticationTokenKey;
-
-    @Value("${artemis.continuous-integration.vcs-credentials}")
-    private String vcsCredentials;
-
     public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
             JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService, ProgrammingExerciseRepository programmingExerciseRepository,
-            JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator, BuildPlanRepository buildPlanRepository, Optional<AeolusBuildPlanService> aeolusBuildPlanService,
+            JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator, BuildPlanRepository buildPlanRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.restTemplate = restTemplate;
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
@@ -101,7 +78,6 @@ public class JenkinsBuildPlanService {
         this.jenkinsInternalUrlService = jenkinsInternalUrlService;
         this.jenkinsPipelineScriptCreator = jenkinsPipelineScriptCreator;
         this.buildPlanRepository = buildPlanRepository;
-        this.aeolusBuildPlanService = aeolusBuildPlanService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
@@ -124,18 +100,10 @@ public class JenkinsBuildPlanService {
 
         final String jobFolder = exercise.getProjectKey();
         String job = jobFolder + "-" + planKey;
-        boolean couldCreateBuildPlan = false;
 
-        if (aeolusBuildPlanService.isPresent() && exercise.getBuildConfig().getBuildPlanConfiguration() != null) {
-            var createdJob = createCustomAeolusBuildPlanForExercise(exercise, jobFolder + "/" + job, internalRepositoryUris.assignmentRepositoryUri(),
-                    internalRepositoryUris.testRepositoryUri(), internalRepositoryUris.solutionRepositoryUri());
-            couldCreateBuildPlan = createdJob != null;
-        }
-        if (!couldCreateBuildPlan) {
-            // create build plan in database first, otherwise the job in Jenkins cannot find it for the initial build
-            jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
-            jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
-        }
+        // create build plan in database first, otherwise the job in Jenkins cannot find it for the initial build
+        jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
+        jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
 
         triggerBuild(jobFolder, job);
     }
@@ -396,47 +364,5 @@ public class JenkinsBuildPlanService {
         catch (HttpClientErrorException e) {
             throw new JenkinsException("Unable to enable plan " + planKey + "; statusCode=" + e.getStatusCode() + "; body=" + e.getResponseBodyAsString());
         }
-    }
-
-    /**
-     * Creates a custom Build Plan for a Programming Exercise using Aeolus. If the build plan could not be created, null is
-     * returned. Example: "PROJECT-BUILDPLANKEY" is created -> "PROJECT-BUILDPLANKEY" is returned, same as the
-     * default build plan creation.
-     *
-     * @param programmingExercise   the programming exercise for which to create the build plan
-     * @param buildPlanId           the id of the build plan
-     * @param repositoryUri         the url of the assignment repository
-     * @param testRepositoryUri     the url of the test repository
-     * @param solutionRepositoryUri the url of the solution repository
-     * @return the key of the created build plan, or null if it could not be created
-     */
-    private String createCustomAeolusBuildPlanForExercise(ProgrammingExercise programmingExercise, String buildPlanId, VcsRepositoryUri repositoryUri,
-            VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri) throws ContinuousIntegrationBuildPlanException {
-        if (aeolusBuildPlanService.isEmpty() || programmingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
-            return null;
-        }
-        try {
-            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
-            Windfile windfile = buildConfig.getWindfile();
-            Map<String, AeolusRepository> repositories = aeolusBuildPlanService.get().createRepositoryMapForWindfile(programmingExercise.getProgrammingLanguage(),
-                    buildConfig.getBranch(), buildConfig.getCheckoutSolutionRepository(), repositoryUri, testRepositoryUri, solutionRepositoryUri, List.of());
-
-            String resultHookUrl = artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH;
-            var metadata = new WindfileMetadata(programmingExercise.getProjectName(), buildPlanId, "planDescription", null, vcsCredentials, null, resultHookUrl,
-                    artemisAuthenticationTokenKey);
-            windfile = new Windfile(windfile, metadata, repositories);
-            String generatedKey = aeolusBuildPlanService.get().publishBuildPlan(windfile, AeolusTarget.JENKINS);
-
-            if (generatedKey != null && generatedKey.contains("-")) {
-                return buildPlanId;
-            }
-            else {
-                throw new ContinuousIntegrationBuildPlanException("Could not create custom build plan for exercise " + programmingExercise.getTitle());
-            }
-        }
-        catch (ContinuousIntegrationBuildPlanException | JsonProcessingException e) {
-            log.error("Custom build plan creation for exercise {} with id {} failed -> use default build plan", programmingExercise.getTitle(), programmingExercise.getId(), e);
-        }
-        return null;
     }
 }

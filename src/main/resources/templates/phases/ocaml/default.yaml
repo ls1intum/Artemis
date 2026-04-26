@@ -1,0 +1,11 @@
+- name: build_and_test_the_code
+  script: |-
+    cd "${testWorkingDirectory}"
+    # the build process is specified in `run.sh` in the test repository
+    chmod +x run.sh
+    ./run.sh -s
+- name: junit
+  script: '#empty script action, just for the results'
+  forceRun: true
+  resultPaths:
+    - 'test-reports/*.xml'

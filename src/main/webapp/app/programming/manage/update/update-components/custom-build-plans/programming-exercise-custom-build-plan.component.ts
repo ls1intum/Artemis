@@ -1,16 +1,14 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { AeolusService } from 'app/programming/shared/services/aeolus.service';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
-import { ASSIGNMENT_REPO_NAME, TEST_REPO_NAME } from 'app/shared/constants/input.constants';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
-import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
-import { ScriptAction } from 'app/programming/shared/entities/build.action';
-import { WindFile } from 'app/programming/shared/entities/wind.file';
+import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, BuildPlanPhases, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { LegacyBuildPlanConverterService } from 'app/programming/shared/services/legacy-build-plan-converter.service';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -19,7 +17,8 @@ import { WindFile } from 'app/programming/shared/entities/wind.file';
     imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, BuildPhasesEditorComponent],
 })
 export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, OnInit {
-    private aeolusService = inject(AeolusService);
+    private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
+    private legacyBuildPlanConverterService = inject(LegacyBuildPlanConverterService);
 
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
@@ -45,31 +44,41 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
     } as BuildPlanPhases;
 
     ngOnInit() {
-        const configJson = this.programmingExercise.buildConfig?.buildPlanConfiguration;
+        const buildConfig = this.programmingExercise.buildConfig;
+        const configJson = buildConfig?.buildPlanConfiguration;
         if (configJson) {
             try {
-                const parsed = JSON.parse(configJson);
+                const parsed = parseBuildPlanPhases(configJson);
                 if (parsed?.phases?.length) {
                     this.buildPlanPhases = parsed as BuildPlanPhases;
                     return;
                 }
             } catch {
-                // Not valid JSON or not phases format
+                // handled by legacy fallback below
             }
         }
 
-        const windfile = this.programmingExercise.buildConfig?.windfile;
-        if (windfile?.actions?.length) {
-            this.buildPlanPhases = this.buildPlanFromWindfile(windfile);
+        const legacyBuildScript = buildConfig?.buildScript;
+        if (!legacyBuildScript?.trim() || !this.programmingExercise.programmingLanguage) {
+            this.resetCustomBuildPlan();
             return;
         }
+
+        // convert legacy format to the new phases
+        const convertedBuildPlanPhases = this.legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(legacyBuildScript, configJson);
+        if (convertedBuildPlanPhases) {
+            this.buildPlanPhases = convertedBuildPlanPhases;
+            return;
+        }
+
+        this.resetCustomBuildPlan();
     }
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.programmingExerciseCreationConfig || changes.programmingExercise) {
             if (this.shouldReloadTemplate()) {
                 const isImportFromFile = changes.programmingExerciseCreationConfig?.currentValue?.isImportFromFile ?? false;
-                this.loadAeolusTemplate(isImportFromFile);
+                this.loadBuildPhasesTemplate(isImportFromFile);
             }
         }
     }
@@ -89,7 +98,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
      * @private
      */
     resetCustomBuildPlan() {
-        this.programmingExercise.buildConfig!.windfile = undefined;
         this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
         this.programmingExercise.buildConfig!.buildScript = undefined;
     }
@@ -100,7 +108,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
      * @param isImportFromFile whether the exercise is imported from a file
      * @private
      */
-    loadAeolusTemplate(isImportFromFile: boolean = false) {
+    loadBuildPhasesTemplate(isImportFromFile: boolean = false) {
         if (!this.programmingExercise.programmingLanguage) {
             return;
         }
@@ -109,23 +117,21 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
         this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         this.sequentialTestRuns = this.programmingExercise.buildConfig?.sequentialTestRuns;
         this.isImportFromFile = isImportFromFile;
-        if (!isImportFromFile || !this.programmingExercise.buildConfig?.windfile) {
-            this.aeolusService.getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
-                next: (file) => {
-                    this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(file);
-                    const windfile = this.programmingExercise.buildConfig!.windfile;
-                    if (!windfile?.actions?.length) {
+        if (!isImportFromFile || !this.programmingExercise.buildConfig?.buildPlanConfiguration) {
+            this.buildPhasesTemplateService.getTemplate(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
+                next: (buildPlanPhases) => {
+                    if (!buildPlanPhases?.phases?.length) {
                         return;
                     }
-                    this.buildPlanPhases = this.buildPlanFromWindfile(windfile);
+                    this.buildPlanPhases = buildPlanPhases;
                 },
                 error: () => {
-                    this.programmingExercise.buildConfig!.windfile = undefined;
+                    this.resetCustomBuildPlan();
                 },
             });
         }
         this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-        if (!this.programmingExercise.buildConfig?.windfile) {
+        if (!this.programmingExercise.buildConfig?.buildPlanConfiguration) {
             this.resetCustomBuildPlan();
         }
         if (!this.programmingExercise.buildConfig?.timeoutSeconds) {
@@ -171,41 +177,5 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
 
     setTimeout(timeout: number) {
         this.programmingExercise.buildConfig!.timeoutSeconds = timeout;
-    }
-
-    replacePlaceholders(buildScript: string): string {
-        const assignmentRepoName = this.programmingExercise.buildConfig?.assignmentCheckoutPath || ASSIGNMENT_REPO_NAME;
-        const testRepoName = this.programmingExercise.buildConfig?.testCheckoutPath || TEST_REPO_NAME;
-        buildScript = buildScript.replaceAll('${studentParentWorkingDirectoryName}', assignmentRepoName);
-        buildScript = buildScript.replaceAll('${testWorkingDirectory}', testRepoName);
-        return buildScript;
-    }
-
-    /**
-     * Converts windfile actions into BuildPlanPhases format.
-     * Only ScriptActions (actions with a script property) are included.
-     * @param windfile The windfile containing actions to convert
-     * @returns BuildPlanPhases with one phase per script action and the docker image
-     */
-    private buildPlanFromWindfile(windfile: WindFile): BuildPlanPhases {
-        const phases: BuildPhase[] = windfile.actions
-            .filter((action): action is ScriptAction => 'script' in action && !!action.script)
-            .map((action) => ({
-                name: action.name || '',
-                script: this.wrapScriptWithWorkdir(action.script, action.workdir),
-                condition: 'ALWAYS' as const,
-                forceRun: action.runAlways,
-                resultPaths: (action.results ?? []).map((r) => r.path).filter((p): p is string => !!p),
-            }));
-        const dockerImage = windfile.metadata?.docker?.image;
-        return { phases, dockerImage };
-    }
-
-    private wrapScriptWithWorkdir(script: string, workdir?: string): string {
-        if (!workdir?.trim()) {
-            return this.replacePlaceholders(script);
-        }
-
-        return this.replacePlaceholders(`ORIGINAL_DIR="$(pwd)"\ncd "${workdir}"\n${script}\ncd "$ORIGINAL_DIR"`);
     }
 }

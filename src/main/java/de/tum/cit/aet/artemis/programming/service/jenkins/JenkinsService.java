@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
 import java.net.URI;
 import java.util.Map;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,21 +15,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanService;
@@ -43,8 +37,6 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
 
-    private final ObjectMapper mapper = JsonObjectMapper.get();
-
     @Value("${artemis.continuous-integration.url}")
     private URI jenkinsServerUri;
 
@@ -54,20 +46,13 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    private final Optional<AeolusTemplateService> aeolusTemplateService;
-
-    private final ProfileService profileService;
-
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     public JenkinsService(@Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, JenkinsBuildPlanService jenkinsBuildPlanService,
-            JenkinsJobService jenkinsJobService, Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            JenkinsJobService jenkinsJobService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
-        this.aeolusTemplateService = aeolusTemplateService;
-        this.profileService = profileService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
@@ -78,7 +63,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException {
+    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
         final String projectKey = exercise.getProjectKey();
 
         if (!jenkinsBuildPlanService.projectFolderExists(projectKey)) {
@@ -88,30 +73,8 @@ public class JenkinsService implements ContinuousIntegrationService {
         deleteBuildPlan(projectKey, exercise.getTemplateBuildPlanId());
         deleteBuildPlan(projectKey, exercise.getSolutionBuildPlanId());
 
-        if (exercise.getBuildConfig().getBuildPlanConfiguration() != null) {
-            resetCustomBuildPlanToTemplate(exercise);
-        }
-
         jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURI(RepositoryType.TEMPLATE));
         jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURI(RepositoryType.SOLUTION));
-    }
-
-    /**
-     * Reset the custom build plan to the template build plan configuration provided by the Aeolus template service.
-     *
-     * @param exercise the programming exercise for which the build plan should be reset
-     */
-    private void resetCustomBuildPlanToTemplate(ProgrammingExercise exercise) throws JsonProcessingException {
-        if (aeolusTemplateService.isEmpty()) {
-            return;
-        }
-        Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(exercise);
-        if (windfile != null) {
-            exercise.getBuildConfig().setBuildPlanConfiguration(mapper.writeValueAsString(windfile));
-        }
-        if (profileService.isAeolusActive()) {
-            programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
-        }
     }
 
     @Override

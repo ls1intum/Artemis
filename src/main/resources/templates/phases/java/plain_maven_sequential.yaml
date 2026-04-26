@@ -1,0 +1,10 @@
+- name: structural
+  script: |-
+    cd "structural"
+    mvn clean test
+- name: behavior
+  script: |-
+    cd "behavior"
+    mvn clean test
+  resultPaths:
+    - '**/target/surefire-reports/*.xml'

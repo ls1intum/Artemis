@@ -1,0 +1,10 @@
+- name: install_dependencies
+  script: |-
+    cd "${testWorkingDirectory}"
+    bundler install
+- name: test
+  script: |-
+    cd "${testWorkingDirectory}"
+    bundler exec rake ci:test
+  resultPaths:
+    - '${testWorkingDirectory}/report.xml'

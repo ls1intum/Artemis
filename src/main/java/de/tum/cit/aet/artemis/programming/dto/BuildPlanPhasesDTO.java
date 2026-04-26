@@ -1,60 +1,57 @@
 package de.tum.cit.aet.artemis.programming.dto;
 
-import java.util.Collections;
 import java.util.List;
 
 import jakarta.validation.Valid;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusResult;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 
 @JsonInclude()
 public record BuildPlanPhasesDTO(List<@Valid BuildPhaseDTO> phases, String dockerImage) {
 
-    private static final ObjectMapper mapper = JsonObjectMapper.get();
+    private static final ObjectMapper mapper = JsonObjectMapper.get().copy().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
 
     /**
-     * Converts a {@link Windfile} into the {@link BuildPlanPhasesDTO} format.
-     * Each {@link ScriptAction} in the windfile becomes a {@link BuildPhaseDTO} with condition {@link BuildPhaseCondition#ALWAYS}.
-     * The docker image is extracted from the windfile metadata.
+     * Deserializes a JSON string representation to a {@link BuildPlanPhasesDTO} object
      *
-     * @param windfile the windfile to convert
-     * @return the converted {@link BuildPlanPhasesDTO}, never null
+     * @param buildPlanConfiguration the JSON String representation
+     * @return the new {@link BuildPlanPhasesDTO} object
+     * @throws JsonProcessingException if the JSON is invalid or has unknown keys
      */
-    public static BuildPlanPhasesDTO fromWindfile(Windfile windfile) {
-        List<BuildPhaseDTO> phases = windfile.scriptActions().stream().map(action -> {
-            final List<String> resultPaths = action.results() != null ? action.results().stream().map(AeolusResult::path).toList() : Collections.emptyList();
-            final String script = prependWorkdir(action.script(), action.workdir());
-            return new BuildPhaseDTO(action.name(), script, BuildPhaseCondition.ALWAYS, action.runAlways(), resultPaths);
-        }).toList();
-
-        String dockerImage = null;
-        if (windfile.metadata() != null && windfile.metadata().docker() != null) {
-            dockerImage = windfile.metadata().docker().getFullImageName();
-        }
-
-        return new BuildPlanPhasesDTO(phases, dockerImage);
-    }
-
-    private static String prependWorkdir(String script, String workdir) {
-        if (workdir == null || workdir.isBlank()) {
-            return script;
-        }
-
-        return "cd \"" + workdir + "\"\n" + script;
-    }
-
     public static BuildPlanPhasesDTO fromBuildPlanConfiguration(String buildPlanConfiguration) throws JsonProcessingException {
         return mapper.readValue(buildPlanConfiguration, BuildPlanPhasesDTO.class);
     }
 
+    /**
+     * Checks whether a JSON string is a {@link BuildPlanPhasesDTO}
+     *
+     * @param buildPlanConfiguration the JSON string to check
+     * @return true if valid else false
+     */
+    public static boolean isInPhasesFormat(String buildPlanConfiguration) {
+        if (buildPlanConfiguration == null) {
+            return true;
+        }
+        try {
+            fromBuildPlanConfiguration(buildPlanConfiguration);
+        }
+        catch (JsonProcessingException e) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Serializes this to a JSON string representation
+     *
+     * @return the JSON string
+     * @throws JsonProcessingException if there was an issue with serialization
+     */
     public String toBuildPlanConfiguration() throws JsonProcessingException {
         return mapper.writeValueAsString(this);
     }

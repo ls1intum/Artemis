@@ -1,0 +1,13 @@
+- name: structural
+  script: |-
+    cd "structural"
+    mvn clean test
+- name: behavior
+  script: |-
+    cd "behavior"
+    mvn clean test
+- name: junit
+  script: '#empty script action, just for the results'
+  forceRun: true
+  resultPaths:
+    - '**/target/surefire-reports/*.xml'

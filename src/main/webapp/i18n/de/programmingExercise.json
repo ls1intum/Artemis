@@ -129,7 +129,6 @@
             "buildPlanEditor": "Build-Plan-Editor",
             "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen, der hier bearbeitet werden kann.",
             "customizeBuildPlan": "Build Konfiguration anpassen",
-            "customizeBuildPlanWithAeolus": "Build Konfiguration anpassen",
             "revertToTemplateBuildPlan": "Artemis führt das folgende Build-Skript für jede Einreichung in einem Docker-Container aus. Du kannst das Build Skript anpassen und auf seinen Standardwert zurücksetzen, indem du die Schaltfläche Zurücksetzen oben verwendest.",
             "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
             "script": "Build Script",
@@ -817,8 +816,7 @@
             },
             "withDependencies": "Mit beispielhafter Abhängigkeit",
             "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
-            "customizeBuildPlansWithAeolusTooltip": "Aktiviere diese Option, um das Docker Image und das Build Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker Container ausgeführt wird.",
-            "customizeBuildPlansTooltip": "Aktiviere diese Option, um das Docker Image und das Build Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker Container ausgeführt wird.",
+            "customizeBuildPlanTooltip": "Aktiviere diese Option, um das Docker-Image und das Build-Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker-Container ausgeführt wird.",
             "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
             "studentDownloadTestsTooltip": "Hier kannst du die Tests runterladen. Die Beispiellösung wird automatisch an der Stelle eingefügt an der du deine Lösung platzieren musst, um diese zu testen.",
             "commitInfo": {

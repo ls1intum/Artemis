@@ -1,0 +1,18 @@
+- name: install_student_dependencies
+  script: |-
+    cd "${studentParentWorkingDirectoryName}"
+    dart pub get
+- name: install_dependencies
+  script: |-
+    cd "${testWorkingDirectory}"
+    dart pub get
+- name: static_code_analysis
+  script: 'dart analyze --format=json "${studentParentWorkingDirectoryName}" | analyze_sarif --srcroot "${studentParentWorkingDirectoryName}" --output ''dart_analyze.sarif'''
+  resultPaths:
+    - dart_analyze.sarif
+- name: test
+  script: |-
+    cd "${testWorkingDirectory}"
+    dart test --reporter=json | tojunit | xmlstarlet ed -d '//failure/@message' -d '//error/@message' > report.xml
+  resultPaths:
+    - '${testWorkingDirectory}/report.xml'

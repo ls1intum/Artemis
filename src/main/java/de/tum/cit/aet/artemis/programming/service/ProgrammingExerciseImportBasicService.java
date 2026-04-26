@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -153,6 +154,10 @@ public class ProgrammingExerciseImportBasicService {
             // this means the user did not override the build plan config when importing the
             // exercise and want to reuse it from the existing exercise
             newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
+        }
+        if (!BuildPlanPhasesDTO.isInPhasesFormat(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())
+                && newProgrammingExercise.getBuildConfig().getBuildScript() == null) {
+            newProgrammingExercise.getBuildConfig().setBuildScript(originalProgrammingExercise.getBuildConfig().getBuildScript());
         }
 
         // Hints, tasks, test cases and static code analysis categories

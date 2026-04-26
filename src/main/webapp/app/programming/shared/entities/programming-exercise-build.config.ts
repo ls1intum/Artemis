@@ -1,5 +1,3 @@
-import { WindFile } from 'app/programming/shared/entities/wind.file';
-
 export class ProgrammingExerciseBuildConfig {
     public sequentialTestRuns?: boolean;
     public buildPlanConfiguration?: string;
@@ -10,7 +8,6 @@ export class ProgrammingExerciseBuildConfig {
     public solutionCheckoutPath?: string;
     public timeoutSeconds?: number;
     public dockerFlags?: string;
-    public windfile?: WindFile;
     public theiaImage?: string;
     public allowBranching: boolean;
     public branchRegex: string;

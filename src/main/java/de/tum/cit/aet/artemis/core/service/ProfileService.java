@@ -80,15 +80,6 @@ public class ProfileService {
     // Sub-system profiles
 
     /**
-     * Checks if the aeolus profile is active
-     *
-     * @return true if the aeolus profile is active, false otherwise
-     */
-    public boolean isAeolusActive() {
-        return isProfileActive(Constants.PROFILE_AEOLUS);
-    }
-
-    /**
      * Checks if the production profile is active
      *
      * @return true if the production profile is active, false otherwise

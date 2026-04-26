@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIA
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -96,10 +98,12 @@ public class ProgrammingExerciseValidationService {
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
+    private final ProfileService profileService;
+
     public ProgrammingExerciseValidationService(AuxiliaryRepositoryService auxiliaryRepositoryService, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService,
-            Optional<VersionControlService> versionControlService1, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
+            Optional<VersionControlService> versionControlService1, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProfileService profileService) {
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionPolicyService = submissionPolicyService;
@@ -108,6 +112,7 @@ public class ProgrammingExerciseValidationService {
         this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
         this.versionControlService = versionControlService1;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
+        this.profileService = profileService;
     }
 
     /**
@@ -285,17 +290,21 @@ public class ProgrammingExerciseValidationService {
      * @param programmingExercise the programming exercise to validate
      */
     public void validateBuildPhaseNames(ProgrammingExercise programmingExercise) {
-        Optional<BuildPlanPhasesDTO> buildPlanPhasesOptional = programmingExercise.getBuildConfig().getBuildPlanPhases();
-        if (buildPlanPhasesOptional.isEmpty()) {
+        if (!profileService.isLocalCIActive()) {
             return;
         }
-        BuildPlanPhasesDTO buildPlanPhases = buildPlanPhasesOptional.orElseThrow();
-        if (buildPlanPhases.phases() == null || buildPlanPhases.phases().isEmpty()) {
+
+        List<BuildPhaseDTO> phases = programmingExercise.getBuildConfig().getBuildPlanPhases().map(BuildPlanPhasesDTO::phases).orElse(null);
+        if (phases == null) {
+            return;
+        }
+
+        if (phases.isEmpty()) {
             throw new BadRequestAlertException("Build plan must include at least one phase", "programmingExercise", "noBuildPhases");
         }
 
         Set<String> normalizedNames = new HashSet<>();
-        for (BuildPhaseDTO phase : buildPlanPhasesOptional.orElseThrow().phases()) {
+        for (BuildPhaseDTO phase : phases) {
             if (phase == null || phase.name() == null || !BuildPhaseDTO.BUILD_PHASE_NAME_PATTERN.matcher(phase.name()).matches()) {
                 throw new BadRequestAlertException("Invalid build phase name", "programmingExercise", "invalidBuildPhaseName");
             }

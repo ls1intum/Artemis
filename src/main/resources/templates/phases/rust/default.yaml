@@ -1,0 +1,6 @@
+- name: build
+  script: 'cargo build --tests --profile test'
+- name: run_all_tests
+  script: 'cargo nextest run --profile ci'
+  resultPaths:
+    - target/nextest/ci/junit.xml

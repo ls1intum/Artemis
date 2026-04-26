@@ -39,7 +39,6 @@ describe('ProgrammingExercise Docker Image', () => {
         fixture.componentRef.setInput('dockerImage', 'testImage');
         fixture.componentRef.setInput('timeout', 10);
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
-        fixture.componentRef.setInput('isAeolus', false);
     });
 
     afterEach(() => {

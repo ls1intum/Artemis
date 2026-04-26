@@ -507,47 +507,6 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createProgrammingExercise_custom_build_plan_validExercise_created(ProgrammingLanguage programmingLanguage, boolean customBuildPlanWorks) throws Exception {
-        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course, programmingLanguage);
-        String validWindfile = """
-                {
-                  "api": "v0.0.1",
-                  "metadata": {
-                    "name": "example windfile",
-                    "description": "example windfile",
-                    "id": "example-windfile"
-                  },
-                  "actions": [
-                    {
-                      "name": "valid-action",
-                      "class": "script-action",
-                      "script": "echo $PATH",
-                      "runAlways": true
-                    },
-                    {
-                      "name": "valid-action1",
-                      "platform": "jenkins",
-                      "runAlways": true
-                    },
-                    {
-                      "name": "valid-action2",
-                      "script": "bash script",
-                      "runAlways": true
-                    }
-                  ]
-                }""";
-
-        exercise.getBuildConfig().setBuildPlanConfiguration(validWindfile);
-        if (programmingLanguage == C) {
-            exercise.setProjectType(ProjectType.FACT);
-        }
-        exercise.setChannelName("testchannel-pe");
-        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false, true, customBuildPlanWorks);
-        validateProgrammingExercise(request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
-    }
-
-    // TEST
     public void createProgrammingExercise_mode_validExercise_created(ExerciseMode mode) throws Exception {
         exercise.setMode(mode);
         exercise.setChannelName("testchannel-pe");
