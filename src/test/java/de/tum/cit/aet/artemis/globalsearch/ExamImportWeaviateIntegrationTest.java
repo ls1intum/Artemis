@@ -87,6 +87,7 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         for (ExerciseGroup group : importedExam.getExerciseGroups()) {
             group.setExam(importedExam);
             for (Exercise exercise : group.getExercises()) {
+                exercise.setExerciseGroup(group);
                 assertExerciseExistsInWeaviate(weaviateService, exercise);
                 assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), importedExam);
             }
@@ -136,6 +137,7 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         for (ExerciseGroup group : groupsWithExercises) {
             group.setExam(targetExam);
             for (Exercise exercise : group.getExercises()) {
+                exercise.setExerciseGroup(group);
                 assertExerciseExistsInWeaviate(weaviateService, exercise);
                 assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), targetExam);
             }
