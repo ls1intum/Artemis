@@ -101,7 +101,8 @@ export class ExamManagementPage {
         await this.page.goto(`/course-management/${courseID}/exams/${examID}/students`);
         await this.page.waitForLoadState('networkidle');
         const row = this.page.locator('tbody tr', { hasText: username }).first();
-        await row.getByRole('button', { name: 'View exam' }).click();
+        await row.waitFor({ state: 'visible' });
+        await row.getByRole('link', { name: 'View exam' }).click();
         await this.page.locator('.summery').click();
         await expect(this.page.locator('#exercise-result-score')).toHaveText(score, { useInnerText: true });
     }
