@@ -29,6 +29,7 @@ import { AnswerPostCreateEditModalComponent } from '../posting-create-edit-modal
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -58,6 +59,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
         CdkConnectedOverlay,
         EmojiPickerComponent,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
     ],
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnDestroy {
