@@ -132,7 +132,7 @@ describe('Test Run Management Component', () => {
             expect(component.testRuns()).toHaveLength(3);
         });
 
-        it('should correctly catch error after creating test run', () => {
+        it('should correctly catch error after creating test run', async () => {
             const alertService = TestBed.inject(AlertService);
             const exercise = { id: 1 } as Exercise;
             const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
@@ -151,6 +151,7 @@ describe('Test Run Management Component', () => {
             expect(createTestRunButton).toBeTruthy();
             expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
             createTestRunButton.nativeElement.click();
+            await result;
             expect(alertService.error).toHaveBeenCalledOnce();
         });
     });

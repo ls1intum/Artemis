@@ -278,7 +278,7 @@ describe('StudentExamsComponent', () => {
         expect(translationSpy).toHaveBeenCalledWith(errorDetailString);
     });
 
-    it('should generate student exams after warning the user that the existing are deleted', () => {
+    it('should generate student exams after warning the user that the existing are deleted', async () => {
         course.isAtLeastInstructor = true;
         exam.startDate = dayjs().add(120, 'seconds');
 
@@ -301,6 +301,7 @@ describe('StudentExamsComponent', () => {
         expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toBe(true);
         generateStudentExamsButton.nativeElement.click();
         expect(modalServiceOpenStub).toHaveBeenCalledOnce();
+        await result;
         expect(generateStudentExamsSpy).toHaveBeenCalledOnce();
         expect(studentExamsComponent.studentExams).toHaveLength(2);
     });

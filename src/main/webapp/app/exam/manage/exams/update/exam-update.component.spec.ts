@@ -507,7 +507,7 @@ describe('ExamUpdateComponent', () => {
 
         it('should call the back method on the nav util service on previousState', () => {
             const navUtilService = TestBed.inject(ArtemisNavigationUtilService);
-            const spy = vi.spyOn(navUtilService, 'navigateBackWithOptional').mockImplementation();
+            const spy = vi.spyOn(navUtilService, 'navigateBackWithOptional').mockImplementation(() => undefined);
             component.course = course;
             component.exam = examWithoutExercises;
             examWithoutExercises.id = 1;
