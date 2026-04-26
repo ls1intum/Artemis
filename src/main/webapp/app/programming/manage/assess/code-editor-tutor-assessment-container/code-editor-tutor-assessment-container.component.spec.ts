@@ -594,6 +594,38 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.submission).toBeUndefined();
     });
 
+    it('should ask for confirmation before going to next submission when there are pending changes', fakeAsync(() => {
+        const routerStub = jest.spyOn(router, 'navigate');
+
+        comp.ngOnInit();
+        tick(100);
+        comp.hasPendingChanges = true;
+        global.confirm = () => true;
+        const confirmSpy = jest.spyOn(window, 'confirm');
+        comp.nextSubmission();
+
+        expect(confirmSpy).toHaveBeenCalledOnce();
+        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
+        expect(routerStub).toHaveBeenCalledOnce();
+        flush();
+    }));
+
+    it('should not go to next submission when user cancels the pending changes confirmation', fakeAsync(() => {
+        const routerStub = jest.spyOn(router, 'navigate');
+
+        comp.ngOnInit();
+        tick(100);
+        comp.hasPendingChanges = true;
+        global.confirm = () => false;
+        const confirmSpy = jest.spyOn(window, 'confirm');
+        comp.nextSubmission();
+
+        expect(confirmSpy).toHaveBeenCalledOnce();
+        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).not.toHaveBeenCalled();
+        expect(routerStub).not.toHaveBeenCalled();
+        flush();
+    }));
+
     it.each([undefined, 'genericErrorKey', 'complaintLock'])(
         'should update assessment after complaint, errorKeyFromServer=%s',
         fakeAsync((errorKeyFromServer: string | undefined) => {
