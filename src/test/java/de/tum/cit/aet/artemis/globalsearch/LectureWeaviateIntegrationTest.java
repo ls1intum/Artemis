@@ -138,12 +138,15 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         LectureSeriesCreateLectureDTO newLectureDTO = new LectureSeriesCreateLectureDTO("Lecture 3", date2, date2.plusHours(1));
         request.postWithoutResponseBody("/api/lecture/courses/" + course.getId() + "/lectures", List.of(newLectureDTO), HttpStatus.NO_CONTENT);
 
-        // Find the newly created lecture (the one with start date = date2)
-        Lecture newLecture = lectureRepository.findAllByCourseId(course.getId()).stream()
-                .filter(l -> l.getStartDate() != null && l.getStartDate().toInstant().equals(date2.toInstant())).findFirst().orElseThrow();
+        // Find the newly created lecture (the one that is neither existingLecture1 nor existingLecture2)
+        long existingId1 = existingLecture1.getId();
+        long existingId2 = existingLecture2.getId();
+        Lecture newLecture = lectureRepository.findAllByCourseId(course.getId()).stream().filter(l -> l.getId() != existingId1 && l.getId() != existingId2).findFirst()
+                .orElseThrow();
 
         // Verify the title was corrected in the database
         assertThat(newLecture.getTitle()).isEqualTo("Lecture 2");
+        assertThat(newLecture.getStartDate().toInstant()).isEqualTo(date2.toInstant());
 
         // Verify Weaviate has the corrected title, not the original "Lecture 3"
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
