@@ -101,6 +101,7 @@ jhi-quiz-question-list-edit {
 
 .section-card--save {
     overflow: visible;
+
     --section-bg-start: transparent;
 }
 
@@ -143,13 +144,13 @@ jhi-quiz-question-list-edit {
         background 0.2s,
         box-shadow 0.2s;
 
-    &:hover:not(:disabled) {
-        background: color-mix(in srgb, var(--success) 80%, black);
-    }
-
     &:disabled {
         opacity: 0.55;
         cursor: not-allowed;
+    }
+
+    &:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--success) 80%, black);
     }
 }
 

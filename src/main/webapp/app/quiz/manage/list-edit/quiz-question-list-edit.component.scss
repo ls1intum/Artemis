@@ -78,17 +78,6 @@
         padding: 1.25rem 1.5rem;
     }
 
-    .add-question-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        padding-top: 1rem;
-
-        .add-question-btn {
-            flex: 1;
-        }
-    }
-
     .add-question-btn {
         display: inline-flex;
         align-items: center;
@@ -109,6 +98,17 @@
             border-color: var(--section-color, var(--bs-primary));
             color: var(--section-color, var(--bs-primary));
             background: var(--section-bg-start, rgba(var(--bs-primary-rgb), 0.04));
+        }
+    }
+
+    .add-question-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding-top: 1rem;
+
+        .add-question-btn {
+            flex: 1;
         }
     }
 
