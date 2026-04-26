@@ -181,7 +181,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }));
 
     // Template refs
-    readonly idCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('idCellTemplate');
     readonly repositoryCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('repositoryCellTemplate');
     readonly initStateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('initStateCellTemplate');
     readonly initDateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('initDateCellTemplate');
@@ -197,15 +196,33 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         const ex = this.exercise();
         if (!ex) return [];
 
-        const cols: ColumnDef<ParticipationManagementDTO>[] = [
-            {
-                headerKey: 'global.field.id',
-                field: 'participationId',
-                width: '80px',
+        const cols: ColumnDef<ParticipationManagementDTO>[] = [];
+
+        if (!ex.teamMode) {
+            cols.push({
+                headerKey: 'artemisApp.participation.student',
+                field: 'participantName',
+                width: '140px',
                 sort: true,
-                templateRef: this.idCellTemplate(),
-            },
-        ];
+                templateRef: this.participantNameCellTemplate(),
+            });
+        } else {
+            cols.push(
+                {
+                    headerKey: 'artemisApp.participation.team',
+                    field: 'participantName',
+                    width: '120px',
+                    sort: true,
+                    templateRef: this.participantNameCellTemplate(),
+                },
+                {
+                    headerKey: 'artemisApp.participation.students',
+                    width: '280px',
+                    sort: false,
+                    templateRef: this.teamStudentsCellTemplate(),
+                },
+            );
+        }
 
         if (ex.type === ExerciseType.PROGRAMMING) {
             cols.push({
@@ -239,32 +256,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 templateRef: this.submissionCountCellTemplate(),
             },
         );
-
-        if (!ex.teamMode) {
-            cols.push({
-                headerKey: 'artemisApp.participation.student',
-                field: 'participantName',
-                width: '140px',
-                sort: true,
-                templateRef: this.participantNameCellTemplate(),
-            });
-        } else {
-            cols.push(
-                {
-                    headerKey: 'artemisApp.participation.team',
-                    field: 'participantName',
-                    width: '120px',
-                    sort: true,
-                    templateRef: this.participantNameCellTemplate(),
-                },
-                {
-                    headerKey: 'artemisApp.participation.students',
-                    width: '280px',
-                    sort: false,
-                    templateRef: this.teamStudentsCellTemplate(),
-                },
-            );
-        }
 
         if (ex.type === ExerciseType.PROGRAMMING && this.afterDueDate()) {
             cols.push({

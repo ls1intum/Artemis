@@ -47,6 +47,7 @@ import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -107,6 +108,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly FilterProp = FilterProp;
 
     private readonly route = inject(ActivatedRoute);
+    private readonly accountService = inject(AccountService);
     private readonly courseService = inject(CourseManagementService);
     private readonly exerciseService = inject(ExerciseService);
     private readonly resultService = inject(ResultService);
@@ -138,6 +140,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     readonly course = signal<Course | undefined>(undefined);
     readonly exercise = signal<Exercise | undefined>(undefined);
+    readonly isAdmin = signal(false);
     readonly participations = signal<ParticipationScoreDTO[]>([]);
     readonly totalRows = signal(0);
     readonly isLoading = signal(false);
@@ -170,7 +173,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     // Template refs for cell rendering
     readonly nameCellTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('nameCellTemplate');
-    readonly idCellTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('idCellTemplate');
     readonly completionDateTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('completionDateTemplate');
     readonly lastResultTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('lastResultTemplate');
     readonly assessmentTypeTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('assessmentTypeTemplate');
@@ -196,23 +198,13 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
         const cols: ColumnDef<ParticipationScoreDTO>[] = [
             {
-                headerKey: 'artemisApp.exercise.name',
+                headerKey: 'artemisApp.participation.student',
                 field: 'participantName',
                 width: '180px',
                 sort: true,
                 templateRef: this.nameCellTemplate(),
             },
         ];
-
-        if (!compact) {
-            cols.push({
-                headerKey: ex.teamMode ? 'artemisApp.exercise.teamShortName' : 'artemisApp.exercise.studentId',
-                field: 'participantIdentifier',
-                width: '110px',
-                sort: true,
-                templateRef: this.idCellTemplate(),
-            });
-        }
 
         cols.push(
             {
@@ -279,6 +271,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
+        this.isAdmin.set(this.accountService.isAdmin());
         this.paramSub = this.route.params.subscribe((params) => {
             this.isLoading.set(true);
             const filterValue = this.route.snapshot.queryParamMap.get('scoreRangeFilter');

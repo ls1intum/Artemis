@@ -2,13 +2,6 @@
     <ng-template titleBarTitle>
         <h5 class="mb-0">
             <span jhiTranslate="artemisApp.instructorDashboard.exerciseDashboard"></span>
-            <span class="text-secondary fw-normal mx-1">·</span>
-            <span class="text-secondary fw-normal">
-                @if (exercise()!.exerciseGroup) {
-                    {{ exercise()!.exerciseGroup?.exam?.title }} -
-                }
-                {{ exercise()!.title }}
-            </span>
         </h5>
     </ng-template>
 
@@ -115,22 +108,16 @@
 <!-- Cell templates -->
 
 <ng-template #nameCellTemplate let-cell>
-    @if (exercise()!.isAtLeastInstructor) {
-        <a [routerLink]="getExerciseParticipationsLink(cell.data.participationId)">
+    @if (exercise()!.teamMode) {
+        <a [routerLink]="['/course-management', course()!.id, 'exercises', exercise()!.id, 'teams', cell.data.teamId]">
             {{ cell.data.participantName }}
         </a>
     } @else {
-        <span>{{ cell.data.participantName }}</span>
-    }
-</ng-template>
-
-<ng-template #idCellTemplate let-cell>
-    @if (exercise()!.teamMode) {
-        <a [routerLink]="['/course-management', exercise()!.course?.id, 'exercises', exercise()!.id, 'teams', cell.data.teamId]">
-            {{ cell.data.participantIdentifier }}
-        </a>
-    } @else {
-        {{ cell.data.participantIdentifier }}
+        @if (isAdmin()) {
+            <a routerLink="/admin/user-management/{{ cell.data.participantIdentifier }}">{{ cell.data.participantName }}</a>
+        } @else {
+            {{ cell.data.participantName }}
+        }
     }
 </ng-template>
 

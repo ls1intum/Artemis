@@ -2,13 +2,6 @@
     <ng-template titleBarTitle>
         <h5 class="mb-0">
             <span jhiTranslate="artemisApp.participation.home.title"></span>
-            <span class="text-secondary fw-normal mx-1">·</span>
-            <span class="text-secondary fw-normal">
-                @if (exercise()!.exerciseGroup) {
-                    {{ exercise()!.exerciseGroup?.exam?.title }} -
-                }
-                {{ exercise()!.title }}
-            </span>
         </h5>
     </ng-template>
 
@@ -108,14 +101,6 @@
 </ng-template>
 
 <!-- Cell templates -->
-
-<ng-template #idCellTemplate let-cell>
-    @if (exercise()!.isAtLeastInstructor) {
-        <a [routerLink]="getParticipationLink(cell.data.participationId)">{{ cell.data.participationId }}</a>
-    } @else {
-        {{ cell.data.participationId }}
-    }
-</ng-template>
 
 <ng-template #repositoryCellTemplate let-cell>
     @if (cell.data.repositoryUri) {
