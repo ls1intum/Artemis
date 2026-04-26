@@ -83,11 +83,29 @@
                                 @if (allExamUsersAttendanceCheck.length === 0 && examUser?.signingImagePath) {
                                     <img class="img-fluid" width="60" [src]="addPublicFilePrefix(examUser.signingImagePath)" />
                                 } @else {
-                                    <h3>
-                                        <span class="m-2">
-                                            <fa-icon class="text-danger" [icon]="faXmark" />
-                                        </span>
-                                    </h3>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (examUser.studentImagePath ? examUser.didCheckImage && examUser.didCheckName : examUser.didCheckName) {
+                                            <div
+                                                aria-label="{{ 'artemisApp.exam.examUsers.attendanceCheckPartial' | artemisTranslate }}"
+                                                title="{{ 'artemisApp.exam.examUsers.attendanceCheckPartial' | artemisTranslate }}"
+                                            >
+                                                <fa-icon [icon]="faCheck" class="fa-2x text-warning" />
+                                            </div>
+                                        } @else {
+                                            <div
+                                                aria-label="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}"
+                                                title="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}"
+                                            >
+                                                <fa-icon [icon]="faXmark" class="fa-2x text-danger" />
+                                            </div>
+                                        }
+                                        @if (hasExamEnded) {
+                                            <button class="btn btn-secondary" (click)="attendanceCheckDialog.openDialog(examUser)">
+                                                <fa-icon [icon]="faPenToSquare" class="me-2" />
+                                                <span jhiTranslate="global.generic.edit"></span>
+                                            </button>
+                                        }
+                                    </div>
                                 }
                             </td>
                             <td class="d-md-table-cell">
@@ -103,3 +121,5 @@
         </div>
     }
 </div>
+
+<jhi-attendance-check-dialog [courseId]="courseId" [exam]="exam" (save)="updateExamUserAttendanceCheck($event)" #attendanceCheckDialog />

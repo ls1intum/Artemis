@@ -7,6 +7,7 @@ import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model'
 import dayjs from 'dayjs/esm';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
+import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -670,6 +671,65 @@ describe('Exam Management Service Tests', () => {
         service.getExercisesWithPotentialPlagiarismForExam(1, 1).subscribe((resp) => expect(resp).toEqual(exercises));
         const req = httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/1/exams/1/exercises-with-potential-plagiarism' });
         req.flush(exercises);
+        tick();
+    }));
+
+    it('should update an exam user without signature file', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = { id: 1 };
+        const mockExamUser: ExamUserDTO = {
+            login: 'login',
+            firstName: 'firstName',
+            lastName: 'lastName',
+            registrationNumber: '1',
+            email: 'firstName.lastName@test.com',
+        };
+
+        // WHEN
+        service.updateExamUser(course.id!, mockExam.id!, mockExamUser).subscribe((res) => expect(res.body).toEqual(mockExamUser));
+
+        // THEN
+        const req = httpMock.expectOne({
+            method: 'POST',
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/exam-users`,
+        });
+
+        expect(req.request.body).toBeInstanceOf(FormData);
+        expect(req.request.body.get('examUserDTO')).toBeInstanceOf(Blob);
+        expect(req.request.body.get('file')).toBeNull();
+
+        // CLEANUP
+        req.flush(mockExamUser);
+        tick();
+    }));
+
+    it('should update an exam user', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = { id: 1 };
+        const mockExamUser: ExamUserDTO = {
+            login: 'login',
+            firstName: 'firstName',
+            lastName: 'lastName',
+            registrationNumber: '1',
+            email: 'firstName.lastName@test.com',
+        };
+        const signatureFile = new File(['signature'], 'signature.png', { type: 'image/png' });
+
+        // WHEN
+        service.updateExamUser(course.id!, mockExam.id!, mockExamUser, signatureFile).subscribe((res) => expect(res.body).toEqual(mockExamUser));
+
+        // THEN
+        const req = httpMock.expectOne({
+            method: 'POST',
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/exam-users`,
+        });
+
+        expect(req.request.body).toBeInstanceOf(FormData);
+        expect(req.request.body.get('examUserDTO')).toBeInstanceOf(Blob);
+        expect(req.request.body.get('file')).toBe(signatureFile);
+
+        // CLEANUP
+        req.flush(mockExamUser);
         tick();
     }));
 

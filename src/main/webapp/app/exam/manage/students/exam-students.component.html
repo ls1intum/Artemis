@@ -228,27 +228,20 @@
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
-                            @if (
-                                value.didExamUserAttendExam &&
-                                hasExamEnded &&
-                                (!value.didCheckLogin || !value.didCheckImage || !value.didCheckName || !value.didCheckRegistrationNumber || !value.signingImagePath)
-                            ) {
-                                <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}">
-                                    <fa-icon [icon]="faTimes" style="color: red" class="fa-2x" />
-                                </div>
-                            }
-                            @if (
-                                value.didExamUserAttendExam &&
-                                value.didCheckLogin &&
-                                value.didCheckImage &&
-                                value.didCheckName &&
-                                value.didCheckRegistrationNumber &&
-                                value.signingImagePath &&
-                                hasExamEnded
-                            ) {
-                                <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate }}">
-                                    <fa-icon [icon]="faCheck" style="color: green" class="fa-2x" />
-                                </div>
+                            @if (value.didExamUserAttendExam && hasExamEnded) {
+                                @if (value.didCheckLogin && value.didCheckImage && value.didCheckName && value.didCheckRegistrationNumber && value.signingImagePath) {
+                                    <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate }}">
+                                        <fa-icon [icon]="faCheck" class="fa-2x text-success" />
+                                    </div>
+                                } @else if (value.studentImagePath ? value.didCheckImage && value.didCheckName : value.didCheckName) {
+                                    <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckPartial' | artemisTranslate }}">
+                                        <fa-icon [icon]="faCheck" class="fa-2x text-warning" />
+                                    </div>
+                                } @else {
+                                    <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}">
+                                        <fa-icon [icon]="faTimes" class="fa-2x text-danger" />
+                                    </div>
+                                }
                             }
                             @if (!value.didExamUserAttendExam) {
                                 <div title="{{ 'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate }}">

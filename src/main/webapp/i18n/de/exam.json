@@ -30,6 +30,8 @@
                 "attendanceStatusTitle": "Status der Prüfungsteilnahme",
                 "attendanceCheckFailed": "Anwesenheitskontrolle nicht bestanden",
                 "attendanceCheckPassed": "Anwesenheitskontrolle bestanden",
+                "attendanceCheckPartial": "Anwesenheitskontrolle teilweise bestanden",
+                "attendanceCheckSaveError": "Aktualisierung der Anwesenheitskontrolle fehlgeschlagen",
                 "didNotAttend": "Hat nicht teilgenommen",
                 "roomDistribute": "Verteilen",
                 "notFound": "Klausurteilnehmer:in konnte nicht gefunden werden",
@@ -589,6 +591,16 @@
                 "verifyAttendanceBtn": "Anwesenheitskontrolle bestätigen",
                 "examNotStarted": "Die Prüfung hat noch nicht begonnen",
                 "verifyChecks": "Anwesenheitskontrollen überprüfen",
+                "attendanceCheckDialog": {
+                    "title": "Anwesenheitskontrolle",
+                    "introText": "<strong>Bitte überprüfe die Identität der Studierenden anhand der angezeigten Informationen.</strong><br>Auch wenn alle Checks ausgewählt sind, ist diese Kontrolle ohne die Unterschrift der Studierenden nicht vollständig.",
+                    "note": "<strong>Hinweis:</strong> Falls die Studierenden noch anwesend sind, verwende die Artemis Exam Participation Checker iPad-App, um die Unterschrift zu erfassen.",
+                    "image": "Bild",
+                    "didCheckImageTooltip": "Das Bild stimmt mit der Person überein",
+                    "didCheckRegistrationNumberTooltip": "Die Matrikelnummer stimmt mit der auf dem Studierendenausweis überein",
+                    "didCheckLoginTooltip": "Der Login stimmt mit dem im Browser der Studierenden angezeigten überein (nicht vollständig zuverlässig)",
+                    "didCheckNameTooltip": "Der Name stimmt mit dem auf dem Studierendenausweis überein"
+                },
                 "removeFromExam": {
                     "modalQuestion": "Soll die Person mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Ihre individuelle Klausur wird dabei gelöscht.",
                     "deleteParticipationsAndSubmission": "Zusätzlich die Teilnahme und Abgaben in der zugehörigen Klausur löschen? Diese Aktion kann NICHT rückgängig gemacht werden!",

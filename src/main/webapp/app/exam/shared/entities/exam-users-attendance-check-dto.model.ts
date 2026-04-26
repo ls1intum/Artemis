@@ -1,11 +1,8 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
+import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 
-export class ExamUserAttendanceCheckDTO implements BaseEntity {
+export class ExamUserAttendanceCheckDTO extends ExamUserDTO {
     id?: number;
     studentImagePath: string;
-    login: string;
-    registrationNumber: string;
-    signingImagePath: string;
     started: boolean;
     submitted: boolean;
 }

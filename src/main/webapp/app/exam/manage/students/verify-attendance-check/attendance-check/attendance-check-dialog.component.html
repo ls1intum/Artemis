@@ -1,0 +1,91 @@
+<p-dialog [visible]="dialogVisible()" [modal]="true" [dismissableMask]="true" [closeOnEscape]="false" (onHide)="closeDialog()" [style]="{ width: '45dvw' }">
+    <ng-template pTemplate="header">
+        <h4>
+            <span jhiTranslate="artemisApp.examManagement.examStudents.attendanceCheckDialog.title"></span>
+        </h4>
+    </ng-template>
+    <p jhiTranslate="artemisApp.examManagement.examStudents.attendanceCheckDialog.introText" class="intro-text"></p>
+    @if (isBeforeExamEndPlusTwoHours()) {
+        <p jhiTranslate="artemisApp.examManagement.examStudents.attendanceCheckDialog.note"></p>
+    }
+    @if (examUserAttendanceCheck) {
+        <form id="attendanceCheckForm" novalidate (keydown.enter)="$event.preventDefault()">
+            <div class="d-flex justify-content-center align-items-center gap-5 mt-4">
+                <div class="d-flex flex-column align-items-center gap-3">
+                    <label for="didCheckImage" class="form-check-label">
+                        <img
+                            class="img-fluid"
+                            width="150"
+                            [src]="examUserAttendanceCheck.studentImagePath ? addPublicFilePrefix(examUserAttendanceCheck.studentImagePath) : MISSING_IMAGE"
+                        />
+                    </label>
+                    <div class="form-check">
+                        <input
+                            id="didCheckImage"
+                            type="checkbox"
+                            class="form-check-input"
+                            [checked]="examUserAttendanceCheck.didCheckImage"
+                            [disabled]="!examUserAttendanceCheck.studentImagePath"
+                            (change)="examUserAttendanceCheck.didCheckImage = $any($event.target).checked"
+                        />
+                        <label for="didCheckImage" class="form-check-label">
+                            <strong jhiTranslate="artemisApp.examManagement.examStudents.attendanceCheckDialog.image"></strong>
+                        </label>
+                        <jhi-help-icon class="ps-1" text="artemisApp.examManagement.examStudents.attendanceCheckDialog.didCheckImageTooltip" />
+                    </div>
+                </div>
+                <div class="d-flex flex-column gap-3">
+                    <div class="form-check">
+                        <input
+                            id="didCheckRegistrationNumber"
+                            type="checkbox"
+                            class="form-check-input"
+                            [checked]="examUserAttendanceCheck.didCheckRegistrationNumber"
+                            (change)="examUserAttendanceCheck.didCheckRegistrationNumber = $any($event.target).checked"
+                        />
+                        <label for="didCheckRegistrationNumber" class="form-check-label">
+                            <strong jhiTranslate="artemisApp.examManagement.examStudents.registrationNumber"></strong>: {{ examUserAttendanceCheck.registrationNumber }}
+                        </label>
+                        <jhi-help-icon class="ps-1" text="artemisApp.examManagement.examStudents.attendanceCheckDialog.didCheckRegistrationNumberTooltip" />
+                    </div>
+                    <div class="form-check">
+                        <input
+                            id="didCheckLogin"
+                            type="checkbox"
+                            class="form-check-input"
+                            [checked]="examUserAttendanceCheck.didCheckLogin"
+                            (change)="examUserAttendanceCheck.didCheckLogin = $any($event.target).checked"
+                        />
+                        <label for="didCheckLogin" class="form-check-label">
+                            <strong jhiTranslate="artemisApp.examManagement.examStudents.login"></strong>: {{ examUserAttendanceCheck.login }}
+                        </label>
+                        <jhi-help-icon class="ps-1" text="artemisApp.examManagement.examStudents.attendanceCheckDialog.didCheckLoginTooltip" />
+                    </div>
+                    <div class="form-check">
+                        <input
+                            id="didCheckName"
+                            type="checkbox"
+                            class="form-check-input"
+                            [checked]="examUserAttendanceCheck.didCheckName"
+                            (change)="examUserAttendanceCheck.didCheckName = $any($event.target).checked"
+                        />
+                        <label for="didCheckName" class="form-check-label">
+                            <strong jhiTranslate="artemisApp.examManagement.examStudents.name"></strong>: {{ getExamUserFullName() }}
+                        </label>
+                        <jhi-help-icon class="ps-1" text="artemisApp.examManagement.examStudents.attendanceCheckDialog.didCheckNameTooltip" />
+                    </div>
+                </div>
+            </div>
+        </form>
+    }
+    <ng-template pTemplate="footer">
+        <button class="btn btn-secondary" (click)="closeDialog()">
+            <fa-icon [icon]="faBan" />
+            <span jhiTranslate="entity.action.cancel" class="m-1"></span>
+        </button>
+        <button class="btn btn-primary" (click)="saveChanges()">
+            <fa-icon [icon]="faSave" />
+            <span jhiTranslate="entity.action.save" class="m-1"></span>
+        </button>
+    </ng-template>
+</p-dialog>

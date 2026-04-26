@@ -30,6 +30,8 @@
                 "attendanceStatusTitle": "Exam Attendance Status",
                 "attendanceCheckFailed": "Attendance check failed",
                 "attendanceCheckPassed": "Attendance check passed",
+                "attendanceCheckPartial": "Attendance check partially completed",
+                "attendanceCheckSaveError": "Failed to update the attendance check",
                 "didNotAttend": "Did not attend",
                 "roomDistribute": "Distribute",
                 "notFound": "Student could not be found",
@@ -589,6 +591,16 @@
                 "verifyAttendanceBtn": "Verify Attendance",
                 "examNotStarted": "The exam has not started yet",
                 "verifyChecks": "Verify Attendance",
+                "attendanceCheckDialog": {
+                    "title": "Attendance Check",
+                    "introText": "<strong>Please verify the student's identity by checking the displayed details.</strong><br>Even if all checks are selected, this check is not complete without the student’s signature.",
+                    "note": "<strong>Note:</strong> If the student is still present, use the Artemis Exam Participation Checker iPad app to collect the signature.",
+                    "image": "Image",
+                    "didCheckImageTooltip": "The picture matches the student",
+                    "didCheckRegistrationNumberTooltip": "The matriculation number matches the one on the student's ID card",
+                    "didCheckLoginTooltip": "The login matches the one shown in the student's browser (not fully reliable)",
+                    "didCheckNameTooltip": "The name matches the one on the student's ID card"
+                },
                 "removeFromExam": {
                     "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?",
                     "deleteParticipationsAndSubmission": "Additionally delete this student's participation and submissions in the associated exam? This action can NOT be undone!",

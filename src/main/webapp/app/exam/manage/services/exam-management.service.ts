@@ -259,6 +259,25 @@ export class ExamManagementService {
     }
 
     /**
+     * Update an exam user for the given exam.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     * @param examUser The exam user data to update.
+     * @param signatureFile Optional signature file of the student.
+     * @return the updated exam user
+     */
+    updateExamUser(courseId: number, examId: number, examUser: ExamUserDTO, signatureFile?: File): Observable<HttpResponse<ExamUserDTO>> {
+        const formData = new FormData();
+        formData.append('examUserDTO', new Blob([JSON.stringify(examUser)], { type: 'application/json' }));
+
+        if (signatureFile) {
+            formData.append('file', signatureFile);
+        }
+
+        return this.http.post<ExamUserDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users`, formData, { observe: 'response' });
+    }
+
+    /**
      * Parse pdf file with student images and save them
      * @param courseId
      * @param examId
