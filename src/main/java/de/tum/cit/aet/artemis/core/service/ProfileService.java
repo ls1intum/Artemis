@@ -96,4 +96,13 @@ public class ProfileService {
     public boolean isProductionActive() {
         return isProfileActive(ArtemisConstants.SPRING_PROFILE_PRODUCTION);
     }
+
+    /**
+     * Checks if the SAML2 profile is active
+     *
+     * @return true if the SAML2 profile is active, false otherwise
+     */
+    public boolean isSaml2Active() {
+        return isProfileActive(Constants.PROFILE_SAML2);
+    }
 }
