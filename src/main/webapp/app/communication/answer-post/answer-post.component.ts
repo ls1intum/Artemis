@@ -20,6 +20,7 @@ import dayjs from 'dayjs/esm';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrash, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -29,6 +30,8 @@ import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { captureException } from '@sentry/angular';
+import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/shared/util/global.utils';
 import { deepClone } from 'app/shared/util/deep-clone.util';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -61,6 +64,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     changeDetector = inject(ChangeDetectorRef);
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
+    private alertService = inject(AlertService);
 
     lastReadDate = input<dayjs.Dayjs | undefined>(undefined);
     isLastAnswer = input<boolean>(false);
@@ -201,7 +205,9 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
                 this.isVerifying = false;
                 this.changeDetector.detectChanges();
             },
-            error: () => {
+            error: (err: HttpErrorResponse) => {
+                captureException(err, { extra: { action: 'approve', postingId: posting.id } });
+                onError(this.alertService, err);
                 this.isVerifying = false;
                 this.changeDetector.detectChanges();
             },
@@ -232,7 +238,9 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
                 this.isVerifying = false;
                 this.changeDetector.detectChanges();
             },
-            error: () => {
+            error: (err: HttpErrorResponse) => {
+                captureException(err, { extra: { action: 'reject', postingId: posting.id } });
+                onError(this.alertService, err);
                 this.isVerifying = false;
                 this.changeDetector.detectChanges();
             },

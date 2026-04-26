@@ -204,8 +204,8 @@ public class AutonomousTutorService {
 
     private void sendReviewNotifications(AnswerPost answerPost, Post originalPost, Conversation conversation, Course course,
             Set<ConversationNotificationRecipientSummary> recipientSummaries) {
-        List<User> tutors = recipientSummaries.stream().filter(ConversationNotificationRecipientSummary::isAtLeastTutorInCourse).map(this::toUserReference)
-                .collect(Collectors.toCollection(ArrayList::new));
+        List<User> tutors = recipientSummaries.stream().filter(ConversationNotificationRecipientSummary::isAtLeastTutorInCourse)
+                .filter(ConversationNotificationRecipientSummary::shouldNotifyRecipient).map(this::toUserReference).collect(Collectors.toCollection(ArrayList::new));
         if (tutors.isEmpty()) {
             log.debug("No tutors available to review unverified Iris answer {} in course {}", answerPost.getId(), course.getId());
             return;

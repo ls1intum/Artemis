@@ -337,6 +337,9 @@ public class AnswerMessageService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
         AnswerPost existingAnswerMessage = this.findById(answerMessageId);
+        if (!existingAnswerMessage.getPost().getConversation().getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("Answer message does not belong to the specified course", METIS_ANSWER_POST_ENTITY_NAME, "invalidCourse");
+        }
         if (!existingAnswerMessage.getAuthor().isBot()) {
             throw new BadRequestAlertException("Only Iris-generated answers can be verified", METIS_ANSWER_POST_ENTITY_NAME, "notIrisAnswer");
         }

@@ -174,7 +174,8 @@
                     "edit": "Bearbeiten",
                     "reject": "Ablehnen",
                     "saveAndApprove": "Speichern & Freigeben",
-                    "cancelEdit": "Abbrechen"
+                    "cancelEdit": "Abbrechen",
+                    "editAreaLabel": "Iris-Antwort bearbeiten"
                 }
             },
             "userRoles": {

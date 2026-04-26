@@ -141,7 +141,9 @@ public class AnswerMessageResource {
 
     /**
      * PATCH /courses/{courseId}/answer-messages/{answerMessageId}/verify : Approve an Iris-generated answer message
-     * (optionally with edited content) so it becomes visible to students. Tutor role required.
+     * (optionally with edited content) so it becomes visible to students.
+     * {@code @EnforceAtLeastTutorInCourse} restricts access to tutors, editors, and instructors
+     * (roles at or above teaching assistant).
      *
      * @param courseId        id of the course the answer message belongs to
      * @param answerMessageId id of the answer message to approve

@@ -174,7 +174,8 @@
                     "edit": "Edit",
                     "reject": "Reject",
                     "saveAndApprove": "Save & Approve",
-                    "cancelEdit": "Cancel"
+                    "cancelEdit": "Cancel",
+                    "editAreaLabel": "Edit Iris reply"
                 }
             },
             "userRoles": {
