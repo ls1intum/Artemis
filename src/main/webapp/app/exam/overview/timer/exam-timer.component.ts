@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { Observable, Subject, timer } from 'rxjs';
 import { distinctUntilChanged, first, map, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
@@ -20,22 +20,18 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
 
     @HostBinding('class.row') readonly row = true;
 
-    @Input()
-    endDate: dayjs.Dayjs;
+    readonly endDate = input<dayjs.Dayjs>(undefined!);
 
-    @Input()
-    criticalTime: plugin.Duration;
+    readonly criticalTime = input<plugin.Duration>(undefined!);
 
-    @Input()
-    isEndView = false;
+    readonly isEndView = input(false);
 
-    @Output()
-    timerAboutToEnd: EventEmitter<void> = new EventEmitter<void>();
+    readonly timerAboutToEnd = output<void>();
 
     isCriticalTime: boolean;
 
     destroy$: Subject<boolean> = new Subject<boolean>();
-    private timer: Observable<plugin.Duration> = timer(0, 100).pipe(map(() => dayjs.duration(this.endDate.diff(this.serverDateService.now()))));
+    private timer: Observable<plugin.Duration> = timer(0, 100).pipe(map(() => dayjs.duration(this.endDate().diff(this.serverDateService.now()))));
 
     displayTime$ = this.timer.pipe(
         map((timeLeft: plugin.Duration) => this.updateDisplayTime(timeLeft)),
@@ -53,6 +49,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
                 takeUntil(this.destroy$),
             )
             .subscribe(() => {
+                // TODO: The 'emit' function requires a mandatory void argument
                 this.timerAboutToEnd.emit();
                 // if timer is displayed and duration is already over
                 // -> display at least one display time, that's why we use setTimeout
@@ -61,7 +58,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        const duration = dayjs.duration(this.endDate.diff(this.serverDateService.now()));
+        const duration = dayjs.duration(this.endDate().diff(this.serverDateService.now()));
         this.setIsCriticalTime(duration);
     }
 
@@ -82,7 +79,8 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
 
     setIsCriticalTime(timeDiff: plugin.Duration) {
         const clonedTimeDiff = cloneDeep(timeDiff);
-        if (this.criticalTime && clonedTimeDiff.subtract(this.criticalTime).asMilliseconds() < 0) {
+        const criticalTime = this.criticalTime();
+        if (criticalTime && clonedTimeDiff.subtract(criticalTime).asMilliseconds() < 0) {
             this.isCriticalTime = true;
         }
     }

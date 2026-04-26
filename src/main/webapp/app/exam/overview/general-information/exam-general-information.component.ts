@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, OnChanges, input } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { endTime, examWorkingTime, getAdditionalWorkingTime, isExamOverMultipleDays } from 'app/exam/overview/exam.utils';
@@ -17,15 +17,15 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
     imports: [TranslateDirective, StudentExamWorkingTimeComponent, TestExamWorkingTimeComponent, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe],
 })
 export class ExamGeneralInformationComponent implements OnChanges {
-    @Input() exam: Exam;
-    @Input() studentExam: StudentExam;
-    @Input() reviewIsOpen = false;
+    readonly exam = input<Exam>(undefined!);
+    readonly studentExam = input<StudentExam>(undefined!);
+    readonly reviewIsOpen = input(false);
 
     /**
      * The exam cover will contain e.g. the number of exercises which is hidden in the exam summary as
      * the information is shown in the {@link ExamResultOverviewComponent}
      */
-    @Input() displayOnExamCover = false;
+    readonly displayOnExamCover = input(false);
 
     examEndDate?: dayjs.Dayjs;
     normalWorkingTime?: number;
@@ -35,11 +35,11 @@ export class ExamGeneralInformationComponent implements OnChanges {
     currentDate?: dayjs.Dayjs;
 
     ngOnChanges() {
-        this.examEndDate = endTime(this.exam, this.studentExam);
-        this.normalWorkingTime = examWorkingTime(this.exam);
-        this.additionalWorkingTime = getAdditionalWorkingTime(this.exam, this.studentExam);
-        this.isExamOverMultipleDays = isExamOverMultipleDays(this.exam, this.studentExam);
-        this.isTestExam = this.exam?.testExam;
+        this.examEndDate = endTime(this.exam(), this.studentExam());
+        this.normalWorkingTime = examWorkingTime(this.exam());
+        this.additionalWorkingTime = getAdditionalWorkingTime(this.exam(), this.studentExam());
+        this.isExamOverMultipleDays = isExamOverMultipleDays(this.exam(), this.studentExam());
+        this.isTestExam = this.exam()?.testExam;
         if (this.isTestExam) {
             this.currentDate = dayjs();
         }

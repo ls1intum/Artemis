@@ -132,6 +132,7 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe(() => {
+                // TODO: The 'emit' function requires a mandatory void argument
                 this.onUpdateSidebar.emit();
             });
     }
@@ -143,6 +144,7 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
             this.conversationService.updateIsFavorite(this.course.id, this.conversation.id, isFavorite).subscribe({
                 next: () => {
                     this.conversation.isFavorite = isFavorite;
+                    // TODO: The 'emit' function requires a mandatory void argument
                     this.onUpdateSidebar.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -157,6 +159,7 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
             this.conversationService.updateIsHidden(this.course.id, this.conversation.id, isHidden).subscribe({
                 next: () => {
                     this.conversation.isHidden = isHidden;
+                    // TODO: The 'emit' function requires a mandatory void argument
                     this.onUpdateSidebar.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -171,6 +174,7 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
             this.conversationService.updateIsMuted(this.course.id, this.conversation.id, isMuted).subscribe({
                 next: () => {
                     this.conversation.isMuted = isMuted;
+                    // TODO: The 'emit' function requires a mandatory void argument
                     this.onUpdateSidebar.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),

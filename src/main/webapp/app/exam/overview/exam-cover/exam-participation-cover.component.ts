@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -39,17 +39,17 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      * if startView is set to true: startText and confirmationStartText will be displayed
      * if startView is set to false: endText and confirmationEndText will be displayed
      */
-    @Input() startView: boolean;
-    @Input() exam: Exam;
-    @Input() studentExam: StudentExam;
-    @Input() handInEarly = false;
-    @Input() handInPossible = true;
-    @Input() submitInProgress = false;
-    @Input() attendanceChecked = false;
-    @Input() testRunStartTime: dayjs.Dayjs | undefined;
-    @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
-    @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
-    @Output() onExamContinueAfterHandInEarly = new EventEmitter<void>();
+    readonly startView = input<boolean>(undefined!);
+    readonly exam = input<Exam>(undefined!);
+    readonly studentExam = input<StudentExam>(undefined!);
+    readonly handInEarly = input(false);
+    readonly handInPossible = input(true);
+    readonly submitInProgress = input(false);
+    readonly attendanceChecked = input(false);
+    readonly testRunStartTime = input<dayjs.Dayjs>();
+    readonly onExamStarted = output<StudentExam>();
+    readonly onExamEnded = output<StudentExam>();
+    readonly onExamContinueAfterHandInEarly = output<void>();
     course?: Course;
     startEnabled: boolean;
     endEnabled: boolean;
@@ -78,7 +78,8 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     faDoorClosed = faDoorClosed;
 
     ngOnInit(): void {
-        this.isAttendanceChecked = this.exam.testExam || !this.exam.examWithAttendanceCheck || this.attendanceChecked;
+        const exam = this.exam();
+        this.isAttendanceChecked = exam.testExam || !exam.examWithAttendanceCheck || this.attendanceChecked();
     }
 
     /**
@@ -89,17 +90,17 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     ngOnChanges() {
         this.confirmed = false;
         this.startEnabled = false;
-        this.testRun = this.studentExam.testRun;
-        this.testExam = this.exam.testExam;
+        this.testRun = this.studentExam().testRun;
+        this.testExam = this.exam().testExam;
 
-        if (this.startView) {
+        if (this.startView()) {
             this.examParticipationService.setEndView(false);
-            this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
-            this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
+            this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam().startText);
+            this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam().confirmationStartText);
         } else {
             this.examParticipationService.setEndView(true);
-            this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
-            this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
+            this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam().endText);
+            this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam().confirmationEndText);
         }
 
         this.accountService.identity().then((user) => {
@@ -122,7 +123,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      * if confirmed, we further check whether exam has started yet regularly
      */
     updateConfirmation() {
-        if (this.startView) {
+        if (this.startView()) {
             this.startEnabled = this.confirmed;
         } else {
             this.endEnabled = this.confirmed;
@@ -136,7 +137,8 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
         if (this.testRun) {
             return true;
         }
-        return this.exam?.startDate ? this.exam.startDate.isBefore(this.serverDateService.now()) : false;
+        const exam = this.exam();
+        return exam?.startDate ? exam.startDate.isBefore(this.serverDateService.now()) : false;
     }
 
     /**
@@ -144,16 +146,17 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      */
     startExam() {
         if (this.testRun) {
-            this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, this.studentExam);
-            this.onExamStarted.emit(this.studentExam);
+            const studentExam = this.studentExam();
+            this.examParticipationService.saveStudentExamToLocalStorage(this.exam().course!.id!, this.exam().id!, studentExam);
+            this.onExamStarted.emit(studentExam);
         } else {
             this.isFetching = true;
             this.loadExamSubscription = this.examParticipationService
-                .loadStudentExamWithExercisesForConduction(this.exam.course!.id!, this.exam.id!, this.studentExam.id!)
+                .loadStudentExamWithExercisesForConduction(this.exam().course!.id!, this.exam().id!, this.studentExam().id!)
                 .subscribe((studentExam: StudentExam) => {
                     this.isFetching = false;
                     this.studentExam = studentExam;
-                    this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, studentExam);
+                    this.examParticipationService.saveStudentExamToLocalStorage(this.exam().course!.id!, this.exam().id!, studentExam);
                     if (this.hasStarted()) {
                         this.onExamStarted.emit(studentExam);
                     } else {
@@ -175,12 +178,13 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     updateDisplayedTimes(studentExam: StudentExam) {
         const translationBasePath = 'artemisApp.showStatistic.';
         // update time until start
-        if (this.exam && this.exam.startDate) {
+        const exam = this.exam();
+        if (exam && exam.startDate) {
             if (this.hasStarted()) {
                 this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
                 this.onExamStarted.emit(studentExam);
             } else {
-                this.timeUntilStart = this.relativeTimeText(this.exam.startDate.diff(this.serverDateService.now(), 'seconds'));
+                this.timeUntilStart = this.relativeTimeText(exam.startDate.diff(this.serverDateService.now(), 'seconds'));
             }
         } else {
             this.timeUntilStart = '';
@@ -207,7 +211,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      * Submits the exam
      */
     submitExam() {
-        this.onExamEnded.emit(this.studentExam);
+        this.onExamEnded.emit(this.studentExam());
     }
 
     /**
@@ -215,26 +219,28 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      */
     continueAfterHandInEarly() {
         this.examParticipationService.setEndView(false);
+        // TODO: The 'emit' function requires a mandatory void argument
         this.onExamContinueAfterHandInEarly.emit();
     }
 
     get startButtonEnabled(): boolean {
         if (this.testRun) {
-            return this.nameIsCorrect && this.confirmed && !!this.exam;
+            return this.nameIsCorrect && this.confirmed && !!this.exam();
         }
         const now = this.serverDateService.now();
+        const exam = this.exam();
         return !!(
             this.nameIsCorrect &&
             this.confirmed &&
-            this.exam &&
-            this.exam.visibleDate &&
-            this.exam.visibleDate.isBefore(now) &&
-            now.add(EXAM_START_WAIT_TIME_MINUTES, 'minute').isAfter(this.exam.startDate!)
+            exam &&
+            exam.visibleDate &&
+            exam.visibleDate.isBefore(now) &&
+            now.add(EXAM_START_WAIT_TIME_MINUTES, 'minute').isAfter(exam.startDate!)
         );
     }
 
     get endButtonEnabled(): boolean {
-        return this.nameIsCorrect && this.confirmed && this.exam && this.handInPossible;
+        return this.nameIsCorrect && this.confirmed && this.exam() && this.handInPossible();
     }
 
     get nameIsCorrect(): boolean {

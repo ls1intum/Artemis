@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -30,16 +30,16 @@ export class ProgrammingExamSummaryComponent implements OnInit {
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
     private router = inject(Router);
 
-    @Input() exercise: ProgrammingExercise;
-    @Input() participation: ProgrammingExerciseStudentParticipation;
-    @Input() submission: ProgrammingSubmission;
-    @Input() isTestRun = false;
-    @Input() exam: Exam;
-    @Input() isAfterStudentReviewStart = false;
-    @Input() resultsPublished = false;
-    @Input() isPrinting = false;
-    @Input() isAfterResultsArePublished = false;
-    @Input() instructorView = false;
+    readonly exercise = input<ProgrammingExercise>(undefined!);
+    readonly participation = input<ProgrammingExerciseStudentParticipation>(undefined!);
+    readonly submission = input<ProgrammingSubmission>(undefined!);
+    readonly isTestRun = input(false);
+    readonly exam = input<Exam>(undefined!);
+    readonly isAfterStudentReviewStart = input(false);
+    readonly resultsPublished = input(false);
+    readonly isPrinting = input(false);
+    readonly isAfterResultsArePublished = input(false);
+    readonly instructorView = input(false);
 
     readonly PROGRAMMING: ExerciseType = ExerciseType.PROGRAMMING;
 
@@ -58,27 +58,28 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     ngOnInit() {
         this.routerLink = this.router.url;
-        this.participation.exercise = this.exercise;
-        this.submission = getLatestSubmission(this.participation) as ProgrammingSubmission;
-        this.result = getLatestSubmissionResult(this.submission);
-        if (this.result && this.submission) {
-            this.result.submission = this.submission;
-            this.result.submission.participation = this.participation;
+        participation.exercise = this.exercise();
+        this.submission = getLatestSubmission(participation) as ProgrammingSubmission;
+        this.result = getLatestSubmissionResult(this.submission());
+        const submission = this.submission();
+        if (this.result && submission) {
+            this.result.submission = submission;
+            this.result.submission.participation = participation;
         }
-        this.commitHash = this.submission?.commitHash?.slice(0, 11);
+        this.commitHash = submission?.commitHash?.slice(0, 11);
         this.isInCourseManagement = this.router.url.includes('course-management');
         const isBuilding = false;
         const missingResultInfo = MissingResultInformation.NONE;
 
-        const templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, isBuilding, missingResultInfo);
+        const templateStatus = evaluateTemplateStatus(this.exercise(), participation, this.result, isBuilding, missingResultInfo);
 
         if (this.result) {
             this.feedbackComponentParameters = prepareFeedbackComponentParameters(
-                this.exercise,
+                this.exercise(),
                 this.result,
-                this.participation,
+                participation,
                 templateStatus,
-                this.exam.latestIndividualEndDate,
+                this.exam().latestIndividualEndDate,
                 this.exerciseCacheService ?? this.exerciseService,
             );
         }
@@ -86,13 +87,13 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     get routerLinkForRepositoryView(): (string | number)[] {
         if (this.isInCourseManagement) {
-            return ['..', 'programming-exercises', this.exercise.id!, 'repository', 'USER', this.participation.id!];
+            return ['..', 'programming-exercises', this.exercise().id!, 'repository', 'USER', this.participation().id!];
         }
         if (this.routerLink.includes('test-exam')) {
             const parts = this.routerLink.split('/');
             const examLink = parts.slice(0, parts.length - 2).join('/');
-            return [examLink, 'exercises', this.exercise.id!, 'repository', this.participation.id!];
+            return [examLink, 'exercises', this.exercise().id!, 'repository', this.participation().id!];
         }
-        return [this.routerLink, 'exercises', this.exercise.id!, 'repository', this.participation.id!];
+        return [this.routerLink, 'exercises', this.exercise().id!, 'repository', this.participation().id!];
     }
 }

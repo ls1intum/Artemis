@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
@@ -23,18 +23,18 @@ export class ExamBarComponent implements AfterViewInit, OnInit, OnDestroy {
 
     protected readonly faDoorClosed = faDoorClosed;
 
-    @Output() onExamHandInEarly = new EventEmitter<void>();
-    @Output() examAboutToEnd = new EventEmitter<void>();
-    @Output() heightChange = new EventEmitter<number>();
+    readonly onExamHandInEarly = output<void>();
+    readonly examAboutToEnd = output<void>();
+    readonly heightChange = output<number>();
 
-    @Input() examTimeLineView = false;
-    @Input() endDate: dayjs.Dayjs;
-    @Input() exerciseIndex = 0;
-    @Input() isEndView: boolean;
-    @Input() testRunStartTime: dayjs.Dayjs | undefined;
-    @Input() exam: Exam;
-    @Input() studentExam: StudentExam;
-    @Input() examStartDate: dayjs.Dayjs;
+    readonly examTimeLineView = input(false);
+    readonly endDate = input<dayjs.Dayjs>(undefined!);
+    readonly exerciseIndex = input(0);
+    readonly isEndView = input<boolean>(undefined!);
+    readonly testRunStartTime = input<dayjs.Dayjs>();
+    readonly exam = input<Exam>(undefined!);
+    readonly studentExam = input<StudentExam>(undefined!);
+    readonly examStartDate = input<dayjs.Dayjs>(undefined!);
 
     criticalTime = dayjs.duration(5, 'minutes');
     criticalTimeEndView = dayjs.duration(30, 'seconds');
@@ -47,10 +47,10 @@ export class ExamBarComponent implements AfterViewInit, OnInit, OnDestroy {
     exercises: Exercise[] = [];
 
     ngOnInit(): void {
-        this.examTitle = this.exam.title ?? '';
-        this.exercises = this.studentExam.exercises ?? [];
-        this.testExam = this.exam.testExam ?? false;
-        this.isTestRun = this.studentExam.testRun ?? false;
+        this.examTitle = this.exam().title ?? '';
+        this.exercises = this.studentExam().exercises ?? [];
+        this.testExam = this.exam().testExam ?? false;
+        this.isTestRun = this.studentExam().testRun ?? false;
     }
 
     /**
@@ -84,15 +84,16 @@ export class ExamBarComponent implements AfterViewInit, OnInit, OnDestroy {
      * Save the currently active exercise
      */
     saveExercise() {
-        const submission = ExamParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
+        const submission = ExamParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex()]);
         // we do not submit programming exercises on a save
-        if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
+        if (submission && this.exercises[this.exerciseIndex()].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
         }
     }
 
     triggerExamAboutToEnd() {
         this.saveExercise();
+        // TODO: The 'emit' function requires a mandatory void argument
         this.examAboutToEnd.emit();
     }
 
@@ -100,6 +101,7 @@ export class ExamBarComponent implements AfterViewInit, OnInit, OnDestroy {
      * Notify parent component when user wants to hand in early
      */
     handInEarly() {
+        // TODO: The 'emit' function requires a mandatory void argument
         this.onExamHandInEarly.emit();
     }
 
