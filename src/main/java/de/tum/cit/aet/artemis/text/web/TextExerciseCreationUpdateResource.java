@@ -173,7 +173,9 @@ public class TextExerciseCreationUpdateResource {
         // Create or update Athena config if modules are provided
         if (textExercise.getAthenaConfig() != null) {
             var athenaConfig = textExercise.getAthenaConfig();
-            exerciseAthenaConfigService.createOrUpdateConfig(result, athenaConfig.getPreliminaryFeedbackModule(), athenaConfig.getGradedFeedbackModule());
+            ExerciseAthenaConfig createdConfig = exerciseAthenaConfigService.createOrUpdateConfig(result, athenaConfig.getPreliminaryFeedbackModule(),
+                    athenaConfig.getGradedFeedbackModule());
+            result.setAthenaConfig(createdConfig);
         }
 
         channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
@@ -270,8 +272,9 @@ public class TextExerciseCreationUpdateResource {
         // Create or update Athena config if modules are provided
         if (updatedExercise.getAthenaConfig() != null) {
             var athenaConfig = updatedExercise.getAthenaConfig();
-            exerciseAthenaConfigService.createOrUpdateConfig(persistedExercise, athenaConfig.getPreliminaryFeedbackModule(),
+            ExerciseAthenaConfig updatedConfig = exerciseAthenaConfigService.createOrUpdateConfig(persistedExercise, athenaConfig.getPreliminaryFeedbackModule(),
                     athenaConfig.getGradedFeedbackModule());
+            persistedExercise.setAthenaConfig(updatedConfig);
         }
 
         exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);

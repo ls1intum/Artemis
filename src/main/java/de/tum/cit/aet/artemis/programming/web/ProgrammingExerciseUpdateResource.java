@@ -310,7 +310,9 @@ public class ProgrammingExerciseUpdateResource {
         // Update Athena config if provided
         if (updatedProgrammingExercise.getAthenaConfig() != null) {
             var athenaConfig = updatedProgrammingExercise.getAthenaConfig();
-            exerciseAthenaConfigService.createOrUpdateConfig(savedProgrammingExercise, athenaConfig.getPreliminaryFeedbackModule(), athenaConfig.getGradedFeedbackModule());
+            ExerciseAthenaConfig updatedConfig = exerciseAthenaConfigService.createOrUpdateConfig(savedProgrammingExercise, athenaConfig.getPreliminaryFeedbackModule(),
+                    athenaConfig.getGradedFeedbackModule());
+            savedProgrammingExercise.setAthenaConfig(updatedConfig);
         }
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);

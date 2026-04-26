@@ -136,7 +136,9 @@ public class ProgrammingExerciseCreationResource {
             // Create or update Athena config if modules are provided
             if (programmingExercise.getAthenaConfig() != null) {
                 var athenaConfig = programmingExercise.getAthenaConfig();
-                exerciseAthenaConfigService.createOrUpdateConfig(newProgrammingExercise, athenaConfig.getPreliminaryFeedbackModule(), athenaConfig.getGradedFeedbackModule());
+                ExerciseAthenaConfig createdConfig = exerciseAthenaConfigService.createOrUpdateConfig(newProgrammingExercise, athenaConfig.getPreliminaryFeedbackModule(),
+                        athenaConfig.getGradedFeedbackModule());
+                newProgrammingExercise.setAthenaConfig(createdConfig);
             }
 
             exerciseVersionService.createExerciseVersion(newProgrammingExercise);
