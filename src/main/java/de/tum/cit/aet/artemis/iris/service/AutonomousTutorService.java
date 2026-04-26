@@ -234,10 +234,15 @@ public class AutonomousTutorService {
             return userRepository.findAllNotificationRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
                     course.getEditorGroupName(), course.getInstructorGroupName());
         }
-        return conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream()
-                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(),
-                        participant.getIsHidden() != null && participant.getIsHidden(), false))
-                .collect(Collectors.toSet());
+        var taGroup = course.getTeachingAssistantGroupName();
+        var editorGroup = course.getEditorGroupName();
+        var instructorGroup = course.getInstructorGroupName();
+        return conversationParticipantRepository.findConversationParticipantsWithUserGroupsByConversationId(conversation.getId()).stream().map(participant -> {
+            var groups = participant.getUser().getGroups();
+            boolean isAtLeastTutor = groups.contains(taGroup) || groups.contains(editorGroup) || groups.contains(instructorGroup);
+            return new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(), participant.getIsHidden() != null && participant.getIsHidden(),
+                    isAtLeastTutor);
+        }).collect(Collectors.toSet());
     }
 
     private void broadcastAnswer(AnswerPost answerPost, Post originalPost, Conversation conversation, Long courseId,
