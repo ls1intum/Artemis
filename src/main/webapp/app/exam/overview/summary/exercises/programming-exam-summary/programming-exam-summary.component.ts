@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -32,7 +32,7 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     readonly exercise = input<ProgrammingExercise>(undefined!);
     readonly participation = input<ProgrammingExerciseStudentParticipation>(undefined!);
-    readonly submission = input<ProgrammingSubmission>(undefined!);
+    readonly submission = signal<ProgrammingSubmission | undefined>(undefined);
     readonly isTestRun = input(false);
     readonly exam = input<Exam>(undefined!);
     readonly isAfterStudentReviewStart = input(false);
@@ -58,15 +58,16 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     ngOnInit() {
         this.routerLink = this.router.url;
+        const participation = this.participation();
         participation.exercise = this.exercise();
-        this.submission = getLatestSubmission(participation) as ProgrammingSubmission;
-        this.result = getLatestSubmissionResult(this.submission());
-        const submission = this.submission();
-        if (this.result && submission) {
-            this.result.submission = submission;
+        const latestSubmission = getLatestSubmission(participation) as ProgrammingSubmission | undefined;
+        this.submission.set(latestSubmission);
+        this.result = getLatestSubmissionResult(latestSubmission);
+        if (this.result && latestSubmission) {
+            this.result.submission = latestSubmission;
             this.result.submission.participation = participation;
         }
-        this.commitHash = submission?.commitHash?.slice(0, 11);
+        this.commitHash = latestSubmission?.commitHash?.slice(0, 11);
         this.isInCourseManagement = this.router.url.includes('course-management');
         const isBuilding = false;
         const missingResultInfo = MissingResultInformation.NONE;

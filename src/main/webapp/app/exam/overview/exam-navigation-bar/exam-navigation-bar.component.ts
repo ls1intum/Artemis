@@ -127,7 +127,6 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
 
     triggerExamAboutToEnd() {
         this.saveExercise(false);
-        // TODO: The 'emit' function requires a mandatory void argument
         this.examAboutToEnd.emit();
     }
 
@@ -144,13 +143,8 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
             if (exerciseIndex > this.exercises().length - 1 || exerciseIndex < 0) {
                 return;
             }
-            // set index and emit event
-            this.exerciseIndex = exerciseIndex;
-            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises()[exerciseIndexValue], forceSave: !!forceSave, submission: submission });
+            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises()[exerciseIndex], forceSave: !!forceSave, submission: submission });
         } else if (overviewPage) {
-            // set index and emit event
-            this.exerciseIndex = -1;
-            // save current exercise
             this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
         }
         this.setExerciseButtonStatus(exerciseIndexValue);
@@ -253,11 +247,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
         return false;
     }
 
-    /**
-     * Notify parent component when user wants to hand in early
-     */
     handInEarly() {
-        // TODO: The 'emit' function requires a mandatory void argument
         this.onExamHandInEarly.emit();
     }
 }

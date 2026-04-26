@@ -134,18 +134,13 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             if (exerciseIndex > this.exercises().length - 1 || exerciseIndex < 0) {
                 return;
             }
-            // set index and emit event
-            this.exerciseIndex = exerciseIndex;
             this.onPageChanged.emit({
                 overViewChange: false,
-                exercise: this.exercises()[exerciseIndexValue],
+                exercise: this.exercises()[exerciseIndex],
                 forceSave: !!forceSave,
                 submission: submission,
             });
         } else if (overviewPage) {
-            // set index and emit event
-            this.exerciseIndex = this.EXERCISE_OVERVIEW_INDEX;
-            // save current exercise
             this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
         }
         this.setExerciseButtonStatus(exerciseIndexValue);

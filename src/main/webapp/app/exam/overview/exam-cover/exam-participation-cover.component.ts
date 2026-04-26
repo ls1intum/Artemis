@@ -155,7 +155,6 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
                 .loadStudentExamWithExercisesForConduction(this.exam().course!.id!, this.exam().id!, this.studentExam().id!)
                 .subscribe((studentExam: StudentExam) => {
                     this.isFetching = false;
-                    this.studentExam = studentExam;
                     this.examParticipationService.saveStudentExamToLocalStorage(this.exam().course!.id!, this.exam().id!, studentExam);
                     if (this.hasStarted()) {
                         this.onExamStarted.emit(studentExam);
@@ -219,7 +218,6 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      */
     continueAfterHandInEarly() {
         this.examParticipationService.setEndView(false);
-        // TODO: The 'emit' function requires a mandatory void argument
         this.onExamContinueAfterHandInEarly.emit();
     }
 
