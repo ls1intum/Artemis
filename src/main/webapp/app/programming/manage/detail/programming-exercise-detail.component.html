@@ -127,11 +127,7 @@
                                     <fa-icon [icon]="faWandMagicSparkles" />
                                     <span jhiTranslate="artemisApp.programmingExercise.atlasOrchestrator.button"></span>
                                 </button>
-                                <jhi-orchestration-result-dialog
-                                    [(visible)]="orchestrationDialogVisible"
-                                    [summaryMessage]="orchestrationDialogMessage()"
-                                    [appliedActions]="orchestrationDialogActions()"
-                                />
+                                <jhi-orchestration-result-dialog [(visible)]="orchestrationDialogVisible" [summary]="orchestrationDialogSummary()" />
                             }
                             <button
                                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"

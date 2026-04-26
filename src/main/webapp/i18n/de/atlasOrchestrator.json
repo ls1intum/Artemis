@@ -3,29 +3,10 @@
         "atlasOrchestrator": {
             "tooltip": "Den Atlas-Kompetenz-Orchestrator für diese Aufgabe ausführen",
             "error": "Atlas-Orchestrator-Durchlauf fehlgeschlagen. Bitte versuche es später erneut.",
-            "partial": "Atlas-Orchestrator-Durchlauf wurde mittendrin abgebrochen — überprüfe die Teilaktionen im Dialog und mache fehlerhafte ggf. rückgängig.",
             "inProgress": "Für diesen Kurs läuft bereits ein Atlas-Orchestrator-Durchlauf. Bitte warte, bis dieser abgeschlossen ist.",
             "resultDialog": {
                 "title": "Ergebnis des Atlas-Orchestrators",
-                "empty": "Der Orchestrator hat keine Änderungen an diesem Kurs vorgenommen.",
-                "columns": {
-                    "action": "Aktion",
-                    "competency": "Kompetenz",
-                    "detail": "Details",
-                    "reason": "Begründung"
-                },
-                "types": {
-                    "CREATE": "Erstellen",
-                    "EDIT": "Bearbeiten",
-                    "ASSIGN": "Zuweisen",
-                    "UNASSIGN": "Verknüpfung entfernen",
-                    "DELETE": "Löschen"
-                },
-                "weightBands": {
-                    "primary": "primär",
-                    "partial": "teilweise",
-                    "incidental": "beiläufig"
-                }
+                "empty": "Der Orchestrator hat keine Zusammenfassung zurückgegeben."
             }
         }
     }

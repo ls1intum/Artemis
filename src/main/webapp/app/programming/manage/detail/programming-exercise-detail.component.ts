@@ -70,7 +70,7 @@ import { RepositoryType } from '../../shared/code-editor/model/code-editor.model
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
-import { AppliedActionDTO, CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
+import { CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
 import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
 
 @Component({
@@ -120,8 +120,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
 
     protected readonly orchestrationDialogVisible = signal(false);
-    protected readonly orchestrationDialogMessage = signal('');
-    protected readonly orchestrationDialogActions = signal<AppliedActionDTO[]>([]);
+    protected readonly orchestrationDialogSummary = signal('');
     protected readonly orchestrationRunning = signal(false);
     protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
 
@@ -800,25 +799,17 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.orchestrationRunning.set(true);
         try {
             const result = await this.competencyOrchestrationApiService.runForProgrammingExercise(exerciseId);
-            const backendMessage = result.message?.trim() || '';
-            if (result.status === CompetencyOrchestrationStatus.Success || result.status === CompetencyOrchestrationStatus.Partial) {
-                this.orchestrationDialogMessage.set(backendMessage);
-                this.orchestrationDialogActions.set(result.appliedActions ?? []);
+            const summary = result.summary?.trim() || '';
+            if (result.status === CompetencyOrchestrationStatus.Success) {
+                this.orchestrationDialogSummary.set(summary);
                 this.orchestrationDialogVisible.set(true);
-                if (result.status === CompetencyOrchestrationStatus.Partial) {
-                    this.alertService.addAlert({
-                        type: AlertType.WARNING,
-                        message: backendMessage || 'artemisApp.atlasOrchestrator.partial',
-                        disableTranslation: backendMessage.length > 0,
-                    });
-                }
             } else if (result.status === CompetencyOrchestrationStatus.InProgress) {
                 this.alertService.warning('artemisApp.atlasOrchestrator.inProgress');
             } else {
                 this.alertService.addAlert({
                     type: AlertType.DANGER,
-                    message: backendMessage || 'artemisApp.atlasOrchestrator.error',
-                    disableTranslation: backendMessage.length > 0,
+                    message: summary || 'artemisApp.atlasOrchestrator.error',
+                    disableTranslation: summary.length > 0,
                 });
             }
         } catch (err) {

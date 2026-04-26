@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -60,13 +59,10 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void runForProgrammingExercise_featureEnabledNoChatClient_returnsServiceUnavailable() throws Exception {
         // ChatClient is not configured in the test profile, so the orchestrator returns a FAILED
-        // result with NO_CHAT_CLIENT and the controller maps that to 503. The applied-actions
-        // list is present but empty.
+        // result with NO_CHAT_CLIENT and the controller maps that to 503.
         request.performMvcRequest(post("/api/atlas/orchestrator/programming-exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isServiceUnavailable()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value("NO_CHAT_CLIENT"))
-                .andExpect(jsonPath("$.message").isNotEmpty());
-
-        assertThat(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(programmingExercise.getId())).isEmpty();
+                .andExpect(jsonPath("$.summary").isNotEmpty());
     }
 
     @Test

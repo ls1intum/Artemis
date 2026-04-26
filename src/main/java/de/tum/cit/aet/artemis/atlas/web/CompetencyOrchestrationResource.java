@@ -56,7 +56,6 @@ public class CompetencyOrchestrationResource {
     private static HttpStatus httpStatusFor(CompetencyOrchestrationResultDTO result) {
         return switch (result.status()) {
             case SUCCESS -> HttpStatus.OK;
-            case PARTIAL -> HttpStatus.MULTI_STATUS;
             case IN_PROGRESS -> HttpStatus.CONFLICT;
             case FAILED -> switch (result.failureReason() == null ? CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR : result.failureReason()) {
                 case NO_CHAT_CLIENT -> HttpStatus.SERVICE_UNAVAILABLE;
