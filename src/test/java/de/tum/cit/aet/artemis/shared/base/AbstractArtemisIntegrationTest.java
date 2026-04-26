@@ -317,7 +317,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @BeforeEach
     void mockMailService() throws IOException {
-        doNothing().when(javaMailSender).send(any(MimeMessage.class));
+        doNothing().when(javaMailSender).send(any(MimeMessage[].class));
         Files.createDirectories(tempPath);
     }
 

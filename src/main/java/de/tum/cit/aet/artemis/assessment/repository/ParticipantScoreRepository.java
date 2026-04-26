@@ -91,13 +91,13 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
     Double findAverageScoreForExercise(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Safely removes the result from all participant scores by setting it to null.
-     * The scheduler will later evaluate and delete the participant score if no older result exists.
+     * Safely removes the result from all participant scores by setting the reference to null.
+     * The participant score is kept even if both references become null, because the
+     * {@link ParticipantScoreScheduleService} will recalculate it from the remaining results.
      *
      * @param resultId the id of the result to be removed
      * @see ParticipantScoreScheduleService
      */
-    @Transactional // ok because of delete
     default void clearAllByResultId(Long resultId) {
         this.clearLastResultByResultId(resultId);
         this.clearLastRatedResultByResultId(resultId);
@@ -131,14 +131,21 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
     List<ScoreDistributionDTO> getScoreDistributionForExercise(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Delete all participant scores for a given exercise
+     * Delete all participant scores for a given exercise.
      * Note: Only call this method when the exercise is about to be deleted. Otherwise, use {@link #clearAllByResultId(Long)}.
+     * <p>
+     * Uses a JPQL bulk DELETE to execute immediately at the database level. This is necessary
+     * because subsequent result deletions use JPQL DELETE ({@code deleteResultById}), which
+     * bypasses Hibernate's auto-flush. A derived delete (select-then-remove) would only schedule
+     * the deletes in the persistence context without flushing them, causing FK constraint
+     * violations when the result JPQL DELETE runs.
      *
      * @param exerciseId the exercise id for which to remove all participant scores
      */
     @Transactional // ok because of delete
     @Modifying
-    void deleteAllByExerciseId(long exerciseId);
+    @Query("DELETE FROM ParticipantScore p WHERE p.exercise.id = :exerciseId")
+    void deleteAllByExerciseId(@Param("exerciseId") long exerciseId);
 
     @Transactional // ok because of modifying query
     @Modifying

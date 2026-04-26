@@ -346,6 +346,7 @@ public class LectureResource {
          * @param youTubeUrlService pure URL parser used to classify YouTube sources without any network calls
          * @return The converted lecture DTO
          */
+        @SuppressWarnings("deprecation") // Lecture attachments are deprecated; migrate to AttachmentUnit
         public static GetLecturesDTO from(Lecture lecture, YouTubeUrlService youTubeUrlService) {
             // only attachments visible to students are included
             List<AttachmentDTO> attachmentDTOs = lecture.getAttachments().stream().filter(Attachment::isVisibleToStudents).map(AttachmentDTO::from).toList();

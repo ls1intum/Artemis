@@ -376,7 +376,7 @@ public class AssessmentService {
             throw new BadRequestAlertException("Result has a complaint", "result", "hasComplaint");
         }
         submission.getResults().remove(result);
-        resultService.deleteResultReferences(result.getId(), true);
+        resultService.deleteResultReferences(result.getId());
         // This saves the submission with the result removed from its list. JPA orphan removal
         // will cascade-delete the result entity, firing @PreRemove in ResultListener.
         submissionRepository.save(submission);
