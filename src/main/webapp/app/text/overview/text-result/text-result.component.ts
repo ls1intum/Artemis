@@ -1,5 +1,5 @@
 import { Component, effect, input, signal } from '@angular/core';
-import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextResultBlock } from './text-result-block';
@@ -41,6 +41,7 @@ export class TextResultComponent {
     }
 
     private convertTextToResultBlocks(feedbacks: Feedback[] = []): void {
+        checkSubsequentFeedbackInAssessment(feedbacks);
         const [referenceBasedFeedback, blockBasedFeedback]: [Feedback[], Feedback[]] = feedbacks.reduce(
             ([refBased, blockBased], elem) => (this.SHA1_REGEX.test(elem.reference!) ? [refBased, [...blockBased, elem]] : [[...refBased, elem], blockBased]),
             [[], []],

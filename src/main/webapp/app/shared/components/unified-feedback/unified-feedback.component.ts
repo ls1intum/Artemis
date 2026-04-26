@@ -18,7 +18,6 @@ export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted' | 'non
 interface FeedbackTypeConfig {
     icon: IconDefinition;
     alertClass: string;
-    defaultTitle: string;
 }
 
 @Component({
@@ -41,32 +40,27 @@ export class UnifiedFeedbackComponent {
     showReference = input<boolean>(true);
 
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
-        correct: {
-            icon: faCheck,
-            alertClass: 'alert-success',
-            defaultTitle: this.artemisTranslatePipe.transform('artemisApp.feedback.type.correct'),
-        },
-        needs_revision: {
-            icon: faRedo,
-            alertClass: 'alert-secondary',
-            defaultTitle: this.artemisTranslatePipe.transform('artemisApp.feedback.type.needsRevision'),
-        },
-        not_attempted: {
-            icon: faTimes,
-            alertClass: 'alert-secondary',
-            defaultTitle: this.artemisTranslatePipe.transform('artemisApp.feedback.type.notAttempted'),
-        },
-        non_compliant: {
-            icon: faTimes,
-            alertClass: 'alert-danger',
-            defaultTitle: this.artemisTranslatePipe.transform('artemisApp.feedback.type.nonCompliant'),
-        },
+        correct: { icon: faCheck, alertClass: 'alert-success' },
+        needs_revision: { icon: faRedo, alertClass: 'alert-secondary' },
+        not_attempted: { icon: faTimes, alertClass: 'alert-secondary' },
+        non_compliant: { icon: faTimes, alertClass: 'alert-danger' },
+    };
+
+    private readonly feedbackTypeTitleKeys: Record<FeedbackType, string> = {
+        correct: 'artemisApp.feedback.type.correct',
+        needs_revision: 'artemisApp.feedback.type.needsRevision',
+        not_attempted: 'artemisApp.feedback.type.notAttempted',
+        non_compliant: 'artemisApp.feedback.type.nonCompliant',
     };
 
     readonly inferredType = computed(() => {
         const explicitType = this.type();
         if (explicitType) {
             return explicitType;
+        }
+
+        if (this.feedback()?.isSubsequent) {
+            return 'needs_revision';
         }
 
         const points = this.points();
@@ -90,7 +84,7 @@ export class UnifiedFeedbackComponent {
             return this.getReferencedFeedbackTitle(feedback);
         }
 
-        return this.feedbackTypeConfigs[this.inferredType()].defaultTitle;
+        return this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]);
     });
 
     readonly inferredReference = computed(() => {
@@ -127,7 +121,7 @@ export class UnifiedFeedbackComponent {
     private getReferencedFeedbackTitle(feedback: Feedback): string {
         if (feedback.text) {
             if (feedback.text.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER)) {
-                return this.feedbackTypeConfigs[this.inferredType()].defaultTitle;
+                return this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]);
             }
             if (Feedback.isFeedbackSuggestion(feedback)) {
                 return this.stripFeedbackSuggestionPrefix(feedback.text);
@@ -137,7 +131,7 @@ export class UnifiedFeedbackComponent {
             if (feedback.detailText) {
                 return feedback.text;
             }
-            return this.feedbackTypeConfigs[this.inferredType()].defaultTitle;
+            return this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]);
         }
 
         if (this.assessmentsNames() && feedback.referenceId) {
@@ -146,7 +140,7 @@ export class UnifiedFeedbackComponent {
                 return `${assessmentName.type}: ${assessmentName.name}`;
             }
         }
-        return this.feedbackTypeConfigs[this.inferredType()].defaultTitle;
+        return this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]);
     }
 
     private getReferencedFeedbackReference(feedback: Feedback): string | undefined {

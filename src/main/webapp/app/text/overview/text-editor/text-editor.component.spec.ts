@@ -554,7 +554,7 @@ describe('TextEditorComponent', () => {
         expect(comp.submitButtonTooltip).toBe('entity.action.submitNoDueDateTooltip');
 
         // Active with due date
-        comp.textExercise = { dueDate: dayjs() } as any;
+        comp.textExercise = { dueDate: dayjs().add(1, 'hour') } as any;
         expect(comp.submitButtonTooltip).toBe('entity.action.submitTooltip');
 
         // Not active
