@@ -1,4 +1,8 @@
-apply plugin: 'java'
+plugins {
+    id 'java'
+    id 'application'
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
@@ -26,4 +30,8 @@ sourceSets {
             srcDirs = []
         }
     }
+}
+
+application {
+    mainClass = '${packageName}.Client'
 }

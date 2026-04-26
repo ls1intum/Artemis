@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "name": "Debug App",
+            "request": "launch",
+            "cargo": {
+                "args": ["build", "--manifest-path", "${workspaceFolder}/Cargo.toml"]
+            },
+            "args": []
+        }
+    ]
+}
