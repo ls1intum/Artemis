@@ -66,7 +66,9 @@ export class MockMetisService {
 
     deletePost(post: Post): void {}
 
-    deleteAnswerPost(answerPost: AnswerPost): void {}
+    deleteAnswerPost(answerPost: AnswerPost): Observable<void> {
+        return of(undefined);
+    }
 
     verifyAnswerPost(answerPost: AnswerPost, content?: string): Observable<AnswerPost> {
         return of(answerPost);
