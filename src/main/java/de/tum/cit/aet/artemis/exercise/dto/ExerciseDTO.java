@@ -7,12 +7,39 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 
 /**
  * A DTO representing an exercise.
- *
- * @param id   the id of the exercise
- * @param type the type of the exercise (programming, modeling, quiz, text, file-upload)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseDTO(long id, ExerciseType type) {
+public class ExerciseDTO {
+
+    private long id;
+
+    private ExerciseType type;
+
+    private ExerciseAthenaConfigDTO athenaConfig;
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public ExerciseType getType() {
+        return type;
+    }
+
+    public void setType(ExerciseType type) {
+        this.type = type;
+    }
+
+    public ExerciseAthenaConfigDTO getAthenaConfig() {
+        return athenaConfig;
+    }
+
+    public void setAthenaConfig(ExerciseAthenaConfigDTO athenaConfig) {
+        this.athenaConfig = athenaConfig;
+    }
 
     /**
      * Converts an exercise to an exercise DTO.
@@ -21,6 +48,9 @@ public record ExerciseDTO(long id, ExerciseType type) {
      * @return the exercise DTO
      */
     public static ExerciseDTO of(Exercise exercise) {
-        return new ExerciseDTO(exercise.getId(), exercise.getExerciseType());
+        ExerciseDTO dto = new ExerciseDTO();
+        dto.setId(exercise.getId());
+        dto.setType(exercise.getExerciseType());
+        return dto;
     }
 }
