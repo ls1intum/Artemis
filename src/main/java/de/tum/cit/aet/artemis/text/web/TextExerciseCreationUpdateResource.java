@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.athena.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -98,11 +99,14 @@ public class TextExerciseCreationUpdateResource {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     public TextExerciseCreationUpdateResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<CompetencyApi> competencyApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            Optional<CompetencyApi> competencyApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi, CompetencyExerciseLinkService competencyExerciseLinkService,
+            ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -119,6 +123,7 @@ public class TextExerciseCreationUpdateResource {
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -164,6 +169,12 @@ public class TextExerciseCreationUpdateResource {
             savedExercise = textExerciseRepository.save(savedExercise);
         }
         final TextExercise result = savedExercise;
+
+        // Create or update Athena config if modules are provided
+        if (textExercise.getAthenaConfig() != null) {
+            var athenaConfig = textExercise.getAthenaConfig();
+            exerciseAthenaConfigService.createOrUpdateConfig(result, athenaConfig.getPreliminaryFeedbackModule(), athenaConfig.getGradedFeedbackModule());
+        }
 
         channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
@@ -255,6 +266,13 @@ public class TextExerciseCreationUpdateResource {
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
         TextExercise persistedExercise = textExerciseRepository.save(updatedExercise);
+
+        // Create or update Athena config if modules are provided
+        if (updatedExercise.getAthenaConfig() != null) {
+            var athenaConfig = updatedExercise.getAthenaConfig();
+            exerciseAthenaConfigService.createOrUpdateConfig(persistedExercise, athenaConfig.getPreliminaryFeedbackModule(),
+                    athenaConfig.getGradedFeedbackModule());
+        }
 
         exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
