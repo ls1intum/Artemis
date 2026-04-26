@@ -161,13 +161,12 @@ describe('ExamParticipationComponent', () => {
         courseService = TestBed.inject(CourseManagementService);
         courseStorageService = TestBed.inject(CourseStorageService);
         examManagementService = TestBed.inject(ExamManagementService);
-        // Stub ngOnInit-triggered service calls so we can call ngOnInit safely
-        const studentExamStub = { exam: new Exam() } as StudentExam;
-        const loadTestRunSpy = vi.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExamStub));
-        vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamStub));
-        vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExamStub));
+        // Stub ngOnInit-triggered service calls with non-emitting Observables so ngOnInit only sets the route-derived
+        // identifiers (courseId/examId/testRunId) without polluting comp.studentExam.
+        const loadTestRunSpy = vi.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(new Subject());
+        vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(new Subject());
+        vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject());
         comp.ngOnInit();
-        // Reset call history so per-test toHaveBeenCalledOnce assertions are not skewed by the beforeEach call
         loadTestRunSpy.mockClear();
         comp.exam = new Exam();
     });
@@ -1154,15 +1153,19 @@ describe('ExamParticipationComponent', () => {
     });
 
     it('should display exam bar and timer during working time', () => {
-        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         const exercise0 = new QuizExercise(undefined, undefined);
         exercise0.id = 5;
         const exercise1 = new ProgrammingExercise(undefined, undefined);
         exercise1.id = 6;
+        comp.exam = new Exam();
+        comp.exam.startDate = dayjs().subtract(1, 'hours');
         comp.studentExam = new StudentExam();
         comp.studentExam.submitted = false;
         comp.studentExam.exercises = [exercise0, exercise1];
         comp.examStartConfirmed = true;
+        comp.individualStudentEndDate = dayjs().add(1, 'hours');
+        comp.individualStudentEndDateWithGracePeriod = dayjs().add(1, 'hours').add(1, 'minutes');
+        vi.spyOn(comp, 'isVisible').mockReturnValue(true);
         vi.spyOn(comp, 'isActive').mockReturnValue(true);
         vi.spyOn(comp, 'isOver').mockReturnValue(false);
         comp.activeExamPage = new ExamPage();
@@ -1171,7 +1174,7 @@ describe('ExamParticipationComponent', () => {
 
         fixture.changeDetectorRef.detectChanges();
         expect(fixture).toBeTruthy();
-        const examBarDebugElement = fixture.debugElement.query(By.directive(ExamBarComponent));
+        const examBarDebugElement = fixture.debugElement.query(By.css('jhi-exam-bar'));
         expect(examBarDebugElement).toBeTruthy();
     });
 

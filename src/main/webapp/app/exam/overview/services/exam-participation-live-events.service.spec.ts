@@ -56,7 +56,7 @@ describe('ExamParticipationLiveEventsService', () => {
 
     afterEach(() => {
         httpMock.verify();
-        jest.resetAllMocks();
+        vi.restoreAllMocks();
     });
 
     // Tests the reconnection handler. The service should only fetch events when the WebSocket
