@@ -58,11 +58,11 @@ public class HyperionCodeGenerationJobService {
     /**
      * Starts a new asynchronous code generation job.
      *
-     * @param user           the requesting user
-     * @param exercise       the target exercise
-     * @param courseId       resolved course id for telemetry attribution
-     * @param repositoryType the target repository type
-     *                           whether this job is the initial automatic generation pass
+     * @param user                  the requesting user
+     * @param exercise              the target exercise
+     * @param courseId              resolved course id for telemetry attribution
+     * @param repositoryType        the target repository type
+     * @param initialAutoGeneration whether this job is the initial automatic generation pass
      * @return the created job id
      */
     public String startJob(User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType, boolean initialAutoGeneration) {
