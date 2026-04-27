@@ -52,7 +52,7 @@ describe('GlobalSearchModalComponent', () => {
                             // in the CSS spec; silently swallow assignments (e.g. from NgStyle
                             // receiving a plain string instead of a style object).
                         } else {
-                            (target as Record<string, unknown>)[prop as string] = value;
+                            (target as unknown as Record<string, unknown>)[prop as string] = value;
                         }
                         return true;
                     },
