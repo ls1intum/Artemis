@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 @Lazy
 @Service
 @Conditional(AtlasEnabled.class)
-public class CompetencyValidator {
+public class CompetencyValidationService {
 
     public static final String ENTITY_NAME = "competency";
 

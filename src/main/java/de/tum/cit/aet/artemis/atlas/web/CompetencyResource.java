@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyAtlasMLNotificationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidator;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -88,13 +88,13 @@ public class CompetencyResource {
 
     private final Optional<AtlasMLApi> atlasMLApi;
 
-    private final CompetencyValidator competencyValidator;
+    private final CompetencyValidationService competencyValidator;
 
     private final CompetencyAtlasMLNotificationService atlasMLNotificationService;
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyService competencyService, CourseCompetencyRepository courseCompetencyRepository,
-            CourseCompetencyService courseCompetencyService, Optional<AtlasMLApi> atlasMLApi, CompetencyValidator competencyValidator,
+            CourseCompetencyService courseCompetencyService, Optional<AtlasMLApi> atlasMLApi, CompetencyValidationService competencyValidator,
             CompetencyAtlasMLNotificationService atlasMLNotificationService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
