@@ -163,6 +163,7 @@ Organized by feature module:
   - All new UI elements must be implemented using PrimeNG components
   - We are migrating from Bootstrap to PrimeNG; do not introduce new Bootstrap components
   - Existing Bootstrap usage will be migrated incrementally
+  - **`@ng-bootstrap/ng-bootstrap` is deprecated** — do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, etc. in new code. Use PrimeNG's `DialogService` (`primeng/dynamicdialog`) for modals, `p-tooltip` for tooltips, etc. ng-bootstrap is incompatible with Angular signal inputs (assigning to `modalRef.componentInstance.X` silently fails when `X` is `input()`/`input.required()`). Existing usages are being migrated.
 
 ### General
 - LF line endings
