@@ -114,6 +114,12 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/exam/manage/exercise-groups/**', // exam manage exercise groups module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/suspicious-behavior/**', // exam manage suspicious behavior module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/services/**', // exam manage services module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exam/manage/exam-management/**', // exam management module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exam/manage/exam-scores/**', // exam scores module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exam/manage/exam-status/**', // exam status module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exam/manage/exams/**', // exam manage exams (detail/import/update/checklist/mode-picker) uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exam/shared/**', // exam shared module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exam/overview/**', // exam overview module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/feature-toggle/**', // feature-toggle service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/sort/**', // sort directives use vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/user-import/util/**', // user import utils use Vitest (see vitest.config.ts)
@@ -152,6 +158,12 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/manage/exercise-groups/', // exam manage exercise groups module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/manage/suspicious-behavior/', // exam manage suspicious behavior module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/manage/services/', // exam manage services module uses Vitest
+        '<rootDir>/src/main/webapp/app/exam/manage/exam-management/', // exam management module uses Vitest
+        '<rootDir>/src/main/webapp/app/exam/manage/exam-scores/', // exam scores module uses Vitest
+        '<rootDir>/src/main/webapp/app/exam/manage/exam-status/', // exam status module uses Vitest
+        '<rootDir>/src/main/webapp/app/exam/manage/exams/', // exam manage exams uses Vitest
+        '<rootDir>/src/main/webapp/app/exam/shared/', // exam shared module uses Vitest
+        '<rootDir>/src/main/webapp/app/exam/overview/', // exam overview module uses Vitest
         '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives use Vitest
         '<rootDir>/src/main/webapp/app/shared/user-import/util/', // user import utils use Vitest
         '<rootDir>/src/main/webapp/app/shared/table-view/', // table view module uses Vitest
@@ -216,6 +228,12 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/manage/exercise-groups/', // exam manage exercise groups module
         '<rootDir>/src/main/webapp/app/exam/manage/suspicious-behavior/', // exam manage suspicious behavior module
         '<rootDir>/src/main/webapp/app/exam/manage/services/', // exam manage services module
+        '<rootDir>/src/main/webapp/app/exam/manage/exam-management/', // exam management module (vitest)
+        '<rootDir>/src/main/webapp/app/exam/manage/exam-scores/', // exam scores module (vitest)
+        '<rootDir>/src/main/webapp/app/exam/manage/exam-status/', // exam status module (vitest)
+        '<rootDir>/src/main/webapp/app/exam/manage/exams/', // exam manage exams (detail/import/update/checklist/mode-picker) (vitest)
+        '<rootDir>/src/main/webapp/app/exam/shared/', // exam shared module (vitest)
+        '<rootDir>/src/main/webapp/app/exam/overview/', // exam overview module (vitest)
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
         '<rootDir>/src/main/webapp/app/shared/table-view/', // shared/table-view component
         '<rootDir>/src/main/webapp/app/shared/feature-toggle/', // feature-toggle service (vitest)
