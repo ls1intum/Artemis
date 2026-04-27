@@ -69,7 +69,7 @@ public abstract class HyperionCodeGenerationService {
             "(?is)(<\\s*(?:password|passwd|pwd|token|secret|secretKey|apiKey|accessKey|clientSecret|privateKey)\\s*>)(.*?)(<\\s*/\\s*(?:password|passwd|pwd|token|secret|secretKey|apiKey|accessKey|clientSecret|privateKey)\\s*>)");
 
     private static final Pattern SENSITIVE_KEY_VALUE_PATTERN = Pattern.compile(
-            "(?im)^(\\s*(?:export\\s+)?[\"']?[A-Za-z0-9_.-]*?(?:api[_-]?key|access[_-]?key|secret|secret[_-]?key|token|password|passwd|pwd|client[_-]?secret|private[_-]?key|ssh[_-]?key|credentials?|auth[_-]?token|bearer[_-]?token|aws_access_key_id|aws_secret_access_key|x-api-key)[A-Za-z0-9_.-]*[\"']?\\s*[:=]\\s*)(.+?)\\s*$");
+            "(?im)^(\\s*(?:export\\s+)?[\"']?(?:[A-Za-z0-9]+[_.-])*(?:api[_-]?key|access[_-]?key|secret[_-]?key|client[_-]?secret|private[_-]?key|ssh[_-]?key|auth[_-]?token|bearer[_-]?token|aws_access_key_id|aws_secret_access_key|x-api-key|secret|token|password|passwd|pwd|credentials?)[\"']?\\s*[:=]\\s*)(.+?)\\s*$");
 
     private static final String USER_FRIENDLY_CHANNEL_TIMEOUT_MESSAGE = "The AI took too long to respond and this generation request timed out after 15 minutes. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.";
 

@@ -469,13 +469,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
 
         this.shouldAutoStartCodeGenerationAllRepositories = false;
-        window.history.replaceState(
-            {
-                ...window.history.state,
-                [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: false,
-            },
-            '',
-        );
+        const updatedState = typeof window.history.state === 'object' && window.history.state !== null ? window.history.state : {};
+        updatedState[AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE] = false;
+        window.history.replaceState(updatedState, '');
         this.startCodeGeneration([...SUPPORTED_CODE_GENERATION_REPOSITORIES], true);
     }
 

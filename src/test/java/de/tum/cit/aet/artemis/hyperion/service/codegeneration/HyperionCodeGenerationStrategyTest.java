@@ -157,6 +157,28 @@ class HyperionCodeGenerationServiceTest {
     }
 
     @Test
+    void generateCode_withNonSecretConfigurationIdentifiers_keepsVisibleValues() throws Exception {
+        String buildEnvironmentContext = """
+                TOKEN_LIFETIME_SECONDS=3600
+                PASSWORD_HASH_ALGORITHM=bcrypt
+                CLIENT_SECRET=super-secret-client-value
+                api_key=real-api-key-value
+                """;
+        String consistencyIssues = """
+                password_policy=minimum-length-12
+                auth_token=real-auth-token
+                """;
+
+        setupMockTemplateAndChatResponses("{\"solutionPlan\":\"plan\",\"files\":[]}");
+
+        strategy.generateCode(user, exercise, 1L, "logs", "repo structure", buildEnvironmentContext, consistencyIssues);
+
+        assertThat(strategy.getLastBuildEnvironmentContext()).contains("TOKEN_LIFETIME_SECONDS=3600").contains("PASSWORD_HASH_ALGORITHM=bcrypt")
+                .contains("CLIENT_SECRET=[REDACTED]").contains("api_key=[REDACTED]").doesNotContain("super-secret-client-value").doesNotContain("real-api-key-value");
+        assertThat(strategy.getLastConsistencyIssues()).contains("password_policy=minimum-length-12").contains("auth_token=[REDACTED]").doesNotContain("real-auth-token");
+    }
+
+    @Test
     void generateCode_withBlankBuildEnvironmentContext_usesDefaultAndTrimsConsistencyIssues() throws Exception {
         setupMockTemplateAndChatResponses("{\"solutionPlan\":\"plan\",\"files\":[]}");
 
