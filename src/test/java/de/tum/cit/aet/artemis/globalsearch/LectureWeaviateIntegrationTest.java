@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLe
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryChannelProperties;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryLectureProperties;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -21,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -48,6 +51,9 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     @Autowired
     private SearchableEntityWeaviateService searchableEntityWeaviateService;
+
+    @Autowired
+    private ChannelRepository channelRepository;
 
     @Autowired
     private WeaviateService weaviateService;
@@ -154,6 +160,20 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             var properties = queryLectureProperties(weaviateService, newLecture.getId());
             assertThat(properties).as("New lecture should be indexed in Weaviate").isNotNull();
             assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("Lecture 2");
+
+            var existingProperties2 = queryLectureProperties(weaviateService, existingId2);
+            assertThat(existingProperties2).as("Existing lecture 2 should be updated in Weaviate").isNotNull();
+            assertThat(existingProperties2.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("Lecture 3");
+
+            Channel newChannel = channelRepository.findChannelByLectureId(newLecture.getId());
+            var channelProperties = queryChannelProperties(weaviateService, newChannel.getId());
+            assertThat(channelProperties).as("New channel should be indexed with corrected name in Weaviate").isNotNull();
+            assertThat(channelProperties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("lecture-lecture-2");
+
+            Channel existingChannel2 = channelRepository.findChannelByLectureId(existingId2);
+            var existingChannelProperties2 = queryChannelProperties(weaviateService, existingChannel2.getId());
+            assertThat(existingChannelProperties2).as("Existing channel 2 should be updated with corrected name in Weaviate").isNotNull();
+            assertThat(existingChannelProperties2.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("lecture-lecture-3");
         });
     }
 

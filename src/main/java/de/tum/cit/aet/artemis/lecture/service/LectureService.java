@@ -466,19 +466,32 @@ public class LectureService {
 
         Pattern defaultLectureNamePattern = Pattern.compile("^Lecture (\\d+)$");
         Pattern defaultChannelnamePattern = Pattern.compile("^lecture-lecture-(\\d+)$");
+
+        Set<Lecture> lecturesToUpdate = new HashSet<>();
+        Set<Channel> channelsToUpdate = new HashSet<>();
+
         for (int index = 0; index < existingLectures.size(); index++) {
             Lecture lecture = existingLectures.get(index);
-            if (defaultLectureNamePattern.matcher(lecture.getTitle()).matches()) {
-                lecture.setTitle("Lecture " + (index + 1));
+            String newTitle = "Lecture " + (index + 1);
+            if (defaultLectureNamePattern.matcher(lecture.getTitle()).matches() && !newTitle.equals(lecture.getTitle())) {
+                lecture.setTitle(newTitle);
+                lecturesToUpdate.add(lecture);
             }
             Channel channel = lectureToChannelMap.get(lecture.getId());
             String channelName = channel.getName();
-            if (channelName != null && defaultChannelnamePattern.matcher(channelName).matches()) {
-                channel.setName("lecture-lecture-" + (index + 1));
+            String newChannelName = "lecture-lecture-" + (index + 1);
+            if (channelName != null && defaultChannelnamePattern.matcher(channelName).matches() && !newChannelName.equals(channelName)) {
+                channel.setName(newChannelName);
+                channelsToUpdate.add(channel);
             }
         }
 
         lectureRepository.saveAll(existingLectures);
         channelRepository.saveAll(existingLectureChannels);
+
+        if (searchableEntityWeaviateService != null) {
+            lecturesToUpdate.forEach(searchableEntityWeaviateService::upsertLectureAsync);
+            channelsToUpdate.forEach(searchableEntityWeaviateService::upsertChannelAsync);
+        }
     }
 }
