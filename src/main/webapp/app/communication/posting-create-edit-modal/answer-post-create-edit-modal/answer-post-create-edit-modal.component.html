@@ -13,7 +13,13 @@
             />
             <div class="col mt-1 text-end">
                 @if (editType === EditType.UPDATE) {
-                    <button jhi-posting-button [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate" class="btn btn-sm btn-outline-secondary" (click)="close()"></button>
+                    <button
+                        jhi-posting-button
+                        [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate"
+                        class="btn btn-sm btn-outline-secondary"
+                        type="button"
+                        (click)="close()"
+                    ></button>
                     <button
                         jhi-posting-button
                         [buttonLoading]="isLoading"
