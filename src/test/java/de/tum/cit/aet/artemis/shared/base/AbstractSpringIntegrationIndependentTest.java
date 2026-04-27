@@ -55,7 +55,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
 import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
-import de.tum.cit.aet.artemis.tumlive.service.TumLiveService;
+import de.tum.cit.aet.artemis.videosource.service.TumLiveService;
 
 /**
  * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.

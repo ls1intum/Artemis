@@ -69,7 +69,10 @@ public class LectureUnitProcessingState extends DomainObject {
 
     /**
      * Translation key for error message if processing failed.
-     * Use i18n keys like "artemisApp.processing.error.transcriptionFailed".
+     * Use i18n keys like "artemisApp.attachmentVideoUnit.processing.error.youtubePrivate".
+     * Populated by the state-write boundary after translating raw Pyris {@code error_code}
+     * values into specific, instructor-readable keys; falls back to a generic key when
+     * the code is absent or unknown.
      */
     @Column(name = "error_key", length = 255)
     private String errorKey;

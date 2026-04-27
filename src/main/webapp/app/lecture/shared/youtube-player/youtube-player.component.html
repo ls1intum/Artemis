@@ -1,0 +1,15 @@
+<div class="video-wrapper" #videoWrapper>
+    <div class="video-column" #videoColumn>
+        <youtube-player
+            [videoId]="videoId()"
+            [disableCookies]="true"
+            [disablePlaceholder]="true"
+            [playerVars]="playerVars"
+            (ready)="onPlayerReady($event)"
+            (stateChange)="onStateChange($event)"
+            (error)="onPlayerError($event)"
+        />
+    </div>
+    <div class="resizer-handle" #resizerHandle>⋮</div>
+    <jhi-transcript-viewer [transcriptSegments]="transcriptSegments()" [currentSegmentIndex]="currentSegmentIndex()" (segmentClicked)="seekTo($event)" />
+</div>

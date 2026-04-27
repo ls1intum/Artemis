@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
@@ -593,5 +594,52 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
         // Should succeed with valid dates
         request.performMvcRequest(validBuilder).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_malformedYouTubeUrl_shouldReturnInvalidYouTubeUrl() throws Exception {
+        attachmentVideoUnit.setVideoSource("https://youtube.com/watch?v=shortid");
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("invalidYouTubeUrl"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_wellFormedYouTubeUrl_shouldCreate() throws Exception {
+        attachmentVideoUnit.setVideoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_nonYouTubeUrl_shouldCreate() throws Exception {
+        attachmentVideoUnit.setVideoSource("https://vimeo.com/123456789");
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_malformedYouTubeUrl_shouldReturnInvalidYouTubeUrl() throws Exception {
+        persistAttachmentVideoUnitWithLecture();
+        attachmentVideoUnit.setVideoSource("https://youtube.com/watch?v=shortid");
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("invalidYouTubeUrl"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_wellFormedYouTubeUrl_shouldUpdate() throws Exception {
+        persistAttachmentVideoUnitWithLecture();
+        attachmentVideoUnit.setVideoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_nonYouTubeUrl_shouldUpdate() throws Exception {
+        persistAttachmentVideoUnitWithLecture();
+        attachmentVideoUnit.setVideoSource("https://vimeo.com/123456789");
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isOk());
     }
 }

@@ -14,9 +14,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -33,10 +30,11 @@ import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyMultipleChoiceP
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestion extends QuizQuestion {
 
+    // No @Cache here on purpose: the parent collection of AnswerOption references that get resolved during merge cascade.
+    // A stale cached collection here is the exact failure mode that caused #12574 / #12584 on the clustered L2 cache.
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "question_id")
     @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<AnswerOption> answerOptions = new ArrayList<>();
 
     @Column(name = "single_choice")

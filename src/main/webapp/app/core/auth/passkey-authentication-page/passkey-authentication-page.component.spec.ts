@@ -182,6 +182,17 @@ describe('PasskeyAuthenticationPageComponent', () => {
             expect(redirectSpy).not.toHaveBeenCalled();
         });
 
+        it('should silently return when loginWithPasskey throws (e.g., user cancellation)', async () => {
+            vi.spyOn(webauthnService, 'loginWithPasskey').mockRejectedValue(new DOMException('User cancelled', 'NotAllowedError'));
+            const identitySpy = vi.spyOn(accountService, 'identity');
+            const redirectSpy = vi.spyOn(component, 'redirectToOriginalUrlOrHome');
+
+            await component.signInWithPasskey();
+
+            expect(identitySpy).not.toHaveBeenCalled();
+            expect(redirectSpy).not.toHaveBeenCalled();
+        });
+
         it('should refresh identity after login', async () => {
             vi.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
             const identitySpy = vi.spyOn(accountService, 'identity').mockResolvedValue({} as User);
