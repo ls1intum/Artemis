@@ -8,10 +8,14 @@ import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundToNDecimalPlace
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.CascadeType;
@@ -24,8 +28,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
-import jakarta.persistence.PostLoad;
 import jakarta.persistence.Table;
 
 import org.apache.commons.lang3.StringUtils;
@@ -95,22 +97,16 @@ public class Result extends DomainObject implements Comparable<Result> {
     private Submission submission;
 
     // No @Cache: actively mutated during manual assessment; NONSTRICT caused stale feedback lists across nodes, same class of bug as #12574.
+    // Stored as a Set: feedback ordering is not semantically meaningful — every consumer that cares about
+    // presentation order sorts explicitly (by credits, by FeedbackType, by reference, ...). Using a Set
+    // avoids the @OrderColumn null-index race (Hibernate "Illegal null value for list index" under
+    // concurrent multi-node assessment writes) and avoids the MultipleBagFetchException that an unordered
+    // List would trigger together with the assessmentNote bag. The legacy "feedbacks_order" DB column is
+    // intentionally left in place — it is now unused by the mapping and a follow-up PR will drop it via
+    // a Liquibase changeset to keep this PR a pure-Java change.
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderColumn
     @JsonIgnoreProperties(value = "result", allowSetters = true)
-    private List<Feedback> feedbacks = new ArrayList<>();
-
-    /**
-     * Removes null entries from the feedbacks list after loading from the database.
-     * Hibernate's @OrderColumn can leave null gaps when feedback entries are deleted without reindexing.
-     * Only cleans already-initialized collections to avoid triggering lazy loading.
-     */
-    @PostLoad
-    private void removeNullFeedbacks() {
-        if (feedbacks != null && Hibernate.isInitialized(feedbacks)) {
-            feedbacks.removeIf(Objects::isNull);
-        }
-    }
+    private Set<Feedback> feedbacks = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn()
@@ -303,12 +299,33 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.submission = submission;
     }
 
-    public List<Feedback> getFeedbacks() {
+    /**
+     * Returns the live, mutable set of feedbacks attached to this result.
+     *
+     * <p>
+     * Returned as a {@link Set} on purpose: feedback ordering is not semantically meaningful for the
+     * domain. Callers that need a specific presentation order (by credits, FeedbackType, reference, ...)
+     * should sort explicitly via {@link #getFeedbacksSorted()} or a custom comparator.
+     *
+     * @return the live {@link Set} of feedbacks; mutations are persisted by the Hibernate session
+     */
+    public Set<Feedback> getFeedbacks() {
         return feedbacks;
     }
 
-    public Result feedbacks(List<Feedback> feedbacks) {
-        this.feedbacks = feedbacks;
+    /**
+     * Convenience accessor that returns a snapshot of the feedbacks sorted by id (insertion order under
+     * the IDENTITY generator). Use when a deterministic ordering is required for tests, JSON output, or
+     * comparison logic.
+     *
+     * @return a new list containing the feedbacks sorted by id (nulls last)
+     */
+    public List<Feedback> getFeedbacksSorted() {
+        return feedbacks.stream().sorted(Comparator.comparing(Feedback::getId, Comparator.nullsLast(Comparator.naturalOrder()))).collect(Collectors.toList());
+    }
+
+    public Result feedbacks(Collection<Feedback> feedbacks) {
+        setFeedbacks(feedbacks);
         return this;
     }
 
@@ -318,7 +335,7 @@ public class Result extends DomainObject implements Comparable<Result> {
         return this;
     }
 
-    public void addFeedbacks(List<Feedback> feedbacks) {
+    public void addFeedbacks(Collection<Feedback> feedbacks) {
         feedbacks.forEach(this::addFeedback);
     }
 
@@ -327,8 +344,11 @@ public class Result extends DomainObject implements Comparable<Result> {
         feedback.setResult(null);
     }
 
-    public void setFeedbacks(List<Feedback> feedbacks) {
-        this.feedbacks = feedbacks;
+    public void setFeedbacks(Collection<Feedback> feedbacks) {
+        this.feedbacks.clear();
+        if (feedbacks != null) {
+            this.feedbacks.addAll(feedbacks);
+        }
     }
 
     /**
@@ -646,7 +666,7 @@ public class Result extends DomainObject implements Comparable<Result> {
         double totalPoints = 0.0;
         double scoreAutomaticTests = 0.0;
         ProgrammingExercise programmingExercise = (ProgrammingExercise) submission.getParticipation().getExercise();
-        List<Feedback> feedbacks = getFeedbacks();
+        Set<Feedback> feedbacks = getFeedbacks();
         var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
 
         for (Feedback feedback : feedbacks) {

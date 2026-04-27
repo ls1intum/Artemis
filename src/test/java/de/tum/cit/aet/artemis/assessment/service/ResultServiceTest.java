@@ -141,7 +141,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
         result = participationUtilService.addVariousFeedbackTypeFeedbacksToResult(result);
 
         // The ordering should be the same as is declared in addVariousFeedbackTypeFeedbacksToResult()
-        assertThat(resultService.filterFeedbackForClient(result)).isEqualTo(result.getFeedbacks());
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
     }
 
     @Test
