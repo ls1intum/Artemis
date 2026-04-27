@@ -75,6 +75,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
@@ -1280,7 +1281,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         // Insert the exercise into Weaviate first
         if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertExerciseAsync(quizExercise);
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(quizExercise));
             await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertQuizExerciseExistsInWeaviate(weaviateService, quizExercise));
         }
 
@@ -1303,7 +1304,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         // Insert the exercise into Weaviate first
         if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertExerciseAsync(quizExercise);
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(quizExercise));
 
             await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertQuizExerciseExistsInWeaviate(weaviateService, quizExercise));
         }
