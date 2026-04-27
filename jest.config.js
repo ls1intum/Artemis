@@ -11,6 +11,7 @@ const esModules = [
     '@angular/platform-browser-dynamic',
     '@angular/router',
     '@angular/service-worker',
+    '@angular/youtube-player',
     '@ctrl/ngx-emoji-mart',
     '@danielmoncada/angular-datetime-picker',
     '@fortawesome/angular-fontawesome',
@@ -46,6 +47,7 @@ const esModules = [
     'dayjs/esm',
     'export-to-csv',
     'franc-min',
+    'interactjs',
     'internmap',
     'lodash-es',
     'markdown-it-github-alerts',
@@ -57,6 +59,7 @@ const esModules = [
     'primeng',
     'rxjs/operators',
     'trigram-utils',
+    'uuid',
 ].join('|');
 
 const {
@@ -106,6 +109,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/shared/table-view/**',          // table view module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/components/buttons/**',  // buttons module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/students/**', // exam manage students module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/feature-toggle/**', // feature-toggle service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/sort/**', // sort directives use vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/user-import/util/**', // user import utils use Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/exercise-headers/**', // exercise headers module uses Vitest (see vitest.config.ts)
@@ -199,6 +203,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
         '<rootDir>/src/main/webapp/app/shared/table-view/', // shared/table-view component
+        '<rootDir>/src/main/webapp/app/shared/feature-toggle/', // feature-toggle service (vitest)
         '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives
         '<rootDir>/src/main/webapp/app/shared/user-import/util/', // user import utils
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // migrated to Vitest

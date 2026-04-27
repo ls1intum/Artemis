@@ -15,7 +15,7 @@ class LocalVCInfoContributorTest {
     @Test
     void testContribute() {
         Info.Builder builder = new Info.Builder();
-        var repositoryAuthenticationMechanisms = List.of("password", "token", "ssh");
+        var repositoryAuthenticationMechanisms = List.of("token", "ssh", "password");
         LocalVCInfoContributor localVCInfoContributor = new LocalVCInfoContributor();
         ReflectionTestUtils.setField(localVCInfoContributor, "orderedRepositoryAuthenticationMechanisms", repositoryAuthenticationMechanisms);
 

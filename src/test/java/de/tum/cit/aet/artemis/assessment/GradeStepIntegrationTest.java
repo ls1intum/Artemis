@@ -393,5 +393,4 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(foundGrade.gradeType()).isEqualTo(GradeType.BONUS);
         assertThat(foundGrade.isPassingGrade()).isFalse();
     }
-
 }

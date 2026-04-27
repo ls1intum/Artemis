@@ -210,6 +210,7 @@
             (ngModelChange)="selectedSessionListOption.set($event)"
             optionLabel="label"
             optionValue="value"
+            unselectable="true"
         />
     </div>
     @let sessions = tutorialGroupSessions();
@@ -266,17 +267,15 @@
                         @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP) {
                             <td>
                                 <div class="session-actions">
-                                    @if (!session.isCancelled) {
-                                        <button
-                                            [pTooltip]="editSessionButtonTooltipLabel()"
-                                            tooltipPosition="left"
-                                            data-testid="edit-session-button"
-                                            (click)="openSessionModal(session.id)"
-                                        >
-                                            <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
-                                        </button>
-                                    }
-                                    @if (session.isCancelled) {
+                                    <button
+                                        [pTooltip]="editSessionButtonTooltipLabel()"
+                                        tooltipPosition="left"
+                                        data-testid="edit-session-button"
+                                        (click)="openSessionModal(session.id)"
+                                    >
+                                        <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
+                                    </button>
+                                    @if (session.isCancelled && !session.isCancelledByFreePeriod) {
                                         <button
                                             [pTooltip]="activateSessionButtonTooltipLabel()"
                                             tooltipPosition="left"
@@ -285,7 +284,7 @@
                                         >
                                             <fa-icon [icon]="faCirclePlay" aria-hidden="true" />
                                         </button>
-                                    } @else {
+                                    } @else if (!session.isCancelled) {
                                         <button
                                             [pTooltip]="cancelSessionButtonTooltipLabel()"
                                             tooltipPosition="left"

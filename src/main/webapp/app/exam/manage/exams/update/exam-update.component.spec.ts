@@ -40,6 +40,7 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { By } from '@angular/platform-browser';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 @Component({
     template: '',
@@ -95,7 +96,7 @@ describe('ExamUpdateComponent', () => {
                         findGradingScaleForExam: () => {
                             return of(
                                 new HttpResponse({
-                                    body: new GradingScale(),
+                                    body: toGradingScaleDTO(new GradingScale()),
                                     status: 200,
                                 }),
                             );
@@ -948,7 +949,7 @@ describe('ExamUpdateComponent', () => {
                         findGradingScaleForExam: () => {
                             return of(
                                 new HttpResponse({
-                                    body: new GradingScale(),
+                                    body: toGradingScaleDTO(new GradingScale()),
                                     status: 200,
                                 }),
                             );

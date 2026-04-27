@@ -107,6 +107,7 @@ public class DatabaseMigration {
         migrationPaths.add(new MigrationPath("5.12.9")); // required for migration to 6.0.0 until 7.0.0
         migrationPaths.add(new MigrationPath("6.9.6"));  // required for migration to 7.0.0 until 8.0.0
         migrationPaths.add(new MigrationPath("7.10.5"));  // required for migration to 8.0.0 until 9.0.0
+        migrationPaths.add(new MigrationPath("8.8.6"));  // required for migration to 9.0.0 until 10.0.0
 
         // Add more migrations here as needed
     }
@@ -139,7 +140,7 @@ public class DatabaseMigration {
                     optionalHeliosClient.ifPresent(HeliosClient::pushDbMigrationFailed);
                     System.exit(15);
                 }
-                else if (previousVersion.isEqualTo(path.requiredVersion)) {
+                else if (previousVersion.isGreaterThanOrEqualTo(path.requiredVersion) && !isSchemaConsolidationCompleted()) {
                     updateInitialChecksum(path.upgradeVersion.toString());
                     log.info("Successfully cleaned up initial schema during migration");
                     break; // Exit after handling the required migration step
@@ -219,29 +220,25 @@ public class DatabaseMigration {
     private void updateInitialChecksum(String newVersion) {
         String description = "Initial schema generation for version " + newVersion;
 
-        // SQL statement with a placeholder for the newVersion parameter
+        // Nullify checksums for all existing initial schema changesets (ID pattern 0000000000000%)
+        // so that Liquibase recalculates them instead of reporting a checksum mismatch.
+        // On upgrade from 8.8.6, only 00000000000001 exists in DATABASECHANGELOG — the new
+        // DB-specific changesets (00000000000002, 00000000000003) use preConditions to handle
+        // the case where their columns already exist.
         String updateSqlStatement = """
                 UPDATE DATABASECHANGELOG
                 SET MD5SUM = null,
                     DATEEXECUTED = now(),
                     DESCRIPTION = ?,
-                    LIQUIBASE = '4.27.0',
+                    LIQUIBASE = '5.0.2',
                     FILENAME = 'config/liquibase/changelog/00000000000000_initial_schema.xml'
-                WHERE ID = '00000000000001';
+                WHERE ID LIKE '0000000000000%';
                 """;
 
-        // Use try-with-resources to ensure resources are closed properly
         try (var connection = dataSource.getConnection(); var preparedStatement = connection.prepareStatement(updateSqlStatement)) {
-
-            // Set the newVersion parameter in the SQL statement
             preparedStatement.setString(1, description);
-
-            // Execute the update
             preparedStatement.executeUpdate();
-
-            // Commit the transaction
             connection.commit();
-
             log.info("Set checksum of initial schema to null so that liquibase will recalculate it");
         }
         catch (SQLException e) {
@@ -249,6 +246,27 @@ public class DatabaseMigration {
             optionalHeliosClient.ifPresent(HeliosClient::pushDbMigrationFailed);
             System.exit(11);
         }
+    }
+
+    /**
+     * Checks whether the schema consolidation for this major version has already been completed
+     * by looking for the cleanup changeset in DATABASECHANGELOG. Once the cleanup has run,
+     * the consolidation is done and we don't need to nullify checksums again.
+     * This prevents unnecessary work on every subsequent startup.
+     *
+     * @return true if the cleanup changeset (20260406120000) is already in DATABASECHANGELOG
+     */
+    private boolean isSchemaConsolidationCompleted() {
+        try (var statement = createStatement()) {
+            var result = statement.executeQuery("SELECT COUNT(*) FROM DATABASECHANGELOG WHERE ID = '20260406120000';");
+            if (result.next()) {
+                return result.getInt(1) > 0;
+            }
+        }
+        catch (SQLException e) {
+            log.warn("Could not check if schema consolidation is completed: {}", e.getMessage());
+        }
+        return false;
     }
 
     /**

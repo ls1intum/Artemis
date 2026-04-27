@@ -78,12 +78,6 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    supportedTitleHeader = POSSIBLE_TUTORIAL_GROUP_TITLE_HEADERS.join(', ');
-    supportedRegistrationNumberHeaders = POSSIBLE_REGISTRATION_NUMBER_HEADERS.join(', ');
-    supportedLoginHeaders = POSSIBLE_LOGIN_HEADERS.join(', ');
-    supportedFirstNameHeaders = POSSIBLE_FIRST_NAME_HEADERS.join(', ');
-    supportedLastNameHeaders = POSSIBLE_LAST_NAME_HEADERS.join(', ');
-
     fixedPlaceForm: FormGroup;
 
     get statusHeaderControl() {

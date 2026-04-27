@@ -107,15 +107,6 @@ public class ModuleFeatureService {
     }
 
     /**
-     * Check if the Nebula module is enabled.
-     *
-     * @return true if the Nebula module is enabled, false otherwise
-     */
-    public boolean isNebulaEnabled() {
-        return artemisConfigHelper.isNebulaEnabled(environment);
-    }
-
-    /**
      * Check if the LTI module is enabled.
      *
      * @return true if the LTI module is enabled, false otherwise

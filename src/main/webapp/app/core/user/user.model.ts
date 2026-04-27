@@ -26,6 +26,8 @@ export class User extends Account {
      * <li>and <code>artemis.user-management.passkey.ask-users-to-setup</code> is set to true</li>
      * </ul>
      */
+    public bot?: boolean;
+
     public askToSetupPasskey?: boolean;
 
     public loggedInWithPasskey?: boolean;
@@ -98,5 +100,13 @@ export class UserPublicInfoDTO {
  */
 export class UserNameAndLoginDTO {
     public name?: string;
+    public login?: string;
+}
+
+/**
+ * A DTO representing a user which contains only the ID and login
+ */
+export class UserIdAndLoginDTO {
+    public id?: number;
     public login?: string;
 }

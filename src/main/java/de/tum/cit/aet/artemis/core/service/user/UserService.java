@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USER_EMAIL_DOMAIN_AFT
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_LAST_NAME_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.domain.Authority.SUPER_ADMIN_AUTHORITY;
+import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
@@ -292,6 +293,9 @@ public class UserService {
         final var newUser = new User();
         String passwordHash = passwordService.hashPassword(password);
         newUser.setLogin(userDTO.getLogin().toLowerCase());
+        if (IRIS_BOT_LOGIN.equals(newUser.getLogin())) {
+            throw new UsernameAlreadyUsedException();
+        }
         // new user gets initially a generated password
         newUser.setPassword(passwordHash);
         newUser.setFirstName(userDTO.getFirstName());

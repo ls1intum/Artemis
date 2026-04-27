@@ -29,6 +29,7 @@ export class TutorialGroupSession {
     public end: Dayjs;
     public location: string;
     public isCancelled: boolean;
+    public isCancelledByFreePeriod: boolean;
     public locationChanged: boolean;
     public timeChanged: boolean;
     public dateChanged: boolean;
@@ -40,6 +41,7 @@ export class TutorialGroupSession {
         this.end = dayjs(rawTutorialGroupSession.end);
         this.location = rawTutorialGroupSession.location;
         this.isCancelled = rawTutorialGroupSession.isCancelled;
+        this.isCancelledByFreePeriod = rawTutorialGroupSession.isCancelledByFreePeriod;
         this.locationChanged = rawTutorialGroupSession.locationChanged;
         this.timeChanged = rawTutorialGroupSession.timeChanged;
         this.dateChanged = rawTutorialGroupSession.dateChanged;

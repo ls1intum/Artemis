@@ -15,6 +15,7 @@ export interface TutorialGroupSession {
     end: string;
     location: string;
     isCancelled: boolean;
+    isCancelledByFreePeriod: boolean;
     locationChanged: boolean;
     timeChanged: boolean;
     dateChanged: boolean;

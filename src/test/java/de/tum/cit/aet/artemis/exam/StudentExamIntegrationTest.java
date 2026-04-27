@@ -2478,6 +2478,66 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSubmitTextExerciseDuringTestRun() throws Exception {
+        // Create a test run and get conduction data (which creates participations + submissions)
+        var testRun = createTestRun();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-run/" + testRun.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
+
+        // Find the text exercise in the test run
+        TextExercise textExercise = null;
+        TextSubmission textSubmission = null;
+        for (var exercise : testRunResponse.getExercises()) {
+            if (exercise instanceof TextExercise) {
+                textExercise = (TextExercise) exercise;
+                assertThat(exercise.getStudentParticipations()).as("Text exercise should have participations").isNotEmpty();
+                var participation = exercise.getStudentParticipations().iterator().next();
+                assertThat(participation.getSubmissions()).as("Participation should have submissions").isNotEmpty();
+                textSubmission = (TextSubmission) participation.getSubmissions().iterator().next();
+                break;
+            }
+        }
+
+        assertThat(textExercise).as("Test run should contain a text exercise").isNotNull();
+
+        // Simulate the student saving the text submission during the exam (the code path that was broken for test runs)
+        textSubmission.setText("Updated text submission during test run");
+        request.put("/api/text/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSubmitModelingExerciseDuringTestRun() throws Exception {
+        var testRun = createTestRun();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-run/" + testRun.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
+
+        // Find the modeling exercise in the test run
+        ModelingExercise modelingExercise = null;
+        ModelingSubmission modelingSubmission = null;
+        for (var exercise : testRunResponse.getExercises()) {
+            if (exercise instanceof ModelingExercise) {
+                modelingExercise = (ModelingExercise) exercise;
+                assertThat(exercise.getStudentParticipations()).as("Modeling exercise should have participations").isNotEmpty();
+                var participation = exercise.getStudentParticipations().iterator().next();
+                assertThat(participation.getSubmissions()).as("Participation should have submissions").isNotEmpty();
+                modelingSubmission = (ModelingSubmission) participation.getSubmissions().iterator().next();
+                break;
+            }
+        }
+
+        assertThat(modelingExercise).as("Test run should contain a modeling exercise").isNotNull();
+        assertThat(modelingSubmission).as("Modeling exercise should have a submission").isNotNull();
+
+        // Simulate saving the modeling submission during the exam test run
+        modelingSubmission.setModel("{\"updated\": true}");
+        request.put("/api/modeling/exercises/" + modelingExercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testTestRunGradeSummaryDoesNotReturn404() throws Exception {
         StudentExam testRun = createTestRun();
         testRun.setSubmitted(true);

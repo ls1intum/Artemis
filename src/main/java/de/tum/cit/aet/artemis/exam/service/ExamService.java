@@ -1545,8 +1545,11 @@ public class ExamService {
         var now = now();
 
         var studentExams = exam.getStudentExams();
+        // Track original working times so we can include them in the notification sent after saving
+        var originalWorkingTimes = new HashMap<Long, Integer>();
         for (var studentExam : studentExams) {
             int originalStudentWorkingTime = studentExam.getWorkingTime();
+            originalWorkingTimes.put(studentExam.getId(), originalStudentWorkingTime);
             int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
             // NOTE: take the original working time extensions into account
             if (originalTimeExtension == 0) {
@@ -1559,13 +1562,20 @@ public class ExamService {
                 int adjustedWorkingTime = Math.max(newNormalWorkingTime + timeAdjustment, 0);
                 studentExam.setWorkingTime(adjustedWorkingTime);
             }
+        }
+        // Important: persist all student exams BEFORE sending WebSocket notifications.
+        // The client uses a REST fallback (GET /student-exams/live-events) to recover missed events.
+        // If we send WebSocket messages before saving, a client that immediately calls the REST
+        // endpoint on receiving the message might not find the event in the database yet.
+        studentExamRepository.saveAll(studentExams);
 
-            // NOTE: if the exam is already visible, notify the student about the working time change
-            if (now.isAfter(exam.getVisibleDate())) {
+        // Notify students about the working time changes via WebSocket live events
+        if (now.isAfter(exam.getVisibleDate())) {
+            for (var studentExam : studentExams) {
+                int originalStudentWorkingTime = originalWorkingTimes.get(studentExam.getId());
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(studentExam, studentExam.getWorkingTime(), originalStudentWorkingTime, true);
             }
         }
-        studentExamRepository.saveAll(studentExams);
     }
 
     /**

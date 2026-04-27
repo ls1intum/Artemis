@@ -167,7 +167,7 @@ export const FOOTER_LINK_GROUPS: FooterLinkGroup[] = [
             { labelKey: 'landing.footer.links.features.lectures', href: 'https://docs.artemis.tum.de/student/learning-content/lectures' },
             { labelKey: 'landing.footer.links.features.communication', href: 'https://docs.artemis.tum.de/student/communication-support/communication' },
             { labelKey: 'landing.footer.links.features.adaptiveLearning', href: 'https://docs.artemis.tum.de/student/progress-analytics/adaptive-learning' },
-            { labelKey: 'landing.footer.links.features.iris', href: 'https://docs.artemis.tum.de/student/learning-content/iris' },
+            { labelKey: 'landing.footer.links.features.iris', href: 'https://ls1intum.github.io/edutelligence/iris/' },
         ],
     },
     {

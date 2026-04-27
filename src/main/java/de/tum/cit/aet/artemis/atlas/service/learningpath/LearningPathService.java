@@ -403,7 +403,7 @@ public class LearningPathService {
         Optional<LearningPath> optionalLearningPath = learningPathRepositoryService.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId);
         LearningPath learningPath;
         if (optionalLearningPath.isEmpty()) {
-            LearningPath learningPathWithCourse = learningPathRepository.findWithEagerCourseByIdElseThrow(learningPathId);
+            LearningPath learningPathWithCourse = learningPathRepository.findWithEagerUserAndCourseByIdElseThrow(learningPathId);
             courseLearnerProfileService.createCourseLearnerProfile(learningPathWithCourse.getCourse(), learningPathWithCourse.getUser());
             learningPath = learningPathRepositoryService.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(learningPathId);
         }

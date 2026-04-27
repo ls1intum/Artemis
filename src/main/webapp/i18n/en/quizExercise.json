@@ -12,7 +12,6 @@
                 "createLabel": "Create Quiz",
                 "editLabel": "Edit Quiz",
                 "importLabel": "Import Quiz",
-                "exportLabel": "Export Quiz Exercises",
                 "createModelDragAndDrop": "Create Drag and Drop Model Quiz"
             },
             "aiGeneration": {
@@ -56,6 +55,14 @@
                 "errors": {
                     "invalidConfiguration": "Please provide a topic and select at least one question type.",
                     "generationFailed": "Failed to generate quiz questions. Please try again."
+                },
+                "refinement": {
+                    "promptPlaceholder": "Describe how to refine this question...",
+                    "changesLabel": "Changes made",
+                    "defaultReasoning": "The question was refined according to your instructions.",
+                    "errors": {
+                        "failed": "Failed to refine the question. Please try again."
+                    }
                 },
                 "preview": {
                     "title": "Preview Results",

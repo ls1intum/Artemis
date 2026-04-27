@@ -6,21 +6,21 @@
             "toggleMenu": "Menü umschalten"
         },
         "hero": {
-            "tagline": "Für Universitäten & technische Hochschulen",
+            "tagline": "Für Universitäten & Bildungseinrichtungen",
             "title": "Eine Lernplattform für die universitäre Lehre.",
-            "subtitle": "Artemis ist eine Open-Source-Lernplattform für die universitäre Lehre — sofortiges Feedback bei Programmieraufgaben, intelligente Quizze und kollaborative Werkzeuge, die Studierende und Lehrende synchron halten."
+            "subtitle": "Artemis ist eine Open-Source-Lernplattform für die universitäre Lehre. Sofortiges Feedback bei Übungen, KI-gestütztes Tutoring und kollaborative Werkzeuge halten Studierende und Lehrende synchron. Auf Wunsch selbst hostbar für volle Kontrolle über deine Daten."
         },
         "spotlight": {
             "title": "KI, die lehrt, nicht nur antwortet",
-            "description": "Iris, der integrierte KI-Tutor von Artemis, führt Studierende mit Hinweisen und Leitfragen durch Probleme — basierend auf kursspezifischen Inhalten. Für Lehrende erkennt er Muster in Studierendenfragen und hält FAQs automatisch aktuell.",
+            "description": "Iris, der integrierte KI-Tutor von Artemis, führt Studierende mit Hinweisen und Leitfragen durch Probleme, basierend auf kursspezifischen Inhalten. Für Lehrende erkennt er Muster in Studierendenfragen und hält FAQs automatisch aktuell. Iris unterstützt Open-Source-Sprachmodelle (LLMs), sodass Institutionen alle Interaktionen innerhalb der eigenen Infrastruktur halten können.",
             "steps": {
                 "tutor": {
-                    "title": "KI, die lehrt — nicht nur antwortet",
-                    "description": "Iris, der integrierte KI-Tutor von Artemis, führt Studierende mit Hinweisen und Leitfragen durch Probleme — basierend auf kursspezifischen Inhalten. Für Lehrende erkennt er Muster in Studierendenfragen und hält FAQs automatisch aktuell."
+                    "title": "KI, die lehrt, nicht nur antwortet",
+                    "description": "Iris, der integrierte KI-Tutor von Artemis, führt Studierende mit Hinweisen und Leitfragen durch Probleme, basierend auf kursspezifischen Inhalten. Für Lehrende erkennt er Muster in Studierendenfragen und hält FAQs automatisch aktuell. Iris unterstützt Open-Source-Sprachmodelle (LLMs), sodass Institutionen alle Interaktionen innerhalb der eigenen Infrastruktur halten können."
                 },
                 "feedback": {
                     "title": "Sofortiges Feedback bei jeder Abgabe",
-                    "description": "Code, Quiz oder Modellierungsaufgabe einreichen — und innerhalb von Sekunden strukturiertes, individuelles Feedback erhalten. Artemis führt automatisch Testfälle, statische Analyse und Bewertungskriterien aus, sodass Studierende immer wissen, wo sie stehen."
+                    "description": "Code, Quiz oder Modellierungsaufgabe einreichen und innerhalb von Sekunden strukturiertes, individuelles Feedback erhalten. Artemis führt Testfälle, statische Analyse und Bewertungskriterien automatisch aus, sodass Studierende immer wissen, wo sie stehen. Lehrende können Feedback-Einstellungen und Testkonfigurationen für jede Aufgabe anpassen."
                 },
                 "transcribedLecture": {
                     "title": "Vorlesungen, die nach dem Unterricht weiterarbeiten",
@@ -28,7 +28,7 @@
                 },
                 "insights": {
                     "title": "Lernpfade, die sich an jeden Studierenden anpassen",
-                    "description": "Kompetenzen definieren, mit Vorlesungen und Übungen verknüpfen und Artemis personalisierte Lernpfade basierend auf dem Fortschritt jedes Studierenden erstellen lassen — gezielte Unterstützung für Schwächere und Freiraum für Fortgeschrittene."
+                    "description": "Kompetenzen definieren, mit Vorlesungen und Übungen verknüpfen und Artemis personalisierte Lernpfade basierend auf dem Fortschritt jedes Studierenden erstellen lassen. Schwächere erhalten gezielte Unterstützung, Fortgeschrittene bekommen Freiraum."
                 }
             },
             "carousel": {
@@ -38,14 +38,14 @@
             }
         },
         "socialProof": {
-            "title": "An führenden technischen Universitäten im Einsatz"
+            "title": "Im Einsatz an führenden Bildungseinrichtungen"
         },
         "features": {
             "title": "Ein vollständiges Lern-Ökosystem",
             "cards": {
                 "assessment": {
                     "category": "Bewertung",
-                    "description": "Von anonymer, kriterienbasierter manueller Bewertung und KI-gestützten Korrekturvorschlägen bis zur vollautomatischen Auswertung von Quizzen und Programmieraufgaben.",
+                    "description": "Von anonymer, kriterienbasierter manueller Bewertung mit KI-gestützten Korrekturvorschlägen bis zur vollautomatischen Auswertung von Quizzen und Programmieraufgaben. Bewertungskriterien sind pro Aufgabe frei konfigurierbar.",
                     "imageAlt": "Bewertungsübersicht"
                 },
                 "tutorials": {
@@ -55,17 +55,17 @@
                 },
                 "lectures": {
                     "category": "Vorlesungen",
-                    "description": "Folien hochladen, Videos einbetten und Inhalte in strukturierte Einheiten aufteilen — direkt verknüpft mit Lernzielen.",
+                    "description": "Folien hochladen, Videos einbetten und Inhalte in strukturierte Einheiten aufteilen, direkt verknüpft mit Lernzielen.",
                     "imageAlt": "Vorlesungsinhalte"
                 },
                 "examMode": {
                     "category": "Prüfungsmodus",
-                    "description": "Online-Prüfungen mit randomisierten Varianten, Plagiatserkennung und strukturierten Bewertungskriterien.",
+                    "description": "Online-Prüfungen mit randomisierten Varianten, Plagiatserkennung und strukturierten Bewertungskriterien. Vollständig konfigurierbar für die Prüfungsabläufe deiner Institution.",
                     "imageAlt": "Prüfungsmodus"
                 },
                 "communication": {
                     "category": "Kommunikation",
-                    "description": "Kursweite Ankündigungen, Diskussionsfäden und private Nachrichten.",
+                    "description": "Kursweite Kanäle, aufgabenspezifische Diskussionsfäden und Direktnachrichten sorgen für eine übersichtliche Kommunikation.",
                     "imageAlt": "Kommunikationswerkzeuge"
                 },
                 "faq": {
@@ -75,12 +75,12 @@
                 },
                 "iris": {
                     "category": "Iris - KI-Tutor",
-                    "description": "Ein KI-gestützter Tutor, der Studierende mit Hinweisen und Fragen statt Antworten anleitet.",
+                    "description": "Ein KI-gestützter Tutor, der Studierende mit Hinweisen und Fragen statt Antworten anleitet. Unterstützt On-Premise-Betrieb mit Open-Source-LLMs für vollständigen Datenschutz.",
                     "imageAlt": "Iris KI-Tutor"
                 },
                 "mobileApps": {
                     "category": "Mobile Apps",
-                    "description": "Zugriff auf Kurse, Übungen, Vorlesungen und Diskussionen von unterwegs.",
+                    "description": "Eigene iOS- und Android-Apps ermöglichen Studierenden den Zugriff auf Kurse, Übungen, Vorlesungen und Diskussionen mit einer nahtlosen mobilen Erfahrung.",
                     "imageAlt": "Mobile Apps"
                 }
             }
@@ -91,11 +91,11 @@
             "items": {
                 "free": {
                     "question": "Ist Artemis kostenlos?",
-                    "answer": "Ja — Artemis ist vollständig Open Source unter der MIT-Lizenz. Du kannst es selbst hosten oder die von der TU München bereitgestellte Version für Partnerinstitutionen nutzen."
+                    "answer": "Ja. Artemis ist vollständig Open Source unter der MIT-Lizenz. Du kannst es selbst hosten für volle Kontrolle über Daten und Konfiguration, oder die von der Technischen Universität München bereitgestellte Instanz für Partnerinstitutionen nutzen."
                 },
                 "languages": {
-                    "question": "Welche Programmiersprachen unterstützt Artemis?",
-                    "answer": "Artemis unterstützt Java, Python, C, Haskell, Kotlin, Swift, OCaml und mehr. Es integriert sich mit gängigen CI-Systemen für automatisierte Tests."
+                    "question": "Welche Programmiersprachen kann ich mit Artemis verwenden?",
+                    "answer": "Artemis ist sprachunabhängig. Automatisierte Tests funktionieren mit jeder Programmiersprache, die in einer CI-Pipeline ausgeführt werden kann. Es enthält vordefinierte Vorlagen für Java, Python, C, Haskell, Kotlin, Swift und weitere Sprachen, sodass Lehrende Aufgaben schnell einrichten können."
                 },
                 "grading": {
                     "question": "Wie funktioniert die automatische Bewertung?",
@@ -103,11 +103,11 @@
                 },
                 "scale": {
                     "question": "Kann ich Prüfungen für 1000+ Studierende durchführen?",
-                    "answer": "Ja. Artemis wurde mit Online-Prüfungen für über 2000 gleichzeitige Studierende erprobt, mit randomisierten Varianten und Echtzeit-Überwachung."
+                    "answer": "Ja. Artemis wurde mit Online-Prüfungen für über 2.000 gleichzeitige Studierende erprobt. Der Prüfungsmodus verwendet Aufgabenpools zur Generierung einzigartiger Prüfungsvarianten pro Studierendem, unterstützt Echtzeit-Überwachung und skaliert horizontal."
                 },
                 "iris": {
                     "question": "Wie unterscheidet sich Iris von ChatGPT?",
-                    "answer": "Iris ist speziell für die Lehre konzipiert — es führt Studierende mit Hinweisen und Leitfragen statt direkten Antworten. Es nutzt kursspezifische Inhalte und ist direkt in den Lernprozess integriert."
+                    "answer": "Iris ist speziell für die Lehre konzipiert. Es führt Studierende mit Hinweisen und Leitfragen statt direkten Antworten und nutzt kursspezifische Inhalte innerhalb des Lernprozesses. Institutionen können Iris mit Open-Source-LLMs auf eigenen Servern betreiben, sodass Studierendendaten die eigene Infrastruktur nie verlassen."
                 },
                 "docs": {
                     "question": "Wo finde ich die vollständige Dokumentation?",

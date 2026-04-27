@@ -38,7 +38,7 @@ public class LectureTranscription extends DomainObject {
     private LectureUnit lectureUnit;
 
     /**
-     * The external transcription job ID from the transcription service (e.g., Nebula).
+     * The external transcription job ID from the transcription service.
      * Used to track and poll the status of the asynchronous transcription process.
      */
     @Column(name = "job_id", unique = true)

@@ -163,6 +163,7 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
             end: '2026-04-20T11:45:00.000Z',
             location: 'Room 101',
             isCancelled,
+            isCancelledByFreePeriod: false,
             locationChanged: false,
             timeChanged: false,
             dateChanged: false,

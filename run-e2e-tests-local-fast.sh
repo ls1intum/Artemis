@@ -122,7 +122,7 @@ check_port_available() {
 if [ "$STOP" = true ]; then
     echo -e "${BLUE}Stopping all E2E services...${NC}"
 
-    # Kill server
+    # Kill server (PID file first, then any remaining process on port 8080)
     if [ -f "$LOCAL_DIR/server.pid" ]; then
         SERVER_PID=$(cat "$LOCAL_DIR/server.pid")
         if kill -0 "$SERVER_PID" 2>/dev/null; then
@@ -130,8 +130,9 @@ if [ "$STOP" = true ]; then
             kill_tree "$SERVER_PID"
         fi
     fi
+    check_port_available 8080 "Artemis server"
 
-    # Kill client
+    # Kill client (PID file first, then any remaining process on port 9000)
     if [ -f "$LOCAL_DIR/client.pid" ]; then
         CLIENT_PID=$(cat "$LOCAL_DIR/client.pid")
         if kill -0 "$CLIENT_PID" 2>/dev/null; then
@@ -139,6 +140,7 @@ if [ "$STOP" = true ]; then
             kill_tree "$CLIENT_PID"
         fi
     fi
+    check_port_available 9000 "Angular client"
 
     # Stop Postgres
     echo "Stopping Postgres..."

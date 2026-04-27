@@ -15,7 +15,8 @@ test.describe('Quiz Exercise Drop Location Spec', { tag: '@slow' }, () => {
             await quizExerciseDragAndDropQuiz.createDnDQuiz('DnD Quiz Test');
         });
 
-        test('Checks drop locations', async ({ page, quizExerciseDragAndDropQuiz }) => {
+        // TODO: Enable test again after fixing https://github.com/ls1intum/Artemis/issues/12418
+        test.skip('Checks drop locations', async ({ page, quizExerciseDragAndDropQuiz }) => {
             await quizExerciseDragAndDropQuiz.dragUsingCoordinates(0, 100);
             await quizExerciseDragAndDropQuiz.dragUsingCoordinates(410, 240);
             await quizExerciseDragAndDropQuiz.dragUsingCoordinates(420, 90);

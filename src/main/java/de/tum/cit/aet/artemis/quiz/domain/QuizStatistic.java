@@ -9,8 +9,6 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.ConcreteProxy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -20,13 +18,13 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 /**
  * A QuizStatistic.
  */
+// No @Cache here on purpose: incremented on every quiz evaluation while instructors watch live statistics. See #12574 / #12584.
 @Entity
 @Table(name = "quiz_statistic")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "S")
 @ConcreteProxy
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class QuizStatistic extends DomainObject {
 

@@ -129,7 +129,7 @@ theia:
             C: "c-latest"
 
 artemis:
-    push-notification-relay: https://hermes-sandbox.artemis.cit.tum.de
+    push-notification-relay: https://hermes-staging.artemis.cit.tum.de
     # Telemetry service: disabled for development
     telemetry:
         enabled: false # Disable sending any telemetry information to the telemetry service by setting this to false

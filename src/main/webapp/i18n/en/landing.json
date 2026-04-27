@@ -6,21 +6,21 @@
             "toggleMenu": "Toggle menu"
         },
         "hero": {
-            "tagline": "For Universities & Technical Institutions",
+            "tagline": "For Universities & Educational Institutions",
             "title": "A learning platform built for university education.",
-            "subtitle": "Artemis is an open-source learning platform built for university education — instant feedback on programming exercises, smart quizzes, and collaborative tools that keep both students and instructors in sync."
+            "subtitle": "Artemis is an open-source learning platform for university education. Instant feedback on exercises, AI-powered tutoring, and collaborative tools keep students and instructors in sync, all while keeping your data under your control."
         },
         "spotlight": {
             "title": "AI that teaches, not just answers",
-            "description": "Iris, Artemis's built-in AI tutor, guides students through problems with hints and leading questions — drawing on course-specific content to stay relevant. For instructors, it surfaces patterns across student questions and keeps FAQs up to date automatically.",
+            "description": "Iris, Artemis's built-in AI tutor, guides students through problems with hints and leading questions, drawing on course-specific content to stay relevant. For instructors, it surfaces patterns across student questions and keeps FAQs up to date automatically. Iris supports open-source large language models (LLMs), so institutions can keep all interactions within their own infrastructure.",
             "steps": {
                 "tutor": {
                     "title": "AI that teaches, not just answers",
-                    "description": "Iris, Artemis's built-in AI tutor, guides students through problems with hints and leading questions — drawing on course-specific content to stay relevant. For instructors, it surfaces patterns across student questions and keeps FAQs up to date automatically."
+                    "description": "Iris, Artemis's built-in AI tutor, guides students through problems with hints and leading questions, drawing on course-specific content to stay relevant. For instructors, it surfaces patterns across student questions and keeps FAQs up to date automatically. Iris supports open-source large language models (LLMs), so institutions can keep all interactions within their own infrastructure."
                 },
                 "feedback": {
                     "title": "Instant feedback, every submission",
-                    "description": "Submit code, a quiz, or a modeling task — and get structured, individual feedback within seconds. Artemis automatically runs test cases, static analysis, and grading criteria so students always know exactly where they stand, without waiting for a tutor."
+                    "description": "Submit code, a quiz, or a modeling task and get structured, individual feedback within seconds. Artemis runs test cases, static analysis, and grading criteria automatically, so students always know exactly where they stand. Instructors can fine-tune feedback settings and test configurations for each exercise."
                 },
                 "transcribedLecture": {
                     "title": "Lectures that keep working after class",
@@ -28,7 +28,7 @@
                 },
                 "insights": {
                     "title": "Learning paths that adapt to every student",
-                    "description": "Define competencies, map them to lectures and exercises, and let Artemis build personalized learning paths based on each student's progress — giving struggling students targeted support and advanced learners room to move ahead."
+                    "description": "Define competencies, map them to lectures and exercises, and let Artemis build personalized learning paths based on each student's progress. Struggling students receive targeted support while advanced learners get room to move ahead."
                 }
             },
             "carousel": {
@@ -38,14 +38,14 @@
             }
         },
         "socialProof": {
-            "title": "Adopted across top technical universities"
+            "title": "Adopted across leading educational institutions"
         },
         "features": {
             "title": "A complete learning ecosystem",
             "cards": {
                 "assessment": {
                     "category": "Assessment",
-                    "description": "From anonymous, rubric-based manual grading and AI-assisted correction suggestions, to fully automatic evaluation of quizzes and programming submissions.",
+                    "description": "From anonymous, rubric-based manual grading with AI-assisted correction suggestions to fully automatic evaluation of quizzes and programming submissions. Grading criteria are fully customizable per exercise.",
                     "imageAlt": "Assessment dashboard"
                 },
                 "tutorials": {
@@ -60,12 +60,12 @@
                 },
                 "examMode": {
                     "category": "Exam Mode",
-                    "description": "Online exams with randomized variants, plagiarism detection, and structured grading criteria.",
+                    "description": "Online exams with randomized variants, plagiarism detection, and structured grading criteria. Fully configurable to fit your institution's exam workflows.",
                     "imageAlt": "Exam mode"
                 },
                 "communication": {
                     "category": "Communication",
-                    "description": "Course-wide announcements, discussion threads, and private messaging.",
+                    "description": "Course-wide channels, exercise-specific discussion threads, and direct messaging keep everyone connected with a streamlined communication experience.",
                     "imageAlt": "Communication tools"
                 },
                 "faq": {
@@ -75,12 +75,12 @@
                 },
                 "iris": {
                     "category": "Iris - AI Tutor",
-                    "description": "An AI-powered tutor that guides students with hints and questions rather than answers.",
+                    "description": "An AI-powered tutor that guides students with hints and questions rather than answers. Supports on-premise deployment with open-source LLMs for full data privacy.",
                     "imageAlt": "Iris AI Tutor"
                 },
                 "mobileApps": {
                     "category": "Mobile Apps",
-                    "description": "Access courses, exercises, lectures, and discussions on the go.",
+                    "description": "Dedicated iOS and Android apps let students access courses, exercises, lectures, and discussions with a seamless mobile experience.",
                     "imageAlt": "Mobile apps"
                 }
             }
@@ -91,23 +91,23 @@
             "items": {
                 "free": {
                     "question": "Is Artemis free to use?",
-                    "answer": "Yes — Artemis is fully open source under the MIT license. You can self-host it or use the hosted version provided by TU Munich for partner institutions."
+                    "answer": "Yes. Artemis is fully open source under the MIT license. You can self-host it for full control over your data and configuration, or use the hosted instance provided by the Technical University of Munich for partner institutions."
                 },
                 "languages": {
-                    "question": "Which programming languages does Artemis support?",
-                    "answer": "Artemis supports Java, Python, C, Haskell, Kotlin, Swift, OCaml, and more. It integrates with popular CI systems to run automated tests for any language."
+                    "question": "Which programming languages can I use with Artemis?",
+                    "answer": "Artemis is language-independent. Automated testing works with any programming language that can run in a CI pipeline. It ships with predefined templates for Java, Python, C, Haskell, Kotlin, Swift, and more, making it easy for instructors to set up exercises quickly."
                 },
                 "grading": {
                     "question": "How does automated grading work?",
-                    "answer": "Student code is built and tested in an isolated container on every submission. Test results are shown instantly. Instructors define the test suite; Artemis handles execution and scoring."
+                    "answer": "Programming submissions are built and tested automatically via CI pipelines, with results appearing within seconds. Quizzes are graded instantly on submission. Text and modeling exercises support both AI-assisted and manual assessment with structured rubrics."
                 },
                 "scale": {
                     "question": "Can I run exams for 1000+ students?",
-                    "answer": "Yes. Artemis is battle-tested at TU Munich with large cohorts. The exam mode uses question pools to generate unique papers per student and scales horizontally."
+                    "answer": "Yes. Artemis has been proven with online exams for over 2,000 concurrent students. The exam mode uses exercise pools to generate unique exam variants per student, supports real-time monitoring, and scales horizontally."
                 },
                 "iris": {
                     "question": "How does Iris differ from ChatGPT?",
-                    "answer": "Iris is designed specifically for education — it guides students with hints and leading questions instead of giving direct answers. It draws on course-specific content and is integrated directly into the learning workflow."
+                    "answer": "Iris is designed specifically for education. It guides students with hints and leading questions instead of giving direct answers, drawing on course-specific content within the learning workflow. Institutions can run Iris with open-source LLMs on their own servers, ensuring that student data never leaves their infrastructure."
                 },
                 "docs": {
                     "question": "Where can I find the full documentation?",
