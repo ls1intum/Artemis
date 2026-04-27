@@ -615,13 +615,13 @@ describe('IrisChatService', () => {
     describe('authentication state changes', () => {
         let authState: BehaviorSubject<User | undefined>;
         let scopedService: IrisChatService;
+        let customAccountService: MockAccountService;
 
         beforeEach(() => {
             authState = new BehaviorSubject<User | undefined>({ id: 99 } as User);
-            const customAccountService = {
-                ...new MockAccountService(),
-                getAuthenticationState: () => authState.asObservable(),
-            };
+            customAccountService = new MockAccountService();
+            customAccountService.userIdentity.set({ id: 99 } as User);
+            customAccountService.getAuthenticationState = () => authState.asObservable();
 
             TestBed.resetTestingModule();
             TestBed.configureTestingModule({
@@ -637,6 +637,11 @@ describe('IrisChatService', () => {
             });
             scopedService = TestBed.inject(IrisChatService);
             scopedService.setCourseId(courseId);
+        });
+
+        it('should not reset state on the initial auth emission for the already-authenticated user', () => {
+            // courseId was set after construction; the initial emission with the same user must not clear it.
+            expect(scopedService.getCourseId()).toBe(courseId);
         });
 
         it('should clear all chat state when the user logs out', () => {
@@ -678,6 +683,34 @@ describe('IrisChatService', () => {
 
             expect(scopedService.sessionId).toBe(id);
             expect(scopedService.messages.getValue()).toEqual([mockServerMessage]);
+        });
+
+        it('should reset shouldReopenChat$ on logout', async () => {
+            scopedService.setShouldReopenChat(true);
+
+            authState.next(undefined);
+
+            const value = await firstValueFrom(scopedService.shouldReopenChat$);
+            expect(value).toBe(false);
+        });
+
+        it('should cancel an in-flight session-loading subscription on logout so it cannot repopulate state', () => {
+            const inFlight = new Subject<HttpResponse<IrisSession>>();
+            const httpServiceMock = TestBed.inject(IrisChatHttpService);
+            vi.spyOn(httpServiceMock, 'createSession').mockReturnValue(inFlight.asObservable());
+            vi.spyOn(httpServiceMock, 'getChatSessions').mockReturnValue(of([]));
+
+            scopedService.switchToNewSession(ChatServiceMode.COURSE, 1);
+            expect(scopedService['sessionLoadingSubscription']).toBeDefined();
+
+            authState.next(undefined);
+
+            // The in-flight HTTP completes after logout; tap operators must not run because the subscription was cancelled.
+            inFlight.next({ body: { ...mockConversation, id: 999 } } as HttpResponse<IrisSession>);
+            inFlight.complete();
+
+            expect(scopedService.sessionId).toBeUndefined();
+            expect(scopedService.messages.getValue()).toEqual([]);
         });
     });
 });

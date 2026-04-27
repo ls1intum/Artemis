@@ -99,6 +99,7 @@ export class IrisChatService implements OnDestroy {
     private acceptSubscription?: Subscription;
     private chatSessionSubscription?: Subscription;
     private chatSessionByIdSubscription?: Subscription;
+    private sessionLoadingSubscription?: Subscription;
     private authenticationStateSubscription: Subscription;
 
     private sessionCreationIdentifier?: string;
@@ -125,6 +126,10 @@ export class IrisChatService implements OnDestroy {
     protected constructor() {
         this.rateLimitSubscription = this.irisStatusService.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
         this.updateCourseId();
+        // Seed the tracked user id from the already-authenticated identity so the initial emission of
+        // getAuthenticationState() does not trigger a spurious reset (which would also wipe courseId
+        // we just set above).
+        this.currentUserId = this.accountService.userIdentity()?.id;
         // Reset all state when the authenticated user changes (logout or login as different user)
         // to prevent leaking the previous user's chat data into the new session.
         this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
@@ -145,12 +150,15 @@ export class IrisChatService implements OnDestroy {
         this.chatSessionSubscription = undefined;
         this.chatSessionByIdSubscription?.unsubscribe();
         this.chatSessionByIdSubscription = undefined;
+        this.sessionLoadingSubscription?.unsubscribe();
+        this.sessionLoadingSubscription = undefined;
         this.acceptSubscription?.unsubscribe();
         this.acceptSubscription = undefined;
         this.chatSessions.next([]);
         this.latestStartedSession = undefined;
         this.sessionCreationIdentifier = undefined;
         this.hasJustAcceptedLLMUsage = false;
+        this.shouldReopenChatSubject.next(false);
         // eslint-disable-next-line @typescript-eslint/no-deprecated -- intentional internal reset
         this.courseId = undefined;
     }
@@ -203,7 +211,8 @@ export class IrisChatService implements OnDestroy {
         this.acceptSubscription?.unsubscribe();
         this.chatSessionSubscription?.unsubscribe();
         this.chatSessionByIdSubscription?.unsubscribe();
-        this.authenticationStateSubscription?.unsubscribe();
+        this.sessionLoadingSubscription?.unsubscribe();
+        this.authenticationStateSubscription.unsubscribe();
     }
 
     protected start() {
@@ -216,7 +225,8 @@ export class IrisChatService implements OnDestroy {
             this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.CLOUD_AI ||
             this.hasJustAcceptedLLMUsage
         ) {
-            this.getCurrentSessionOrCreate().subscribe({
+            this.sessionLoadingSubscription?.unsubscribe();
+            this.sessionLoadingSubscription = this.getCurrentSessionOrCreate().subscribe({
                 ...this.handleNewSession(),
                 complete: () => this.loadChatSessions(),
             });
@@ -485,7 +495,8 @@ export class IrisChatService implements OnDestroy {
 
     public clearChat(): void {
         this.close();
-        this.createNewSession().subscribe({
+        this.sessionLoadingSubscription?.unsubscribe();
+        this.sessionLoadingSubscription = this.createNewSession().subscribe({
             ...this.handleNewSession(),
             complete: () => this.loadChatSessions(),
         });
@@ -637,7 +648,8 @@ export class IrisChatService implements OnDestroy {
         this.sessionCreationIdentifier = modeUrl && id ? modeUrl + '/' + id : undefined;
         this.close();
         if (this.sessionCreationIdentifier) {
-            this.createNewSession().subscribe({
+            this.sessionLoadingSubscription?.unsubscribe();
+            this.sessionLoadingSubscription = this.createNewSession().subscribe({
                 ...this.handleNewSession(),
                 complete: () => this.loadChatSessions(),
             });
