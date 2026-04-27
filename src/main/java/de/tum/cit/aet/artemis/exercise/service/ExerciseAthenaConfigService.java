@@ -22,6 +22,14 @@ public class ExerciseAthenaConfigService {
         configRepository.deleteByExerciseId(exerciseId);
     }
 
+    /**
+     * Creates or updates the Athena config for the given exercise.
+     *
+     * @param exercise          the exercise to configure
+     * @param preliminaryModule the module name for preliminary feedback, or null to clear
+     * @param gradedModule      the module name for graded feedback, or null to clear
+     * @return the saved ExerciseAthenaConfig
+     */
     public ExerciseAthenaConfig createOrUpdateConfig(Exercise exercise, String preliminaryModule, String gradedModule) {
         Optional<ExerciseAthenaConfig> existingConfig = configRepository.findByExerciseId(exercise.getId());
 

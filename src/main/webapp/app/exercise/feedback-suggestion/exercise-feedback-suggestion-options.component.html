@@ -50,12 +50,7 @@
             <div class="form-group mt-2">
                 <label for="athenaPreliminaryModuleSelect" jhiTranslate="artemisApp.exercise.athenaPreliminaryModule"></label>
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.athenaPreliminaryModuleTooltip'" />
-                <select
-                    id="athenaPreliminaryModuleSelect"
-                    class="form-select"
-                    [(ngModel)]="preliminaryFeedbackModule"
-                    [disabled]="inputControlsDisabled()"
-                >
+                <select id="athenaPreliminaryModuleSelect" class="form-select" [(ngModel)]="preliminaryFeedbackModule" [disabled]="inputControlsDisabled()">
                     <option [value]="undefined" jhiTranslate="artemisApp.exercise.athenaModuleDefault"></option>
                     @for (athenaModule of availableAthenaModules; track athenaModule) {
                         <option [value]="athenaModule">{{ athenaModule }}</option>
@@ -65,12 +60,7 @@
             <div class="form-group mt-2">
                 <label for="athenaGradedModuleSelect" jhiTranslate="artemisApp.exercise.athenaGradedModule"></label>
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.athenaGradedModuleTooltip'" />
-                <select
-                    id="athenaGradedModuleSelect"
-                    class="form-select"
-                    [(ngModel)]="gradedFeedbackModule"
-                    [disabled]="inputControlsDisabled()"
-                >
+                <select id="athenaGradedModuleSelect" class="form-select" [(ngModel)]="gradedFeedbackModule" [disabled]="inputControlsDisabled()">
                     <option [value]="undefined" jhiTranslate="artemisApp.exercise.athenaModuleDefault"></option>
                     @for (athenaModule of availableAthenaModules; track athenaModule) {
                         <option [value]="athenaModule">{{ athenaModule }}</option>

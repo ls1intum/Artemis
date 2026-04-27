@@ -593,7 +593,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 textExercise.getIncludedInOverallScore(), textExercise.getAllowComplaintsForAutomaticAssessments(), textExercise.getAllowFeedbackRequests(),
                 textExercise.getPresentationScoreEnabled(), textExercise.getSecondCorrectionEnabled(), textExercise.getFeedbackSuggestionModule(),
                 textExercise.getGradingInstructions(), textExercise.getReleaseDate(), textExercise.getStartDate(), textExercise.getDueDate(), textExercise.getAssessmentDueDate(),
-                textExercise.getExampleSolutionPublicationDate(), textExercise.getExampleSolution(), course.getId(), null, null, Set.of(new CompetencyLinkDTO(null, 1.0)));
+                textExercise.getExampleSolutionPublicationDate(), textExercise.getExampleSolution(), course.getId(), null, null, Set.of(new CompetencyLinkDTO(null, 1.0)), null);
 
         request.putWithResponseBody("/api/text/text-exercises", malformedCreateDto, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -607,7 +607,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 textExercise.getAllowFeedbackRequests(), textExercise.getPresentationScoreEnabled(), textExercise.getSecondCorrectionEnabled(),
                 textExercise.getFeedbackSuggestionModule(), textExercise.getGradingInstructions(), textExercise.getReleaseDate(), textExercise.getStartDate(),
                 textExercise.getDueDate(), textExercise.getAssessmentDueDate(), textExercise.getExampleSolutionPublicationDate(), textExercise.getExampleSolution(), course.getId(),
-                null, null, Set.of(new CompetencyLinkDTO(null, 1.0)));
+                null, null, Set.of(new CompetencyLinkDTO(null, 1.0)), null);
 
         request.putWithResponseBody("/api/text/text-exercises", malformedUpdateDto, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
