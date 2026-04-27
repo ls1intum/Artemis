@@ -50,7 +50,7 @@ artemis:
 
     # activate the following line if you want to support push notifications for the mobile clients.
     # More information about the TUM hosted hermes service can be found here: https://github.com/ls1intum/Hermes
-    # push-notification-relay: https://hermes.artemis.cit.tum.de
+    # push-notification-relay: https://hermes-prod.artemis.cit.tum.de
 
     continuous-integration:
         # Defines the used docker images for certain programming languages.
@@ -133,12 +133,6 @@ artemis:
       ios:
         min: "2.0.0"
         recommended: "2.2.0"
-
-    # Nebula configuration for AI-powered features
-    nebula:
-        enabled: false
-        url: # Set this in production environment (e.g., https://nebula.example.com)
-        secret-token: # Set this in production environment
 
     # Theia configuration for online IDE functionality
     theia:

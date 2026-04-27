@@ -56,8 +56,28 @@
             overflow: hidden;
         }
 
-        .delete-button {
+        .question-action-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .refine-button {
+            background: none;
+            border: none;
             cursor: pointer;
+            padding: 0;
+        }
+
+        .refine-button:hover {
+            color: var(--bs-primary);
+        }
+
+        .delete-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
         }
 
         .delete-button:hover {

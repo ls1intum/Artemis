@@ -101,10 +101,6 @@
                     "name": "Tutorial Groups",
                     "description": "Enables tutorial group management for organizing students and tutors."
                 },
-                "nebula": {
-                    "name": "Nebula (Video Processing)",
-                    "description": "Enables lecture video processing and transcription for AI-enhanced content understanding."
-                },
                 "theia": {
                     "name": "Theia (Online IDE)",
                     "description": "Enables the Theia cloud-based IDE for programming exercises, allowing students to code in the browser."
@@ -180,8 +176,8 @@
                 },
                 "LectureContentProcessing": {
                     "name": "Lecture Video Processing",
-                    "description": "Uses Nebula to automatically generate transcriptions from lecture videos and sends them to Pyris/Iris, enabling AI assistants to answer questions about lecture content and provide more accurate, content-aware responses.",
-                    "disableWarning": "Lecture videos will not be transcribed by Nebula and Iris will not be able to reference lecture content in its responses."
+                    "description": "Enables automated lecture content processing: transcription, slide extraction, and Pyris ingestion.",
+                    "disableWarning": "Disabling lecture content processing stops all ongoing transcription and ingestion jobs for new lectures."
                 },
                 "RateLimit": {
                     "name": "API Rate Limiting",
@@ -197,11 +193,6 @@
                     "name": "Global Search",
                     "description": "Enables a unified search interface accessible via Cmd+K/Ctrl+K that allows users to quickly search across courses, exercises, lectures, and other content.",
                     "disableWarning": "Users will not have access to the global search functionality and must navigate manually through the interface."
-                },
-                "ApollonQuizDragAndDrop": {
-                    "name": "Apollon Quiz Drag-and-Drop Import",
-                    "description": "Allows instructors to add Apollon-based drag-and-drop quiz questions from the quiz editor.",
-                    "disableWarning": "Instructors will not be able to create new Apollon-based drag-and-drop quiz questions from the quiz editor."
                 }
             }
         }

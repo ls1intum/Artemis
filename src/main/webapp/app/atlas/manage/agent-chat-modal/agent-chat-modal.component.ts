@@ -143,7 +143,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 this.isAgentTyping.set(false);
 
                 this.addMessage(
-                    response.message || this.translateService.instant('artemisApp.agent.chat.error.general'),
+                    response.message ?? this.translateService.instant('artemisApp.agent.chat.error.general'),
                     false,
                     response.competencyPreviews,
                     response.relationPreviews,
@@ -207,7 +207,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
                 // Add agent response message (may include next step preview from plan continuation)
                 this.addMessage(
-                    response.message || this.translateService.instant('artemisApp.agent.chat.success.createdSingle'),
+                    response.message ?? this.translateService.instant('artemisApp.agent.chat.success.createdSingle'),
                     false,
                     response.competencyPreviews,
                     response.relationPreviews,
@@ -245,7 +245,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
                 // Add agent response message
                 this.addMessage(
-                    response.message || this.translateService.instant('artemisApp.agent.chat.success.relationCreated'),
+                    response.message ?? this.translateService.instant('artemisApp.agent.chat.success.relationCreated'),
                     false,
                     response.competencyPreviews,
                     response.relationPreviews,
@@ -295,7 +295,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, exerciseMappingCreated: true } : msg)));
 
                 this.addMessage(
-                    response.message || this.translateService.instant('artemisApp.agent.chat.success.exerciseMappingCreated'),
+                    response.message ?? this.translateService.instant('artemisApp.agent.chat.success.exerciseMappingCreated'),
                     false,
                     response.competencyPreviews,
                     response.relationPreviews,
@@ -328,7 +328,14 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         this.agentChatService.sendMessage(this.translateService.instant('artemisApp.agent.chat.planApproval'), this.courseId()).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
-                this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error.general'), false, response.competencyPreviews);
+                this.addMessage(
+                    response.message ?? this.translateService.instant('artemisApp.agent.chat.error.general'),
+                    false,
+                    response.competencyPreviews,
+                    response.relationPreviews,
+                    response.relationGraphPreview,
+                    response.exerciseMappingPreview,
+                );
 
                 if (response.competenciesModified) {
                     this.competencyChanged.emit();
@@ -495,7 +502,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     /**
      * Returns true if the message is an internal system message that should never appear in the chat UI:
-     * - Orchestrator delegation briefs (EXERCISE_ID: / %%ARTEMIS_DELEGATE_TO_)
+     * - Orchestrator delegation briefs (EXERCISE_ID:)
      * - Action confirmation commands with JSON payloads ([CREATE_APPROVED_EXERCISE_MAPPING]:{...})
      */
     private isDelegationBrief(content: string): boolean {
@@ -505,7 +512,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         const trimmed = content.trimStart();
         return (
             trimmed.startsWith('EXERCISE_ID:') ||
-            trimmed.startsWith('%%ARTEMIS_DELEGATE_TO_') ||
             trimmed.startsWith('[CREATE_APPROVED_EXERCISE_MAPPING]:') ||
             trimmed.startsWith('[CREATE_APPROVED_COMPETENCY]:') ||
             trimmed.startsWith('[CREATE_APPROVED_RELATION]:')

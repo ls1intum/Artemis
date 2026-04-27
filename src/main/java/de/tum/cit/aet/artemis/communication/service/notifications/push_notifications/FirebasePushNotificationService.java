@@ -33,7 +33,7 @@ public class FirebasePushNotificationService extends PushNotificationService {
 
     private final PushNotificationDeviceConfigurationRepository repository;
 
-    @Value("${artemis.push-notification-relay:https://hermes-sandbox.artemis.cit.tum.de}")
+    @Value("${artemis.push-notification-relay:https://hermes-staging.artemis.cit.tum.de}")
     private String relayServerBaseUrl;
 
     public FirebasePushNotificationService(PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository, RestTemplate restTemplate) {

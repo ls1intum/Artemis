@@ -56,6 +56,8 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.web.LectureResource;
+import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
+import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
 @Conditional(LectureEnabled.class)
 @Lazy
@@ -82,10 +84,12 @@ public class LectureService {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final YouTubeUrlService youTubeUrlService;
+
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
             Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
-            LectureUnitRepository lectureUnitRepository) {
+            LectureUnitRepository lectureUnitRepository, YouTubeUrlService youTubeUrlService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -96,6 +100,7 @@ public class LectureService {
         this.competencyApi = competencyApi;
         this.exerciseService = exerciseService;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.youTubeUrlService = youTubeUrlService;
     }
 
     /**
@@ -169,7 +174,7 @@ public class LectureService {
      * @param updateCompetencyProgress whether the competency progress should be updated
      */
     public void delete(Lecture lecture, boolean updateCompetencyProgress) {
-        // Clean up external processing resources (cancel Nebula jobs, delete from Pyris)
+        // Clean up external processing resources (delete from Pyris)
         Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
         List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentVideoUnits.getLectureUnits().stream()
                 .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
@@ -315,9 +320,12 @@ public class LectureService {
         switch (lectureUnit) {
             case AttachmentVideoUnit attachmentVideoUnit -> {
                 LectureDetailsDTO.AttachmentDTO attachmentDTO = Optional.ofNullable(attachmentVideoUnit.getAttachment()).map(this::mapAttachment).orElse(null);
+                Optional<String> ytId = youTubeUrlService.extractYouTubeVideoId(attachmentVideoUnit.getVideoSource());
+                VideoSourceType videoSourceType = ytId.isPresent() ? VideoSourceType.YOUTUBE : null;
+                String youtubeVideoId = ytId.orElse(null);
                 return new LectureDetailsDTO.AttachmentUnitDTO(attachmentVideoUnit.getId(), lectureReference, attachmentVideoUnit.getName(),
                         resolveReleaseDate(attachmentVideoUnit), completed, visibleToStudents, competencyLinks, attachmentDTO, attachmentVideoUnit.getDescription(),
-                        attachmentVideoUnit.getVideoSource(), null);
+                        attachmentVideoUnit.getVideoSource(), videoSourceType, youtubeVideoId, null);
             }
             case ExerciseUnit exerciseUnit -> {
                 return new LectureDetailsDTO.ExerciseUnitDTO(exerciseUnit.getId(), lectureReference, exerciseUnit.getName(), exerciseUnit.getReleaseDate(), completed,

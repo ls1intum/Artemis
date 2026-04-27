@@ -8,7 +8,6 @@ import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.s
 import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-create-button/exercise-create-button.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { provideHttpClient } from '@angular/common/http';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
@@ -51,15 +50,5 @@ describe('ExerciseCreateButtonComponent', () => {
         expect(beforeNavigateSpy).toHaveBeenCalledOnce();
         expect(modalService.dismissAll).toHaveBeenCalledOnce();
         expect(router.navigate).toHaveBeenCalledWith(['/course-management', 123, `${exerciseType}-exercises`, 'new']);
-    });
-    it.each([
-        { exerciseType: ExerciseType.MODELING, expectedIcon: faProjectDiagram },
-        { exerciseType: ExerciseType.FILE_UPLOAD, expectedIcon: faFileUpload },
-        { exerciseType: ExerciseType.TEXT, expectedIcon: faFont },
-        { exerciseType: ExerciseType.PROGRAMMING, expectedIcon: faKeyboard },
-    ])('should determine correct icon for exercise type', ({ exerciseType, expectedIcon }) => {
-        fixture.componentRef.setInput('exerciseType', exerciseType);
-        component.ngOnInit();
-        expect(component.icon).toEqual(expectedIcon);
     });
 });

@@ -106,7 +106,7 @@ export class AttachmentVideoUnitService {
      */
     getPlaylistUrl(pageUrl: string): Observable<string | undefined> {
         const params = new HttpParams().set('url', pageUrl);
-        return this.httpClient.get('/api/nebula/video-utils/tum-live-playlist', { params, responseType: 'text' }).pipe(catchError(() => of(undefined)));
+        return this.httpClient.get('/api/videosource/playlist', { params, responseType: 'text' }).pipe(catchError(() => of(undefined)));
     }
 
     /**

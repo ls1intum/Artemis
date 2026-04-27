@@ -20,18 +20,14 @@ const routes: Routes = [
             showSkeleton: false,
         },
         canActivate: [
-            (): Promise<boolean | UrlTree> => {
+            (): boolean | UrlTree => {
                 const accountService = inject(AccountService);
                 const router = inject(Router);
-                return accountService
-                    .identity()
-                    .then((account) => {
-                        if (account) {
-                            return router.parseUrl('/courses');
-                        }
-                        return true;
-                    })
-                    .catch(() => true);
+                // Identity is already resolved by the APP_INITIALIZER, so check synchronously
+                if (accountService.userIdentity()) {
+                    return router.parseUrl('/courses');
+                }
+                return true;
             },
         ],
     },
