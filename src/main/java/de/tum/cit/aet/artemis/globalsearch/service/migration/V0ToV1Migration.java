@@ -78,7 +78,8 @@ public class V0ToV1Migration implements WeaviateMigration {
         int skipped = 0;
         int failed = 0;
 
-        // Cursor-based pagination: read all objects from the old collection in pages
+        // Cursor-based pagination: read all objects from the old collection in pages.
+        // If we encounter failures, we use 'cursor' to skip them in the next fetch.
         // Successfully migrated objects are deleted from the old collection.
         String cursor = null;
         boolean hasMore = true;
@@ -101,13 +102,9 @@ public class V0ToV1Migration implements WeaviateMigration {
             for (WeaviateObject<Map<String, Object>> obj : objects) {
                 Object rawId = obj.properties().get("exercise_id");
                 if (rawId == null) {
+                    log.debug("V0→V1: Skipping object {} with missing exercise_id", obj.uuid());
+                    oldCollection.data.deleteById(obj.uuid());
                     skipped++;
-                    try {
-                        oldCollection.data.delete(obj.uuid());
-                    }
-                    catch (Exception e) {
-                        log.warn("V0→V1: Failed to delete invalid exercise {}: {}", obj.uuid(), e.getMessage());
-                    }
                     continue;
                 }
                 long entityId = ((Number) rawId).longValue();
@@ -116,26 +113,26 @@ public class V0ToV1Migration implements WeaviateMigration {
                     Map<String, Object> newProps = transformProperties(obj.properties());
                     String uuid = WeaviateUuidUtil.deterministicUuid(SearchableEntitySchema.TypeValues.EXERCISE, entityId);
 
-                    if (newCollection.data.exists(uuid)) {
+                    boolean shouldUpsertToNewCollection = newCollection.data.exists(uuid);
+                    if (shouldUpsertToNewCollection) {
                         newCollection.data.replace(uuid, replaceOptions -> replaceOptions.properties(newProps));
                     }
                     else {
                         newCollection.data.insert(newProps, insertOptions -> insertOptions.uuid(uuid));
                     }
-                    migrated++;
 
-                    // Remove from legacy collection so we don't process it again on retry
-                    oldCollection.data.delete(obj.uuid());
+                    // Successful migration (or update) -> delete from old collection
+                    oldCollection.data.deleteById(obj.uuid());
+                    migrated++;
                 }
                 catch (Exception exception) {
                     log.warn("V0→V1: Failed to migrate exercise {}: {}", entityId, exception.getMessage());
                     failed++;
+                    // We must update the cursor to skip this failing object in the next page fetch
+                    cursor = obj.uuid();
                 }
             }
 
-            // Since we delete items as we go, we don't strictly need the 'after' cursor,
-            // but we keep it for extra safety in case some items were not deleted.
-            cursor = objects.getLast().uuid();
             hasMore = objects.size() == PAGE_SIZE;
         }
 
