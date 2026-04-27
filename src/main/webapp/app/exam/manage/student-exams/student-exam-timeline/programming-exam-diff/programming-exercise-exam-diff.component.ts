@@ -187,8 +187,8 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
             return;
         }
         const modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
-        modalRef.componentInstance.repositoryDiffInformation = signal(this.cachedDiffInformation().get(this.calculateMapKey())!);
-        modalRef.componentInstance.diffForTemplateAndSolution = signal(false);
+        modalRef.componentInstance.repositoryDiffInformation.set(this.cachedDiffInformation().get(this.calculateMapKey())!);
+        modalRef.componentInstance.diffForTemplateAndSolution.set(false);
     }
 
     private calculateMapKey() {

@@ -69,7 +69,7 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
             windowClass: 'live-events-modal-window',
         });
 
-        this.modalRef.componentInstance.examStartDate = this.examStartDate();
+        this.modalRef.componentInstance.examStartDate.set(this.examStartDate());
 
         from(this.modalRef.result).subscribe(() => (this.modalRef = undefined));
     }

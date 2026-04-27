@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { StudentsUploadImagesButtonComponent } from 'app/exam/manage/students/upload-images/students-upload-images-button.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateModule } from '@ngx-translate/core';
@@ -38,8 +39,10 @@ describe('StudentsUploadImagesButtonComponent', () => {
     });
 
     it('should initialize and set modal inputs correctly', () => {
+        const courseIdSignal = signal<number | undefined>(undefined);
+        const examSignal = signal<Exam | undefined>(undefined);
         const mockModalRef = {
-            componentInstance: { courseId: undefined as any, exam: undefined as any },
+            componentInstance: { courseId: courseIdSignal, exam: examSignal },
             result: new Promise((resolve) => resolve(true)),
         };
         const modalServiceOpenStub = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
@@ -49,7 +52,7 @@ describe('StudentsUploadImagesButtonComponent', () => {
         const openUploadImagesDialogButton = fixture.debugElement.query(By.css('jhi-button'));
         expect(openUploadImagesDialogButton).not.toBeNull();
         expect(modalServiceOpenStub).toHaveBeenCalledOnce();
-        expect(mockModalRef.componentInstance.courseId()!).toBe(1);
-        expect(mockModalRef.componentInstance.exam()!).toBe(testExam);
+        expect(courseIdSignal()).toBe(1);
+        expect(examSignal()).toBe(testExam);
     });
 });

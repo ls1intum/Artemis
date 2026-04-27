@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
 import { Subscription } from 'rxjs';
@@ -33,7 +33,7 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     readonly eventsToDisplay = signal<ExamLiveEvent[] | undefined>(undefined);
     readonly events = signal<ExamLiveEvent[]>([]);
 
-    readonly examStartDate = input<dayjs.Dayjs>(undefined!);
+    readonly examStartDate = signal<dayjs.Dayjs | undefined>(undefined);
     // Icons
     faCheck = faCheck;
 
@@ -53,7 +53,7 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.newLiveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate()).subscribe((event: ExamLiveEvent) => {
+        this.newLiveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate()!).subscribe((event: ExamLiveEvent) => {
             this.unacknowledgedEvents.update((events) => [event, ...events]);
             this.updateEventsToDisplay();
         });

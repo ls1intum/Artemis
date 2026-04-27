@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ViewEncapsulation, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, ViewEncapsulation, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -36,8 +36,8 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     notFoundUsers = signal<NotFoundExamUserType | undefined>(undefined);
     file = signal<File | undefined>(undefined);
 
-    courseId = input.required<number>();
-    exam = input.required<Exam>();
+    courseId = signal<number | undefined>(undefined);
+    exam = signal<Exam | undefined>(undefined);
 
     isParsing = signal(false);
     hasParsed = signal(false);
@@ -88,7 +88,7 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
             const formData: FormData = new FormData();
             formData.append('file', this.file()!);
 
-            this.examManagementService.saveImages(this.courseId(), exam.id, formData).subscribe({
+            this.examManagementService.saveImages(this.courseId()!, exam.id, formData).subscribe({
                 next: (res: any) => {
                     if (res) {
                         this.notFoundUsers.set(res.body);

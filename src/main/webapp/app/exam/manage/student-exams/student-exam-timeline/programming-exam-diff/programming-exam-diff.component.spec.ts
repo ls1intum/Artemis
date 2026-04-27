@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -173,7 +174,13 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     });
 
     it('should open the modal when showGitDiff is called', () => {
-        const modalServiceSpy = vi.spyOn(modal, 'open');
+        const repositoryDiffInformationSignal = signal<any>(undefined);
+        const diffForTemplateAndSolutionSignal = signal<boolean>(true);
+        const modalServiceSpy = vi.spyOn(modal, 'open').mockReturnValue({
+            componentInstance: { repositoryDiffInformation: repositoryDiffInformationSignal, diffForTemplateAndSolution: diffForTemplateAndSolutionSignal },
+            result: Promise.resolve(),
+            close: () => {},
+        } as any);
         const exercise = { id: 1 } as ProgrammingExercise;
         component.exercise.update(() => exercise);
 
