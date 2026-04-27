@@ -122,10 +122,10 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateLectureSeries_indexesLecturesWithCorrectedTitlesInWeaviate() throws Exception {
-        // Truncate to microseconds since PostgreSQL does not preserve nanosecond precision
-        ZonedDateTime date1 = ZonedDateTime.now().minusDays(10).truncatedTo(ChronoUnit.MICROS);
-        ZonedDateTime date2 = ZonedDateTime.now().minusDays(5).truncatedTo(ChronoUnit.MICROS);
-        ZonedDateTime date3 = ZonedDateTime.now().truncatedTo(ChronoUnit.MICROS);
+        // Truncate to milliseconds since PostgreSQL JDBC might round microseconds to the nearest millisecond
+        ZonedDateTime date1 = ZonedDateTime.now().minusDays(10).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime date2 = ZonedDateTime.now().minusDays(5).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime date3 = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
 
         // Set up two pre-existing lectures with default names and channels
         Lecture existingLecture1 = new Lecture();
