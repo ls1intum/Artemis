@@ -11,9 +11,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -22,9 +19,9 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 /**
  * A DropLocation.
  */
+// No @Cache here on purpose: loaded via cascade during quiz submission merge. See #12574 / #12584.
 @Entity
 @Table(name = "drop_location")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DropLocation extends DomainObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
@@ -50,7 +47,6 @@ public class DropLocation extends DomainObject implements QuizQuestionComponent<
     // NOTE: without cascade and orphanRemoval, deletion of quizzes might not work properly, so we reference mappings here, even if we do not use them
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "dropLocation")
     @JsonIgnore
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DragAndDropMapping> mappings = new HashSet<>();
 
     public Double getPosX() {

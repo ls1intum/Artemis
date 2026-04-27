@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.dto.atlasAgent;
 
+import java.io.Serializable;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Used by the Exercise Mapper Agent to show which competencies will be linked to an exercise.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseCompetencyMappingDTO(Long exerciseId, String exerciseTitle, List<CompetencyMappingOptionDTO> competencies, Boolean viewOnly) {
+public record ExerciseCompetencyMappingDTO(Long exerciseId, String exerciseTitle, List<CompetencyMappingOptionDTO> competencies, Boolean viewOnly) implements Serializable {
 
     /**
      * Represents a single competency that can be mapped to an exercise.
@@ -21,6 +22,6 @@ public record ExerciseCompetencyMappingDTO(Long exerciseId, String exerciseTitle
      * @param suggested       True if this competency was suggested by the AI (green checkbox)
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record CompetencyMappingOptionDTO(Long competencyId, String competencyTitle, Double weight, Boolean alreadyMapped, Boolean suggested) {
+    public record CompetencyMappingOptionDTO(Long competencyId, String competencyTitle, Double weight, Boolean alreadyMapped, Boolean suggested) implements Serializable {
     }
 }
