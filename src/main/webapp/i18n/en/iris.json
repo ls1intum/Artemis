@@ -141,6 +141,7 @@
                     },
                     "competencyGenerationSettings": "Competency Generation Settings",
                     "tutorSuggestionSettings": "Tutor Suggestion Settings",
+                    "promptUserSettings": "Prompt User Settings",
                     "proactivityBuildFailedEventEnabled": {
                         "label": "Monitor submission build failures",
                         "tooltip": "When enabled, Iris will proactively send help messages if a submission build fails."
@@ -189,6 +190,13 @@
                         "title": "Custom Instructions",
                         "description": "Custom instructions to be provided to the AI when generating responses.",
                         "placeholder": "Enter custom instructions for the AI (max 2048 characters)"
+                    },
+                    "questionLimits": {
+                        "title": "Question Limits",
+                        "lowerLimit": "Minimum number of questions",
+                        "lowerLimitTooltip": "The minimum number of questions Iris must ask a student before forming an opinion.",
+                        "upperLimit": "Maximum number of questions",
+                        "upperLimitTooltip": "The maximum number of questions Iris is allowed to ask a student before forming an opinion."
                     }
                 },
                 "title": "Iris Settings"
@@ -302,6 +310,13 @@
             },
             "controlCenter": {
                 "tooltip": "Enable or disable Iris for your course. To configure custom instructions, click the configure button."
+            },
+            "assessmentAttentionCenter": {
+                "tooltip": "Here is shown whether there are any Iris-Assessments to inspect. Click on the button to get to the general overview of assessments.",
+                "state": {
+                    "needsAttention": "Suspicious results need reviews",
+                    "nothingToDo": "No suspicious results to inspect"
+                }
             },
             "chatHistory": {
                 "title": "Chats",

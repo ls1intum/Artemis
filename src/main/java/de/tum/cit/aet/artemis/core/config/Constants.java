@@ -192,6 +192,15 @@ public final class Constants {
      */
     public static final int MAX_PROCESSING_RETRIES = 5;
 
+    // This value limits the amount of questions allowed as upper limit in Iris sub-settings for prompting mode.
+    public static final int IRIS_PROMPTING_MODE_MAX_QUESTION_LIMIT = 10;
+
+    // This value determines the initial value of the lower question limit in Iris sub-settings for prompting mode.
+    public static final int IRIS_PROMPTING_MODE_MIN_QUESTION_INIT = 3;
+
+    // This value determines the initial value of the upper question limit in Iris sub-settings for prompting mode.
+    public static final int IRIS_PROMPTING_MODE_MAX_QUESTION_INIT = 5;
+
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
     public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";

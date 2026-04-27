@@ -56,6 +56,8 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { IrisReviewAssessmentButtonComponent } from 'app/iris/shared/components/iris-assessment-button/iris-review-assessment-button.component';
 
 /**
  * Filter properties for a result
@@ -97,6 +99,7 @@ export enum FilterProp {
         FilterDropdownComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
+        IrisReviewAssessmentButtonComponent,
     ],
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {

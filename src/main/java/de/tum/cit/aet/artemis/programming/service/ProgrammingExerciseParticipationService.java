@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -19,12 +20,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.FileSystemUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -38,6 +42,8 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisVerdictReview;
+import de.tum.cit.aet.artemis.iris.dto.IrisVerdictDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -47,6 +53,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -78,10 +85,12 @@ public class ProgrammingExerciseParticipationService {
 
     private final UserRepository userRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
             ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository, UserRepository userRepository) {
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -92,6 +101,7 @@ public class ProgrammingExerciseParticipationService {
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -390,5 +400,58 @@ public class ProgrammingExerciseParticipationService {
         latestResultOptional.ifPresentOrElse(latestResult -> latestSubmission.setResults(List.of(latestResult)), () -> latestSubmission.setResults(List.of()));
         participation.setSubmissions(Set.of(latestSubmission));
         return participation;
+    }
+
+    @Transactional
+    public void saveAndHandleVerdict(User user, Exercise exercise, IrisVerdictDTO verdict) {
+        ProgrammingExerciseStudentParticipation participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin()).orElseThrow();
+
+        String verdictString = verdict.verdict();
+        participation.setIrisVerdict(verdictString);
+
+        switch (verdictString) {
+            case "unsuspicious":
+                updateVerifiedScoreAccept(participation);
+                participation.setIrisVerdictReview(IrisVerdictReview.REVIEWABLE);
+                break;
+            case "suspicious":
+                participation.setIrisVerdictReview(IrisVerdictReview.NEEDS_REVIEW);
+
+                break;
+            default:
+                throw new Error("unknown verdict: " + verdict);
+
+        }
+
+        addReasoningInternal(participation, verdict.reasoning());
+        studentParticipationRepository.save(participation);
+    }
+
+    @Transactional
+    public void addReasoning(User user, Exercise exercise, String reasoning) {
+        ProgrammingExerciseStudentParticipation participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin()).orElseThrow();
+        addReasoningInternal(participation, reasoning);
+        studentParticipationRepository.save(participation);
+    }
+
+    private void addReasoningInternal(ProgrammingExerciseStudentParticipation participation, String reasoning) {
+        var reasonings = participation.getIrisReasoning() == null ? new ArrayList<String>() : participation.getIrisReasoning();
+
+        reasonings.add(reasoning);
+        participation.setIrisReasoning(reasonings);
+    }
+
+    private void updateVerifiedScoreAccept(ProgrammingExerciseStudentParticipation participation) {
+
+        Double recentScore = participation.findLatestResult().getScore();
+        if (participation.getIrisVerifiedScore() == null || recentScore > participation.getIrisVerifiedScore()) {
+            participation.setIrisVerifiedScoreOld(participation.getIrisVerifiedScore());
+            participation.setIrisVerifiedScore(recentScore);
+        }
+    }
+
+    public boolean assessmentAttentionNeededInCourse(Course course) {
+        return programmingExerciseRepository.findAllWithStudentParticipationsByCourseId(course.getId()).stream().flatMap(exercise -> exercise.getStudentParticipations().stream())
+                .map(ProgrammingExerciseStudentParticipation.class::cast).anyMatch(p -> p.getIrisVerdictReview() == IrisVerdictReview.NEEDS_REVIEW);
     }
 }

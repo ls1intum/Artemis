@@ -675,5 +675,4 @@ public class ProgrammingExerciseParticipationResource {
         }
         return false;
     }
-
 }

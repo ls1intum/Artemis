@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20260427-2-add-default" author="PeterNiedermoser">
+
+        <addColumn tableName="iris_sub_settings">
+            <column name="min_questions" type="tinyint unsigned" defaultValueNumeric="3"/>
+            <column name="max_questions" type="tinyint unsigned" defaultValueNumeric="5"/>
+        </addColumn>
+
+        <addColumn tableName="iris_settings">
+            <column name="iris_prompt_user_settings_id" type="bigint"/>
+        </addColumn>
+        <addForeignKeyConstraint
+                baseTableName="iris_settings"
+                baseColumnNames="iris_prompt_user_settings_id"
+                referencedTableName="iris_sub_settings"
+                referencedColumnNames="id"
+                constraintName="FK_IRIS_SETTINGS_ON_IRIS_PROMPT_USER_SETTINGS"
+                onDelete="CASCADE"/>
+
+        <addColumn tableName="iris_session">
+            <column name="questions_asked" type="tinyint unsigned" defaultValueNumeric="0"/>
+        </addColumn>
+
+        <update tableName="iris_session">
+            <column name="questions_asked" valueNumeric="0"/>
+        </update>
+
+    </changeSet>
+</databaseChangeLog>

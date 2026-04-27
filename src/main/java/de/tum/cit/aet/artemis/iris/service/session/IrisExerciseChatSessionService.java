@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
@@ -54,6 +53,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 
 /**
  * Service to handle the chat subsystem of Iris including prompting mode if enabled.
@@ -87,14 +87,15 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final UserRepository userRepository;
 
-    private final ParticipationService participationService;
+    private final ProgrammingExerciseParticipationService participationService;
 
     public IrisExerciseChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
             IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
             IrisSessionRepository irisSessionRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService,
             ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository,
-            SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository, UserRepository userRepository, ParticipationService participationService) {
+            SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository, UserRepository userRepository,
+            ProgrammingExerciseParticipationService participationService) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
@@ -221,7 +222,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         var actualLatestSubmission = latestSubmission.or(() -> getLatestSubmissionIfExists(exercise, actualUser));
 
         var chatSession = (IrisProgrammingExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        pyrisPipelineService.executePromptUserPipeline(actualSettings.selectedVariant(), actualLatestSubmission, exercise, chatSession, event);
+        pyrisPipelineService.executePromptUserPipeline(actualSettings.selectedVariant(), actualLatestSubmission, exercise, chatSession, event, actualSettings);
     }
 
     /**
@@ -276,6 +277,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * submissions.
      */
     private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission) {
+
         // Check if prompt user pipeline needs to be informed
         if (checkIfExplainPromptingMode(studentParticipation, latestSubmission)) {
             return;
@@ -545,6 +547,9 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
                         throw new Error("Prompting finished without verdict");
                     }
                     participationService.addReasoning(user, exercise, statusUpdate.verdict().reasoning());
+
+                    session.setQuestionsAsked(session.getQuestionsAsked() + 1);
+                    irisExerciseChatSessionRepository.save(session);
                 }
                 catch (Exception e) {
                     log.error("Error while processing prompting mode reasoning {}", statusUpdate.verdict(), e);

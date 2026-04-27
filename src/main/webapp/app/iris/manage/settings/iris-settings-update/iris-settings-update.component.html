@@ -96,6 +96,32 @@
                                             ></span>
                                         }
                                     </div>
+        <hr class="hr" />
+
+        <h3 jhiTranslate="artemisApp.iris.settings.subSettings.promptUserSettings"></h3>
+        <div>
+            <jhi-iris-common-sub-settings-update
+                [subSettings]="irisSettings?.irisPromptUserSettings"
+                [parentSubSettings]="parentIrisSettings?.irisPromptUserSettings"
+                [settingsType]="settingsType"
+                [courseId]="courseId"
+                (onChanges)="isDirty = true"
+            />
+        </div>
+
+        @if (settingsType !== EXERCISE) {
+            <hr class="hr" />
+
+            <h3 jhiTranslate="artemisApp.iris.settings.subSettings.courseChatSettings"></h3>
+            <div>
+                <jhi-iris-common-sub-settings-update
+                    [subSettings]="irisSettings?.irisCourseChatSettings"
+                    [parentSubSettings]="parentIrisSettings?.irisCourseChatSettings"
+                    [settingsType]="settingsType"
+                    [courseId]="courseId"
+                    (onChanges)="isDirty = true"
+                />
+            </div>
 
                                     <!-- Announce the selected level to assistive technology -->
                                     <span class="sr-only" role="status" aria-live="polite">

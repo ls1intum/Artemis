@@ -9,6 +9,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.NonNull;
@@ -19,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisVerdictReview;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Entity
 @DiscriminatorValue(value = "PESP")
@@ -40,8 +46,17 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     private String irisVerdict;
 
     @Nullable
+    @Enumerated(EnumType.STRING)
+    @Column(name = "iris_verdict_review")
+    private IrisVerdictReview irisVerdictReview;
+
+    @Nullable
     @Column(name = "iris_verified_score")
     private Double irisVerifiedScore;
+
+    @Nullable
+    @Column(name = "iris_verified_score_old")
+    private Double irisVerifiedScoreOld;
 
     @ElementCollection
     @CollectionTable(name = "participation_iris_reasoning", joinColumns = @JoinColumn(name = "participation_id"))
@@ -112,12 +127,30 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     }
 
     @Nullable
+    public IrisVerdictReview getIrisVerdictReview() {
+        return irisVerdictReview;
+    }
+
+    public void setIrisVerdictReview(@Nullable IrisVerdictReview irisVerdictReview) {
+        this.irisVerdictReview = irisVerdictReview;
+    }
+
+    @Nullable
     public Double getIrisVerifiedScore() {
         return irisVerifiedScore;
     }
 
     public void setIrisVerifiedScore(@Nullable Double irisVerifiedScore) {
         this.irisVerifiedScore = irisVerifiedScore;
+    }
+
+    @Nullable
+    public Double getIrisVerifiedScoreOld() {
+        return irisVerifiedScoreOld;
+    }
+
+    public void setIrisVerifiedScoreOld(@Nullable Double irisVerifiedScoreOld) {
+        this.irisVerifiedScoreOld = irisVerifiedScoreOld;
     }
 
     @Override

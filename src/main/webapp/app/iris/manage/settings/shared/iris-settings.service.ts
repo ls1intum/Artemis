@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { finalize, map, shareReplay, tap } from 'rxjs/operators';
 import { IrisCourseSettingsDTO, IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 
@@ -19,6 +19,9 @@ export class IrisSettingsService {
     private pendingCourseRequests = new Map<number, Observable<IrisCourseSettingsWithRateLimitDTO | undefined>>();
     private courseCacheTimestamps = new Map<number, number>();
     private static readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+    private refreshSubject = new Subject<void>();
+    refresh$ = this.refreshSubject.asObservable();
 
     /**
      * Get the Iris settings for a course.
@@ -92,5 +95,13 @@ export class IrisSettingsService {
         this.courseSettingsCache.clear();
         this.courseCacheTimestamps.clear();
         this.pendingCourseRequests.clear();
+    }
+
+    /**
+     * Trigger refresh for subscribed components
+     * (currently used for Assessment Attention Center on course-details page when toggling iris in control center)
+     */
+    public triggerRefresh() {
+        this.refreshSubject.next();
     }
 }

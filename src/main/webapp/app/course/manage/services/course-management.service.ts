@@ -35,6 +35,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { convertTutorialGroupArrayDatesFromServer, convertTutorialGroupsConfigurationDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { IrisAssessmentAttentionDTO } from 'app/iris/shared/entities/iris-assessment-attention-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -676,6 +677,10 @@ export class CourseManagementService implements OnDestroy {
      */
     removeUserFromCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, login: string): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/${login}`, { observe: 'response' });
+    }
+
+    public getAssessmentAttentionState(courseId: number): Observable<HttpResponse<IrisAssessmentAttentionDTO>> {
+        return this.http.get<IrisAssessmentAttentionDTO>(`${this.resourceUrl}/${courseId}/assessment-attention-state`, { observe: 'response' });
     }
 
     /**

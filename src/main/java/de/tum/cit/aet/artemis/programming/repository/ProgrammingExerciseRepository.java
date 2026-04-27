@@ -167,6 +167,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(String projectKey);
 
+    @EntityGraph(type = LOAD, attributePaths = "studentParticipations")
+    List<ProgrammingExercise> findAllWithStudentParticipationsByCourseId(Long courseId);
+
     @EntityGraph(type = LOAD, attributePaths = "buildConfig")
     List<ProgrammingExercise> findWithBuildConfigByProjectKey(String projectKey);
 

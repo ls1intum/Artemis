@@ -79,7 +79,13 @@
                 "practice": "Practice",
                 "graded": "Graded"
             },
-            "startPrompting": "Assess understanding"
+            "startPrompting": "Assess understanding",
+            "reviewIrisAssessment": {
+                "needsReview": "Needs review",
+                "missing": "Missing assessment",
+                "reviewable": "Reviewable",
+                "reviewed": "Already reviewed"
+            }
         }
     }
 }

@@ -1,0 +1,13 @@
+<button
+    jhi-exercise-action-button
+    [buttonIcon]="faBrain"
+    [ngClass]="{ 'btn-success selected': !needsAttention, 'btn-danger selected': needsAttention }"
+    [jhiFeatureToggle]="FeatureToggle.PromptingMode"
+    [overwriteDisabled]="participation.irisVerdictReview === undefined"
+    [buttonLabel]="getLabel() | artemisTranslate"
+    [smallButton]="smallButtons"
+    [hideLabelMobile]="hideLabelMobile"
+    [routerLink]="['/course-management', course.id, 'programming-exercises/iris-assessment', participation.id]"
+    placement="right auto"
+    container="body"
+></button>

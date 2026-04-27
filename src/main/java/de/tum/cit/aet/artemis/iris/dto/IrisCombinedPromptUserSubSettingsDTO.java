@@ -7,7 +7,7 @@ import jakarta.annotation.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisCombinedPromptUserSubSettingsDTO(boolean enabled, Integer rateLimit, Integer rateLimitTimeframeHours, @Nullable SortedSet<String> allowedVariants,
-        @Nullable String selectedVariant, @Nullable SortedSet<String> enabledForCategories, @Nullable SortedSet<String> disabledProactiveEvents) {
+public record IrisCombinedPromptUserSubSettingsDTO(boolean enabled, @Nullable SortedSet<String> allowedVariants, @Nullable String selectedVariant, int minQuestions,
+        int maxQuestions) {
 
 }

@@ -46,6 +46,8 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentAttentionDTO;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 
 /**
  * REST controller for managing courses by tutors, editors and instructors.
@@ -81,10 +83,12 @@ public class CourseManagementResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
     public CourseManagementResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, AssessmentDashboardService assessmentDashboardService,
             ExerciseRepository exerciseRepository, CourseForUserGroupService courseForUserGroupService, CourseOverviewService courseOverviewService,
-            CourseLoadService courseLoadService) {
+            CourseLoadService courseLoadService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -96,6 +100,7 @@ public class CourseManagementResource {
         this.courseForUserGroupService = courseForUserGroupService;
         this.courseOverviewService = courseOverviewService;
         this.courseLoadService = courseLoadService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     /**
@@ -328,6 +333,22 @@ public class CourseManagementResource {
         }));
 
         return ResponseEntity.ok(new CourseExistingExerciseDetailsDTO(alreadyTakenExerciseNames, alreadyTakenShortNames));
+    }
+
+    /**
+     * GET /courses/:courseId/assessment-attention-state : Returns whether the iris assessment of a course needs to be inspected
+     *
+     * @param courseId the id of the course to get the state from
+     * @return {@link IrisAssessmentAttentionDTO} with the corresponding boolean
+     */
+    @GetMapping("courses/{courseId}/assessment-attention-state")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<IrisAssessmentAttentionDTO> getAssessmentAttentionState(@PathVariable Long courseId) {
+        log.debug("REST request to get assessment state of Course : {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+        return ResponseEntity.ok((new IrisAssessmentAttentionDTO(programmingExerciseParticipationService.assessmentAttentionNeededInCourse(course))));
     }
 
 }

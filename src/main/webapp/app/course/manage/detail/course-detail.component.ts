@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Subscription } from 'rxjs';
+import { Subscription, map, startWith, switchMap } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
@@ -31,6 +31,7 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { AccountService } from 'app/core/auth/account.service';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Detail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
@@ -40,6 +41,7 @@ import { OnboardingExploreComponent } from 'app/course/manage/onboarding/pages/o
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { AssessmentAttentionCenterComponent } from 'app/iris/overview/assessment-attention-center/assessment-attention-center.component';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -65,11 +67,13 @@ export enum DoughnutChartType {
         OnboardingExploreComponent,
         FaIconComponent,
         TranslateDirective,
+        AssessmentAttentionCenterComponent,
     ],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly DoughnutChartType = DoughnutChartType;
     protected readonly FeatureToggle = FeatureToggle;
+    protected readonly IrisSubSettingsType = IrisSubSettingsType;
 
     protected readonly faTimes = faTimes;
     protected readonly faEye = faEye;
@@ -108,6 +112,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     readonly communicationEnabled = signal(false);
     readonly irisEnabled = signal(false);
     readonly irisChatEnabled = signal(false);
+    readonly irisPromptingModeEnabled = signal(false);
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
     readonly isHyperionEnabled = signal(false);
@@ -117,6 +122,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
     private eventSubscription?: Subscription;
     private paramSub?: Subscription;
+    private irisSettingsSub?: Subscription;
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.
@@ -145,7 +151,23 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
                 this.messagingEnabled.set(!!course.courseInformationSharingConfiguration?.includes('MESSAGING'));
                 this.communicationEnabled.set(!!course.courseInformationSharingConfiguration?.includes('COMMUNICATION'));
                 this.fetchOrganizations(course.id);
-                this.fetchIrisSettings(course);
+                if (this.irisEnabled() && course.isAtLeastInstructor) {
+                    // This subscription is needed to show the assessment attention box whether iris is being disabled/enabled in control center
+                    this.irisSettingsSub = this.irisSettingsService.refresh$
+                        .pipe(
+                            startWith(void 0),
+                            switchMap(() => this.irisSettingsService.getUncombinedCourseSettings(course.id!)),
+                            map((settings) => ({
+                                promptingEnabled: settings?.irisPromptUserSettings?.enabled ?? false,
+                                // TODO: Outdated, as we now have a bunch more sub settings
+                                chatEnabled: settings?.irisProgrammingExerciseChatSettings?.enabled ?? false,
+                            })),
+                        )
+                        .subscribe((result) => {
+                            this.irisPromptingModeEnabled.set(result.promptingEnabled);
+                            this.irisChatEnabled.set(result.chatEnabled);
+                        });
+                }
             }
             this.isAdmin.set(this.accountService.isAdmin());
             this.getCourseDetailSections();
@@ -381,6 +403,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         if (this.eventSubscription) {
             this.eventManager?.destroy(this.eventSubscription);
         }
+        if (this.irisSettingsSub) {
+            this.irisSettingsSub.unsubscribe();
+        }
     }
 
     /**
@@ -393,14 +418,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
-    }
-
-    private fetchIrisSettings(course: Course) {
-        if (this.irisEnabled() && course.isAtLeastInstructor) {
-            this.irisSettingsService.getCourseSettingsWithRateLimit(course.id!).subscribe((irisSettings) => {
-                this.irisChatEnabled.set(irisSettings?.settings?.enabled ?? false);
-            });
-        }
     }
 
     private fetchOrganizations(courseId: number) {

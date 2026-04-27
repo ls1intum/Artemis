@@ -141,6 +141,7 @@
                     },
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
                     "tutorSuggestionSettings": "Tutor Vorschlag Einstellungen",
+                    "promptUserSettings": "Studentenbefragung Einstellungen",
                     "proactivityBuildFailedEventEnabled": {
                         "label": "Build-Fehler überwachen",
                         "tooltip": "Wenn aktiviert, wird Iris proaktiv Hilfe-Nachrichten senden, wenn der Build einer Abbgabe fehlschlägt."
@@ -189,6 +190,13 @@
                         "title": "Benutzerdefinierte Anweisungen",
                         "description": "Benutzerdefinierte Anweisungen, die der KI beim Generieren von Antworten zur Verfügung gestellt werden.",
                         "placeholder": "Gib benutzerdefinierte Anweisungen für die KI ein (maximal 2048 Zeichen)"
+                    },
+                    "questionLimits": {
+                        "title": "Fragen Limits",
+                        "lowerLimit": "Minimale Anzahl an Fragen",
+                        "lowerLimitTooltip": "Die minimale Anzahl an Fragen, die Iris Studierenden stellen muss, bevor eine Einschätzung abgegeben wird.",
+                        "upperLimit": "Maximale Anzahl an Fragen",
+                        "upperLimitTooltip": "Die maximale Anzahl an Fragen, die Iris Studierenden stellen darf, bevor eine Einschätzung abgegeben wird."
                     }
                 },
                 "title": "Iris Einstellungen"
@@ -302,6 +310,13 @@
             },
             "controlCenter": {
                 "tooltip": "Aktiviere oder deaktiviere Iris für deinen Kurs. Um benutzerdefinierte Anweisungen zu konfigurieren, klicke auf die Schaltfläche 'Konfigurieren'."
+            },
+            "assessmentAttentionCenter": {
+                "tooltip": "Hier wird gezeigt, ob Bewertungen von Iris überprüft werden müssen. Klicke auf den Knopf, um zur allgemeinen Übersicht der Bewertungen zu gelangen.",
+                "state": {
+                    "needsAttention": "Ausstehende Überprüfung von auffälligen Bewertungen",
+                    "nothingToDo": "Keine auffälligen Bewertungen zu überprüfen"
+                }
             },
             "chatHistory": {
                 "title": "Chats",

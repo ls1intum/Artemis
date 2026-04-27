@@ -79,7 +79,13 @@
                 "practice": "Übung",
                 "graded": "Bewertet"
             },
-            "startPrompting": "Verständnis prüfen"
+            "startPrompting": "Verständnis prüfen",
+            "reviewIrisAssessment": {
+                "needsReview": "Review nötig",
+                "missing": "Überprüfung fehlt",
+                "reviewable": "Review möglich",
+                "reviewed": "Review erledigt"
+            }
         }
     }
 }

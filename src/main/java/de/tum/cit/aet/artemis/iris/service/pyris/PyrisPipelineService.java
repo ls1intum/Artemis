@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedPromptUserSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
@@ -304,9 +305,9 @@ public class PyrisPipelineService {
                 new PyrisCourseDTO(course),
                 programmingExerciseDTO,
                 submissionDTO.orElse(null),
-                1, // TODO: load these values from exercise settings
-                2,
-                1
+                settings.minQuestions(),
+                settings.maxQuestions(),
+                session.getQuestionsAsked()
             ),
             (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, error, eventVariant.orElse(null))
         );
