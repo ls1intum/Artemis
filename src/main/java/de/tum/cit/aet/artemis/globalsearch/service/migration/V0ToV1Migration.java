@@ -101,6 +101,12 @@ public class V0ToV1Migration implements WeaviateMigration {
                 Object rawId = obj.properties().get("exercise_id");
                 if (rawId == null) {
                     skipped++;
+                    try {
+                        oldCollection.data.delete(obj.uuid());
+                    }
+                    catch (Exception e) {
+                        log.warn("V0→V1: Failed to delete invalid exercise {}: {}", obj.uuid(), e.getMessage());
+                    }
                     continue;
                 }
                 long entityId = ((Number) rawId).longValue();
@@ -116,6 +122,9 @@ public class V0ToV1Migration implements WeaviateMigration {
                         newCollection.data.insert(newProps, insertOptions -> insertOptions.uuid(uuid));
                     }
                     migrated++;
+
+                    // Remove from legacy collection so we don't process it again on retry
+                    oldCollection.data.delete(obj.uuid());
                 }
                 catch (Exception exception) {
                     log.warn("V0→V1: Failed to migrate exercise {}: {}", entityId, exception.getMessage());
@@ -123,11 +132,17 @@ public class V0ToV1Migration implements WeaviateMigration {
                 }
             }
 
+            // Since we delete items as we go, we don't strictly need the 'after' cursor,
+            // but we keep it for extra safety in case some items were not deleted.
             cursor = objects.getLast().uuid();
             hasMore = objects.size() == PAGE_SIZE;
         }
 
         log.info("V0→V1: Data migration complete — migrated: {}, skipped: {}, failed: {}", migrated, skipped, failed);
+
+        if (failed > 0) {
+            throw new IOException("V0→V1: Migration failed for " + failed + " exercises. Aborting cleanup to prevent data loss.");
+        }
 
         // Clean up the legacy collection
         client.collections.delete(oldName);
