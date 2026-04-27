@@ -1146,7 +1146,9 @@ public class CourseStudentDataExportService {
     }
 
     private String formatFeedbacks(Collection<Feedback> feedbacks) {
-        return feedbacks.stream().map(f -> {
+        // Sort by id (insertion order under IDENTITY) so the exported CSV is deterministic regardless of
+        // the underlying Set iteration order.
+        return feedbacks.stream().sorted(Comparator.comparing(Feedback::getId, Comparator.nullsLast(Comparator.naturalOrder()))).map(f -> {
             String text = f.getDetailText() != null ? f.getDetailText() : (f.getText() != null ? f.getText() : "");
             String credits = f.getCredits() != null ? " (" + f.getCredits() + " pts)" : "";
             return text + credits;

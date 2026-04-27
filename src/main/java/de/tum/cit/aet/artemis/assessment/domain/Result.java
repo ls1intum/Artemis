@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -101,12 +101,15 @@ public class Result extends DomainObject implements Comparable<Result> {
     // presentation order sorts explicitly (by credits, by FeedbackType, by reference, ...). Using a Set
     // avoids the @OrderColumn null-index race (Hibernate "Illegal null value for list index" under
     // concurrent multi-node assessment writes) and avoids the MultipleBagFetchException that an unordered
-    // List would trigger together with the assessmentNote bag. The legacy "feedbacks_order" DB column is
-    // intentionally left in place — it is now unused by the mapping and a follow-up PR will drop it via
-    // a Liquibase changeset to keep this PR a pure-Java change.
+    // List would trigger together with the assessmentNote bag.
+    // LinkedHashSet (combined with the constant Feedback#hashCode) preserves insertion order for the
+    // in-memory view, which keeps test snapshots stable and matches the previous List-based behaviour
+    // for callers that simply iterate without explicit sorting.
+    // TODO: drop the legacy "feedbacks_order" DB column in a follow-up PR via a Liquibase changeset.
+    // Keeping the column for now so this PR ships as a pure-Java change without a DB migration risk.
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "result", allowSetters = true)
-    private Set<Feedback> feedbacks = new HashSet<>();
+    private Set<Feedback> feedbacks = new LinkedHashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn()
@@ -329,9 +332,18 @@ public class Result extends DomainObject implements Comparable<Result> {
         return this;
     }
 
+    /**
+     * Adds the given feedback to this result, wiring the inverse side first so the FK is persisted.
+     *
+     * @param feedback the feedback to attach to this result
+     * @return this result, for chaining
+     */
     public Result addFeedback(Feedback feedback) {
-        this.feedbacks.add(feedback);
+        // Set the back-reference first so the equals/hashCode contract sees the same Result on both sides
+        // before the element is dropped into the hash bucket. (Feedback#hashCode is a constant, so the
+        // ordering only matters for clarity, but it avoids surprises if the contract ever changes.)
         feedback.setResult(this);
+        this.feedbacks.add(feedback);
         return this;
     }
 
@@ -344,10 +356,24 @@ public class Result extends DomainObject implements Comparable<Result> {
         feedback.setResult(null);
     }
 
+    /**
+     * Replaces the current feedback set with the given collection. Each feedback's owning side is
+     * wired to {@code this} so that Hibernate persists the FK; orphaned feedback (those previously in
+     * the set but not in the new collection) are dropped via {@code orphanRemoval = true}.
+     *
+     * @param feedbacks the new feedback collection (may be {@code null} or empty to clear)
+     */
     public void setFeedbacks(Collection<Feedback> feedbacks) {
         this.feedbacks.clear();
         if (feedbacks != null) {
-            this.feedbacks.addAll(feedbacks);
+            for (Feedback feedback : feedbacks) {
+                if (feedback == null) {
+                    // Tolerate null entries that may surface from legacy callers / tests; just skip them.
+                    continue;
+                }
+                feedback.setResult(this);
+                this.feedbacks.add(feedback);
+            }
         }
     }
 

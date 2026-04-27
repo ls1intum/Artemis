@@ -140,8 +140,10 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousFeedbackTypeFeedbacksToResult(result);
 
-        // The ordering should be the same as is declared in addVariousFeedbackTypeFeedbacksToResult()
-        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
+        // filterFeedbackForClient must order feedbacks by FeedbackType (manual first, then manual_unreferenced,
+        // automatic_adapted, automatic). Assert the exact order so a future regression in the comparator fails here.
+        assertThat(resultService.filterFeedbackForClient(result)).extracting(Feedback::getType).containsExactly(FeedbackType.MANUAL, FeedbackType.MANUAL_UNREFERENCED,
+                FeedbackType.AUTOMATIC_ADAPTED, FeedbackType.AUTOMATIC);
     }
 
     @Test
