@@ -648,6 +648,19 @@ describe('UserManagementUpdateComponent', () => {
 
             expect(component.editForm.get('internal')?.disabled).toBe(true);
         });
+
+        it('should include email validator on email form control', () => {
+            component.user = new User();
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+
+            const emailControl = component.editForm.get('email')!;
+            emailControl.setValue('not-an-email');
+            expect(emailControl.errors?.email).toBeTruthy();
+
+            emailControl.setValue('valid@email.com');
+            expect(emailControl.errors?.email).toBeFalsy();
+        });
     });
 
     describe('authority management', () => {
