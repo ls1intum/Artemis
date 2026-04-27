@@ -621,7 +621,7 @@ describe('IrisChatService', () => {
             authState = new BehaviorSubject<User | undefined>({ id: 99 } as User);
             customAccountService = new MockAccountService();
             customAccountService.userIdentity.set({ id: 99 } as User);
-            customAccountService.getAuthenticationState = () => authState.asObservable();
+            customAccountService.getAuthenticationState = () => authState.asObservable() as Observable<User>;
 
             TestBed.resetTestingModule();
             TestBed.configureTestingModule({
