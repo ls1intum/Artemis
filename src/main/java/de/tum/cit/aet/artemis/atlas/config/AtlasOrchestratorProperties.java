@@ -24,9 +24,13 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param orchestratorTemperature     sampling temperature for the orchestrator; ignored when
  *                                        {@link #orchestratorReasoningEffort()} is set, because
  *                                        GPT-5 reasoning models reject any non-default temperature.
- * @param orchestratorReasoningEffort reasoning effort passed to Azure OpenAI's reasoning models;
- *                                        leave blank to fall back to a regular non-reasoning chat
- *                                        options build.
+ * @param orchestratorReasoningEffort reasoning effort passed to Azure OpenAI's reasoning models.
+ *                                        Defaults to {@code "medium"}; the matching 5-minute TTL
+ *                                        on the per-course Hazelcast lock map (see
+ *                                        {@code HazelcastConfiguration#configureCacheMaps}) is
+ *                                        sized for a reasoning run. Operators must explicitly set
+ *                                        the property to an empty string to opt into the regular
+ *                                        non-reasoning chat options build.
  */
 @ConfigurationProperties(prefix = "artemis.atlas")
 public record AtlasOrchestratorProperties(@DefaultValue("gpt-5.4-mini") String chatModel, @DefaultValue("0.8") double chatTemperature,

@@ -49,11 +49,15 @@ public class CompetencyAtlasMLNotificationService {
         if (competencies == null || competencies.isEmpty()) {
             return;
         }
-        try {
-            atlasMLApi.ifPresent(api -> api.saveCompetencies(competencies, operationType));
-        }
-        catch (Exception e) {
-            log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
-        }
+        atlasMLApi.ifPresent(api -> {
+            try {
+                if (!api.saveCompetencies(competencies, operationType)) {
+                    log.warn("AtlasML reported failure for {}", operationDescription);
+                }
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
+            }
+        });
     }
 }

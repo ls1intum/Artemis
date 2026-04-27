@@ -70,7 +70,7 @@ import { RepositoryType } from '../../shared/code-editor/model/code-editor.model
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
-import { CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
+import { CompetencyOrchestrationResultDTO } from 'app/atlas/shared/dto/competency-orchestration-dto';
 import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
 
 @Component({
@@ -798,22 +798,27 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         }
         this.orchestrationRunning.set(true);
         try {
+            // Backend returns 2xx only for SUCCESS; IN_PROGRESS (409) and FAILED (422/502/503)
+            // surface as HttpErrorResponse and are handled in the catch block below.
             const result = await this.competencyOrchestrationApiService.runForProgrammingExercise(exerciseId);
             const summary = result.summary?.trim() || '';
-            if (result.status === CompetencyOrchestrationStatus.Success) {
-                this.orchestrationDialogSummary.set(summary);
-                this.orchestrationDialogVisible.set(true);
-            } else if (result.status === CompetencyOrchestrationStatus.InProgress) {
+            this.orchestrationDialogSummary.set(summary);
+            this.orchestrationDialogVisible.set(true);
+        } catch (err) {
+            const httpErr = err as HttpErrorResponse;
+            const body = httpErr?.error as CompetencyOrchestrationResultDTO | undefined;
+            const summary = body?.summary?.trim() || '';
+            if (httpErr?.status === 409) {
                 this.alertService.warning('artemisApp.atlasOrchestrator.inProgress');
-            } else {
+            } else if (httpErr?.status === 422 || httpErr?.status === 502 || httpErr?.status === 503) {
                 this.alertService.addAlert({
                     type: AlertType.DANGER,
                     message: summary || 'artemisApp.atlasOrchestrator.error',
                     disableTranslation: summary.length > 0,
                 });
+            } else {
+                onError(this.alertService, httpErr);
             }
-        } catch (err) {
-            onError(this.alertService, err as HttpErrorResponse);
         } finally {
             this.orchestrationRunning.set(false);
         }

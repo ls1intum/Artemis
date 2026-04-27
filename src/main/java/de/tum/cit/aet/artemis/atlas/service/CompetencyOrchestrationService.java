@@ -158,7 +158,8 @@ public class CompetencyOrchestrationService {
         long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
         String runId = UUID.randomUUID().toString();
-        RunInfo existing = runMap.putIfAbsent(courseId, new RunInfo(runId, exerciseId, Instant.now()));
+        RunInfo claim = new RunInfo(runId, exerciseId, Instant.now());
+        RunInfo existing = runMap.putIfAbsent(courseId, claim);
         if (existing != null) {
             log.info("Atlas orchestrator rejected for exercise {} (course {}): run {} already in progress for exercise {}", exerciseId, courseId, existing.runId(),
                     existing.exerciseId());
@@ -187,12 +188,9 @@ public class CompetencyOrchestrationService {
             return CompetencyOrchestrationResultDTO.success(summary);
         }
         finally {
-            // Only clear if the stored run is still ours — TTL eviction followed by a new run would
-            // otherwise let us delete someone else's claim.
-            RunInfo stored = runMap.get(courseId);
-            if (stored != null && runId.equals(stored.runId())) {
-                runMap.remove(courseId);
-            }
+            // Atomic compare-and-remove: only clears when the stored entry still equals our claim,
+            // so a TTL-evicted entry replaced by another node's claim is left untouched.
+            runMap.remove(courseId, claim);
         }
     }
 

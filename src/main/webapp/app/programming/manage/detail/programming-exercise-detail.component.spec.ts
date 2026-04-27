@@ -487,10 +487,12 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         const apiService = TestBed.inject(CompetencyOrchestrationApiService);
-        jest.spyOn(apiService, 'runForProgrammingExercise').mockResolvedValue({
-            status: CompetencyOrchestrationStatus.Failed,
-            summary: 'model not configured',
-        });
+        jest.spyOn(apiService, 'runForProgrammingExercise').mockRejectedValue(
+            new HttpErrorResponse({
+                status: 503,
+                error: { status: CompetencyOrchestrationStatus.Failed, summary: 'model not configured' },
+            }),
+        );
         comp.programmingExercise = buildInstructorExerciseForDialog();
         await comp.triggerAtlasOrchestrator();
         fixture.detectChanges();
