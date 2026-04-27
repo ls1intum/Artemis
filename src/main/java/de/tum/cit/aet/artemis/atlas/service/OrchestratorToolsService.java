@@ -167,9 +167,9 @@ public class OrchestratorToolsService {
             ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
             return toJson(extracted);
         }
-        catch (IllegalArgumentException ex) {
+        catch (RuntimeException ex) {
             // Generic message — raw exception text could leak Hibernate/SQL detail into the LLM's summary.
-            log.debug("getExerciseContent failed for exercise {}: {}", exerciseId, ex.getMessage());
+            log.warn("getExerciseContent failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
             return errorJson("Failed to extract content for exercise " + exerciseId + ".");
         }
     }
