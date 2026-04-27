@@ -51,7 +51,7 @@ describe('GlobalSearchService', () => {
     it('should include type filter when provided', () => {
         service.search('test', { type: 'exercise' }).subscribe();
 
-        const req = httpMock.expectOne((request) => request.url === 'api/search' && request.params.get('type') === 'exercise');
+        const req = httpMock.expectOne((request) => request.url === 'api/search' && request.params.get('types') === 'exercise');
         expect(req.request.method).toBe('GET');
         req.flush([]);
     });
@@ -79,7 +79,7 @@ describe('GlobalSearchService', () => {
             (request) =>
                 request.url === 'api/search' &&
                 request.params.get('q') === 'q' &&
-                request.params.get('type') === 'exercise' &&
+                request.params.get('types') === 'exercise' &&
                 request.params.get('courseId') === '123' &&
                 request.params.get('limit') === '10',
         );
