@@ -816,5 +816,122 @@ examples.forEach((activeConversation) => {
             const result = (component as any).isPostVisible(postId);
             expect(result).toBe(false);
         });
+
+        it('should set and clear scroll anchor', () => {
+            const mockElement = document.createElement('div');
+            (component as any).setScrollAnchor(mockElement, 10);
+            expect((component as any).scrollAnchorElement).toBe(mockElement);
+            expect((component as any).scrollAnchorVisualOffset).toBe(10);
+            expect((component as any).anchorTimeoutId).toBeDefined();
+
+            (component as any).clearScrollAnchor();
+            expect((component as any).scrollAnchorElement).toBeUndefined();
+            expect((component as any).anchorTimeoutId).toBeUndefined();
+        });
+
+        it('should auto-clear scroll anchor after timeout', () => {
+            const mockElement = document.createElement('div');
+            (component as any).setScrollAnchor(mockElement, 10);
+            expect((component as any).scrollAnchorElement).toBe(mockElement);
+
+            vi.advanceTimersByTime(10000);
+            expect((component as any).scrollAnchorElement).toBeUndefined();
+        });
+
+        it('should adjust scroll position when anchor element offset changes', () => {
+            const mockElement = document.createElement('div');
+            Object.defineProperty(mockElement, 'offsetTop', { value: 200, configurable: true });
+
+            const mockContainer = {
+                scrollTop: 100,
+                scrollHeight: 500,
+                getBoundingClientRect: vi.fn().mockReturnValue({ top: 0, bottom: 300 }),
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+            };
+            (component as any).content = vi.fn().mockReturnValue({ nativeElement: mockContainer });
+
+            (component as any).setScrollAnchor(mockElement, 10);
+            (component as any).adjustScrollForAnchor();
+
+            // expectedScrollTop = max(0, 200 - 10) = 190
+            expect(mockContainer.scrollTop).toBe(190);
+            expect((component as any).nextScrollIsProgrammatic).toBe(true);
+        });
+
+        it('should not adjust scroll when no anchor is set', () => {
+            const mockContainer = {
+                scrollTop: 100,
+                scrollHeight: 500,
+                getBoundingClientRect: vi.fn().mockReturnValue({ top: 0, bottom: 300 }),
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+            };
+            (component as any).content = vi.fn().mockReturnValue({ nativeElement: mockContainer });
+
+            (component as any).adjustScrollForAnchor();
+            expect(mockContainer.scrollTop).toBe(100);
+        });
+
+        it('should clear scroll anchor on user scroll', () => {
+            const mockElement = document.createElement('div');
+            (component as any).setScrollAnchor(mockElement, 10);
+            expect((component as any).scrollAnchorElement).toBe(mockElement);
+
+            // Simulate user scroll (nextScrollIsProgrammatic is false)
+            (component as any).nextScrollIsProgrammatic = false;
+            (component as any).scrollListener();
+            expect((component as any).scrollAnchorElement).toBeUndefined();
+        });
+
+        it('should not clear scroll anchor on programmatic scroll', () => {
+            const mockElement = document.createElement('div');
+            (component as any).setScrollAnchor(mockElement, 10);
+
+            // Simulate programmatic scroll
+            (component as any).nextScrollIsProgrammatic = true;
+            (component as any).scrollListener();
+            expect((component as any).scrollAnchorElement).toBe(mockElement);
+            expect((component as any).nextScrollIsProgrammatic).toBe(false);
+        });
+
+        it('should set scroll anchor when scrolling to last selected element', async () => {
+            const mockElement = { scrollIntoView: vi.fn(), offsetTop: 150 };
+            const mockMessages = [{ post: vi.fn().mockReturnValue({ id: 42 }), elementRef: { nativeElement: mockElement } }] as unknown as PostingThreadComponent[];
+            (component as any).messages = vi.fn().mockReturnValue(mockMessages);
+
+            await component.goToLastSelectedElement(42, false);
+
+            expect((component as any).scrollAnchorElement).toBe(mockElement);
+            expect((component as any).scrollAnchorVisualOffset).toBe(10);
+        });
+
+        it('should clear scroll anchor when conversation changes', () => {
+            const mockElement = document.createElement('div');
+            (component as any).setScrollAnchor(mockElement, 10);
+
+            component._activeConversation = { id: 999, type: ConversationType.CHANNEL };
+            fixture.componentRef.setInput('course', { id: 1 } as Course);
+            (component as any).onActiveConversationChange();
+
+            expect((component as any).scrollAnchorElement).toBeUndefined();
+        });
+
+        it('should clear scroll anchor when scrolling to bottom', () => {
+            const mockElement = document.createElement('div');
+            (component as any).setScrollAnchor(mockElement, 10);
+
+            component.scrollToBottomOfMessages();
+            expect((component as any).scrollAnchorElement).toBeUndefined();
+        });
+
+        it('should clear scroll anchor when fetching next page', () => {
+            const mockElement = document.createElement('div');
+            (component as any).setScrollAnchor(mockElement, 10);
+
+            component.totalNumberOfPosts = 100;
+            component.fetchNextPage();
+            expect((component as any).scrollAnchorElement).toBeUndefined();
+        });
     });
 });

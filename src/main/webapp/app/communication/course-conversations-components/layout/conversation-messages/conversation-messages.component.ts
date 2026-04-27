@@ -87,6 +87,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     canStartSaving = false;
     createdNewMessage = false;
 
+    // Scroll anchor: tracks a target element to maintain scroll position when async content (images, link previews) loads
+    private scrollAnchorElement: HTMLElement | undefined;
+    private scrollAnchorVisualOffset = 0;
+    private nextScrollIsProgrammatic = false;
+    private anchorTimeoutId: ReturnType<typeof setTimeout> | undefined;
+
     readonly openThread = output<Post>();
 
     readonly messages = viewChildren<PostingThreadComponent>('postingThread');
@@ -252,14 +258,24 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             });
     }
 
-    private scrollListener = () => this.findElementsAtScrollPosition();
+    private scrollListener = () => {
+        if (this.nextScrollIsProgrammatic) {
+            this.nextScrollIsProgrammatic = false;
+        } else {
+            this.clearScrollAnchor();
+        }
+        this.findElementsAtScrollPosition();
+    };
     private mutationObserver: MutationObserver | undefined;
 
     ngAfterViewInit() {
         this.content().nativeElement.addEventListener('scroll', this.scrollListener);
+        // Capture image/iframe load events to re-adjust scroll when async content loads
+        this.content().nativeElement.addEventListener('load', this.onContentLoaded, true);
 
         const el = this.content().nativeElement;
         this.mutationObserver = new MutationObserver(() => {
+            this.adjustScrollForAnchor();
             this.findElementsAtScrollPosition();
         });
         this.mutationObserver.observe(el, {
@@ -273,7 +289,41 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.ngUnsubscribe.complete();
         this.scrollSubject.complete();
         this.content()?.nativeElement.removeEventListener('scroll', this.scrollListener);
+        this.content()?.nativeElement.removeEventListener('load', this.onContentLoaded, true);
         this.mutationObserver?.disconnect();
+        this.clearScrollAnchor();
+    }
+
+    private onContentLoaded = () => {
+        this.adjustScrollForAnchor();
+    };
+
+    private setScrollAnchor(element: HTMLElement, visualOffset: number) {
+        this.scrollAnchorElement = element;
+        this.scrollAnchorVisualOffset = visualOffset;
+        if (this.anchorTimeoutId !== undefined) {
+            clearTimeout(this.anchorTimeoutId);
+        }
+        // Auto-clear anchor after 10 seconds to stop adjustments once content has settled
+        this.anchorTimeoutId = setTimeout(() => this.clearScrollAnchor(), 10000);
+    }
+
+    private clearScrollAnchor() {
+        this.scrollAnchorElement = undefined;
+        if (this.anchorTimeoutId !== undefined) {
+            clearTimeout(this.anchorTimeoutId);
+            this.anchorTimeoutId = undefined;
+        }
+    }
+
+    private adjustScrollForAnchor() {
+        if (!this.scrollAnchorElement) return;
+        const container = this.content().nativeElement;
+        const expectedScrollTop = Math.max(0, this.scrollAnchorElement.offsetTop - this.scrollAnchorVisualOffset);
+        if (Math.abs(container.scrollTop - expectedScrollTop) > 1) {
+            this.nextScrollIsProgrammatic = true;
+            container.scrollTop = expectedScrollTop;
+        }
     }
 
     private scrollToStoredId() {
@@ -290,6 +340,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private onActiveConversationChange() {
+        this.clearScrollAnchor();
         if (this._activeConversation !== undefined && this.getAsChannel(this._activeConversation)?.isAnnouncementChannel) {
             this.isHiddenInputFull = !canCreateNewMessageInConversation(this._activeConversation);
             this.isHiddenInputWithCallToAction = canCreateNewMessageInConversation(this._activeConversation);
@@ -578,6 +629,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     fetchNextPage() {
+        this.clearScrollAnchor();
         const morePostsAvailable = this.posts.length < this.totalNumberOfPosts;
         let addBuffer = 0;
         if (morePostsAvailable) {
@@ -587,6 +639,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         } else if (!this.canStartSaving) {
             this.canStartSaving = true;
         }
+        this.nextScrollIsProgrammatic = true;
         this.content().nativeElement.scrollTop = this.content().nativeElement.scrollTop + addBuffer;
     }
 
@@ -643,8 +696,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     };
 
     scrollToBottomOfMessages() {
-        // Use setTimeout to ensure the scroll happens after the new message is rendered
+        this.clearScrollAnchor();
         requestAnimationFrame(() => {
+            this.nextScrollIsProgrammatic = true;
             this.content().nativeElement.scrollTop = this.content().nativeElement.scrollHeight;
         });
     }
@@ -675,13 +729,15 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         }
         const messageArray = this.messages();
-        const element = messageArray.find((message) => message.post().id === lastScrollPosition); // Suchen nach dem Post
+        const element = messageArray.find((message) => message.post().id === lastScrollPosition);
 
         if (!element) {
             this.fetchNextPage();
         } else {
-            // We scroll to the element with a slight buffer to ensure its fully visible (-10)
-            this.content().nativeElement.scrollTop = Math.max(0, element.elementRef.nativeElement.offsetTop - 10);
+            const visualOffset = 10;
+            this.nextScrollIsProgrammatic = true;
+            this.content().nativeElement.scrollTop = Math.max(0, element.elementRef.nativeElement.offsetTop - visualOffset);
+            this.setScrollAnchor(element.elementRef.nativeElement, visualOffset);
             this.canStartSaving = true;
             if (isOpenThread) {
                 this.openThread.emit(element.post());
@@ -765,7 +821,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (!isVisible) {
             requestAnimationFrame(() => {
                 const offsetTop = component.elementRef.nativeElement.offsetTop;
+                this.nextScrollIsProgrammatic = true;
                 containerElement.scrollTop = Math.max(offsetTop - scrollOffset, 0);
+                this.setScrollAnchor(component.elementRef.nativeElement, scrollOffset);
             });
         }
     }
