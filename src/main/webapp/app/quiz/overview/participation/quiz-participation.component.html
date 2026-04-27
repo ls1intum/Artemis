@@ -1,11 +1,11 @@
 <div [id]="'exercise-' + quizExercise?.id" class="position-relative min-h-100 d-flex flex-column">
     @if (quizExercise) {
         @if (mode === 'live' && !waitingForQuizStart && remainingTimeSeconds <= 0 && !submission.submitted && !hasAnyAnswer()) {
-            <div class="d-flex justify-content-center text-center my-3">
+            <div id="missed-deadline-message" class="d-flex justify-content-center text-center my-3">
                 <span [jhiTranslate]="'artemisApp.quizExercise.missedDeadlinePracticeHint'"></span>
             </div>
         } @else {
-            <div #quizHeader class="row module-bg">
+            <div id="quiz-header" #quizHeader class="row module-bg">
                 <div class="d-flex justify-content-between align-items-center module-bg gap-2 pt-2">
                     <h5 class="mb-0 d-flex gap-2 align-items-center">
                         @switch (mode) {
