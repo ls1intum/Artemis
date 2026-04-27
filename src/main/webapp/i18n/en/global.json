@@ -463,6 +463,7 @@
             "patternLogin": "This field may only contain letters, digits and e-mail addresses.",
             "invalidPattern": "This field contains an invalid e-mail pattern."
         },
+        "now": "Now",
         "timeZoneWarning": "You are currently in the {{ timeZone }} time zone.",
         "dateMissingOrNotValid": "'{{labelName}}' is missing/invalid",
         "startDateError": "'Start of working time' should be between 'Visible from' and 'End of working time'",

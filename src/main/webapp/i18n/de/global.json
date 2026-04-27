@@ -463,6 +463,7 @@
             "patternLogin": "Dieses Feld darf nur Buchstaben, Ziffern und E-Mail-Adressen enthalten.",
             "invalidPattern": "Dieses Feld beinhaltet ein ungültiges E-Mail Muster."
         },
+        "now": "Jetzt",
         "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone.",
         "dateMissingOrNotValid": "'{{labelName}}' fehlt/ungültig",
         "startDateError": "'Bearbeitungszeit ab' sollte zwischen 'Sichtbar ab' und 'Bearbeitungszeit bis' liegen",

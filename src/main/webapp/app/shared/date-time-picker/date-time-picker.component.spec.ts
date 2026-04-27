@@ -1,10 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
-import { MockModule, MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('FormDateTimePickerComponent', () => {
     let component: FormDateTimePickerComponent;
@@ -17,6 +18,7 @@ describe('FormDateTimePickerComponent', () => {
         TestBed.configureTestingModule({
             imports: [MockModule(OwlDateTimeModule), MockPipe(ArtemisTranslatePipe), MockModule(NgbTooltipModule)],
             declarations: [FormDateTimePickerComponent],
+            providers: [MockProvider(TranslateService, { instant: jest.fn((key: string) => key) })],
         })
             .compileComponents()
             .then(() => {
@@ -123,5 +125,84 @@ describe('FormDateTimePickerComponent', () => {
 
         expect(resetSpy).toHaveBeenCalledWith(undefined);
         expect(updateSignalsSpy).toHaveBeenCalled();
+    });
+
+    describe('Now button', () => {
+        it('should call select and confirmSelect on the picker when setNow is called', () => {
+            const mockPicker = { select: jest.fn(), confirmSelect: jest.fn() };
+            jest.spyOn(component as any, 'dtDefault').mockReturnValue(mockPicker);
+
+            component.setNow();
+
+            expect(mockPicker.select).toHaveBeenCalledWith(expect.any(Date));
+            expect(mockPicker.confirmSelect).toHaveBeenCalledOnce();
+        });
+
+        it('should not throw when setNow is called without a picker', () => {
+            jest.spyOn(component as any, 'dtDefault').mockReturnValue(undefined);
+
+            expect(() => component.setNow()).not.toThrow();
+        });
+
+        it('should inject a Now button into the container on picker open', fakeAsync(() => {
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.classList.add('owl-dt-container-buttons');
+            const setButton = document.createElement('button');
+            buttonsContainer.appendChild(setButton);
+            document.body.appendChild(buttonsContainer);
+
+            component.onPickerOpen();
+            tick();
+
+            const nowButton = buttonsContainer.querySelector('button:first-child');
+            expect(nowButton).toBeDefined();
+            expect(nowButton?.getAttribute('aria-label')).toBe('entity.now');
+            expect(buttonsContainer.children).toHaveLength(2);
+
+            // Cleanup
+            component.onPickerClosed();
+            document.body.removeChild(buttonsContainer);
+        }));
+
+        it('should remove the Now button on picker close', fakeAsync(() => {
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.classList.add('owl-dt-container-buttons');
+            const setButton = document.createElement('button');
+            buttonsContainer.appendChild(setButton);
+            document.body.appendChild(buttonsContainer);
+
+            component.onPickerOpen();
+            tick();
+
+            expect(buttonsContainer.children).toHaveLength(2);
+
+            component.onPickerClosed();
+
+            expect(buttonsContainer.children).toHaveLength(1);
+
+            document.body.removeChild(buttonsContainer);
+        }));
+
+        it('should call setNow when the Now button is clicked', fakeAsync(() => {
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.classList.add('owl-dt-container-buttons');
+            const setButton = document.createElement('button');
+            buttonsContainer.appendChild(setButton);
+            document.body.appendChild(buttonsContainer);
+
+            const setNowSpy = jest.spyOn(component, 'setNow').mockImplementation();
+
+            component.onPickerOpen();
+            tick();
+
+            const nowButton = buttonsContainer.querySelector('button:first-child') as HTMLButtonElement;
+            nowButton.click();
+
+            expect(setNowSpy).toHaveBeenCalledOnce();
+
+            // Cleanup
+            component.onPickerClosed();
+            document.body.removeChild(buttonsContainer);
+        }));
     });
 });
