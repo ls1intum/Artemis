@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,7 @@ import de.tum.cit.aet.artemis.core.dto.CourseRequestDecisionDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestsAdminOverviewDTO;
 import de.tum.cit.aet.artemis.core.dto.RequesterCourseDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRequestRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -29,11 +32,16 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     private static final String TEST_PREFIX = "courserequest";
 
+    private static final ZonedDateTime FIXED_NOW = ZonedDateTime.parse("2026-01-15T10:00:00Z");
+
     @Autowired
     private CourseRequestRepository courseRequestRepository;
 
     @Autowired
     private CourseTestRepository courseRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private User student;
 
@@ -49,7 +57,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createCourseRequest_asStudent_shouldSucceed() throws Exception {
-        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Test Course", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Test Course", "WS2025", FIXED_NOW, FIXED_NOW.plusMonths(3), false,
                 "I need this course for teaching purposes.");
 
         CourseRequestDTO result = request.postWithResponseBody("/api/core/course-requests", createDTO, CourseRequestDTO.class, HttpStatus.CREATED);
@@ -125,7 +133,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     void acceptCourseRequest_asAdmin_shouldSucceed() throws Exception {
         CourseRequest courseRequest = createTestCourseRequest("Accept Test");
 
-        CourseRequestAcceptDTO acceptDTO = new CourseRequestAcceptDTO("Accept Test", "ACPTST", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false);
+        CourseRequestAcceptDTO acceptDTO = new CourseRequestAcceptDTO("Accept Test", "ACPTST", "WS2025", FIXED_NOW, FIXED_NOW.plusMonths(3), false);
 
         CourseRequestDTO result = request.postWithResponseBody("/api/core/admin/course-requests/" + courseRequest.getId() + "/accept", acceptDTO, CourseRequestDTO.class,
                 HttpStatus.OK);
@@ -202,7 +210,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         CourseRequest acceptedRequest = createTestCourseRequest("Accepted Test");
         acceptedRequest.setStatus(CourseRequestStatus.ACCEPTED);
-        acceptedRequest.setProcessedDate(ZonedDateTime.now());
+        acceptedRequest.setProcessedDate(FIXED_NOW);
         courseRequestRepository.save(acceptedRequest);
 
         CourseRequestsAdminOverviewDTO result = request.get("/api/core/admin/course-requests/overview", HttpStatus.OK, CourseRequestsAdminOverviewDTO.class);
@@ -224,8 +232,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createCourseRequest_withInvalidDates_shouldReturnBadRequest() throws Exception {
-        ZonedDateTime startDate = ZonedDateTime.now().plusMonths(3);
-        ZonedDateTime endDate = ZonedDateTime.now(); // End before start
+        ZonedDateTime startDate = FIXED_NOW.plusMonths(3);
+        ZonedDateTime endDate = FIXED_NOW; // End before start
 
         CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Test Course", "WS2025", startDate, endDate, false, "Reason for request.");
 
@@ -237,7 +245,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     void acceptCourseRequest_alreadyAccepted_shouldReturnBadRequest() throws Exception {
         CourseRequest courseRequest = createTestCourseRequest("Already Accepted");
         courseRequest.setStatus(CourseRequestStatus.ACCEPTED);
-        courseRequest.setProcessedDate(ZonedDateTime.now());
+        courseRequest.setProcessedDate(FIXED_NOW);
         courseRequestRepository.save(courseRequest);
 
         CourseRequestAcceptDTO acceptDTO = new CourseRequestAcceptDTO("Already Accepted", "ALRACPT", "WS2025", null, null, false);
@@ -250,7 +258,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     void acceptCourseRequest_alreadyRejected_shouldReturnBadRequest() throws Exception {
         CourseRequest courseRequest = createTestCourseRequest("Already Rejected");
         courseRequest.setStatus(CourseRequestStatus.REJECTED);
-        courseRequest.setProcessedDate(ZonedDateTime.now());
+        courseRequest.setProcessedDate(FIXED_NOW);
         courseRequest.setDecisionReason("Previous rejection");
         courseRequestRepository.save(courseRequest);
 
@@ -264,7 +272,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     void rejectCourseRequest_alreadyAccepted_shouldReturnBadRequest() throws Exception {
         CourseRequest courseRequest = createTestCourseRequest("Already Accepted For Reject");
         courseRequest.setStatus(CourseRequestStatus.ACCEPTED);
-        courseRequest.setProcessedDate(ZonedDateTime.now());
+        courseRequest.setProcessedDate(FIXED_NOW);
         courseRequestRepository.save(courseRequest);
 
         CourseRequestDecisionDTO decision = new CourseRequestDecisionDTO("Late rejection reason");
@@ -277,13 +285,22 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     void rejectCourseRequest_alreadyRejected_shouldReturnBadRequest() throws Exception {
         CourseRequest courseRequest = createTestCourseRequest("Already Rejected For Reject");
         courseRequest.setStatus(CourseRequestStatus.REJECTED);
-        courseRequest.setProcessedDate(ZonedDateTime.now());
+        courseRequest.setProcessedDate(FIXED_NOW);
         courseRequest.setDecisionReason("Previous rejection");
         courseRequestRepository.save(courseRequest);
 
         CourseRequestDecisionDTO decision = new CourseRequestDecisionDTO("Another rejection reason");
 
         request.post("/api/core/admin/course-requests/" + courseRequest.getId() + "/reject", decision, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void acceptCourseRequest_withInvalidShortName_shouldReturnBadRequest() throws Exception {
+        CourseRequest courseRequest = createTestCourseRequest("Invalid Short Name");
+        CourseRequestAcceptDTO acceptDTO = new CourseRequestAcceptDTO("Invalid Short Name", "AB", "WS2025", null, null, false);
+
+        request.post("/api/core/admin/course-requests/" + courseRequest.getId() + "/accept", acceptDTO, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -305,8 +322,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createCourseRequest_withAllFields_shouldSucceed() throws Exception {
-        ZonedDateTime startDate = ZonedDateTime.now();
-        ZonedDateTime endDate = ZonedDateTime.now().plusMonths(6);
+        ZonedDateTime startDate = FIXED_NOW;
+        ZonedDateTime endDate = FIXED_NOW.plusMonths(6);
 
         CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Complete Course", "SS2025", startDate, endDate, true,
                 "A comprehensive reason for requesting this test course.");
@@ -324,7 +341,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void getAdminOverview_withMultiplePendingRequests_shouldReturnAll() throws Exception {
-        ZonedDateTime baseTime = ZonedDateTime.now();
+        ZonedDateTime baseTime = FIXED_NOW;
         createTestCourseRequest("First Request", baseTime);
         createTestCourseRequest("Second Request", baseTime.plusSeconds(1));
         createTestCourseRequest("Third Request", baseTime.plusSeconds(2));
@@ -343,7 +360,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         for (int i = 0; i < 3; i++) {
             CourseRequest cr = createTestCourseRequest("Decided " + i);
             cr.setStatus(CourseRequestStatus.REJECTED);
-            cr.setProcessedDate(ZonedDateTime.now());
+            cr.setProcessedDate(FIXED_NOW);
             cr.setDecisionReason("Rejection reason " + i);
             courseRequestRepository.save(cr);
         }
@@ -386,11 +403,48 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void getRequesterCourses_shouldReturnRecentInstructorCourses() throws Exception {
+        // Add the student (requester) to an instructor group
+        String instructorGroup = TEST_PREFIX + "test-instructors";
+        student = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(student.getId());
+        Set<String> groups = new HashSet<>(student.getGroups());
+        groups.add(instructorGroup);
+        student.setGroups(groups);
+        userRepository.save(student);
+
+        // Create 12 courses where the student is instructor (only 10 most recent should be returned)
+        for (int i = 0; i < 12; i++) {
+            Course course = new Course();
+            course.setTitle("Instructor Course " + i);
+            course.setShortName("IC" + String.format("%03d", i));
+            course.setInstructorGroupName(instructorGroup);
+            courseRepository.save(course);
+        }
+
+        // Create a course with a different instructor group (should NOT be returned)
+        Course otherCourse = new Course();
+        otherCourse.setTitle("Other Instructor Course");
+        otherCourse.setShortName("OTHERIC");
+        otherCourse.setInstructorGroupName("other-instructor-group");
+        courseRepository.save(otherCourse);
+
+        CourseRequest courseRequest = createTestCourseRequest("Requester Courses Test");
+
+        List<RequesterCourseDTO> result = request.getList("/api/core/admin/course-requests/" + courseRequest.getId() + "/requester-courses", HttpStatus.OK,
+                RequesterCourseDTO.class);
+
+        assertThat(result).hasSize(10);
+        assertThat(result).allSatisfy(dto -> assertThat(dto.title()).startsWith("Instructor Course"));
+        assertThat(result).noneMatch(dto -> "Other Instructor Course".equals(dto.title()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void acceptCourseRequest_withModifiedData_shouldCreateCourseWithModifiedData() throws Exception {
         CourseRequest courseRequest = createTestCourseRequest("Original Title");
 
-        ZonedDateTime startDate = ZonedDateTime.now();
-        ZonedDateTime endDate = ZonedDateTime.now().plusMonths(6);
+        ZonedDateTime startDate = FIXED_NOW;
+        ZonedDateTime endDate = FIXED_NOW.plusMonths(6);
         CourseRequestAcceptDTO acceptDTO = new CourseRequestAcceptDTO("Modified Title", "MODTITL", "SS2026", startDate, endDate, true);
 
         CourseRequestDTO result = request.postWithResponseBody("/api/core/admin/course-requests/" + courseRequest.getId() + "/accept", acceptDTO, CourseRequestDTO.class,
@@ -411,7 +465,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     private CourseRequest createTestCourseRequest(String title) {
-        return createTestCourseRequest(title, ZonedDateTime.now());
+        return createTestCourseRequest(title, FIXED_NOW);
     }
 
     private CourseRequest createTestCourseRequest(String title, ZonedDateTime createdDate) {

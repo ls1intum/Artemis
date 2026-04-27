@@ -149,13 +149,20 @@ export class CourseRequestsComponent implements OnInit {
 
         // Load requester's courses
         if (request.id) {
+            const requestId = request.id;
             this.loadingRequesterCourses.set(true);
-            this.courseRequestService.getRequesterCourses(request.id).subscribe({
+            this.courseRequestService.getRequesterCourses(requestId).subscribe({
                 next: (courses) => {
+                    if (this.selectedRequest()?.id !== requestId) {
+                        return;
+                    }
                     this.requesterCourses.set(courses);
                     this.loadingRequesterCourses.set(false);
                 },
                 error: (error) => {
+                    if (this.selectedRequest()?.id !== requestId) {
+                        return;
+                    }
                     this.loadingRequesterCourses.set(false);
                     onError(this.alertService, error);
                 },
@@ -190,14 +197,11 @@ export class CourseRequestsComponent implements OnInit {
         this.isSubmittingAccept.set(true);
         this.courseRequestService.acceptRequest(currentRequest.id, payload).subscribe({
             next: (updated) => {
-                // Move from pending to decided
-                this.pendingRequests.update((reqs) => reqs.filter((req) => req.id !== updated.id));
-                this.decidedRequests.update((reqs) => [updated, ...reqs]);
-                this.totalDecidedCount.update((count) => count + 1);
                 this.alertService.success('artemisApp.courseRequest.admin.acceptSuccess', { title: updated.title, shortName: payload.shortName });
                 this.acceptModalVisible.set(false);
                 this.isSubmittingAccept.set(false);
                 this.selectedRequest.set(undefined);
+                this.load();
             },
             error: (error: HttpErrorResponse) => {
                 this.handleAcceptError(error);
@@ -234,14 +238,11 @@ export class CourseRequestsComponent implements OnInit {
         }
         this.courseRequestService.rejectRequest(currentRequest.id, this.decisionReason()).subscribe({
             next: (updated) => {
-                // Move from pending to decided
-                this.pendingRequests.update((reqs) => reqs.filter((req) => req.id !== updated.id));
-                this.decidedRequests.update((reqs) => [updated, ...reqs]);
-                this.totalDecidedCount.update((count) => count + 1);
                 this.alertService.success('artemisApp.courseRequest.admin.rejectSuccess', { title: updated.title });
                 this.rejectModalVisible.set(false);
                 this.reasonInvalid.set(false);
                 this.selectedRequest.set(undefined);
+                this.load();
             },
             error: (error) => onError(this.alertService, error),
         });

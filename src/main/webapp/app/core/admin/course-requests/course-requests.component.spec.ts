@@ -178,8 +178,15 @@ describe('CourseRequestsComponent', () => {
             component.acceptModalVisible.set(true);
         });
 
-        it('should accept request with form data and move to decided list', () => {
+        it('should accept request with form data and reload overview', () => {
             mockCourseRequestService.acceptRequest.mockReturnValue(of(mockAcceptedRequest));
+            // After accept, load() is called which fetches the overview again
+            const updatedOverview: CourseRequestsAdminOverview = {
+                pendingRequests: [],
+                decidedRequests: [mockAcceptedRequest],
+                totalDecidedCount: 1,
+            };
+            mockCourseRequestService.findAdminOverview.mockReturnValue(of(updatedOverview));
             component.pendingRequests.set([mockRequest]);
             component.decidedRequests.set([]);
             component.totalDecidedCount.set(0);
@@ -200,6 +207,7 @@ describe('CourseRequestsComponent', () => {
                     semester: 'WS25/26',
                 }),
             );
+            expect(courseRequestService.findAdminOverview).toHaveBeenCalled();
             expect(component.pendingRequests()).toHaveLength(0);
             expect(component.decidedRequests()[0].status).toBe(CourseRequestStatus.ACCEPTED);
             expect(component.totalDecidedCount()).toBe(1);
@@ -294,8 +302,15 @@ describe('CourseRequestsComponent', () => {
             component.rejectModalVisible.set(true);
         });
 
-        it('should reject a request with a reason and move it to decided list', () => {
+        it('should reject a request with a reason and reload overview', () => {
             mockCourseRequestService.rejectRequest.mockReturnValue(of(mockRejectedRequest));
+            // After reject, load() is called which fetches the overview again
+            const updatedOverview: CourseRequestsAdminOverview = {
+                pendingRequests: [],
+                decidedRequests: [mockRejectedRequest],
+                totalDecidedCount: 1,
+            };
+            mockCourseRequestService.findAdminOverview.mockReturnValue(of(updatedOverview));
             component.pendingRequests.set([mockRequest]);
             component.decidedRequests.set([]);
             component.totalDecidedCount.set(0);
@@ -304,6 +319,7 @@ describe('CourseRequestsComponent', () => {
             component.reject();
 
             expect(courseRequestService.rejectRequest).toHaveBeenCalledWith(1, 'Not approved');
+            expect(courseRequestService.findAdminOverview).toHaveBeenCalled();
             expect(component.pendingRequests()).toHaveLength(0);
             expect(component.decidedRequests()[0].status).toBe(CourseRequestStatus.REJECTED);
             expect(component.totalDecidedCount()).toBe(1);
