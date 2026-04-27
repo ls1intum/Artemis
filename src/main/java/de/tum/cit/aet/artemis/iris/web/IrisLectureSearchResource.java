@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.web;
 
+import java.security.Principal;
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -15,10 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisSearchAskRequestDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisSearchAskResponseDTO;
 
 /**
  * REST controller for Iris lecture search.
@@ -31,8 +32,11 @@ public class IrisLectureSearchResource {
 
     private final PyrisConnectorService pyrisConnectorService;
 
-    public IrisLectureSearchResource(PyrisConnectorService pyrisConnectorService) {
+    private final PyrisJobService pyrisJobService;
+
+    public IrisLectureSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService) {
         this.pyrisConnectorService = pyrisConnectorService;
+        this.pyrisJobService = pyrisJobService;
     }
 
     /**
@@ -48,14 +52,18 @@ public class IrisLectureSearchResource {
     }
 
     /**
-     * POST api/iris/search-answer: Ask Iris to answer a question using lecture content.
+     * POST api/iris/search-answer: Ask Iris to answer a question using course content (async).
+     * Pyris classifies the query and sends webhook callbacks; results are pushed to the client via WebSocket.
      *
      * @param requestDTO the request containing the query and result limit
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the answer with sources
+     * @param principal  the authenticated user (used to route the WebSocket response)
+     * @return the {@link ResponseEntity} with status {@code 202 (Accepted)}
      */
     @PostMapping("search-answer")
     @EnforceAtLeastStudent
-    public ResponseEntity<PyrisSearchAskResponseDTO> ask(@RequestBody @Valid PyrisSearchAskRequestDTO requestDTO) {
-        return ResponseEntity.ok(pyrisConnectorService.searchAsk(requestDTO.query(), requestDTO.limit()));
+    public ResponseEntity<Void> ask(@RequestBody @Valid PyrisSearchAskRequestDTO requestDTO, Principal principal) {
+        var jobToken = pyrisJobService.addGlobalSearchAnswerJob(principal.getName());
+        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), jobToken);
+        return ResponseEntity.accepted().build();
     }
 }
