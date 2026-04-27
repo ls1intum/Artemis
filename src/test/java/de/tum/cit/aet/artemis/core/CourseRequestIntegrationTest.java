@@ -373,7 +373,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void getRequesterCourses_nonExistent_shouldReturnNotFound() throws Exception {
-        request.get("/api/core/admin/course-requests/99999/requester-courses", HttpStatus.NOT_FOUND, List.class);
+        request.getList("/api/core/admin/course-requests/99999/requester-courses", HttpStatus.NOT_FOUND, RequesterCourseDTO.class);
     }
 
     @Test
@@ -381,7 +381,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     void getRequesterCourses_asInstructor_shouldReturnForbidden() throws Exception {
         CourseRequest courseRequest = createTestCourseRequest("Instructor Forbidden Test");
 
-        request.get("/api/core/admin/course-requests/" + courseRequest.getId() + "/requester-courses", HttpStatus.FORBIDDEN, List.class);
+        request.getList("/api/core/admin/course-requests/" + courseRequest.getId() + "/requester-courses", HttpStatus.FORBIDDEN, RequesterCourseDTO.class);
     }
 
     @Test

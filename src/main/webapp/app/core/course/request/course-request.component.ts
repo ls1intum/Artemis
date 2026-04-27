@@ -1,7 +1,8 @@
 import { Component, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 
 import { CourseRequestService } from 'app/core/course/request/course-request.service';
 import { CourseRequestFormComponent } from 'app/core/course/request/course-request-form.component';
@@ -33,8 +34,8 @@ export class CourseRequestComponent {
     form = this.fb.group({
         title: ['', [Validators.required, Validators.maxLength(255)]],
         semester: [getDefaultSemester(), [Validators.required]],
-        startDate: [undefined as any],
-        endDate: [undefined as any],
+        startDate: new FormControl<dayjs.Dayjs | undefined>(undefined),
+        endDate: new FormControl<dayjs.Dayjs | undefined>(undefined),
         testCourse: [false],
         reason: ['', [Validators.required]],
     });

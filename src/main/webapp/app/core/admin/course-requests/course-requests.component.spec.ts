@@ -73,7 +73,6 @@ describe('CourseRequestsComponent', () => {
     };
 
     beforeEach(async () => {
-        vi.restoreAllMocks();
         vi.clearAllMocks();
 
         await TestBed.configureTestingModule({
@@ -249,8 +248,8 @@ describe('CourseRequestsComponent', () => {
 
         it('should handle other errors using onError', () => {
             const errorResponse = new HttpErrorResponse({
-                error: { message: 'Server error' },
-                status: 500,
+                error: { message: 'Bad request error' },
+                status: 400,
             });
             mockCourseRequestService.acceptRequest.mockReturnValue(throwError(() => errorResponse));
             component.acceptForm.patchValue({
@@ -263,6 +262,8 @@ describe('CourseRequestsComponent', () => {
             component.submitAccept();
 
             expect(component.isSubmittingAccept()).toBe(false);
+            expect(alertService.warning).not.toHaveBeenCalledWith('artemisApp.courseRequest.admin.shortNameConflictAccept');
+            expect(alertService.error).toHaveBeenCalled();
         });
     });
 

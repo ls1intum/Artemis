@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +42,8 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CourseRequestServiceTest {
+
+    private static final ZonedDateTime FIXED_NOW = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 
     @Mock
     private CourseRequestRepository courseRequestRepository;
@@ -103,7 +106,7 @@ class CourseRequestServiceTest {
         when(courseRequestRepository.save(any(CourseRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(resourceLoaderService.getResource(any())).thenReturn(new ByteArrayResource("code of conduct".getBytes(StandardCharsets.UTF_8)));
 
-        var acceptDTO = new CourseRequestAcceptDTO("Accepted Course", "NEWCRS", "WS25", ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(10), false);
+        var acceptDTO = new CourseRequestAcceptDTO("Accepted Course", "NEWCRS", "WS25", FIXED_NOW.minusDays(1), FIXED_NOW.plusDays(10), false);
         CourseRequestDTO result = courseRequestService.acceptRequest(1L, acceptDTO);
 
         verify(courseAccessService).setDefaultGroupsIfNotSet(courseCaptor.capture());
@@ -164,7 +167,7 @@ class CourseRequestServiceTest {
             return merged;
         });
 
-        var acceptDTO = new CourseRequestAcceptDTO("New Course", "NEWCRS", "WS25", ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(10), false);
+        var acceptDTO = new CourseRequestAcceptDTO("New Course", "NEWCRS", "WS25", FIXED_NOW.minusDays(1), FIXED_NOW.plusDays(10), false);
         courseRequestService.acceptRequest(1L, acceptDTO);
 
         verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
@@ -235,7 +238,7 @@ class CourseRequestServiceTest {
             return Optional.of(refetched);
         });
 
-        var createDTO = new CourseRequestCreateDTO("New Course", "WS25", ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(10), false, "Need a course");
+        var createDTO = new CourseRequestCreateDTO("New Course", "WS25", FIXED_NOW.minusDays(1), FIXED_NOW.plusDays(10), false, "Need a course");
         courseRequestService.createCourseRequest(createDTO);
 
         // Verify received email was sent with the original requester, not from the saved entity
@@ -260,8 +263,8 @@ class CourseRequestServiceTest {
         CourseRequest request = new CourseRequest();
         request.setId(1L);
         request.setTitle("New Course");
-        request.setStartDate(ZonedDateTime.now().minusDays(1));
-        request.setEndDate(ZonedDateTime.now().plusDays(10));
+        request.setStartDate(FIXED_NOW.minusDays(1));
+        request.setEndDate(FIXED_NOW.plusDays(10));
         request.setStatus(CourseRequestStatus.PENDING);
         request.setRequester(requester);
         return request;

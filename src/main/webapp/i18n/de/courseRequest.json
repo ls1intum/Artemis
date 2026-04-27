@@ -49,7 +49,7 @@
                 "acceptConfirm": "Kurs erstellen",
                 "reject": "Ablehnen",
                 "rejectReasonLabel": "Ablehnungsgrund",
-                "rejectReasonPlaceholder": "Geben Sie einen Grund für die Ablehnung an",
+                "rejectReasonPlaceholder": "Gib einen Grund für die Ablehnung an",
                 "rejectConfirm": "Ablehnung senden",
                 "noRequests": "Aktuell liegen keine Kursanfragen vor.",
                 "noPendingRequests": "Keine offenen Anfragen.",
@@ -57,9 +57,9 @@
                 "acceptSuccess": "Kursanfrage \"{{ title }}\" akzeptiert. Kurs {{ shortName }} erstellt.",
                 "rejectSuccess": "Kursanfrage \"{{ title }}\" abgelehnt.",
                 "link": "Kurs öffnen",
-                "shortNameConflictAccept": "Ein Kurs mit diesem Kürzel existiert bereits. Bitte wählen Sie ein anderes Kürzel.",
+                "shortNameConflictAccept": "Ein Kurs mit diesem Kürzel existiert bereits. Bitte wähle ein anderes Kürzel.",
                 "shortNameHint": "Muss eindeutig sein, mindestens 3 Zeichen, nur Buchstaben und Zahlen. Es gelten die gleichen Regeln wie bei der normalen Kurserstellung.",
-                "requesterCoursesHint": "Der Anfragende ist Kursleiter in folgenden Kursen. Nutzen Sie dies zur Bestimmung des Kürzels:",
+                "requesterCoursesHint": "Der Anfragende ist Kursleiter in folgenden Kursen. Nutze dies zur Bestimmung des Kürzels:",
                 "loadingCourses": "Lade Kursleiterkurse...",
                 "noPreviousCourses": "Der Anfragende ist kein Kursleiter bestehender Kurse."
             }

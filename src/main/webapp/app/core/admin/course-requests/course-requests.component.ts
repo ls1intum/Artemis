@@ -15,7 +15,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { getCurrentAndFutureSemesters } from 'app/shared/util/semester-utils';
@@ -96,8 +97,8 @@ export class CourseRequestsComponent implements OnInit {
     acceptForm = this.fb.group({
         title: ['', [Validators.required, Validators.maxLength(255)]],
         semester: ['', [Validators.required]],
-        startDate: [undefined as any],
-        endDate: [undefined as any],
+        startDate: new FormControl<dayjs.Dayjs | undefined>(undefined),
+        endDate: new FormControl<dayjs.Dayjs | undefined>(undefined),
         testCourse: [false],
         reason: [''],
         shortName: ['', [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)]],
