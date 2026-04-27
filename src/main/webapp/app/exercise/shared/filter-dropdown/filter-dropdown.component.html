@@ -10,7 +10,7 @@
     <ng-template #selectedItem>
         <div class="d-flex align-items-center">
             <i class="pi pi-filter"></i>
-            <span class="ms-2">
+            <span class="d-none d-md-inline ms-2">
                 @if (activeFilter() === allValue()) {
                     {{ 'artemisApp.exercise.filter' | artemisTranslate }}
                 } @else {

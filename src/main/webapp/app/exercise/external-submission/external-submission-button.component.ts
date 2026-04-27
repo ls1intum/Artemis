@@ -14,6 +14,8 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
             [btnSize]="ButtonSize.SMALL"
             [icon]="faPlus"
             [title]="'entity.action.addExternalSubmission'"
+            [shouldToggle]="true"
+            [toggleBreakpoint]="'md'"
             (onClick)="openExternalSubmissionDialog($event)"
         />
     `,

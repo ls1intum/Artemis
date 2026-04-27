@@ -26,21 +26,23 @@
                         !participation.submissions![0].results?.[correctionRound]?.hasComplaint
                     "
                 >
-                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                    @if (!participation.submissions![0].results?.[correctionRound]?.hasComplaint) {
-                        {{
-                            'artemisApp.assessment.dashboard.actions.' +
-                                (this.examMode ? 'examCorrectionRound.' : '') +
-                                (!participation.submissions![0].results?.[correctionRound]?.assessmentType ||
-                                participation.submissions![0].results?.[correctionRound]?.assessmentType === AssessmentType.AUTOMATIC
-                                    ? 'assess'
-                                    : participation.submissions![0].results?.[correctionRound]?.completionDate
-                                      ? 'open'
-                                      : 'continue') | artemisTranslate: { correctionRound: correctionRound + 1 }
-                        }}
-                    } @else {
-                        {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
-                    }
+                    <fa-icon [icon]="faClipboardList" [fixedWidth]="true" />
+                    <span class="d-none d-xl-inline ms-1">
+                        @if (!participation.submissions![0].results?.[correctionRound]?.hasComplaint) {
+                            {{
+                                'artemisApp.assessment.dashboard.actions.' +
+                                    (this.examMode ? 'examCorrectionRound.' : '') +
+                                    (!participation.submissions![0].results?.[correctionRound]?.assessmentType ||
+                                    participation.submissions![0].results?.[correctionRound]?.assessmentType === AssessmentType.AUTOMATIC
+                                        ? 'assess'
+                                        : participation.submissions![0].results?.[correctionRound]?.completionDate
+                                          ? 'open'
+                                          : 'continue') | artemisTranslate: { correctionRound: correctionRound + 1 }
+                            }}
+                        } @else {
+                            {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
+                        }
+                    </span>
                 </a>
                 @if (
                     newManualResultAllowed &&
@@ -54,7 +56,7 @@
                         class="btn btn-sm btn-danger"
                     >
                         <fa-icon [fixedWidth]="true" [icon]="faBan" />
-                        <span>
+                        <span class="d-none d-xl-inline ms-1">
                             {{
                                 'artemisApp.assessment.dashboard.actions.' + (this.examMode ? 'examCorrectionRound.' : '') + 'cancel'
                                     | artemisTranslate: { correctionRound: correctionRound + 1 }

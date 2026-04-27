@@ -30,6 +30,8 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
             [tooltipPlacement]="TooltipPlacement.BOTTOM"
             [icon]="faRedo"
             [title]="'artemisApp.programmingExercise.resubmitAll'"
+            [shouldToggle]="shouldToggle"
+            [toggleBreakpoint]="toggleBreakpoint"
             [featureToggle]="FeatureToggle.ProgrammingExercises"
             (onClick)="openTriggerAllModal()"
         />
@@ -48,6 +50,8 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     @Input() exercise: ProgrammingExercise;
     @Input() disabled = false;
     @Input() btnSize = ButtonSize.MEDIUM;
+    @Input() shouldToggle = false;
+    @Input() toggleBreakpoint: 'md' | 'xl' = 'xl';
 
     @Output() onBuildTriggered = new EventEmitter();
     isTriggeringBuildAll = false;

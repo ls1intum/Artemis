@@ -37,6 +37,8 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     ProgrammingSubmissionState = ProgrammingSubmissionState;
 
     @Input() exercise: ProgrammingExercise;
+    @Input() shouldToggle = false;
+    @Input() toggleBreakpoint: 'md' | 'xl' = 'xl';
 
     hasFailedSubmissions = false;
     hasBuildingSubmissions = false;
