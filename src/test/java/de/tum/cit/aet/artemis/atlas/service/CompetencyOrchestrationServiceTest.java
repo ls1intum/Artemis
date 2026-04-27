@@ -55,7 +55,6 @@ class CompetencyOrchestrationServiceTest {
     @BeforeEach
     void setUp() {
         properties = new AtlasOrchestratorProperties("gpt-test-chat", 0.8, "gpt-test-orchestrator", 1.0, "");
-        when(hazelcastInstance.<Long, CompetencyOrchestrationService.RunInfo>getMap("atlas-orchestrator-runs")).thenReturn(runMap);
     }
 
     @Test
