@@ -1,21 +1,32 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { Subject } from 'rxjs';
 import { LectureSearchService } from './lecture-search.service';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 
 describe('LectureSearchService', () => {
     setupTestBed({ zoneless: true });
 
     let service: LectureSearchService;
     let httpTesting: HttpTestingController;
+    let wsSubject: Subject<IrisSearchStatusUpdate>;
+
+    const mockWebsocketService = {
+        subscribe: vi.fn(),
+    };
 
     beforeEach(() => {
+        vi.clearAllMocks();
+        wsSubject = new Subject<IrisSearchStatusUpdate>();
+        mockWebsocketService.subscribe.mockReturnValue(wsSubject.asObservable());
+
         TestBed.configureTestingModule({
-            providers: [LectureSearchService, provideHttpClient(), provideHttpClientTesting()],
+            providers: [LectureSearchService, provideHttpClient(), provideHttpClientTesting(), { provide: WebsocketService, useValue: mockWebsocketService }],
         });
         service = TestBed.inject(LectureSearchService);
         httpTesting = TestBed.inject(HttpTestingController);
@@ -79,7 +90,7 @@ describe('LectureSearchService', () => {
             expect(req.request.method).toBe('POST');
             expect(req.request.body).toEqual({ query: 'what are signals?', limit: 5 });
 
-            req.flush({ answer: '', sources: [] });
+            req.flush(null, { status: 202, statusText: 'Accepted' });
         });
 
         it('should accept a custom limit', () => {
@@ -88,10 +99,10 @@ describe('LectureSearchService', () => {
             const req = httpTesting.expectOne('api/iris/search-answer');
             expect(req.request.body).toEqual({ query: 'explain dependency injection', limit: 3 });
 
-            req.flush({ answer: '', sources: [] });
+            req.flush(null, { status: 202, statusText: 'Accepted' });
         });
 
-        it('should return the answer and sources from the server', () => {
+        it('should return the answer and sources from the server via WebSocket', () => {
             const mockResult: IrisSearchStatusUpdate = {
                 isThinking: false,
                 answer: 'Signals are a reactive primitive in Angular...',
@@ -110,8 +121,12 @@ describe('LectureSearchService', () => {
                 actualResult = result;
             });
 
+            // Flush the HTTP trigger (Artemis returns 202; result arrives via WebSocket)
             const req = httpTesting.expectOne('api/iris/search-answer');
-            req.flush(mockResult);
+            req.flush(null, { status: 202, statusText: 'Accepted' });
+
+            // Simulate the WebSocket push
+            wsSubject.next(mockResult);
 
             expect(actualResult).toEqual(mockResult);
         });
