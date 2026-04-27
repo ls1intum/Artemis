@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -102,14 +102,15 @@ public class Result extends DomainObject implements Comparable<Result> {
     // avoids the @OrderColumn null-index race (Hibernate "Illegal null value for list index" under
     // concurrent multi-node assessment writes) and avoids the MultipleBagFetchException that an unordered
     // List would trigger together with the assessmentNote bag.
-    // LinkedHashSet (combined with the constant Feedback#hashCode) preserves insertion order for the
-    // in-memory view, which keeps test snapshots stable and matches the previous List-based behaviour
-    // for callers that simply iterate without explicit sorting.
+    // HashSet is intentional — Hibernate7Module's REPLACE_PERSISTENT_COLLECTIONS only swaps the standard
+    // PersistentSet (HashSet-backed) for uninitialized collections; using LinkedHashSet would keep the
+    // persistent wrapper around and fail with LazyInitializationException once the Hibernate session
+    // closes (open-in-view is disabled). Insertion order is not meaningful here anyway.
     // TODO: drop the legacy "feedbacks_order" DB column in a follow-up PR via a Liquibase changeset.
     // Keeping the column for now so this PR ships as a pure-Java change without a DB migration risk.
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "result", allowSetters = true)
-    private Set<Feedback> feedbacks = new LinkedHashSet<>();
+    private Set<Feedback> feedbacks = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn()
@@ -320,9 +321,16 @@ public class Result extends DomainObject implements Comparable<Result> {
      * Convenience accessor that returns a snapshot of the feedbacks sorted by id (insertion order under
      * the IDENTITY generator). Use when a deterministic ordering is required for tests, JSON output, or
      * comparison logic.
+     * <p>
+     * Marked {@link JsonIgnore}: Jackson would otherwise auto-detect this getter as a "feedbacksSorted"
+     * JSON property and iterate the underlying {@link Set}, triggering a {@link org.hibernate.LazyInitializationException}
+     * when the set is an uninitialized {@code PersistentSet} and the Hibernate session has already closed.
+     * Serialization goes through the {@code feedbacks} field, which is correctly handled by the
+     * {@link com.fasterxml.jackson.datatype.hibernate7.Hibernate7Module} via {@code REPLACE_PERSISTENT_COLLECTIONS}.
      *
      * @return a new list containing the feedbacks sorted by id (nulls last)
      */
+    @JsonIgnore
     public List<Feedback> getFeedbacksSorted() {
         return feedbacks.stream().sorted(Comparator.comparing(Feedback::getId, Comparator.nullsLast(Comparator.naturalOrder()))).collect(Collectors.toList());
     }
@@ -339,9 +347,6 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @return this result, for chaining
      */
     public Result addFeedback(Feedback feedback) {
-        // Set the back-reference first so the equals/hashCode contract sees the same Result on both sides
-        // before the element is dropped into the hash bucket. (Feedback#hashCode is a constant, so the
-        // ordering only matters for clarity, but it avoids surprises if the contract ever changes.)
         feedback.setResult(this);
         this.feedbacks.add(feedback);
         return this;
@@ -357,14 +362,20 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Replaces the current feedback set with the given collection. Each feedback's owning side is
-     * wired to {@code this} so that Hibernate persists the FK; orphaned feedback (those previously in
-     * the set but not in the new collection) are dropped via {@code orphanRemoval = true}.
+     * Replaces the feedback collection with the given one. Each feedback's owning side is wired to
+     * {@code this} so Hibernate persists the FK; orphaned feedback (those previously in the set but not
+     * in the new collection) are dropped via {@code orphanRemoval = true}.
+     * <p>
+     * Replaces the field reference rather than calling {@code clear()} on the existing collection: when
+     * the entity is detached and {@code feedbacks} is an uninitialized {@code PersistentSet}, calling
+     * {@code clear()} would force initialization and throw {@code LazyInitializationException}.
+     * Hibernate's snapshot-based dirty detection still computes orphans correctly when the reference is
+     * swapped on an attached entity.
      *
      * @param feedbacks the new feedback collection (may be {@code null} or empty to clear)
      */
     public void setFeedbacks(Collection<Feedback> feedbacks) {
-        this.feedbacks.clear();
+        Set<Feedback> newSet = new HashSet<>();
         if (feedbacks != null) {
             for (Feedback feedback : feedbacks) {
                 if (feedback == null) {
@@ -372,9 +383,10 @@ public class Result extends DomainObject implements Comparable<Result> {
                     continue;
                 }
                 feedback.setResult(this);
-                this.feedbacks.add(feedback);
+                newSet.add(feedback);
             }
         }
+        this.feedbacks = newSet;
     }
 
     /**
