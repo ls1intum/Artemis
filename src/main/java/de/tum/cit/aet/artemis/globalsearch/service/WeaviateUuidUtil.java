@@ -31,6 +31,10 @@ public final class WeaviateUuidUtil {
      * Weaviate object UUID regardless of which node performs the upsert. The type is
      * included because entity IDs are only unique within a table (e.g. exercise 42 and
      * FAQ 42 can coexist).
+     *
+     * @param type     the type of the entity
+     * @param entityId the ID of the entity
+     * @return the derived deterministic UUID
      */
     public static String deterministicUuid(String type, Long entityId) {
         return UUID.nameUUIDFromBytes((WEAVIATE_UUID_NAMESPACE + ":" + type + ":" + entityId).getBytes(StandardCharsets.UTF_8)).toString();
