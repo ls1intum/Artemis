@@ -51,6 +51,7 @@ public class ExerciseDTO {
         ExerciseDTO dto = new ExerciseDTO();
         dto.setId(exercise.getId());
         dto.setType(exercise.getExerciseType());
+        dto.setAthenaConfig(ExerciseAthenaConfigDTO.from(exercise.getAthenaConfig()));
         return dto;
     }
 }

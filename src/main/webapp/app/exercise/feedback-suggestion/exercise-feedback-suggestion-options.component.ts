@@ -53,9 +53,10 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
         if (changes.dueDate && !changes.dueDate.isFirstChange()) {
             if (this.inputControlsDisabled()) {
                 this.exercise.feedbackSuggestionModule = this.initialAthenaModule;
-                if (this.exercise.athenaConfig) {
-                    this.exercise.athenaConfig.preliminaryFeedbackModule = this.initialPreliminaryModule;
-                    this.exercise.athenaConfig.gradedFeedbackModule = this.initialGradedModule;
+                if (this.initialPreliminaryModule !== undefined || this.initialGradedModule !== undefined) {
+                    this.ensureAthenaConfig();
+                    this.exercise.athenaConfig!.preliminaryFeedbackModule = this.initialPreliminaryModule;
+                    this.exercise.athenaConfig!.gradedFeedbackModule = this.initialGradedModule;
                 }
             }
         }

@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
@@ -19,22 +18,18 @@ public class ExerciseAthenaConfigService {
         this.configRepository = configRepository;
     }
 
-    @Transactional(readOnly = true)
     public Optional<ExerciseAthenaConfig> findByExerciseId(Long exerciseId) {
         return configRepository.findByExerciseId(exerciseId);
     }
 
-    @Transactional
     public ExerciseAthenaConfig save(ExerciseAthenaConfig config) {
         return configRepository.save(config);
     }
 
-    @Transactional
     public void deleteByExerciseId(Long exerciseId) {
         configRepository.deleteByExerciseId(exerciseId);
     }
 
-    @Transactional
     public ExerciseAthenaConfig createOrUpdateConfig(Exercise exercise, String preliminaryModule, String gradedModule) {
         Optional<ExerciseAthenaConfig> existingConfig = configRepository.findByExerciseId(exercise.getId());
 
@@ -55,8 +50,9 @@ public class ExerciseAthenaConfigService {
             return configRepository.save(config);
         }
         catch (DataIntegrityViolationException e) {
-            // Another transaction created the config between our lookup and save
-            // Retry the lookup and update the existing config
+            // Another transaction inserted the row between our findByExerciseId and save.
+            // Each repository call runs in its own transaction (no outer @Transactional here),
+            // so the retry read and save succeed in fresh transactions.
             existingConfig = configRepository.findByExerciseId(exercise.getId());
             if (existingConfig.isPresent()) {
                 config = existingConfig.get();

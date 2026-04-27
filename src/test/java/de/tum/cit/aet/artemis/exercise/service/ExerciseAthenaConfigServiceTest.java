@@ -85,8 +85,7 @@ class ExerciseAthenaConfigServiceTest extends AbstractSpringIntegrationIndepende
         assertThat(savedConfig.get().getPreliminaryFeedbackModule()).isEqualTo(updatedPreliminaryModule);
         assertThat(savedConfig.get().getGradedFeedbackModule()).isEqualTo(updatedGradedModule);
 
-        // Verify only one config exists for this exercise
-        var allConfigs = exerciseAthenaConfigRepository.findAll();
-        assertThat(allConfigs).hasSize(1);
+        // Verify the same row was updated, not a duplicate
+        assertThat(savedConfig.get().getId()).isEqualTo(result.getId());
     }
 }

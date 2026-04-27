@@ -137,7 +137,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "feedback_suggestion_module") // Athena module name (Athena enabled) or null
     private String feedbackSuggestionModule;
 
-    @OneToOne(mappedBy = "exercise", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "exercise", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private ExerciseAthenaConfig athenaConfig;
 
     @ManyToOne
@@ -719,8 +719,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         if (feedbackSuggestionModule != null) {
             return true;
         }
-        return athenaConfig != null
-                && (athenaConfig.getPreliminaryFeedbackModule() != null || athenaConfig.getGradedFeedbackModule() != null);
+        return athenaConfig != null && (athenaConfig.getPreliminaryFeedbackModule() != null || athenaConfig.getGradedFeedbackModule() != null);
     }
 
     public Set<GradingCriterion> getGradingCriteria() {

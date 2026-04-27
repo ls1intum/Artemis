@@ -14,7 +14,6 @@ import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -30,9 +29,6 @@ class ProgrammingExerciseResourceAthenaConfigTest extends AbstractSpringIntegrat
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private ExerciseAthenaConfigRepository exerciseAthenaConfigRepository;
 
     @Autowired
     private CourseTestRepository courseRepository;
@@ -53,9 +49,8 @@ class ProgrammingExerciseResourceAthenaConfigTest extends AbstractSpringIntegrat
 
     @AfterEach
     void tearDown() {
-        programmingExerciseRepository.deleteAll();
-        exerciseAthenaConfigRepository.deleteAll();
-        courseRepository.deleteAll();
+        // Delete only the course created in @BeforeEach; cascade removes exercises and their Athena configs.
+        courseRepository.delete(course);
     }
 
     @Test
@@ -120,7 +115,8 @@ class ProgrammingExerciseResourceAthenaConfigTest extends AbstractSpringIntegrat
         assertThat(updatedExercise.getAthenaConfig().getPreliminaryFeedbackModule()).isEqualTo("module_programming_test");
         assertThat(updatedExercise.getAthenaConfig().getGradedFeedbackModule()).isEqualTo("module_text_test");
 
-        var persistedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(updatedExercise.getId());
+        var persistedExercise = programmingExerciseRepository
+                .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(updatedExercise.getId());
         assertThat(persistedExercise.getAthenaConfig()).isNotNull();
         assertThat(persistedExercise.getAthenaConfig().getPreliminaryFeedbackModule()).isEqualTo("module_programming_test");
         assertThat(persistedExercise.getAthenaConfig().getGradedFeedbackModule()).isEqualTo("module_text_test");
@@ -152,7 +148,8 @@ class ProgrammingExerciseResourceAthenaConfigTest extends AbstractSpringIntegrat
         assertThat(updatedExercise.getAthenaConfig().getPreliminaryFeedbackModule()).isEqualTo("module_text_test");
         assertThat(updatedExercise.getAthenaConfig().getGradedFeedbackModule()).isEqualTo("module_programming_test");
 
-        var persistedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(updatedExercise.getId());
+        var persistedExercise = programmingExerciseRepository
+                .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(updatedExercise.getId());
         assertThat(persistedExercise.getAthenaConfig()).isNotNull();
         assertThat(persistedExercise.getAthenaConfig().getPreliminaryFeedbackModule()).isEqualTo("module_text_test");
         assertThat(persistedExercise.getAthenaConfig().getGradedFeedbackModule()).isEqualTo("module_programming_test");

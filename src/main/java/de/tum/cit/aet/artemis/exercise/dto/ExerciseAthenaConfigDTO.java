@@ -2,46 +2,16 @@ package de.tum.cit.aet.artemis.exercise.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
+
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ExerciseAthenaConfigDTO {
+public record ExerciseAthenaConfigDTO(Long id, Long exerciseId, String preliminaryFeedbackModule, String gradedFeedbackModule) {
 
-    private Long id;
-
-    private Long exerciseId;
-
-    private String preliminaryFeedbackModule;
-
-    private String gradedFeedbackModule;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getExerciseId() {
-        return exerciseId;
-    }
-
-    public void setExerciseId(Long exerciseId) {
-        this.exerciseId = exerciseId;
-    }
-
-    public String getPreliminaryFeedbackModule() {
-        return preliminaryFeedbackModule;
-    }
-
-    public void setPreliminaryFeedbackModule(String preliminaryFeedbackModule) {
-        this.preliminaryFeedbackModule = preliminaryFeedbackModule;
-    }
-
-    public String getGradedFeedbackModule() {
-        return gradedFeedbackModule;
-    }
-
-    public void setGradedFeedbackModule(String gradedFeedbackModule) {
-        this.gradedFeedbackModule = gradedFeedbackModule;
+    public static ExerciseAthenaConfigDTO from(ExerciseAthenaConfig config) {
+        if (config == null) {
+            return null;
+        }
+        Long exId = config.getExercise() != null ? config.getExercise().getId() : null;
+        return new ExerciseAthenaConfigDTO(config.getId(), exId, config.getPreliminaryFeedbackModule(), config.getGradedFeedbackModule());
     }
 }

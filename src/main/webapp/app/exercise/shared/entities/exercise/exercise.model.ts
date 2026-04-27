@@ -1,12 +1,4 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-
-export interface ExerciseAthenaConfig {
-    id?: number;
-    exerciseId?: number;
-    preliminaryFeedbackModule?: string;
-    gradedFeedbackModule?: string;
-}
-
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -26,6 +18,13 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { ExerciseInfo } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
+
+export interface ExerciseAthenaConfig {
+    id?: number;
+    exerciseId?: number;
+    preliminaryFeedbackModule?: string;
+    gradedFeedbackModule?: string;
+}
 
 export enum DifficultyLevel {
     EASY = 'EASY',

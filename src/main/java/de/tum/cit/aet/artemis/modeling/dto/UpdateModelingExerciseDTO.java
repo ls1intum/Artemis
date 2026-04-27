@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseAthenaConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 
@@ -23,8 +24,8 @@ public record UpdateModelingExerciseDTO(long id, String title, String channelNam
         Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
         Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions, ZonedDateTime releaseDate,
         ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, String exampleSolutionModel,
-        String exampleSolutionExplanation, Long courseId, Long exerciseGroupId, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks)
-        implements CompetencyLinksHolderDTO {
+        String exampleSolutionExplanation, Long courseId, Long exerciseGroupId, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
+        ExerciseAthenaConfigDTO athenaConfig) implements CompetencyLinksHolderDTO {
 
     /**
      * Creates a DTO from a ModelingExercise entity.
@@ -63,6 +64,7 @@ public record UpdateModelingExerciseDTO(long id, String title, String channelNam
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getPresentationScoreEnabled(),
                 exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
                 exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolutionModel(),
-                exercise.getExampleSolutionExplanation(), courseId, exerciseGroupId, gradingCriterionDTOs, competencyLinkDTOs);
+                exercise.getExampleSolutionExplanation(), courseId, exerciseGroupId, gradingCriterionDTOs, competencyLinkDTOs,
+                ExerciseAthenaConfigDTO.from(exercise.getAthenaConfig()));
     }
 }

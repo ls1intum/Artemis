@@ -308,10 +308,10 @@ public class ModelingExerciseResource {
 
         ModelingExercise persistedExercise = modelingExerciseRepository.save(updatedExercise);
 
-        // Handle athenaConfig if provided
-        if (updatedExercise.getAthenaConfig() != null) {
+        // Handle athenaConfig from the request DTO
+        if (updateModelingExerciseDTO.athenaConfig() != null) {
             ExerciseAthenaConfig athenaConfig = exerciseAthenaConfigService.createOrUpdateConfig(persistedExercise,
-                    updatedExercise.getAthenaConfig().getPreliminaryFeedbackModule(), updatedExercise.getAthenaConfig().getGradedFeedbackModule());
+                    updateModelingExerciseDTO.athenaConfig().preliminaryFeedbackModule(), updateModelingExerciseDTO.athenaConfig().gradedFeedbackModule());
             persistedExercise.setAthenaConfig(athenaConfig);
         }
 

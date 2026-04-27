@@ -185,7 +185,7 @@ public class AthenaModuleService {
      * @throws BadRequestAlertException when the exercise has no access to the exercise's provided module.
      */
     public void checkHasAccessToAthenaModule(Exercise exercise, Course course, AthenaModuleMode moduleMode, String entityName) throws BadRequestAlertException {
-        String module = moduleMode == AthenaModuleMode.PRELIMINARY ? exercise.getPreliminaryFeedbackModule() : exercise.getGradedFeedbackModule();
+        String module = resolveModuleForMode(exercise, moduleMode);
 
         if (exercise.isExamExercise() && module != null) {
             throw new BadRequestAlertException("The exam exercise has no access to Athena", entityName, "examExerciseNoAccessToAthena");
@@ -223,8 +223,8 @@ public class AthenaModuleService {
      * @param course The course for which the access to restricted modules should be revoked
      */
     public void revokeAccessToRestrictedFeedbackModules(Course course) {
-        exerciseRepository.revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(course.getId(), restrictedModules);
         if (!restrictedModules.isEmpty()) {
+            exerciseRepository.revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(course.getId(), restrictedModules);
             exerciseAthenaConfigRepository.revokeRestrictedModulesByCourseId(course.getId(), restrictedModules);
         }
     }
