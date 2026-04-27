@@ -160,6 +160,16 @@ describe('CourseRequestsComponent', () => {
             expect(component.requesterCourses()).toEqual(mockCourses);
             expect(component.loadingRequesterCourses()).toBe(false);
         });
+
+        it('should surface error when loading requester courses fails', () => {
+            const errorResponse = new HttpErrorResponse({ status: 403, statusText: 'Forbidden' });
+            mockCourseRequestService.getRequesterCourses.mockReturnValue(throwError(() => errorResponse));
+
+            component.openAcceptModal(mockRequest);
+
+            expect(component.loadingRequesterCourses()).toBe(false);
+            expect(alertService.error).toHaveBeenCalled();
+        });
     });
 
     describe('submitAccept', () => {

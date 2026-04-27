@@ -155,8 +155,9 @@ export class CourseRequestsComponent implements OnInit {
                     this.requesterCourses.set(courses);
                     this.loadingRequesterCourses.set(false);
                 },
-                error: () => {
+                error: (error) => {
                     this.loadingRequesterCourses.set(false);
+                    onError(this.alertService, error);
                 },
             });
         }
