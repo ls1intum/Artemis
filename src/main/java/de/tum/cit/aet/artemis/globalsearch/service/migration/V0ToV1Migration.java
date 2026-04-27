@@ -84,12 +84,12 @@ public class V0ToV1Migration implements WeaviateMigration {
 
         while (hasMore) {
             final String afterCursor = cursor;
-            var result = oldCollection.query.fetchObjects(b -> {
-                b.limit(PAGE_SIZE);
+            var result = oldCollection.query.fetchObjects(builder -> {
+                builder.limit(PAGE_SIZE);
                 if (afterCursor != null) {
-                    b.after(afterCursor);
+                    builder.after(afterCursor);
                 }
-                return b;
+                return builder;
             });
 
             var objects = result.objects();
@@ -110,15 +110,15 @@ public class V0ToV1Migration implements WeaviateMigration {
                     String uuid = WeaviateUuidUtil.deterministicUuid(SearchableEntitySchema.TypeValues.EXERCISE, entityId);
 
                     if (newCollection.data.exists(uuid)) {
-                        newCollection.data.replace(uuid, r -> r.properties(newProps));
+                        newCollection.data.replace(uuid, replaceOptions -> replaceOptions.properties(newProps));
                     }
                     else {
-                        newCollection.data.insert(newProps, o -> o.uuid(uuid));
+                        newCollection.data.insert(newProps, insertOptions -> insertOptions.uuid(uuid));
                     }
                     migrated++;
                 }
-                catch (Exception e) {
-                    log.warn("V0→V1: Failed to migrate exercise {}: {}", entityId, e.getMessage());
+                catch (Exception exception) {
+                    log.warn("V0→V1: Failed to migrate exercise {}: {}", entityId, exception.getMessage());
                     failed++;
                 }
             }
