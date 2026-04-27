@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 
 /**
- * WebSocket message sent from Artemis to the Angular client for lecture search status updates.
+ * WebSocket message sent from Artemis to the Angular client for global search Iris answer status updates.
  *
  * <p>
  * There are two kinds of messages:
