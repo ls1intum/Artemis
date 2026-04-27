@@ -10,7 +10,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { GlobalSearchLectureResultsComponent } from './global-search-lecture-results.component';
 import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 const mockResult: LectureSearchResult = {
     course: { id: 1, name: 'Advanced Web Development' },
@@ -41,12 +40,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [GlobalSearchLectureResultsComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [
-                provideRouter([]),
-                { provide: LectureSearchService, useValue: mockSearchService },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
-            ],
+            providers: [provideRouter([]), { provide: LectureSearchService, useValue: mockSearchService }, { provide: TranslateService, useClass: MockTranslateService }],
         });
 
         fixture = TestBed.createComponent(GlobalSearchLectureResultsComponent);
@@ -141,14 +135,14 @@ describe('GlobalSearchLectureResultsComponent', () => {
     });
 
     describe('itemCount', () => {
-        it('should be 1 when there are no results (iris action slot is always present)', () => {
+        it('should be 0 when there are no results', () => {
             (component as any).lectureResults.set([]);
-            expect(component.itemCount()).toBe(1);
+            expect(component.itemCount()).toBe(0);
         });
 
-        it('should equal the number of results plus 1 for the iris action slot', () => {
+        it('should equal the number of results', () => {
             (component as any).lectureResults.set([mockResult, mockResultNoSnippet]);
-            expect(component.itemCount()).toBe(3);
+            expect(component.itemCount()).toBe(2);
         });
     });
 
@@ -167,8 +161,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
     describe('Keyboard navigation', () => {
         it('should navigate to result link when Enter is pressed on a selected result', () => {
             (component as any).lectureResults.set([mockResult]);
-            // selectedIndex 1 because slot 0 is the iris action button (irisOpen defaults to false)
-            fixture.componentRef.setInput('selectedIndex', 1);
+            fixture.componentRef.setInput('selectedIndex', 0);
             fixture.detectChanges();
 
             const navigateSpy = vi.spyOn((component as any).router, 'navigateByUrl');
