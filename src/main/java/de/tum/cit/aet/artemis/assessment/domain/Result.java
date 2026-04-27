@@ -332,8 +332,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      */
     @JsonIgnore
     public List<Feedback> getFeedbacksSorted() {
-        return feedbacks.stream().filter(Objects::nonNull).sorted(Comparator.comparing(Feedback::getId, Comparator.nullsLast(Comparator.naturalOrder())))
-                .collect(Collectors.toList());
+        return feedbacks.stream().filter(Objects::nonNull).sorted(Comparator.comparing(Feedback::getId, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
     }
 
     public Result feedbacks(Collection<Feedback> feedbacks) {
