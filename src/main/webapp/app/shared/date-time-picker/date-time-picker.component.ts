@@ -58,6 +58,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     private nowButton: HTMLButtonElement | undefined;
     private nowButtonClickListener: (() => void) | undefined;
+    private nowButtonTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
     labelName = input<string>();
     hideLabelName = input<boolean>(false);
@@ -179,8 +180,12 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     onPickerOpen(): void {
         // Use setTimeout to let the CDK overlay render first
-        const timeoutId = setTimeout(() => {
-            const buttonsContainer = this.document.querySelector('.owl-dt-container-buttons');
+        this.nowButtonTimeoutId = setTimeout(() => {
+            this.nowButtonTimeoutId = undefined;
+
+            // Use the last matching container to scope to the most recently opened picker overlay
+            const allContainers = this.document.querySelectorAll('.owl-dt-container-buttons');
+            const buttonsContainer = allContainers[allContainers.length - 1];
             if (!buttonsContainer) {
                 return;
             }
@@ -209,13 +214,14 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
             this.nowButton = button;
         });
 
-        this.destroyRef.onDestroy(() => clearTimeout(timeoutId));
+        this.destroyRef.onDestroy(() => this.clearNowButtonTimeout());
     }
 
     /**
      * Cleans up the injected "Now" button when the picker closes.
      */
     onPickerClosed(): void {
+        this.clearNowButtonTimeout();
         this.nowButtonClickListener?.();
         this.nowButtonClickListener = undefined;
         if (this.nowButton?.parentNode) {
@@ -225,13 +231,30 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     }
 
     /**
-     * Sets the date/time to the current moment via the owl-date-time component.
+     * Sets the date/time to the current moment via the owl-date-time component,
+     * clamping to min/max constraints if set.
      */
     setNow(): void {
         const picker = this.dtDefault();
         if (picker) {
-            picker.select(new Date());
+            let now = new Date();
+            const minDate = this.minDate();
+            const maxDate = this.maxDate();
+            if (minDate && now < minDate) {
+                now = minDate;
+            }
+            if (maxDate && now > maxDate) {
+                now = maxDate;
+            }
+            picker.select(now);
             picker.confirmSelect();
+        }
+    }
+
+    private clearNowButtonTimeout(): void {
+        if (this.nowButtonTimeoutId !== undefined) {
+            clearTimeout(this.nowButtonTimeoutId);
+            this.nowButtonTimeoutId = undefined;
         }
     }
 

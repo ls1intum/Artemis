@@ -138,6 +138,32 @@ describe('FormDateTimePickerComponent', () => {
             expect(mockPicker.confirmSelect).toHaveBeenCalledOnce();
         });
 
+        it('should clamp to minDate when now is before min', () => {
+            const futureMin = new Date(Date.now() + 3600000);
+            const mockPicker = { select: jest.fn(), confirmSelect: jest.fn() };
+            jest.spyOn(component as any, 'dtDefault').mockReturnValue(mockPicker);
+            jest.spyOn(component, 'minDate').mockReturnValue(futureMin);
+            jest.spyOn(component, 'maxDate').mockReturnValue(null);
+
+            component.setNow();
+
+            expect(mockPicker.select).toHaveBeenCalledWith(futureMin);
+            expect(mockPicker.confirmSelect).toHaveBeenCalledOnce();
+        });
+
+        it('should clamp to maxDate when now is after max', () => {
+            const pastMax = new Date(Date.now() - 3600000);
+            const mockPicker = { select: jest.fn(), confirmSelect: jest.fn() };
+            jest.spyOn(component as any, 'dtDefault').mockReturnValue(mockPicker);
+            jest.spyOn(component, 'minDate').mockReturnValue(null);
+            jest.spyOn(component, 'maxDate').mockReturnValue(pastMax);
+
+            component.setNow();
+
+            expect(mockPicker.select).toHaveBeenCalledWith(pastMax);
+            expect(mockPicker.confirmSelect).toHaveBeenCalledOnce();
+        });
+
         it('should not throw when setNow is called without a picker', () => {
             jest.spyOn(component as any, 'dtDefault').mockReturnValue(undefined);
 
@@ -178,6 +204,24 @@ describe('FormDateTimePickerComponent', () => {
 
             component.onPickerClosed();
 
+            expect(buttonsContainer.children).toHaveLength(1);
+
+            document.body.removeChild(buttonsContainer);
+        }));
+
+        it('should clear timeout when picker closes before button injection', fakeAsync(() => {
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.classList.add('owl-dt-container-buttons');
+            const setButton = document.createElement('button');
+            buttonsContainer.appendChild(setButton);
+            document.body.appendChild(buttonsContainer);
+
+            component.onPickerOpen();
+            // Close immediately before setTimeout fires
+            component.onPickerClosed();
+            tick();
+
+            // Button should not have been injected
             expect(buttonsContainer.children).toHaveLength(1);
 
             document.body.removeChild(buttonsContainer);
