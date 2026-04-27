@@ -201,6 +201,10 @@ public class ModelingExerciseResource {
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(modelingExercise, ENTITY_NAME);
 
+        // Detach athenaConfig before save to prevent cascade-persist with null exercise FK
+        var requestedAthenaConfig = modelingExercise.getAthenaConfig();
+        modelingExercise.setAthenaConfig(null);
+
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(modelingExercise);
         ModelingExercise savedExercise = modelingExerciseRepository.save(modelingExercise);
         if (!competencyLinks.isEmpty()) {
@@ -210,9 +214,9 @@ public class ModelingExerciseResource {
         final ModelingExercise result = savedExercise;
 
         // Handle athenaConfig if provided
-        if (modelingExercise.getAthenaConfig() != null) {
-            ExerciseAthenaConfig athenaConfig = exerciseAthenaConfigService.createOrUpdateConfig(result, modelingExercise.getAthenaConfig().getPreliminaryFeedbackModule(),
-                    modelingExercise.getAthenaConfig().getGradedFeedbackModule());
+        if (requestedAthenaConfig != null) {
+            ExerciseAthenaConfig athenaConfig = exerciseAthenaConfigService.createOrUpdateConfig(result, requestedAthenaConfig.getPreliminaryFeedbackModule(),
+                    requestedAthenaConfig.getGradedFeedbackModule());
             result.setAthenaConfig(athenaConfig);
         }
 

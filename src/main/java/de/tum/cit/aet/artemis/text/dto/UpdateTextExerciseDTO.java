@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseAthenaConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -27,7 +28,8 @@ public record UpdateTextExerciseDTO(Long id, String title, String channelName, S
         Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
         Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions, ZonedDateTime releaseDate,
         ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, String exampleSolution, Long courseId,
-        Long exerciseGroupId, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
+        Long exerciseGroupId, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, ExerciseAthenaConfigDTO athenaConfig)
+        implements CompetencyLinksHolderDTO {
 
     /**
      * Creates an UpdateTextExerciseDTO from the given TextExercise domain object.
@@ -62,11 +64,15 @@ public record UpdateTextExerciseDTO(Long id, String title, String channelName, S
             competencyLinkDTOs = null;
         }
 
+        ExerciseAthenaConfigDTO athenaConfigDTO = exercise.getAthenaConfig() != null && Hibernate.isInitialized(exercise.getAthenaConfig())
+                ? ExerciseAthenaConfigDTO.from(exercise.getAthenaConfig())
+                : null;
+
         return new UpdateTextExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getPresentationScoreEnabled(),
                 exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
                 exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(),
-                courseId, exerciseGroupId, gradingCriterionDTOs, competencyLinkDTOs);
+                courseId, exerciseGroupId, gradingCriterionDTOs, competencyLinkDTOs, athenaConfigDTO);
     }
 }

@@ -112,17 +112,19 @@ public class AthenaModuleService {
     }
 
     /**
-     * Get all available Athena modules for a specific course, exercise type, and module mode.
+     * Get all available Athena modules for a specific course and exercise type.
+     * <p>
+     * NOTE: The {@code moduleMode} parameter is currently ignored and reserved for future
+     * mode-based filtering (e.g., when modules expose mode-specific capabilities). Callers
+     * must not rely on the returned list being filtered by mode.
      *
      * @param course       The course for which the modules should be retrieved
      * @param exerciseType The exercise type for which the modules should be retrieved
-     * @param moduleMode   The module mode (PRELIMINARY or GRADED)
-     * @return The list of available Athena modules for the course and mode
+     * @param moduleMode   Reserved for future filtering; currently has no effect
+     * @return The list of available Athena modules for the course (not filtered by mode)
      * @throws NetworkingException is thrown in case the modules can't be fetched from Athena
      */
     public List<String> getAthenaModulesForCourse(Course course, ExerciseType exerciseType, AthenaModuleMode moduleMode) throws NetworkingException {
-        // For now, return all modules for the exercise type
-        // In the future, this could filter based on module capabilities
         return getAthenaModulesForCourse(course, exerciseType);
     }
 

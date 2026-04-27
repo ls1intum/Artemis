@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exercise.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -23,7 +22,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExerciseAthenaConfig extends DomainObject {
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne
     @JoinColumn(name = "exercise_id", nullable = false, unique = true)
     private Exercise exercise;
 

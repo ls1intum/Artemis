@@ -65,6 +65,6 @@ public record UpdateModelingExerciseDTO(long id, String title, String channelNam
                 exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
                 exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolutionModel(),
                 exercise.getExampleSolutionExplanation(), courseId, exerciseGroupId, gradingCriterionDTOs, competencyLinkDTOs,
-                ExerciseAthenaConfigDTO.from(exercise.getAthenaConfig()));
+                exercise.getAthenaConfig() != null && Hibernate.isInitialized(exercise.getAthenaConfig()) ? ExerciseAthenaConfigDTO.from(exercise.getAthenaConfig()) : null);
     }
 }
