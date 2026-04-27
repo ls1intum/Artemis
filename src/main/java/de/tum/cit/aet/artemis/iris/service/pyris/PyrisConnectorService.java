@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryWithRelationsDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisLearningDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryConnectionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryWithRelationsDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisSearchAskRequestDTO;
@@ -234,6 +236,35 @@ public class PyrisConnectorService {
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to get Iris answer from Pyris", e);
             throw new PyrisConnectorException("Could not fetch Iris answer from Pyris");
+        }
+    }
+
+    /**
+     * Asks Pyris to answer a question using course content via the async pipeline (POST /api/v1/pipelines/global-search/run → 202).
+     * Pyris will POST two webhook callbacks to Artemis:
+     * 1. A "thinking" update (~2 ms after this call) when the query is classified as a real question.
+     * 2. A "result" update when the LLM finishes, containing the answer (or null for navigation queries).
+     *
+     * @param query    the user's question
+     * @param limit    the maximum number of source segments to retrieve
+     * @param jobToken the Hazelcast job token used for callback authentication and WebSocket routing
+     */
+    public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken) {
+        var endpoint = "/api/v1/pipelines/global-search/run";
+        try {
+            var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, null);
+            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, List.of());
+            var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
+            if (response.getStatusCode().value() != 202) {
+                log.warn("Unexpected status {} from Pyris search/ask async", response.getStatusCode().value());
+            }
+        }
+        catch (HttpStatusCodeException e) {
+            throw toIrisException(e);
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to send async search/ask request to Pyris", e);
+            throw new PyrisConnectorException("Could not send global search Iris answer request to Pyris");
         }
     }
 
