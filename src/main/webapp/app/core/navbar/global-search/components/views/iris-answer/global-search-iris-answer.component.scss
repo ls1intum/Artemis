@@ -1,0 +1,207 @@
+// ── Iris inline answer card ─────────────────────────────────────────────────
+
+.iris-inline-answer {
+    border-radius: 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--global-search-iris-accent) 18%, transparent);
+    background: color-mix(in srgb, var(--global-search-iris-accent) 4.5%, transparent);
+}
+
+.iris-card-header {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--global-search-iris-accent) 12%, transparent);
+    border-radius: 0.75rem 0.75rem 0 0;
+
+    ::ng-deep .iris-logo {
+        filter: none;
+    }
+}
+
+.iris-card-label {
+    font-size: 0.75rem;
+    color: var(--global-search-iris-accent);
+}
+
+.iris-ai-badge {
+    padding: 0.125rem 0.375rem;
+    font-size: 0.5625rem;
+    letter-spacing: 0.04em;
+    color: var(--global-search-iris-accent);
+    background: color-mix(in srgb, var(--global-search-iris-accent) 12%, transparent);
+}
+
+@keyframes iris-logo-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.45;
+    }
+}
+
+.iris-logo-pulse {
+    animation: iris-logo-pulse 1.4s ease-in-out infinite;
+}
+
+// Override thinking bubble — remove dashed border, transparent bg inside the card
+:host ::ng-deep .thinking-bubble {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+:host ::ng-deep jhi-iris-thinking-bubble {
+    display: block;
+    padding: 0.5rem 0.75rem 0.625rem;
+}
+
+// ── Answer collapse ──────────────────────────────────────────────────────────
+
+.iris-answer-region {
+    padding: 0.625rem 0.75rem 0;
+}
+
+.iris-answer-text {
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: var(--bs-body-color);
+    transition: max-height 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.is-clamped {
+        max-height: 88px;
+        overflow: hidden;
+        -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+        mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+    }
+
+    &.is-expanded {
+        max-height: none;
+    }
+
+    ::ng-deep p {
+        margin-bottom: 0.4rem;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+}
+
+.iris-toggle-btn {
+    padding: 0.125rem 0.75rem 0;
+    font-size: 0.6875rem;
+    color: color-mix(in srgb, var(--global-search-iris-accent) 60%, transparent);
+    cursor: pointer;
+    transition: color 0.15s;
+
+    &:hover {
+        color: var(--global-search-iris-accent);
+    }
+}
+
+// ── Source chips ─────────────────────────────────────────────────────────────
+
+.iris-chips {
+    gap: 0.375rem;
+    flex-wrap: nowrap;
+    padding: 0.5rem 0.75rem 0;
+    animation: fade-slide-up 0.3s ease both;
+
+    &--expanded {
+        flex-wrap: wrap;
+        padding-bottom: 0.125rem;
+        animation: fade-slide-up 0.15s ease both;
+    }
+}
+
+.iris-collapse-btn {
+    width: 1.5rem;
+    height: 1.5rem;
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--global-search-iris-accent) 30%, transparent);
+    color: color-mix(in srgb, var(--global-search-iris-accent) 60%, transparent);
+    font-size: 0.5rem;
+    cursor: pointer;
+    transition:
+        border-color 0.15s,
+        color 0.15s,
+        background 0.15s;
+
+    &:hover {
+        border-color: color-mix(in srgb, var(--global-search-iris-accent) 60%, transparent);
+        color: var(--global-search-iris-accent);
+        background: color-mix(in srgb, var(--global-search-iris-accent) 8%, transparent);
+    }
+}
+
+// Give the first chip row bottom padding when it's the last thing in the card
+.iris-chips:last-child {
+    padding-bottom: 0.625rem;
+}
+
+// "+N more" — same chip shape but accent-colored
+.iris-more-btn {
+    flex-shrink: 0;
+    color: var(--global-search-iris-accent);
+    border-color: color-mix(in srgb, var(--global-search-iris-accent) 30%, transparent);
+    background: color-mix(in srgb, var(--global-search-iris-accent) 6%, transparent);
+    cursor: pointer;
+
+    &:hover {
+        border-color: color-mix(in srgb, var(--global-search-iris-accent) 60%, transparent);
+        background: color-mix(in srgb, var(--global-search-iris-accent) 8%, transparent);
+    }
+}
+
+@keyframes fade-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Override Bootstrap's global a:hover { text-decoration: underline }
+:host ::ng-deep {
+    a.iris-chip,
+    a.iris-chip:hover,
+    a.iris-chip:focus-visible {
+        text-decoration: none !important;
+    }
+}
+
+.iris-chip {
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    min-width: 0;
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--global-search-iris-accent) 30%, transparent);
+    font-size: 0.6875rem;
+    color: var(--bs-body-color);
+    transition:
+        border-color 0.15s,
+        background 0.15s;
+
+    &:hover,
+    &:focus-visible {
+        border-color: color-mix(in srgb, var(--global-search-iris-accent) 60%, transparent);
+        background: color-mix(in srgb, var(--global-search-iris-accent) 8%, transparent);
+        color: var(--bs-body-color);
+        text-decoration: none !important;
+    }
+}
+
+.iris-chip-icon {
+    color: var(--global-search-iris-chip-icon);
+    font-size: 0.625rem;
+}
+
+.iris-chip-name {
+    max-width: 9rem;
+}

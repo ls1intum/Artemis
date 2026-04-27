@@ -78,20 +78,20 @@ describe('GlobalSearchNavigationViewComponent', () => {
 
         describe('itemCount', () => {
             it('should equal action button count plus searchable entities when not searching', () => {
-                // actionButtonCount = 2 (iris + lecture both visible), searchableEntities.length = 6
-                expect(component.itemCount()).toBe(8);
+                // actionButtonCount = 1 (lecture search button), searchableEntities.length = 5
+                expect(component.itemCount()).toBe(6);
             });
 
             it('should equal action button count plus results when searching', () => {
                 fixture.componentRef.setInput('showResults', true);
                 fixture.componentRef.setInput('results', [{ id: '1' }, { id: '2' }] as GlobalSearchResult[]);
                 fixture.detectChanges();
-                expect(component.itemCount()).toBe(4); // 2 buttons + 2 results
+                expect(component.itemCount()).toBe(3); // 1 button + 2 results
             });
         });
 
         describe('Keyboard navigation', () => {
-            it('should emit SearchView.Iris when Enter is pressed at index 0', () => {
+            it('should emit SearchView.Lecture when Enter is pressed at index 0', () => {
                 const spy = vi.fn();
                 component.viewSelected.subscribe(spy);
 
@@ -101,7 +101,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 const event = new KeyboardEvent('keydown', { key: 'Enter' });
                 component.handleKeydown(event);
 
-                expect(spy).toHaveBeenCalledWith(SearchView.Iris);
+                expect(spy).toHaveBeenCalledWith(SearchView.Lecture);
             });
 
             it('should call preventDefault when Enter is pressed at index 0', () => {

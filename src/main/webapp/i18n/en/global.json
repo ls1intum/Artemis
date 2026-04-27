@@ -93,6 +93,10 @@
             "irisAnswerTitle": "Iris AI Answer",
             "irisAnswerSources": "Sources",
             "irisAnswerError": "Iris couldn't generate an answer. Please try again.",
+            "irisAnswerShowMore": "Show more",
+            "irisAnswerShowLess": "Show less",
+            "irisAnswerMore": "more",
+            "irisThinking": "Iris is thinking…",
             "continueInIris": "Continue conversation in Iris"
         },
         "menu": {
