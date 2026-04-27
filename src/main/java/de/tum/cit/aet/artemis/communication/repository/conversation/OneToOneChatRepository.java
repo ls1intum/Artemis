@@ -38,7 +38,7 @@ public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneCha
                 LEFT JOIN FETCH user.groups
                 LEFT JOIN FETCH oneToOneChat.course
             WHERE oneToOneChat.course.id = :courseId
-                AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creator.id = :userId)
+                AND oneToOneChat.lastMessageDate IS NOT NULL
                 AND matchingParticipant.user.id = :userId
             ORDER BY oneToOneChat.lastMessageDate DESC
             """)
