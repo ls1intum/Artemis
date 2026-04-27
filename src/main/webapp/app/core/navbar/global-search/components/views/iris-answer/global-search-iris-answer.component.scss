@@ -1,4 +1,4 @@
-// ── Iris inline answer card ─────────────────────────────────────────────────
+/* ── Iris inline answer card ───────────────────────────────────────────────── */
 
 .iris-inline-answer {
     border-radius: 0.75rem;
@@ -44,7 +44,7 @@
     animation: iris-logo-pulse 1.4s ease-in-out infinite;
 }
 
-// Override thinking bubble — remove dashed border, transparent bg inside the card
+/* Override thinking bubble — remove dashed border, transparent bg inside the card */
 :host ::ng-deep .thinking-bubble {
     background: transparent !important;
     box-shadow: none !important;
@@ -57,7 +57,7 @@
     padding: 0.5rem 0.75rem 0.625rem;
 }
 
-// ── Answer collapse ──────────────────────────────────────────────────────────
+/* ── Answer collapse ────────────────────────────────────────────────────────── */
 
 .iris-answer-region {
     padding: 0.625rem 0.75rem 0;
@@ -101,7 +101,7 @@
     }
 }
 
-// ── Source chips ─────────────────────────────────────────────────────────────
+/* ── Source chips ─────────────────────────────────────────────────────────── */
 
 .iris-chips {
     gap: 0.375rem;
@@ -136,12 +136,12 @@
     }
 }
 
-// Give the first chip row bottom padding when it's the last thing in the card
+/* Give the first chip row bottom padding when it's the last thing in the card */
 .iris-chips:last-child {
     padding-bottom: 0.625rem;
 }
 
-// "+N more" — same chip shape but accent-colored
+/* "+N more" — same chip shape but accent-colored */
 .iris-more-btn {
     flex-shrink: 0;
     color: var(--global-search-iris-accent);
@@ -167,7 +167,8 @@
     }
 }
 
-// Override Bootstrap's global a:hover { text-decoration: underline }
+/* Override Bootstrap's global a:hover { text-decoration: underline } */
+
 :host ::ng-deep {
     a.iris-chip,
     a.iris-chip:hover,
