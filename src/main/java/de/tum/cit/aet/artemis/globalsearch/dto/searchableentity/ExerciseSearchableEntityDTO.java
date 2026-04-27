@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch.dto.searchableentity;
 
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,6 +9,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateDateUtil;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -88,17 +88,17 @@ public record ExerciseSearchableEntityDTO(Long exerciseId, Long courseId, String
 
         putIfNotNull(properties, SearchableEntitySchema.Properties.SHORT_NAME, shortName);
         putIfNotNull(properties, SearchableEntitySchema.Properties.DESCRIPTION, problemStatement);
-        putIfNotNull(properties, SearchableEntitySchema.Properties.RELEASE_DATE, formatDate(releaseDate));
-        putIfNotNull(properties, SearchableEntitySchema.Properties.START_DATE, formatDate(startDate));
-        putIfNotNull(properties, SearchableEntitySchema.Properties.DUE_DATE, formatDate(dueDate));
+        putIfNotNull(properties, SearchableEntitySchema.Properties.RELEASE_DATE, WeaviateDateUtil.format(releaseDate));
+        putIfNotNull(properties, SearchableEntitySchema.Properties.START_DATE, WeaviateDateUtil.format(startDate));
+        putIfNotNull(properties, SearchableEntitySchema.Properties.DUE_DATE, WeaviateDateUtil.format(dueDate));
         putIfNotNull(properties, SearchableEntitySchema.Properties.DIFFICULTY, difficulty);
 
         if (isExamExercise && examId != null) {
             properties.put(SearchableEntitySchema.Properties.EXAM_ID, examId);
             putIfNotNull(properties, SearchableEntitySchema.Properties.TEST_EXAM, isTestExam);
-            putIfNotNull(properties, SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE, formatDate(examVisibleDate));
-            putIfNotNull(properties, SearchableEntitySchema.Properties.EXAM_START_DATE, formatDate(examStartDate));
-            putIfNotNull(properties, SearchableEntitySchema.Properties.EXAM_END_DATE, formatDate(examEndDate));
+            putIfNotNull(properties, SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE, WeaviateDateUtil.format(examVisibleDate));
+            putIfNotNull(properties, SearchableEntitySchema.Properties.EXAM_START_DATE, WeaviateDateUtil.format(examStartDate));
+            putIfNotNull(properties, SearchableEntitySchema.Properties.EXAM_END_DATE, WeaviateDateUtil.format(examEndDate));
         }
 
         putIfNotNull(properties, SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE, programmingLanguage);
@@ -117,7 +117,4 @@ public record ExerciseSearchableEntityDTO(Long exerciseId, Long courseId, String
         }
     }
 
-    private static String formatDate(ZonedDateTime dateTime) {
-        return dateTime != null ? dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) : null;
-    }
 }

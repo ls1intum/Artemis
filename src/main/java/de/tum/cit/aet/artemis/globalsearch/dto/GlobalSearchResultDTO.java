@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.globalsearch.dto;
 
-import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -222,34 +219,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         return null;
     }
 
-    private static final DateTimeFormatter CONSISTENT_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-
-    /**
-     * Extracts a date property from the Weaviate property map and normalizes it
-     * to a consistent ISO 8601 format ({@code yyyy-MM-dd'T'HH:mm:ss.SSSXXX}).
-     * Weaviate may return dates as {@link OffsetDateTime} or {@link String}
-     * depending on the client version; this method handles both.
-     */
     private static String getDateString(Map<String, Object> properties, String key) {
-        Object value = properties.get(key);
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof OffsetDateTime offsetDateTime) {
-            return offsetDateTime.format(CONSISTENT_DATE_FORMAT);
-        }
-        if (value instanceof ZonedDateTime zonedDateTime) {
-            return zonedDateTime.format(CONSISTENT_DATE_FORMAT);
-        }
-        if (value instanceof String str) {
-            try {
-                OffsetDateTime parsed = OffsetDateTime.parse(str);
-                return parsed.format(CONSISTENT_DATE_FORMAT);
-            }
-            catch (Exception e) {
-                return str;
-            }
-        }
-        return value.toString();
+        return WeaviateDateUtil.normalize(properties.get(key));
     }
 }
