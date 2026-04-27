@@ -79,6 +79,7 @@ public class V0ToV1Migration implements WeaviateMigration {
         int failed = 0;
 
         // Cursor-based pagination: read all objects from the old collection in pages
+        // Successfully migrated objects are deleted from the old collection.
         String cursor = null;
         boolean hasMore = true;
 
