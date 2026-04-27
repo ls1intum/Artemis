@@ -1588,7 +1588,7 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     max-width: 700px;
     height: 60vh;
     max-height: 600px;
-    // !important overrides PrimeNG's own margin: 0 rule on .p-dialog when position="top"
+    /* !important overrides PrimeNG's own margin: 0 rule on .p-dialog when position="top" */
     margin-top: 15vh !important;
     overflow: hidden;
     background: var(--module-bg);
@@ -1600,4 +1600,32 @@ ngb-typeahead-window.dropdown-menu.show {
     max-height: min(40dvh, 22rem);
     overflow-y: auto !important;
     will-change: unset !important;
+}
+
+/* Iris inline answer — overrides that cannot be scoped inside the component */
+.iris-inline-answer {
+    a.iris-chip,
+    a.iris-chip:hover,
+    a.iris-chip:focus-visible {
+        text-decoration: none !important;
+    }
+
+    /* Strip the default dashed bubble styling when shown inside the card */
+    .thinking-bubble {
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+}
+
+/* Tighten paragraph spacing in the Iris markdown answer */
+.iris-answer-text {
+    p {
+        margin-bottom: 0.4rem;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
 }

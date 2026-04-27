@@ -2,14 +2,16 @@
     <div class="iris-inline-answer my-2">
         <!-- Header -->
         <div class="iris-card-header d-flex align-items-center gap-2">
-            <jhi-iris-logo [size]="IrisLogoSize.TEXT" [class.iris-logo-pulse]="irisThinking()" aria-hidden="true" />
+            <jhi-iris-logo [size]="IrisLogoSize.TEXT" [class.iris-logo-pulse]="irisThinking()" [style.filter]="'none'" aria-hidden="true" />
             <span class="iris-card-label fw-bold">Iris</span>
             <span class="iris-ai-badge d-inline-flex align-items-center rounded-pill fw-bold">AI</span>
         </div>
 
         <!-- Body -->
         @if (irisThinking()) {
-            <jhi-iris-thinking-bubble [message]="'global.search.irisThinking' | artemisTranslate" />
+            <div class="iris-thinking-wrapper">
+                <jhi-iris-thinking-bubble [message]="'global.search.irisThinking' | artemisTranslate" />
+            </div>
         } @else {
             <!-- Answer window with optional collapse -->
             <div class="iris-answer-region">

@@ -10,10 +10,6 @@
     padding: 0.5rem 0.75rem;
     border-bottom: 1px solid color-mix(in srgb, var(--global-search-iris-accent) 12%, transparent);
     border-radius: 0.75rem 0.75rem 0 0;
-
-    ::ng-deep .iris-logo {
-        filter: none;
-    }
 }
 
 .iris-card-label {
@@ -44,15 +40,8 @@
     animation: iris-logo-pulse 1.4s ease-in-out infinite;
 }
 
-/* Override thinking bubble — remove dashed border, transparent bg inside the card */
-:host ::ng-deep .thinking-bubble {
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
-    padding: 0 !important;
-}
-
-:host ::ng-deep jhi-iris-thinking-bubble {
+/* Thinking bubble wrapper — provides padding; .thinking-bubble overrides live in global.scss */
+.iris-thinking-wrapper {
     display: block;
     padding: 0.5rem 0.75rem 0.625rem;
 }
@@ -78,14 +67,6 @@
 
     &.is-expanded {
         max-height: none;
-    }
-
-    ::ng-deep p {
-        margin-bottom: 0.4rem;
-
-        &:last-child {
-            margin-bottom: 0;
-        }
     }
 }
 
@@ -164,16 +145,6 @@
     to {
         opacity: 1;
         transform: translateY(0);
-    }
-}
-
-/* Override Bootstrap's global a:hover { text-decoration: underline } */
-
-:host ::ng-deep {
-    a.iris-chip,
-    a.iris-chip:hover,
-    a.iris-chip:focus-visible {
-        text-decoration: none !important;
     }
 }
 
