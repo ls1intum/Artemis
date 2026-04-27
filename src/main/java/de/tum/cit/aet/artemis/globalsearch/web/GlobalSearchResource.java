@@ -50,7 +50,7 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
 @Conditional(WeaviateEnabled.class)
 @RestController
 @RequestMapping("api/")
-@Tag(name = "Global Search", description = "Weaviate-based semantic search across all entity types")
+@Tag(name = "Global Search Resource", description = "Weaviate-based semantic search across all entity types")
 public class GlobalSearchResource {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalSearchResource.class);

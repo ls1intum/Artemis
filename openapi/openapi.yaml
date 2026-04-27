@@ -9,7 +9,7 @@ servers:
 - url: http://localhost:8080
   description: Generated server url
 tags:
-- name: Global Search
+- name: Global Search Resource
   description: Weaviate-based semantic search across all entity types
 paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}:
@@ -1079,7 +1079,7 @@ paths:
   /api/search:
     get:
       tags:
-      - Glob
+      - Global Search
       summary: Perform a unified semantic search across entity types
       description: |-
         Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels)
