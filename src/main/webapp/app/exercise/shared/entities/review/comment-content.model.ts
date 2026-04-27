@@ -23,7 +23,7 @@ export interface ConsistencyIssueCommentContent {
     severity: ConsistencyIssue.SeverityEnum;
     category: ConsistencyIssue.CategoryEnum;
     text: string;
-    suggestedFix?: InlineCodeChange;
+    suggestedFix?: InlineCodeChange | null;
 }
 
 export type CommentContent = UserCommentContent | ConsistencyIssueCommentContent;

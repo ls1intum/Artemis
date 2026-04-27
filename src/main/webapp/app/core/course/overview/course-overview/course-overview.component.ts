@@ -329,7 +329,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             sidebarItems.push(communicationsItem);
         }
 
-        if (this.hasTutorialGroups()) {
+        if (this.tutorialGroupEnabled && this.hasTutorialGroups()) {
             const tutorialGroupsItem = this.sidebarItemService.getTutorialGroupsItem();
             sidebarItems.push(tutorialGroupsItem);
         }

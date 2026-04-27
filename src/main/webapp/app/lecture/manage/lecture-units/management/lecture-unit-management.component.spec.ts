@@ -414,10 +414,10 @@ describe('LectureUnitManagementComponent', () => {
                     lectureUnitId: attachmentVideoUnit.id!,
                     phase: ProcessingPhase.FAILED,
                     retryCount: 3,
-                    errorKey: 'artemisApp.lectureUnit.processing.error.transcriptionFailed',
+                    errorKey: 'artemisApp.attachmentVideoUnit.processing.error.youtubeLive',
                 },
             });
-            expect(lectureUnitManagementComponent.getProcessingErrorKey(attachmentVideoUnit)).toBe('artemisApp.lectureUnit.processing.error.transcriptionFailed');
+            expect(lectureUnitManagementComponent.getProcessingErrorKey(attachmentVideoUnit)).toBe('artemisApp.attachmentVideoUnit.processing.error.youtubeLive');
         });
 
         it('should handle error when bulk status endpoint fails', () => {
