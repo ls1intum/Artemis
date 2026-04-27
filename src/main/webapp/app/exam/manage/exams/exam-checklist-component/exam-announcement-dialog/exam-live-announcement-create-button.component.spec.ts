@@ -66,8 +66,9 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
         expect(mockAlertService.closeAll).toHaveBeenCalled();
         expect(dialogSpy).toHaveBeenCalledOnce();
         const config = dialogSpy.mock.calls[0][1];
-        expect(config?.data?.examId).toBe(1);
-        expect(config?.data?.courseId).toBe(2);
+        const data = config?.data as { examId?: number; courseId?: number } | undefined;
+        expect(data?.examId).toBe(1);
+        expect(data?.courseId).toBe(2);
     });
 
     it('should not open dialog when announcementCreationAllowed is false', () => {

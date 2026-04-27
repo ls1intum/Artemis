@@ -620,7 +620,7 @@ describe('Exam Management Service Tests', () => {
     it('should download the exam from archive', async () => {
         const mockExam: Exam = { id: 1 };
 
-        const windowSpy = vi.spyOn(window, 'open').mockImplementation();
+        const windowSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
         service.downloadExamArchive(course.id!, mockExam.id!);
         expect(windowSpy).toHaveBeenCalledWith('api/exam/courses/456/exams/1/download-archive', '_blank');
     });
@@ -643,7 +643,7 @@ describe('Exam Management Service Tests', () => {
 
     it('should reset an exam', async () => {
         const accountService = TestBed.inject(AccountService);
-        const accountServiceSpy = vi.spyOn(accountService, 'setAccessRightsForCourse').mockImplementation();
+        const accountServiceSpy = vi.spyOn(accountService, 'setAccessRightsForCourse').mockImplementation(() => undefined);
 
         // GIVEN
         const mockExam: Exam = { id: 1, course };

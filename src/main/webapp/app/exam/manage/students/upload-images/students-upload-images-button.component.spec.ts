@@ -55,8 +55,9 @@ describe('StudentsUploadImagesButtonComponent', () => {
         expect(dialogServiceOpenSpy).toHaveBeenCalledOnce();
         expect(dialogServiceOpenSpy.mock.calls[0][0]).toBe(StudentsUploadImagesDialogComponent);
         const config = dialogServiceOpenSpy.mock.calls[0][1];
-        expect(config?.data?.courseId).toBe(1);
-        expect(config?.data?.exam).toBe(testExam);
+        const data = config?.data as { courseId?: number; exam?: Exam } | undefined;
+        expect(data?.courseId).toBe(1);
+        expect(data?.exam).toBe(testExam);
     });
 
     it('should emit uploadDone when dialog closes with finished result', () => {
