@@ -75,7 +75,7 @@ class OrchestratorToolsServiceTest {
         assertThat(index.competencies()).singleElement().satisfies(entry -> {
             assertThat(entry.id()).isEqualTo(5L);
             assertThat(entry.exercises())
-                    .extracting(CompetencyIndexDTO.ExerciseLinkRef::title, CompetencyIndexDTO.ExerciseLinkRef::type, CompetencyIndexDTO.ExerciseLinkRef::weight)
+                    .extracting(CompetencyIndexDTO.ExerciseLinkRefDTO::title, CompetencyIndexDTO.ExerciseLinkRefDTO::type, CompetencyIndexDTO.ExerciseLinkRefDTO::weight)
                     .containsExactlyInAnyOrder(tuple("Hash Maps in Practice", partial.getType(), 0.5), tuple("Sorting Fundamentals", standalone.getType(), 1.0));
         });
         assertThat(index.unassignedExercises()).isEmpty();
@@ -113,7 +113,7 @@ class OrchestratorToolsServiceTest {
         CompetencyIndexResponseDTO index = service.listCompetencyIndex(COURSE_ID);
 
         assertThat(index.competencies()).isEmpty();
-        assertThat(index.unassignedExercises()).extracting(CompetencyIndexResponseDTO.UnassignedExerciseRef::id).containsExactly(30L, 31L);
+        assertThat(index.unassignedExercises()).extracting(CompetencyIndexResponseDTO.UnassignedExerciseRefDTO::id).containsExactly(30L, 31L);
     }
 
     @Test

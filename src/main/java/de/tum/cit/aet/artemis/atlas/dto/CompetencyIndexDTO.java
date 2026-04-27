@@ -13,11 +13,13 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
  * additional tool calls for every competency.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record CompetencyIndexDTO(Long id, String title, CompetencyTaxonomy taxonomy, String type, List<ExerciseLinkRef> exercises, List<LectureUnitRef> lectureUnits) {
+public record CompetencyIndexDTO(Long id, String title, CompetencyTaxonomy taxonomy, String type, List<ExerciseLinkRefDTO> exercises, List<LectureUnitRefDTO> lectureUnits) {
 
-    public record ExerciseLinkRef(String title, String type, Double weight) {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record ExerciseLinkRefDTO(String title, String type, Double weight) {
     }
 
-    public record LectureUnitRef(String name, String type) {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record LectureUnitRefDTO(String name, String type) {
     }
 }

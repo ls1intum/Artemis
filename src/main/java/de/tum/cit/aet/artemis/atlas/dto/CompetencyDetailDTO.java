@@ -15,11 +15,13 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record CompetencyDetailDTO(Long id, String title, String description, CompetencyTaxonomy taxonomy, String type, ZonedDateTime softDueDate, Integer masteryThreshold,
-        Boolean optional, List<ExerciseRef> exercises, List<LectureUnitRef> lectureUnits) {
+        Boolean optional, List<ExerciseRefDTO> exercises, List<LectureUnitRefDTO> lectureUnits) {
 
-    public record ExerciseRef(Long id, String title, String type, Double weight) {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record ExerciseRefDTO(Long id, String title, String type, Double weight) {
     }
 
-    public record LectureUnitRef(Long id, String name, String type) {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record LectureUnitRefDTO(Long id, String name, String type) {
     }
 }

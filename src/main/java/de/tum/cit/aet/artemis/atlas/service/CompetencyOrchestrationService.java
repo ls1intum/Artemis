@@ -272,7 +272,7 @@ public class CompetencyOrchestrationService {
 
     private static String renderCompetencyIndex(CompetencyIndexResponseDTO index) {
         List<CompetencyIndexDTO> competencies = index.competencies();
-        List<CompetencyIndexResponseDTO.UnassignedExerciseRef> unassigned = index.unassignedExercises();
+        List<CompetencyIndexResponseDTO.UnassignedExerciseRefDTO> unassigned = index.unassignedExercises();
         StringBuilder sb = new StringBuilder();
         if (competencies.isEmpty()) {
             sb.append("(no competencies defined in this course yet)\n");
@@ -296,7 +296,7 @@ public class CompetencyOrchestrationService {
         return sb.toString().stripTrailing();
     }
 
-    private static String formatUnassignedLine(CompetencyIndexResponseDTO.UnassignedExerciseRef exercise) {
+    private static String formatUnassignedLine(CompetencyIndexResponseDTO.UnassignedExerciseRefDTO exercise) {
         String title = sanitizeForPrompt(Objects.requireNonNullElse(exercise.title(), "(untitled)"), EXERCISE_TITLE_MAX);
         String type = sanitizeForPrompt(Objects.requireNonNullElse(exercise.type(), "unknown"), TYPE_LABEL_MAX);
         return "[" + exercise.id() + "] " + title + " (" + type + ")";
@@ -317,7 +317,7 @@ public class CompetencyOrchestrationService {
         }
     }
 
-    private static String formatExerciseLine(CompetencyIndexDTO.ExerciseLinkRef exercise) {
+    private static String formatExerciseLine(CompetencyIndexDTO.ExerciseLinkRefDTO exercise) {
         String safeTitle = sanitizeForPrompt(exercise.title(), EXERCISE_TITLE_MAX);
         String safeType = sanitizeForPrompt(Objects.requireNonNullElse(exercise.type(), "unknown"), TYPE_LABEL_MAX);
         if (exercise.weight() == null) {
@@ -326,7 +326,7 @@ public class CompetencyOrchestrationService {
         return safeTitle + " (" + safeType + ", w=" + String.format(Locale.ROOT, "%.1f", exercise.weight()) + ")";
     }
 
-    private static String formatLectureUnitLine(CompetencyIndexDTO.LectureUnitRef lectureUnit) {
+    private static String formatLectureUnitLine(CompetencyIndexDTO.LectureUnitRefDTO lectureUnit) {
         String safeName = sanitizeForPrompt(lectureUnit.name(), LECTURE_UNIT_NAME_MAX);
         String safeType = sanitizeForPrompt(Objects.requireNonNullElse(lectureUnit.type(), "unknown"), TYPE_LABEL_MAX);
         return safeName + " (" + safeType + ")";

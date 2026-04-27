@@ -10,8 +10,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * can reason about global coverage gaps without issuing extra tool calls.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record CompetencyIndexResponseDTO(List<CompetencyIndexDTO> competencies, List<UnassignedExerciseRef> unassignedExercises) {
+public record CompetencyIndexResponseDTO(List<CompetencyIndexDTO> competencies, List<UnassignedExerciseRefDTO> unassignedExercises) {
 
-    public record UnassignedExerciseRef(Long id, String title, String type) {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record UnassignedExerciseRefDTO(Long id, String title, String type) {
     }
 }

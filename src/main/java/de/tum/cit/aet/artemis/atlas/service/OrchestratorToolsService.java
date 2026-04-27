@@ -111,10 +111,10 @@ public class OrchestratorToolsService {
         List<CompetencyIndexDTO> entries = competencies.stream().map(OrchestratorToolsService::toIndexEntry).sorted(Comparator.comparing(CompetencyIndexDTO::id)).toList();
         Set<Long> linkedExerciseIds = competencies.stream().flatMap(c -> c.getExerciseLinks().stream()).map(CompetencyExerciseLink::getExercise).map(Exercise::getId)
                 .collect(Collectors.toSet());
-        List<CompetencyIndexResponseDTO.UnassignedExerciseRef> unassigned = exerciseRepository.findAllExercisesByCourseId(courseId).stream()
+        List<CompetencyIndexResponseDTO.UnassignedExerciseRefDTO> unassigned = exerciseRepository.findAllExercisesByCourseId(courseId).stream()
                 .filter(exercise -> !linkedExerciseIds.contains(exercise.getId()))
-                .map(exercise -> new CompetencyIndexResponseDTO.UnassignedExerciseRef(exercise.getId(), exercise.getTitle(), exerciseType(exercise)))
-                .sorted(Comparator.comparing(CompetencyIndexResponseDTO.UnassignedExerciseRef::id)).toList();
+                .map(exercise -> new CompetencyIndexResponseDTO.UnassignedExerciseRefDTO(exercise.getId(), exercise.getTitle(), exerciseType(exercise)))
+                .sorted(Comparator.comparing(CompetencyIndexResponseDTO.UnassignedExerciseRefDTO::id)).toList();
         return new CompetencyIndexResponseDTO(entries, unassigned);
     }
 
@@ -196,24 +196,24 @@ public class OrchestratorToolsService {
     // -----------------------------------------------------------------------------------------------
 
     private static CompetencyIndexDTO toIndexEntry(CourseCompetency competency) {
-        List<CompetencyIndexDTO.ExerciseLinkRef> exercises = competency.getExerciseLinks().stream()
+        List<CompetencyIndexDTO.ExerciseLinkRefDTO> exercises = competency.getExerciseLinks().stream()
                 .sorted(Comparator.comparing((CompetencyExerciseLink link) -> link.getExercise().getId()))
-                .map(link -> new CompetencyIndexDTO.ExerciseLinkRef(link.getExercise().getTitle(), exerciseType(link.getExercise()), link.getWeight())).toList();
-        List<CompetencyIndexDTO.LectureUnitRef> lectureUnits = competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit)
-                .filter(lu -> lu.getName() != null).sorted(Comparator.comparing(lu -> lu.getName())).map(lu -> new CompetencyIndexDTO.LectureUnitRef(lu.getName(), lu.getType()))
+                .map(link -> new CompetencyIndexDTO.ExerciseLinkRefDTO(link.getExercise().getTitle(), exerciseType(link.getExercise()), link.getWeight())).toList();
+        List<CompetencyIndexDTO.LectureUnitRefDTO> lectureUnits = competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit)
+                .filter(lu -> lu.getName() != null).sorted(Comparator.comparing(lu -> lu.getName())).map(lu -> new CompetencyIndexDTO.LectureUnitRefDTO(lu.getName(), lu.getType()))
                 .toList();
         return new CompetencyIndexDTO(competency.getId(), competency.getTitle(), competency.getTaxonomy(), competency.getType(), exercises, lectureUnits);
     }
 
     private static CompetencyDetailDTO toDetail(CourseCompetency competency) {
-        List<CompetencyDetailDTO.ExerciseRef> exercises = competency.getExerciseLinks().stream()
+        List<CompetencyDetailDTO.ExerciseRefDTO> exercises = competency.getExerciseLinks().stream()
                 .sorted(Comparator.comparing((CompetencyExerciseLink link) -> link.getExercise().getId())).map(link -> {
                     Exercise exercise = link.getExercise();
-                    return new CompetencyDetailDTO.ExerciseRef(exercise.getId(), exercise.getTitle(), exercise.getType(), link.getWeight());
+                    return new CompetencyDetailDTO.ExerciseRefDTO(exercise.getId(), exercise.getTitle(), exercise.getType(), link.getWeight());
                 }).toList();
-        List<CompetencyDetailDTO.LectureUnitRef> lectureUnits = competency.getLectureUnitLinks().stream()
+        List<CompetencyDetailDTO.LectureUnitRefDTO> lectureUnits = competency.getLectureUnitLinks().stream()
                 .sorted(Comparator.comparing((CompetencyLectureUnitLink link) -> link.getLectureUnit().getId()))
-                .map(link -> new CompetencyDetailDTO.LectureUnitRef(link.getLectureUnit().getId(), link.getLectureUnit().getName(), link.getLectureUnit().getType())).toList();
+                .map(link -> new CompetencyDetailDTO.LectureUnitRefDTO(link.getLectureUnit().getId(), link.getLectureUnit().getName(), link.getLectureUnit().getType())).toList();
         return new CompetencyDetailDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getType(),
                 competency.getSoftDueDate(), competency.getMasteryThreshold(), competency.isOptional(), exercises, lectureUnits);
     }
