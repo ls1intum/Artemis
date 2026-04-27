@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
@@ -54,6 +56,9 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     private WeaviateService weaviateService;
 
     @Autowired
+    private RequestUtilService request;
+
+    @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
@@ -72,6 +77,32 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testToggleChannelPrivacy_updatesWeaviate() throws Exception {
+        Channel channel = new Channel();
+        channel.setName("privacy-test");
+        channel.setIsPublic(true);
+        channel.setIsCourseWide(true);
+        channel.setIsAnnouncementChannel(false);
+
+        Channel createdChannel = channelService.createChannel(course, channel, Optional.of(instructor));
+        assertChannelExistsInWeaviate(weaviateService, createdChannel);
+
+        // Toggle privacy via REST (to simulate the actual use case where it's missing)
+        request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + createdChannel.getId() + "/toggle-privacy", HttpStatus.OK,
+                new org.springframework.util.LinkedMultiValueMap<>());
+
+        Channel updatedChannel = channelRepository.findByIdElseThrow(createdChannel.getId());
+        assertThat(updatedChannel.getIsPublic()).isFalse();
+
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryChannelProperties(weaviateService, updatedChannel.getId());
+            assertThat(properties).isNotNull();
+            assertThat(properties.get(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC)).isEqualTo(false);
+        });
     }
 
     @Nested

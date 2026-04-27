@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 
 @Profile(PROFILE_CORE)
@@ -88,10 +89,13 @@ public class ChannelResource extends ConversationManagementResource {
 
     private final CourseNotificationService courseNotificationService;
 
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     public ChannelResource(ConversationParticipantRepository conversationParticipantRepository, ChannelService channelService, ChannelRepository channelRepository,
             ChannelAuthorizationService channelAuthorizationService, AuthorizationCheckService authorizationCheckService, ConversationDTOService conversationDTOService,
             CourseRepository courseRepository, UserRepository userRepository, ConversationService conversationService,
-            Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseNotificationService courseNotificationService) {
+            Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseNotificationService courseNotificationService,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         super(courseRepository);
         this.channelService = channelService;
         this.channelRepository = channelRepository;
@@ -103,6 +107,7 @@ public class ChannelResource extends ConversationManagementResource {
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.courseNotificationService = courseNotificationService;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
     /**
@@ -566,6 +571,7 @@ public class ChannelResource extends ConversationManagementResource {
         channelAuthorizationService.isAllowedToUpdateChannel(channelFromDatabase, requestingUser);
         channelFromDatabase.setIsPublic(!channelFromDatabase.getIsPublic());
         var updatedChannel = channelRepository.save(channelFromDatabase);
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertChannelAsync(updatedChannel));
         return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, updatedChannel));
     }
 
