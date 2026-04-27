@@ -13,19 +13,58 @@ import { OsDetectorService } from '../../services/os-detector.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
 import { GlobalSearchApiService } from 'app/openapi/api/globalSearchApi.service';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { GlobalSearchNavigationViewComponent } from '../views/navigation-view/global-search-navigation-view.component';
+import { GlobalSearchActionItemComponent } from '../action-item/global-search-action-item.component';
+import { GlobalSearchIrisAnswerComponent } from '../views/iris-answer/global-search-iris-answer.component';
 
 describe('GlobalSearchModalComponent', () => {
     setupTestBed({ zoneless: true });
     let component: GlobalSearchModalComponent;
     let fixture: ComponentFixture<GlobalSearchModalComponent>;
     let searchOverlayService: SearchOverlayService;
+
+    // JSDOM does not implement scrollIntoView; mock it to prevent TypeError in the navigation-view effect
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+
+    // JSDOM's CSSStyleDeclaration proxy rejects CSS custom property assignments via index notation
+    // (e.g. el.style['--p-dialog-border-radius'] = '…') — Angular's NoneEncapsulationDomRenderer uses
+    // that path, and PrimeNG's Dialog applies its design tokens this way when visible=true.
+    // Wrapping the style getter redirects custom-property assignments through setProperty() instead.
+    const originalStyleDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'style')!;
+    beforeAll(() => {
+        Object.defineProperty(HTMLElement.prototype, 'style', {
+            get() {
+                const style = originalStyleDescriptor.get!.call(this) as CSSStyleDeclaration;
+                return new Proxy(style, {
+                    set(target, prop, value) {
+                        if (typeof prop === 'string' && prop.startsWith('--')) {
+                            // CSS custom properties must go through setProperty in JSDOM
+                            target.setProperty(prop, String(value));
+                        } else if (typeof prop === 'string' && /^\d+$/.test(prop)) {
+                            // Numeric indices (el.style[0], el.style[1], …) are read-only
+                            // in the CSS spec; silently swallow assignments (e.g. from NgStyle
+                            // receiving a plain string instead of a style object).
+                        } else {
+                            (target as Record<string, unknown>)[prop as string] = value;
+                        }
+                        return true;
+                    },
+                });
+            },
+            configurable: true,
+        });
+    });
+
+    afterAll(() => {
+        Object.defineProperty(HTMLElement.prototype, 'style', originalStyleDescriptor);
+    });
 
     const mockSearchOverlayService = {
         isOpen: signal(false),
@@ -59,6 +98,14 @@ describe('GlobalSearchModalComponent', () => {
                 { provide: GlobalSearchApiService, useValue: mockSearchService },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
             ],
+        });
+
+        // GlobalSearchActionItemComponent uses CSS custom-property bindings ([style.--accent]) that
+        // JSDOM's CSSStyleDeclaration proxy rejects. Mock it (and GlobalSearchIrisAnswerComponent)
+        // inside the navigation view so the modal spec is isolated from their rendering details.
+        TestBed.overrideComponent(GlobalSearchNavigationViewComponent, {
+            remove: { imports: [GlobalSearchActionItemComponent, GlobalSearchIrisAnswerComponent] },
+            add: { imports: [MockComponent(GlobalSearchActionItemComponent), MockComponent(GlobalSearchIrisAnswerComponent)] },
         });
 
         fixture = TestBed.createComponent(GlobalSearchModalComponent);
