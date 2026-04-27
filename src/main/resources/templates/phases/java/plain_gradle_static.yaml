@@ -1,7 +1,11 @@
-- name: gradle
+- name: compile
   script: |-
     chmod +x ./gradlew
-    ./gradlew clean test
+    ./gradlew clean compileJava compileTestJava
+- name: test
+  script: './gradlew test'
+  resultPaths:
+    - '**/test-results/test/*.xml'
 - name: static_code_analysis
   script: './gradlew check -x test'
   forceRun: true
@@ -10,4 +14,3 @@
     - 'target/checkstyle-result.xml'
     - target/pmd.xml
     - target/cpd.xml
-    - '**/test-results/test/*.xml'

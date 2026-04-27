@@ -2,6 +2,9 @@
   script: |-
     cd "${testWorkingDirectory}"
     bundler install
+- name: syntax_check
+  script: |-
+    find . -type f -name "*.rb" -print0 | xargs -0 -n1 ruby -wc
 - name: test
   script: |-
     cd "${testWorkingDirectory}"

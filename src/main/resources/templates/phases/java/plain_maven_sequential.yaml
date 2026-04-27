@@ -1,10 +1,20 @@
+- name: compile_structural
+  script: |-
+    cd "structural"
+    mvn -B clean compile
+- name: compile_behavior
+  script: |-
+    cd "behavior"
+    mvn -B clean compile
 - name: structural
   script: |-
     cd "structural"
-    mvn clean test
+    mvn -B test
+  resultPaths:
+    - '**/target/surefire-reports/*.xml'
 - name: behavior
   script: |-
     cd "behavior"
-    mvn clean test
+    mvn -B test
   resultPaths:
     - '**/target/surefire-reports/*.xml'

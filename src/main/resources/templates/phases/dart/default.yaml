@@ -2,6 +2,10 @@
   script: |-
     cd "${testWorkingDirectory}"
     dart pub get
+- name: compile
+  script: |-
+    cd "${testWorkingDirectory}"
+    dart analyze .
 - name: test
   script: |-
     cd "${testWorkingDirectory}"

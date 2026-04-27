@@ -23,14 +23,18 @@
   script: |-
     rm -f ${studentParentWorkingDirectoryName}/{GNUmakefile, Makefile, makefile}
     cp -f ${testWorkingDirectory}/Makefile ${studentParentWorkingDirectoryName}/Makefile || exit 2
-- name: run_and_compile
+- name: compile
   script: |-
-    cd "${testWorkingDirectory}"
-    python3 compileTest.py ../${studentParentWorkingDirectoryName}/
+    cd ${testWorkingDirectory}
+
+    exit_code=0
+    python3 compileTest.py ../${studentParentWorkingDirectoryName}/ || exit_code=$?
+
     rm compileTest.py
     cp result.xml ../${studentParentWorkingDirectoryName}/result.xml
-- name: junit
-  script: '#empty script action, just for the results'
-  forceRun: true
+    exit $exit_code
+- name: test
+  script: |-
+    # no tests
   resultPaths:
     - '${studentParentWorkingDirectoryName}/result.xml'

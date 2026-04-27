@@ -1,13 +1,11 @@
-- name: static_code_analysis
-  script: 'ruff check --config=ruff-student.toml --output-format=sarif --output-file=ruff.sarif --exit-zero "${studentParentWorkingDirectoryName}"'
-  resultPaths:
-    - ruff.sarif
-- name: build_and_test_the_code
-  script: |-
-    python3 -m compileall . -q || error=true
-    if [ ! $error ]
-    then
-        pytest --junitxml=test-reports/results.xml
-    fi
+- name: compile
+  script: 'python3 -m compileall . -q'
+- name: test
+  script: 'pytest --junitxml=test-reports/results.xml'
   resultPaths:
     - 'test-reports/*results.xml'
+- name: static_code_analysis
+  script: 'ruff check --config=ruff-student.toml --output-format=sarif --output-file=ruff.sarif --exit-zero "${studentParentWorkingDirectoryName}"'
+  forceRun: true
+  resultPaths:
+    - ruff.sarif

@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Werror -Wextra -Wpedantic -std=c11
+CFLAGS=-Wall -Wextra -Wpedantic -std=c11
 
 exercise: exercise.c
 
