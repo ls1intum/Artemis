@@ -27,6 +27,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadImportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.modeling.api.ModelingExerciseImportApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -125,8 +127,9 @@ public class ExamImportService {
 
         // 3rd: Index all imported exercises and the exam itself in Weaviate
         searchableItemWeaviateService.ifPresent(service -> {
-            service.upsertExamAsync(examWithExercises);
-            service.updateExamExercisesAsync(examWithExercises);
+            service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(examWithExercises));
+            service.updateExercisesAsync(examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                    .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, examWithExercises)).toList(), examWithExercises.getId());
         });
 
         return examWithExercises;
@@ -154,8 +157,9 @@ public class ExamImportService {
 
         // Index the imported exercises and update the exam in Weaviate
         searchableItemWeaviateService.ifPresent(service -> {
-            service.upsertExamAsync(examWithExercises);
-            service.updateExamExercisesAsync(examWithExercises);
+            service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(examWithExercises));
+            service.updateExercisesAsync(examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                    .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, examWithExercises)).toList(), examWithExercises.getId());
         });
 
         return examWithExercises.getExerciseGroups();

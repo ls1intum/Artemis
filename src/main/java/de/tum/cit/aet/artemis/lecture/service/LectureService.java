@@ -43,6 +43,8 @@ import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -490,8 +492,15 @@ public class LectureService {
         channelRepository.saveAll(existingLectureChannels);
 
         if (searchableEntityWeaviateService != null) {
-            lecturesToUpdate.forEach(searchableEntityWeaviateService::upsertLectureAsync);
-            channelsToUpdate.forEach(searchableEntityWeaviateService::upsertChannelAsync);
+            lecturesToUpdate.forEach(lecture -> searchableEntityWeaviateService.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture)));
+            channelsToUpdate.forEach(channel -> {
+                if (ChannelSearchableEntityDTO.isIndexable(channel)) {
+                    searchableEntityWeaviateService.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(channel));
+                }
+                else {
+                    searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
+                }
+            });
         }
     }
 }

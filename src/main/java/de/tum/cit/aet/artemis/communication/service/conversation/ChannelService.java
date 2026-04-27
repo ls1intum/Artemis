@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
@@ -67,6 +68,17 @@ public class ChannelService {
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
+    }
+
+    private void syncChannelWithWeaviate(Channel channel) {
+        if (searchableEntityWeaviateService != null && channel != null && channel.getId() != null) {
+            if (ChannelSearchableEntityDTO.isIndexable(channel)) {
+                searchableEntityWeaviateService.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(channel));
+            }
+            else {
+                searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
+            }
+        }
     }
 
     /**
@@ -135,9 +147,7 @@ public class ChannelService {
 
         var updatedChannel = channelRepository.save(channel);
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertChannelAsync(updatedChannel);
-        }
+        syncChannelWithWeaviate(updatedChannel);
         return updatedChannel;
     }
 
@@ -171,9 +181,7 @@ public class ChannelService {
             savedChannel = channelRepository.save(savedChannel);
             conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, savedChannel, Set.of(creator.get()));
         }
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertChannelAsync(savedChannel);
-        }
+        syncChannelWithWeaviate(savedChannel);
         return savedChannel;
     }
 
@@ -256,9 +264,7 @@ public class ChannelService {
         channel.setIsArchived(true);
         var updatedChannel = channelRepository.save(channel);
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertChannelAsync(updatedChannel);
-        }
+        syncChannelWithWeaviate(updatedChannel);
     }
 
     /**
@@ -274,9 +280,7 @@ public class ChannelService {
         channel.setIsArchived(false);
         var updatedChannel = channelRepository.save(channel);
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertChannelAsync(updatedChannel);
-        }
+        syncChannelWithWeaviate(updatedChannel);
     }
 
     /**
@@ -316,7 +320,7 @@ public class ChannelService {
         channelsToCreate.forEach(channel -> {
             conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, channel, Set.of(creator));
             if (searchableEntityWeaviateService != null) {
-                searchableEntityWeaviateService.upsertChannelAsync(channel);
+                syncChannelWithWeaviate(channel);
             }
         });
     }
@@ -428,9 +432,7 @@ public class ChannelService {
             channel.setName(newChannelName);
             this.channelIsValidOrThrow(channel.getCourse().getId(), channel);
             var updatedChannel = channelRepository.save(channel);
-            if (searchableEntityWeaviateService != null) {
-                searchableEntityWeaviateService.upsertChannelAsync(updatedChannel);
-            }
+            syncChannelWithWeaviate(updatedChannel);
             return updatedChannel;
         }
         else {

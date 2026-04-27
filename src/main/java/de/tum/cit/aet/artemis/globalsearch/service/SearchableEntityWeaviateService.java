@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -13,12 +12,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.communication.domain.Faq;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -30,8 +24,6 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEnt
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
 import io.weaviate.client6.v1.api.collections.query.Filter;
@@ -141,64 +133,51 @@ public class SearchableEntityWeaviateService {
      * @param event the exercise version created event
      */
     @EventListener
-    @Async
     public void onExerciseVersionCreated(ExerciseVersionCreatedEvent event) {
-        upsertExerciseAsync(event.exercise());
+        try {
+            ExerciseSearchableEntityDTO dto = ExerciseSearchableEntityDTO.fromExercise(event.exercise());
+            upsertExerciseAsync(dto);
+        }
+        catch (Exception e) {
+            log.error("Failed to extract exercise DTO for version created event (exercise {}): {}", event.exercise().getId(), e.getMessage(), e);
+        }
     }
 
     /**
-     * Asynchronously upserts exercise metadata into the unified collection. Must be called while the
-     * Hibernate session is still active so course + exam relationships are loaded before the DTO is
-     * extracted.
+     * Asynchronously upserts exercise metadata into the unified collection.
      *
-     * @param exercise the exercise to upsert
-     * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
+     * @param dto the extracted exercise data
      */
     @Async
-    public void upsertExerciseAsync(Exercise exercise) {
+    public void upsertExerciseAsync(ExerciseSearchableEntityDTO dto) {
         SecurityUtils.setAuthorizationObject();
-        if (exercise == null || exercise.getId() == null) {
+        if (dto == null || dto.exerciseId() == null) {
             log.warn("Cannot upsert exercise without an ID");
             return;
         }
         try {
-            ExerciseSearchableEntityDTO dto = ExerciseSearchableEntityDTO.fromExercise(exercise);
             upsertRow(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), dto.toPropertyMap());
             log.debug("Successfully upserted exercise {} '{}' in Weaviate", dto.exerciseId(), dto.exerciseTitle());
         }
         catch (Exception e) {
-            log.error("Failed to upsert exercise {} in Weaviate: {}", exercise.getId(), e.getMessage(), e);
+            log.error("Failed to upsert exercise {} in Weaviate: {}", dto.exerciseId(), e.getMessage(), e);
         }
     }
 
     /**
-     * Asynchronously re-upserts Weaviate metadata for every exercise belonging to the given exam.
-     * Sequential upserts (batching can be added later if this becomes a bottleneck). Exam + exercise
-     * groups + exercises must be eagerly loaded.
+     * Asynchronously re-upserts Weaviate metadata for a list of exercises (e.g. from an exam refresh).
      *
-     * @param exam the exam whose exercises should be refreshed
-     * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
+     * @param dtos   the list of exercise DTOs to upsert
+     * @param examId the exam ID (for logging)
      */
     @Async
-    public void updateExamExercisesAsync(Exam exam) {
+    public void updateExercisesAsync(List<ExerciseSearchableEntityDTO> dtos, long examId) {
         SecurityUtils.setAuthorizationObject();
-        if (exam == null || exam.getExerciseGroups() == null) {
-            log.warn("Cannot update exam exercises in Weaviate: exam or exercise groups are null");
+        if (dtos == null) {
             return;
         }
-        log.info("Updating {} exercise groups for exam {} in Weaviate", exam.getExerciseGroups().size(), exam.getId());
+        log.info("Updating {} exercises for exam {} in Weaviate", dtos.size(), examId);
 
-        List<ExerciseSearchableEntityDTO> dtos = new ArrayList<>();
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            for (Exercise exercise : exerciseGroup.getExercises()) {
-                try {
-                    dtos.add(ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, exam));
-                }
-                catch (Exception e) {
-                    log.error("Failed to convert exercise {} in exam {}: {}", exercise.getId(), exam.getId(), e.getMessage(), e);
-                }
-            }
-        }
         int successCount = 0;
         for (ExerciseSearchableEntityDTO dto : dtos) {
             try {
@@ -206,63 +185,55 @@ public class SearchableEntityWeaviateService {
                 successCount++;
             }
             catch (Exception e) {
-                log.error("Failed to update exercise {} in exam {}: {}", dto.exerciseId(), exam.getId(), e.getMessage(), e);
+                log.error("Failed to update exercise {} in exam {}: {}", dto.exerciseId(), examId, e.getMessage(), e);
             }
         }
-        log.info("Successfully updated {} out of {} exercises for exam {} in Weaviate", successCount, dtos.size(), exam.getId());
+        log.info("Successfully updated {} out of {} exercises for exam {} in Weaviate", successCount, dtos.size(), examId);
     }
 
     // ----- Lecture sync -----
 
     /**
-     * Asynchronously upserts lecture metadata into the unified collection. Course must be loaded.
+     * Asynchronously upserts lecture metadata into the unified collection.
      *
-     * @param lecture the lecture to upsert
+     * @param dto the extracted lecture data
      */
     @Async
-    public void upsertLectureAsync(Lecture lecture) {
+    public void upsertLectureAsync(LectureSearchableEntityDTO dto) {
         SecurityUtils.setAuthorizationObject();
-        if (lecture == null || lecture.getId() == null) {
+        if (dto == null || dto.lectureId() == null) {
             log.warn("Cannot upsert lecture without an ID");
             return;
         }
         try {
-            LectureSearchableEntityDTO dto = LectureSearchableEntityDTO.fromLecture(lecture);
             upsertRow(SearchableEntitySchema.TypeValues.LECTURE, dto.lectureId(), dto.toPropertyMap());
             log.debug("Successfully upserted lecture {} '{}' in Weaviate", dto.lectureId(), dto.lectureTitle());
         }
         catch (Exception e) {
-            log.error("Failed to upsert lecture {} in Weaviate: {}", lecture.getId(), e.getMessage(), e);
+            log.error("Failed to upsert lecture {} in Weaviate: {}", dto.lectureId(), e.getMessage(), e);
         }
     }
 
     // ----- LectureUnit sync -----
 
     /**
-     * Asynchronously upserts a lecture unit into the unified collection. Only supported subtypes
-     * (text, online, attachment/video) are synchronized — exercise units are skipped because their
-     * underlying exercise is already indexed under the {@code exercise} type.
+     * Asynchronously upserts a lecture unit into the unified collection.
      *
-     * @param unit the lecture unit to upsert
+     * @param dto the extracted lecture unit data
      */
     @Async
-    public void upsertLectureUnitAsync(LectureUnit unit) {
+    public void upsertLectureUnitAsync(LectureUnitSearchableEntityDTO dto) {
         SecurityUtils.setAuthorizationObject();
-        if (unit == null || unit.getId() == null) {
+        if (dto == null || dto.lectureUnitId() == null) {
             log.warn("Cannot upsert lecture unit without an ID");
             return;
         }
-        if (!LectureUnitSearchableEntityDTO.isIndexable(unit)) {
-            log.debug("Skipping non-indexable lecture unit type: {}", unit.getClass().getSimpleName());
-            return;
-        }
         try {
-            LectureUnitSearchableEntityDTO dto = LectureUnitSearchableEntityDTO.fromLectureUnit(unit);
             upsertRow(SearchableEntitySchema.TypeValues.LECTURE_UNIT, dto.lectureUnitId(), dto.toPropertyMap());
             log.debug("Successfully upserted lecture unit {} '{}' in Weaviate", dto.lectureUnitId(), dto.unitName());
         }
         catch (Exception e) {
-            log.error("Failed to upsert lecture unit {} in Weaviate: {}", unit.getId(), e.getMessage(), e);
+            log.error("Failed to upsert lecture unit {} in Weaviate: {}", dto.lectureUnitId(), e.getMessage(), e);
         }
     }
 
@@ -291,78 +262,69 @@ public class SearchableEntityWeaviateService {
     // ----- Exam sync -----
 
     /**
-     * Asynchronously upserts an exam into the unified collection. Course must be loaded.
+     * Asynchronously upserts an exam into the unified collection.
      *
-     * @param exam the exam to upsert
+     * @param dto the extracted exam data
      */
     @Async
-    public void upsertExamAsync(Exam exam) {
+    public void upsertExamAsync(ExamSearchableEntityDTO dto) {
         SecurityUtils.setAuthorizationObject();
-        if (exam == null || exam.getId() == null) {
+        if (dto == null || dto.examId() == null) {
             log.warn("Cannot upsert exam without an ID");
             return;
         }
         try {
-            ExamSearchableEntityDTO dto = ExamSearchableEntityDTO.fromExam(exam);
             upsertRow(SearchableEntitySchema.TypeValues.EXAM, dto.examId(), dto.toPropertyMap());
             log.debug("Successfully upserted exam {} '{}' in Weaviate", dto.examId(), dto.examTitle());
         }
         catch (Exception e) {
-            log.error("Failed to upsert exam {} in Weaviate: {}", exam.getId(), e.getMessage(), e);
+            log.error("Failed to upsert exam {} in Weaviate: {}", dto.examId(), e.getMessage(), e);
         }
     }
 
     // ----- FAQ sync -----
 
     /**
-     * Asynchronously upserts a FAQ into the unified collection. Course must be loaded.
+     * Asynchronously upserts a FAQ into the unified collection.
      *
-     * @param faq the FAQ to upsert
+     * @param dto the extracted FAQ data
      */
     @Async
-    public void upsertFaqAsync(Faq faq) {
+    public void upsertFaqAsync(FaqSearchableEntityDTO dto) {
         SecurityUtils.setAuthorizationObject();
-        if (faq == null || faq.getId() == null) {
+        if (dto == null || dto.faqId() == null) {
             log.warn("Cannot upsert faq without an ID");
             return;
         }
         try {
-            FaqSearchableEntityDTO dto = FaqSearchableEntityDTO.fromFaq(faq);
             upsertRow(SearchableEntitySchema.TypeValues.FAQ, dto.faqId(), dto.toPropertyMap());
             log.debug("Successfully upserted faq {} '{}' in Weaviate", dto.faqId(), dto.questionTitle());
         }
         catch (Exception e) {
-            log.error("Failed to upsert faq {} in Weaviate: {}", faq.getId(), e.getMessage(), e);
+            log.error("Failed to upsert faq {} in Weaviate: {}", dto.faqId(), e.getMessage(), e);
         }
     }
 
     // ----- Channel sync -----
 
     /**
-     * Asynchronously upserts a channel into the unified collection, or deletes any existing row if the
-     * channel is no longer indexable (e.g. changed from public to private). Course must be loaded.
+     * Asynchronously upserts a channel into the unified collection.
      *
-     * @param channel the channel to upsert
+     * @param dto the extracted channel data
      */
     @Async
-    public void upsertChannelAsync(Channel channel) {
+    public void upsertChannelAsync(ChannelSearchableEntityDTO dto) {
         SecurityUtils.setAuthorizationObject();
-        if (channel == null || channel.getId() == null) {
+        if (dto == null || dto.channelId() == null) {
             log.warn("Cannot upsert channel without an ID");
             return;
         }
         try {
-            if (!ChannelSearchableEntityDTO.isIndexable(channel)) {
-                deleteEntityInternal(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
-                log.debug("Channel {} is no longer indexable (archived, or not course-wide and not public); removed from Weaviate", channel.getId());
-                return;
-            }
-            ChannelSearchableEntityDTO dto = ChannelSearchableEntityDTO.fromChannel(channel);
             upsertRow(SearchableEntitySchema.TypeValues.CHANNEL, dto.channelId(), dto.toPropertyMap());
             log.debug("Successfully upserted channel {} '{}' in Weaviate", dto.channelId(), dto.name());
         }
         catch (Exception e) {
-            log.error("Failed to upsert channel {} in Weaviate: {}", channel.getId(), e.getMessage(), e);
+            log.error("Failed to upsert channel {} in Weaviate: {}", dto.channelId(), e.getMessage(), e);
         }
     }
 

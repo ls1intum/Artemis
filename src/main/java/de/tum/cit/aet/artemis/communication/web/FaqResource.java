@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 
 /**
@@ -108,7 +109,7 @@ public class FaqResource {
         FaqDTO dto = new FaqDTO(savedFaq);
         faqService.autoIngestFaqIntoPyris(savedFaq);
         if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertFaqAsync(savedFaq);
+            searchableEntityWeaviateService.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(savedFaq));
         }
         return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
     }
@@ -142,7 +143,7 @@ public class FaqResource {
         Faq updatedFaq = faqRepository.save(existingFaq);
         faqService.autoIngestFaqIntoPyris(updatedFaq);
         if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertFaqAsync(updatedFaq);
+            searchableEntityWeaviateService.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(updatedFaq));
         }
         FaqDTO dto = new FaqDTO(updatedFaq);
         return ResponseEntity.ok().body(dto);

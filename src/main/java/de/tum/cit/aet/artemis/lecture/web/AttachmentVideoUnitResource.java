@@ -44,6 +44,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -182,7 +184,12 @@ public class AttachmentVideoUnitResource {
         }
 
         if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertLectureUnitAsync(savedAttachmentVideoUnit);
+            if (LectureUnitSearchableEntityDTO.isIndexable(savedAttachmentVideoUnit)) {
+                searchableEntityWeaviateService.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(savedAttachmentVideoUnit));
+            }
+            else {
+                searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, savedAttachmentVideoUnit.getId());
+            }
         }
 
         return ResponseEntity.ok(savedAttachmentVideoUnit);
@@ -239,7 +246,12 @@ public class AttachmentVideoUnitResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
         if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertLectureUnitAsync(persistedUnit);
+            if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {
+                searchableEntityWeaviateService.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(persistedUnit));
+            }
+            else {
+                searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, persistedUnit.getId());
+            }
         }
 
         return ResponseEntity.created(new URI("/api/attachment-video-units/" + persistedUnit.getId())).body(persistedUnit);
@@ -299,7 +311,14 @@ public class AttachmentVideoUnitResource {
 
             competencyProgressApi.ifPresent(api -> savedUnits.forEach(api::updateProgressByLearningObjectAsync));
             if (searchableEntityWeaviateService != null) {
-                savedUnits.forEach(searchableEntityWeaviateService::upsertLectureUnitAsync);
+                savedUnits.forEach(unit -> {
+                    if (LectureUnitSearchableEntityDTO.isIndexable(unit)) {
+                        searchableEntityWeaviateService.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(unit));
+                    }
+                    else {
+                        searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unit.getId());
+                    }
+                });
             }
             return ResponseEntity.ok().body(savedUnits);
         }

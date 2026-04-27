@@ -39,6 +39,8 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -142,7 +144,12 @@ public class OnlineUnitResource {
         }
 
         if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertLectureUnitAsync(existingOnlineUnit);
+            if (LectureUnitSearchableEntityDTO.isIndexable(existingOnlineUnit)) {
+                searchableEntityWeaviateService.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(existingOnlineUnit));
+            }
+            else {
+                searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, existingOnlineUnit.getId());
+            }
         }
 
         // convert into DTO
@@ -190,7 +197,12 @@ public class OnlineUnitResource {
         lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedUnit);
 
         if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertLectureUnitAsync(persistedUnit);
+            if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {
+                searchableEntityWeaviateService.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(persistedUnit));
+            }
+            else {
+                searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, persistedUnit.getId());
+            }
         }
         return ResponseEntity.created(new URI("/api/online-units/" + persistedUnit.getId())).body(persistedUnit);
     }

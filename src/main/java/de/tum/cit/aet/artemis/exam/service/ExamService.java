@@ -101,6 +101,8 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -1590,8 +1592,9 @@ public class ExamService {
         if (visibleOrStartDateChanged || endDateChanged) {
             searchableItemWeaviateService.ifPresent(service -> {
                 examRepository.findWithExerciseGroupsAndExercisesById(examWithExercises.getId()).ifPresent(reloadedExam -> {
-                    service.upsertExamAsync(reloadedExam);
-                    service.updateExamExercisesAsync(reloadedExam);
+                    service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
+                    service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                            .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
                 });
             });
         }
@@ -1605,8 +1608,9 @@ public class ExamService {
     public void syncExamExercisesMetadata(Exam exam) {
         searchableItemWeaviateService.ifPresent(service -> {
             examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).ifPresent(reloadedExam -> {
-                service.upsertExamAsync(reloadedExam);
-                service.updateExamExercisesAsync(reloadedExam);
+                service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
+                service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                        .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
             });
         });
     }

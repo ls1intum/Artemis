@@ -58,6 +58,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 
@@ -571,7 +573,14 @@ public class ChannelResource extends ConversationManagementResource {
         channelAuthorizationService.isAllowedToUpdateChannel(channelFromDatabase, requestingUser);
         channelFromDatabase.setIsPublic(!channelFromDatabase.getIsPublic());
         var updatedChannel = channelRepository.save(channelFromDatabase);
-        searchableEntityWeaviateService.ifPresent(service -> service.upsertChannelAsync(updatedChannel));
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (ChannelSearchableEntityDTO.isIndexable(updatedChannel)) {
+                service.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(updatedChannel));
+            }
+            else {
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, updatedChannel.getId());
+            }
+        });
         return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, updatedChannel));
     }
 

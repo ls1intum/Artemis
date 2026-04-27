@@ -118,6 +118,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -247,7 +248,7 @@ public class ExamResource {
         Exam savedExam = examRepository.save(exam);
         channelService.createExamChannel(savedExam, Optional.ofNullable(examDTO.channelName()));
         if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertExamAsync(savedExam);
+            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(savedExam));
         }
         return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }
@@ -324,7 +325,7 @@ public class ExamResource {
         }
 
         if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertExamAsync(savedExam);
+            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(savedExam));
         }
 
         return ResponseEntity.ok(savedExam);
@@ -366,7 +367,7 @@ public class ExamResource {
         examService.syncExamExercisesMetadata(exam);
 
         if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertExamAsync(exam);
+            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(exam));
         }
 
         return ResponseEntity.ok(exam);

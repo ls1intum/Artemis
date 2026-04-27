@@ -27,6 +27,8 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -86,7 +88,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteLecture_removesLectureFromWeaviate() throws Exception {
         Lecture lecture = lectureUtilService.createLecture(course);
-        searchableEntityWeaviateService.upsertLectureAsync(lecture);
+        searchableEntityWeaviateService.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertLectureExistsInWeaviate(weaviateService, lecture));
 
         long lectureId = lecture.getId();
@@ -100,8 +102,8 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     void testDeleteLecture_removesLectureUnitsFromWeaviate() throws Exception {
         Lecture lecture = lectureUtilService.createLecture(course);
         TextUnit textUnit = lectureUtilService.createTextUnit(lecture);
-        searchableEntityWeaviateService.upsertLectureAsync(lecture);
-        searchableEntityWeaviateService.upsertLectureUnitAsync(textUnit);
+        searchableEntityWeaviateService.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
+        searchableEntityWeaviateService.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(textUnit));
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             assertLectureExistsInWeaviate(weaviateService, lecture);
             assertLectureUnitExistsInWeaviate(weaviateService, textUnit.getId());
