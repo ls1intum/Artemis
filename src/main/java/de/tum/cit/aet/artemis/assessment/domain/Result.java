@@ -332,7 +332,8 @@ public class Result extends DomainObject implements Comparable<Result> {
      */
     @JsonIgnore
     public List<Feedback> getFeedbacksSorted() {
-        return feedbacks.stream().sorted(Comparator.comparing(Feedback::getId, Comparator.nullsLast(Comparator.naturalOrder()))).collect(Collectors.toList());
+        return feedbacks.stream().filter(Objects::nonNull).sorted(Comparator.comparing(Feedback::getId, Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
     }
 
     public Result feedbacks(Collection<Feedback> feedbacks) {
@@ -347,12 +348,18 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @return this result, for chaining
      */
     public Result addFeedback(Feedback feedback) {
+        if (feedback == null) {
+            return this;
+        }
         feedback.setResult(this);
         this.feedbacks.add(feedback);
         return this;
     }
 
     public void addFeedbacks(Collection<Feedback> feedbacks) {
+        if (feedbacks == null) {
+            return;
+        }
         feedbacks.forEach(this::addFeedback);
     }
 
