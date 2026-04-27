@@ -1,3 +1,4 @@
+import { HttpStatusCode } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { decodeBase64url } from 'app/shared/util/base64.util';
@@ -216,14 +217,19 @@ export class WebauthnService {
                 // Let the caller decide how to handle them.
                 throw error;
             }
+            if (this.isUserCancelledPasskeyError(error)) {
+                // User cancelled the authenticator dialog (e.g., closed the passkey prompt).
+                // No error alert needed — just re-throw so callers can handle it.
+                throw error;
+            }
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
+            } else if (error.status === HttpStatusCode.Forbidden) {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.loginDeactivated');
+            } else if (error.status === HttpStatusCode.NotFound) {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.noPasskeyFound');
             } else {
-                if (error.status === 401) {
-                    this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.loginDeactivated');
-                } else {
-                    this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
-                }
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
             }
             // eslint-disable-next-line no-undef
             console.error(error);

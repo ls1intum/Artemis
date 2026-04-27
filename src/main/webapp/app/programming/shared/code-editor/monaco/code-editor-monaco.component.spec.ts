@@ -25,6 +25,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { IKeyboardEvent } from 'monaco-editor';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 
 describe('CodeEditorMonacoComponent', () => {
     let comp: CodeEditorMonacoComponent;
@@ -981,6 +982,34 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         expect(config.showLocationWarning()).toBeTrue();
         expect(config.canSubmit()).toBeFalse();
+    });
+
+    it('should commit and mark inline fix as applied after successful code-editor apply', () => {
+        fixture.componentRef.setInput('selectedFile', 'src/Foo.java');
+        fixture.changeDetectorRef.detectChanges();
+        jest.spyOn(comp.editor(), 'getText').mockReturnValue('class Foo {}');
+        const updateFilesSpy = jest.spyOn(codeEditorRepositoryFileService, 'updateFiles').mockReturnValue(of({} as any));
+        const markAppliedSpy = jest.spyOn((comp as any).exerciseReviewCommentService, 'markInlineFixAppliedInContext').mockImplementation();
+        const onSavedFilesSpy = jest.fn();
+        const onInlineFixCommittedSpy = jest.fn();
+        comp.onSavedFiles.subscribe(onSavedFilesSpy);
+        comp.onInlineFixCommitted.subscribe(onInlineFixCommittedSpy);
+        const thread = {
+            comments: [
+                {
+                    id: 42,
+                    type: CommentType.CONSISTENCY_CHECK,
+                    createdDate: '2026-01-01T00:00:00Z',
+                },
+            ],
+        } as any;
+
+        (comp as any).persistInlineFixApplication(thread);
+
+        expect(updateFilesSpy).toHaveBeenCalledWith([{ fileName: 'src/Foo.java', fileContent: 'class Foo {}' }], true);
+        expect(onSavedFilesSpy).toHaveBeenCalledWith({ 'src/Foo.java': undefined });
+        expect(onInlineFixCommittedSpy).toHaveBeenCalled();
+        expect(markAppliedSpy).toHaveBeenCalledWith(42);
     });
 
     it('should clear review comment drafts through the manager', () => {
