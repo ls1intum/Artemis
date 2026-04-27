@@ -53,6 +53,10 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     private readonly document = inject(DOCUMENT);
     private readonly translateService = inject(TranslateService);
 
+    constructor() {
+        this.destroyRef.onDestroy(() => this.clearNowButtonTimeout());
+    }
+
     @ViewChild('dateInput', { static: false }) dateInput: NgModel;
     protected readonly dtDefault = viewChild<OwlDateTimeComponent<Date>>('dtDefault');
 
@@ -213,8 +217,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
             this.nowButtonClickListener = this.renderer.listen(button, 'click', () => this.setNow());
             this.nowButton = button;
         });
-
-        this.destroyRef.onDestroy(() => this.clearNowButtonTimeout());
     }
 
     /**
@@ -240,6 +242,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
             let now = new Date();
             const minDate = this.minDate();
             const maxDate = this.maxDate();
+            if (minDate && maxDate && minDate > maxDate) {
+                return;
+            }
             if (minDate && now < minDate) {
                 now = minDate;
             }
