@@ -74,8 +74,9 @@ class OrchestratorToolsServiceTest {
 
         assertThat(index.competencies()).singleElement().satisfies(entry -> {
             assertThat(entry.id()).isEqualTo(5L);
-            assertThat(entry.exercises()).extracting(CompetencyIndexDTO.ExerciseLinkRef::title, CompetencyIndexDTO.ExerciseLinkRef::weight)
-                    .containsExactlyInAnyOrder(tuple("Hash Maps in Practice", 0.5), tuple("Sorting Fundamentals", 1.0));
+            assertThat(entry.exercises())
+                    .extracting(CompetencyIndexDTO.ExerciseLinkRef::title, CompetencyIndexDTO.ExerciseLinkRef::type, CompetencyIndexDTO.ExerciseLinkRef::weight)
+                    .containsExactlyInAnyOrder(tuple("Hash Maps in Practice", partial.getType(), 0.5), tuple("Sorting Fundamentals", standalone.getType(), 1.0));
         });
         assertThat(index.unassignedExercises()).isEmpty();
     }

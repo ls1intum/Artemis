@@ -1,13 +1,12 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -90,8 +89,8 @@ public class OrchestratorToolsService {
      * @return JSON-serialized competency index, or a JSON error when course context is missing
      */
     @Tool(description = "List the competency index for the current course. Returns two sections: (1) competencies — id, title, taxonomy, type (competency or prerequisite), "
-            + "linked exercises (with title and the current link weight — 1.0 / 0.5 / 0.3) and linked lecture-unit names; (2) unassignedExercises — exercises in the course "
-            + "that are currently not linked to any competency (id, title, type), which are prime candidates for closing coverage gaps.")
+            + "linked exercises (with title, exercise type, and the current link weight — 1.0 / 0.5 / 0.3) and linked lecture units (with name and lecture-unit type); "
+            + "(2) unassignedExercises — exercises in the course that are currently not linked to any competency (id, title, type), which are prime candidates for closing coverage gaps.")
     public String listCompetencyIndex(ToolContext toolContext) {
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
@@ -110,12 +109,11 @@ public class OrchestratorToolsService {
     public CompetencyIndexResponseDTO listCompetencyIndex(long courseId) {
         Set<CourseCompetency> competencies = courseCompetencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(courseId);
         List<CompetencyIndexDTO> entries = competencies.stream().map(OrchestratorToolsService::toIndexEntry).sorted(Comparator.comparing(CompetencyIndexDTO::id)).toList();
-        Set<Long> linkedExerciseIds = competencies.stream().flatMap(c -> c.getExerciseLinks() == null ? Stream.<CompetencyExerciseLink>empty() : c.getExerciseLinks().stream())
-                .map(CompetencyExerciseLink::getExercise).filter(e -> e != null && e.getId() != null).map(Exercise::getId).collect(Collectors.toSet());
+        Set<Long> linkedExerciseIds = competencies.stream().flatMap(c -> c.getExerciseLinks().stream()).map(CompetencyExerciseLink::getExercise).map(Exercise::getId)
+                .collect(Collectors.toSet());
         List<CompetencyIndexResponseDTO.UnassignedExerciseRef> unassigned = exerciseRepository.findAllExercisesByCourseId(courseId).stream()
-                .filter(exercise -> exercise.getId() != null && !linkedExerciseIds.contains(exercise.getId()))
-                .map(exercise -> new CompetencyIndexResponseDTO.UnassignedExerciseRef(exercise.getId(), exercise.getTitle(),
-                        exercise.getType() != null ? exercise.getType() : exercise.getClass().getSimpleName()))
+                .filter(exercise -> !linkedExerciseIds.contains(exercise.getId()))
+                .map(exercise -> new CompetencyIndexResponseDTO.UnassignedExerciseRef(exercise.getId(), exercise.getTitle(), exerciseType(exercise)))
                 .sorted(Comparator.comparing(CompetencyIndexResponseDTO.UnassignedExerciseRef::id)).toList();
         return new CompetencyIndexResponseDTO(entries, unassigned);
     }
@@ -135,15 +133,15 @@ public class OrchestratorToolsService {
             return missingCourseContextError();
         }
         if (competencyId == null) {
-            return toJson(Map.of("error", "competencyId is required."));
+            return errorJson("competencyId is required.");
         }
         Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(competencyId);
         if (competencyOpt.isEmpty()) {
-            return toJson(Map.of("error", "Competency not found: " + competencyId));
+            return errorJson("Competency not found: " + competencyId);
         }
         CourseCompetency competency = competencyOpt.get();
         if (!belongsToCourse(competency, courseId)) {
-            return toJson(Map.of("error", "Competency " + competencyId + " does not belong to the current course."));
+            return errorJson("Competency " + competencyId + " does not belong to the current course.");
         }
         return toJson(toDetail(competency));
     }
@@ -164,22 +162,21 @@ public class OrchestratorToolsService {
             return missingCourseContextError();
         }
         if (exerciseId == null) {
-            return toJson(Map.of("error", "exerciseId is required."));
+            return errorJson("exerciseId is required.");
         }
         Exercise exercise;
         try {
             exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         }
         catch (EntityNotFoundException ex) {
-            return toJson(Map.of("error", "Exercise not found: " + exerciseId));
+            return errorJson("Exercise not found: " + exerciseId);
         }
         if (!exerciseBelongsToCourse(exercise, courseId)) {
-            return toJson(Map.of("error", "Exercise " + exerciseId + " does not belong to the current course."));
+            return errorJson("Exercise " + exerciseId + " does not belong to the current course.");
         }
         if (!(exercise instanceof ProgrammingExercise)) {
-            String type = exercise.getType() != null ? exercise.getType() : exercise.getClass().getSimpleName();
-            String title = exercise.getTitle() != null ? exercise.getTitle() : "";
-            return toJson(Map.of("id", exerciseId, "title", title, "type", type, "textExtractable", false, "note",
+            String title = Objects.requireNonNullElse(exercise.getTitle(), "");
+            return toJson(Map.of("id", exerciseId, "title", title, "type", exerciseType(exercise), "textExtractable", false, "note",
                     "Content extraction is only available for programming exercises. Use the title and type to decide fit."));
         }
         try {
@@ -190,7 +187,7 @@ public class OrchestratorToolsService {
             // Generic message back to the LLM — raw exception text could leak Hibernate/SQL detail
             // into the instructor-facing summary the model writes at the end of the run.
             log.debug("getExerciseContent failed for exercise {}: {}", exerciseId, ex.getMessage());
-            return toJson(Map.of("error", "Failed to extract content for exercise " + exerciseId + "."));
+            return errorJson("Failed to extract content for exercise " + exerciseId + ".");
         }
     }
 
@@ -199,39 +196,34 @@ public class OrchestratorToolsService {
     // -----------------------------------------------------------------------------------------------
 
     private static CompetencyIndexDTO toIndexEntry(CourseCompetency competency) {
-        List<CompetencyIndexDTO.ExerciseLinkRef> exercises = new ArrayList<>();
-        if (competency.getExerciseLinks() != null) {
-            competency.getExerciseLinks().stream().filter(link -> link.getExercise() != null && link.getExercise().getId() != null && link.getExercise().getTitle() != null)
-                    .sorted(Comparator.comparing((CompetencyExerciseLink link) -> link.getExercise().getId()))
-                    .forEach(link -> exercises.add(new CompetencyIndexDTO.ExerciseLinkRef(link.getExercise().getTitle(), link.getWeight())));
-        }
-        List<String> lectureUnitNames = competency.getLectureUnitLinks() == null ? List.of()
-                : competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit).filter(lu -> lu != null).map(lu -> lu.getName()).filter(n -> n != null)
-                        .sorted().toList();
-        return new CompetencyIndexDTO(competency.getId(), competency.getTitle(), competency.getTaxonomy(), competency.getType(), exercises, lectureUnitNames);
+        List<CompetencyIndexDTO.ExerciseLinkRef> exercises = competency.getExerciseLinks().stream()
+                .sorted(Comparator.comparing((CompetencyExerciseLink link) -> link.getExercise().getId()))
+                .map(link -> new CompetencyIndexDTO.ExerciseLinkRef(link.getExercise().getTitle(), exerciseType(link.getExercise()), link.getWeight())).toList();
+        List<CompetencyIndexDTO.LectureUnitRef> lectureUnits = competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit)
+                .filter(lu -> lu.getName() != null).sorted(Comparator.comparing(lu -> lu.getName())).map(lu -> new CompetencyIndexDTO.LectureUnitRef(lu.getName(), lu.getType()))
+                .toList();
+        return new CompetencyIndexDTO(competency.getId(), competency.getTitle(), competency.getTaxonomy(), competency.getType(), exercises, lectureUnits);
     }
 
     private static CompetencyDetailDTO toDetail(CourseCompetency competency) {
-        List<CompetencyDetailDTO.ExerciseRef> exercises = new ArrayList<>();
-        if (competency.getExerciseLinks() != null) {
-            competency.getExerciseLinks().stream().filter(link -> link.getExercise() != null && link.getExercise().getId() != null)
-                    .sorted(Comparator.comparing((CompetencyExerciseLink link) -> link.getExercise().getId())).forEach(link -> {
-                        Exercise exercise = link.getExercise();
-                        exercises.add(new CompetencyDetailDTO.ExerciseRef(exercise.getId(), exercise.getTitle(), exercise.getType(), link.getWeight()));
-                    });
-        }
-        List<CompetencyDetailDTO.LectureUnitRef> lectureUnits = new ArrayList<>();
-        if (competency.getLectureUnitLinks() != null) {
-            competency.getLectureUnitLinks().stream().filter(link -> link.getLectureUnit() != null && link.getLectureUnit().getId() != null)
-                    .sorted(Comparator.comparing((CompetencyLectureUnitLink link) -> link.getLectureUnit().getId())).forEach(link -> lectureUnits
-                            .add(new CompetencyDetailDTO.LectureUnitRef(link.getLectureUnit().getId(), link.getLectureUnit().getName(), link.getLectureUnit().getType())));
-        }
+        List<CompetencyDetailDTO.ExerciseRef> exercises = competency.getExerciseLinks().stream()
+                .sorted(Comparator.comparing((CompetencyExerciseLink link) -> link.getExercise().getId())).map(link -> {
+                    Exercise exercise = link.getExercise();
+                    return new CompetencyDetailDTO.ExerciseRef(exercise.getId(), exercise.getTitle(), exercise.getType(), link.getWeight());
+                }).toList();
+        List<CompetencyDetailDTO.LectureUnitRef> lectureUnits = competency.getLectureUnitLinks().stream()
+                .sorted(Comparator.comparing((CompetencyLectureUnitLink link) -> link.getLectureUnit().getId()))
+                .map(link -> new CompetencyDetailDTO.LectureUnitRef(link.getLectureUnit().getId(), link.getLectureUnit().getName(), link.getLectureUnit().getType())).toList();
         return new CompetencyDetailDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getType(),
                 competency.getSoftDueDate(), competency.getMasteryThreshold(), competency.isOptional(), exercises, lectureUnits);
     }
 
+    private static String exerciseType(Exercise exercise) {
+        return exercise.getType() != null ? exercise.getType() : exercise.getClass().getSimpleName();
+    }
+
     private static boolean belongsToCourse(CourseCompetency competency, long courseId) {
-        return competency.getCourse() != null && courseId == competency.getCourse().getId();
+        return competency.getCourse() != null && Objects.equals(courseId, competency.getCourse().getId());
     }
 
     /**
@@ -245,11 +237,15 @@ public class OrchestratorToolsService {
             return false;
         }
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        return course != null && courseId == course.getId();
+        return course != null && Objects.equals(courseId, course.getId());
     }
 
     private String missingCourseContextError() {
-        return toJson(Map.of("error", "No course context available for this tool call."));
+        return errorJson("No course context available for this tool call.");
+    }
+
+    private String errorJson(String message) {
+        return toJson(Map.of("error", message));
     }
 
     private static @Nullable Long courseIdFromContext(ToolContext toolContext) {

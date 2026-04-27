@@ -7,6 +7,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record CompetencyOrchestrationResultDTO(Status status, String summary, @Nullable FailureReason failureReason) {
 
+    public CompetencyOrchestrationResultDTO {
+        if (status == Status.FAILED && failureReason == null) {
+            throw new IllegalArgumentException("failureReason must be set when status is FAILED");
+        }
+    }
+
     public enum Status {
         SUCCESS, FAILED, IN_PROGRESS
     }

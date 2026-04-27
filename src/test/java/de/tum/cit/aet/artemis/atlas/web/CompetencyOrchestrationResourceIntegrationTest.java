@@ -36,8 +36,11 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
 
     @BeforeEach
     void setup() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        // OTHER_PREFIX must be added first: addUsers wipes the groups of every existing user, so
+        // whichever batch is added last keeps its groups. The TEST_PREFIX instructor needs to
+        // retain its group membership to pass the @EnforceAtLeastInstructorInExercise DB check.
         userUtilService.addUsers(OTHER_PREFIX, 0, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         // Restrict the course's groups to TEST_PREFIX so the OTHER_PREFIX instructor is not a
         // member of this course and the wrong-course branch can be exercised.
@@ -57,11 +60,12 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void runForProgrammingExercise_featureEnabledNoChatClient_returnsServiceUnavailable() throws Exception {
-        // ChatClient is not configured in the test profile, so the orchestrator returns a FAILED
-        // result with NO_CHAT_CLIENT and the controller maps that to 503.
+    void runForProgrammingExercise_featureEnabledChatClientFails_returnsBadGateway() throws Exception {
+        // The shared test base autowires a Mockito-mocked ChatClient, so the orchestrator's
+        // null-check passes but invoking chatClient.prompt() yields null and the service catches
+        // the NPE, returning FAILED with LLM_ERROR (mapped to 502 by the controller).
         request.performMvcRequest(post("/api/atlas/orchestrator/programming-exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isServiceUnavailable()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value("NO_CHAT_CLIENT"))
+                .andExpect(status().isBadGateway()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value("LLM_ERROR"))
                 .andExpect(jsonPath("$.summary").isNotEmpty());
     }
 

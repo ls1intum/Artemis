@@ -70,7 +70,7 @@ public class CompetencyOrchestrationService {
 
     private static final int LECTURE_UNIT_NAME_MAX = 200;
 
-    private static final int EXERCISE_TYPE_MAX = 50;
+    private static final int TYPE_LABEL_MAX = 50;
 
     private static final String TRUNCATION_MARKER = " …[truncated]";
 
@@ -297,8 +297,8 @@ public class CompetencyOrchestrationService {
     }
 
     private static String formatUnassignedLine(CompetencyIndexResponseDTO.UnassignedExerciseRef exercise) {
-        String title = sanitizeForPrompt(exercise.title() != null ? exercise.title() : "(untitled)", EXERCISE_TITLE_MAX);
-        String type = sanitizeForPrompt(exercise.type() != null ? exercise.type() : "unknown", EXERCISE_TYPE_MAX);
+        String title = sanitizeForPrompt(Objects.requireNonNullElse(exercise.title(), "(untitled)"), EXERCISE_TITLE_MAX);
+        String type = sanitizeForPrompt(Objects.requireNonNullElse(exercise.type(), "unknown"), TYPE_LABEL_MAX);
         return "[" + exercise.id() + "] " + title + " (" + type + ")";
     }
 
@@ -308,21 +308,28 @@ public class CompetencyOrchestrationService {
         sb.append(lastCompetency ? "└── " : "├── ").append('[').append(entry.id()).append("] ").append(safeTitle).append(" (").append(entry.type()).append(", ").append(taxonomy)
                 .append(")\n");
         String childIndent = lastCompetency ? "    " : "│   ";
-        boolean hasLectureUnits = !entry.lectureUnitNames().isEmpty();
+        boolean hasLectureUnits = !entry.lectureUnits().isEmpty();
         List<String> exerciseLines = entry.exercises().stream().map(CompetencyOrchestrationService::formatExerciseLine).toList();
         appendLeafGroup(sb, childIndent, "exercises", exerciseLines, !hasLectureUnits);
         if (hasLectureUnits) {
-            List<String> safeLectureNames = entry.lectureUnitNames().stream().map(name -> sanitizeForPrompt(name, LECTURE_UNIT_NAME_MAX)).toList();
-            appendLeafGroup(sb, childIndent, "lecture units", safeLectureNames, true);
+            List<String> lectureUnitLines = entry.lectureUnits().stream().map(CompetencyOrchestrationService::formatLectureUnitLine).toList();
+            appendLeafGroup(sb, childIndent, "lecture units", lectureUnitLines, true);
         }
     }
 
     private static String formatExerciseLine(CompetencyIndexDTO.ExerciseLinkRef exercise) {
         String safeTitle = sanitizeForPrompt(exercise.title(), EXERCISE_TITLE_MAX);
+        String safeType = sanitizeForPrompt(Objects.requireNonNullElse(exercise.type(), "unknown"), TYPE_LABEL_MAX);
         if (exercise.weight() == null) {
-            return safeTitle;
+            return safeTitle + " (" + safeType + ")";
         }
-        return safeTitle + " (w=" + String.format(Locale.ROOT, "%.1f", exercise.weight()) + ")";
+        return safeTitle + " (" + safeType + ", w=" + String.format(Locale.ROOT, "%.1f", exercise.weight()) + ")";
+    }
+
+    private static String formatLectureUnitLine(CompetencyIndexDTO.LectureUnitRef lectureUnit) {
+        String safeName = sanitizeForPrompt(lectureUnit.name(), LECTURE_UNIT_NAME_MAX);
+        String safeType = sanitizeForPrompt(Objects.requireNonNullElse(lectureUnit.type(), "unknown"), TYPE_LABEL_MAX);
+        return safeName + " (" + safeType + ")";
     }
 
     /**

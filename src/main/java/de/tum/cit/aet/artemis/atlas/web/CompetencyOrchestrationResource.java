@@ -57,7 +57,7 @@ public class CompetencyOrchestrationResource {
         return switch (result.status()) {
             case SUCCESS -> HttpStatus.OK;
             case IN_PROGRESS -> HttpStatus.CONFLICT;
-            case FAILED -> switch (result.failureReason() == null ? CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR : result.failureReason()) {
+            case FAILED -> switch (result.failureReason()) {
                 case NO_CHAT_CLIENT -> HttpStatus.SERVICE_UNAVAILABLE;
                 case LLM_ERROR -> HttpStatus.BAD_GATEWAY;
                 case UNSUPPORTED_EXERCISE -> HttpStatus.UNPROCESSABLE_CONTENT;
