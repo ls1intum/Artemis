@@ -2,15 +2,19 @@
   script: |-
     cd "${testWorkingDirectory}"
     bundler install
-- name: static_code_analysis
+- name: syntax_check
   script: |-
-    cd "${testWorkingDirectory}"
-    bundler exec rake ci:rubocop
-  resultPaths:
-    - '${testWorkingDirectory}/rubocop.sarif'
+    find . -type f -name "*.rb" -print0 | xargs -0 -n1 ruby -wc
 - name: test
   script: |-
     cd "${testWorkingDirectory}"
     bundler exec rake ci:test
   resultPaths:
     - '${testWorkingDirectory}/report.xml'
+- name: static_code_analysis
+  script: |-
+    cd "${testWorkingDirectory}"
+    bundler exec rake ci:rubocop
+  forceRun: true
+  resultPaths:
+    - '${testWorkingDirectory}/rubocop.sarif'

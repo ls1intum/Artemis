@@ -1,11 +1,36 @@
-- name: build_and_test_the_code
+- name: compile
   script: |-
     cd "${testWorkingDirectory}"
-    # the build process is specified in `run.sh` in the test repository
+
+    # Artemis replaces the variable on the right hand side with a concrete value
+    export studentParentWorkingDirectoryName="${studentParentWorkingDirectoryName}"
+    export solutionWorkingDirectory="${solutionWorkingDirectory}"
+    export testWorkingDirectory="${testWorkingDirectory}"
+
     chmod +x run.sh
-    ./run.sh -s
-- name: junit
-  script: '#empty script action, just for the results'
-  forceRun: true
+    ./run.sh -s --only compile
+- name: test
+  script: |-
+    cd "${testWorkingDirectory}"
+
+    # Artemis replaces the variable on the right hand side with a concrete value
+    export studentParentWorkingDirectoryName="${studentParentWorkingDirectoryName}"
+    export solutionWorkingDirectory="${solutionWorkingDirectory}"
+    export testWorkingDirectory="${testWorkingDirectory}"
+
+    ./run.sh -s --only test
+  resultPaths:
+    - 'test-reports/*.xml'
+- name: tests_with_hidden
+  condition: AFTER_DUE_DATE
+  script: |-
+    cd "${testWorkingDirectory}"
+
+    # Artemis replaces the variable on the right hand side with a concrete value
+    export studentParentWorkingDirectoryName="${studentParentWorkingDirectoryName}"
+    export solutionWorkingDirectory="${solutionWorkingDirectory}"
+    export testWorkingDirectory="${testWorkingDirectory}"
+
+    ./run.sh -s --run-hidden
   resultPaths:
     - 'test-reports/*.xml'

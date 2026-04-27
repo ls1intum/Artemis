@@ -1,6 +1,5 @@
 - name: provide_environment_information
   script: |-
-    #!/bin/bash
     echo "--------------------Python versions--------------------"
     python3 --version
     pip3 --version
@@ -19,19 +18,26 @@
     fi
 - name: prepare_makefile
   script: |-
-    #!/usr/bin/env bash
     rm -f ${studentParentWorkingDirectoryName}/{GNUmakefile, Makefile, makefile}
     rm -f ${studentParentWorkingDirectoryName}/io.inc
     cp -f ${testWorkingDirectory}/Makefile ${studentParentWorkingDirectoryName}/Makefile || exit 2
     cp -f ${testWorkingDirectory}/io.inc ${studentParentWorkingDirectoryName}/io.inc || exit 2
-- name: run_and_compile
+- name: compile
   script: |-
     cd ${testWorkingDirectory}
-    python3 compileTest.py ../${studentParentWorkingDirectoryName}/
+
+    exit_code=0
+    python3 compileTest.py ../${studentParentWorkingDirectoryName}/ || exit_code=$?
+
     rm compileTest.py
     cp result.xml ../${studentParentWorkingDirectoryName}/result.xml
-- name: junit
-  script: 'chmod -R 777 .'
-  forceRun: true
+    exit $exit_code
+- name: test
+  script: |-
+    # no tests
   resultPaths:
     - '${studentParentWorkingDirectoryName}/result.xml'
+- name: finalize
+  script: |-
+    chmod -R 777 .
+  forceRun: true
