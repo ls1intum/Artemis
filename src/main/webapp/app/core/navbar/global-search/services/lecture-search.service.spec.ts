@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LectureSearchService } from './lecture-search.service';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
-import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
+import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 
 describe('LectureSearchService', () => {
     setupTestBed({ zoneless: true });
@@ -104,7 +104,7 @@ describe('LectureSearchService', () => {
                 ],
             };
 
-            let actualResult: IrisSearchResult | undefined;
+            let actualResult: IrisSearchStatusUpdate | undefined;
             service.ask('what are signals?').subscribe((result) => {
                 actualResult = result;
             });
