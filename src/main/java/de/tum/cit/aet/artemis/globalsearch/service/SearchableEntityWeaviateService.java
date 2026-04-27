@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,14 +61,6 @@ public class SearchableEntityWeaviateService {
      */
     private static final String[] QUERY_PROPERTIES = { SearchableEntitySchema.Properties.TITLE + "^3", SearchableEntitySchema.Properties.SHORT_NAME + "^2",
             SearchableEntitySchema.Properties.DESCRIPTION + "^1" };
-
-    /**
-     * Fixed namespace prefix included in the string passed to
-     * {@link UUID#nameUUIDFromBytes(byte[])} to derive deterministic UUID v3 (MD5-based)
-     * identifiers for Weaviate objects. The full input is {@code "namespace:type:entityId"},
-     * ensuring the same entity always maps to the same Weaviate object UUID across nodes.
-     */
-    private static final UUID WEAVIATE_UUID_NAMESPACE = UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
 
     private final WeaviateService weaviateService;
 
@@ -418,17 +408,6 @@ public class SearchableEntityWeaviateService {
     // ----- Internal helpers -----
 
     /**
-     * Derives a deterministic UUID v3 (MD5-based) from {@code (type, entityId)} via
-     * {@link UUID#nameUUIDFromBytes(byte[])} so the same entity always maps to the same
-     * Weaviate object UUID regardless of which node performs the upsert. The type is
-     * included because entity IDs are only unique within a table (e.g. exercise 42 and
-     * FAQ 42 can coexist).
-     */
-    private static String deterministicUuid(String type, Long entityId) {
-        return UUID.nameUUIDFromBytes((WEAVIATE_UUID_NAMESPACE + ":" + type + ":" + entityId).getBytes(StandardCharsets.UTF_8)).toString();
-    }
-
-    /**
      * Shared upsert implementation: uses a deterministic UUID derived from {@code (type, entity_id)}
      * to replace an existing row or insert a new one.
      * <br>
@@ -440,7 +419,7 @@ public class SearchableEntityWeaviateService {
     private void upsertRow(String type, Long entityId, Map<String, Object> properties) {
         try {
             var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-            String uuid = deterministicUuid(type, entityId);
+            String uuid = WeaviateUuidUtil.deterministicUuid(type, entityId);
             if (collection.data.exists(uuid)) {
                 collection.data.replace(uuid, r -> r.properties(properties));
             }

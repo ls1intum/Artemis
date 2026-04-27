@@ -1,16 +1,15 @@
 package de.tum.cit.aet.artemis.globalsearch.service.migration;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateUuidUtil;
 import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
 
@@ -36,12 +35,6 @@ public class V0ToV1Migration implements WeaviateMigration {
     public static final String LEGACY_EXERCISES_COLLECTION = "Exercises";
 
     private static final int PAGE_SIZE = 100;
-
-    /**
-     * Must match {@code SearchableEntityWeaviateService.WEAVIATE_UUID_NAMESPACE} so
-     * that migrated objects receive the same deterministic UUID as a normal upsert.
-     */
-    private static final UUID WEAVIATE_UUID_NAMESPACE = UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
 
     /**
      * Properties that kept the same name between the v0 {@code Exercises} and v1
@@ -114,7 +107,7 @@ public class V0ToV1Migration implements WeaviateMigration {
 
                 try {
                     Map<String, Object> newProps = transformProperties(obj.properties());
-                    String uuid = deterministicUuid(SearchableEntitySchema.TypeValues.EXERCISE, entityId);
+                    String uuid = WeaviateUuidUtil.deterministicUuid(SearchableEntitySchema.TypeValues.EXERCISE, entityId);
 
                     if (newCollection.data.exists(uuid)) {
                         newCollection.data.replace(uuid, r -> r.properties(newProps));
@@ -182,12 +175,4 @@ public class V0ToV1Migration implements WeaviateMigration {
         return newProps;
     }
 
-    /**
-     * Derives a deterministic UUID v3 from {@code (type, entityId)}, matching the logic in
-     * {@code SearchableEntityWeaviateService.deterministicUuid()} so migrated objects get the
-     * same UUID as they would from a normal upsert.
-     */
-    private static String deterministicUuid(String type, Long entityId) {
-        return UUID.nameUUIDFromBytes((WEAVIATE_UUID_NAMESPACE + ":" + type + ":" + entityId).getBytes(StandardCharsets.UTF_8)).toString();
-    }
 }
