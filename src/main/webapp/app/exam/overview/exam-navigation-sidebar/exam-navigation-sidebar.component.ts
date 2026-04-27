@@ -69,7 +69,9 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
 
     readonly isCollapsed = signal(false);
     exerciseId: string;
-    readonly numberOfSavedExercises = signal(0);
+    // Plain field on purpose: setExerciseButtonStatus is called from template bindings and writes
+    // through refreshExerciseSaveCount; using a signal here triggers NG0600 in zoneless mode.
+    numberOfSavedExercises = 0;
 
     ngOnInit(): void {
         if (!this.examTimeLineView()) {
@@ -162,7 +164,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
                 count++;
             }
         });
-        this.numberOfSavedExercises.set(count);
+        this.numberOfSavedExercises = count;
     }
 
     /**
