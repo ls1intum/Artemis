@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseRequest;
 import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseRequestAcceptDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRequestRepository;
@@ -80,22 +81,11 @@ class CourseRequestServiceTest {
     }
 
     @Test
-    void acceptRequestShouldCreateCourseWithDefaultsAndNotify() {
-        CourseRequest pendingRequest = new CourseRequest();
-        pendingRequest.setId(1L);
-        pendingRequest.setTitle("New Course");
-        pendingRequest.setShortName("NEW123");
-        pendingRequest.setStartDate(ZonedDateTime.now().minusDays(1));
-        pendingRequest.setEndDate(ZonedDateTime.now().plusDays(10));
-        User requester = new User();
-        requester.setId(7L);
-        requester.setLogin("instructor1");
-        requester.setEmail("instructor@uni.test");
-        pendingRequest.setRequester(requester);
+    void acceptRequestShouldCreateCourseWithAcceptDTODataAndNotify() {
+        CourseRequest pendingRequest = createPendingRequest(createRequester());
 
         when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
-        when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
-        when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
+        when(courseRepository.existsByShortNameIgnoreCase("NEWCRS")).thenReturn(false);
         doAnswer(invocation -> {
             Course course = invocation.getArgument(0);
             course.setStudentGroupName(course.getDefaultStudentGroupName());
@@ -109,21 +99,26 @@ class CourseRequestServiceTest {
             course.setId(22L);
             return course;
         });
-        when(userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(7L)).thenReturn(requester);
+        when(userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(7L)).thenReturn(pendingRequest.getRequester());
         when(courseRequestRepository.save(any(CourseRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(resourceLoaderService.getResource(any())).thenReturn(new ByteArrayResource("code of conduct".getBytes(StandardCharsets.UTF_8)));
 
-        CourseRequestDTO result = courseRequestService.acceptRequest(1L);
+        var acceptDTO = new CourseRequestAcceptDTO("Accepted Course", "NEWCRS", "WS25", ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(10), false);
+        CourseRequestDTO result = courseRequestService.acceptRequest(1L, acceptDTO);
 
         verify(courseAccessService).setDefaultGroupsIfNotSet(courseCaptor.capture());
         verify(channelService).createDefaultChannels(courseCaptor.getValue());
-        verify(courseAccessService).addUserToGroup(eq(requester), eq(courseCaptor.getValue().getInstructorGroupName()), eq(courseCaptor.getValue()));
-        verify(mailSendingService).buildAndSendAsync(eq(requester), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
+        verify(courseAccessService).addUserToGroup(eq(pendingRequest.getRequester()), eq(courseCaptor.getValue().getInstructorGroupName()), eq(courseCaptor.getValue()));
+        verify(mailSendingService).buildAndSendAsync(eq(pendingRequest.getRequester()), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
         verify(courseRequestRepository).save(courseRequestCaptor.capture());
 
         assertThat(result.status()).isEqualTo(CourseRequestStatus.ACCEPTED);
         assertThat(result.createdCourseId()).isEqualTo(22L);
         assertThat(courseRequestCaptor.getValue().getProcessedDate()).isNotNull();
+
+        // Verify course was created with accept DTO data, not request data
+        assertThat(courseCaptor.getValue().getTitle()).isEqualTo("Accepted Course");
+        assertThat(courseCaptor.getValue().getShortName()).isEqualTo("NEWCRS");
     }
 
     /**
@@ -138,8 +133,7 @@ class CourseRequestServiceTest {
         CourseRequest pendingRequest = createPendingRequest(requester);
 
         when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
-        when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
-        when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
+        when(courseRepository.existsByShortNameIgnoreCase("NEWCRS")).thenReturn(false);
         doAnswer(invocation -> {
             Course course = invocation.getArgument(0);
             course.setStudentGroupName(course.getDefaultStudentGroupName());
@@ -170,7 +164,8 @@ class CourseRequestServiceTest {
             return merged;
         });
 
-        courseRequestService.acceptRequest(1L);
+        var acceptDTO = new CourseRequestAcceptDTO("New Course", "NEWCRS", "WS25", ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(10), false);
+        courseRequestService.acceptRequest(1L, acceptDTO);
 
         verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
         assertThat(userCaptor.getValue()).isSameAs(requester);
@@ -209,16 +204,12 @@ class CourseRequestServiceTest {
 
     /**
      * Verifies that createCourseRequest sends the received confirmation email with the
-     * eagerly loaded requester User, not from the post-save entity. While new entities
-     * use persist() (which preserves the association), this test ensures the defensive
-     * pattern is in place for consistency with accept/reject.
+     * eagerly loaded requester User, not from the post-save entity.
      */
     @Test
     void createCourseRequestShouldSendReceivedEmailWithCorrectRequester() {
         User requester = createRequester();
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(requester);
-        when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
-        when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
 
         // save() returns a new entity without requester (simulates merge behavior for defensive testing)
         when(courseRequestRepository.save(any(CourseRequest.class))).thenAnswer(invocation -> {
@@ -226,7 +217,6 @@ class CourseRequestServiceTest {
             CourseRequest saved = new CourseRequest();
             saved.setId(42L);
             saved.setTitle(original.getTitle());
-            saved.setShortName(original.getShortName());
             saved.setSemester(original.getSemester());
             saved.setStartDate(original.getStartDate());
             saved.setEndDate(original.getEndDate());
@@ -240,13 +230,12 @@ class CourseRequestServiceTest {
             CourseRequest refetched = new CourseRequest();
             refetched.setId(42L);
             refetched.setTitle("New Course");
-            refetched.setShortName("NEW123");
             refetched.setStatus(CourseRequestStatus.PENDING);
             refetched.setRequester(requester);
             return Optional.of(refetched);
         });
 
-        var createDTO = new CourseRequestCreateDTO("New Course", "NEW123", "WS25", ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(10), false, "Need a course");
+        var createDTO = new CourseRequestCreateDTO("New Course", "WS25", ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(10), false, "Need a course");
         courseRequestService.createCourseRequest(createDTO);
 
         // Verify received email was sent with the original requester, not from the saved entity
@@ -271,7 +260,6 @@ class CourseRequestServiceTest {
         CourseRequest request = new CourseRequest();
         request.setId(1L);
         request.setTitle("New Course");
-        request.setShortName("NEW123");
         request.setStartDate(ZonedDateTime.now().minusDays(1));
         request.setEndDate(ZonedDateTime.now().plusDays(10));
         request.setStatus(CourseRequestStatus.PENDING);

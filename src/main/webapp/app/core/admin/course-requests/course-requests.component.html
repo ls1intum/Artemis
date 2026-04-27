@@ -33,7 +33,6 @@
                     <tr>
                         <td>
                             <div class="fw-semibold">{{ request.title }}</div>
-                            <div class="text-muted">{{ request.shortName }}</div>
                             @if (request.testCourse) {
                                 <span class="badge bg-info" jhiTranslate="artemisApp.courseRequest.admin.testCourse"></span>
                             }
@@ -73,17 +72,10 @@
                         <td class="text-end">
                             <div class="d-flex justify-content-end gap-2">
                                 <jhi-button
-                                    [btnType]="ButtonType.SECONDARY"
-                                    [btnSize]="ButtonSize.SMALL"
-                                    [icon]="faEdit"
-                                    (click)="openEditModal(request)"
-                                    [title]="'artemisApp.courseRequest.admin.edit'"
-                                />
-                                <jhi-button
                                     [btnType]="ButtonType.SUCCESS"
                                     [btnSize]="ButtonSize.SMALL"
                                     [icon]="faCheck"
-                                    (click)="accept(request)"
+                                    (click)="openAcceptModal(request)"
                                     [title]="'artemisApp.courseRequest.admin.accept'"
                                 />
                                 <jhi-button
@@ -125,7 +117,9 @@
                     <tr>
                         <td>
                             <div class="fw-semibold">{{ request.title }}</div>
-                            <div class="text-muted">{{ request.shortName }}</div>
+                            @if (request.shortName) {
+                                <div class="text-muted">{{ request.shortName }}</div>
+                            }
                             @if (request.testCourse) {
                                 <span class="badge bg-info" jhiTranslate="artemisApp.courseRequest.admin.testCourse"></span>
                             }
@@ -225,18 +219,95 @@
 </p-dialog>
 
 <p-dialog
-    [(visible)]="editModalVisible"
+    [(visible)]="acceptModalVisible"
     [modal]="true"
     [draggable]="false"
     [appendTo]="'body'"
-    [style]="{ width: '50dvw' }"
-    header="{{ 'artemisApp.courseRequest.admin.editTitle' | artemisTranslate }}"
+    [style]="{ width: '60dvw' }"
+    header="{{ 'artemisApp.courseRequest.admin.acceptTitle' | artemisTranslate }}"
 >
-    <form [formGroup]="editForm" novalidate>
-        <jhi-course-request-form [form]="editForm" [semesters]="semesters" [dateRangeInvalid]="editDateRangeInvalid()" [showReasonPlaceholder]="false" idPrefix="edit" />
+    <form [formGroup]="acceptForm" novalidate>
+        <!-- Section 1: Course Data -->
+        <h5 class="mb-3" jhiTranslate="artemisApp.courseRequest.admin.acceptCourseDataSection"></h5>
+        <jhi-course-request-form [form]="acceptForm" [semesters]="semesters" [dateRangeInvalid]="acceptDateRangeInvalid()" [showReasonPlaceholder]="false" idPrefix="accept" />
+
+        <!-- Section 2: Short Name with Instructor Course History -->
+        <h5 class="mb-3 mt-4" jhiTranslate="artemisApp.courseRequest.admin.acceptShortNameSection"></h5>
+
+        <!-- Instructor Course History Table -->
+        @if (loadingRequesterCourses()) {
+            <div class="text-center text-muted mb-3">
+                <span jhiTranslate="artemisApp.courseRequest.admin.loadingCourses"></span>
+            </div>
+        } @else if (requesterCourses().length > 0) {
+            <div class="table-responsive mb-3">
+                <p class="text-secondary mb-2" jhiTranslate="artemisApp.courseRequest.admin.requesterCoursesHint"></p>
+                <table class="table table-sm table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.courseName"></th>
+                            <th scope="col" jhiTranslate="artemisApp.courseRequest.form.shortName"></th>
+                            <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.semester"></th>
+                            <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.dates"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (course of requesterCourses(); track course.shortName) {
+                            <tr>
+                                <td>{{ course.title }}</td>
+                                <td class="fw-semibold">{{ course.shortName }}</td>
+                                <td>{{ course.semester }}</td>
+                                <td>
+                                    @if (course.startDate) {
+                                        {{ course.startDate | artemisDate: 'short' }}
+                                    }
+                                    @if (course.startDate && course.endDate) {
+                                        —
+                                    }
+                                    @if (course.endDate) {
+                                        {{ course.endDate | artemisDate: 'short' }}
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        } @else {
+            <p class="text-muted mb-3" jhiTranslate="artemisApp.courseRequest.admin.noPreviousCourses"></p>
+        }
+
+        <!-- Short Name Input -->
+        <div class="mb-3">
+            <label class="form-label fw-semibold" for="acceptShortName" jhiTranslate="artemisApp.courseRequest.form.shortName"></label>
+            <input
+                id="acceptShortName"
+                type="text"
+                class="form-control"
+                formControlName="shortName"
+                [pattern]="SHORT_NAME_PATTERN.source"
+                [class.is-invalid]="acceptForm.get('shortName')?.invalid && acceptForm.get('shortName')?.touched"
+            />
+            <small class="form-text text-secondary" jhiTranslate="artemisApp.courseRequest.admin.shortNameHint"></small>
+            @if (acceptForm.get('shortName')?.touched) {
+                @if (acceptForm.get('shortName')?.hasError('required')) {
+                    <div class="text-danger small" jhiTranslate="entity.validation.required"></div>
+                } @else if (acceptForm.get('shortName')?.hasError('minlength')) {
+                    <div class="text-danger small" jhiTranslate="artemisApp.courseRequest.form.shortNameTooShort"></div>
+                } @else if (acceptForm.get('shortName')?.hasError('regexInvalid') || acceptForm.get('shortName')?.hasError('pattern')) {
+                    <div class="text-danger small" jhiTranslate="artemisApp.courseRequest.form.shortNameInvalid"></div>
+                }
+            }
+        </div>
     </form>
     <ng-template #footer>
-        <jhi-button [btnType]="ButtonType.SECONDARY" (click)="editModalVisible.set(false)" [title]="'entity.action.cancel'" />
-        <jhi-button [btnType]="ButtonType.PRIMARY" [icon]="faCheck" (click)="saveEdit()" [disabled]="isSubmittingEdit()" [title]="'entity.action.save'" />
+        <jhi-button [btnType]="ButtonType.SECONDARY" (click)="acceptModalVisible.set(false)" [title]="'entity.action.cancel'" />
+        <jhi-button
+            [btnType]="ButtonType.SUCCESS"
+            [icon]="faCheck"
+            (click)="submitAccept()"
+            [disabled]="isSubmittingAccept()"
+            [title]="'artemisApp.courseRequest.admin.acceptConfirm'"
+        />
     </ng-template>
 </p-dialog>

@@ -2,13 +2,19 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
-import { BaseCourseRequest, CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/core/shared/entities/course-request.model';
+import {
+    BaseCourseRequest,
+    CourseRequest,
+    CourseRequestAcceptPayload,
+    CourseRequestStatus,
+    CourseRequestsAdminOverview,
+    RequesterCourse,
+} from 'app/core/shared/entities/course-request.model';
 import { User } from 'app/core/user/user.model';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/shared/util/date.utils';
 
 interface BaseCourseRequestDTO {
     title: string;
-    shortName: string;
     semester?: string;
     startDate?: string;
     endDate?: string;
@@ -18,6 +24,7 @@ interface BaseCourseRequestDTO {
 
 interface CourseRequestDTO extends BaseCourseRequestDTO {
     id?: number;
+    shortName?: string;
     status?: CourseRequestStatus;
     createdDate?: string;
     processedDate?: string;
@@ -31,6 +38,23 @@ interface CourseRequestsAdminOverviewDTO {
     pendingRequests: CourseRequestDTO[];
     decidedRequests: CourseRequestDTO[];
     totalDecidedCount: number;
+}
+
+interface CourseRequestAcceptDTO {
+    title: string;
+    shortName: string;
+    semester?: string;
+    startDate?: string;
+    endDate?: string;
+    testCourse: boolean;
+}
+
+interface RequesterCourseDTO {
+    title?: string;
+    shortName?: string;
+    semester?: string;
+    startDate?: string;
+    endDate?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -59,23 +83,39 @@ export class CourseRequestService {
             );
     }
 
-    acceptRequest(courseRequestId: number): Observable<CourseRequest> {
-        return this.http.post<CourseRequestDTO>(`${this.adminResourceUrl}/${courseRequestId}/accept`, {}).pipe(map((res) => this.convertDTOToResponse(res)));
+    acceptRequest(courseRequestId: number, payload: CourseRequestAcceptPayload): Observable<CourseRequest> {
+        const dto: CourseRequestAcceptDTO = {
+            title: payload.title,
+            shortName: payload.shortName,
+            semester: payload.semester,
+            startDate: convertDateFromClient(payload.startDate),
+            endDate: convertDateFromClient(payload.endDate),
+            testCourse: payload.testCourse,
+        };
+        return this.http.post<CourseRequestDTO>(`${this.adminResourceUrl}/${courseRequestId}/accept`, dto).pipe(map((res) => this.convertDTOToResponse(res)));
     }
 
     rejectRequest(courseRequestId: number, reason: string): Observable<CourseRequest> {
         return this.http.post<CourseRequestDTO>(`${this.adminResourceUrl}/${courseRequestId}/reject`, { reason }).pipe(map((res) => this.convertDTOToResponse(res)));
     }
 
-    updateRequest(courseRequestId: number, courseRequest: BaseCourseRequest): Observable<CourseRequest> {
-        const dto = this.convertRequestToDTO(courseRequest);
-        return this.http.put<CourseRequestDTO>(`${this.adminResourceUrl}/${courseRequestId}`, dto).pipe(map((res) => this.convertDTOToResponse(res)));
+    getRequesterCourses(courseRequestId: number): Observable<RequesterCourse[]> {
+        return this.http.get<RequesterCourseDTO[]>(`${this.adminResourceUrl}/${courseRequestId}/requester-courses`).pipe(
+            map((dtos) =>
+                dtos.map((dto) => ({
+                    title: dto.title,
+                    shortName: dto.shortName,
+                    semester: dto.semester,
+                    startDate: convertDateStringFromServer(dto.startDate),
+                    endDate: convertDateStringFromServer(dto.endDate),
+                })),
+            ),
+        );
     }
 
     private convertRequestToDTO(courseRequest: BaseCourseRequest): BaseCourseRequestDTO {
         const dto: BaseCourseRequestDTO = {
             title: courseRequest.title,
-            shortName: courseRequest.shortName,
             testCourse: courseRequest.testCourse,
             reason: courseRequest.reason,
         };
@@ -88,11 +128,11 @@ export class CourseRequestService {
     private convertDTOToResponse(dto: CourseRequestDTO): CourseRequest {
         const response: CourseRequest = {
             title: dto.title,
-            shortName: dto.shortName,
             testCourse: dto.testCourse,
             reason: dto.reason,
         };
         response.id = dto.id;
+        response.shortName = dto.shortName;
         response.semester = dto.semester;
         response.startDate = convertDateStringFromServer(dto.startDate);
         response.endDate = convertDateStringFromServer(dto.endDate);

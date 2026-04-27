@@ -28,7 +28,7 @@ public class CourseRequest extends DomainObject {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "short_name", nullable = false, unique = true)
+    @Column(name = "short_name")
     private String shortName;
 
     @Column(name = "semester")

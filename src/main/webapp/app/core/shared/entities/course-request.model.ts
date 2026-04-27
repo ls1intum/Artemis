@@ -18,7 +18,6 @@ export interface CourseRequestRequester {
 
 export interface BaseCourseRequest {
     title: string;
-    shortName: string;
     semester?: string;
     startDate?: dayjs.Dayjs;
     endDate?: dayjs.Dayjs;
@@ -28,6 +27,7 @@ export interface BaseCourseRequest {
 
 export interface CourseRequest extends BaseCourseRequest {
     id?: number;
+    shortName?: string;
     status?: CourseRequestStatus;
     createdDate?: dayjs.Dayjs;
     processedDate?: dayjs.Dayjs;
@@ -41,4 +41,21 @@ export interface CourseRequestsAdminOverview {
     pendingRequests: CourseRequest[];
     decidedRequests: CourseRequest[];
     totalDecidedCount: number;
+}
+
+export interface CourseRequestAcceptPayload {
+    title: string;
+    shortName: string;
+    semester?: string;
+    startDate?: dayjs.Dayjs;
+    endDate?: dayjs.Dayjs;
+    testCourse: boolean;
+}
+
+export interface RequesterCourse {
+    title?: string;
+    shortName?: string;
+    semester?: string;
+    startDate?: dayjs.Dayjs;
+    endDate?: dayjs.Dayjs;
 }

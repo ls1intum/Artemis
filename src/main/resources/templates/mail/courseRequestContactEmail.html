@@ -16,7 +16,7 @@
                 <span class="bold-text" th:text="#{email.courseRequest.label.title}">Title</span>:
                 <span th:text="${courseRequest.title}">Title</span>
             </li>
-            <li>
+            <li th:if="${courseRequest.shortName != null}">
                 <span class="bold-text" th:text="#{email.courseRequest.label.shortName}">Short name</span>:
                 <span th:text="${courseRequest.shortName}">short-name</span>
             </li>

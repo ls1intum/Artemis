@@ -6,11 +6,8 @@
             "form": {
                 "title": "Kurstitel",
                 "shortName": "Kürzel",
-                "shortNameHint": "Muss eindeutig sein, 3-7 Zeichen empfohlen, nur Buchstaben und Zahlen.",
                 "shortNameTooShort": "Das Kürzel muss mindestens 3 Zeichen lang sein.",
                 "shortNameInvalid": "Das Kürzel darf nur Buchstaben und Zahlen enthalten, ohne Leerzeichen.",
-                "shortNameNotUnique": "Dieses Kürzel wird bereits verwendet. Wir haben \"{{ suggestedShortName }}\" als Alternative vorgeschlagen.",
-                "generate": "Generieren",
                 "semester": "Semester",
                 "startDate": "Startdatum",
                 "endDate": "Enddatum",
@@ -34,6 +31,7 @@
                 "decidedTitle": "Bearbeitete Anfragen",
                 "requester": "Anfragender",
                 "course": "Kurs",
+                "courseName": "Kursname",
                 "semester": "Semester",
                 "dates": "Daten",
                 "reason": "Grund des Nutzers",
@@ -45,6 +43,10 @@
                 "testCourse": "Testkurs",
                 "previousInstructor": "Bisheriger Kursleiter",
                 "accept": "Akzeptieren",
+                "acceptTitle": "Kursanfrage akzeptieren",
+                "acceptCourseDataSection": "Kursdaten",
+                "acceptShortNameSection": "Kürzel",
+                "acceptConfirm": "Kurs erstellen",
                 "reject": "Ablehnen",
                 "rejectReasonLabel": "Ablehnungsgrund",
                 "rejectReasonPlaceholder": "Geben Sie einen Grund für die Ablehnung an",
@@ -55,10 +57,11 @@
                 "acceptSuccess": "Kursanfrage \"{{ title }}\" akzeptiert. Kurs {{ shortName }} erstellt.",
                 "rejectSuccess": "Kursanfrage \"{{ title }}\" abgelehnt.",
                 "link": "Kurs öffnen",
-                "edit": "Bearbeiten",
-                "editTitle": "Kursanfrage bearbeiten",
-                "editSuccess": "Kursanfrage erfolgreich aktualisiert.",
-                "shortNameConflict": "Das Kürzel \"{{ shortName }}\" wird bereits verwendet. Bitte bearbeite die Anfrage und verwende ein eindeutiges Kürzel wie z.B. \"{{ suggestedShortName }}\"."
+                "shortNameConflictAccept": "Ein Kurs mit diesem Kürzel existiert bereits. Bitte wählen Sie ein anderes Kürzel.",
+                "shortNameHint": "Muss eindeutig sein, mindestens 3 Zeichen, nur Buchstaben und Zahlen. Es gelten die gleichen Regeln wie bei der normalen Kurserstellung.",
+                "requesterCoursesHint": "Der Anfragende ist Kursleiter in folgenden Kursen. Nutzen Sie dies zur Bestimmung des Kürzels:",
+                "loadingCourses": "Lade Kursleiterkurse...",
+                "noPreviousCourses": "Der Anfragende ist kein Kursleiter bestehender Kurse."
             }
         }
     }

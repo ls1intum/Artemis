@@ -6,7 +6,7 @@ import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
 import { CourseRequestService } from 'app/core/course/request/course-request.service';
-import { BaseCourseRequest, CourseRequestStatus } from 'app/core/shared/entities/course-request.model';
+import { BaseCourseRequest, CourseRequestAcceptPayload, CourseRequestStatus } from 'app/core/shared/entities/course-request.model';
 
 describe('CourseRequestService', () => {
     setupTestBed({ zoneless: true });
@@ -35,7 +35,6 @@ describe('CourseRequestService', () => {
         it('should create a course request and convert dates', () => {
             const baseCourseRequest: BaseCourseRequest = {
                 title: 'Test Course',
-                shortName: 'TC001',
                 semester: 'WS2025',
                 startDate: dayjs('2025-01-01'),
                 endDate: dayjs('2025-06-30'),
@@ -46,7 +45,6 @@ describe('CourseRequestService', () => {
             const mockResponse = {
                 id: 1,
                 title: 'Test Course',
-                shortName: 'TC001',
                 semester: 'WS2025',
                 startDate: '2025-01-01T00:00:00Z',
                 endDate: '2025-06-30T00:00:00Z',
@@ -60,7 +58,6 @@ describe('CourseRequestService', () => {
             service.create(baseCourseRequest).subscribe((result) => {
                 expect(result.id).toBe(1);
                 expect(result.title).toBe('Test Course');
-                expect(result.shortName).toBe('TC001');
                 expect(result.semester).toBe('WS2025');
                 expect(result.status).toBe(CourseRequestStatus.PENDING);
                 expect(result.startDate).toBeDefined();
@@ -71,12 +68,13 @@ describe('CourseRequestService', () => {
 
             const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
             expect(req.request.body.title).toBe('Test Course');
-            expect(req.request.body.shortName).toBe('TC001');
             expect(req.request.body.semester).toBe('WS2025');
             expect(req.request.body.testCourse).toBe(false);
             expect(req.request.body.reason).toBe('I need this course for teaching.');
             expect(req.request.body.startDate).toBeDefined();
             expect(req.request.body.endDate).toBeDefined();
+            // shortName should not be in the request body
+            expect(req.request.body.shortName).toBeUndefined();
 
             req.flush(mockResponse);
         });
@@ -84,7 +82,6 @@ describe('CourseRequestService', () => {
         it('should create a course request without optional fields', () => {
             const baseCourseRequest: BaseCourseRequest = {
                 title: 'Minimal Course',
-                shortName: 'MC001',
                 testCourse: true,
                 reason: 'Testing purpose.',
             };
@@ -92,7 +89,6 @@ describe('CourseRequestService', () => {
             const mockResponse = {
                 id: 2,
                 title: 'Minimal Course',
-                shortName: 'MC001',
                 testCourse: true,
                 reason: 'Testing purpose.',
                 status: CourseRequestStatus.PENDING,
@@ -119,7 +115,6 @@ describe('CourseRequestService', () => {
                     {
                         id: 1,
                         title: 'Course 1',
-                        shortName: 'C1',
                         testCourse: false,
                         reason: 'Reason 1',
                         status: CourseRequestStatus.PENDING,
@@ -195,8 +190,16 @@ describe('CourseRequestService', () => {
     });
 
     describe('acceptRequest', () => {
-        it('should accept a course request', () => {
+        it('should accept a course request with payload', () => {
             const courseRequestId = 1;
+            const payload: CourseRequestAcceptPayload = {
+                title: 'Accepted Course',
+                shortName: 'AC001',
+                semester: 'WS2025',
+                startDate: dayjs('2025-01-01'),
+                endDate: dayjs('2025-06-30'),
+                testCourse: false,
+            };
             const mockResponse = {
                 id: 1,
                 title: 'Accepted Course',
@@ -210,7 +213,7 @@ describe('CourseRequestService', () => {
                 requester: { id: 1, login: 'instructor1' },
             };
 
-            service.acceptRequest(courseRequestId).subscribe((result) => {
+            service.acceptRequest(courseRequestId, payload).subscribe((result) => {
                 expect(result.id).toBe(1);
                 expect(result.status).toBe(CourseRequestStatus.ACCEPTED);
                 expect(result.processedDate).toBeDefined();
@@ -218,7 +221,9 @@ describe('CourseRequestService', () => {
             });
 
             const req = httpMock.expectOne({ method: 'POST', url: `${adminResourceUrl}/${courseRequestId}/accept` });
-            expect(req.request.body).toEqual({});
+            expect(req.request.body.title).toBe('Accepted Course');
+            expect(req.request.body.shortName).toBe('AC001');
+            expect(req.request.body.semester).toBe('WS2025');
             req.flush(mockResponse);
         });
     });
@@ -230,7 +235,6 @@ describe('CourseRequestService', () => {
             const mockResponse = {
                 id: 2,
                 title: 'Rejected Course',
-                shortName: 'RC001',
                 testCourse: false,
                 reason: 'Original reason',
                 status: CourseRequestStatus.REJECTED,
@@ -254,6 +258,28 @@ describe('CourseRequestService', () => {
         });
     });
 
+    describe('getRequesterCourses', () => {
+        it('should retrieve requester courses', () => {
+            const courseRequestId = 1;
+            const mockResponse = [
+                { title: 'Course A', shortName: 'CA', semester: 'WS2025', startDate: '2025-10-01T00:00:00Z', endDate: '2026-03-31T00:00:00Z' },
+                { title: 'Course B', shortName: 'CB', semester: 'SS2025' },
+            ];
+
+            service.getRequesterCourses(courseRequestId).subscribe((result) => {
+                expect(result).toHaveLength(2);
+                expect(result[0].title).toBe('Course A');
+                expect(result[0].shortName).toBe('CA');
+                expect(result[0].startDate).toBeDefined();
+                expect(result[1].title).toBe('Course B');
+                expect(result[1].startDate).toBeUndefined();
+            });
+
+            const req = httpMock.expectOne({ method: 'GET', url: `${adminResourceUrl}/${courseRequestId}/requester-courses` });
+            req.flush(mockResponse);
+        });
+    });
+
     describe('date conversion', () => {
         it('should properly convert dates from server response', () => {
             const mockResponse = {
@@ -261,7 +287,6 @@ describe('CourseRequestService', () => {
                     {
                         id: 1,
                         title: 'Date Test Course',
-                        shortName: 'DTC',
                         testCourse: false,
                         reason: 'Testing dates',
                         status: CourseRequestStatus.PENDING,
@@ -291,7 +316,6 @@ describe('CourseRequestService', () => {
                     {
                         id: 1,
                         title: 'No Dates Course',
-                        shortName: 'NDC',
                         testCourse: false,
                         reason: 'No dates provided',
                         status: CourseRequestStatus.PENDING,

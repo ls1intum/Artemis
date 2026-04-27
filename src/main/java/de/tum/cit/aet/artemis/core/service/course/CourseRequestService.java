@@ -26,10 +26,12 @@ import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.CourseRequest;
 import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseRequestAcceptDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestRequesterDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestsAdminOverviewDTO;
+import de.tum.cit.aet.artemis.core.dto.RequesterCourseDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -46,6 +48,8 @@ public class CourseRequestService {
     private static final Logger log = LoggerFactory.getLogger(CourseRequestService.class);
 
     private static final int MAX_TITLE_LENGTH = 255;
+
+    private static final int MAX_REQUESTER_COURSES = 10;
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -83,22 +87,18 @@ public class CourseRequestService {
      */
     public CourseRequestDTO createCourseRequest(CourseRequestCreateDTO createDTO) {
         var requester = userRepository.getUserWithGroupsAndAuthorities();
-        validateShortNameUniqueness(createDTO.shortName(), createDTO.title(), createDTO.semester(), null);
 
         if (createDTO.title().length() > MAX_TITLE_LENGTH) {
             throw new BadRequestAlertException("The course title is too long", CourseRequest.ENTITY_NAME, "courseRequestTitleTooLong");
         }
 
         Course validationCourse = new Course();
-        validationCourse.setShortName(createDTO.shortName());
-        validationCourse.validateShortName();
         validationCourse.setStartDate(createDTO.startDate());
         validationCourse.setEndDate(createDTO.endDate());
         validationCourse.validateStartAndEndDate();
 
         CourseRequest courseRequest = new CourseRequest();
         courseRequest.setTitle(createDTO.title());
-        courseRequest.setShortName(createDTO.shortName());
         courseRequest.setSemester(createDTO.semester());
         courseRequest.setStartDate(createDTO.startDate());
         courseRequest.setEndDate(createDTO.endDate());
@@ -118,23 +118,28 @@ public class CourseRequestService {
     }
 
     /**
-     * Accepts the course request and creates a course.
+     * Accepts the course request and creates a course using the provided accept data.
      *
      * @param requestId the request id
+     * @param acceptDTO the course data provided by the admin (title, shortName, semester, dates, testCourse)
      * @return the updated course request DTO
      */
-    public CourseRequestDTO acceptRequest(long requestId) {
+    public CourseRequestDTO acceptRequest(long requestId, CourseRequestAcceptDTO acceptDTO) {
         CourseRequest courseRequest = getRequestWithRequesterElseThrow(requestId);
         if (courseRequest.getStatus() != CourseRequestStatus.PENDING) {
             throw new BadRequestAlertException("The course request has already been processed", CourseRequest.ENTITY_NAME, "courseRequestProcessed");
         }
 
-        validateShortNameUniqueness(courseRequest.getShortName(), courseRequest.getTitle(), courseRequest.getSemester(), courseRequest.getId());
+        if (acceptDTO.title().length() > MAX_TITLE_LENGTH) {
+            throw new BadRequestAlertException("The course title is too long", CourseRequest.ENTITY_NAME, "courseRequestTitleTooLong");
+        }
+
+        validateShortNameUniqueness(acceptDTO.shortName());
 
         // Save eagerly loaded requester before save() which calls merge() and replaces the association with an uninitialized lazy proxy
         User requester = courseRequest.getRequester();
 
-        Course createdCourse = createCourseFromRequest(courseRequest);
+        Course createdCourse = createCourseFromAcceptDTO(acceptDTO, requester);
         courseRequest.setCreatedCourseId(createdCourse.getId());
         courseRequest.setStatus(CourseRequestStatus.ACCEPTED);
         courseRequest.setDecisionReason(null);
@@ -177,132 +182,50 @@ public class CourseRequestService {
     }
 
     /**
-     * Updates a pending course request. Only admins can update requests.
+     * Returns the most recent courses (up to 10) where the requester of a given course request is instructor.
      *
-     * @param requestId the request id
-     * @param updateDTO the updated course request data
-     * @return the updated course request DTO
+     * @param requestId the course request id
+     * @return list of requester course DTOs
      */
-    public CourseRequestDTO updateCourseRequest(long requestId, CourseRequestCreateDTO updateDTO) {
+    public List<RequesterCourseDTO> getRequesterCourses(long requestId) {
         CourseRequest courseRequest = getRequestWithRequesterElseThrow(requestId);
-        if (courseRequest.getStatus() != CourseRequestStatus.PENDING) {
-            throw new BadRequestAlertException("The course request has already been processed", CourseRequest.ENTITY_NAME, "courseRequestProcessed");
+        User requester = courseRequest.getRequester();
+        if (requester == null || requester.getId() == null) {
+            return List.of();
         }
 
-        validateShortNameUniqueness(updateDTO.shortName(), updateDTO.title(), updateDTO.semester(), requestId);
-
-        if (updateDTO.title().length() > MAX_TITLE_LENGTH) {
-            throw new BadRequestAlertException("The course title is too long", CourseRequest.ENTITY_NAME, "courseRequestTitleTooLong");
+        // Re-fetch with groups to avoid LazyInitializationException
+        requester = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(requester.getId());
+        Set<String> groups = requester.getGroups();
+        if (groups == null || groups.isEmpty()) {
+            return List.of();
         }
 
-        // Validate date range if both dates are provided
-        if (updateDTO.startDate() != null && updateDTO.endDate() != null) {
-            Course validationCourse = new Course();
-            validationCourse.setStartDate(updateDTO.startDate());
-            validationCourse.setEndDate(updateDTO.endDate());
-            validationCourse.validateStartAndEndDate();
-        }
-
-        courseRequest.setTitle(updateDTO.title());
-        courseRequest.setShortName(updateDTO.shortName());
-        courseRequest.setSemester(updateDTO.semester());
-        courseRequest.setStartDate(updateDTO.startDate());
-        courseRequest.setEndDate(updateDTO.endDate());
-        courseRequest.setTestCourse(updateDTO.testCourse());
-        courseRequest.setReason(updateDTO.reason());
-
-        courseRequest = courseRequestRepository.save(courseRequest);
-        // Re-fetch with eager loading to avoid LazyInitializationException when converting to DTO
-        courseRequest = getRequestWithRequesterElseThrow(courseRequest.getId());
-        return toDto(courseRequest);
+        var pageable = PageRequest.of(0, MAX_REQUESTER_COURSES);
+        List<Course> courses = courseRepository.findRecentInstructorCourses(groups, pageable);
+        return courses.stream().map(RequesterCourseDTO::of).toList();
     }
 
     private CourseRequest getRequestWithRequesterElseThrow(long requestId) {
         return courseRequestRepository.findOneWithEagerRelationshipsById(requestId).orElseThrow(() -> new EntityNotFoundException(CourseRequest.ENTITY_NAME, requestId));
     }
 
-    private void validateShortNameUniqueness(String shortName, String title, String semester, Long currentRequestId) {
+    private void validateShortNameUniqueness(String shortName) {
         boolean existsInCourse = courseRepository.existsByShortNameIgnoreCase(shortName);
-        var existingRequest = courseRequestRepository.findOneByShortNameIgnoreCase(shortName);
-        boolean existsInRequest = existingRequest.isPresent() && (currentRequestId == null || !existingRequest.get().getId().equals(currentRequestId));
-
-        if (existsInCourse || existsInRequest) {
-            String suggestedShortName = generateUniqueShortName(title, semester);
-            String errorKey = existsInCourse ? "courseShortNameExists" : "courseRequestShortNameExists";
-            throw new BadRequestAlertException("A course or request with the same short name already exists", CourseRequest.ENTITY_NAME, errorKey,
-                    Map.of("suggestedShortName", suggestedShortName));
+        if (existsInCourse) {
+            throw new BadRequestAlertException("A course with the same short name already exists", CourseRequest.ENTITY_NAME, "courseShortNameExists");
         }
     }
 
-    /**
-     * Generates a unique short name based on the first letters of the title words and the semester number.
-     * If the generated short name already exists, appends an incrementing number until a unique one is found.
-     *
-     * @param title    the course title
-     * @param semester the semester (e.g., "WS25/26", "SS24")
-     * @return a unique short name suggestion
-     */
-    private String generateUniqueShortName(String title, String semester) {
-        // Extract first letters from title words (only alphanumeric characters)
-        StringBuilder baseShortName = new StringBuilder();
-        if (title != null && !title.isBlank()) {
-            String[] words = title.split("\\s+");
-            for (String word : words) {
-                if (!word.isEmpty()) {
-                    char firstChar = Character.toUpperCase(word.charAt(0));
-                    if (Character.isLetterOrDigit(firstChar)) {
-                        baseShortName.append(firstChar);
-                    }
-                }
-            }
-        }
-
-        // Extract semester number (digits only)
-        if (semester != null && !semester.isBlank()) {
-            String semesterDigits = semester.replaceAll("[^0-9]", "");
-            if (!semesterDigits.isEmpty()) {
-                baseShortName.append(semesterDigits);
-            }
-        }
-
-        // Ensure minimum length of 3 characters by appending random uppercase letters
-        String base = baseShortName.toString();
-        if (base.length() < 3) {
-            base = base + generateRandomLetters(3 - base.length());
-        }
-
-        // Find a unique short name by appending a number if necessary
-        String candidate = base;
-        int counter = 1;
-        while (isShortNameTaken(candidate)) {
-            candidate = base + counter;
-            counter++;
-        }
-
-        return candidate;
-    }
-
-    private boolean isShortNameTaken(String shortName) {
-        return courseRepository.existsByShortNameIgnoreCase(shortName) || courseRequestRepository.findOneByShortNameIgnoreCase(shortName).isPresent();
-    }
-
-    private String generateRandomLetters(int length) {
-        StringBuilder sb = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            sb.append((char) ('A' + (int) (Math.random() * 26)));
-        }
-        return sb.toString();
-    }
-
-    private Course createCourseFromRequest(CourseRequest request) {
+    private Course createCourseFromAcceptDTO(CourseRequestAcceptDTO acceptDTO, User requester) {
         Course course = new Course();
 
-        course.setTitle(request.getTitle());
-        course.setShortName(request.getShortName());
-        course.setSemester(request.getSemester());
-        course.setStartDate(request.getStartDate());
-        course.setEndDate(request.getEndDate());
-        course.setTestCourse(request.isTestCourse());
+        course.setTitle(acceptDTO.title());
+        course.setShortName(acceptDTO.shortName());
+        course.setSemester(acceptDTO.semester());
+        course.setStartDate(acceptDTO.startDate());
+        course.setEndDate(acceptDTO.endDate());
+        course.setTestCourse(acceptDTO.testCourse());
         course.setOnlineCourse(Boolean.FALSE);
         course.setEnrollmentEnabled(Boolean.FALSE);
         course.setLearningPathsEnabled(false);
@@ -339,8 +262,8 @@ public class CourseRequestService {
         Course createdCourse = courseRepository.save(course);
         channelService.createDefaultChannels(createdCourse);
 
-        if (request.getRequester() != null) {
-            User requesterWithGroups = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(request.getRequester().getId());
+        if (requester != null) {
+            User requesterWithGroups = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(requester.getId());
             courseAccessService.addUserToGroup(requesterWithGroups, createdCourse.getInstructorGroupName(), createdCourse);
         }
         return createdCourse;
