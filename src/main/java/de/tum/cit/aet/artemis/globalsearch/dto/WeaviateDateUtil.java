@@ -3,43 +3,57 @@ package de.tum.cit.aet.artemis.globalsearch.dto;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
+import java.util.Set;
+
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 
 /**
- * Centralizes date formatting for the Weaviate search index so that both the
- * write side (entity → Weaviate property map) and the read side (Weaviate
- * property map → REST response) use the same consistent ISO 8601 format.
+ * Normalizes date values read back from Weaviate to a consistent ISO 8601 format
+ * ({@code yyyy-MM-dd'T'HH:mm:ss.SSSXXX}, always three fractional digits).
  * <p>
- * Format: {@code yyyy-MM-dd'T'HH:mm:ss.SSSXXX} (always three fractional digits).
+ * Weaviate may return DATE properties as {@link OffsetDateTime}, {@link ZonedDateTime},
+ * or {@link String} depending on the client version. This utility normalizes them all
+ * to uniform strings at the read boundary so downstream consumers don't need to handle
+ * type variations.
  */
 public final class WeaviateDateUtil {
 
     private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 
+    /**
+     * All property keys in the {@link SearchableEntitySchema} that use the Weaviate DATE type.
+     */
+    private static final Set<String> DATE_PROPERTY_KEYS = Set.of(SearchableEntitySchema.Properties.RELEASE_DATE, SearchableEntitySchema.Properties.START_DATE,
+            SearchableEntitySchema.Properties.END_DATE, SearchableEntitySchema.Properties.DUE_DATE, SearchableEntitySchema.Properties.VISIBLE_DATE,
+            SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE, SearchableEntitySchema.Properties.EXAM_START_DATE, SearchableEntitySchema.Properties.EXAM_END_DATE);
+
     private WeaviateDateUtil() {
     }
 
     /**
-     * Formats a {@link ZonedDateTime} for storage in Weaviate.
+     * Normalizes all date properties in a Weaviate property map in-place.
+     * Weaviate may return dates as {@link OffsetDateTime}, {@link ZonedDateTime},
+     * or {@link String} depending on the client version; this method converts them
+     * all to the consistent format so downstream consumers don't need to handle
+     * type variations.
      *
-     * @param dateTime the date-time to format, may be {@code null}
-     * @return the formatted string, or {@code null} if the input is {@code null}
+     * @param properties the mutable property map returned by Weaviate
      */
-    public static String format(ZonedDateTime dateTime) {
-        return dateTime != null ? dateTime.format(FORMAT) : null;
+    public static void normalizeDateProperties(Map<String, Object> properties) {
+        for (String key : DATE_PROPERTY_KEYS) {
+            Object value = properties.get(key);
+            if (value == null) {
+                continue;
+            }
+            String normalized = normalizeValue(value);
+            if (normalized != null) {
+                properties.put(key, normalized);
+            }
+        }
     }
 
-    /**
-     * Normalizes a date value read back from Weaviate to the consistent format.
-     * Weaviate may return dates as {@link OffsetDateTime}, {@link ZonedDateTime},
-     * or {@link String} depending on the client version; this method handles all three.
-     *
-     * @param value the raw value from the Weaviate property map, may be {@code null}
-     * @return the normalized date string, or {@code null} if the input is {@code null}
-     */
-    public static String normalize(Object value) {
-        if (value == null) {
-            return null;
-        }
+    private static String normalizeValue(Object value) {
         if (value instanceof OffsetDateTime offsetDateTime) {
             return offsetDateTime.format(FORMAT);
         }

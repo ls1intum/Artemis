@@ -58,8 +58,8 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
 
         Map<String, Object> metadata = new HashMap<>();
         addCourseContext(properties, metadata, courseNameById);
-        putIfNotNull(metadata, "dueDate", getDateString(properties, SearchableEntitySchema.Properties.DUE_DATE));
-        putIfNotNull(metadata, "releaseDate", getDateString(properties, SearchableEntitySchema.Properties.RELEASE_DATE));
+        putIfNotNull(metadata, "dueDate", getString(properties, SearchableEntitySchema.Properties.DUE_DATE));
+        putIfNotNull(metadata, "releaseDate", getString(properties, SearchableEntitySchema.Properties.RELEASE_DATE));
         putIfNotNull(metadata, "points", getDouble(properties, SearchableEntitySchema.Properties.MAX_POINTS));
         putIfNotNull(metadata, "difficulty", getString(properties, SearchableEntitySchema.Properties.DIFFICULTY));
 
@@ -79,8 +79,8 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
     private static GlobalSearchResultDTO fromLectureRow(Map<String, Object> properties, Map<Long, String> courseNameById) {
         Map<String, Object> metadata = new HashMap<>();
         addCourseContext(properties, metadata, courseNameById);
-        putIfNotNull(metadata, "startDate", getDateString(properties, SearchableEntitySchema.Properties.START_DATE));
-        putIfNotNull(metadata, "endDate", getDateString(properties, SearchableEntitySchema.Properties.END_DATE));
+        putIfNotNull(metadata, "startDate", getString(properties, SearchableEntitySchema.Properties.START_DATE));
+        putIfNotNull(metadata, "endDate", getString(properties, SearchableEntitySchema.Properties.END_DATE));
 
         return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.LECTURE, getString(properties, SearchableEntitySchema.Properties.TITLE),
                 getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Lecture", metadata);
@@ -94,7 +94,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
             metadata.put("lectureId", lectureId);
         }
         putIfNotNull(metadata, "unitType", getString(properties, SearchableEntitySchema.Properties.UNIT_TYPE));
-        putIfNotNull(metadata, "releaseDate", getDateString(properties, SearchableEntitySchema.Properties.RELEASE_DATE));
+        putIfNotNull(metadata, "releaseDate", getString(properties, SearchableEntitySchema.Properties.RELEASE_DATE));
 
         return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.LECTURE_UNIT, getString(properties, SearchableEntitySchema.Properties.TITLE),
                 getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Lecture Unit", metadata);
@@ -103,9 +103,9 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
     private static GlobalSearchResultDTO fromExamRow(Map<String, Object> properties, Map<Long, String> courseNameById) {
         Map<String, Object> metadata = new HashMap<>();
         addCourseContext(properties, metadata, courseNameById);
-        putIfNotNull(metadata, "visibleDate", getDateString(properties, SearchableEntitySchema.Properties.VISIBLE_DATE));
-        putIfNotNull(metadata, "startDate", getDateString(properties, SearchableEntitySchema.Properties.START_DATE));
-        putIfNotNull(metadata, "endDate", getDateString(properties, SearchableEntitySchema.Properties.END_DATE));
+        putIfNotNull(metadata, "visibleDate", getString(properties, SearchableEntitySchema.Properties.VISIBLE_DATE));
+        putIfNotNull(metadata, "startDate", getString(properties, SearchableEntitySchema.Properties.START_DATE));
+        putIfNotNull(metadata, "endDate", getString(properties, SearchableEntitySchema.Properties.END_DATE));
         Boolean testExam = getBoolean(properties, SearchableEntitySchema.Properties.TEST_EXAM);
         if (testExam != null) {
             metadata.put("testExam", testExam);
@@ -217,9 +217,5 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
             return bool;
         }
         return null;
-    }
-
-    private static String getDateString(Map<String, Object> properties, String key) {
-        return WeaviateDateUtil.normalize(properties.get(key));
     }
 }

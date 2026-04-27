@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.globalsearch.dto.searchableentity;
 
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
-import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateDateUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 /**
@@ -44,10 +44,10 @@ public record LectureSearchableEntityDTO(Long lectureId, Long courseId, String l
             properties.put(SearchableEntitySchema.Properties.DESCRIPTION, description);
         }
         if (startDate != null) {
-            properties.put(SearchableEntitySchema.Properties.START_DATE, WeaviateDateUtil.format(startDate));
+            properties.put(SearchableEntitySchema.Properties.START_DATE, startDate.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         }
         if (endDate != null) {
-            properties.put(SearchableEntitySchema.Properties.END_DATE, WeaviateDateUtil.format(endDate));
+            properties.put(SearchableEntitySchema.Properties.END_DATE, endDate.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         }
         return properties;
     }

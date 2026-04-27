@@ -1,12 +1,12 @@
 package de.tum.cit.aet.artemis.globalsearch.dto.searchableentity;
 
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
-import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateDateUtil;
 
 /**
  * Snapshot of the data needed to upsert an exam into the unified {@code SearchableEntities} Weaviate collection.
@@ -64,13 +64,13 @@ public record ExamSearchableEntityDTO(Long examId, Long courseId, String examTit
             properties.put(SearchableEntitySchema.Properties.DESCRIPTION, description);
         }
         if (visibleDate != null) {
-            properties.put(SearchableEntitySchema.Properties.VISIBLE_DATE, WeaviateDateUtil.format(visibleDate));
+            properties.put(SearchableEntitySchema.Properties.VISIBLE_DATE, visibleDate.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         }
         if (startDate != null) {
-            properties.put(SearchableEntitySchema.Properties.START_DATE, WeaviateDateUtil.format(startDate));
+            properties.put(SearchableEntitySchema.Properties.START_DATE, startDate.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         }
         if (endDate != null) {
-            properties.put(SearchableEntitySchema.Properties.END_DATE, WeaviateDateUtil.format(endDate));
+            properties.put(SearchableEntitySchema.Properties.END_DATE, endDate.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         }
         return properties;
     }

@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateDateUtil;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
@@ -99,6 +100,7 @@ public class SearchableEntityWeaviateService {
             CollectionHandle<Map<String, Object>> collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
             boolean browse = query == null || query.isBlank();
 
+            List<WeaviateObject<Map<String, Object>>> objects;
             if (browse) {
                 var result = collection.query.fetchObjects(builder -> {
                     builder.limit(limit);
@@ -107,10 +109,9 @@ public class SearchableEntityWeaviateService {
                     }
                     return builder;
                 });
-                return result.objects().stream().map(WeaviateObject::properties).toList();
+                objects = result.objects();
             }
-
-            if (useHybridSearch) {
+            else if (useHybridSearch) {
                 var result = collection.query.hybrid(query, builder -> {
                     builder.limit(limit).queryProperties(QUERY_PROPERTIES);
                     if (filter != null) {
@@ -118,17 +119,22 @@ public class SearchableEntityWeaviateService {
                     }
                     return builder;
                 });
-                return result.objects().stream().map(WeaviateObject::properties).toList();
+                objects = result.objects();
+            }
+            else {
+                var result = collection.query.bm25(query, builder -> {
+                    builder.limit(limit).queryProperties(QUERY_PROPERTIES);
+                    if (filter != null) {
+                        builder.filters(filter);
+                    }
+                    return builder;
+                });
+                objects = result.objects();
             }
 
-            var result = collection.query.bm25(query, builder -> {
-                builder.limit(limit).queryProperties(QUERY_PROPERTIES);
-                if (filter != null) {
-                    builder.filters(filter);
-                }
-                return builder;
-            });
-            return result.objects().stream().map(WeaviateObject::properties).toList();
+            List<Map<String, Object>> propertiesList = objects.stream().map(WeaviateObject::properties).toList();
+            propertiesList.forEach(WeaviateDateUtil::normalizeDateProperties);
+            return propertiesList;
         }
         catch (Exception e) {
             log.error("Failed to search SearchableEntities (query length={}): {}", query != null ? query.length() : 0, e.getMessage(), e);
