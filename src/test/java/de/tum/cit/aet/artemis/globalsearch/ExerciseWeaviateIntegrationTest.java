@@ -26,6 +26,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
@@ -77,7 +78,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testInsertExercise_storesMetadataInWeaviate() throws Exception {
-            searchableEntityWeaviateService.upsertExerciseAsync(programmingExercise);
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
 
             await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
@@ -90,7 +91,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testUpdateExercise_updatesMetadataInWeaviate() throws Exception {
-            searchableEntityWeaviateService.upsertExerciseAsync(programmingExercise);
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
 
             await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
@@ -100,7 +101,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             programmingExercise.setTitle(updatedTitle);
             programmingExercise.setMaxPoints(updatedMaxPoints);
 
-            searchableEntityWeaviateService.upsertExerciseAsync(programmingExercise);
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
 
             await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
@@ -114,7 +115,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testDeleteExercise_removesMetadataFromWeaviate() throws Exception {
-            searchableEntityWeaviateService.upsertExerciseAsync(programmingExercise);
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
 
             await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
@@ -136,7 +137,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
                 executor.submit(() -> {
                     try {
                         startLatch.await();
-                        searchableEntityWeaviateService.upsertExerciseAsync(programmingExercise);
+                        searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
                     }
                     catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
@@ -167,7 +168,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testUpdateProblemStatement_updatesWeaviate() throws Exception {
             // Insert exercise into Weaviate first
-            searchableEntityWeaviateService.upsertExerciseAsync(programmingExercise);
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
             await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
             // Update problem statement via endpoint
@@ -187,7 +188,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testUpdateTimeline_updatesWeaviate() throws Exception {
             // Insert exercise into Weaviate first
-            searchableEntityWeaviateService.upsertExerciseAsync(programmingExercise);
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
             await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
             // Update timeline via endpoint

@@ -37,6 +37,11 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -99,7 +104,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteCourse_removesExercisesFromWeaviate() throws Exception {
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        searchableEntityWeaviateService.upsertExerciseAsync(exercise);
+        searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(exercise));
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, exercise));
 
         long exerciseId = exercise.getId();
@@ -112,7 +117,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteCourse_removesLecturesFromWeaviate() throws Exception {
         Lecture lecture = lectureUtilService.createLecture(course);
-        searchableEntityWeaviateService.upsertLectureAsync(lecture);
+        searchableEntityWeaviateService.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertLectureExistsInWeaviate(weaviateService, lecture));
 
         long lectureId = lecture.getId();
@@ -126,7 +131,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     void testDeleteCourse_removesLectureUnitsFromWeaviate() throws Exception {
         Lecture lecture = lectureUtilService.createLecture(course);
         TextUnit textUnit = lectureUtilService.createTextUnit(lecture);
-        searchableEntityWeaviateService.upsertLectureUnitAsync(textUnit);
+        searchableEntityWeaviateService.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(textUnit));
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertLectureUnitExistsInWeaviate(weaviateService, textUnit.getId()));
 
         long textUnitId = textUnit.getId();
@@ -139,7 +144,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteCourse_removesExamsFromWeaviate() throws Exception {
         Exam exam = examUtilService.addExam(course);
-        searchableEntityWeaviateService.upsertExamAsync(exam);
+        searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(exam));
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExamExistsInWeaviate(weaviateService, exam.getId()));
 
         long examId = exam.getId();
@@ -153,11 +158,11 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     void testDeleteCourse_removesFaqsFromWeaviate() throws Exception {
         Faq faq1 = FaqFactory.generateFaq(course, FaqState.ACCEPTED, "FAQ Title 1", "FAQ Answer 1");
         Faq savedFaq1 = faqRepository.save(faq1);
-        searchableEntityWeaviateService.upsertFaqAsync(savedFaq1);
+        searchableEntityWeaviateService.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(savedFaq1));
 
         Faq faq2 = FaqFactory.generateFaq(course, FaqState.ACCEPTED, "FAQ Title 2", "FAQ Answer 2");
         Faq savedFaq2 = faqRepository.save(faq2);
-        searchableEntityWeaviateService.upsertFaqAsync(savedFaq2);
+        searchableEntityWeaviateService.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(savedFaq2));
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             assertFaqExistsInWeaviate(weaviateService, savedFaq1.getId());

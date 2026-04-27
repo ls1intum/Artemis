@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
@@ -67,11 +68,11 @@ class FaqWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCILo
         void testDeleteCourse_removesFaqsFromWeaviate() throws Exception {
             Faq faq1 = FaqFactory.generateFaq(course, FaqState.ACCEPTED, "FAQ Title 1", "FAQ Answer 1");
             faq1 = faqRepository.save(faq1);
-            searchableEntityWeaviateService.upsertFaqAsync(faq1);
+            searchableEntityWeaviateService.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(faq1));
 
             Faq faq2 = FaqFactory.generateFaq(course, FaqState.ACCEPTED, "FAQ Title 2", "FAQ Answer 2");
             faq2 = faqRepository.save(faq2);
-            searchableEntityWeaviateService.upsertFaqAsync(faq2);
+            searchableEntityWeaviateService.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(faq2));
 
             assertFaqExistsInWeaviate(weaviateService, faq1.getId());
             assertFaqExistsInWeaviate(weaviateService, faq2.getId());
