@@ -67,11 +67,7 @@ class AtlasAgentServiceTest {
 
     private static final double TEST_TEMPERATURE = 0.2;
 
-    /**
-     * Test fixture mirroring the production {@link AtlasOrchestratorProperties} binding. Only the
-     * chat-* fields are read by {@link AtlasAgentDelegationService}; orchestrator-* values are
-     * placeholder defaults.
-     */
+    /** Only chat-* fields are read by {@link AtlasAgentDelegationService}; orchestrator-* values are placeholders. */
     private static final AtlasOrchestratorProperties TEST_PROPERTIES = new AtlasOrchestratorProperties(TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE, "gpt-5.4", 1.0, "medium");
 
     private AtlasAgentPreviewService previewService;

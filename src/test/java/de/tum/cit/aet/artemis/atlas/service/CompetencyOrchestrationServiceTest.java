@@ -23,12 +23,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
-/**
- * Unit tests for fast-path branches of {@link CompetencyOrchestrationService#run(long)} that
- * never reach the LLM. The integration test covers the LLM_ERROR path; this class locks in the
- * UNSUPPORTED_EXERCISE and NO_CHAT_CLIENT branches in isolation so they cannot be silently
- * lost when the integration-test base changes (as happened to the NO_CHAT_CLIENT case before).
- */
+/** Unit tests for the UNSUPPORTED_EXERCISE / NO_CHAT_CLIENT fast-paths of {@link CompetencyOrchestrationService#run(long)}. */
 @ExtendWith(MockitoExtension.class)
 class CompetencyOrchestrationServiceTest {
 
@@ -65,8 +60,6 @@ class CompetencyOrchestrationServiceTest {
 
     @Test
     void run_noChatClient_returnsFailedNoChatClient() {
-        // chatClient = null is the entire point of this test; the run must short-circuit BEFORE
-        // touching the Hazelcast lock map, so we also verify runMap is never queried.
         ProgrammingExercise exercise = courseExercise(11L);
         when(programmingExerciseRepository.findByIdElseThrow(11L)).thenReturn(exercise);
         CompetencyOrchestrationService service = new CompetencyOrchestrationService(programmingExerciseRepository, contentExtractionService, orchestratorToolsService,
@@ -81,9 +74,6 @@ class CompetencyOrchestrationServiceTest {
 
     @Test
     void run_examExercise_returnsUnsupportedExercise() {
-        // Exam exercises must be rejected before any work is done — the rejection happens even
-        // when a chat client IS configured. Locking this in protects against silent regressions
-        // where an exam exercise's underlying course gets advised on.
         ProgrammingExercise exam = examExercise(12L);
         when(programmingExerciseRepository.findByIdElseThrow(12L)).thenReturn(exam);
         CompetencyOrchestrationService service = new CompetencyOrchestrationService(programmingExerciseRepository, contentExtractionService, orchestratorToolsService,

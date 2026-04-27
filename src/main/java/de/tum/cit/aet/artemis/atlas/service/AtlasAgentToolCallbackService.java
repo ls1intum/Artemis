@@ -9,13 +9,9 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 
 /**
- * Factory for creating {@link ToolCallbackProvider} instances on-demand.
- * <p>
- * Providers are NOT registered as Spring beans to avoid being auto-discovered by
- * Spring AI's {@code ToolCallbackResolver}, which would create a circular dependency:
- * {@code AtlasAgentDelegationService → ChatClient → ChatModel → ToolCallingManager
- * → ToolCallbackResolver → [ToolCallbackProvider beans] → AtlasAgentToolsService
- * → AtlasAgentDelegationService}.
+ * Factory for {@link ToolCallbackProvider} instances. Providers are intentionally NOT Spring beans
+ * to avoid Spring AI's {@code ToolCallbackResolver} auto-discovering them and creating a circular
+ * dependency back to {@link AtlasAgentDelegationService}.
  */
 @Lazy
 @Service
@@ -41,11 +37,10 @@ public class AtlasAgentToolCallbackService {
     }
 
     /**
-     * Returns the provider exposing the Main Agent tools (information retrieval and delegation).
-     * Cached after first call. Accepts the tools service as a parameter to avoid a circular bean dependency.
+     * Provider for the Main Agent tools; cached after first call. Tools service is passed in to avoid a circular bean dependency.
      *
-     * @param toolsService the tools service providing main agent tools
-     * @return ToolCallbackProvider for the Main Agent
+     * @param toolsService the main agent tools service
+     * @return the provider
      */
     public ToolCallbackProvider createMainAgentProvider(AtlasAgentToolsService toolsService) {
         if (mainAgentProvider == null) {
@@ -54,38 +49,22 @@ public class AtlasAgentToolCallbackService {
         return mainAgentProvider;
     }
 
-    /**
-     * Returns the provider exposing the Competency Expert sub-agent tools.
-     *
-     * @return ToolCallbackProvider for the Competency Expert
-     */
+    /** @return provider for the Competency Expert sub-agent. */
     public ToolCallbackProvider createCompetencyExpertProvider() {
         return expertProvider;
     }
 
-    /**
-     * Returns the provider exposing the Competency Mapper sub-agent tools.
-     *
-     * @return ToolCallbackProvider for the Competency Mapper
-     */
+    /** @return provider for the Competency Mapper sub-agent. */
     public ToolCallbackProvider createCompetencyMapperProvider() {
         return mapperProvider;
     }
 
-    /**
-     * Returns the provider exposing the Exercise Mapper sub-agent tools.
-     *
-     * @return ToolCallbackProvider for the Exercise Mapper
-     */
+    /** @return provider for the Exercise Mapper sub-agent. */
     public ToolCallbackProvider createExerciseMapperProvider() {
         return exerciseMapperProvider;
     }
 
-    /**
-     * Returns the provider exposing the Competency Orchestrator tools.
-     *
-     * @return ToolCallbackProvider for the Competency Orchestrator
-     */
+    /** @return provider for the Competency Orchestrator. */
     public ToolCallbackProvider createOrchestratorProvider() {
         return orchestratorProvider;
     }

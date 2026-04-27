@@ -37,15 +37,9 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Read-only tools exposed to the Atlas orchestrator LLM. The orchestrator is currently advisory:
- * it inspects course state via {@link #listCompetencyIndex(ToolContext)},
- * {@link #getCompetencyDetails(Long, ToolContext)}, and {@link #getExerciseContent(Long, ToolContext)},
- * then writes a natural-language summary. Mutation tools (create / edit / assign / unassign /
- * delete) are deferred to a follow-up PR.
- *
- * <p>
- * The current course id is injected via Spring AI's {@link ToolContext}; that parameter is
- * stripped from the JSON schema exposed to the LLM, so the model cannot forge it.
+ * Read-only tools exposed to the Atlas orchestrator LLM. The current course id is injected via
+ * Spring AI's {@link ToolContext} and stripped from the JSON schema, so the model cannot forge it.
+ * Mutation tools are deferred to a follow-up PR.
  */
 @Lazy
 @Service
@@ -54,12 +48,7 @@ public class OrchestratorToolsService {
 
     private static final Logger log = LoggerFactory.getLogger(OrchestratorToolsService.class);
 
-    /**
-     * Tool-context key carrying the course id the orchestrator is operating on. Package-private:
-     * only {@link CompetencyOrchestrationService} (same package) populates the context, the LLM
-     * cannot inject this key because tool-context parameters are stripped from the JSON schema
-     * exposed to the model.
-     */
+    /** Tool-context key carrying the current course id; package-private so only the orchestrator service can populate it. */
     static final String COURSE_ID_KEY = "courseId";
 
     private final ObjectMapper objectMapper;
@@ -78,15 +67,11 @@ public class OrchestratorToolsService {
         this.contentExtractionService = contentExtractionService;
     }
 
-    // -----------------------------------------------------------------------------------------------
-    // Read tools
-    // -----------------------------------------------------------------------------------------------
-
     /**
      * LLM tool: returns the competency index for the current course as JSON.
      *
-     * @param toolContext Spring AI tool context carrying the current course id
-     * @return JSON-serialized competency index, or a JSON error when course context is missing
+     * @param toolContext carries the current course id
+     * @return the JSON-serialized index
      */
     @Tool(description = "List the competency index for the current course. Returns two sections: (1) competencies — id, title, taxonomy, type (competency or prerequisite), "
             + "linked exercises (with title, exercise type, and the current link weight — 1.0 / 0.5 / 0.3) and linked lecture units (with name and lecture-unit type); "
@@ -100,11 +85,10 @@ public class OrchestratorToolsService {
     }
 
     /**
-     * Builds the competency index for the given course so callers can seed the system prompt with
-     * the initial state (saves a tool-call round-trip for the LLM).
+     * Builds the competency index so callers can seed the system prompt and save a tool-call round-trip.
      *
-     * @param courseId the course whose competencies to fetch
-     * @return wrapper with one entry per competency plus the list of course exercises currently linked to no competency
+     * @param courseId the course
+     * @return the index
      */
     public CompetencyIndexResponseDTO listCompetencyIndex(long courseId) {
         Set<CourseCompetency> competencies = courseCompetencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(courseId);
@@ -119,11 +103,11 @@ public class OrchestratorToolsService {
     }
 
     /**
-     * LLM tool: returns the full details for a single competency in the current course as JSON.
+     * LLM tool: returns full details for a single competency in the current course as JSON.
      *
-     * @param competencyId id of the competency to inspect
-     * @param toolContext  Spring AI tool context carrying the current course id
-     * @return JSON-serialized competency detail, or a JSON error when inputs or access fail
+     * @param competencyId id to inspect
+     * @param toolContext  carries the current course id
+     * @return the JSON-serialized details
      */
     @Tool(description = "Get the full details (description, soft due date, mastery threshold, optional flag, and linked exercises/lecture units with their ids and types; "
             + "each exercise ref also carries its current link weight — 1.0 / 0.5 / 0.3) for a single competency in the current course.")
@@ -147,11 +131,11 @@ public class OrchestratorToolsService {
     }
 
     /**
-     * LLM tool: extracts the learning-relevant content for an exercise in the current course as JSON.
+     * LLM tool: extracts learning-relevant content for an exercise in the current course as JSON.
      *
-     * @param exerciseId  id of the exercise whose content should be extracted
-     * @param toolContext Spring AI tool context carrying the current course id
-     * @return JSON-serialized extracted content, or a JSON error when inputs or access fail
+     * @param exerciseId  id to extract
+     * @param toolContext carries the current course id
+     * @return the JSON-serialized content
      */
     @Tool(description = "Extract the learning-relevant content (title, problem statement text, and metadata) for an exercise that belongs to the current course. "
             + "Only programming exercises are text-extractable; for quiz, text, modeling, or file-upload exercises this returns a stub with the title and type "
@@ -184,16 +168,11 @@ public class OrchestratorToolsService {
             return toJson(extracted);
         }
         catch (IllegalArgumentException ex) {
-            // Generic message back to the LLM — raw exception text could leak Hibernate/SQL detail
-            // into the instructor-facing summary the model writes at the end of the run.
+            // Generic message — raw exception text could leak Hibernate/SQL detail into the LLM's summary.
             log.debug("getExerciseContent failed for exercise {}: {}", exerciseId, ex.getMessage());
             return errorJson("Failed to extract content for exercise " + exerciseId + ".");
         }
     }
-
-    // -----------------------------------------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------------------------------------
 
     private static CompetencyIndexDTO toIndexEntry(CourseCompetency competency) {
         List<CompetencyIndexDTO.ExerciseLinkRefDTO> exercises = competency.getExerciseLinks().stream()
@@ -211,9 +190,7 @@ public class OrchestratorToolsService {
                     Exercise exercise = link.getExercise();
                     return new CompetencyDetailDTO.ExerciseRefDTO(exercise.getId(), exercise.getTitle(), exercise.getType(), link.getWeight());
                 }).toList();
-        // Mirror toIndexEntry's null-name filter so listCompetencyIndex and getCompetencyDetails
-        // expose the same lecture-unit set to the LLM — a null-named unit has no useful identifier
-        // for the model to cross-reference.
+        // Mirror toIndexEntry's null-name filter so both tools expose the same lecture-unit set.
         List<CompetencyDetailDTO.LectureUnitRefDTO> lectureUnits = competency.getLectureUnitLinks().stream().filter(link -> link.getLectureUnit().getName() != null)
                 .sorted(Comparator.comparing((CompetencyLectureUnitLink link) -> link.getLectureUnit().getId()))
                 .map(link -> new CompetencyDetailDTO.LectureUnitRefDTO(link.getLectureUnit().getId(), link.getLectureUnit().getName(), link.getLectureUnit().getType())).toList();
@@ -229,12 +206,7 @@ public class OrchestratorToolsService {
         return competency.getCourse() != null && Objects.equals(courseId, competency.getCourse().getId());
     }
 
-    /**
-     * Defense-in-depth course check: rejects exam exercises outright (the orchestrator's entry
-     * point in {@link CompetencyOrchestrationService#run(long)} already rejects them, but a tool
-     * call with an exam exercise id would otherwise walk the lazy
-     * {@code exerciseGroup.exam.course} chain outside any transaction).
-     */
+    /** Defense-in-depth: rejects exam exercises so a tool call cannot walk the lazy exam.course chain outside a transaction. */
     private static boolean exerciseBelongsToCourse(Exercise exercise, long courseId) {
         if (exercise.isExamExercise()) {
             return false;
@@ -256,7 +228,7 @@ public class OrchestratorToolsService {
             return null;
         }
         Object value = toolContext.getContext().get(COURSE_ID_KEY);
-        return value instanceof Long longValue ? longValue : null;
+        return value instanceof Number number ? number.longValue() : null;
     }
 
     private String toJson(Object object) {

@@ -22,11 +22,7 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
 
     private static final String TEST_PREFIX = "atlasorchres";
 
-    /**
-     * Second user prefix used to provision an instructor that has the global INSTRUCTOR role but
-     * is NOT in the test course's prefix-restricted instructor group — exercises the
-     * wrong-course-instructor branch of {@code @EnforceAtLeastInstructorInExercise}.
-     */
+    /** Instructor outside the course's prefix-restricted group; exercises the wrong-course branch of {@code @EnforceAtLeastInstructorInExercise}. */
     private static final String OTHER_PREFIX = "atlasorchresother";
 
     @Autowired

@@ -16,14 +16,9 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 
 /**
- * Shared helper that pushes competency mutations to AtlasML so its ML index stays in sync with
- * the database. Used by both the REST controller ({@link de.tum.cit.aet.artemis.atlas.web.CompetencyResource})
- * and the orchestrator's write tools ({@link de.tum.cit.aet.artemis.atlas.service.OrchestratorToolsService})
- * — every mutation path that writes a {@link Competency} must call this so the index does not
- * silently desync.
- * <p>
- * AtlasML failures are swallowed with a warn-log to keep the primary mutation flow non-blocking;
- * the index can be reconciled separately if needed.
+ * Pushes competency mutations to AtlasML so its ML index stays in sync with the database; every
+ * write path on a {@link Competency} must call this. Failures are swallowed with a warn-log so the
+ * primary mutation flow stays non-blocking.
  */
 @Lazy
 @Service
@@ -39,11 +34,11 @@ public class CompetencyAtlasMLNotificationService {
     }
 
     /**
-     * Notify AtlasML about competency changes with consistent error handling.
+     * Notifies AtlasML about competency changes with consistent error handling.
      *
      * @param competencies         the competencies to save
-     * @param operationType        the operation type (UPDATE or DELETE)
-     * @param operationDescription the description of the operation for logging purposes
+     * @param operationType        UPDATE or DELETE
+     * @param operationDescription used in the warn-log on failure
      */
     public void notifyAtlasML(List<Competency> competencies, @NonNull OperationTypeDTO operationType, String operationDescription) {
         if (competencies == null || competencies.isEmpty()) {

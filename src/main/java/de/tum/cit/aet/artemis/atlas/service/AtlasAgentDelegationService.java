@@ -17,11 +17,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 
-/**
- * Service for delegating messages to AI agents.
- * Extracted from {@link AtlasAgentService} to break the circular dependency between
- * {@link AtlasAgentService} and {@link AtlasAgentToolsService}.
- */
+/** Delegates messages to AI agents; extracted from {@code AtlasAgentService} to break a circular dependency with {@code AtlasAgentToolsService}. */
 @Lazy
 @Service
 @Conditional(AtlasEnabled.class)
@@ -46,17 +42,7 @@ public class AtlasAgentDelegationService {
         this.temperature = properties.chatTemperature();
     }
 
-    /**
-     * Delegate message processing to an AI agent with the given prompt template and tool provider.
-     *
-     * @param promptResourcePath   the classpath resource path of the system prompt template
-     * @param message              the user's message
-     * @param courseId             the course ID for context
-     * @param sessionId            the session ID for chat memory
-     * @param saveToMemory         whether to add message to chat memory
-     * @param toolCallbackProvider the tool callback provider for this agent (may be null)
-     * @return the agent's response
-     */
+    /** Delegates a message to an AI agent with the given prompt template and tool provider; returns the agent's response. */
     String delegateToAgent(String promptResourcePath, String message, Long courseId, String sessionId, boolean saveToMemory, @Nullable ToolCallbackProvider toolCallbackProvider) {
         if (chatClient == null) {
             throw new IllegalStateException("ChatClient is not configured. Atlas Agent delegation is unavailable.");

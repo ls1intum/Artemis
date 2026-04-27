@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+import jakarta.annotation.PostConstruct;
+
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,15 +37,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
- * Entry point for advisory competency-management runs.
- * <p>
- * {@link #run(long)} drives a tool-calling LLM loop: the model is given the exercise as anchor
- * text and can call {@link OrchestratorToolsService}'s read tools to inspect course state, then
- * writes a natural-language summary of the changes it would recommend. Mutation tools are
- * deferred to a follow-up PR — the orchestrator does not persist any changes today.
- * <p>
- * Course context is injected via {@code ToolContext} (see {@link OrchestratorToolsService}) so
- * the LLM cannot forge the course id through tool arguments.
+ * Advisory competency-management orchestrator. {@link #run(long)} drives a tool-calling LLM loop
+ * that inspects course state via {@link OrchestratorToolsService} and returns a natural-language
+ * summary; no mutations are persisted today. Course context is injected via {@code ToolContext}
+ * so the LLM cannot forge the course id.
  */
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -56,12 +53,7 @@ public class CompetencyOrchestrationService {
 
     private static final String RUN_MAP_NAME = "atlas-orchestrator-runs";
 
-    /**
-     * Length caps applied to instructor-controlled strings before they are interpolated into the
-     * system prompt. Instructor input is untrusted ground truth — without caps, hallucinated 4 kB
-     * titles or pasted code dumps could blow up the prompt budget AND give an injection attempt
-     * more room to maneuver. Hard truncation produces a clear marker the LLM can recognize.
-     */
+    /** Length caps on instructor-controlled strings to bound prompt size and injection surface. */
     private static final int EXERCISE_TITLE_MAX = 200;
 
     private static final int PROBLEM_STATEMENT_MAX = 8_000;
@@ -74,11 +66,7 @@ public class CompetencyOrchestrationService {
 
     private static final String TRUNCATION_MARKER = " …[truncated]";
 
-    /**
-     * Markers used in {@link #orchestrator_execute_prompt.st} to delimit the untrusted-data sections.
-     * Any literal occurrence inside user content is neutralized so the model cannot be tricked
-     * into believing user-supplied text has closed the fence and reverted to instruction mode.
-     */
+    /** Fence delimiters for untrusted data in {@code orchestrator_execute_prompt.st}; literal occurrences in user content are neutralized in {@link #sanitizeForPrompt}. */
     private static final String USER_DATA_BEGIN = "<<<USER_DATA>>>";
 
     private static final String USER_DATA_END = "<<<END_USER_DATA>>>";
@@ -103,7 +91,9 @@ public class CompetencyOrchestrationService {
 
     private final String reasoningEffort;
 
-    private final IMap<Long, RunInfo> runMap;
+    private final HazelcastInstance hazelcastInstance;
+
+    private IMap<Long, RunInfo> runMap;
 
     public CompetencyOrchestrationService(ProgrammingExerciseRepository programmingExerciseRepository, ContentExtractionService contentExtractionService,
             OrchestratorToolsService orchestratorToolsService, AtlasPromptTemplateService templateService, @Nullable ChatClient chatClient,
@@ -117,44 +107,34 @@ public class CompetencyOrchestrationService {
         this.deploymentName = properties.orchestratorModel();
         this.temperature = properties.orchestratorTemperature();
         this.reasoningEffort = properties.orchestratorReasoningEffort();
-        // TTL for this map is configured at Hazelcast bean construction time in
-        // HazelcastConfiguration#registerCustomMaps — setting it here via @PostConstruct would be
-        // a no-op once the map proxy is built.
+        this.hazelcastInstance = hazelcastInstance;
+    }
+
+    /** TTL configured in {@code HazelcastConfiguration#registerCustomMaps}. */
+    @PostConstruct
+    void initRunMap() {
         this.runMap = hazelcastInstance.getMap(RUN_MAP_NAME);
     }
 
     /**
-     * Run one orchestration pass for the given programming exercise. Returns the LLM's
-     * advisory summary of which competency changes it would recommend.
+     * Runs one orchestration pass. Result status is SUCCESS, FAILED (with a
+     * {@link CompetencyOrchestrationResultDTO.FailureReason}), or IN_PROGRESS when another run
+     * is already active for the same course.
      *
-     * @param exerciseId the programming exercise to orchestrate competencies for
-     * @return one of:
-     *         <ul>
-     *         <li>{@link CompetencyOrchestrationResultDTO.Status#SUCCESS} with the LLM's summary message;</li>
-     *         <li>{@link CompetencyOrchestrationResultDTO.Status#FAILED} with {@link CompetencyOrchestrationResultDTO.FailureReason#LLM_ERROR} if the call failed,
-     *         or {@link CompetencyOrchestrationResultDTO.FailureReason#NO_CHAT_CLIENT} if no ChatClient is configured;</li>
-     *         <li>{@link CompetencyOrchestrationResultDTO.Status#IN_PROGRESS} if a run is already active for the same course.</li>
-     *         </ul>
+     * @param exerciseId the programming exercise to orchestrate
+     * @return the orchestration result
      */
     public CompetencyOrchestrationResultDTO run(long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        // Reject exam exercises BEFORE acquiring the Hazelcast lock or doing any work. For an exam
-        // exercise, getCourseViaExerciseGroupOrCourseMember() resolves to the underlying course,
-        // so the orchestrator would silently advise on course-wide competencies — never desired.
         if (exercise.isExamExercise()) {
             log.info("Atlas orchestrator rejected for exam exercise {}", exerciseId);
             return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator only operates on course exercises.",
                     CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_EXERCISE);
         }
-        // Fail fast (and without acquiring the per-course Hazelcast lock) when the chat client is
-        // not configured — keeps the no-chat-client path orthogonal to the "ok-but-empty content"
-        // path inside callChatClient.
         if (chatClient == null) {
             log.info("Atlas orchestrator requested for exercise {} but no ChatClient is available", exerciseId);
             return CompetencyOrchestrationResultDTO.failed("Atlas chat model is not configured.", CompetencyOrchestrationResultDTO.FailureReason.NO_CHAT_CLIENT);
         }
-        // Exam exercises were rejected above, so the utility resolves to the directly-attached
-        // course without walking the lazy exerciseGroup.exam.course chain.
         long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
         String runId = UUID.randomUUID().toString();
@@ -168,9 +148,6 @@ public class CompetencyOrchestrationService {
         try {
             String content;
             try {
-                // Pre-LLM helpers (extractContent / listCompetencyIndex / templateService.render)
-                // are inside the try so a failure becomes FAILED instead of bubbling a 500 to the
-                // resource — and so the finally block's lock release is symmetric with all paths.
                 ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
                 CompetencyIndexResponseDTO competencyIndex = orchestratorToolsService.listCompetencyIndex(courseId);
                 String renderedIndex = renderCompetencyIndex(competencyIndex);
@@ -180,7 +157,7 @@ public class CompetencyOrchestrationService {
                 content = callChatClient(systemPrompt, courseId);
             }
             catch (Exception ex) {
-                log.warn("Atlas orchestrator failed for exercise {}: {}", exerciseId, ex.getMessage());
+                log.warn("Atlas orchestrator failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
                 return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
             }
             log.info("Atlas orchestrator completed for exercise {} (course {})", exerciseId, courseId);
@@ -188,17 +165,12 @@ public class CompetencyOrchestrationService {
             return CompetencyOrchestrationResultDTO.success(summary);
         }
         finally {
-            // Atomic compare-and-remove: only clears when the stored entry still equals our claim,
-            // so a TTL-evicted entry replaced by another node's claim is left untouched.
+            // Compare-and-remove: leaves a TTL-evicted entry replaced by another claim untouched.
             runMap.remove(courseId, claim);
         }
     }
 
-    /**
-     * Drive the Spring AI tool-calling loop. {@link #run(long)} guarantees {@link #chatClient} is
-     * non-null before we get here, so no null check is needed and no null is returned. Returns the
-     * (possibly empty) final assistant message.
-     */
+    /** Drives the Spring AI tool-calling loop; caller guarantees {@link #chatClient} is non-null. */
     private String callChatClient(String systemPrompt, long courseId) {
         ToolCallingChatOptions options = buildChatOptions();
         Map<String, Object> toolContext = new HashMap<>();
@@ -213,12 +185,7 @@ public class CompetencyOrchestrationService {
         return Objects.requireNonNullElse(content, "");
     }
 
-    /**
-     * Build {@link AzureOpenAiChatOptions} for the orchestrator call. GPT-5 reasoning models reject
-     * an explicit {@code temperature} alongside {@code reasoningEffort} (only the default 1.0 is
-     * accepted), so we omit temperature whenever a reasoning effort is configured. Older / non-
-     * reasoning deployments still get the temperature.
-     */
+    /** GPT-5 reasoning models reject explicit temperature alongside reasoningEffort, so we omit one when the other is set. */
     private ToolCallingChatOptions buildChatOptions() {
         var builder = AzureOpenAiChatOptions.builder().deploymentName(deploymentName);
         if (reasoningEffort != null && !reasoningEffort.isBlank()) {
@@ -237,29 +204,19 @@ public class CompetencyOrchestrationService {
     }
 
     /**
-     * Neutralize instructor-controlled text before it is concatenated into the orchestrator's
-     * system prompt. Three concerns:
-     * <ol>
-     * <li>Strip control characters and normalize whitespace so injected ANSI / zero-width tricks
-     * cannot reposition tokens within the prompt.</li>
-     * <li>Hard-truncate at {@code maxChars} with an explicit marker so a hallucinated or pasted
-     * code-dump cannot blow up the prompt budget — and so the LLM can see the truncation
-     * happened.</li>
-     * <li>Neutralize literal occurrences of the user-data fence delimiters so user content
-     * cannot pretend to close the fence and revert to instruction mode.</li>
-     * </ol>
+     * Neutralizes instructor text before prompt interpolation: strips control / zero-width
+     * characters, neutralizes the user-data fence delimiters, and hard-truncates at {@code maxChars}.
      */
     static String sanitizeForPrompt(@Nullable String raw, int maxChars) {
         if (raw == null || raw.isBlank()) {
             return "(empty)";
         }
-        String normalized = raw.replace(' ', ' ').replace('​', ' ').replace('‌', ' ').replace('‍', ' ').replace('﻿', ' ');
+        String normalized = raw.replace('\u00A0', ' ').replace('\u200B', ' ').replace('\u200C', ' ').replace('\u200D', ' ').replace('\uFEFF', ' ');
         normalized = normalized.replaceAll("[\\p{Cntrl}&&[^\\n\\t]]", "");
         normalized = normalized.replaceAll("\\n{3,}", "\n\n").strip();
         if (normalized.isEmpty()) {
             return "(empty)";
         }
-        // Defuse fence delimiters so user content cannot break out of the fenced data section.
         normalized = normalized.replace(USER_DATA_BEGIN, "<<<USER_DATA_LITERAL>>>").replace(USER_DATA_END, "<<<END_USER_DATA_LITERAL>>>");
         if (normalized.length() > maxChars) {
             int cut = Math.max(0, maxChars - TRUNCATION_MARKER.length());
@@ -330,14 +287,7 @@ public class CompetencyOrchestrationService {
         return safeName + " (" + safeType + ")";
     }
 
-    /**
-     * Hazelcast map entry guarding per-course orchestrator runs.
-     *
-     * @param runId      unique id of the currently active run, used to reject concurrent requests
-     *                       for the same course and to ensure the run-holder only clears its own entry
-     * @param exerciseId the exercise that triggered the run, kept for diagnostics/logging
-     * @param startedAt  wall-clock start timestamp (advisory; real expiry is handled by the map TTL)
-     */
+    /** Hazelcast map entry guarding per-course orchestrator runs; expiry is handled by the map TTL. */
     record RunInfo(String runId, long exerciseId, @Nullable Instant startedAt) implements Serializable {
 
         @Serial
