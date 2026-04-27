@@ -70,7 +70,7 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
             width: '50rem',
             modal: true,
             closable: true,
-            closeOnEscape: false,
+            closeOnEscape: true,
             dismissableMask: false,
             styleClass: 'live-events-modal-window',
             data: {
