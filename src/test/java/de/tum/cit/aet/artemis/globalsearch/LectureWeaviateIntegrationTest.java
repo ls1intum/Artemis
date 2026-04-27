@@ -146,7 +146,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
 
         // Verify the title was corrected in the database
         assertThat(newLecture.getTitle()).isEqualTo("Lecture 2");
-        assertThat(newLecture.getStartDate().toInstant()).isEqualTo(date2.toInstant());
+        assertThat(newLecture.getStartDate().toInstant().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(date2.toInstant().truncatedTo(ChronoUnit.MILLIS));
 
         // Verify Weaviate has the corrected title, not the original "Lecture 3"
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
