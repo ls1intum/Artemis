@@ -24,8 +24,8 @@ import de.tum.cit.aet.artemis.core.dto.CourseRequestDecisionDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestsAdminOverviewDTO;
 import de.tum.cit.aet.artemis.core.dto.RequesterCourseDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRequestRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -41,7 +41,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     private CourseTestRepository courseRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     private User student;
 
