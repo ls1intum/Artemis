@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.lecture.web.LectureResource;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
@@ -153,6 +154,24 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             var properties = queryLectureProperties(weaviateService, newLecture.getId());
             assertThat(properties).as("New lecture should be indexed in Weaviate").isNotNull();
             assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("Lecture 2");
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportLecture_indexesLectureUnitsInWeaviate() throws Exception {
+        Lecture sourceLecture = lectureUtilService.createLecture(course);
+        TextUnit textUnit = lectureUtilService.createTextUnit(sourceLecture);
+
+        var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import/" + sourceLecture.getId() + "?courseId=" + course.getId(), null,
+                LectureResource.SimpleLectureDTO.class, HttpStatus.CREATED);
+
+        Lecture newlyImportedLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(importedLectureDto.id());
+        TextUnit importedTextUnit = (TextUnit) newlyImportedLecture.getLectureUnits().stream().filter(u -> u instanceof TextUnit).findFirst().orElseThrow();
+
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            assertLectureExistsInWeaviate(weaviateService, newlyImportedLecture);
+            assertLectureUnitExistsInWeaviate(weaviateService, importedTextUnit.getId());
         });
     }
 }

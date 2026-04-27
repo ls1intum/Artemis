@@ -508,6 +508,7 @@ public class LectureResource {
     private void indexLectureInWeaviate(Lecture lecture) {
         if (searchableEntityWeaviateService != null) {
             searchableEntityWeaviateService.upsertLectureAsync(lecture);
+            lecture.getLectureUnits().forEach(searchableEntityWeaviateService::upsertLectureUnitAsync);
         }
     }
 
