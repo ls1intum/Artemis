@@ -25,7 +25,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
-import { GlobalSearchResult } from 'app/core/navbar/global-search/services/global-search.service';
+import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
 import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
@@ -181,7 +181,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         this.entityClick.emit(entity);
     }
 
-    protected getIconForType(type: string, badge?: string): IconDefinition {
+    protected getIconForType(type?: string, badge?: string): IconDefinition {
         if (type === 'exercise') {
             if (badge === 'Programming') return this.faKeyboard;
             if (badge === 'Modeling') return this.faProjectDiagram;
@@ -206,7 +206,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     }
 
     protected navigateToResult(result: GlobalSearchResult) {
-        const courseId = result.metadata['courseId'];
+        const courseId = result.metadata?.['courseId'];
         if (!courseId) {
             this.overlay.close();
             return;
@@ -216,7 +216,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         } else if (result.type === 'lecture' && result.id) {
             this.router.navigate(['/courses', courseId, 'lectures', result.id]);
         } else if (result.type === 'lecture_unit' && result.id) {
-            const lectureId = result.metadata['lectureId'];
+            const lectureId = result.metadata?.['lectureId'];
             if (lectureId) {
                 this.router.navigate(['/courses', courseId, 'lectures', lectureId]);
             }
