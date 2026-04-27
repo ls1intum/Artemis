@@ -406,6 +406,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(createdCourse.getShortName()).isEqualTo("MODTITL");
         assertThat(createdCourse.getSemester()).isEqualTo("SS2026");
         assertThat(createdCourse.isTestCourse()).isTrue();
+        assertThat(createdCourse.getStartDate().toInstant()).isEqualTo(startDate.toInstant());
+        assertThat(createdCourse.getEndDate().toInstant()).isEqualTo(endDate.toInstant());
     }
 
     private CourseRequest createTestCourseRequest(String title) {

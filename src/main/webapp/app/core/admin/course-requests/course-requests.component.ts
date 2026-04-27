@@ -170,20 +170,20 @@ export class CourseRequestsComponent implements OnInit {
             return;
         }
 
-        const startDate = this.acceptForm.get('startDate')!.value;
-        const endDate = this.acceptForm.get('endDate')!.value;
+        const startDate = this.acceptForm.controls.startDate.value ?? undefined;
+        const endDate = this.acceptForm.controls.endDate.value ?? undefined;
         if (startDate && endDate && !startDate.isBefore(endDate)) {
             this.acceptDateRangeInvalid.set(true);
             return;
         }
 
         const payload: CourseRequestAcceptPayload = {
-            title: this.acceptForm.get('title')!.value!,
-            shortName: this.acceptForm.get('shortName')!.value!,
-            semester: this.acceptForm.get('semester')!.value ?? undefined,
-            startDate: startDate ?? undefined,
-            endDate: endDate ?? undefined,
-            testCourse: this.acceptForm.get('testCourse')!.value ?? false,
+            title: this.acceptForm.controls.title.value!,
+            shortName: this.acceptForm.controls.shortName.value!,
+            semester: this.acceptForm.controls.semester.value ?? undefined,
+            startDate,
+            endDate,
+            testCourse: this.acceptForm.controls.testCourse.value ?? false,
         };
 
         this.isSubmittingAccept.set(true);

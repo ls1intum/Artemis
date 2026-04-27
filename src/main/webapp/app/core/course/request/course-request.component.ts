@@ -46,20 +46,20 @@ export class CourseRequestComponent {
             this.form.markAllAsTouched();
             return;
         }
-        const startDate = this.form.get('startDate')!.value ?? undefined;
-        const endDate = this.form.get('endDate')!.value ?? undefined;
+        const startDate = this.form.controls.startDate.value ?? undefined;
+        const endDate = this.form.controls.endDate.value ?? undefined;
         if (startDate && endDate && !startDate.isBefore(endDate)) {
             this.dateRangeInvalid = true;
             return;
         }
 
         const payload: BaseCourseRequest = {
-            title: this.form.get('title')!.value!,
-            semester: this.form.get('semester')!.value ?? undefined,
+            title: this.form.controls.title.value!,
+            semester: this.form.controls.semester.value ?? undefined,
             startDate,
             endDate,
-            testCourse: this.form.get('testCourse')!.value ?? false,
-            reason: this.form.get('reason')!.value!,
+            testCourse: this.form.controls.testCourse.value ?? false,
+            reason: this.form.controls.reason.value!,
         };
 
         this.isSubmitting = true;
