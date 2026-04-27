@@ -4,7 +4,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -18,7 +18,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -28,13 +28,19 @@ describe('StudentsUploadImagesDialogComponent', () => {
     let fixture: ComponentFixture<StudentsUploadImagesDialogComponent>;
     let component: StudentsUploadImagesDialogComponent;
     let examManagementService: ExamManagementService;
+    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
+    let dialogRef: DynamicDialogRef;
 
     const course: Course = { id: 1 };
     const exam: Exam = { course, id: 2, title: 'Exam Title' };
 
-    let ngbModal: NgbActiveModal;
-
     beforeEach(async () => {
+        dialogRefCloseSpy = vi.fn();
+        dialogRef = {
+            close: dialogRefCloseSpy,
+            onClose: new Subject<any>(),
+        } as unknown as DynamicDialogRef;
+
         await TestBed.configureTestingModule({
             imports: [
                 FaIconComponent,
@@ -45,7 +51,8 @@ describe('StudentsUploadImagesDialogComponent', () => {
                 MockComponent(HelpIconComponent),
             ],
             providers: [
-                MockProvider(NgbActiveModal),
+                { provide: DynamicDialogRef, useValue: dialogRef },
+                { provide: DynamicDialogConfig, useValue: { data: { courseId: course.id, exam } } },
                 MockProvider(AlertService),
                 MockProvider(ExamManagementService),
                 provideHttpClientTesting(),
@@ -58,13 +65,16 @@ describe('StudentsUploadImagesDialogComponent', () => {
         fixture = TestBed.createComponent(StudentsUploadImagesDialogComponent);
         component = fixture.componentInstance;
         examManagementService = TestBed.inject(ExamManagementService);
-        component.courseId.set(course.id);
-        component.exam.set(exam);
-        ngbModal = TestBed.inject(NgbActiveModal);
+        fixture.detectChanges();
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('should read courseId and exam from dialog config', () => {
+        expect(component.courseId()).toBe(course.id);
+        expect(component.exam()).toBe(exam);
     });
 
     it('should reset dialog when selecting pdf file', async () => {
@@ -78,19 +88,16 @@ describe('StudentsUploadImagesDialogComponent', () => {
     });
 
     it('should call the function to cancel the dialog', () => {
-        const spyModalClose = vi.spyOn(ngbModal, 'dismiss');
         component.clear();
-        expect(spyModalClose).toHaveBeenCalledOnce();
+        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
     });
 
-    it('should call the function onFinish and then close the dialog', () => {
-        const spyModalClose = vi.spyOn(ngbModal, 'close');
+    it('should call the function onFinish and then close the dialog with finished result', () => {
         component.onFinish();
-        expect(spyModalClose).toHaveBeenCalledOnce();
+        expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith('finished');
     });
 
     it('should upload and save images correctly', () => {
-        fixture.detectChanges();
         const response: any = {
             numberOfUsersNotFound: 1,
             numberOfImagesSaved: 10,

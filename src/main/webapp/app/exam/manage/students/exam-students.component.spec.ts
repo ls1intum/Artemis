@@ -16,7 +16,8 @@ import { StudentsUploadImagesButtonComponent } from 'app/exam/manage/students/up
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { DialogService } from 'primeng/dynamicdialog';
 import { Observable, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -93,6 +94,7 @@ describe('ExamStudentsComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: DeleteDialogService, useClass: MockDialogService },
+                MockProvider(DialogService),
                 provideHttpClientTesting(),
             ],
         }).compileComponents();

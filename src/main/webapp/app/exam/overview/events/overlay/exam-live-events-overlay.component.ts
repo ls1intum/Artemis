@@ -9,7 +9,7 @@ import {
     ProblemStatementUpdateEvent,
 } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { USER_DISPLAY_RELEVANT_EVENTS, USER_DISPLAY_RELEVANT_EVENTS_REOPEN } from 'app/exam/overview/events/button/exam-live-events-button.component';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -23,7 +23,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 })
 export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     private liveEventsService = inject(ExamParticipationLiveEventsService);
-    private activeModal = inject(NgbActiveModal);
+    private dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
 
     private allLiveEventsSubscription?: Subscription;
@@ -45,6 +46,11 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        const data = this.dialogConfig?.data;
+        if (data?.examStartDate) {
+            this.examStartDate.set(data.examStartDate);
+        }
+
         this.allLiveEventsSubscription = this.liveEventsService.observeAllEvents(USER_DISPLAY_RELEVANT_EVENTS_REOPEN).subscribe((events: ExamLiveEvent[]) => {
             // display the problem statements events only after the start of the exam
             this.events.set(events.filter((event) => !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(this.examStartDate()))));
@@ -85,7 +91,7 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     }
 
     closeOverlay() {
-        this.activeModal.close('cancel');
+        this.dialogRef.close('cancel');
     }
 
     updateEventsToDisplay() {

@@ -1,6 +1,6 @@
-import { Component, OnDestroy, ViewEncapsulation, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
@@ -26,8 +26,9 @@ class NotFoundExamUserType {
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, NgClass, ArtemisTranslatePipe],
 })
-export class StudentsUploadImagesDialogComponent implements OnDestroy {
-    private activeModal = inject(NgbActiveModal);
+export class StudentsUploadImagesDialogComponent implements OnInit, OnDestroy {
+    private dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
     private alertService = inject(AlertService);
     private examManagementService = inject(ExamManagementService);
 
@@ -53,16 +54,28 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     faUpload = faUpload;
     faArrowRight = faArrowRight;
 
+    ngOnInit(): void {
+        const data = this.dialogConfig?.data;
+        if (data) {
+            if (data.courseId !== undefined) {
+                this.courseId.set(data.courseId);
+            }
+            if (data.exam !== undefined) {
+                this.exam.set(data.exam);
+            }
+        }
+    }
+
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
     }
 
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close();
     }
 
     onFinish() {
-        this.activeModal.close();
+        this.dialogRef.close('finished');
     }
 
     private resetDialog() {

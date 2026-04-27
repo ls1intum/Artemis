@@ -17,6 +17,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockProvider } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
@@ -41,6 +43,7 @@ describe('Exam Navigation Bar Component', () => {
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(DialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

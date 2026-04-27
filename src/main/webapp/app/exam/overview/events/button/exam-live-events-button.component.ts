@@ -1,8 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, signal } from '@angular/core';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/shared/service/alert.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Subscription, from } from 'rxjs';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { ExamLiveEventsOverlayComponent } from 'app/exam/overview/events/overlay/exam-live-events-overlay.component';
 import dayjs from 'dayjs/esm';
@@ -25,10 +26,11 @@ export const USER_DISPLAY_RELEVANT_EVENTS_REOPEN = [ExamLiveEventType.EXAM_WIDE_
 })
 export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
     private liveEventsService = inject(ExamParticipationLiveEventsService);
 
-    private modalRef?: NgbModalRef;
+    private dialogRef: DynamicDialogRef | null | undefined;
     private liveEventsSubscription?: Subscription;
     private allEventsSubscription?: Subscription;
     readonly eventCount = signal(0);
@@ -46,7 +48,7 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
 
         this.liveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate()).subscribe(() => {
             // If any unacknowledged event comes in, open the dialog to display it
-            if (!this.modalRef) {
+            if (!this.dialogRef) {
                 this.openDialog();
             }
         });
@@ -61,16 +63,19 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
         event?.preventDefault();
 
         this.alertService.closeAll();
-        this.modalRef = this.modalService.open(ExamLiveEventsOverlayComponent, {
-            size: 'lg',
-            backdrop: 'static',
-            animation: false,
-            centered: true,
-            windowClass: 'live-events-modal-window',
+        this.dialogRef = this.dialogService.open(ExamLiveEventsOverlayComponent, {
+            header: this.translateService.instant('artemisApp.exam.events.title'),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: false,
+            dismissableMask: false,
+            styleClass: 'live-events-modal-window',
+            data: {
+                examStartDate: this.examStartDate(),
+            },
         });
 
-        this.modalRef.componentInstance.examStartDate.set(this.examStartDate());
-
-        from(this.modalRef.result).subscribe(() => (this.modalRef = undefined));
+        this.dialogRef?.onClose.subscribe(() => (this.dialogRef = undefined));
     }
 }

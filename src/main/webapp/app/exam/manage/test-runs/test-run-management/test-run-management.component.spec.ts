@@ -2,7 +2,6 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -16,17 +15,16 @@ import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-m
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortService } from 'app/shared/service/sort.service';
 import { MockDirective } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { DialogService } from 'primeng/dynamicdialog';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
 describe('Test Run Management Component', () => {
     setupTestBed({ zoneless: true });
 
@@ -34,7 +32,7 @@ describe('Test Run Management Component', () => {
     let fixture: ComponentFixture<TestRunManagementComponent>;
     let examManagementService: ExamManagementService;
     let accountService: AccountService;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
     let userSpy: ReturnType<typeof vi.spyOn>;
 
     const course = { id: 1, isAtLeastInstructor: true } as Course;
@@ -54,9 +52,8 @@ describe('Test Run Management Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 MockDirective(TranslateDirective),
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useValue: { open: vi.fn() } },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: DialogService, useClass: MockDialogService },
             ],
         })
             .compileComponents()
@@ -65,7 +62,7 @@ describe('Test Run Management Component', () => {
                 component = fixture.componentInstance;
                 examManagementService = TestBed.inject(ExamManagementService);
                 accountService = TestBed.inject(AccountService);
-                modalService = TestBed.inject(NgbModal);
+                dialogService = TestBed.inject(DialogService);
                 vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
                 vi.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
                 userSpy = vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
@@ -115,9 +112,8 @@ describe('Test Run Management Component', () => {
             const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
             exam.exerciseGroups = [exerciseGroup];
 
-            const componentInstance = { title: String, text: String };
-            const result = new Promise((resolve) => resolve({} as StudentExam));
-            vi.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
+            const onCloseSubject = new Subject<StudentExam | undefined>();
+            vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: onCloseSubject.asObservable() } as DynamicDialogRef);
             vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(of(new HttpResponse({ body: { id: 3, user: { id: 90 }, exercises: [exercise] } as StudentExam })));
             fixture.detectChanges();
 
@@ -126,6 +122,8 @@ describe('Test Run Management Component', () => {
             expect(createTestRunButton).toBeTruthy();
             expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
             createTestRunButton.nativeElement.click();
+
+            onCloseSubject.next({} as StudentExam);
 
             await Promise.resolve();
 
@@ -139,9 +137,8 @@ describe('Test Run Management Component', () => {
             exam.exerciseGroups = [exerciseGroup];
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
 
-            const componentInstance = { title: String, text: String };
-            const result = new Promise((resolve) => resolve({} as StudentExam));
-            vi.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
+            const onCloseSubject = new Subject<StudentExam | undefined>();
+            vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: onCloseSubject.asObservable() } as DynamicDialogRef);
             vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(throwError(() => httpError));
             vi.spyOn(alertService, 'error');
             fixture.detectChanges();
@@ -151,8 +148,29 @@ describe('Test Run Management Component', () => {
             expect(createTestRunButton).toBeTruthy();
             expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
             createTestRunButton.nativeElement.click();
-            await result;
+
+            onCloseSubject.next({} as StudentExam);
+
+            await Promise.resolve();
             expect(alertService.error).toHaveBeenCalledOnce();
+        });
+
+        it('should not create test run when dialog closes without configuration', async () => {
+            const exercise = { id: 1 } as Exercise;
+            const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
+            exam.exerciseGroups = [exerciseGroup];
+
+            const onCloseSubject = new Subject<StudentExam | undefined>();
+            vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: onCloseSubject.asObservable() } as DynamicDialogRef);
+            const createTestRunSpy = vi.spyOn(examManagementService, 'createTestRun');
+            fixture.detectChanges();
+
+            const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
+            createTestRunButton.nativeElement.click();
+            onCloseSubject.next(undefined);
+
+            await Promise.resolve();
+            expect(createTestRunSpy).not.toHaveBeenCalled();
         });
     });
 

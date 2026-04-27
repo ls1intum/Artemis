@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
-import { of } from 'rxjs';
+import { Subject } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -17,13 +17,13 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
 
     let component: ExamLiveAnnouncementCreateButtonComponent;
     let fixture: ComponentFixture<ExamLiveAnnouncementCreateButtonComponent>;
-    let mockModalService: NgbModal;
+    let mockDialogService: DialogService;
     let mockAlertService: AlertService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             providers: [
-                { provide: NgbModal, useValue: { open: vi.fn() } },
+                { provide: DialogService, useValue: { open: vi.fn() } },
                 { provide: AlertService, useValue: { closeAll: vi.fn() } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -31,7 +31,7 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
 
         fixture = TestBed.createComponent(ExamLiveAnnouncementCreateButtonComponent);
         component = fixture.componentInstance;
-        mockModalService = TestBed.inject(NgbModal);
+        mockDialogService = TestBed.inject(DialogService);
         mockAlertService = TestBed.inject(AlertService);
 
         const exam = {
@@ -59,12 +59,15 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
     });
 
     it('should open dialog when button is clicked', () => {
-        vi.spyOn(mockModalService, 'open').mockReturnValue({ componentInstance: {}, result: of() } as any);
+        const dialogSpy = vi.spyOn(mockDialogService, 'open').mockReturnValue({ onClose: new Subject<any>() } as unknown as DynamicDialogRef);
         const button = fixture.debugElement.query(By.css('.btn-warning'));
         button.triggerEventHandler('click', new MouseEvent('click'));
 
         expect(mockAlertService.closeAll).toHaveBeenCalled();
-        expect(mockModalService.open).toHaveBeenCalled();
+        expect(dialogSpy).toHaveBeenCalledOnce();
+        const config = dialogSpy.mock.calls[0][1];
+        expect(config?.data?.examId).toBe(1);
+        expect(config?.data?.courseId).toBe(2);
     });
 
     it('should not open dialog when announcementCreationAllowed is false', () => {
@@ -81,6 +84,6 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
         button.nativeElement.click();
 
         expect(mockAlertService.closeAll).not.toHaveBeenCalled();
-        expect(mockModalService.open).not.toHaveBeenCalled();
+        expect(mockDialogService.open).not.toHaveBeenCalled();
     });
 });

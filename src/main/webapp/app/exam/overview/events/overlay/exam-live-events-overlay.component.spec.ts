@@ -1,13 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExamLiveEventsOverlayComponent } from 'app/exam/overview/events/overlay/exam-live-events-overlay.component';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/overview/services/exam-participation-live-events.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { MockProvider } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
@@ -18,11 +17,24 @@ describe('ExamLiveEventsOverlayComponent', () => {
     let fixture: ComponentFixture<ExamLiveEventsOverlayComponent>;
     let mockLiveEventsService: ExamParticipationLiveEventsService;
     let mockExamExerciseUpdateService: ExamExerciseUpdateService;
-    let mockActiveModal: NgbActiveModal;
+    let mockDialogRef: DynamicDialogRef;
+    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
 
     beforeEach(async () => {
+        dialogRefCloseSpy = vi.fn();
+        mockDialogRef = {
+            close: dialogRefCloseSpy,
+            onClose: new Subject<any>(),
+        } as unknown as DynamicDialogRef;
+
         await TestBed.configureTestingModule({
-            providers: [SessionStorageService, provideHttpClient(), provideHttpClientTesting(), MockProvider(NgbActiveModal)],
+            providers: [
+                SessionStorageService,
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: DynamicDialogRef, useValue: mockDialogRef },
+                { provide: DynamicDialogConfig, useValue: { data: {} } },
+            ],
         }).compileComponents();
     });
 
@@ -31,7 +43,6 @@ describe('ExamLiveEventsOverlayComponent', () => {
         component = fixture.componentInstance;
         mockLiveEventsService = TestBed.inject(ExamParticipationLiveEventsService);
         mockExamExerciseUpdateService = TestBed.inject(ExamExerciseUpdateService);
-        mockActiveModal = TestBed.inject(NgbActiveModal);
         fixture.detectChanges();
     });
 
@@ -83,11 +94,9 @@ describe('ExamLiveEventsOverlayComponent', () => {
     });
 
     it('should close overlay', () => {
-        vi.spyOn(mockActiveModal, 'close');
-
         component.closeOverlay();
 
-        expect(mockActiveModal.close).toHaveBeenCalledWith('cancel');
+        expect(dialogRefCloseSpy).toHaveBeenCalledWith('cancel');
     });
 
     it('should update events to display based on unacknowledgedEvents', () => {
