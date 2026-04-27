@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
@@ -335,8 +336,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             LegacyBuildPlanConverterService.DataFromLegacyFormat dataFromLegacyFormat = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise)
                     .orElse(null);
             if (dataFromLegacyFormat != null) {
+                List<String> resultPaths = finalizeResultPaths(buildConfig, dataFromLegacyFormat.resultPaths().stream());
                 return new BuildConfig(dataFromLegacyFormat.buildScript(), dataFromLegacyFormat.dockerImage(), commitHashToBuild, assignmentCommitHash, testCommitHash, branch,
-                        programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, dataFromLegacyFormat.resultPaths(), buildConfig.getTimeoutSeconds(),
+                        programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(),
                         buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
             }
             log.error("The build config with id {} has a build script and plan but the legacy exercise was not able to be interpreted", buildConfig.getId());
@@ -352,15 +354,20 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
 
-        final Set<String> gatheredGlobResultPaths = BuildPhaseEvaluationService.gatherResultPaths(activePhases);
-        List<String> resultPaths = gatheredGlobResultPaths.stream().map(path -> LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + path).toList();
-        resultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
+        final Set<String> resultPathsSet = BuildPhaseEvaluationService.gatherResultPaths(activePhases);
+        final List<String> resultPaths = finalizeResultPaths(buildConfig, resultPathsSet.stream());
 
         final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
                 buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+    }
+
+    private List<String> finalizeResultPaths(final ProgrammingExerciseBuildConfig buildConfig, final Stream<String> resultPaths) {
+        List<String> resultPathsList = resultPaths.map(path -> LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + path).toList();
+        resultPathsList = buildScriptProviderService.replaceResultPathsPlaceholders(resultPathsList, buildConfig);
+        return resultPathsList;
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {
