@@ -318,6 +318,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private adjustScrollForAnchor() {
         if (!this.scrollAnchorElement) return;
+        if (!this.scrollAnchorElement.isConnected) {
+            this.clearScrollAnchor();
+            return;
+        }
         const container = this.content().nativeElement;
         const expectedScrollTop = Math.max(0, this.scrollAnchorElement.offsetTop - this.scrollAnchorVisualOffset);
         if (Math.abs(container.scrollTop - expectedScrollTop) > 1) {

@@ -841,6 +841,7 @@ examples.forEach((activeConversation) => {
         it('should adjust scroll position when anchor element offset changes', () => {
             const mockElement = document.createElement('div');
             Object.defineProperty(mockElement, 'offsetTop', { value: 200, configurable: true });
+            Object.defineProperty(mockElement, 'isConnected', { value: true, configurable: true });
 
             const mockContainer = {
                 scrollTop: 100,
@@ -871,6 +872,17 @@ examples.forEach((activeConversation) => {
 
             (component as any).adjustScrollForAnchor();
             expect(mockContainer.scrollTop).toBe(100);
+        });
+
+        it('should clear scroll anchor when anchor element is disconnected from DOM', () => {
+            const mockElement = document.createElement('div');
+            Object.defineProperty(mockElement, 'isConnected', { value: false, configurable: true });
+
+            (component as any).setScrollAnchor(mockElement, 10);
+            expect((component as any).scrollAnchorElement).toBe(mockElement);
+
+            (component as any).adjustScrollForAnchor();
+            expect((component as any).scrollAnchorElement).toBeUndefined();
         });
 
         it('should clear scroll anchor on user scroll', () => {
