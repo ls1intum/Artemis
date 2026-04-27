@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
@@ -244,7 +245,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // Pre-populate Weaviate with the exercise to avoid race condition on first insert
         // This ensures we're actually testing the UPDATE path, not the INSERT path
         if (searchableEntityWeaviateService != null && weaviateService != null) {
-            searchableEntityWeaviateService.upsertExerciseAsync(programmingExercise);
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
             // Wait for initial insert to complete before proceeding with update
             await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());

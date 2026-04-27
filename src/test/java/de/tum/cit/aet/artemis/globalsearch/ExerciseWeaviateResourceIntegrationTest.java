@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -149,12 +151,12 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         lecture = lectureTestRepository.save(lecture);
 
         // Index all exercises and the lecture in Weaviate
-        searchableEntityWeaviateService.upsertExerciseAsync(releasedExercise);
-        searchableEntityWeaviateService.upsertExerciseAsync(unreleasedExercise);
-        searchableEntityWeaviateService.upsertExerciseAsync(notStartedExamExercise);
-        searchableEntityWeaviateService.upsertExerciseAsync(ongoingExamExercise);
-        searchableEntityWeaviateService.upsertExerciseAsync(endedExamExercise);
-        searchableEntityWeaviateService.upsertLectureAsync(lecture);
+        searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(releasedExercise));
+        searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(unreleasedExercise));
+        searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(notStartedExamExercise));
+        searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(ongoingExamExercise));
+        searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(endedExamExercise));
+        searchableEntityWeaviateService.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
 
         // Wait for all entities to be indexed
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {

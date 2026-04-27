@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
@@ -139,8 +141,9 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         // Create an exam with exercises via util and seed them in Weaviate
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course);
         examUtilService.addExamChannel(exam, "weaviate-wt-ex-test");
-        searchableEntityWeaviateService.upsertExamAsync(exam);
-        searchableEntityWeaviateService.updateExamExercisesAsync(exam);
+        searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(exam));
+        searchableEntityWeaviateService.updateExercisesAsync(exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, exam)).toList(), exam.getId());
 
         // Verify exercises are initially indexed with original exam dates
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
@@ -173,8 +176,9 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         // Create an exam with exercises via util and seed them in Weaviate
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course);
         examUtilService.addExamChannel(exam, "weaviate-upd-ex-test");
-        searchableEntityWeaviateService.upsertExamAsync(exam);
-        searchableEntityWeaviateService.updateExamExercisesAsync(exam);
+        searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(exam));
+        searchableEntityWeaviateService.updateExercisesAsync(exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, exam)).toList(), exam.getId());
 
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             for (ExerciseGroup group : exam.getExerciseGroups()) {
