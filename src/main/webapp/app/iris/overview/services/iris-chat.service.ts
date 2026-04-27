@@ -99,6 +99,7 @@ export class IrisChatService implements OnDestroy {
     private acceptSubscription?: Subscription;
     private chatSessionSubscription?: Subscription;
     private chatSessionByIdSubscription?: Subscription;
+    private authenticationStateSubscription: Subscription;
 
     private sessionCreationIdentifier?: string;
 
@@ -119,9 +120,39 @@ export class IrisChatService implements OnDestroy {
 
     latestStartedSession?: IrisSessionDTO;
 
+    private currentUserId?: number;
+
     protected constructor() {
         this.rateLimitSubscription = this.irisStatusService.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
         this.updateCourseId();
+        // Reset all state when the authenticated user changes (logout or login as different user)
+        // to prevent leaking the previous user's chat data into the new session.
+        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
+            if (this.currentUserId !== user?.id) {
+                this.currentUserId = user?.id;
+                this.resetState();
+            }
+        });
+    }
+
+    /**
+     * Clears all in-memory chat state held by this service. Used on logout / user change to avoid leaking
+     * the previous user's session data into the next user's view.
+     */
+    private resetState(): void {
+        this.close();
+        this.chatSessionSubscription?.unsubscribe();
+        this.chatSessionSubscription = undefined;
+        this.chatSessionByIdSubscription?.unsubscribe();
+        this.chatSessionByIdSubscription = undefined;
+        this.acceptSubscription?.unsubscribe();
+        this.acceptSubscription = undefined;
+        this.chatSessions.next([]);
+        this.latestStartedSession = undefined;
+        this.sessionCreationIdentifier = undefined;
+        this.hasJustAcceptedLLMUsage = false;
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- intentional internal reset
+        this.courseId = undefined;
     }
 
     /**
@@ -172,6 +203,7 @@ export class IrisChatService implements OnDestroy {
         this.acceptSubscription?.unsubscribe();
         this.chatSessionSubscription?.unsubscribe();
         this.chatSessionByIdSubscription?.unsubscribe();
+        this.authenticationStateSubscription?.unsubscribe();
     }
 
     protected start() {

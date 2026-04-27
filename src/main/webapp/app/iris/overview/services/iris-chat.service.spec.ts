@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
-import { Observable, Subject, filter, firstValueFrom, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, filter, firstValueFrom, of, throwError } from 'rxjs';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
@@ -609,6 +609,75 @@ describe('IrisChatService', () => {
             inFlight.complete();
 
             expect(emissions).toBe(1);
+        });
+    });
+
+    describe('authentication state changes', () => {
+        let authState: BehaviorSubject<User | undefined>;
+        let scopedService: IrisChatService;
+
+        beforeEach(() => {
+            authState = new BehaviorSubject<User | undefined>({ id: 99 } as User);
+            const customAccountService = {
+                ...new MockAccountService(),
+                getAuthenticationState: () => authState.asObservable(),
+            };
+
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                providers: [
+                    IrisChatService,
+                    MockProvider(IrisChatHttpService),
+                    MockProvider(IrisWebsocketService),
+                    { provide: IrisStatusService, useValue: statusMock },
+                    { provide: UserService, useValue: userMock },
+                    { provide: AccountService, useValue: customAccountService },
+                    { provide: Router, useValue: routerMock },
+                ],
+            });
+            scopedService = TestBed.inject(IrisChatService);
+            scopedService.setCourseId(courseId);
+        });
+
+        it('should clear all chat state when the user logs out', () => {
+            scopedService.sessionId = id;
+            scopedService.messages.next([mockServerMessage]);
+            scopedService.chatSessions.next([{ id: 1 } as IrisSessionDTO]);
+            scopedService.latestStartedSession = { id: 1 } as IrisSessionDTO;
+            scopedService['sessionCreationIdentifier'] = 'course-chat/1';
+            scopedService.hasJustAcceptedLLMUsage = true;
+
+            authState.next(undefined);
+
+            expect(scopedService.sessionId).toBeUndefined();
+            expect(scopedService.messages.getValue()).toEqual([]);
+            expect(scopedService.chatSessions.getValue()).toEqual([]);
+            expect(scopedService.latestStartedSession).toBeUndefined();
+            expect(scopedService['sessionCreationIdentifier']).toBeUndefined();
+            expect(scopedService.hasJustAcceptedLLMUsage).toBe(false);
+            expect(scopedService.getCourseId()).toBeUndefined();
+        });
+
+        it('should clear chat state when a different user logs in', () => {
+            scopedService.sessionId = id;
+            scopedService.messages.next([mockServerMessage]);
+            scopedService.chatSessions.next([{ id: 1 } as IrisSessionDTO]);
+
+            authState.next({ id: 42 } as User);
+
+            expect(scopedService.sessionId).toBeUndefined();
+            expect(scopedService.messages.getValue()).toEqual([]);
+            expect(scopedService.chatSessions.getValue()).toEqual([]);
+        });
+
+        it('should not clear state when the same user re-emits', () => {
+            scopedService.sessionId = id;
+            scopedService.messages.next([mockServerMessage]);
+
+            authState.next({ id: 99 } as User);
+
+            expect(scopedService.sessionId).toBe(id);
+            expect(scopedService.messages.getValue()).toEqual([mockServerMessage]);
         });
     });
 });
