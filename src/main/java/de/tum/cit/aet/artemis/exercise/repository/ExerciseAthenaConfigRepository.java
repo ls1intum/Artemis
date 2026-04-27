@@ -39,7 +39,7 @@ public interface ExerciseAthenaConfigRepository extends ArtemisJpaRepository<Exe
      * Revokes access to restricted Athena modules by nulling out the preliminary and graded
      * feedback module fields for all exercises in the given course that reference a restricted module.
      *
-     * @param courseId         the ID of the course
+     * @param courseId          the ID of the course
      * @param restrictedModules the list of restricted module names
      */
     @Modifying
