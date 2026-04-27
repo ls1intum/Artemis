@@ -4,6 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LectureSearchService } from './lecture-search.service';
+import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 
 describe('LectureSearchService', () => {
@@ -92,6 +93,7 @@ describe('LectureSearchService', () => {
 
         it('should return the answer and sources from the server', () => {
             const mockResult: IrisSearchStatusUpdate = {
+                isThinking: false,
                 answer: 'Signals are a reactive primitive in Angular...',
                 sources: [
                     {
