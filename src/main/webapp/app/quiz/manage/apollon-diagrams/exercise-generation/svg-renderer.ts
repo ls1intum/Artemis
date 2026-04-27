@@ -42,6 +42,67 @@ export function convertRenderedSVGToPNG(renderedSVG: SVG): Promise<Blob> {
 }
 
 /**
+ * Trims excess whitespace from an exported SVG while preserving the original global
+ * clip coordinates so Artemis can still place the element relative to the full diagram.
+ */
+export function trimRenderedSVGToContent(renderedSVG: SVG): SVG {
+    const parser = new DOMParser();
+    const documentFragment = parser.parseFromString(renderedSVG.svg, 'image/svg+xml');
+    const svg = documentFragment.documentElement;
+    if (!(svg instanceof SVGSVGElement)) {
+        return renderedSVG;
+    }
+
+    const host = document.createElement('div');
+    host.style.position = 'absolute';
+    host.style.left = '-9999px';
+    host.style.top = '-9999px';
+    host.style.visibility = 'hidden';
+    host.appendChild(svg);
+    document.body.appendChild(host);
+
+    try {
+        const bbox = svg.getBBox();
+        if (!Number.isFinite(bbox.x) || !Number.isFinite(bbox.y) || !Number.isFinite(bbox.width) || !Number.isFinite(bbox.height) || bbox.width === 0 || bbox.height === 0) {
+            return renderedSVG;
+        }
+
+        const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        wrapper.classList.add('__trim_wrapper__');
+
+        const staticChildren = new Set(['style', 'defs', 'title', 'desc']);
+        const childrenToWrap = Array.from(svg.childNodes).filter((child) => {
+            return !(child instanceof Element) || !staticChildren.has(child.tagName.toLowerCase());
+        });
+
+        for (const child of childrenToWrap) {
+            wrapper.appendChild(child);
+        }
+
+        svg.appendChild(wrapper);
+        wrapper.setAttribute('transform', `translate(${-bbox.x}, ${-bbox.y})`);
+        svg.setAttribute('viewBox', `0 0 ${bbox.width} ${bbox.height}`);
+        svg.setAttribute('width', `${bbox.width}`);
+        svg.setAttribute('height', `${bbox.height}`);
+
+        const serializer = new XMLSerializer();
+        return {
+            svg: serializer.serializeToString(svg),
+            clip: {
+                x: bbox.x,
+                y: bbox.y,
+                width: bbox.width,
+                height: bbox.height,
+            },
+        };
+    } catch {
+        return renderedSVG;
+    } finally {
+        document.body.removeChild(host);
+    }
+}
+
+/**
  * Fallback for HTMLCanvasElement.toBlob().
  */
 // Some browsers (such as IE or Edge) don't support the HTMLCanvasElement.toBlob() method,
