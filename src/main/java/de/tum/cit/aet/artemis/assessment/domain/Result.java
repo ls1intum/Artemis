@@ -24,7 +24,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderBy;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.Table;
 
@@ -95,18 +95,15 @@ public class Result extends DomainObject implements Comparable<Result> {
     private Submission submission;
 
     // No @Cache: actively mutated during manual assessment; NONSTRICT caused stale feedback lists across nodes, same class of bug as #12574.
-    // Use @OrderBy("id") instead of @OrderColumn: under multi-node concurrent assessment writes the @OrderColumn occasionally
-    // left null indexes in the DB, which then made every subsequent load throw
-    // "Illegal null value for list index encountered while reading: NavigableRole[Result.feedbacks]". Insertion order is
-    // preserved by the auto-incremented id, so the visible ordering is unchanged.
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("id")
+    @OrderColumn
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     private List<Feedback> feedbacks = new ArrayList<>();
 
     /**
-     * Defensive cleanup: legacy rows persisted with @OrderColumn could contain nulls in the (now unused) order column.
-     * Strip any null entries that surface when historical data is loaded after the @OrderBy switch.
+     * Removes null entries from the feedbacks list after loading from the database.
+     * Hibernate's @OrderColumn can leave null gaps when feedback entries are deleted without reindexing.
+     * Only cleans already-initialized collections to avoid triggering lazy loading.
      */
     @PostLoad
     private void removeNullFeedbacks() {
