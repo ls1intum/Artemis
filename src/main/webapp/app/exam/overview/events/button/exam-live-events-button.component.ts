@@ -33,6 +33,7 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
     private dialogRef: DynamicDialogRef | null | undefined;
     private liveEventsSubscription?: Subscription;
     private allEventsSubscription?: Subscription;
+    private dialogCloseSubscription?: Subscription;
     readonly eventCount = signal(0);
     readonly examStartDate = input<dayjs.Dayjs>(undefined!);
 
@@ -57,6 +58,7 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.liveEventsSubscription?.unsubscribe();
         this.allEventsSubscription?.unsubscribe();
+        this.dialogCloseSubscription?.unsubscribe();
     }
 
     openDialog(event?: MouseEvent) {
@@ -76,6 +78,7 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
             },
         });
 
-        this.dialogRef?.onClose.subscribe(() => (this.dialogRef = undefined));
+        this.dialogCloseSubscription?.unsubscribe();
+        this.dialogCloseSubscription = this.dialogRef?.onClose.subscribe(() => (this.dialogRef = undefined));
     }
 }
