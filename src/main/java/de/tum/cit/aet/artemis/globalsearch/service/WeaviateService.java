@@ -177,7 +177,8 @@ public class WeaviateService {
         catch (WeaviateApiException e) {
             // Multiple Spring contexts (or concurrent startups) may race between the
             // exists() check and the create() call, causing an "already exists" error.
-            if (e.getMessage() != null && e.getMessage().contains("already exists")) {
+            if (e.getMessage() != null
+                    && (e.getMessage().contains("already exists") || e.getMessage().contains("CLASS_ALREADY_EXISTS") || e.getMessage().contains("TYPE_ADD_CLASS"))) {
                 log.debug("Collection '{}' was created concurrently, ignoring", collectionName);
             }
             else {

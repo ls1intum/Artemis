@@ -176,7 +176,8 @@ public class WeaviateMigrationService {
             log.info("Created schema version tracking collection '{}'", name);
         }
         catch (WeaviateApiException e) {
-            if (e.getMessage() != null && e.getMessage().contains("already exists")) {
+            if (e.getMessage() != null
+                    && (e.getMessage().contains("already exists") || e.getMessage().contains("CLASS_ALREADY_EXISTS") || e.getMessage().contains("TYPE_ADD_CLASS"))) {
                 log.debug("Collection '{}' was created concurrently, ignoring", name);
             }
             else {
@@ -193,11 +194,22 @@ public class WeaviateMigrationService {
         var versionCollection = client.collections.use(collectionPrefix + VERSION_COLLECTION_BASE_NAME);
         Map<String, Object> props = Map.of(SCHEMA_VERSION_PROPERTY, version);
 
-        if (versionCollection.data.exists(VERSION_OBJECT_UUID)) {
-            versionCollection.data.replace(VERSION_OBJECT_UUID, r -> r.properties(props));
+        try {
+            if (versionCollection.data.exists(VERSION_OBJECT_UUID)) {
+                versionCollection.data.replace(VERSION_OBJECT_UUID, r -> r.properties(props));
+            }
+            else {
+                versionCollection.data.insert(props, o -> o.uuid(VERSION_OBJECT_UUID));
+            }
         }
-        else {
-            versionCollection.data.insert(props, o -> o.uuid(VERSION_OBJECT_UUID));
+        catch (WeaviateApiException e) {
+            // Concurrent initialization might have inserted the object between exists() and insert()
+            if (e.getMessage() != null && e.getMessage().contains("already exists")) {
+                versionCollection.data.replace(VERSION_OBJECT_UUID, r -> r.properties(props));
+            }
+            else {
+                throw e;
+            }
         }
     }
 }

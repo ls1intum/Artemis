@@ -113,12 +113,21 @@ public class V0ToV1Migration implements WeaviateMigration {
                     Map<String, Object> newProps = transformProperties(obj.properties());
                     String uuid = WeaviateUuidUtil.deterministicUuid(SearchableEntitySchema.TypeValues.EXERCISE, entityId);
 
-                    boolean shouldUpsertToNewCollection = newCollection.data.exists(uuid);
-                    if (shouldUpsertToNewCollection) {
-                        newCollection.data.replace(uuid, replaceOptions -> replaceOptions.properties(newProps));
+                    try {
+                        if (newCollection.data.exists(uuid)) {
+                            newCollection.data.replace(uuid, replaceOptions -> replaceOptions.properties(newProps));
+                        }
+                        else {
+                            newCollection.data.insert(newProps, insertOptions -> insertOptions.uuid(uuid));
+                        }
                     }
-                    else {
-                        newCollection.data.insert(newProps, insertOptions -> insertOptions.uuid(uuid));
+                    catch (io.weaviate.client6.v1.api.WeaviateApiException e) {
+                        if (e.getMessage() != null && e.getMessage().contains("already exists")) {
+                            newCollection.data.replace(uuid, replaceOptions -> replaceOptions.properties(newProps));
+                        }
+                        else {
+                            throw e;
+                        }
                     }
 
                     // Successful migration (or update) -> delete from old collection

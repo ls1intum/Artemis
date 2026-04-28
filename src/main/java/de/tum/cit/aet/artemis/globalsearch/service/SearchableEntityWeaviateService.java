@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -150,7 +151,9 @@ public class SearchableEntityWeaviateService {
      */
     @Async
     public void upsertExerciseAsync(ExerciseSearchableEntityDTO dto) {
-        SecurityUtils.setAuthorizationObject();
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
         if (dto == null || dto.exerciseId() == null) {
             log.warn("Cannot upsert exercise without an ID");
             return;
@@ -172,7 +175,9 @@ public class SearchableEntityWeaviateService {
      */
     @Async
     public void updateExercisesAsync(List<ExerciseSearchableEntityDTO> dtos, long examId) {
-        SecurityUtils.setAuthorizationObject();
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
         if (dtos == null) {
             return;
         }
@@ -200,7 +205,9 @@ public class SearchableEntityWeaviateService {
      */
     @Async
     public void upsertLectureAsync(LectureSearchableEntityDTO dto) {
-        SecurityUtils.setAuthorizationObject();
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
         if (dto == null || dto.lectureId() == null) {
             log.warn("Cannot upsert lecture without an ID");
             return;
@@ -223,7 +230,9 @@ public class SearchableEntityWeaviateService {
      */
     @Async
     public void upsertLectureUnitAsync(LectureUnitSearchableEntityDTO dto) {
-        SecurityUtils.setAuthorizationObject();
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
         if (dto == null || dto.lectureUnitId() == null) {
             log.warn("Cannot upsert lecture unit without an ID");
             return;
@@ -246,7 +255,9 @@ public class SearchableEntityWeaviateService {
      */
     @Async
     public void deleteAllLectureUnitsForLectureAsync(long lectureId) {
-        SecurityUtils.setAuthorizationObject();
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
         try {
             var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
             var filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE_UNIT),
@@ -268,7 +279,9 @@ public class SearchableEntityWeaviateService {
      */
     @Async
     public void upsertExamAsync(ExamSearchableEntityDTO dto) {
-        SecurityUtils.setAuthorizationObject();
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
         if (dto == null || dto.examId() == null) {
             log.warn("Cannot upsert exam without an ID");
             return;
@@ -291,7 +304,9 @@ public class SearchableEntityWeaviateService {
      */
     @Async
     public void upsertFaqAsync(FaqSearchableEntityDTO dto) {
-        SecurityUtils.setAuthorizationObject();
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
         if (dto == null || dto.faqId() == null) {
             log.warn("Cannot upsert faq without an ID");
             return;
@@ -314,7 +329,9 @@ public class SearchableEntityWeaviateService {
      */
     @Async
     public void upsertChannelAsync(ChannelSearchableEntityDTO dto) {
-        SecurityUtils.setAuthorizationObject();
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
         if (dto == null || dto.channelId() == null) {
             log.warn("Cannot upsert channel without an ID");
             return;
@@ -338,7 +355,9 @@ public class SearchableEntityWeaviateService {
      */
     @Async
     public void deleteEntityAsync(String type, long entityId) {
-        SecurityUtils.setAuthorizationObject();
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
         try {
             deleteEntityInternal(type, entityId);
             log.debug("Deleted {} row for entity id {}", type, entityId);
@@ -356,7 +375,9 @@ public class SearchableEntityWeaviateService {
      */
     @Async
     public void deleteAllForCourseAsync(long courseId) {
-        SecurityUtils.setAuthorizationObject();
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
         try {
             var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
             var result = collection.data.deleteMany(Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId));
