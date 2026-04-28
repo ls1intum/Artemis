@@ -99,7 +99,7 @@ public class WeaviateMigrationService {
                 return;
             }
 
-            int pendingCount = (int) MIGRATIONS.stream().filter(m -> m.targetVersion() > currentVersion).count();
+            int pendingCount = (int) MIGRATIONS.stream().filter(migration -> migration.targetVersion() > currentVersion).count();
             log.info("Weaviate schema version is {}, latest is {}. Running {} pending migration(s)...", currentVersion, LATEST_VERSION, pendingCount);
 
             for (WeaviateMigration migration : MIGRATIONS) {
@@ -114,9 +114,9 @@ public class WeaviateMigrationService {
 
             log.info("All Weaviate migrations completed. Schema is now at version {}", LATEST_VERSION);
         }
-        catch (Exception e) {
-            log.error("Weaviate migration failed: {}. Search may return incomplete results until entities are re-indexed.", e.getMessage(), e);
-            throw new WeaviateException("Weaviate migration failed: " + e.getMessage(), e);
+        catch (Exception exception) {
+            log.error("Weaviate migration failed: {}. Search may return incomplete results until entities are re-indexed.", exception.getMessage(), exception);
+            throw new WeaviateException("Weaviate migration failed: " + exception.getMessage(), exception);
         }
     }
 
@@ -131,7 +131,7 @@ public class WeaviateMigrationService {
     private int detectCurrentVersion() throws IOException {
         var versionCollection = client.collections.use(collectionPrefix + VERSION_COLLECTION_BASE_NAME);
 
-        var result = versionCollection.query.fetchObjects(b -> b.limit(1));
+        var result = versionCollection.query.fetchObjects(builder -> builder.limit(1));
         if (!result.objects().isEmpty()) {
             Object raw = result.objects().getFirst().properties().get(SCHEMA_VERSION_PROPERTY);
             if (raw instanceof Number number) {
@@ -168,20 +168,20 @@ public class WeaviateMigrationService {
             return;
         }
         try {
-            client.collections.create(name, c -> {
-                c.vectorConfig(VectorConfig.selfProvided());
-                c.properties(Property.integer(SCHEMA_VERSION_PROPERTY));
-                return c;
+            client.collections.create(name, config -> {
+                config.vectorConfig(VectorConfig.selfProvided());
+                config.properties(Property.integer(SCHEMA_VERSION_PROPERTY));
+                return config;
             });
             log.info("Created schema version tracking collection '{}'", name);
         }
-        catch (WeaviateApiException e) {
-            if (e.getMessage() != null
-                    && (e.getMessage().contains("already exists") || e.getMessage().contains("CLASS_ALREADY_EXISTS") || e.getMessage().contains("TYPE_ADD_CLASS"))) {
+        catch (WeaviateApiException exception) {
+            if (exception.getMessage() != null && (exception.getMessage().contains("already exists") || exception.getMessage().contains("CLASS_ALREADY_EXISTS")
+                    || exception.getMessage().contains("TYPE_ADD_CLASS"))) {
                 log.debug("Collection '{}' was created concurrently, ignoring", name);
             }
             else {
-                throw e;
+                throw exception;
             }
         }
     }
@@ -196,19 +196,19 @@ public class WeaviateMigrationService {
 
         try {
             if (versionCollection.data.exists(VERSION_OBJECT_UUID)) {
-                versionCollection.data.replace(VERSION_OBJECT_UUID, r -> r.properties(props));
+                versionCollection.data.replace(VERSION_OBJECT_UUID, replaceOptions -> replaceOptions.properties(props));
             }
             else {
-                versionCollection.data.insert(props, o -> o.uuid(VERSION_OBJECT_UUID));
+                versionCollection.data.insert(props, insertOptions -> insertOptions.uuid(VERSION_OBJECT_UUID));
             }
         }
-        catch (WeaviateApiException e) {
+        catch (WeaviateApiException exception) {
             // Concurrent initialization might have inserted the object between exists() and insert()
-            if (e.getMessage() != null && e.getMessage().contains("already exists")) {
-                versionCollection.data.replace(VERSION_OBJECT_UUID, r -> r.properties(props));
+            if (exception.getMessage() != null && exception.getMessage().contains("already exists")) {
+                versionCollection.data.replace(VERSION_OBJECT_UUID, replaceOptions -> replaceOptions.properties(props));
             }
             else {
-                throw e;
+                throw exception;
             }
         }
     }
