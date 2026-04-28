@@ -10,6 +10,7 @@ import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iri
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { SelectModule } from 'primeng/select';
 import { ChipModule } from 'primeng/chip';
+import { TooltipModule } from 'primeng/tooltip';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
@@ -37,7 +38,7 @@ const EXERCISE_TYPE_TO_CHAT_MODE: Record<string, ChatServiceMode> = {
     selector: 'jhi-context-selection',
     templateUrl: './context-selection.component.html',
     styleUrls: ['./context-selection.component.scss'],
-    imports: [SelectModule, ChipModule, FormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
+    imports: [SelectModule, ChipModule, TooltipModule, FormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContextSelectionComponent {

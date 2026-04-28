@@ -179,7 +179,8 @@
                 "courseGroup": "Kurs",
                 "lecturesGroup": "Vorlesungen",
                 "exercisesGroup": "Aufgaben",
-                "divider": "Kontext gewechselt zu"
+                "divider": "Kontext gewechselt zu",
+                "addContextTooltip": "Vorlesung oder Aufgabe wählen"
             },
             "citation": {
                 "unitLabel": "Einheit:",

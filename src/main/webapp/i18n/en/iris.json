@@ -183,7 +183,8 @@
                 "courseGroup": "Course",
                 "lecturesGroup": "Lectures",
                 "exercisesGroup": "Exercises",
-                "divider": "Context changed to"
+                "divider": "Context changed to",
+                "addContextTooltip": "Select lecture or exercise"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",

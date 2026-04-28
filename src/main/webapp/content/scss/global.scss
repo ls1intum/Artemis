@@ -1397,6 +1397,13 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     transition: transform 0.3s ease;
 }
 
+// Compact tooltip used by Iris context selection trigger
+.p-tooltip.iris-context-tooltip .p-tooltip-text {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.55rem;
+    line-height: 1.2;
+}
+
 // About Iris modal — PrimeNG variant (sidebar chat)
 .p-dialog-mask.about-iris-dialog {
     background-color: rgba(0, 0, 0, 0.3);
