@@ -1508,3 +1508,10 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     background: var(--module-bg);
     transition: max-width 250ms ease-out;
 }
+
+// ng-bootstrap typeahead: ensure long suggestion lists are scrollable
+ngb-typeahead-window.dropdown-menu.show {
+    max-height: min(40dvh, 22rem);
+    overflow-y: auto !important;
+    will-change: unset !important;
+}
