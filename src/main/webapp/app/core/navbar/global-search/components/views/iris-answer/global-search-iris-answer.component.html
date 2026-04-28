@@ -60,7 +60,7 @@
                             class="iris-collapse-btn d-inline-flex align-items-center justify-content-center rounded-pill flex-shrink-0"
                             type="button"
                             (click)="moreOpen.set(false)"
-                            aria-label="Show fewer sources"
+                            [attr.aria-label]="'global.search.irisCollapseSources' | artemisTranslate"
                         >
                             <fa-icon [icon]="faChevronUp" />
                         </button>

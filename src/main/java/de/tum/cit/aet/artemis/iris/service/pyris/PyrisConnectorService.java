@@ -257,6 +257,7 @@ public class PyrisConnectorService {
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
             if (response.getStatusCode().value() != 202) {
                 log.warn("Unexpected status {} from Pyris search/ask async", response.getStatusCode().value());
+                throw new PyrisConnectorException("Unexpected status from Pyris global-search pipeline: " + response.getStatusCode().value());
             }
         }
         catch (HttpStatusCodeException e) {
