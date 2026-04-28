@@ -84,7 +84,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
 
             it('should equal action button count plus results when searching', () => {
                 fixture.componentRef.setInput('showResults', true);
-                fixture.componentRef.setInput('results', [{ id: 1 }, { id: 2 }] as GlobalSearchResult[]);
+                fixture.componentRef.setInput('results', [{ id: '1' }, { id: '2' }] as GlobalSearchResult[]);
                 fixture.detectChanges();
                 expect(component.itemCount()).toBe(4); // 2 buttons + 2 results
             });
@@ -170,14 +170,14 @@ describe('GlobalSearchNavigationViewComponent', () => {
 
             it('should handle Enter on results', () => {
                 fixture.componentRef.setInput('showResults', true);
-                fixture.componentRef.setInput('results', [{ id: 123, type: 'exercise', metadata: { courseId: 1 } }] as GlobalSearchResult[]);
+                fixture.componentRef.setInput('results', [{ id: '123', type: 'exercise', metadata: { courseId: 1 } }] as GlobalSearchResult[]);
                 fixture.componentRef.setInput('selectedIndex', 2); // Iris(0), Lecture(1), Result(2)
                 fixture.detectChanges();
 
                 const event = new KeyboardEvent('keydown', { key: 'Enter' });
                 component.handleKeydown(event);
 
-                expect(router.navigate).toHaveBeenCalledWith(['/courses', 1, 'exercises', 123]);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 1, 'exercises', '123']);
             });
         });
 
@@ -203,29 +203,29 @@ describe('GlobalSearchNavigationViewComponent', () => {
 
         describe('navigateToResult', () => {
             it('should close overlay if courseId is missing', () => {
-                component['navigateToResult']({ type: 'exercise', id: 1 } as GlobalSearchResult);
+                component['navigateToResult']({ type: 'exercise', id: '1' } as GlobalSearchResult);
                 expect(overlay.close).toHaveBeenCalled();
                 expect(router.navigate).not.toHaveBeenCalled();
             });
 
             it('should navigate to exercise', () => {
-                component['navigateToResult']({ type: 'exercise', id: 1, metadata: { courseId: 10 } } as GlobalSearchResult);
-                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'exercises', 1]);
+                component['navigateToResult']({ type: 'exercise', id: '1', metadata: { courseId: 10 } } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'exercises', '1']);
             });
 
             it('should navigate to lecture', () => {
-                component['navigateToResult']({ type: 'lecture', id: 2, metadata: { courseId: 10 } } as GlobalSearchResult);
-                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'lectures', 2]);
+                component['navigateToResult']({ type: 'lecture', id: '2', metadata: { courseId: 10 } } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'lectures', '2']);
             });
 
             it('should navigate to lecture unit', () => {
-                component['navigateToResult']({ type: 'lecture_unit', id: 3, metadata: { courseId: 10, lectureId: 20 } } as GlobalSearchResult);
+                component['navigateToResult']({ type: 'lecture_unit', id: '3', metadata: { courseId: 10, lectureId: 20 } } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'lectures', 20]);
             });
 
             it('should navigate to exam', () => {
-                component['navigateToResult']({ type: 'exam', id: 4, metadata: { courseId: 10 } } as GlobalSearchResult);
-                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'exams', 4]);
+                component['navigateToResult']({ type: 'exam', id: '4', metadata: { courseId: 10 } } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'exams', '4']);
             });
 
             it('should navigate to faq', () => {
@@ -234,8 +234,8 @@ describe('GlobalSearchNavigationViewComponent', () => {
             });
 
             it('should navigate to channel', () => {
-                component['navigateToResult']({ type: 'channel', id: 5, metadata: { courseId: 10 } } as GlobalSearchResult);
-                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: 5 } });
+                component['navigateToResult']({ type: 'channel', id: '5', metadata: { courseId: 10 } } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: '5' } });
             });
         });
 
@@ -247,7 +247,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
 
             it('should render results when showResults is true', () => {
                 fixture.componentRef.setInput('showResults', true);
-                fixture.componentRef.setInput('results', [{ id: 1, type: 'exercise' }] as GlobalSearchResult[]);
+                fixture.componentRef.setInput('results', [{ id: '1', type: 'exercise' }] as GlobalSearchResult[]);
                 fixture.detectChanges();
                 const items = fixture.nativeElement.querySelectorAll('jhi-global-search-result-item');
                 expect(items.length).toBe(1);

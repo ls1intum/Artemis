@@ -23,7 +23,7 @@ describe('SearchResultItemComponent', () => {
 
         fixture = TestBed.createComponent(SearchResultItemComponent);
         component = fixture.componentInstance;
-        fixture.componentRef.setInput('result', { id: 1, title: 'Test Result', type: 'exercise', metadata: {} } as GlobalSearchResult);
+        fixture.componentRef.setInput('result', { id: '1', title: 'Test Result', type: 'exercise', metadata: {} } as GlobalSearchResult);
         fixture.componentRef.setInput('icon', faCube);
         fixture.componentRef.setInput('isSelected', false);
         fixture.detectChanges();
@@ -35,7 +35,7 @@ describe('SearchResultItemComponent', () => {
 
     it('should compute metadata correctly', () => {
         fixture.componentRef.setInput('result', {
-            id: 1,
+            id: '1',
             title: 'Test Result',
             type: 'exercise',
             metadata: {
@@ -59,7 +59,7 @@ describe('SearchResultItemComponent', () => {
     });
 
     it('should handle missing metadata', () => {
-        fixture.componentRef.setInput('result', { id: 1, title: 'Test Result', type: 'exercise' } as GlobalSearchResult);
+        fixture.componentRef.setInput('result', { id: '1', title: 'Test Result', type: 'exercise' } as GlobalSearchResult);
         fixture.detectChanges();
 
         expect(component['courseName']()).toBeUndefined();
@@ -69,7 +69,7 @@ describe('SearchResultItemComponent', () => {
 
     it('should show start date only if due date is missing', () => {
         fixture.componentRef.setInput('result', {
-            id: 1,
+            id: '1',
             title: 'Test Result',
             type: 'exercise',
             metadata: {
