@@ -24,6 +24,8 @@ import { ExamDeletionSummaryDTO } from 'app/exam/shared/entities/exam-deletion-s
 import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
+import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
+import { PageableResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -270,6 +272,37 @@ export class ExamManagementService {
     }
 
     /**
+     * Fetch a paginated, searchable, and sortable page of students registered for the exam.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     * @param params Page index, page size, search term, sort column, and sort direction.
+     * @returns A page of {@link ExamStudentDTO} rows with date fields converted to Dayjs instances.
+     */
+    findExamStudentsPaged(courseId: number, examId: number, params: SearchTermPageableSearch): Observable<PageableResult<ExamStudentDTO>> {
+        return this.http
+            .get<ExamStudentDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-students/paged`, {
+                params: {
+                    page: params.page,
+                    pageSize: params.pageSize,
+                    sortingOrder: params.sortingOrder,
+                    sortedColumn: params.sortedColumn,
+                    searchTerm: params.searchTerm,
+                },
+                observe: 'response',
+            })
+            .pipe(
+                map((res) => ({
+                    content: (res.body ?? []).map((row) => ({
+                        ...row,
+                        startedDate: convertDateFromServer(row.startedDate),
+                        submissionDate: convertDateFromServer(row.submissionDate),
+                    })),
+                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
+                })),
+            );
+    }
+
+    /**
      * Verify student's attendance. It will return true if student's attendance was successfully verified. False otherwise
      * @param courseId
      * @param examId
@@ -280,10 +313,10 @@ export class ExamManagementService {
     }
 
     /**
-     * Verify exam user attendance check. It will return exam users that started the exam but did not sign.
-     * @param courseId
-     * @param examId
-     * @return matriculation number of students that were not found in the system
+     * Returns exam users who started the exam but have not yet submitted a signed attendance record.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     * @returns Exam users with incomplete attendance check data.
      */
     verifyExamUserAttendance(courseId: number, examId: number): Observable<HttpResponse<ExamUserAttendanceCheckDTO[]>> {
         return this.http.get<ExamUserAttendanceCheckDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/verify-exam-users`, { observe: 'response' });
@@ -319,10 +352,10 @@ export class ExamManagementService {
     }
 
     /**
-     * Generate all student exams for all registered students of the exam.
-     * @param courseId
-     * @param examId
-     * @returns a list with the generated student exams
+     * Generate student exams for all registered students of the exam.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     * @returns The list of generated student exams.
      */
     generateStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-student-exams`, {}, { observe: 'response' });
@@ -359,10 +392,10 @@ export class ExamManagementService {
     }
 
     /**
-     * Generate missing student exams for newly added students of the exam.
-     * @param courseId
-     * @param examId
-     * @returns a list with the generated student exams
+     * Generate student exams for students registered after the initial generation.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     * @returns The list of newly generated student exams.
      */
     generateMissingStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-missing-student-exams`, {}, { observe: 'response' });
@@ -512,6 +545,11 @@ export class ExamManagementService {
         this.sendTitlesToEntityTitleService(exam);
     }
 
+    /**
+     * Returns all submissions for the exam that are currently locked by a tutor for assessment.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     */
     findAllLockedSubmissionsOfExam(courseId: number, examId: number) {
         return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/locked-submissions`, { observe: 'response' }).pipe(
             filter((res) => !!res.body),
@@ -539,6 +577,11 @@ export class ExamManagementService {
         return this.http.put<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
     }
 
+    /**
+     * Delete all student submissions and participations for the exam to free up storage.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     */
     cleanupExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/cleanup`, { observe: 'response' });
     }
@@ -547,10 +590,20 @@ export class ExamManagementService {
         this.entityTitleService.setTitle(EntityType.EXAM, [exam?.id], exam?.title);
     }
 
+    /**
+     * Returns exercises in the exam that have submissions eligible for plagiarism detection.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     */
     getExercisesWithPotentialPlagiarismForExam(courseId: number, examId: number): Observable<Exercise[]> {
         return this.http.get<Exercise[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercises-with-potential-plagiarism`);
     }
 
+    /**
+     * Export the list of registered exam users with their seat and room assignments.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     */
     exportExamUsers(courseId: number, examId: number): Observable<ExportExamUserDTO[]> {
         return this.http.get<ExportExamUserDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/export-students`);
     }
