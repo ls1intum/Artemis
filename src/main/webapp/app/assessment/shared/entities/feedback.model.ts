@@ -4,6 +4,7 @@ import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { convertToHtmlLinebreaks, escapeString } from 'app/shared/util/text.utils';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
+import { GradingInstructionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -346,4 +347,46 @@ export class FeedbackDTO {
     public type?: FeedbackType;
     public visibility?: Visibility;
     public testCaseName?: string;
+    public gradingInstruction?: GradingInstructionDTO;
+}
+
+export function convertFeedbackFromServer(dto: FeedbackDTO): Feedback {
+    const feedback = new Feedback();
+
+    feedback.id = dto.id;
+    feedback.text = dto.text;
+    feedback.detailText = dto.detailText;
+    feedback.hasLongFeedbackText = dto.hasLongFeedbackText;
+    feedback.reference = dto.reference;
+    feedback.credits = dto.credits;
+    feedback.positive = dto.positive;
+    feedback.type = dto.type;
+    feedback.testCase = dto.testCaseName
+        ? ({
+              testName: dto.testCaseName,
+              visibility: dto.visibility,
+          } as ProgrammingExerciseTestCase)
+        : undefined;
+    if (dto.reference) {
+        const split = dto.reference.split(':');
+        if (split.length === 2) {
+            feedback.referenceType = split[0];
+            feedback.referenceId = split[1];
+        }
+    }
+    if (dto.gradingInstruction) {
+        feedback.gradingInstruction = {
+            id: dto.gradingInstruction.id,
+            feedback: dto.gradingInstruction.feedback,
+            credits: dto.gradingInstruction.credits,
+            usageCount: dto.gradingInstruction.usageCount,
+            instructionDescription: dto.gradingInstruction.instructionDescription,
+            gradingScale: dto.gradingInstruction.gradingScale,
+        } as GradingInstruction;
+    }
+    return feedback;
+}
+
+export function convertFeedbacksFromServer(dtos?: FeedbackDTO[]): Feedback[] {
+    return dtos?.map((dto) => convertFeedbackFromServer(dto)) ?? [];
 }

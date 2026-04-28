@@ -43,6 +43,7 @@ import { ResizeableContainerComponent } from 'app/shared/resizeable-container/re
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 describe('FileUploadAssessmentComponent', () => {
     setupTestBed({ zoneless: true });
@@ -161,6 +162,12 @@ describe('FileUploadAssessmentComponent', () => {
                     provide: ComplaintService,
                     useValue: {
                         findBySubmissionId: vi.fn().mockReturnValue(of({ body: null })),
+                        convertComplaintFromServer: vi.fn((dto: ComplaintDTO, result?: Result) =>
+                            Object.assign(new Complaint(), dto, {
+                                accepted: dto.complaintIsAccepted ?? (dto as Complaint).accepted,
+                                result,
+                            }),
+                        ),
                     },
                 },
                 {
@@ -355,15 +362,19 @@ describe('FileUploadAssessmentComponent', () => {
             const result = createResult(submission);
             result.hasComplaint = true;
             setLatestSubmissionResult(submission, result);
-            const complaint = new Complaint();
+            const complaint = new ComplaintDTO();
             complaint.id = 555;
             complaint.complaintText = 'Test complaint';
             vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<Complaint>));
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
 
             component.ngOnInit();
 
-            expect(component.complaint).toEqual(complaint);
+            expect(component.complaint).toMatchObject({
+                id: complaint.id,
+                complaintText: complaint.complaintText,
+            });
+            expect(component.complaint.result).toBe(component.result);
         });
 
         it('should show lock alert for unassessed submission owned by current user', async () => {
@@ -853,7 +864,7 @@ describe('FileUploadAssessmentComponent', () => {
             const complaint = new Complaint();
             complaint.id = 123;
             complaint.complaintText = 'Test complaint';
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<Complaint>));
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
 
             component.getComplaint();
 
@@ -861,7 +872,7 @@ describe('FileUploadAssessmentComponent', () => {
         });
 
         it('should not set complaint when response body is null', () => {
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as HttpResponse<Complaint>));
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as HttpResponse<ComplaintDTO>));
 
             component.getComplaint();
 

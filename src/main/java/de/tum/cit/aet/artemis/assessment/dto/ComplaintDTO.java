@@ -51,7 +51,7 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
          */
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record FeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
-                Visibility visibility, String testCaseName) {
+                Visibility visibility, String testCaseName, GradingInstructionDTO gradingInstruction) {
 
             /**
              * Creates a {@link FeedbackDTO} from a {@link Feedback} entity.
@@ -65,8 +65,12 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
                 if (feedback.getTestCase() != null && Hibernate.isInitialized(feedback.getTestCase())) {
                     testCaseName = feedback.getTestCase().getTestName();
                 }
+                GradingInstructionDTO gradingInstructionDTO = null;
+                if (feedback.getGradingInstruction() != null && Hibernate.isInitialized(feedback.getGradingInstruction())) {
+                    gradingInstructionDTO = GradingInstructionDTO.of(feedback.getGradingInstruction());
+                }
                 return new FeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(),
-                        feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), testCaseName);
+                        feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), testCaseName, gradingInstructionDTO);
             }
         }
 

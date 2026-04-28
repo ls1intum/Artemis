@@ -54,6 +54,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -190,7 +191,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         lockAndGetProgrammingSubmissionParticipationStub = jest
             .spyOn(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation')
             .mockReturnValue(of(submission).pipe(delay(100)));
-        findBySubmissionIdStub = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<Complaint>));
+        findBySubmissionIdStub = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
         getIdentityStub = jest.spyOn(accountService, 'identity').mockReturnValue(new Promise((promise) => promise(user)));
         getProgrammingSubmissionForExerciseWithoutAssessmentStub = jest
             .spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment')

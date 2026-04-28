@@ -5,20 +5,18 @@ import dayjs from 'dayjs/esm';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { map } from 'rxjs/operators';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { User } from 'app/core/user/user.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
+import { User } from 'app/core/user/user.model';
+import { convertFeedbacksFromServer } from 'app/assessment/shared/entities/feedback.model';
 
-export type EntityResponseType = HttpResponse<Complaint>;
-export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
-export type ComplaintDTOResponseType = HttpResponse<ComplaintDTO>;
-export type ComplaintDTOArrayResponseType = HttpResponse<ComplaintDTO[]>;
+export type EntityResponseType = HttpResponse<ComplaintDTO>;
+export type EntityResponseTypeArray = HttpResponse<ComplaintDTO[]>;
 
 export interface IComplaintService {
     isComplaintLockedForLoggedInUser: (complaint: Complaint, exercise: Exercise) => boolean | undefined;
@@ -86,9 +84,7 @@ export class ComplaintService implements IComplaintService {
      * @param complaintRequest
      */
     create(complaintRequest: ComplaintRequestDTO): Observable<EntityResponseType> {
-        return this.http
-            .post<ComplaintDTO>(this.resourceUrl, complaintRequest, { observe: 'response' })
-            .pipe(map((res: ComplaintDTOResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
+        return this.http.post<ComplaintDTO>(this.resourceUrl, complaintRequest, { observe: 'response' });
     }
 
     /**
@@ -96,9 +92,7 @@ export class ComplaintService implements IComplaintService {
      * @param submissionId
      */
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<ComplaintDTO>(`${this.resourceUrl}?submissionId=${submissionId}`, { observe: 'response' })
-            .pipe(map((res: ComplaintDTOResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
+        return this.http.get<ComplaintDTO>(`${this.resourceUrl}?submissionId=${submissionId}`, { observe: 'response' });
     }
 
     /**
@@ -106,9 +100,7 @@ export class ComplaintService implements IComplaintService {
      * @param exerciseId
      */
     getComplaintsForTestRun(exerciseId: number): Observable<EntityResponseTypeArray> {
-        return this.http
-            .get<ComplaintDTO[]>(`${this.resourceUrl}?exerciseId=${exerciseId}`, { observe: 'response' })
-            .pipe(map((res: ComplaintDTOArrayResponseType) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
+        return this.http.get<ComplaintDTO[]>(`${this.resourceUrl}?exerciseId=${exerciseId}`, { observe: 'response' });
     }
 
     /**
@@ -245,22 +237,25 @@ export class ComplaintService implements IComplaintService {
     }
 
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {
-        return this.http
-            .get<ComplaintDTO[]>(url, { observe: 'response' })
-            .pipe(map((res: ComplaintDTOArrayResponseType) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
+        return this.http.get<ComplaintDTO[]>(url, { observe: 'response' });
     }
 
-    private convertComplaintEntityResponseArrayDateFromServer(res: ComplaintDTOArrayResponseType): EntityResponseTypeArray {
-        return res.clone({
-            body: res.body ? res.body.map((dto) => this.convertComplaintFromServer(dto)) : undefined,
-        });
+    public convertComplaintFromServer(dto: ComplaintDTO, result: Result): Complaint {
+        const complaint = new Complaint();
+        complaint.id = dto.id;
+        complaint.complaintText = dto.complaintText;
+        complaint.complaintType = dto.complaintType;
+        complaint.accepted = dto.complaintIsAccepted;
+        complaint.submittedTime = dto.submittedTime ? dayjs(dto.submittedTime) : undefined;
+
+        if (dto.complaintResponse) {
+            complaint.complaintResponse = this.complaintResponseService.convertComplaintResponseFromServer(dto.complaintResponse);
+        }
+        complaint.result = result;
+        return complaint;
     }
 
-    private convertComplaintEntityResponseDatesFromServer(res: ComplaintDTOResponseType): HttpResponse<Complaint> {
-        return res.clone({ body: res.body ? this.convertComplaintFromServer(res.body) : undefined });
-    }
-
-    private convertComplaintFromServer(dto: ComplaintDTO): Complaint {
+    public convertComplaintFromServerInList(dto: ComplaintDTO): Complaint {
         const complaint = new Complaint();
         complaint.id = dto.id;
         complaint.complaintText = dto.complaintText;
@@ -287,18 +282,7 @@ export class ComplaintService implements IComplaintService {
             }
 
             if (dto.result.feedbacks) {
-                result.feedbacks = dto.result.feedbacks.map((feedbackDTO) => ({
-                    id: feedbackDTO.id,
-                    text: feedbackDTO.text,
-                    detailText: feedbackDTO.detailText,
-                    hasLongFeedbackText: feedbackDTO.hasLongFeedbackText,
-                    reference: feedbackDTO.reference,
-                    credits: feedbackDTO.credits,
-                    positive: feedbackDTO.positive,
-                    type: feedbackDTO.type,
-                    visibility: feedbackDTO.visibility,
-                    testCase: feedbackDTO.testCaseName ? { testName: feedbackDTO.testCaseName } : undefined,
-                })) as any;
+                result.feedbacks = convertFeedbacksFromServer(dto.result.feedbacks);
             }
 
             if (dto.result.submission) {

@@ -424,7 +424,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 if (!res.body) {
                     return;
                 }
-                this.complaint = res.body;
+                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.result!);
             },
             error: (err: HttpErrorResponse) => {
                 onError(this.alertService, err);

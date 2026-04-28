@@ -23,6 +23,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 @Component({
     selector: 'jhi-complaint-list',
@@ -90,7 +91,7 @@ export class ListOfComplaintsComponent implements OnInit {
     }
 
     loadComplaints() {
-        let complaintResponse: Observable<HttpResponse<Complaint[]>>;
+        let complaintResponse: Observable<HttpResponse<ComplaintDTO[]>>;
 
         if (this.tutorId) {
             if (this.exerciseId) {
@@ -117,10 +118,10 @@ export class ListOfComplaintsComponent implements OnInit {
         });
     }
 
-    subscribeToComplaintResponse(complaintResponse: Observable<HttpResponse<Complaint[]>>) {
+    subscribeToComplaintResponse(complaintResponse: Observable<HttpResponse<ComplaintDTO[]>>) {
         complaintResponse.subscribe({
             next: (res) => {
-                this.complaints = res.body!;
+                this.complaints = res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? [];
                 if (this.filterOption === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
                     this.showAddressedComplaints = true;
                 }

@@ -5,6 +5,7 @@ import { Observable, of } from 'rxjs';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HttpResponse } from '@angular/common/http';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 const complaintObject: Complaint = {
     complaintType: ComplaintType.COMPLAINT,
@@ -23,17 +24,17 @@ const feedbackRequestObject: Complaint = {
     student: new User(),
 };
 
-export const MockComplaintResponse: HttpResponse<Complaint> = {
+export const MockComplaintResponse: HttpResponse<ComplaintDTO> = {
     body: complaintObject,
-} as HttpResponse<Complaint>;
+} as HttpResponse<ComplaintDTO>;
 
-export const MockComplaintResponse2: HttpResponse<Complaint> = {
+export const MockComplaintResponse2: HttpResponse<ComplaintDTO> = {
     body: feedbackRequestObject,
-} as HttpResponse<Complaint>;
+} as HttpResponse<ComplaintDTO>;
 
-export const MockComplaintArrayResponse: HttpResponse<Complaint[]> = {
+export const MockComplaintArrayResponse: HttpResponse<ComplaintDTO[]> = {
     body: [complaintObject, feedbackRequestObject],
-} as HttpResponse<Complaint[]>;
+} as HttpResponse<ComplaintDTO[]>;
 
 export class MockComplaintService implements IComplaintService {
     create(complaint: Complaint): Observable<EntityResponseType> {
@@ -83,5 +84,16 @@ export class MockComplaintService implements IComplaintService {
 
     isComplaintLockedForLoggedInUser(complaint: Complaint, exercise: Exercise): boolean | undefined {
         return undefined;
+    }
+    convertComplaintFromServerInList(dto: ComplaintDTO): Complaint {
+        return Object.assign(new Complaint(), dto, {
+            accepted: dto.complaintIsAccepted ?? (dto as Complaint).accepted,
+        });
+    }
+    convertComplaintFromServer(dto: ComplaintDTO, result?: Result): Complaint {
+        return Object.assign(new Complaint(), dto, {
+            accepted: dto.complaintIsAccepted ?? (dto as Complaint).accepted,
+            result,
+        });
     }
 }

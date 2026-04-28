@@ -505,7 +505,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 if (!res.body) {
                     return;
                 }
-                this.complaint = res.body;
+                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.result!);
                 this.isLoading.set(false);
             },
             error: (err: HttpErrorResponse) => {

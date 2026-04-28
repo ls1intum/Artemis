@@ -10,12 +10,13 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import dayjs from 'dayjs/esm';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Result, ResultSimpleDTO } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
 import { provideHttpClient } from '@angular/common/http';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 describe('ComplaintService', () => {
     setupTestBed({ zoneless: true });
@@ -29,19 +30,19 @@ describe('ComplaintService', () => {
     const stringTime2 = '2022-05-12T18:12:11.140Z';
     const dayjsTime3 = dayjs();
 
-    const clientComplaint1 = new Complaint();
+    const clientComplaint1 = new ComplaintDTO();
     clientComplaint1.id = 42;
     clientComplaint1.complaintType = ComplaintType.MORE_FEEDBACK;
-    clientComplaint1.result = new Result();
+    clientComplaint1.result = new ResultSimpleDTO();
     clientComplaint1.submittedTime = dayjsTime1;
     clientComplaint1.complaintText = 'Test text';
 
     const serverComplaint1 = { ...clientComplaint1, submittedTime: stringTime1 };
 
-    const clientComplaint2 = new Complaint();
+    const clientComplaint2 = new ComplaintDTO();
     clientComplaint2.id = 42;
     clientComplaint2.complaintType = ComplaintType.MORE_FEEDBACK;
-    clientComplaint2.result = new Result();
+    clientComplaint2.result = new ResultSimpleDTO();
     clientComplaint2.submittedTime = dayjsTime2;
     clientComplaint2.complaintText = 'Test text';
 
