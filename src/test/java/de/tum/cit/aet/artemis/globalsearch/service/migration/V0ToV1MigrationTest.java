@@ -61,7 +61,7 @@ class V0ToV1MigrationTest {
         oldProps.put("course_id", 10L);
         oldProps.put("title", "Hello World");
         oldProps.put("short_name", "HW");
-        oldProps.put("exercise_type", "programming");
+        oldProps.put("type", "programming");
         oldProps.put("difficulty", "EASY");
         oldProps.put("max_points", 100.0);
         oldProps.put("programming_language", "JAVA");
@@ -126,7 +126,7 @@ class V0ToV1MigrationTest {
         oldProps.put("release_date", "2025-03-01T08:00:00Z");
         oldProps.put("start_date", "2025-03-01T08:00:00Z");
         oldProps.put("due_date", "2025-03-15T23:59:00Z");
-        oldProps.put("exercise_type", "programming");
+        oldProps.put("type", "programming");
         oldProps.put("difficulty", "MEDIUM");
         oldProps.put("max_points", 50.0);
         oldProps.put("is_exam_exercise", false);

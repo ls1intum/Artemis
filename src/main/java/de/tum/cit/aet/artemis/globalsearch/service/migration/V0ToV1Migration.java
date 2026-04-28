@@ -165,7 +165,8 @@ public class V0ToV1Migration implements WeaviateMigration {
      * <ul>
      * <li>{@code exercise_id} → {@code entity_id}</li>
      * <li>{@code problem_statement} → {@code description}</li>
-     * <li>{@code type = "exercise"} added</li>
+     * <li>{@code type} (exercise type) → {@code exercise_type}</li>
+     * <li>{@code type = "exercise"} added (entity discriminator)</li>
      * <li>{@code course_name} dropped (no longer stored in Weaviate)</li>
      * </ul>
      *
@@ -181,6 +182,14 @@ public class V0ToV1Migration implements WeaviateMigration {
         // Renamed properties
         newProps.put(SearchableEntitySchema.Properties.ENTITY_ID, oldProps.get("exercise_id"));
         newProps.put(SearchableEntitySchema.Properties.DESCRIPTION, oldProps.get("problem_statement"));
+
+        // In v0, the exercise type was stored in the "type" property.
+        // In v1, "type" is the entity discriminator ("exercise"), and the exercise type
+        // is moved to "exercise_type".
+        Object typeValue = oldProps.get("type");
+        if (typeValue != null && !SearchableEntitySchema.TypeValues.EXERCISE.equals(typeValue)) {
+            newProps.put(SearchableEntitySchema.Properties.EXERCISE_TYPE, typeValue);
+        }
 
         // Directly mapped properties (same name in v0 and v1)
         for (String prop : DIRECT_MAPPINGS) {
