@@ -26,6 +26,8 @@ import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
@@ -80,7 +82,14 @@ public class TextExerciseFeedbackService {
         if (this.athenaFeedbackApi.isEmpty()) {
             return;
         }
-        var submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
+        Optional<Submission> submissionOptional;
+        try {
+            submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
+        }
+        catch (EntityNotFoundException e) {
+            log.warn("Skipping Athena feedback for text participation {}: {}", participation.getId(), e.getMessage());
+            return;
+        }
         if (submissionOptional.isEmpty()) {
             return;
         }

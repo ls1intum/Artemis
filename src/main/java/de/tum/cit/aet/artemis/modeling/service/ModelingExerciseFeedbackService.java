@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -77,8 +78,14 @@ public class ModelingExerciseFeedbackService {
         if (this.athenaFeedbackApi.isEmpty()) {
             return;
         }
-        Optional<Submission> submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId())
-                .findLatestSubmission();
+        Optional<Submission> submissionOptional;
+        try {
+            submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
+        }
+        catch (EntityNotFoundException e) {
+            log.warn("Skipping Athena feedback for modeling participation {}: {}", participation.getId(), e.getMessage());
+            return;
+        }
         if (submissionOptional.isEmpty()) {
             return;
         }
