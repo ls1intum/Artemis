@@ -183,11 +183,12 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     protected getIconForType(type?: string, badge?: string): IconDefinition {
         if (type === 'exercise') {
-            if (badge === 'Programming') return this.faKeyboard;
-            if (badge === 'Modeling') return this.faProjectDiagram;
-            if (badge === 'Text') return this.faFont;
-            if (badge === 'File Upload') return this.faFileUpload;
-            if (badge === 'Quiz') return this.faCheckDouble;
+            const normalizedBadge = badge?.toLowerCase();
+            if (normalizedBadge === 'programming') return this.faKeyboard;
+            if (normalizedBadge === 'modeling') return this.faProjectDiagram;
+            if (normalizedBadge === 'text') return this.faFont;
+            if (normalizedBadge === 'file upload') return this.faFileUpload;
+            if (normalizedBadge === 'quiz') return this.faCheckDouble;
             return this.faQuestion;
         }
         if (type === 'lecture' || type === 'lecture_unit') {
