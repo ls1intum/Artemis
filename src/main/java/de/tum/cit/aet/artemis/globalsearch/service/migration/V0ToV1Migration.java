@@ -183,12 +183,14 @@ public class V0ToV1Migration implements WeaviateMigration {
         newProps.put(SearchableEntitySchema.Properties.ENTITY_ID, oldProps.get("exercise_id"));
         newProps.put(SearchableEntitySchema.Properties.DESCRIPTION, oldProps.get("problem_statement"));
 
-        // In v0, the exercise type was stored in the "type" property.
-        // In v1, "type" is the entity discriminator ("exercise"), and the exercise type
-        // is moved to "exercise_type".
+        // In v0, the exercise type was stored in the "type" property using the Java enum name
+        // (e.g. "FILE_UPLOAD", "PROGRAMMING"). In v1, "type" is the entity discriminator ("exercise"),
+        // and the exercise type is moved to "exercise_type" using ExerciseType.getValue() format
+        // (e.g. "file-upload", "programming"). Normalize the value to the v1 format.
         Object typeValue = oldProps.get("type");
         if (typeValue != null && !SearchableEntitySchema.TypeValues.EXERCISE.equals(typeValue)) {
-            newProps.put(SearchableEntitySchema.Properties.EXERCISE_TYPE, typeValue);
+            String normalized = typeValue.toString().toLowerCase().replace('_', '-');
+            newProps.put(SearchableEntitySchema.Properties.EXERCISE_TYPE, normalized);
         }
 
         // Directly mapped properties (same name in v0 and v1)

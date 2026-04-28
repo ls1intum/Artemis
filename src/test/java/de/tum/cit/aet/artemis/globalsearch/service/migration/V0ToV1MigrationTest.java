@@ -166,6 +166,45 @@ class V0ToV1MigrationTest {
     }
 
     @Test
+    void transformProperties_normalizesEnumNameExerciseType() {
+        Map<String, Object> oldProps = new HashMap<>();
+        oldProps.put("exercise_id", 102L);
+        oldProps.put("course_id", 5L);
+        oldProps.put("title", "File Upload Exercise");
+        oldProps.put("type", "FILE_UPLOAD");
+
+        Map<String, Object> newProps = V0ToV1Migration.transformProperties(oldProps);
+
+        assertThat(newProps.get(SearchableEntitySchema.Properties.EXERCISE_TYPE)).isEqualTo("file-upload");
+    }
+
+    @Test
+    void transformProperties_normalizesUppercaseExerciseType() {
+        Map<String, Object> oldProps = new HashMap<>();
+        oldProps.put("exercise_id", 103L);
+        oldProps.put("course_id", 5L);
+        oldProps.put("title", "Programming Exercise");
+        oldProps.put("type", "PROGRAMMING");
+
+        Map<String, Object> newProps = V0ToV1Migration.transformProperties(oldProps);
+
+        assertThat(newProps.get(SearchableEntitySchema.Properties.EXERCISE_TYPE)).isEqualTo("programming");
+    }
+
+    @Test
+    void transformProperties_preservesAlreadyNormalizedExerciseType() {
+        Map<String, Object> oldProps = new HashMap<>();
+        oldProps.put("exercise_id", 104L);
+        oldProps.put("course_id", 5L);
+        oldProps.put("title", "Quiz Exercise");
+        oldProps.put("type", "quiz");
+
+        Map<String, Object> newProps = V0ToV1Migration.transformProperties(oldProps);
+
+        assertThat(newProps.get(SearchableEntitySchema.Properties.EXERCISE_TYPE)).isEqualTo("quiz");
+    }
+
+    @Test
     void targetVersion_isOne() {
         var migration = new V0ToV1Migration();
         assertThat(migration.targetVersion()).isEqualTo(1);
