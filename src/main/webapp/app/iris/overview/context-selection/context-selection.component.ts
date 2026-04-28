@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { faChalkboardUser, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -9,6 +9,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { SelectModule } from 'primeng/select';
+import { ChipModule } from 'primeng/chip';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
@@ -36,12 +37,15 @@ const EXERCISE_TYPE_TO_CHAT_MODE: Record<string, ChatServiceMode> = {
     selector: 'jhi-context-selection',
     templateUrl: './context-selection.component.html',
     styleUrls: ['./context-selection.component.scss'],
-    imports: [SelectModule, FormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
+    imports: [SelectModule, ChipModule, FormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContextSelectionComponent {
     private readonly courseStorageService = inject(CourseStorageService);
     private readonly chatService = inject(IrisChatService);
+
+    protected readonly faPlus = faPlus;
+    protected readonly faXmark = faXmark;
 
     readonly disabled = input<boolean>(false);
 
@@ -50,10 +54,6 @@ export class ContextSelectionComponent {
     private readonly currentMode = toSignal(this.chatService.currentChatMode(), { initialValue: undefined });
     private readonly currentEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
 
-    readonly courseName = computed<string>(() => {
-        const courseId = this.courseId();
-        return courseId !== undefined ? (this.courseStorageService.getCourse(courseId)?.title ?? '') : '';
-    });
     readonly lectures = computed<Lecture[]>(() => {
         const courseId = this.courseId();
         return courseId !== undefined ? (this.courseStorageService.getCourse(courseId)?.lectures ?? []) : [];
@@ -73,26 +73,9 @@ export class ContextSelectionComponent {
     });
 
     readonly allGroups = computed<ContextGroup[]>(() => {
-        const courseId = this.courseId();
-        const courseName = this.courseName();
         const lectures = this.lectures();
         const exercises = this.supportedExercises();
         const groups: ContextGroup[] = [];
-
-        if (courseName && courseId !== undefined) {
-            groups.push({
-                label: 'artemisApp.iris.contextSelection.courseGroup',
-                items: [
-                    {
-                        label: courseName,
-                        value: `${ChatServiceMode.COURSE}:${courseId}`,
-                        faIcon: faGraduationCap,
-                        mode: ChatServiceMode.COURSE,
-                        entityId: courseId,
-                    },
-                ],
-            });
-        }
 
         if (lectures.length > 0) {
             groups.push({
@@ -127,12 +110,30 @@ export class ContextSelectionComponent {
         return groups;
     });
 
+    readonly activeChip = computed<ContextOption | undefined>(() => {
+        const mode = this.currentMode();
+        const entityId = this.currentEntityId();
+        if (mode === undefined || entityId === undefined || mode === ChatServiceMode.COURSE) {
+            return undefined;
+        }
+        return this.allGroups()
+            .flatMap((g) => g.items)
+            .find((o) => o.mode === mode && o.entityId === entityId);
+    });
+
     onSelectionChange(value: string): void {
         const option = this.allGroups()
             .flatMap((g) => g.items)
             .find((o) => o.value === value);
         if (option) {
             this.chatService.switchContextOfCurrentSession(option.mode, option.entityId);
+        }
+    }
+
+    onChipRemove(): void {
+        const courseId = this.courseId();
+        if (courseId !== undefined) {
+            this.chatService.switchContextOfCurrentSession(ChatServiceMode.COURSE, courseId);
         }
     }
 }
