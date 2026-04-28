@@ -89,6 +89,8 @@ public class ExamDeletionService {
 
     private final ExamUserRepository examUserRepository;
 
+    private final StudentExamService studentExamService;
+
     private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationDeletionService participationDeletionService, CacheManager cacheManager,
@@ -96,7 +98,7 @@ public class ExamDeletionService {
             GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository,
             ChannelService channelService, ExamLiveEventRepository examLiveEventRepository, ExamSessionRepository examSessionRepository, BuildJobRepository buildJobRepository,
             PostRepository postRepository, AnswerPostRepository answerPostRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExamUserRepository examUserRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+            ExamUserRepository examUserRepository, final StudentExamService studentExamService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationDeletionService = participationDeletionService;
         this.cacheManager = cacheManager;
@@ -115,6 +117,7 @@ public class ExamDeletionService {
         this.answerPostRepository = answerPostRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examUserRepository = examUserRepository;
+        this.studentExamService = studentExamService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
     }
 
@@ -251,6 +254,7 @@ public class ExamDeletionService {
             }
         }
         studentExamRepository.deleteAll(exam.getStudentExams());
+        studentExamService.invalidateExerciseStartStatus(examId);
     }
 
     /**
