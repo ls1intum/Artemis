@@ -32,6 +32,10 @@ export interface ApollonModelData {
     // v3 format (legacy)
     elements?: Record<string, V3Element>;
     relationships?: Record<string, V3Element>;
+    interactive?: {
+        elements?: Record<string, boolean>;
+        relationships?: Record<string, boolean>;
+    };
 }
 
 /**
@@ -115,6 +119,43 @@ export function getModelElementIds(model: UMLModel | ApollonModelData | undefine
     return new Set([...nodeIds, ...edgeIds]);
 }
 
+export function hasExplicitInteractiveConfig(model: UMLModel | ApollonModelData | undefined): boolean {
+    return !!(model as ApollonModelData | undefined)?.interactive;
+}
+
+export function getExplicitInteractiveElementIds(model: UMLModel | ApollonModelData | undefined): string[] | undefined {
+    if (!model) {
+        return undefined;
+    }
+
+    const interactive = (model as ApollonModelData).interactive;
+    if (!interactive) {
+        return undefined;
+    }
+
+    const validIds = getModelElementIds(model);
+    const elementIds = Object.entries(interactive.elements ?? {})
+        .filter(([id, included]) => included && validIds.has(id))
+        .map(([id]) => id);
+    const relationshipIds = Object.entries(interactive.relationships ?? {})
+        .filter(([id, included]) => included && validIds.has(id))
+        .map(([id]) => id);
+
+    return [...elementIds, ...relationshipIds];
+}
+
+export function getQuizRelevantElementIds(model: UMLModel | ApollonModelData | undefined): string[] {
+    if (!model) {
+        return [];
+    }
+
+    if (hasExplicitInteractiveConfig(model)) {
+        return getExplicitInteractiveElementIds(model) ?? [];
+    }
+
+    return [...getModelElementIds(model)];
+}
+
 /**
  * Checks if an Apollon model has elements (nodes).
  * This is the inverse of isModelEmpty for convenience.
@@ -124,4 +165,8 @@ export function getModelElementIds(model: UMLModel | ApollonModelData | undefine
  */
 export function hasModelElements(model: UMLModel | ApollonModelData | undefined): boolean {
     return getModelNodes(model).length > 0;
+}
+
+export function hasQuizRelevantElements(model: UMLModel | ApollonModelData | undefined): boolean {
+    return getQuizRelevantElementIds(model).length > 0;
 }

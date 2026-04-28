@@ -84,9 +84,9 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Lecture lecture;
 
+    // No @Cache here on purpose: mutated whenever competencies are linked / unlinked. See #12574 / #12584.
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("lectureUnit")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     protected Set<CompetencyLectureUnitLink> competencyLinks = new HashSet<>();
 
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)

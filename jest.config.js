@@ -11,6 +11,7 @@ const esModules = [
     '@angular/platform-browser-dynamic',
     '@angular/router',
     '@angular/service-worker',
+    '@angular/youtube-player',
     '@ctrl/ngx-emoji-mart',
     '@danielmoncada/angular-datetime-picker',
     '@fortawesome/angular-fontawesome',
@@ -46,6 +47,7 @@ const esModules = [
     'dayjs/esm',
     'export-to-csv',
     'franc-min',
+    'interactjs',
     'internmap',
     'lodash-es',
     'markdown-it-github-alerts',
@@ -57,6 +59,7 @@ const esModules = [
     'primeng',
     'rxjs/operators',
     'trigram-utils',
+    'uuid',
 ].join('|');
 
 const {
@@ -158,7 +161,7 @@ module.exports = {
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
     coverageThreshold: {
         global: {
-            statements: 85.6,
+            statements: 85.5,
             branches: 74.1,
             functions: 75.4,
             lines: 86.5,

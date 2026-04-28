@@ -87,12 +87,14 @@ public class ExamDeletionService {
 
     private final ExamUserRepository examUserRepository;
 
+    private final StudentExamService studentExamService;
+
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationDeletionService participationDeletionService, CacheManager cacheManager,
             UserRepository userRepository, ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository,
             GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository,
             ChannelService channelService, ExamLiveEventRepository examLiveEventRepository, ExamSessionRepository examSessionRepository, BuildJobRepository buildJobRepository,
             PostRepository postRepository, AnswerPostRepository answerPostRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExamUserRepository examUserRepository) {
+            ExamUserRepository examUserRepository, final StudentExamService studentExamService) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationDeletionService = participationDeletionService;
         this.cacheManager = cacheManager;
@@ -111,6 +113,7 @@ public class ExamDeletionService {
         this.answerPostRepository = answerPostRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examUserRepository = examUserRepository;
+        this.studentExamService = studentExamService;
     }
 
     /**
@@ -241,6 +244,7 @@ public class ExamDeletionService {
             }
         }
         studentExamRepository.deleteAll(exam.getStudentExams());
+        studentExamService.invalidateExerciseStartStatus(examId);
     }
 
     /**

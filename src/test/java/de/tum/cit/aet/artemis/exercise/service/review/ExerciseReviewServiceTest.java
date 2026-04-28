@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.InlineCodeChangeDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
@@ -42,7 +43,7 @@ import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
-import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService.LineMappingResult;
+import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewVersionChangeService.LineMappingResult;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;
 import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
@@ -63,6 +64,9 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Autowired
     private ExerciseReviewService exerciseReviewService;
+
+    @Autowired
+    private ExerciseReviewVersionChangeService exerciseReviewVersionChangeService;
 
     @Autowired
     private ExerciseVersionService exerciseVersionService;
@@ -204,6 +208,70 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         var content = generatedConsistencyThread.getComments().iterator().next().getContent();
         assertThat(content).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
         assertThat(((ConsistencyIssueCommentContentDTO) content).text()).contains("New consistency issue");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldPersistInlineFixForProblemStatementConsistencyLocation() {
+        ExerciseVersion initialVersion = createExerciseVersion();
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Rename parameter in statement",
+                "Align parameter naming", List.of(new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 2, 2, "Line 2 updated")));
+
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
+
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+        assertThat(threads).singleElement().satisfies(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.PROBLEM_STATEMENT);
+            assertThat(thread.getLineNumber()).isEqualTo(2);
+            assertThat(thread.getInitialVersion()).isEqualTo(initialVersion);
+
+            var content = thread.getComments().iterator().next().getContent();
+            assertThat(content).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+            InlineCodeChangeDTO inlineFix = ((ConsistencyIssueCommentContentDTO) content).suggestedFix();
+            assertThat(inlineFix).isNotNull();
+            assertThat(inlineFix.startLine()).isEqualTo(2);
+            assertThat(inlineFix.endLine()).isEqualTo(2);
+            assertThat(inlineFix.expectedCode()).isEqualTo("Line 2");
+            assertThat(inlineFix.replacementCode()).isEqualTo("Line 2 updated");
+            assertThat(inlineFix.applied()).isFalse();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldNotPersistInlineFixWhenSuggestedInlineFixIsNull() {
+        createExerciseVersion();
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Rename parameter in statement",
+                "Align parameter naming", List.of(new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 2, 2, null)));
+
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
+
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+        assertThat(threads).singleElement().satisfies(thread -> {
+            var content = thread.getComments().iterator().next().getContent();
+            assertThat(content).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+            assertThat(((ConsistencyIssueCommentContentDTO) content).suggestedFix()).isNull();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldPersistDeletionInlineFixWhenSuggestedInlineFixIsEmptyString() {
+        createExerciseVersion();
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Remove obsolete statement line",
+                "Remove obsolete line", List.of(new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 2, 2, "")));
+
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
+
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+        assertThat(threads).singleElement().satisfies(thread -> {
+            var content = thread.getComments().iterator().next().getContent();
+            assertThat(content).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+            InlineCodeChangeDTO inlineFix = ((ConsistencyIssueCommentContentDTO) content).suggestedFix();
+            assertThat(inlineFix).isNotNull();
+            assertThat(inlineFix.expectedCode()).isEqualTo("Line 2");
+            assertThat(inlineFix.replacementCode()).isEmpty();
+        });
     }
 
     @Test
@@ -407,6 +475,22 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldUpdateThreadGroupResolvedState() {
+        CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        CommentThread ungrouped = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        var group = exerciseReviewService.createGroup(programmingExercise.getId(), new CreateCommentThreadGroupDTO(List.of(first.getId(), second.getId())));
+
+        List<CommentThread> updatedThreads = exerciseReviewService.updateGroupResolvedState(programmingExercise.getId(), group.getId(), new UpdateThreadResolvedStateDTO(true));
+
+        assertThat(updatedThreads).hasSize(2).allMatch(CommentThread::isResolved);
+        assertThat(commentThreadRepository.findById(first.getId())).get().extracting(CommentThread::isResolved).isEqualTo(true);
+        assertThat(commentThreadRepository.findById(second.getId())).get().extracting(CommentThread::isResolved).isEqualTo(true);
+        assertThat(commentThreadRepository.findById(ungrouped.getId())).get().extracting(CommentThread::isResolved).isEqualTo(false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateThreadGroupWithTwoThreads() {
         CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
@@ -489,6 +573,17 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectThreadGroupResolvedUpdateWithNullBody() {
+        CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        var group = exerciseReviewService.createGroup(programmingExercise.getId(), new CreateCommentThreadGroupDTO(List.of(first.getId(), second.getId())));
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> exerciseReviewService.updateGroupResolvedState(programmingExercise.getId(), group.getId(), null));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldLoadThreadWithCommentsById() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("First"));
@@ -558,6 +653,56 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldMarkConsistencyInlineFixAsAppliedWithoutChangingOtherFields() {
+        CommentThread thread = persistThread(programmingExercise);
+        InlineCodeChangeDTO inlineFix = new InlineCodeChangeDTO(2, 3, "int value = foo;", "int value = bar;", false);
+        ConsistencyIssueCommentContentDTO consistencyContent = new ConsistencyIssueCommentContentDTO(Severity.MEDIUM, ConsistencyIssueCategory.IDENTIFIER_NAMING_INCONSISTENCY,
+                "Rename identifier", inlineFix);
+        Comment comment = new Comment();
+        comment.setType(CommentType.CONSISTENCY_CHECK);
+        comment.setContent(consistencyContent);
+        comment.setThread(thread);
+        Comment saved = commentRepository.save(comment);
+
+        Comment updated = exerciseReviewService.markConsistencyInlineFixApplied(programmingExercise.getId(), saved.getId());
+
+        assertThat(updated.getContent()).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+        ConsistencyIssueCommentContentDTO updatedContent = (ConsistencyIssueCommentContentDTO) updated.getContent();
+        assertThat(updatedContent.severity()).isEqualTo(consistencyContent.severity());
+        assertThat(updatedContent.category()).isEqualTo(consistencyContent.category());
+        assertThat(updatedContent.text()).isEqualTo(consistencyContent.text());
+        assertThat(updatedContent.suggestedFix()).isNotNull();
+        assertThat(updatedContent.suggestedFix().startLine()).isEqualTo(inlineFix.startLine());
+        assertThat(updatedContent.suggestedFix().endLine()).isEqualTo(inlineFix.endLine());
+        assertThat(updatedContent.suggestedFix().expectedCode()).isEqualTo(inlineFix.expectedCode());
+        assertThat(updatedContent.suggestedFix().replacementCode()).isEqualTo(inlineFix.replacementCode());
+        assertThat(updatedContent.suggestedFix().applied()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectMarkConsistencyInlineFixAsAppliedForUserComment() {
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        Comment userComment = exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("Initial"));
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> exerciseReviewService.markConsistencyInlineFixApplied(programmingExercise.getId(), userComment.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectMarkConsistencyInlineFixAsAppliedWhenInlineFixMissing() {
+        CommentThread thread = persistThread(programmingExercise);
+        Comment consistencyComment = buildConsistencyIssueCommentEntity("Missing inline fix");
+        consistencyComment.setThread(thread);
+        Comment saved = commentRepository.save(consistencyComment);
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> exerciseReviewService.markConsistencyInlineFixApplied(programmingExercise.getId(), saved.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectCreateUserCommentWhenExerciseIdDoesNotMatchThread() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         long mismatchingExerciseId = programmingExercise.getId() + 1;
@@ -584,6 +729,18 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> exerciseReviewService.updateThreadResolvedState(mismatchingExerciseId, thread.getId(), new UpdateThreadResolvedStateDTO(true)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectUpdateResolvedStateWhenExerciseIdDoesNotMatchThreadGroup() {
+        CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        var group = exerciseReviewService.createGroup(programmingExercise.getId(), new CreateCommentThreadGroupDTO(List.of(first.getId(), second.getId())));
+        long mismatchingExerciseId = programmingExercise.getId() + 1;
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> exerciseReviewService.updateGroupResolvedState(mismatchingExerciseId, group.getId(), new UpdateThreadResolvedStateDTO(true)));
     }
 
     @Test
@@ -711,7 +868,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         String oldText = "a\nb\nc\nd\n";
         String newText = "a\nb\nx\nc\nd\n";
 
-        LineMappingResult result = exerciseReviewService.mapLineInText(oldText, newText, 3);
+        LineMappingResult result = exerciseReviewVersionChangeService.mapLineInText(oldText, newText, 3);
 
         assertThat(result.newLine()).isEqualTo(4);
         assertThat(result.outdated()).isFalse();
@@ -722,7 +879,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         String oldText = "a\nb\nc\nd\n";
         String newText = "a\nb\nc2\nd\n";
 
-        LineMappingResult result = exerciseReviewService.mapLineInText(oldText, newText, 3);
+        LineMappingResult result = exerciseReviewVersionChangeService.mapLineInText(oldText, newText, 3);
 
         assertThat(result.newLine()).isEqualTo(3);
         assertThat(result.outdated()).isTrue();
@@ -730,7 +887,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     void shouldMapLineInTextMarksInvalidLineAsOutdated() {
-        LineMappingResult result = exerciseReviewService.mapLineInText("a\nb\n", "a\nb\n", 0);
+        LineMappingResult result = exerciseReviewVersionChangeService.mapLineInText("a\nb\n", "a\nb\n", 0);
 
         assertThat(result.newLine()).isNull();
         assertThat(result.outdated()).isTrue();
@@ -756,15 +913,15 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         RevCommit newCommit = GitService.commit(repo.git()).setMessage("Update file").call();
         pushHeadToDefaultBranch(repo.git());
 
-        LineMappingResult shiftedLine = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 2);
+        LineMappingResult shiftedLine = exerciseReviewVersionChangeService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 2);
         assertThat(shiftedLine.newLine()).isEqualTo(3);
         assertThat(shiftedLine.outdated()).isFalse();
 
-        LineMappingResult editedLine = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 8);
+        LineMappingResult editedLine = exerciseReviewVersionChangeService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 8);
         assertThat(editedLine.newLine()).isEqualTo(9);
         assertThat(editedLine.outdated()).isTrue();
 
-        LineMappingResult unchangedLine = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 9);
+        LineMappingResult unchangedLine = exerciseReviewVersionChangeService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 9);
         assertThat(unchangedLine.newLine()).isEqualTo(10);
         assertThat(unchangedLine.outdated()).isFalse();
     }
@@ -786,7 +943,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         RevCommit newCommit = GitService.commit(repo.git()).setMessage("Delete file").call();
         pushHeadToDefaultBranch(repo.git());
 
-        LineMappingResult result = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
+        LineMappingResult result = exerciseReviewVersionChangeService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
         assertThat(result.newLine()).isNull();
         assertThat(result.outdated()).isTrue();
     }
@@ -806,7 +963,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         RevCommit newCommit = GitService.commit(repo.git()).setMessage("Add file").call();
         pushHeadToDefaultBranch(repo.git());
 
-        LineMappingResult result = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
+        LineMappingResult result = exerciseReviewVersionChangeService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
         assertThat(result.newLine()).isNull();
         assertThat(result.outdated()).isTrue();
     }
@@ -826,7 +983,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(3);
@@ -847,7 +1004,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(5);
@@ -867,7 +1024,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(3);
@@ -890,7 +1047,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(3);
@@ -909,7 +1066,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(5);
@@ -931,7 +1088,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(5);
@@ -939,14 +1096,27 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    void shouldReturnWhenUpdateThreadsForVersionChangeSnapshotsNull() {
+    void shouldThrowWhenUpdateThreadsForVersionChangeSnapshotsNull() {
         CommentThread thread = persistThread(programmingExercise);
         Integer originalLine = thread.getLineNumber();
+        ExerciseSnapshotDTO snapshot = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), null);
 
-        exerciseReviewService.updateThreadsForVersionChange(null, null);
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> exerciseReviewVersionChangeService.updateThreadsForVersionChange(null, snapshot))
+                .withMessage("previousSnapshot must not be null");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> exerciseReviewVersionChangeService.updateThreadsForVersionChange(snapshot, null))
+                .withMessage("currentSnapshot must not be null");
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(originalLine);
+    }
+
+    @Test
+    void shouldThrowWhenUpdateThreadsForVersionChangeSnapshotsBelongToDifferentExercises() {
+        ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), null);
+        ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId() + 1, programmingExercise.getProblemStatement(), null);
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current))
+                .withMessage("Cannot update review threads for snapshots of different exercises");
     }
 
     @Test
@@ -959,11 +1129,72 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), "line1\nline2\nline3\n", null);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), "line1\ninserted\nline2\nline3\n", null);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(3);
         assertThat(updated.isOutdated()).isFalse();
+    }
+
+    @Test
+    void shouldUpdateInlineFixRangeForProblemStatementOnVersionChange() {
+        CommentThread thread = persistThread(programmingExercise);
+        thread.setLineNumber(2);
+        thread.setInitialLineNumber(2);
+        thread = commentThreadRepository.save(thread);
+
+        Comment consistencyComment = buildConsistencyIssueCommentEntityWithInlineFix("Inline fix", "line2", "line2Updated", 2, 2, false);
+        consistencyComment.setThread(thread);
+        consistencyComment = commentRepository.save(consistencyComment);
+
+        ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), "line1\nline2\nline3\n", null);
+        ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), "line1\ninserted\nline2\nline3\n", null);
+
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
+
+        CommentThread updatedThread = commentThreadRepository.findById(thread.getId()).orElseThrow();
+        assertThat(updatedThread.getLineNumber()).isEqualTo(3);
+        assertThat(updatedThread.isOutdated()).isFalse();
+
+        Comment updatedComment = commentRepository.findWithThreadById(consistencyComment.getId()).orElseThrow();
+        assertThat(updatedComment.getContent()).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+        InlineCodeChangeDTO inlineFix = ((ConsistencyIssueCommentContentDTO) updatedComment.getContent()).suggestedFix();
+        assertThat(inlineFix).isNotNull();
+        assertThat(inlineFix.startLine()).isEqualTo(3);
+        assertThat(inlineFix.endLine()).isEqualTo(3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldUpdateInlineFixRangeForTemplateRepositoryOnVersionChange() throws Exception {
+        RepoHistory history = createRepoWithTwoCommits("template-inline-map");
+        CommentThread thread = buildRepoThread(CommentThreadLocationType.TEMPLATE_REPO, "src/Main.java", 2);
+        thread.setExercise(programmingExercise);
+        thread = commentThreadRepository.save(thread);
+
+        Comment consistencyComment = buildConsistencyIssueCommentEntityWithInlineFix("Inline fix", "beta\ngamma", "gamma\nbeta", 2, 3, false);
+        consistencyComment.setThread(thread);
+        consistencyComment = commentRepository.save(consistencyComment);
+
+        var previousParticipation = new ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO(1L, history.repositoryUri().toString(), null, history.oldCommit());
+        var currentParticipation = new ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO(1L, history.repositoryUri().toString(), null, history.newCommit());
+        var previousProgramming = buildProgrammingSnapshot(null, null, previousParticipation, null, null);
+        var currentProgramming = buildProgrammingSnapshot(null, null, currentParticipation, null, null);
+        ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
+        ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
+
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
+
+        CommentThread updatedThread = commentThreadRepository.findById(thread.getId()).orElseThrow();
+        assertThat(updatedThread.getLineNumber()).isEqualTo(3);
+        assertThat(updatedThread.isOutdated()).isFalse();
+
+        Comment updatedComment = commentRepository.findWithThreadById(consistencyComment.getId()).orElseThrow();
+        assertThat(updatedComment.getContent()).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+        InlineCodeChangeDTO inlineFix = ((ConsistencyIssueCommentContentDTO) updatedComment.getContent()).suggestedFix();
+        assertThat(inlineFix).isNotNull();
+        assertThat(inlineFix.startLine()).isEqualTo(3);
+        assertThat(inlineFix.endLine()).isEqualTo(4);
     }
 
     @Test
@@ -974,7 +1205,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), null);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), null);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(originalLine);
@@ -992,7 +1223,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         assertThat(commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId())).isEmpty();
     }
@@ -1049,6 +1280,14 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         Comment comment = new Comment();
         comment.setType(CommentType.CONSISTENCY_CHECK);
         comment.setContent(new ConsistencyIssueCommentContentDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, text, null));
+        return comment;
+    }
+
+    private Comment buildConsistencyIssueCommentEntityWithInlineFix(String text, String expectedCode, String replacementCode, int startLine, int endLine, boolean applied) {
+        Comment comment = new Comment();
+        comment.setType(CommentType.CONSISTENCY_CHECK);
+        comment.setContent(new ConsistencyIssueCommentContentDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, text,
+                new InlineCodeChangeDTO(startLine, endLine, expectedCode, replacementCode, applied)));
         return comment;
     }
 
