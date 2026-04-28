@@ -13,14 +13,6 @@ import java.util.UUID;
  */
 public final class WeaviateUuidUtil {
 
-    /**
-     * Fixed namespace prefix included in the string passed to
-     * {@link UUID#nameUUIDFromBytes(byte[])} to derive deterministic UUID v3 (MD5-based)
-     * identifiers for Weaviate objects. The full input is {@code "namespace:type:entityId"},
-     * ensuring the same entity always maps to the same Weaviate object UUID across nodes.
-     */
-    static final UUID WEAVIATE_UUID_NAMESPACE = UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
-
     private WeaviateUuidUtil() {
         // utility class
     }
@@ -37,6 +29,6 @@ public final class WeaviateUuidUtil {
      * @return the derived deterministic UUID
      */
     public static String deterministicUuid(String type, Long entityId) {
-        return UUID.nameUUIDFromBytes((WEAVIATE_UUID_NAMESPACE + ":" + type + ":" + entityId).getBytes(StandardCharsets.UTF_8)).toString();
+        return UUID.nameUUIDFromBytes((type + ":" + entityId).getBytes(StandardCharsets.UTF_8)).toString();
     }
 }
