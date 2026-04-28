@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 
@@ -23,7 +24,7 @@ class OAuth2JWKSIntegrationTest extends AbstractLtiIntegrationTest {
     void getKeysetIsPublicAndReturnsJson() throws Exception {
 
         String keyset = request.get("/.well-known/jwks.json", HttpStatus.OK, String.class);
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = JsonObjectMapper.get();
         JsonNode jsonKeyset = objectMapper.readTree(keyset);
         assertThat(jsonKeyset.get("keys")).isNotNull();
     }
@@ -47,7 +48,7 @@ class OAuth2JWKSIntegrationTest extends AbstractLtiIntegrationTest {
         oAuth2JWKSService.updateKey(TEST_PREFIX + "registrationId");
 
         String keyset = request.get("/.well-known/jwks.json", HttpStatus.OK, String.class);
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = JsonObjectMapper.get();
         JsonNode jsonKeyset = objectMapper.readTree(keyset);
 
         assertThat(jsonKeyset).isNotNull();

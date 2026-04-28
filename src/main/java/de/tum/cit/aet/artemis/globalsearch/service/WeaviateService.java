@@ -1,9 +1,13 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
 
@@ -14,7 +18,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateCollectionSchema;
@@ -24,10 +30,12 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateSchemas;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.WeaviateClient;
+import io.weaviate.client6.v1.api.collections.CollectionConfig;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.ReferenceProperty;
 import io.weaviate.client6.v1.api.collections.VectorConfig;
+import io.weaviate.client6.v1.api.collections.vectorizers.Text2VecOpenAiVectorizer;
 
 /**
  * Infrastructure service for Weaviate vector database.
@@ -42,16 +50,13 @@ public class WeaviateService {
 
     private final WeaviateClient client;
 
-    private final String collectionPrefix;
-
-    private final String vectorizerModule;
+    private final WeaviateConfigurationProperties properties;
 
     private final boolean isTestProfile;
 
     public WeaviateService(WeaviateClient client, WeaviateConfigurationProperties properties, Environment environment) {
         this.client = client;
-        this.collectionPrefix = properties.collectionPrefix();
-        this.vectorizerModule = properties.vectorizerModule();
+        this.properties = properties;
         this.isTestProfile = environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST));
     }
 
@@ -62,7 +67,7 @@ public class WeaviateService {
      * @return the prefixed collection name (e.g. "Artemis_Exercises" when prefix is "Artemis_")
      */
     private String resolveCollectionName(String baseName) {
-        return collectionPrefix + baseName;
+        return properties.collectionPrefix() + baseName;
     }
 
     /**
@@ -71,7 +76,8 @@ public class WeaviateService {
      */
     @PostConstruct
     public void initializeCollections() {
-        log.info("Initializing Weaviate collections with vectorizer module: {}", vectorizerModule);
+        log.info("Initializing Weaviate collections at {}://{}:{} (gRPC: {}) with vectorizer module: {}", properties.scheme(), properties.httpHost(), properties.httpPort(),
+                properties.grpcPort(), properties.vectorizerModule());
 
         for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {
             ensureCollectionExists(schema);
@@ -90,29 +96,42 @@ public class WeaviateService {
 
         try {
             if (client.collections.exists(collectionName)) {
-                log.debug("Collection '{}' already exists", collectionName);
+                log.info("Collection '{}' already exists, skipping creation.", collectionName);
+                checkForConfigurationDrift(collectionName);
                 return;
             }
 
-            log.info("Creating collection '{}'...", collectionName);
+            log.info("Creating collection '{}' with vectorizer '{}'...", collectionName, properties.vectorizerModule());
 
             client.collections.create(collectionName, collection -> {
                 // Configure vectorizer based on deployment setup
                 // - "none": Use self-provided vectors (respective weaviate instance can be started via docker/weaviate.yml)
                 // - "text2vec-transformers": Automatic embeddings with embeddinggemma-300m (respective weaviate instance can be started via docker/weaviate-embeddings.yml)
-                switch (vectorizerModule) {
-                    case WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS -> {
-                        log.debug("Configuring collection '{}' with text2vec-transformers vectorizer", collectionName);
-                        collection.vectorConfig(VectorConfig.text2vecTransformers());
-                    }
-                    case WeaviateConfigurationProperties.VECTORIZER_NONE -> {
-                        log.debug("Configuring collection '{}' with self-provided vectors", collectionName);
-                        collection.vectorConfig(VectorConfig.selfProvided());
-                    }
-                    default -> {
-                        log.warn("Unknown vectorizer module '{}', defaulting to self-provided vectors", vectorizerModule);
-                        collection.vectorConfig(VectorConfig.selfProvided());
-                    }
+                // - "text2vec-openai": OpenAI-compatible API embeddings, e.g. Ollama (weaviate started with docker/weaviate/openai.env)
+                if (SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(properties.vectorizerModule())) {
+                    collection.vectorConfig(VectorConfig.text2vecOpenAi(builder -> {
+                        if (StringUtils.hasText(properties.openAiBaseUrl())) {
+                            builder.baseUrl(properties.openAiBaseUrl());
+                        }
+                        if (StringUtils.hasText(properties.openAiEmbeddingModel())) {
+                            builder.model(properties.openAiEmbeddingModel());
+                        }
+                        return builder;
+                    }));
+                    log.info("Configured collection '{}' with text2vec-openai: baseUrl='{}', model='{}', apiKey configured={}", collectionName, properties.openAiBaseUrl(),
+                            properties.openAiEmbeddingModel(), StringUtils.hasText(properties.gpuApiKey()));
+                }
+                else if (SupportedVectorizer.TEXT2VEC_TRANSFORMERS.configValue().equals(properties.vectorizerModule())) {
+                    log.info("Configured collection '{}' with text2vec-transformers vectorizer", collectionName);
+                    collection.vectorConfig(VectorConfig.text2vecTransformers());
+                }
+                else if (SupportedVectorizer.NONE.configValue().equals(properties.vectorizerModule())) {
+                    log.info("Configured collection '{}' with self-provided vectors (no automatic embeddings)", collectionName);
+                    collection.vectorConfig(VectorConfig.selfProvided());
+                }
+                else {
+                    log.warn("Unknown vectorizer module '{}', defaulting to self-provided vectors", properties.vectorizerModule());
+                    collection.vectorConfig(VectorConfig.selfProvided());
                 }
 
                 // Enable null state indexing so that properties with null values can be used in filters
@@ -149,6 +168,89 @@ public class WeaviateService {
                 throw new WeaviateException("Failed to create Weaviate collection '" + collectionName + "': " + e.getMessage(), e);
             }
         }
+    }
+
+    /**
+     * Compares the existing collection's vectorizer configuration with the application config.
+     * Logs a warning if there is a mismatch, guiding the developer to delete and recreate the collection.
+     *
+     * @param collectionName the fully-qualified collection name (with prefix)
+     */
+    private void checkForConfigurationDrift(String collectionName) {
+        try {
+            Optional<VectorConfig> defaultVector = getDefaultVectorConfig(collectionName);
+            if (defaultVector.isEmpty()) {
+                return;
+            }
+
+            List<String> mismatches = detectVectorizerMismatches(defaultVector.get());
+            if (!mismatches.isEmpty()) {
+                log.warn(
+                        "Collection '{}' exists but its vectorizer configuration differs from the application config: {}. "
+                                + "Delete the collection and restart Artemis to apply the new settings: curl -X DELETE \"http://{}:{}/v1/schema/{}\"",
+                        collectionName, String.join("; ", mismatches), properties.httpHost(), properties.httpPort(), collectionName);
+            }
+        }
+        catch (Exception e) {
+            log.debug("Could not verify configuration of existing collection '{}': {}", collectionName, e.getMessage());
+        }
+    }
+
+    /**
+     * Retrieves the default vector configuration from an existing collection.
+     *
+     * @param collectionName the fully-qualified collection name
+     * @return the default vector config, or empty if not available
+     */
+    private Optional<VectorConfig> getDefaultVectorConfig(String collectionName) throws IOException {
+        Optional<CollectionConfig> existingConfig = client.collections.getConfig(collectionName);
+        if (existingConfig.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Map<String, VectorConfig> vectors = existingConfig.get().vectors();
+        if (vectors == null || vectors.isEmpty()) {
+            return Optional.empty();
+        }
+
+        // Weaviate stores the default vector under the key "default"
+        VectorConfig defaultVector = vectors.get("default");
+        if (defaultVector == null) {
+            log.warn("Collection '{}' has no 'default' vector key; found keys: {}. Skipping configuration drift check.", collectionName, vectors.keySet());
+            return Optional.empty();
+        }
+        return Optional.of(defaultVector);
+    }
+
+    /**
+     * Compares the existing vector configuration against the application's configured vectorizer
+     * and returns a list of human-readable mismatch descriptions.
+     *
+     * @param existingVector the vector configuration currently stored in Weaviate
+     * @return a list of mismatch descriptions (empty if configurations match)
+     */
+    private List<String> detectVectorizerMismatches(VectorConfig existingVector) {
+        VectorConfig.Kind existingKind = existingVector._kind();
+        VectorConfig.Kind expectedKind = SupportedVectorizer.fromConfigValue(properties.vectorizerModule()).vectorConfigKind();
+
+        List<String> mismatches = new ArrayList<>();
+
+        if (existingKind != expectedKind) {
+            mismatches.add("vectorizer module: existing='%s', configured='%s'".formatted(existingKind.jsonValue(), properties.vectorizerModule()));
+        }
+
+        boolean shouldCompareOpenAiProperties = existingKind == VectorConfig.Kind.TEXT2VEC_OPENAI && expectedKind == VectorConfig.Kind.TEXT2VEC_OPENAI;
+        if (shouldCompareOpenAiProperties) {
+            Text2VecOpenAiVectorizer existingOpenAi = existingVector._as(VectorConfig.Kind.TEXT2VEC_OPENAI);
+            if (!Objects.equals(existingOpenAi.baseUrl(), properties.openAiBaseUrl())) {
+                mismatches.add("open-ai-base-url: existing='%s', configured='%s'".formatted(existingOpenAi.baseUrl(), properties.openAiBaseUrl()));
+            }
+            if (!Objects.equals(existingOpenAi.model(), properties.openAiEmbeddingModel())) {
+                mismatches.add("open-ai-embedding-model: existing='%s', configured='%s'".formatted(existingOpenAi.model(), properties.openAiEmbeddingModel()));
+            }
+        }
+
+        return mismatches;
     }
 
     /**
@@ -190,6 +292,7 @@ public class WeaviateService {
      * @return {@code true} if a text vectorizer is available, {@code false} otherwise
      */
     public boolean isVectorizerAvailable() {
-        return WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS.equals(vectorizerModule);
+        return SupportedVectorizer.TEXT2VEC_TRANSFORMERS.configValue().equals(properties.vectorizerModule())
+                || SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(properties.vectorizerModule());
     }
 }

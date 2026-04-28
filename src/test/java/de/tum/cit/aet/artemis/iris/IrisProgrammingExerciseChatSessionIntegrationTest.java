@@ -17,11 +17,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -106,7 +106,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
 
     private IrisJsonMessageContent createMockJsonContent() {
         var jsonMap = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
-        JsonNode jsonNode = new ObjectMapper().valueToTree(jsonMap);
+        JsonNode jsonNode = JsonObjectMapper.get().valueToTree(jsonMap);
         return new IrisJsonMessageContent(jsonNode);
     }
 

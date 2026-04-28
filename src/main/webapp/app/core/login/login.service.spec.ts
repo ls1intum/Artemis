@@ -158,7 +158,7 @@ describe('LoginService', () => {
         expect(alertServiceClearStub).toHaveBeenCalledOnce();
         expect(alertServiceClearStub).toHaveBeenCalledWith();
         expect(navigateByUrlStub).toHaveBeenCalledOnce();
-        expect(navigateByUrlStub).toHaveBeenCalledWith('/');
+        expect(navigateByUrlStub).toHaveBeenCalledWith('/sign-in');
         expect(authServerProviderClearStub).toHaveBeenCalledOnce();
     }
 });

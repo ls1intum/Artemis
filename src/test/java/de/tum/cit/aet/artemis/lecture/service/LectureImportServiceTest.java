@@ -79,10 +79,6 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(lecture2.getStartDate()).isNotNull().isEqualTo(this.lecture1.getStartDate());
         assertThat(lecture2.getEndDate()).isNotNull().isEqualTo(this.lecture1.getEndDate());
 
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // assertThat(lecture2.getVisibleDate()).isNotNull().isEqualTo(this.lecture1.getVisibleDate());
-
         // Assert that all lecture units (except exercise units) were copied
         assertThat(lecture2.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(
                 this.lecture1.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(LectureUnit::getName).toList());

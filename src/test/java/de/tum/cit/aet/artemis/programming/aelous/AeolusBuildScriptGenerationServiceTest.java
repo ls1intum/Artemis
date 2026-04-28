@@ -14,9 +14,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.connector.AeolusRequestMockProvider;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -76,7 +76,7 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
     }
 
     private String getSerializedWindfile() throws JsonProcessingException {
-        return new ObjectMapper().writeValueAsString(getWindfile());
+        return JsonObjectMapper.get().writeValueAsString(getWindfile());
     }
 
     @Test

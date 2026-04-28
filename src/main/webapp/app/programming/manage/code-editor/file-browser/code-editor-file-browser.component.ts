@@ -148,6 +148,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
     allowHiddenFiles = input<boolean>(false);
 
     isProblemStatementVisible = input<boolean>(true);
+    showHeader = input<boolean>(true);
     fileSyncService = input<CodeEditorFileSyncService | undefined>();
 
     onToggleCollapse = output<InteractableEvent>();
@@ -236,6 +237,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
 
     ngOnDestroy(): void {
         this.conflictSubscription?.unsubscribe();
+        this.interactResizable?.unset();
     }
 
     /**

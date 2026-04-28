@@ -60,7 +60,7 @@ describe('AuthExpiredInterceptor', () => {
         };
         const isAuthenticatedSpy = vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
 
-        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
+        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe({ error: () => {} });
 
         expect(isAuthenticatedSpy).toHaveBeenCalledOnce();
         expect(loginServiceMock.logout).toHaveBeenCalledWith(false);
@@ -73,7 +73,7 @@ describe('AuthExpiredInterceptor', () => {
         };
         const isAuthenticatedSpy = vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(false);
 
-        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
+        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe({ error: () => {} });
 
         expect(isAuthenticatedSpy).toHaveBeenCalledOnce();
         expect(loginServiceMock.logout).not.toHaveBeenCalled();
@@ -86,7 +86,7 @@ describe('AuthExpiredInterceptor', () => {
         };
         const isAuthenticatedSpy = vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
 
-        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
+        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe({ error: () => {} });
 
         expect(isAuthenticatedSpy).not.toHaveBeenCalled();
         expect(loginServiceMock.logout).not.toHaveBeenCalled();

@@ -5,7 +5,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { CreateOrUpdateTutorialGroupSessionDTO, TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { Validation, ValidationStatus } from 'app/shared/util/validation';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { TooltipModule } from 'primeng/tooltip';
@@ -15,10 +15,11 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
+import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/createOrUpdateTutorialGroupSessionRequest';
 
 export interface UpdateTutorialGroupSessionData {
     tutorialGroupSessionId: number;
-    updateTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO;
+    updateTutorialGroupSessionRequest: CreateOrUpdateTutorialGroupSessionRequest;
 }
 
 @Component({
@@ -43,7 +44,7 @@ export class TutorialSessionCreateOrEditModalComponent {
     protected readonly ValidationStatus = ValidationStatus;
 
     private translateService = inject(TranslateService);
-    private session = signal<TutorialGroupSessionDTO | undefined>(undefined);
+    private session = signal<TutorialGroupSession | undefined>(undefined);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private inputsInvalid = computed(() => this.computeIfInputsInvalid());
 
@@ -64,9 +65,9 @@ export class TutorialSessionCreateOrEditModalComponent {
     attendance = signal<number | null>(null);
     header = computed(() => this.computeHeader());
     onUpdate = output<UpdateTutorialGroupSessionData>();
-    onCreate = output<CreateOrUpdateTutorialGroupSessionDTO>();
+    onCreate = output<CreateOrUpdateTutorialGroupSessionRequest>();
 
-    open(session?: TutorialGroupSessionDTO) {
+    open(session?: TutorialGroupSession) {
         if (session) {
             this.session.set(session);
             this.date.set(session.start.toDate());
@@ -108,21 +109,21 @@ export class TutorialSessionCreateOrEditModalComponent {
     }
 
     private createSession() {
-        const createTutorialGroupSessionDTO = this.constructCreateOrUpdateTutorialGroupSessionDTO();
-        this.onCreate.emit(createTutorialGroupSessionDTO);
+        const createTutorialGroupSessionRequest = this.constructCreateOrUpdateTutorialGroupSessionRequest();
+        this.onCreate.emit(createTutorialGroupSessionRequest);
     }
 
-    private updateSession(session: TutorialGroupSessionDTO) {
+    private updateSession(session: TutorialGroupSession) {
         const tutorialGroupSessionId = session.id;
-        const updateTutorialGroupSessionDTO = this.constructCreateOrUpdateTutorialGroupSessionDTO();
+        const updateTutorialGroupSessionRequest = this.constructCreateOrUpdateTutorialGroupSessionRequest();
         const updateTutorialGroupSessionData: UpdateTutorialGroupSessionData = {
             tutorialGroupSessionId: tutorialGroupSessionId,
-            updateTutorialGroupSessionDTO: updateTutorialGroupSessionDTO,
+            updateTutorialGroupSessionRequest: updateTutorialGroupSessionRequest,
         };
         this.onUpdate.emit(updateTutorialGroupSessionData);
     }
 
-    private constructCreateOrUpdateTutorialGroupSessionDTO(): CreateOrUpdateTutorialGroupSessionDTO {
+    private constructCreateOrUpdateTutorialGroupSessionRequest(): CreateOrUpdateTutorialGroupSessionRequest {
         return {
             date: dayjs(this.date()).format('YYYY-MM-DD'),
             startTime: dayjs(this.startTime()).format('HH:mm'),
@@ -194,6 +195,12 @@ export class TutorialSessionCreateOrEditModalComponent {
                 message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.locationRequired',
             };
         }
+        if (trimmedLocation.length > 255) {
+            return {
+                status: ValidationStatus.INVALID,
+                message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.locationLength',
+            };
+        }
         return { status: ValidationStatus.VALID };
     }
 
@@ -205,7 +212,7 @@ export class TutorialSessionCreateOrEditModalComponent {
         return dateInvalid || startTimeInvalid || endTimeInvalid || locationInvalid;
     }
 
-    private checkIfSessionChanged(session: TutorialGroupSessionDTO): boolean {
+    private checkIfSessionChanged(session: TutorialGroupSession): boolean {
         const date = this.date();
         const startTime = this.startTime();
         const endTime = this.endTime();

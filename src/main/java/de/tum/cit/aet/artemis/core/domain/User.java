@@ -41,6 +41,7 @@ import org.springframework.security.web.webauthn.api.Bytes;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
@@ -63,6 +64,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class User extends AbstractAuditingEntity implements Participant {
+
+    public static final String IRIS_BOT_LOGIN = "iris_bot";
 
     @NonNull
     @Pattern(regexp = Constants.LOGIN_REGEX)
@@ -170,8 +173,8 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnoreProperties(value = "user", allowSetters = true)
     private Set<Organization> organizations = new HashSet<>();
 
+    // No @Cache: mutated on every tutorial-group enrolment change; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
     @OneToMany(mappedBy = "student", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "student", allowSetters = true)
     public Set<TutorialGroupRegistration> tutorialGroupRegistrations = new HashSet<>();
 
@@ -187,8 +190,8 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     private Set<LearningPath> learningPaths = new HashSet<>();
 
+    // No @Cache: mutated on every exam registration; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnore
     private Set<ExamUser> examUsers = new HashSet<>();
 
@@ -450,6 +453,11 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setInternal(boolean internal) {
         this.internal = internal;
+    }
+
+    @JsonProperty("bot")
+    public boolean isBot() {
+        return IRIS_BOT_LOGIN.equals(this.login);
     }
 
     public boolean isDeleted() {

@@ -20,7 +20,6 @@ test.describe('Logout tests', () => {
         const exerciseID = textExercise.id!;
         await page.goto(`/courses/${course.id}/exercises/${exerciseID}`);
         await courseOverview.startExercise(exerciseID);
-        await courseOverview.openRunningExercise(exerciseID);
         await textExerciseEditor.typeSubmission(exerciseID, 'Some unsaved text content');
 
         page.on('dialog', async (dialog) => {
@@ -38,7 +37,6 @@ test.describe('Logout tests', () => {
         const exerciseID = textExercise.id!;
         await page.goto(`/courses/${course.id}/exercises/${exerciseID}`);
         await courseOverview.startExercise(exerciseID);
-        await courseOverview.openRunningExercise(exerciseID);
         await textExerciseEditor.typeSubmission(exerciseID, 'Some unsaved text content');
 
         page.on('dialog', async (dialog) => {

@@ -108,11 +108,13 @@ describe('RequestFeedbackButtonComponent', () => {
     }
 
     function createParticipation(submitted = true): StudentParticipation {
-        return {
+        const participation = {
             id: 1,
             submissions: [{ id: 1, submitted }],
             testRun: false,
         } as StudentParticipation;
+        component.participation = participation;
+        return participation;
     }
 
     function setupComponentInputs(exercise: Exercise, isSubmitted?: boolean, isGeneratingFeedback?: boolean) {
@@ -218,7 +220,7 @@ describe('RequestFeedbackButtonComponent', () => {
             setAthenaEnabled(true);
             const participation = createParticipation();
             const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
-            setupComponentInputs(exercise);
+            setupComponentInputs(exercise, true);
             component.hasUserAcceptedLLMUsage = true;
 
             await initAndTick();
@@ -237,7 +239,8 @@ describe('RequestFeedbackButtonComponent', () => {
         it('should show an alert when requestAIFeedback() is called and conditions are not satisfied', async () => {
             vi.useFakeTimers();
             setAthenaEnabled(true);
-            const exercise = createBaseExercise(ExerciseType.TEXT, false);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
             setupComponentInputs(exercise);
             component.hasUserAcceptedLLMUsage = true;
 
@@ -293,7 +296,7 @@ describe('RequestFeedbackButtonComponent', () => {
             await vi.advanceTimersByTimeAsync(0);
 
             expect(modalSpy).not.toHaveBeenCalled();
-            expect(processFeedbackSpy).toHaveBeenCalledWith(exercise.id);
+            expect(processFeedbackSpy).toHaveBeenCalledWith(exercise.id, participation.id);
         });
     });
 
@@ -519,7 +522,8 @@ describe('RequestFeedbackButtonComponent', () => {
     });
 
     it('should return true for programming exercises in assureConditionsSatisfied', () => {
-        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
         fixture.componentRef.setInput('exercise', exercise);
 
         const result = component.assureConditionsSatisfied();

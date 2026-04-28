@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import java.time.Duration;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -13,7 +14,9 @@ import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepositoryDialect;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.model.azure.openai.autoconfigure.AzureOpenAIClientBuilderCustomizer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
@@ -22,6 +25,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import com.azure.ai.openai.OpenAIClientBuilder;
+import com.azure.core.http.HttpClient;
+import com.azure.core.http.netty.NettyAsyncHttpClientBuilder;
 
 /**
  * Configuration for Spring AI chat clients.
@@ -96,6 +103,29 @@ public class SpringAIConfiguration {
         ChatClient.Builder builder = ChatClient.builder(chatModel);
 
         return builder.build();
+    }
+
+    /**
+     * Applies explicit HTTP timeouts to the Azure OpenAI client builder.
+     * Spring AI 1.1.3 does not bind the configured {@code spring.ai.azure.openai.client.*} timeout
+     * properties automatically for the Azure model, so Artemis applies them explicitly here.
+     *
+     * @param connectTimeout  configured connection timeout
+     * @param readTimeout     configured read timeout
+     * @param responseTimeout configured response timeout
+     * @return customizer that sets a Netty HTTP client with the configured timeouts
+     */
+    @Bean
+    @Lazy
+    @ConditionalOnClass({ OpenAIClientBuilder.class, AzureOpenAIClientBuilderCustomizer.class, NettyAsyncHttpClientBuilder.class })
+    public AzureOpenAIClientBuilderCustomizer azureOpenAiClientTimeoutCustomizer(@Value("${spring.ai.azure.openai.client.connect-timeout:30s}") Duration connectTimeout,
+            @Value("${spring.ai.azure.openai.client.read-timeout:5m}") Duration readTimeout,
+            @Value("${spring.ai.azure.openai.client.response-timeout:5m}") Duration responseTimeout) {
+        return clientBuilder -> {
+            HttpClient httpClient = new NettyAsyncHttpClientBuilder().connectTimeout(connectTimeout).readTimeout(readTimeout).responseTimeout(responseTimeout).build();
+            clientBuilder.httpClient(httpClient);
+            log.info("Configured Azure OpenAI HTTP client timeouts: connect={}, read={}, response={}", connectTimeout, readTimeout, responseTimeout);
+        };
     }
 
     /**

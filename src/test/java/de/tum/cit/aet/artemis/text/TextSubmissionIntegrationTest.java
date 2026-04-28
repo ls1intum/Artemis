@@ -381,7 +381,9 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         Optional<SubmissionVersion> newVersion = submissionVersionRepository.findLatestVersion(submission.getId());
         assertThat(newVersion.orElseThrow().getId()).as("submission version was not created").isEqualTo(version.get().getId());
 
-        exerciseRepository.save(releasedTextExercise.participations(Set.of()));
+        // Note: Cleanup of participations through orphan removal is not possible here because
+        // the participations have submissions that are not cascade-deleted. The test database
+        // is reset between test runs, so explicit cleanup is not required.
     }
 
     @Test

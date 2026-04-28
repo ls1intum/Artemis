@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USER_EMAIL_DOMAIN_AFT
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_LAST_NAME_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.domain.Authority.SUPER_ADMIN_AUTHORITY;
+import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsExcepti
 import de.tum.cit.aet.artemis.core.exception.UsernameAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.RandomUtil;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
@@ -65,7 +67,6 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
-import tech.jhipster.security.RandomUtil;
 
 /**
  * Service class for managing users.
@@ -292,6 +293,9 @@ public class UserService {
         final var newUser = new User();
         String passwordHash = passwordService.hashPassword(password);
         newUser.setLogin(userDTO.getLogin().toLowerCase());
+        if (IRIS_BOT_LOGIN.equals(newUser.getLogin())) {
+            throw new UsernameAlreadyUsedException();
+        }
         // new user gets initially a generated password
         newUser.setPassword(passwordHash);
         newUser.setFirstName(userDTO.getFirstName());

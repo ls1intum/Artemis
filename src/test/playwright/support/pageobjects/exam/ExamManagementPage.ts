@@ -58,13 +58,6 @@ export class ExamManagementPage {
     }
 
     /**
-     * Opens the student exams page.
-     */
-    async openStudentExams(examId: number) {
-        await this.page.locator(`#student-exams-${examId}`).click();
-    }
-
-    /**
      * Opens the exam assessment dashboard
      * @param courseID the id of the course
      * @param examID the id of the exam
@@ -72,7 +65,7 @@ export class ExamManagementPage {
      */
     async openAssessmentDashboard(courseID: number, examID: number, timeout = EXAM_DASHBOARD_TIMEOUT) {
         await this.page.goto(`/course-management/${courseID}/exams/${examID}/assessment-dashboard`);
-        await this.page.waitForLoadState('domcontentloaded');
+        await this.page.waitForLoadState('networkidle');
     }
 
     /**
@@ -97,14 +90,19 @@ export class ExamManagementPage {
     }
 
     async verifySubmitted(courseID: number, examID: number, username: string) {
-        await this.page.goto(`/course-management/${courseID}/exams/${examID}/student-exams`);
-        await this.page.locator('#student-exam').waitFor({ state: 'visible' });
-        await expect(this.page.locator('#student-exam .datatable-body-row', { hasText: username }).locator('.submitted')).toHaveText('Yes');
+        await this.page.goto(`/course-management/${courseID}/exams/${examID}/students`);
+        await this.page.waitForLoadState('networkidle');
+        const row = this.page.locator('tbody tr', { hasText: username }).first();
+        await row.waitFor({ state: 'visible' });
+        await expect(row).toContainText('Submitted');
     }
 
     async checkQuizSubmission(courseID: number, examID: number, username: string, score: string) {
-        await this.page.goto(`/course-management/${courseID}/exams/${examID}/student-exams`);
-        await this.page.locator('#student-exam .datatable-body-row', { hasText: username }).locator('.view-submission').click();
+        await this.page.goto(`/course-management/${courseID}/exams/${examID}/students`);
+        await this.page.waitForLoadState('networkidle');
+        const row = this.page.locator('tbody tr', { hasText: username }).first();
+        await row.waitFor({ state: 'visible' });
+        await row.getByRole('link', { name: 'View exam' }).click();
         await this.page.locator('.summery').click();
         await expect(this.page.locator('#exercise-result-score')).toHaveText(score, { useInnerText: true });
     }

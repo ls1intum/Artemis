@@ -1,40 +1,67 @@
 @if (exercise) {
-    <div id="exercise-headers-information" class="d-flex flex-row flex-wrap gap-2 overflow-auto">
+    <div id="exercise-headers-information" class="align-self-stretch d-flex flex-row flex-wrap align-items-stretch gap-2 overflow-auto">
         @for (informationBoxItem of informationBoxItems; track informationBoxItem) {
-            <jhi-information-box [informationBoxData]="informationBoxItem">
-                @switch (informationBoxItem.content.type) {
-                    @case ('difficultyLevel') {
-                        <jhi-difficulty-level contentComponent [difficultyLevel]="informationBoxItem.content.value" />
+            @if (informationBoxItem.content.type === 'submissionStatus') {
+                <div
+                    [attr.role]="sortedHistoryResults.length ? 'button' : undefined"
+                    [attr.tabindex]="sortedHistoryResults.length ? 0 : undefined"
+                    [attr.aria-disabled]="!sortedHistoryResults.length"
+                    [class.pe-auto]="sortedHistoryResults.length"
+                    [ngbTooltip]="sortedHistoryResults.length ? ('artemisApp.result.progressString.clickToSeeAllResults' | artemisTranslate) : ''"
+                    (click)="sortedHistoryResults.length ? resultHistoryDropdown.toggleResultsPopover($event) : undefined"
+                    (keydown.enter)="sortedHistoryResults.length ? resultHistoryDropdown.toggleResultsPopover($event) : undefined"
+                    (keydown.space)="sortedHistoryResults.length ? resultHistoryDropdown.toggleResultsPopover($event) : undefined"
+                >
+                    <jhi-information-box [informationBoxData]="informationBoxItem">
+                        <span contentComponent class="d-flex align-items-center gap-1">
+                            <span (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()" (keydown.space)="$event.stopPropagation()">
+                                <jhi-submission-result-status
+                                    class="text-truncate result"
+                                    [exercise]="informationBoxItem.content.value"
+                                    [studentParticipation]="studentParticipation"
+                                    [triggerLastGraded]="!isPractice"
+                                    [showUngradedResults]="isPractice"
+                                    [showCompletion]="false"
+                                    [showBadge]="false"
+                                    [showProgressBar]="true"
+                                    [isInSidebarCard]="false"
+                                />
+                            </span>
+                            <jhi-result-history-dropdown
+                                #resultHistoryDropdown
+                                [exercise]="exercise"
+                                [sortedHistoryResults]="sortedHistoryResults"
+                                [studentParticipation]="studentParticipation"
+                                [showUngradedResults]="isPractice"
+                                (viewingSubmissionChange)="viewingSubmissionChange.emit($event)"
+                            />
+                        </span>
+                    </jhi-information-box>
+                </div>
+            } @else {
+                <jhi-information-box [informationBoxData]="informationBoxItem">
+                    @switch (informationBoxItem.content.type) {
+                        @case ('difficultyLevel') {
+                            <jhi-difficulty-level contentComponent [difficultyLevel]="informationBoxItem.content.value" />
+                        }
+                        @case ('categories') {
+                            <jhi-exercise-categories
+                                contentComponent
+                                [exercise]="informationBoxItem.content.value"
+                                [showTags]="{ difficulty: false, notReleased: true, includedInScore: true }"
+                                [ngClass]="'badge-row'"
+                                [isSmall]="true"
+                            />
+                        }
+                        @case ('timeAgo') {
+                            <span [ngClass]="'text-' + informationBoxItem.contentColor" contentComponent>{{ informationBoxItem.content.value | artemisTimeAgo }}</span>
+                        }
+                        @case ('dateTime') {
+                            <span contentComponent>{{ informationBoxItem.content.value | artemisDate }}</span>
+                        }
                     }
-                    @case ('categories') {
-                        <jhi-exercise-categories
-                            contentComponent
-                            [exercise]="informationBoxItem.content.value"
-                            [showTags]="{ difficulty: false, notReleased: true, includedInScore: true }"
-                            [ngClass]="'badge-row'"
-                            [isSmall]="true"
-                        />
-                    }
-                    @case ('timeAgo') {
-                        <span [ngClass]="'text-' + informationBoxItem.contentColor" contentComponent>{{ informationBoxItem.content.value | artemisTimeAgo }}</span>
-                    }
-                    @case ('dateTime') {
-                        <span contentComponent>{{ informationBoxItem.content.value | artemisDate }}</span>
-                    }
-                    @case ('submissionStatus') {
-                        <jhi-submission-result-status
-                            contentComponent
-                            class="text-truncate result"
-                            [exercise]="informationBoxItem.content.value"
-                            [studentParticipation]="studentParticipation"
-                            [triggerLastGraded]="false"
-                            [showCompletion]="false"
-                            [showBadge]="false"
-                            [showProgressBar]="true"
-                        />
-                    }
-                }
-            </jhi-information-box>
+                </jhi-information-box>
+            }
         }
     </div>
 }

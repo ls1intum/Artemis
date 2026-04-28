@@ -10,7 +10,6 @@ import { ExerciseComponent } from 'app/exercise/exercise.component';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
@@ -44,7 +43,6 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
     ],
 })
 export class TextExerciseComponent extends ExerciseComponent {
-    protected exerciseService = inject(ExerciseService); // needed in html code
     protected textExerciseService = inject(TextExerciseService); // needed in html code
     private router = inject(Router);
     private courseExerciseService = inject(CourseExerciseService);

@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
-import { McqData } from 'app/iris/shared/entities/iris-content-type.model';
+import { ChangeDetectionStrategy, Component, effect, input, output, signal } from '@angular/core';
+import { McqData, McqQuestionData } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
+import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 /**
@@ -9,14 +11,24 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-iris-mcq-question',
     standalone: true,
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, IrisCitationTextComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './iris-mcq-question.component.html',
     styleUrl: './iris-mcq-question.component.scss',
 })
 export class IrisMcqQuestionComponent {
     /** The MCQ payload to render, containing the question, options, and explanation. */
-    mcqData = input.required<McqData>();
+    mcqData = input.required<McqData | McqQuestionData>();
+
+    /** Citation metadata for rendering citation bubbles in the explanation. */
+    citationInfo = input<IrisCitationMetaDTO[]>([]);
+
+    // Optional inputs for pre-populated state from carousel parent
+    initialSelectedIndex = input<number | undefined>(undefined);
+    initialSubmitted = input<boolean>(false);
+
+    // Output event for carousel parent
+    answerChanged = output<{ selectedIndex: number | undefined; submitted: boolean }>();
 
     private readonly instanceId = window.crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
     /** Unique id for the question label element, used to link aria-labelledby across instances. */
@@ -24,6 +36,25 @@ export class IrisMcqQuestionComponent {
 
     selectedIndex = signal<number | undefined>(undefined);
     submitted = signal(false);
+
+    constructor() {
+        // Restore state from carousel parent inputs
+        effect(() => {
+            const idx = this.initialSelectedIndex();
+            const sub = this.initialSubmitted();
+            this.selectedIndex.set(idx);
+            this.submitted.set(sub);
+        });
+
+        // Restore state from persisted response on standalone MCQ
+        effect(() => {
+            const data = this.mcqData();
+            if ('response' in data && data.response) {
+                this.selectedIndex.set(data.response.selectedIndex);
+                this.submitted.set(data.response.submitted);
+            }
+        });
+    }
 
     /**
      * Selects an option by index. No-op if the question has already been submitted.
@@ -34,6 +65,7 @@ export class IrisMcqQuestionComponent {
             return;
         }
         this.selectedIndex.set(index);
+        this.answerChanged.emit({ selectedIndex: index, submitted: false });
     }
 
     /**
@@ -44,6 +76,7 @@ export class IrisMcqQuestionComponent {
             return;
         }
         this.submitted.set(true);
+        this.answerChanged.emit({ selectedIndex: this.selectedIndex(), submitted: true });
     }
 
     /**
@@ -53,6 +86,17 @@ export class IrisMcqQuestionComponent {
      */
     optionLabel(index: number): string {
         return String.fromCharCode(65 + index);
+    }
+
+    /**
+     * Strips leading letter/number prefixes like "A.", "A)", "A:", "1.", "1)" from option text.
+     * Only strips when followed by an explicit delimiter (. ) :), not a plain space,
+     * to avoid removing meaningful text that happens to start with a letter.
+     * @param text the raw option text
+     * @returns the cleaned option text
+     */
+    cleanOptionText(text: string): string {
+        return text.replace(/^[A-Da-d1-4][.):]\s*/u, '');
     }
 
     /**

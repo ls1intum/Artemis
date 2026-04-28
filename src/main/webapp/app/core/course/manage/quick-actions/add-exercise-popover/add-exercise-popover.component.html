@@ -16,18 +16,16 @@
                     <div class="ms-n3 col-8">
                         <div class="row gx-2">
                             <div class="col-6">
-                                <jhi-exercise-create-button
+                                <jhi-exercise-import-button
                                     [course]="course()"
-                                    [translationKey]="'global.generic.create'"
                                     [exerciseType]="exercise.type"
                                     [featureToggle]="exercise.featureToggle"
                                     (beforeNavigate)="hidePopover()"
                                 />
                             </div>
                             <div class="col-6">
-                                <jhi-exercise-import-button
+                                <jhi-exercise-create-button
                                     [course]="course()"
-                                    [translationKey]="'entity.action.to-import'"
                                     [exerciseType]="exercise.type"
                                     [featureToggle]="exercise.featureToggle"
                                     (beforeNavigate)="hidePopover()"

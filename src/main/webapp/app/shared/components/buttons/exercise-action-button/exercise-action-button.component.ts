@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, model } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -14,6 +14,7 @@ import { NgClass } from '@angular/common';
         '[class.btn-outline-primary]': 'outlined()',
         '[class.btn-sm]': 'smallButton()',
         '[class.btn-primary]': 'isPrimary()',
+        '[class.btn-secondary]': 'isSecondary()',
         '[disabled]': 'isDisabled()',
     },
 })
@@ -27,7 +28,11 @@ export class ExerciseActionButtonComponent {
     outlined = input(false);
     smallButton = input(false);
 
-    protected isPrimary = computed(() => !this.outlined());
+    /** Allows parent to override primary/secondary styling programmatically. */
+    overrideSecondary = model<boolean | undefined>(undefined);
+
+    protected isPrimary = computed(() => !this.outlined() && !(this.overrideSecondary() ?? false));
+    protected isSecondary = computed(() => !this.outlined() && (this.overrideSecondary() ?? false));
 
     protected isDisabled = computed(() => this.buttonLoading() || this.overwriteDisabled());
 

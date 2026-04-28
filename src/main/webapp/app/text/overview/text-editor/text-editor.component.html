@@ -1,5 +1,5 @@
 <div [id]="'exercise-' + textExercise?.id">
-    @if (displayHeader()) {
+    @if (displayHeader() && examMode) {
         <jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [participation]="participation">
             <span pagetitle>
                 {{ 'artemisApp.textSubmission.textEditor' | artemisTranslate }}:
@@ -23,27 +23,20 @@
                                 [routerLink]="['/courses', course?.id, 'exercises', 'text-exercises', textExercise?.id!, 'participate', participation?.id!]"
                             />
                         }
-                    } @else {
-                        @if (textExercise.allowFeedbackRequests && (!this.textExercise.dueDate || !hasExerciseDueDatePassed(this.textExercise, this.participation))) {
-                            <jhi-request-feedback-button
-                                [exercise]="textExercise"
-                                [pendingChanges]="submission.text !== answer"
-                                [hasAthenaResultForLatestSubmission]="hasAthenaResultForLatestSubmission"
-                                [isGeneratingFeedback]="isGeneratingFeedback"
-                                (generatingFeedback)="this.isGeneratingFeedback = true"
-                                [isSubmitted]="submission.submitted || false"
-                            />
-                        }
                     }
                     @if (!this.isReadOnlyWithShowResult) {
-                        <jhi-button
+                        <jhi-exercise-submit-button
                             id="submit"
+                            [exercise]="textExercise"
                             [title]="!isAllowedToSubmitAfterDueDate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
-                            (onClick)="submit()"
+                            (onSubmit)="submit()"
                             [disabled]="!isActive || !submission"
                             [isLoading]="isSaving"
+                            [isSubmitted]="!!submission?.submitted"
                             [btnType]="isAllowedToSubmitAfterDueDate ? ButtonType.WARNING : ButtonType.PRIMARY"
                             [tooltip]="submitButtonTooltip"
+                            [isGeneratingFeedback]="isGeneratingFeedback"
+                            (generatingFeedback)="isGeneratingFeedback = true"
                         />
                     }
                 }
@@ -71,6 +64,7 @@
             [isExerciseParticipation]="true"
             [expandProblemStatement]="expandProblemStatement() && !isReadOnlyWithShowResult"
             [collapsed]="isReadOnlyWithShowResult"
+            [showRightPanel]="examMode"
         >
             <!--region Left Panel-->
             <div left-body class="text-editor-grid ps-2 pb-2 w-100">
@@ -180,8 +174,5 @@
 
             <!--endregion-->
         </jhi-resizeable-container>
-        @if (!textExercise.exerciseGroup && irisSettings?.settings?.enabled) {
-            <jhi-exercise-chatbot-button [mode]="ChatServiceMode.TEXT_EXERCISE" />
-        }
     }
 </div>

@@ -10,8 +10,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.ArtemisConstants;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import tech.jhipster.config.JHipsterConstants;
 
 /**
  * Helper service for checking which profiles are active
@@ -45,7 +45,7 @@ public class ProfileService {
      * @return true if the development profile is active, false otherwise
      */
     public boolean isDevActive() {
-        return isProfileActive(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT);
+        return isProfileActive(ArtemisConstants.SPRING_PROFILE_DEVELOPMENT);
     }
 
     /**
@@ -94,6 +94,6 @@ public class ProfileService {
      * @return true if the production profile is active, false otherwise
      */
     public boolean isProductionActive() {
-        return isProfileActive(JHipsterConstants.SPRING_PROFILE_PRODUCTION);
+        return isProfileActive(ArtemisConstants.SPRING_PROFILE_PRODUCTION);
     }
 }

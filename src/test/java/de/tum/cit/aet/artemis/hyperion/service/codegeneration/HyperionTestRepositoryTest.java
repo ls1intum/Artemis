@@ -155,7 +155,7 @@ class HyperionTestRepositoryServiceTest {
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("Repository access failed"));
 
         assertThatThrownBy(() -> testRepository.generateSolutionPlan(user, exercise, 1L, "logs", "structure", "consistency issues")).isInstanceOf(NetworkingException.class)
-                .hasMessageContaining("AI request failed due to an internal processing error. Please contact support.").hasRootCauseMessage("Repository access failed");
+                .hasMessageContaining("AI request failed due to an internal processing error.").hasRootCauseMessage("Repository access failed");
     }
 
     @Test

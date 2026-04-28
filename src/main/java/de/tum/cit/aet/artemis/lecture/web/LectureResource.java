@@ -68,6 +68,8 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
+import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
+import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
 /**
  * REST controller for managing Lecture.
@@ -103,9 +105,11 @@ public class LectureResource {
 
     private final ChannelRepository channelRepository;
 
+    private final YouTubeUrlService youTubeUrlService;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ChannelService channelService, ChannelRepository channelRepository,
-            SlideRepository slideRepository) {
+            SlideRepository slideRepository, YouTubeUrlService youTubeUrlService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -115,6 +119,7 @@ public class LectureResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.slideRepository = slideRepository;
+        this.youTubeUrlService = youTubeUrlService;
     }
 
     /**
@@ -300,9 +305,7 @@ public class LectureResource {
         log.info("Getting all lectures with slides for course {}", courseId);
         long start = System.currentTimeMillis();
 
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR add back in such that the result of the query is filtered for visible lectures again */
-        var lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId); // .stream().filter(Lecture::isVisibleToStudents).collect(Collectors.toSet());
+        var lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
         Set<Long> attachmentVideoUnitIds = lectures.stream().flatMap(lecture -> lecture.getLectureUnits().stream())
                 .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(DomainObject::getId).collect(Collectors.toSet());
 
@@ -312,7 +315,7 @@ public class LectureResource {
         // Group slides by attachment video unit id to combine them into the DTOs
         Map<Long, List<SlideDTO>> slidesByAttachmentVideoUnitId = slides.stream().collect(Collectors.groupingBy(SlideDTO::attachmentVideoUnitId));
         // Convert visible lectures to DTOs (filtering active attachments) and add non hidden slides to the DTOs
-        List<GetLecturesDTO> lectureDTOs = lectures.stream().map(GetLecturesDTO::from).sorted(Comparator.comparingLong(GetLecturesDTO::id)).toList();
+        List<GetLecturesDTO> lectureDTOs = lectures.stream().map(l -> GetLecturesDTO.from(l, youTubeUrlService)).sorted(Comparator.comparingLong(GetLecturesDTO::id)).toList();
 
         lectureDTOs.forEach(lectureDTO -> {
             for (AttachmentVideoUnitDTO attachmentVideoUnitDTO : lectureDTO.lectureUnits) {
@@ -339,17 +342,17 @@ public class LectureResource {
         /**
          * Converts a lecture to a DTO. Only the attachments and attachment video units that are visible to students are included.
          *
-         * @param lecture The lecture to convert
+         * @param lecture           The lecture to convert
+         * @param youTubeUrlService pure URL parser used to classify YouTube sources without any network calls
          * @return The converted lecture DTO
          */
-        public static GetLecturesDTO from(Lecture lecture) {
+        public static GetLecturesDTO from(Lecture lecture, YouTubeUrlService youTubeUrlService) {
             // only attachments visible to students are included
             List<AttachmentDTO> attachmentDTOs = lecture.getAttachments().stream().filter(Attachment::isVisibleToStudents).map(AttachmentDTO::from).toList();
             // only attachment video units visible to students are included
             List<AttachmentVideoUnitDTO> attachmentVideoUnitDTOs = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
-                    .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(AttachmentVideoUnit::isVisibleToStudents).map(AttachmentVideoUnitDTO::from).toList();
-            /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-            /* TODO: #11479 - remove the visibleDate property from the LectureDTO OR leave as is */
+                    .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(AttachmentVideoUnit::isVisibleToStudents)
+                    .map(unit -> AttachmentVideoUnitDTO.from(unit, youTubeUrlService)).toList();
             return new GetLecturesDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
                     attachmentDTOs, attachmentVideoUnitDTOs);
         }
@@ -364,12 +367,33 @@ public class LectureResource {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record AttachmentVideoUnitDTO(Long id, String name, List<SlideDTO> slides, @Nullable AttachmentDTO attachment, ZonedDateTime releaseDate, String type) {
+    public record AttachmentVideoUnitDTO(Long id, String name, List<SlideDTO> slides, @Nullable AttachmentDTO attachment, ZonedDateTime releaseDate, String type,
+            @Nullable String videoSource, @Nullable VideoSourceType videoSourceType, @Nullable String youtubeVideoId) {
 
-        public static AttachmentVideoUnitDTO from(AttachmentVideoUnit attachmentVideoUnit) {
-            var attachment = attachmentVideoUnit.getAttachment();
-            return new AttachmentVideoUnitDTO(attachmentVideoUnit.getId(), attachmentVideoUnit.getName(), new ArrayList<>(),
-                    attachment != null ? AttachmentDTO.from(attachment) : null, attachmentVideoUnit.getReleaseDate(), "attachment");
+        public AttachmentVideoUnitDTO {
+            if (videoSourceType == VideoSourceType.YOUTUBE && (youtubeVideoId == null || youtubeVideoId.isBlank())) {
+                throw new IllegalArgumentException("YOUTUBE videoSourceType requires non-blank youtubeVideoId");
+            }
+            if (videoSourceType != VideoSourceType.YOUTUBE && youtubeVideoId != null) {
+                throw new IllegalArgumentException("youtubeVideoId must be null when videoSourceType != YOUTUBE");
+            }
+        }
+
+        /**
+         * Converts an {@link AttachmentVideoUnit} to a DTO. YouTube video IDs are extracted via pure URL parsing (no network calls). TUM Live units will have
+         * {@code videoSourceType = null} from this endpoint, which is acceptable — the client resolves TUM Live playlist URLs on-demand via a separate endpoint.
+         *
+         * @param unit              the attachment video unit to convert
+         * @param youTubeUrlService pure URL parser for YouTube ID extraction; no network calls are made
+         * @return the populated DTO
+         */
+        public static AttachmentVideoUnitDTO from(AttachmentVideoUnit unit, YouTubeUrlService youTubeUrlService) {
+            var attachment = unit.getAttachment();
+            Optional<String> ytId = youTubeUrlService.extractYouTubeVideoId(unit.getVideoSource());
+            VideoSourceType type = ytId.isPresent() ? VideoSourceType.YOUTUBE : null;
+            String youtubeVideoId = ytId.orElse(null);
+            return new AttachmentVideoUnitDTO(unit.getId(), unit.getName(), new ArrayList<>(), attachment != null ? AttachmentDTO.from(attachment) : null, unit.getReleaseDate(),
+                    "attachment", unit.getVideoSource(), type, youtubeVideoId);
         }
     }
 

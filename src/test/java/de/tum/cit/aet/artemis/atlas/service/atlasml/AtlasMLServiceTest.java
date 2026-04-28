@@ -8,6 +8,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.jspecify.annotations.NonNull;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -46,6 +48,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @ExtendWith(MockitoExtension.class)
 class AtlasMLServiceTest {
+
+    private static final String HEALTHY_ATLASML_RESPONSE = """
+            {"status":"ok","components":{"api":{"status":"ok"},"weaviate":{"status":"ok","collections":{"Exercise":{"status":"ok"},"Competency":{"status":"ok"},"SemanticCluster":{"status":"ok"}}}}}
+            """;
+
+    private static final String UNHEALTHY_ATLASML_RESPONSE = """
+            {"status":"error","components":{"api":{"status":"ok"},"weaviate":{"status":"error","message":"Weaviate is unreachable"}}}
+            """;
 
     @Mock
     private RestTemplate atlasmlRestTemplate;
@@ -77,7 +87,7 @@ class AtlasMLServiceTest {
     @Test
     void testIsHealthy_WhenServiceIsUp() {
         // Given
-        ResponseEntity<String> response = new ResponseEntity<>("[]", HttpStatus.OK);
+        ResponseEntity<String> response = new ResponseEntity<>(HEALTHY_ATLASML_RESPONSE, HttpStatus.OK);
 
         when(shortTimeoutAtlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/health/"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(response);
@@ -91,6 +101,42 @@ class AtlasMLServiceTest {
         HttpEntity<?> sentEntity = captor.getValue();
         HttpHeaders headers = sentEntity.getHeaders();
         assertThat(headers.getFirst("Authorization")).isEqualTo("Bearer secret-token");
+    }
+
+    @Test
+    void testHealth_WhenServiceIsUp_ExposesDetailedStatus() {
+        // Given
+        ResponseEntity<String> response = new ResponseEntity<>(HEALTHY_ATLASML_RESPONSE, HttpStatus.OK);
+
+        when(shortTimeoutAtlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/health/"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(response);
+
+        // When
+        ConnectorHealth result = atlasMLService.health();
+
+        // Then
+        assertThat(result.isUp()).isTrue();
+        assertThat(result.additionalInfo()).containsEntry("url", "http://localhost:8000").containsEntry("status", "\uD83D\uDFE2 ok").containsEntry("api", "\uD83D\uDFE2 ok")
+                .containsEntry("weaviate", "\uD83D\uDFE2 ok").containsEntry("collection Exercise", "\uD83D\uDFE2 ok").containsEntry("collection Competency", "\uD83D\uDFE2 ok")
+                .containsEntry("collection SemanticCluster", "\uD83D\uDFE2 ok");
+    }
+
+    @Test
+    void testHealth_WhenServiceReturns503_ExposesDetailedStatusFromResponseBody() {
+        // Given
+        HttpServerErrorException exception = HttpServerErrorException.create(HttpStatus.SERVICE_UNAVAILABLE, "Service Unavailable", HttpHeaders.EMPTY,
+                UNHEALTHY_ATLASML_RESPONSE.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+
+        when(shortTimeoutAtlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/health/"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(exception);
+
+        // When
+        ConnectorHealth result = atlasMLService.health();
+
+        // Then
+        assertThat(result.isUp()).isFalse();
+        assertThat(result.additionalInfo()).containsEntry("url", "http://localhost:8000").containsEntry("status", "\uD83D\uDD34 error").containsEntry("api", "\uD83D\uDFE2 ok")
+                .containsEntry("weaviate", "\uD83D\uDD34 error: Weaviate is unreachable");
     }
 
     @Test
@@ -552,7 +598,7 @@ class AtlasMLServiceTest {
     void testIsHealthy_HttpServerErrorException() {
         // Given
         when(shortTimeoutAtlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/health/"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
-                .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+                .thenThrow(new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE));
 
         // When
         boolean result = atlasMLService.isHealthy();

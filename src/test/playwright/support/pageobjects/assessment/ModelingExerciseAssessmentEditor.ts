@@ -1,8 +1,6 @@
-import { BASE_API, ExerciseType, MODELING_EDITOR_CANVAS } from '../../constants';
+import { BASE_API, ExerciseType } from '../../constants';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 import { expect } from '@playwright/test';
-
-const ASSESSMENT_CONTAINER = '#modeling-assessment-container';
 
 /**
  * A class which encapsulates UI selectors and actions for the Modeling Exercise Assessment editor
@@ -11,12 +9,9 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
     async openAssessmentForComponent(componentNumber: number) {
         await this.page
             .locator('#apollon-assessment-row')
-            .locator(MODELING_EDITOR_CANVAS)
-            .locator('svg')
-            .first()
-            .locator('svg')
+            .locator('.react-flow__node')
             .nth(componentNumber)
-            .click({ clickCount: 2, position: { x: 100, y: 5 }, force: true });
+            .dblclick({ position: { x: 100, y: 5 }, force: true });
     }
 
     async assessComponent(points: number, feedback: string) {
@@ -36,14 +31,19 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
         return super.acceptComplaint(response, examMode, ExerciseType.MODELING);
     }
 
+    async closeAssessmentPanel() {
+        await this.page.keyboard.press('Escape');
+        await this.page.locator('.MuiPopover-root').waitFor({ state: 'hidden' });
+    }
+
     async submitExample() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/modeling/modeling-submissions/*/example-assessment`);
+        await this.closeAssessmentPanel();
         await this.page.getByText('Save Example Assessment').click();
-        const response = await responsePromise;
-        expect(response.status()).toBe(200);
+        await expect(this.page.getByText('Your assessment was saved successfully!')).toBeVisible({ timeout: 30000 });
     }
 
     async submit() {
+        await this.closeAssessmentPanel();
         const responsePromise = this.page.waitForResponse(`${BASE_API}/modeling/modeling-submissions/*/result/*/assessment*`);
         await super.submitWithoutInterception();
         const response = await responsePromise;
@@ -52,18 +52,14 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
     }
 
     private getNextAssessmentField() {
-        return this.getAssessmentContainer().locator('section', { hasText: 'Next Assessment' });
+        return this.page.getByRole('button', { name: 'Next Assessment' });
     }
 
     private getPointAssessmentField() {
-        return this.getAssessmentContainer().locator('section', { hasText: 'Points' }).nth(0).locator('input');
+        return this.page.getByRole('spinbutton').first();
     }
 
     private getFeedbackAssessmentField() {
-        return this.getAssessmentContainer().locator('textarea').nth(0);
-    }
-
-    private getAssessmentContainer() {
-        return this.page.locator(`${ASSESSMENT_CONTAINER}`);
+        return this.page.getByRole('textbox', { name: 'You can enter feedback here...' }).first();
     }
 }

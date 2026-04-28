@@ -24,6 +24,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             createReplyInContext: vi.fn(),
             updateCommentInContext: vi.fn(),
             toggleResolvedInContext: vi.fn(),
+            toggleGroupResolvedInContext: vi.fn(),
             threads: signal([]),
         };
 
@@ -179,6 +180,42 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(collapseSpy).toHaveBeenCalledWith(true);
     });
 
+    it('should resolve all threads in the group and collapse current thread', () => {
+        const collapseSpy = vi.fn();
+        comp.onToggleCollapse.subscribe(collapseSpy);
+        fixture.componentRef.setInput('thread', { id: 1, groupId: 10, resolved: false, comments: [] } as any);
+
+        comp.resolveGroup();
+
+        expect(reviewCommentService.toggleGroupResolvedInContext).toHaveBeenCalledWith(10, true);
+        expect(comp.showThreadBody()).toBe(false);
+        expect(collapseSpy).toHaveBeenCalledWith(true);
+    });
+
+    it('should not resolve group when the thread has no group', () => {
+        fixture.componentRef.setInput('thread', { id: 1, resolved: false, comments: [] } as any);
+
+        comp.resolveGroup();
+
+        expect(reviewCommentService.toggleGroupResolvedInContext).not.toHaveBeenCalled();
+    });
+
+    it('should unresolve all threads in the group', () => {
+        fixture.componentRef.setInput('thread', { id: 1, groupId: 10, resolved: true, comments: [] } as any);
+
+        comp.unresolveGroup();
+
+        expect(reviewCommentService.toggleGroupResolvedInContext).toHaveBeenCalledWith(10, false);
+    });
+
+    it('should handle unresolve-group menu action', () => {
+        fixture.componentRef.setInput('thread', { id: 1, groupId: 10, resolved: true, comments: [] } as any);
+
+        comp.handleResolveGroupMenuAction('unresolve-group');
+
+        expect(reviewCommentService.toggleGroupResolvedInContext).toHaveBeenCalledWith(10, false);
+    });
+
     it('should detect edited comments', () => {
         const comment = {
             createdDate: '2024-01-01T00:00:00Z',
@@ -275,5 +312,130 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         comp.startEditing(comment);
         expect(comp.editingCommentId()).toBeUndefined();
         expect(comp.editText()).toBe('');
+    });
+
+    it('should expose suggested inline fix for consistency issue threads', () => {
+        const suggestedFix = {
+            startLine: 5,
+            endLine: 5,
+            expectedCode: 'foo',
+            replacementCode: 'bar',
+            applied: false,
+        };
+        fixture.componentRef.setInput('thread', {
+            id: 1,
+            resolved: false,
+            comments: [
+                {
+                    id: 3,
+                    type: CommentType.CONSISTENCY_CHECK,
+                    createdDate: '2024-01-01T00:00:00Z',
+                    content: {
+                        contentType: CommentContentType.CONSISTENCY_CHECK,
+                        severity: ConsistencyIssue.SeverityEnum.High,
+                        category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                        text: 'issue',
+                        suggestedFix,
+                    },
+                },
+            ],
+        } as any);
+
+        expect(comp.consistencySuggestedInlineFix()).toEqual(suggestedFix);
+    });
+
+    it('should hide malformed suggested inline fix with null replacement code', () => {
+        fixture.componentRef.setInput('thread', {
+            id: 1,
+            resolved: false,
+            comments: [
+                {
+                    id: 3,
+                    type: CommentType.CONSISTENCY_CHECK,
+                    createdDate: '2024-01-01T00:00:00Z',
+                    content: {
+                        contentType: CommentContentType.CONSISTENCY_CHECK,
+                        severity: ConsistencyIssue.SeverityEnum.High,
+                        category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                        text: 'issue',
+                        suggestedFix: {
+                            startLine: 5,
+                            endLine: 5,
+                            expectedCode: 'foo',
+                            replacementCode: null,
+                            applied: false,
+                        },
+                    },
+                },
+            ],
+        } as any);
+
+        expect(comp.consistencySuggestedInlineFix()).toBeUndefined();
+    });
+
+    it('should keep deletion suggested inline fixes with empty replacement code', () => {
+        const suggestedFix = {
+            startLine: 5,
+            endLine: 5,
+            expectedCode: 'foo',
+            replacementCode: '',
+            applied: false,
+        };
+        fixture.componentRef.setInput('thread', {
+            id: 1,
+            resolved: false,
+            comments: [
+                {
+                    id: 3,
+                    type: CommentType.CONSISTENCY_CHECK,
+                    createdDate: '2024-01-01T00:00:00Z',
+                    content: {
+                        contentType: CommentContentType.CONSISTENCY_CHECK,
+                        severity: ConsistencyIssue.SeverityEnum.High,
+                        category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                        text: 'issue',
+                        suggestedFix,
+                    },
+                },
+            ],
+        } as any);
+
+        expect(comp.consistencySuggestedInlineFix()).toEqual(suggestedFix);
+    });
+
+    it('should emit apply-inline-fix event', () => {
+        const inlineFix = {
+            startLine: 2,
+            endLine: 2,
+            expectedCode: 'foo',
+            replacementCode: 'bar',
+            applied: false,
+        };
+        const applySpy = vi.fn();
+        comp.onApplyInlineFix.subscribe(applySpy);
+
+        comp.applySuggestedInlineFix(inlineFix);
+
+        expect(applySpy).toHaveBeenCalledWith(inlineFix);
+    });
+
+    it('should clear outdated warning when trying to apply an inline fix', () => {
+        const inlineFix = {
+            startLine: 2,
+            endLine: 2,
+            expectedCode: 'foo',
+            replacementCode: 'bar',
+            applied: false,
+        };
+        comp.setInlineFixOutdatedWarning(true);
+
+        comp.applySuggestedInlineFix(inlineFix);
+
+        expect(comp.showInlineFixOutdatedWarning()).toBe(false);
+    });
+
+    it('should set outdated warning state for inline fixes', () => {
+        comp.setInlineFixOutdatedWarning(true);
+        expect(comp.showInlineFixOutdatedWarning()).toBe(true);
     });
 });

@@ -37,6 +37,13 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
         const lecture: Lecture = (lastCreatedLecture = await lectureResponse.json());
         expect(lectureResponse.status()).toBe(201);
         await expect(page).toHaveURL(`/course-management/${course.id}/lectures/${lecture.id}/edit`);
+        // Wait for the form to hydrate from the server before typing again.
+        // Asserting on the visible title input is a deterministic UI signal
+        // that the lecture has been loaded — more robust than `networkidle`,
+        // which can hang on SPAs with long-polling / SSE / background work.
+        // Monaco's own value would be an even closer signal, but title is
+        // both sufficient and trivial to observe.
+        await expect(page.locator('#field_title')).toHaveValue(lectureData.title);
 
         const adjustedDescription = description! + 'change to enable save button again';
         await lectureCreation.typeDescription(adjustedDescription);
@@ -64,9 +71,11 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
     test.describe('Handle existing lecture', () => {
         let lecture: Lecture;
 
-        test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
-            await login(instructor, `/course-management/${course.id}/lectures`);
+        test.beforeEach(async ({ login, page, courseManagementAPIRequests }) => {
+            await login(instructor);
             lecture = lastCreatedLecture = await courseManagementAPIRequests.createLecture(course);
+            await page.goto(`/course-management/${course.id}/lectures`);
+            await page.waitForLoadState('networkidle');
         });
 
         test('Deletes an existing lecture', async ({ lectureManagement }) => {

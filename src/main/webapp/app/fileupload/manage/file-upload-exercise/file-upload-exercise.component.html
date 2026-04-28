@@ -8,14 +8,9 @@
                             <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(fileUploadExercises())" [ngModel]="allChecked" />
                         </th>
                     }
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.due"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="assessmentDueDate"><span jhiTranslate="artemisApp.exercise.assessmentDue"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dates"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     @if (course.presentationScore) {
                         <th jhiSortBy="presentationScoreEnabled">
                             <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"></span>&nbsp;<fa-icon [icon]="faSort" />
@@ -23,7 +18,7 @@
                     }
                     <th><span jhiTranslate="artemisApp.fileUploadExercise.filePattern"></span></th>
                     <th class="d-md-table-cell"><span jhiTranslate="artemisApp.exercise.categories"></span></th>
-                    <th></th>
+                    <th style="width: 1%"></th>
                 </tr>
             </thead>
             <tbody class="markdown-preview">
@@ -37,33 +32,61 @@
                         <td>
                             @if (fileUploadExercise.isAtLeastTutor) {
                                 <a [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id]">
-                                    {{ fileUploadExercise.id }}
-                                </a>
-                            } @else {
-                                {{ fileUploadExercise.id }}
-                            }
-                        </td>
-                        <td>
-                            @if (fileUploadExercise.isAtLeastTutor) {
-                                <a [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id]">
                                     {{ fileUploadExercise.title }}
                                 </a>
                             } @else {
                                 {{ fileUploadExercise.title }}
                             }
                         </td>
-                        <td>{{ fileUploadExercise.releaseDate | artemisDate }}</td>
-                        <td>{{ fileUploadExercise.dueDate | artemisDate }}</td>
-                        <td>{{ fileUploadExercise.assessmentDueDate | artemisDate }}</td>
-                        <td>{{ fileUploadExercise.maxPoints }}</td>
-                        <td>{{ fileUploadExercise.bonusPoints }}</td>
-                        <td>{{ exerciseService.isIncludedInScore(fileUploadExercise) }}</td>
+                        <td style="white-space: nowrap">
+                            <div class="d-flex flex-column small">
+                                @if (fileUploadExercise.releaseDate) {
+                                    <div>
+                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.release"></span>:
+                                        {{ fileUploadExercise.releaseDate | artemisDate }}
+                                    </div>
+                                }
+                                @if (fileUploadExercise.dueDate) {
+                                    <div>
+                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.due"></span>:
+                                        {{ fileUploadExercise.dueDate | artemisDate }}
+                                    </div>
+                                }
+                                @if (fileUploadExercise.assessmentDueDate) {
+                                    <div>
+                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.assessmentDue"></span>:
+                                        {{ fileUploadExercise.assessmentDueDate | artemisDate }}
+                                    </div>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                {{ fileUploadExercise.maxPoints }}
+                                @if (fileUploadExercise.bonusPoints && fileUploadExercise.bonusPoints > 0) {
+                                    <span class="text-muted">(+{{ fileUploadExercise.bonusPoints }})</span>
+                                }
+                            </div>
+                            <div class="small">
+                                @switch (fileUploadExercise.includedInOverallScore) {
+                                    @case ('INCLUDED_COMPLETELY') {
+                                        <span class="badge bg-success" jhiTranslate="artemisApp.exercise.includedCompletely"></span>
+                                    }
+                                    @case ('INCLUDED_AS_BONUS') {
+                                        <span class="badge bg-warning" jhiTranslate="artemisApp.exercise.includedAsBonus"></span>
+                                    }
+                                    @case ('NOT_INCLUDED') {
+                                        <span class="badge bg-secondary" jhiTranslate="artemisApp.exercise.notIncluded"></span>
+                                    }
+                                }
+                            </div>
+                        </td>
                         @if (course.presentationScore) {
                             <td>{{ fileUploadExercise.presentationScoreEnabled }}</td>
                         }
                         <td>{{ fileUploadExercise.filePattern }}</td>
                         <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="fileUploadExercise" /></td>
-                        <td class="text-end">
+                        <td class="text-end" style="white-space: nowrap">
                             <div class="btn-group flex-btn-group-container">
                                 @if (fileUploadExercise.isAtLeastTutor) {
                                     <a

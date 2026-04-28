@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.sharing.ExerciseSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.ProgrammingExerciseImportFromSharingService;
@@ -40,7 +41,6 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorServic
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingException;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfoDTO;
-import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller that orchestrates importing and exporting programming exercises

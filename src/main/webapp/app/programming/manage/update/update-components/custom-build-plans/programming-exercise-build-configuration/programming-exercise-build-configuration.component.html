@@ -19,7 +19,7 @@
         <div class="mb-2">
             <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.title"></span>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.envVars.description" />
-            <ngx-datatable id="envVarsTable" class="bootstrap" trackByProp="id" [headerHeight]="50" [columnMode]="'force'" [rowHeight]="'auto'" [rows]="envVars">
+            <ngx-datatable id="envVarsTable" class="bootstrap" [headerHeight]="50" [columnMode]="'force'" [rowHeight]="'auto'" [rows]="envVars">
                 <ngx-datatable-column [name]="'Key'" [maxWidth]="200">
                     <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
                         <jhi-table-editable-field [id]="'key' + rowIndex" [value]="row[0] || ''" [onValueUpdate]="this.onEnvVarsKeyChange(row)" [isRequired]="true" />

@@ -120,13 +120,13 @@ describe('PasskeyAuthenticationPageComponent', () => {
             expect(navigateByUrlSpy).toHaveBeenCalledExactlyOnceWith('/admin/metrics');
         });
 
-        it('should navigate to home when redirectToOriginalUrlOrHome is called without returnUrl', () => {
+        it('should navigate to sign-in when redirectToOriginalUrlOrHome is called without returnUrl', () => {
             component.returnUrl = undefined;
             const navigateSpy = vi.spyOn(router, 'navigate');
 
             component.redirectToOriginalUrlOrHome();
 
-            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/']);
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/sign-in']);
         });
     });
 
@@ -179,6 +179,17 @@ describe('PasskeyAuthenticationPageComponent', () => {
             await component.signInWithPasskey();
 
             expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('global.menu.admin.usedPasskeyIsNotSuperAdminApproved');
+            expect(redirectSpy).not.toHaveBeenCalled();
+        });
+
+        it('should silently return when loginWithPasskey throws (e.g., user cancellation)', async () => {
+            vi.spyOn(webauthnService, 'loginWithPasskey').mockRejectedValue(new DOMException('User cancelled', 'NotAllowedError'));
+            const identitySpy = vi.spyOn(accountService, 'identity');
+            const redirectSpy = vi.spyOn(component, 'redirectToOriginalUrlOrHome');
+
+            await component.signInWithPasskey();
+
+            expect(identitySpy).not.toHaveBeenCalled();
             expect(redirectSpy).not.toHaveBeenCalled();
         });
 

@@ -92,13 +92,12 @@ class HyperionCodeGenerationJobServiceTest {
     }
 
     @Test
-    void startJob_withExistingJobForSameUser_returnsExistingId() {
+    void startJob_withExistingJobForSameUser_throwsConflict() {
         HyperionCodeGenerationJobService.JobInfo existingJob = new HyperionCodeGenerationJobService.JobInfo("job-1", "testuser", 42L, RepositoryType.SOLUTION, Instant.now());
         when(jobMap.putIfAbsent(eq("42"), any(HyperionCodeGenerationJobService.JobInfo.class))).thenReturn(existingJob);
 
-        String jobId = service.startJob(user, exercise, 1L, RepositoryType.SOLUTION);
-
-        assertThat(jobId).isEqualTo("job-1");
+        assertThatThrownBy(() -> service.startJob(user, exercise, 1L, RepositoryType.SOLUTION)).isInstanceOf(ConflictException.class)
+                .hasMessageContaining("Code generation already running for this exercise");
         verify(taskService, never()).runJobAsync(eq("job-1"), eq(user), eq(exercise), eq(1L), eq(RepositoryType.SOLUTION), any(Runnable.class));
     }
 

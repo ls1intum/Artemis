@@ -43,6 +43,8 @@ import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
@@ -64,7 +66,10 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     private ConversationUtilService conversationUtilService;
 
     @Autowired
-    private AtlasMLRequestMockProvider atlasMLRequestMockProvider;
+    private Optional<AtlasMLRequestMockProvider> atlasMLRequestMockProvider;
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
 
     @Autowired(required = false)
     private WeaviateService weaviateService;
@@ -723,28 +728,35 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void atlasML_isCalledOnCreateUpdateAndDelete() throws Exception {
-        atlasMLRequestMockProvider.reset();
-        atlasMLRequestMockProvider.enableMockingOfRequests();
-        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+        var provider = atlasMLRequestMockProvider.orElseThrow(() -> new IllegalStateException("AtlasMLRequestMockProvider must be available for AtlasML tests"));
+        featureToggleService.enableFeature(Feature.AtlasML);
+        try {
+            provider.reset();
+            provider.enableMockingOfRequests();
+            provider.mockSaveCompetenciesAny();
 
-        // Create
-        courseUtilService.enableMessagingForCourse(course);
-        var create = new FileUploadExercise();
-        create.setCourse(course);
-        create.setTitle("AtlasML FileUpload Create");
-        create.setFilePattern("pdf, png");
-        create.setMaxPoints(10.0);
-        create.setChannelName("atlasml-fileupload-create");
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", create, FileUploadExercise.class, HttpStatus.CREATED);
+            // Create
+            courseUtilService.enableMessagingForCourse(course);
+            var create = new FileUploadExercise();
+            create.setCourse(course);
+            create.setTitle("AtlasML FileUpload Create");
+            create.setFilePattern("pdf, png");
+            create.setMaxPoints(10.0);
+            create.setChannelName("atlasml-fileupload-create");
+            request.postWithResponseBody("/api/fileupload/file-upload-exercises", create, FileUploadExercise.class, HttpStatus.CREATED);
 
-        // Update
-        FileUploadExercise persisted = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-        persisted.setTitle("AtlasML FileUpload Update");
-        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + persisted.getId() + "?notificationText=x", UpdateFileUploadExerciseDTO.of(persisted),
-                FileUploadExercise.class, HttpStatus.OK);
+            // Update
+            FileUploadExercise persisted = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
+            persisted.setTitle("AtlasML FileUpload Update");
+            request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + persisted.getId() + "?notificationText=x", UpdateFileUploadExerciseDTO.of(persisted),
+                    FileUploadExercise.class, HttpStatus.OK);
 
-        // Delete
-        request.delete("/api/fileupload/file-upload-exercises/" + persisted.getId(), HttpStatus.OK);
+            // Delete
+            request.delete("/api/fileupload/file-upload-exercises/" + persisted.getId(), HttpStatus.OK);
+        }
+        finally {
+            featureToggleService.disableFeature(Feature.AtlasML);
+        }
     }
 
     @Test

@@ -727,6 +727,21 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+    void testGetLearningPathNavigationOverviewCreatesMissingCourseLearnerProfile() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        courseLearnerProfileRepository.deleteAllByCourseId(course.getId());
+
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+
+        final var result = request.get("/api/atlas/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.OK, LearningPathNavigationOverviewDTO.class);
+
+        assertThat(result.learningObjects()).hasSize(2);
+        assertThat(courseLearnerProfileRepository.findByLoginAndCourse(STUDENT1_OF_COURSE, course)).isPresent();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1337", roles = "USER")
     void testGetLearningPathNavigationOverviewForOtherStudent() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);

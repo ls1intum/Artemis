@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.INDIVIDUAL;
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C;
@@ -18,7 +19,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mockStatic;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.io.IOException;

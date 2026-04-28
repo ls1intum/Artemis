@@ -1,8 +1,11 @@
-<div class="question card">
+<div class="question card rounded-4">
     <div class="question-options card-header">
         <h5 class="mb-0">
-            <span> {{ exerciseCount() }} </span>
+            @if (leadingIcon(); as icon) {
+                <fa-icon [icon]="icon" [fixedWidth]="true" />
+            }
             <span [jhiTranslate]="headingJhiTranslate()"></span>
+            <span> ({{ exerciseCount() }}) </span>
         </h5>
         @if (course()?.isAtLeastEditor) {
             <div class="ms-auto">
@@ -10,7 +13,7 @@
             </div>
         }
         <button class="btn question-collapse" (click)="isCollapsed.set(!isCollapsed())" [attr.aria-expanded]="!isCollapsed()" [attr.aria-controls]="'collapseQuestion'">
-            <fa-icon size="2x" [icon]="isCollapsed() ? faAngleRight : faAngleDown" />
+            <fa-icon size="lg" [icon]="isCollapsed() ? faAngleRight : faAngleDown" />
         </button>
     </div>
     <div class="card-body question-card-body" [ngbCollapse]="isCollapsed()">

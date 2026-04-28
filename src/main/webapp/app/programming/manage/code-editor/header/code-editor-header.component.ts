@@ -18,6 +18,7 @@ export class CodeEditorHeaderComponent {
     readonly fileName = input<string>();
     readonly isLoading = input<boolean>(false);
     readonly showTabSizeSelector = input<boolean>(true);
+    readonly secondary = input<boolean>(false);
     readonly onValidateTabSize = output<number>();
 
     readonly tabSize = model<number>(4);

@@ -8,7 +8,7 @@ import { By } from '@angular/platform-browser';
 import { DatePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faChalkboardUser, faKeyboard } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faFont, faKeyboard } from '@fortawesome/free-solid-svg-icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -135,6 +135,18 @@ describe('ChatHistoryItemComponent', () => {
             entityName: 'Exercise 1',
         };
         testSessionRendering(session, faKeyboard, 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise', '../exercises/77');
+    });
+
+    it('should render correct icon with correct tooltip and entity route for text exercise session', () => {
+        const session: IrisSessionDTO = {
+            id: 3,
+            title: 'New chat',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.TEXT_EXERCISE,
+            entityId: 55,
+            entityName: 'Text Exercise 1',
+        };
+        testSessionRendering(session, faFont, 'artemisApp.iris.chatHistory.relatedEntityTooltip.textExercise', '../exercises/55');
     });
 
     it('should detect new chat session with English title', async () => {

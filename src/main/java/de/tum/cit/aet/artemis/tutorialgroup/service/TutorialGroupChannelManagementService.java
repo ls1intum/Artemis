@@ -100,7 +100,7 @@ public class TutorialGroupChannelManagementService {
      *
      * @param tutorialGroup the tutorial group for which the channel should be updated
      */
-    public void updateNameOfTutorialGroupChannel(TutorialGroup tutorialGroup) {
+    public void updateNameOfTutorialGroupChannelIfItExists(TutorialGroup tutorialGroup) {
         getTutorialGroupChannel(tutorialGroup).ifPresentOrElse(channel -> {
             channel.setName(determineUniqueTutorialGroupChannelName(tutorialGroup));
             channelRepository.save(channel);
@@ -229,7 +229,7 @@ public class TutorialGroupChannelManagementService {
     private Channel createTutorialGroupChannel(TutorialGroup tutorialGroup) {
         var tutorialGroupChannel = new Channel();
         tutorialGroupChannel.setName(determineUniqueTutorialGroupChannelName(tutorialGroup));
-        tutorialGroupChannel.setIsPublic(true); // TODO: make this configurable if desired requirement
+        tutorialGroupChannel.setIsPublic(true);
         tutorialGroupChannel.setIsAnnouncementChannel(false);
         var persistedChannel = channelService.createChannel(tutorialGroup.getCourse(), tutorialGroupChannel, Optional.empty());
         log.debug("Created channel with id {} for tutorial group with id {}", persistedChannel.getId(), tutorialGroup.getId());

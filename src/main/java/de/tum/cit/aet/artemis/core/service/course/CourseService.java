@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -21,7 +22,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
-import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
@@ -71,8 +71,6 @@ public class CourseService {
 
     private final Optional<CompetencyApi> competencyApi;
 
-    private final Optional<CompetencyProgressApi> competencyProgressApi;
-
     private final Optional<PrerequisitesApi> prerequisitesApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -88,17 +86,15 @@ public class CourseService {
     private final CourseVisibleService courseVisibleService;
 
     public CourseService(Optional<LectureApi> lectureApi, CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            Optional<CompetencyApi> competencyApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<ExamRepositoryApi> examRepositoryApi,
-            Optional<ExerciseGroupApi> exerciseGroupApi, StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
-            Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository,
-            CourseVisibleService courseVisibleService) {
+            Optional<CompetencyApi> competencyApi, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
+            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TutorialGroupApi> tutorialGroupApi,
+            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository, CourseVisibleService courseVisibleService) {
         this.lectureApi = lectureApi;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.exerciseGroupApi = exerciseGroupApi;
         this.competencyApi = competencyApi;
-        this.competencyProgressApi = competencyProgressApi;
         this.examRepositoryApi = examRepositoryApi;
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
@@ -193,7 +189,7 @@ public class CourseService {
         exerciseService.loadExerciseDetailsIfNecessary(course, user, true);
         examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(courseId, user.getId(), user.getGroups(), ZonedDateTime.now())));
         // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
-        lectureApi.ifPresent(api -> course.setLectures(api.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user)));
+        lectureApi.ifPresent(api -> course.setLectures(api.filterLecturesWithActiveAttachments(course, course.getLectures(), user)));
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
         competencyApi.ifPresent(api -> course.setNumberOfCompetencies(api.countByCourseId(courseId)));
         // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
@@ -249,9 +245,19 @@ public class CourseService {
         }
 
         long startFilterAll = System.nanoTime();
+        // Pre-assign the course back-reference on all exercises to prevent Hibernate 7 lazy proxy initialization.
+        // findByCourseIds only returns course exercises (not exam exercises), so we can safely set the course directly.
+        Map<Long, Course> courseById = userVisibleCourses.stream().collect(Collectors.toMap(DomainObject::getId, c -> c));
+        allExercises.forEach(ex -> {
+            Course c = courseById.get(ex.getCourseViaExerciseGroupOrCourseMember().getId());
+            if (c != null) {
+                ex.setCourse(c);
+            }
+        });
+
         var courses = userVisibleCourses.stream().peek(course -> {
             // connect the exercises with the course
-            course.setExercises(allExercises.stream().filter(ex -> ex.getCourseViaExerciseGroupOrCourseMember().getId().equals(course.getId())).collect(Collectors.toSet()));
+            course.setExercises(allExercises.stream().filter(ex -> course.equals(ex.getCourseViaExerciseGroupOrCourseMember())).collect(Collectors.toSet()));
             course.setExercises(exerciseService.filterExercisesForCourse(course, user, false));
             exerciseService.loadExerciseDetailsIfNecessary(course, user, false);
             // we do not send actual lectures or exams to the client, not needed

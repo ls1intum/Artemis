@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.exercise.dto.review;
 
 import java.time.Instant;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -8,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
+import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -29,6 +33,20 @@ public record CommentDTO(@Schema(description = "Comment identifier.") @NotNull L
         this(comment.getId(), comment.getThread().getId(), extractAuthorName(comment.getAuthor()), comment.getType(), comment.getContent(),
                 comment.getInitialVersion() != null ? comment.getInitialVersion().getId() : null, comment.getInitialCommitSha(), comment.getCreatedDate(),
                 comment.getLastModifiedDate());
+    }
+
+    /**
+     * Maps all comments of a thread to DTOs in deterministic order.
+     *
+     * @param thread the source thread
+     * @return mapped comments ordered by creation date and id
+     */
+    public static List<CommentDTO> fromThread(CommentThread thread) {
+        if (thread.getComments() == null || thread.getComments().isEmpty()) {
+            return List.of();
+        }
+        return thread.getComments().stream().sorted(Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder())).thenComparing(Comment::getId,
+                Comparator.nullsLast(Comparator.naturalOrder()))).map(CommentDTO::new).collect(Collectors.toUnmodifiableList());
     }
 
     private static String extractAuthorName(User author) {

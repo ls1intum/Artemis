@@ -2,6 +2,7 @@
     <ng-template #help let-close="close" let-dismiss="dismiss">
         <div class="modal-header">
             <h4 class="modal-title" jhiTranslate="artemisApp.modelingEditor.helpModal.title"></h4>
+
             <button type="button" class="btn-close" aria-label="Close" (click)="dismiss()"><span aria-hidden="true"></span></button>
         </div>
         <div class="modal-body">
@@ -94,21 +95,21 @@
             }
         </div>
     }
-    <div #resizeContainer [hidden]="readOnly()" class="modeling-editor" [class.resizable]="resizeOptions()" [ngStyle]="{ marginTop: isFullScreen ? '30px' : '' }">
+    <div #resizeContainer [hidden]="readOnly()" class="modeling-editor" [class.resizable]="resizeOptions()" [style.marginTop]="isFullScreen ? '30px' : ''">
         <div #editorContainer class="apollon-container"></div>
-        @if (resizeOptions() && resizeOptions().horizontalResize) {
+        @if (resizeOptions()?.horizontalResize) {
             <div class="draggable-right">
                 <fa-icon [icon]="faGripLinesVertical" />
             </div>
         }
-        @if (resizeOptions() && resizeOptions().verticalResize) {
+        @if (resizeOptions()?.verticalResize) {
             <div class="draggable-bottom">
                 <fa-icon [icon]="faGripLines" />
             </div>
         }
     </div>
     @if (readOnly()) {
-        <div class="d-flex align-items-center readonly-diagram scroll-container" [innerHtml]="readOnlySVG" [ngClass]="{ 'full-screen-margin': isFullScreen }"></div>
+        <div class="d-flex align-items-center readonly-diagram scroll-container" [innerHtml]="readOnlySVG" [class.full-screen-margin]="isFullScreen"></div>
     }
 
     @if (withExplanation()) {

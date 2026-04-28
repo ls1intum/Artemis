@@ -14,7 +14,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
@@ -35,7 +35,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     let component: StudentsRoomDistributionDialogComponent;
     let fixture: ComponentFixture<StudentsRoomDistributionDialogComponent>;
-    let service: StudentsRoomDistributionService | MockStudentsRoomDistributionService;
+    let service: StudentsRoomDistributionService;
 
     const course: Course = { id: 1 };
     const exam: Exam = { course, id: 2, title: 'Exam Title' };
@@ -60,21 +60,19 @@ describe('StudentsRoomDistributionDialogComponent', () => {
                 provideHttpClientTesting(),
                 MockProvider(SessionStorageService),
                 MockProvider(LocalStorageService),
-                MockProvider(Router),
+                provideRouter([]),
+                MockProvider(ActivatedRoute),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
             ],
         }).compileComponents();
+
         fixture = TestBed.createComponent(StudentsRoomDistributionDialogComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('courseId', course.id);
         fixture.componentRef.setInput('exam', exam);
-        service = TestBed.inject(StudentsRoomDistributionService) as unknown as MockStudentsRoomDistributionService;
-
-        vi.spyOn(service, 'loadRoomData').mockImplementation(() => {
-            (service as MockStudentsRoomDistributionService).availableRooms.set(rooms);
-        });
+        service = TestBed.inject(StudentsRoomDistributionService);
 
         component.openDialog();
     });
@@ -93,7 +91,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     it('should not have selected rooms and distribute button disabled on first open', () => {
         fixture.detectChanges();
         expect(component.hasSelectedRooms()).toBe(false);
-        const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
+        const button = document.body.querySelector('#finish-button') as HTMLButtonElement;
         expect(button.disabled).toBe(true);
     });
 
@@ -108,7 +106,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         component.pickSelectedRoom({ item: rooms[0] });
         fixture.changeDetectorRef.detectChanges();
 
-        const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
+        const button = document.body.querySelector('#finish-button') as HTMLButtonElement;
         expect(component.hasSelectedRooms()).toBe(true);
         expect(button.hidden).toBe(false);
     });
@@ -123,7 +121,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.hasSelectedRooms()).toBe(false);
-        const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
+        const button = document.body.querySelector('#finish-button') as HTMLButtonElement;
         expect(button.disabled).toBe(true);
     });
 
@@ -158,7 +156,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should find correct rooms', () => {
         vi.useFakeTimers();
-        (service as MockStudentsRoomDistributionService).availableRooms.set(rooms);
+        (service as unknown as MockStudentsRoomDistributionService).availableRooms.set(rooms);
 
         let searchResult: RoomForDistributionDTO[] = [];
         component.search(of('t')).subscribe((rooms) => {
@@ -175,7 +173,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should update reserve percentage when typing valid numbers', () => {
         fixture.detectChanges();
-        const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
+        const input: HTMLInputElement = document.body.querySelector('#reserveFactor') as HTMLInputElement;
 
         dispatchInputEvent(input, '25');
         fixture.changeDetectorRef.detectChanges();
@@ -188,7 +186,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should reset reserve factor to latest value when invalid input is entered', () => {
         fixture.detectChanges();
-        const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
+        const input: HTMLInputElement = document.body.querySelector('#reserveFactor') as HTMLInputElement;
 
         dispatchInputEvent(input, '25');
         fixture.changeDetectorRef.detectChanges();
@@ -225,7 +223,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should toggle use narrow layouts when switch is pressed', () => {
         fixture.detectChanges();
-        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowNarrowLayoutsToggle');
+        const checkbox: HTMLInputElement = document.body.querySelector('#allowNarrowLayoutsToggle') as HTMLInputElement;
 
         expect(component.allowNarrowLayouts()).toBe(false);
 
@@ -250,7 +248,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         }
 
         fixture.componentRef.setInput('exam', examWithUsers);
-        (service as MockStudentsRoomDistributionService).capacityData.set({
+        (service as unknown as MockStudentsRoomDistributionService).capacityData.set({
             combinedDefaultCapacity: 999,
             combinedMaximumCapacity: 999,
         });
@@ -278,5 +276,15 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(component.selectedRooms()).toHaveLength(2);
         expect(component.selectedRooms()).toContain(rooms[0]);
         expect(component.selectedRooms()).toContain(rooms[1]);
+    });
+
+    it('exam room management link should open in a new tab', () => {
+        fixture.changeDetectorRef.detectChanges();
+
+        const link: HTMLAnchorElement = fixture.debugElement.nativeElement.querySelector('#examRoomManagementLink');
+
+        expect(link).toBeTruthy();
+        expect(link.href).toContain('/exams/rooms');
+        expect(link.target).toBe('_blank');
     });
 });

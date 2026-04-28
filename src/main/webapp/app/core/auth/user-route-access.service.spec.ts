@@ -126,6 +126,6 @@ describe('UserRouteAccessService', () => {
         expect(storeSpy).toHaveBeenCalledWith('previousUrl', url);
         expect(navigateMock).toHaveBeenCalledTimes(2);
         expect(navigateMock.mock.calls[0][0]).toEqual(['accessdenied']);
-        expect(navigateMock.mock.calls[1][0]).toEqual(['/']);
+        expect(navigateMock.mock.calls[1][0]).toEqual(['/sign-in']);
     });
 });

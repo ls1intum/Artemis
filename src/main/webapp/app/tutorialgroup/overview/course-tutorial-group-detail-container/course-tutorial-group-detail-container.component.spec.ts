@@ -1,110 +1,123 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
-
-import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
-import { CourseTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail.component';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-
-import { MockProvider } from 'ng-mocks';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { RawTutorialGroupDetailGroupDTO, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { CourseTutorialGroupDetailContainerComponent } from './course-tutorial-group-detail-container.component';
+import { TutorialGroupDetailAccessLevel, TutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
+import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
+import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { CourseTutorialGroupDetailStubComponent } from 'test/helpers/stubs/tutorialgroup/course-tutorial-group-detail-stub.component';
+import { MockTutorialGroupCourseAndGroupService } from 'test/helpers/mocks/service/mock-tutorial-group-course-and-group.service';
+import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { By } from '@angular/platform-browser';
 
 describe('CourseTutorialGroupDetailContainerComponent', () => {
     setupTestBed({ zoneless: true });
 
     let fixture: ComponentFixture<CourseTutorialGroupDetailContainerComponent>;
     let component: CourseTutorialGroupDetailContainerComponent;
-    let tutorialGroupService: TutorialGroupsService;
-    let courseManagementService: CourseManagementService;
-    let tutorialGroupOfResponse: TutorialGroupDetailGroupDTO;
-    let courseOfResponse: Course;
-    let findStub: ReturnType<typeof vi.spyOn>;
-    let findByIdStub: ReturnType<typeof vi.spyOn>;
-
-    const parentParams = { courseId: 2 };
-    const parentRoute = { parent: { params: of(parentParams) } } as any as ActivatedRoute;
-    const route = { params: of({ tutorialGroupId: 1 }), parent: parentRoute } as any as ActivatedRoute;
+    let tutorialGroupCourseAndGroupService: MockTutorialGroupCourseAndGroupService;
 
     beforeEach(async () => {
-        TestBed.configureTestingModule({
+        tutorialGroupCourseAndGroupService = new MockTutorialGroupCourseAndGroupService();
+
+        await TestBed.configureTestingModule({
             imports: [CourseTutorialGroupDetailContainerComponent, CourseTutorialGroupDetailStubComponent],
             providers: [
-                MockProvider(TutorialGroupsService),
-                MockProvider(CourseManagementService),
-                MockProvider(AlertService),
-                { provide: Router, useClass: MockRouter },
-                { provide: ActivatedRoute, useValue: route },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AccountService, useClass: MockAccountService },
-                { provide: ProfileService, useClass: MockProfileService },
+                mockedActivatedRoute({ tutorialGroupId: '1' }, {}, {}, {}, { courseId: '2' }),
+                { provide: TutorialGroupCourseAndGroupService, useValue: tutorialGroupCourseAndGroupService },
             ],
-        });
-
-        TestBed.overrideComponent(CourseTutorialGroupDetailContainerComponent as any, {
-            remove: { imports: [CourseTutorialGroupDetailComponent] as any },
-            add: { imports: [CourseTutorialGroupDetailStubComponent] },
-        });
-
-        await TestBed.compileComponents();
+        })
+            .overrideComponent(CourseTutorialGroupDetailContainerComponent, {
+                remove: { imports: [TutorialGroupDetailComponent] },
+                add: { imports: [CourseTutorialGroupDetailStubComponent] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CourseTutorialGroupDetailContainerComponent);
         component = fixture.componentInstance;
-
-        tutorialGroupService = TestBed.inject(TutorialGroupsService);
-        courseManagementService = TestBed.inject(CourseManagementService);
-
-        const raw: RawTutorialGroupDetailGroupDTO = {
-            id: 1,
-            title: 'TG 1 MN 13',
-            language: 'English',
-            isOnline: false,
-            sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
-            capacity: 10,
-            campus: 'Garching',
-            groupChannelId: 2,
-            tutorChatId: 3,
-        };
-        tutorialGroupOfResponse = new TutorialGroupDetailGroupDTO(raw);
-
-        courseOfResponse = { id: 2 } as Course;
-
-        findStub = vi.spyOn(courseManagementService, 'find').mockReturnValue(of({ body: courseOfResponse } as any));
-        findByIdStub = vi.spyOn(tutorialGroupService, 'getTutorialGroupDetailGroupDTO').mockReturnValue(of(tutorialGroupOfResponse));
     });
 
     afterEach(() => {
+        vi.clearAllMocks();
         vi.restoreAllMocks();
     });
 
-    it('should initialize', () => {
+    function createTutorialGroupDetailData(): TutorialGroupDetailData {
+        return new TutorialGroupDetailData({
+            id: 1,
+            title: 'TG Tue 13',
+            language: 'Polish',
+            isOnline: false,
+            sessions: [],
+            tutorName: 'Grace Hopper',
+            tutorLogin: 'grace',
+            tutorId: 12,
+            tutorImageUrl: undefined,
+            capacity: undefined,
+            campus: undefined,
+            additionalInformation: undefined,
+            groupChannelId: undefined,
+            tutorChatId: undefined,
+        });
+    }
+
+    it('should fetch and expose the tutorial group when courseId and tutorialGroupId are available', () => {
+        const tutorialGroup = createTutorialGroupDetailData();
+        tutorialGroupCourseAndGroupService.fetchTutorialGroup.mockImplementation(() => {
+            tutorialGroupCourseAndGroupService.tutorialGroup.set(tutorialGroup);
+        });
+        tutorialGroupCourseAndGroupService.fetchCourse.mockImplementation(() => {
+            tutorialGroupCourseAndGroupService.course.set(new Course());
+        });
+
         fixture.detectChanges();
-        expect(component).not.toBeNull();
+
+        expect(tutorialGroupCourseAndGroupService.fetchTutorialGroup).toHaveBeenCalledOnce();
+        expect(tutorialGroupCourseAndGroupService.fetchTutorialGroup).toHaveBeenCalledWith(2, 1);
+        expect(component.tutorialGroup()).toBe(tutorialGroup);
+
+        const detailStub = fixture.debugElement.query(By.directive(CourseTutorialGroupDetailStubComponent)).componentInstance as CourseTutorialGroupDetailStubComponent;
+        expect(detailStub.courseId()).toBe(2);
+        expect(detailStub.tutorialGroup()).toBe(tutorialGroup);
+        expect(detailStub.loggedInUserAccessLevel()).toBe(TutorialGroupDetailAccessLevel.STUDENT);
     });
 
-    it('should load tutorial group', () => {
+    it('should fetch the course for the courseId and compute messaging availability from it', () => {
+        const tutorialGroup = createTutorialGroupDetailData();
+        const course = new Course();
+        course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+        tutorialGroupCourseAndGroupService.fetchTutorialGroup.mockImplementation(() => {
+            tutorialGroupCourseAndGroupService.tutorialGroup.set(tutorialGroup);
+        });
+        tutorialGroupCourseAndGroupService.fetchCourse.mockImplementation(() => {
+            tutorialGroupCourseAndGroupService.course.set(course);
+        });
+
         fixture.detectChanges();
-        expect(component.tutorialGroup).toEqual(tutorialGroupOfResponse);
-        expect(component.course).toEqual(courseOfResponse);
-        expect(findByIdStub).toHaveBeenCalledWith(2, 1);
-        expect(findByIdStub).toHaveBeenCalledOnce();
-        expect(findStub).toHaveBeenCalledWith(2);
-        expect(findStub).toHaveBeenCalledOnce();
+
+        expect(tutorialGroupCourseAndGroupService.fetchCourse).toHaveBeenCalledOnce();
+        expect(tutorialGroupCourseAndGroupService.fetchCourse).toHaveBeenCalledWith(2);
+        expect(component.isMessagingEnabled()).toBe(true);
+
+        const detailStub = fixture.debugElement.query(By.directive(CourseTutorialGroupDetailStubComponent)).componentInstance as CourseTutorialGroupDetailStubComponent;
+        expect(detailStub.isMessagingEnabled()).toBe(true);
+    });
+
+    it('should compute messaging as disabled when the fetched course does not allow messaging', () => {
+        const course = new Course();
+        course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+        tutorialGroupCourseAndGroupService.fetchTutorialGroup.mockImplementation(() => {
+            tutorialGroupCourseAndGroupService.tutorialGroup.set(createTutorialGroupDetailData());
+        });
+        tutorialGroupCourseAndGroupService.fetchCourse.mockImplementation(() => {
+            tutorialGroupCourseAndGroupService.course.set(course);
+        });
+
+        fixture.detectChanges();
+
+        expect(component.isMessagingEnabled()).toBe(false);
+        const detailStub = fixture.debugElement.query(By.directive(CourseTutorialGroupDetailStubComponent)).componentInstance as CourseTutorialGroupDetailStubComponent;
+        expect(detailStub.isMessagingEnabled()).toBe(false);
     });
 });

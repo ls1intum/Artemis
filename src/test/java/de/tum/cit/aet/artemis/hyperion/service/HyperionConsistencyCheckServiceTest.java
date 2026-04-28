@@ -30,14 +30,13 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
@@ -95,9 +94,9 @@ class HyperionConsistencyCheckServiceTest {
         var costConfiguration = createTestConfiguration();
         var llmTokenUsageService = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, costConfiguration);
         var observationRegistry = ObservationRegistry.create();
-        var reviewCommentContextRenderer = new HyperionReviewCommentContextRendererService(commentThreadRepository, new ObjectMapper());
+        var reviewCommentContextRenderer = new HyperionReviewCommentContextRendererService(commentThreadRepository, JsonObjectMapper.get());
         this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
-                reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository, new ObjectMapper());
+                reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository, JsonObjectMapper.get());
     }
 
     @Test
@@ -108,7 +107,7 @@ class HyperionConsistencyCheckServiceTest {
         when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
                 .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
 
-        String json = "{\n  \"issues\": [\n    {\n      \"severity\": \"HIGH\",\n      \"category\": \"METHOD_PARAMETER_MISMATCH\",\n      \"description\": \"Parameters differ\",\n      \"suggestedFix\": \"Align parameter names\",\n      \"relatedLocations\": [{\"type\": \"TEMPLATE_REPOSITORY\", \"filePath\": \"src/main/java/App.java\", \"startLine\": 1, \"endLine\": 1}]\n    }\n  ]\n}";
+        String json = "{\n  \"issues\": [\n    {\n      \"severity\": \"HIGH\",\n      \"category\": \"METHOD_PARAMETER_MISMATCH\",\n      \"description\": \"Parameters differ\",\n      \"suggestedFix\": \"Align parameter names\",\n      \"relatedLocations\": [{\"type\": \"TEMPLATE_REPOSITORY\", \"filePath\": \"src/main/java/App.java\", \"startLine\": 1, \"endLine\": 1, \"suggestedInlineFix\": \"int sum(int first, int second) {\"}]\n    }\n  ]\n}";
 
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> {
             AssistantMessage msg = new AssistantMessage(json);
@@ -120,6 +119,62 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(resp).isNotNull();
         assertThat(resp.issues()).isNotEmpty();
         assertThat(resp.issues().getFirst().category()).isEqualTo(ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH);
+        assertThat(resp.issues().getFirst().relatedLocations()).hasSize(1);
+        assertThat(resp.issues().getFirst().relatedLocations().getFirst().suggestedInlineFix()).isEqualTo("int sum(int first, int second) {");
+    }
+
+    @Test
+    void checkConsistency_normalizesInlineFixOperation() throws Exception {
+        final var exercise = getProgrammingExercise();
+
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class))).thenReturn(Map.of("src/main/java/App.java", "class App {}"));
+
+        String checkerJson = "{ \"issues\": [] }";
+        String verifierJson = """
+                {
+                  "issues": [
+                    {
+                      "severity": "HIGH",
+                      "category": "METHOD_PARAMETER_MISMATCH",
+                      "description": "Parameters differ",
+                      "suggestedFix": "Align parameters",
+                      "relatedLocations": [
+                        {
+                          "type": "TEMPLATE_REPOSITORY",
+                          "filePath": "src/main/java/App.java",
+                          "startLine": 1,
+                          "endLine": 1,
+                          "inlineFixOperation": "NONE",
+                          "suggestedInlineFix": ""
+                        },
+                        {
+                          "type": "SOLUTION_REPOSITORY",
+                          "filePath": "src/main/java/App.java",
+                          "startLine": 2,
+                          "endLine": 2,
+                          "inlineFixOperation": "DELETE",
+                          "suggestedInlineFix": ""
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+
+        var callCount = new AtomicInteger(0);
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> {
+            String json = callCount.incrementAndGet() <= 2 ? checkerJson : verifierJson;
+            return new ChatResponse(List.of(new Generation(new AssistantMessage(json))));
+        });
+
+        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
+
+        assertThat(resp.issues()).singleElement().satisfies(issue -> {
+            assertThat(issue.relatedLocations()).hasSize(2);
+            assertThat(issue.relatedLocations().getFirst().suggestedInlineFix()).isNull();
+            assertThat(issue.relatedLocations().get(1).suggestedInlineFix()).isEmpty();
+        });
     }
 
     @Test

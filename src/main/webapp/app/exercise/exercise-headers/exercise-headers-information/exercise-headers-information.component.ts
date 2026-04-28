@@ -1,7 +1,7 @@
-import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject, output, viewChild } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
-import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { countSubmissions, getExerciseDueDate } from 'app/exercise/util/exercise.utils';
@@ -9,22 +9,37 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/shared/util/date.utils';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
 import { DifficultyLevelComponent } from 'app/exercise/difficulty-level/difficulty-level.component';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { ResultHistoryDropdownComponent } from './result-history-dropdown/result-history-dropdown.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-exercise-headers-information',
     templateUrl: './exercise-headers-information.component.html',
-    imports: [SubmissionResultStatusComponent, InformationBoxComponent, DifficultyLevelComponent, ExerciseCategoriesComponent, ArtemisDatePipe, ArtemisTimeAgoPipe, CommonModule],
-    styleUrls: ['./exercise-headers-information.component.scss'],
+    imports: [
+        SubmissionResultStatusComponent,
+        InformationBoxComponent,
+        DifficultyLevelComponent,
+        ExerciseCategoriesComponent,
+        ArtemisDatePipe,
+        ArtemisTimeAgoPipe,
+        ArtemisTranslatePipe,
+        CommonModule,
+        ResultHistoryDropdownComponent,
+        NgbTooltip,
+    ],
     /* Our tsconfig file has `preserveWhitespaces: 'true'` which causes whitespace to affect content projection.
     We need to set it to 'false 'for this component, otherwise the components with the selector [contentComponent]
     will not be projected into their specific slot of the "InformationBoxComponent" component.*/
@@ -34,6 +49,10 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     private sortService = inject(SortService);
     private serverDateService = inject(ArtemisServerDateService);
 
+    readonly resultHistoryDropdown = viewChild(ResultHistoryDropdownComponent);
+
+    viewingSubmissionChange = output<boolean>();
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly dayjs = dayjs;
 
@@ -41,6 +60,10 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     @Input() studentParticipation?: StudentParticipation;
     @Input() course?: Course;
     @Input() submissionPolicy?: SubmissionPolicy;
+    @Input() sortedHistoryResults: Result[] = [];
+    @Input() isPractice: boolean = false;
+    @Input() athenaEnabled: boolean = false;
+    @Input() feedbackRequestLimit: number = 10;
 
     dueDate?: dayjs.Dayjs;
     programmingExercise?: ProgrammingExercise;
@@ -48,6 +71,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     now: dayjs.Dayjs;
     achievedPoints: number = 0;
     numberOfSubmissions: number;
+    currentFeedbackRequestCount: number = 0;
     informationBoxItems: InformationBox[] = [];
 
     ngOnInit() {
@@ -71,15 +95,25 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             this.updateSubmissionPolicyItem();
         }
         const results = getAllResultsOfAllSubmissions(this.studentParticipation?.submissions);
-        if (results.length) {
-            // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
-            this.sortService.sortByProperty(results, 'id', false);
+        // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
+        this.sortService.sortByProperty(results, 'id', false);
+        this.sortedHistoryResults = results;
 
+        if (results.length) {
             const latestRatedResult = results.filter((result) => result.rated).first();
             if (latestRatedResult) {
                 this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course) ?? 0;
-                this.updatePointsItem();
+            } else {
+                this.achievedPoints = 0;
             }
+            this.updatePointsItem();
+            this.updateStaticCodeAnalysisItem();
+        } else {
+            this.achievedPoints = 0;
+            this.updatePointsItem();
+        }
+        if (this.athenaEnabled && this.exercise.allowFeedbackRequests) {
+            this.updateAiFeedbackItem();
         }
     }
 
@@ -89,6 +123,8 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         this.addStartDateItem();
         this.addSubmissionStatusItem();
         this.addSubmissionPolicyItem();
+        this.addStaticCodeAnalysisItem();
+        this.addAiFeedbackItem();
         this.addDifficultyItem();
         this.addCategoryItems();
     }
@@ -296,5 +332,66 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
 
     countSubmissions() {
         this.numberOfSubmissions = countSubmissions(this.studentParticipation);
+    }
+
+    addStaticCodeAnalysisItem() {
+        if (this.exercise.type === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise).staticCodeAnalysisEnabled) {
+            this.informationBoxItems.push(this.getStaticCodeAnalysisItem());
+        }
+    }
+
+    getStaticCodeAnalysisItem(): InformationBox {
+        const latestResult = this.sortedHistoryResults.first();
+        const issueCount = latestResult?.codeIssueCount ?? 0;
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.codeIssues',
+            content: {
+                type: 'string',
+                value: `${issueCount}`,
+            },
+            contentColor: issueCount > 0 ? 'warning' : 'success',
+            tooltip: 'artemisApp.courseOverview.exerciseDetails.codeIssuesTooltip',
+        };
+    }
+
+    updateStaticCodeAnalysisItem() {
+        const itemIndex = this.informationBoxItems.findIndex((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.codeIssues');
+        if (itemIndex !== -1) {
+            this.informationBoxItems.splice(itemIndex, 1, this.getStaticCodeAnalysisItem());
+        }
+    }
+
+    addAiFeedbackItem() {
+        if (this.athenaEnabled && this.exercise.allowFeedbackRequests) {
+            this.countAiFeedbackRequests();
+            this.informationBoxItems.push(this.getAiFeedbackItem());
+        }
+    }
+
+    getAiFeedbackItem(): InformationBox {
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests',
+            content: {
+                type: 'string',
+                value: `${this.currentFeedbackRequestCount} / ${this.feedbackRequestLimit}`,
+            },
+            contentColor: this.currentFeedbackRequestCount >= this.feedbackRequestLimit ? 'danger' : 'warning',
+            tooltip: 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequestsTooltip',
+        };
+    }
+
+    countAiFeedbackRequests() {
+        this.currentFeedbackRequestCount =
+            getAllResultsOfAllSubmissions(this.studentParticipation?.submissions)?.filter(
+                (result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true,
+            ).length ?? 0;
+    }
+
+    updateAiFeedbackItem() {
+        this.countAiFeedbackRequests();
+        const itemIndex = this.informationBoxItems.findIndex((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests');
+        if (itemIndex !== -1) {
+            this.informationBoxItems.splice(itemIndex, 1, this.getAiFeedbackItem());
+        }
     }
 }

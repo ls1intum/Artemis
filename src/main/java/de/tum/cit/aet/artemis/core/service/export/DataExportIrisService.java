@@ -17,8 +17,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.core.dto.export.IrisChatSessionExportDTO;
 import de.tum.cit.aet.artemis.core.dto.export.IrisMessageExportDTO;
@@ -43,12 +41,9 @@ public class DataExportIrisService {
 
     private final ObjectMapper objectMapper;
 
-    public DataExportIrisService(Optional<IrisDataExportApi> irisDataExportApi) {
+    public DataExportIrisService(Optional<IrisDataExportApi> irisDataExportApi, ObjectMapper objectMapper) {
         this.irisDataExportApi = irisDataExportApi;
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.registerModule(new JavaTimeModule());
-        this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -84,7 +79,7 @@ public class DataExportIrisService {
         List<IrisChatSessionExportDTO> exportDTOs = chatSessions.stream().sorted(Comparator.comparing(IrisChatSession::getCreationDate)).map(this::convertToExportDTO).toList();
 
         Path outputFile = workingDirectory.resolve("iris_chat_sessions.json");
-        objectMapper.writeValue(outputFile.toFile(), exportDTOs);
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(outputFile.toFile(), exportDTOs);
     }
 
     /**

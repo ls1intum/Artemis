@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.OrganizationService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import tech.jhipster.web.util.PaginationUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 
 /**
  * REST controller for administrating the Organization entities

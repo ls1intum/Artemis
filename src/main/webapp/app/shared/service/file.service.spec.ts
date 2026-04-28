@@ -61,6 +61,24 @@ describe('FileService', () => {
         });
     });
 
+    describe('getBlobFromUrl', () => {
+        it('should fetch a blob from an absolute URL', () => {
+            const fileUrl = 'api/core/files/path/to/file.pdf';
+            const blob = new Blob(['pdf-content'], { type: 'application/pdf' });
+
+            fileService.getBlobFromUrl(fileUrl).subscribe((response) => {
+                expect(response).toEqual(blob);
+            });
+
+            const req = httpMock.expectOne({
+                url: fileUrl,
+                method: 'GET',
+            });
+            expect(req.request.responseType).toBe('blob');
+            req.flush(blob);
+        });
+    });
+
     describe('getTemplateFile', () => {
         it('should fetch the template file without project type', () => {
             const language = ProgrammingLanguage.JAVA;

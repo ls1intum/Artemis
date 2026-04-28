@@ -20,11 +20,10 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.dto.RewriteFaqResponseDTO;
 import io.micrometer.observation.ObservationRegistry;
 
@@ -46,7 +45,7 @@ class HyperionFaqRewriteServiceTest {
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
         var observationRegistry = ObservationRegistry.create();
-        var objectMapper = new ObjectMapper();
+        var objectMapper = JsonObjectMapper.get();
         this.hyperionFaqRewriteService = new HyperionFaqRewriteService(faqRepository, chatClient, templateService, observationRegistry, objectMapper);
 
         existingFaq = new Faq();

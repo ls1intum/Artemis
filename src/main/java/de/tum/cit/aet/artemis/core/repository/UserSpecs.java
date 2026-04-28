@@ -8,7 +8,6 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.cit.aet.artemis.core.domain.Authority;
@@ -57,7 +56,7 @@ public class UserSpecs {
             if (query != null) {
                 query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(joinedAuthorities), authorities.size()));
             }
-            return null;
+            return criteriaBuilder.conjunction();
         };
     }
 
@@ -77,7 +76,7 @@ public class UserSpecs {
      * @param authorities provided authorities
      * @return specification used to chain database operations
      */
-    @Nullable
+    @NonNull
     public static Specification<User> getAuthoritySpecification(Set<String> authorities) {
         if (authorities.contains(FILTER_NO_AUTHORITY)) {
             // Empty authorities
@@ -87,7 +86,7 @@ public class UserSpecs {
             // Match all authorities
             return getAllUsersMatchingAuthorities(authorities);
         }
-        return null;
+        return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
     }
 
     /**
@@ -97,10 +96,10 @@ public class UserSpecs {
      * @param external true if the account should be external
      * @return specification used to chain database operations
      */
-    @Nullable
+    @NonNull
     public static Specification<User> getInternalOrExternalSpecification(boolean internal, boolean external) {
         if (!internal && !external) {
-            return null;
+            return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
         }
         else {
             return (root, query, criteriaBuilder) -> {
@@ -119,10 +118,10 @@ public class UserSpecs {
      * @param withRegistrationNumber true if the account should have a registration number
      * @return specification used to chain database operations
      */
-    @Nullable
+    @NonNull
     public static Specification<User> getWithOrWithoutRegistrationNumberSpecification(Boolean noRegistrationNumber, Boolean withRegistrationNumber) {
         if (!noRegistrationNumber && !withRegistrationNumber) {
-            return null;
+            return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
         }
         else {
             return (root, query, criteriaBuilder) -> {
@@ -145,10 +144,10 @@ public class UserSpecs {
      * @param deactivated true if the account should be deactivated
      * @return specification used to chain database operations
      */
-    @Nullable
+    @NonNull
     public static Specification<User> getActivatedOrDeactivatedSpecification(boolean activated, boolean deactivated) {
         if (!activated && !deactivated) {
-            return null;
+            return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
         }
         else {
             return (root, query, criteriaBuilder) -> {
@@ -180,7 +179,7 @@ public class UserSpecs {
             if (query != null) {
                 query.distinct(true);
             }
-            return null;
+            return criteriaBuilder.conjunction();
         };
     }
 

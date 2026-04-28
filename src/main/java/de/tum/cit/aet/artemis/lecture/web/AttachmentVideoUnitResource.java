@@ -30,8 +30,6 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
@@ -44,6 +42,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.Enf
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -59,6 +59,7 @@ import de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
+import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
 @Conditional(LectureEnabled.class)
 @Lazy
@@ -92,10 +93,12 @@ public class AttachmentVideoUnitResource {
 
     private final LectureUnitService lectureUnitService;
 
+    private final YouTubeUrlService youTubeUrlService;
+
     public AttachmentVideoUnitResource(AttachmentVideoUnitRepository attachmentVideoUnitRepository, LectureRepository lectureRepository,
             LectureUnitProcessingService lectureUnitProcessingService, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
             AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService,
-            FileService fileService, LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService) {
+            FileService fileService, LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, YouTubeUrlService youTubeUrlService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -107,6 +110,7 @@ public class AttachmentVideoUnitResource {
         this.fileService = fileService;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureUnitService = lectureUnitService;
+        this.youTubeUrlService = youTubeUrlService;
     }
 
     /**
@@ -156,6 +160,8 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("Hidden slide dates cannot be in the past", ENTITY_NAME, "invalidHiddenDates");
         }
 
+        validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
+
         // Capture original competency IDs BEFORE updating links (for progress tracking)
         Set<Long> originalCompetencyIds = existingAttachmentVideoUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(c -> c.getId())
                 .collect(Collectors.toSet());
@@ -202,6 +208,8 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("A attachment must have a an attachment or a video source", ENTITY_NAME, "videosourceAndAttachment");
         }
 
+        validateYouTubeVideoSource(attachmentVideoUnit.getVideoSource());
+
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
@@ -236,7 +244,7 @@ public class AttachmentVideoUnitResource {
     public ResponseEntity<String> uploadSlidesForProcessing(@PathVariable Long lectureId, @RequestPart("file") MultipartFile file) {
         // time until the temporary file gets deleted. Must be greater or equal than MINUTES_UNTIL_DELETION in attachment-video-units.component.ts
         int minutesUntilDeletion = 30;
-        String originalFilename = file.getOriginalFilename();
+        String originalFilename = FileUtil.sanitizeFilename(file.getOriginalFilename());
         log.debug("REST request to upload file: {}", originalFilename);
         checkLectureElseThrow(lectureId);
         if (!Objects.equals(FilenameUtils.getExtension(originalFilename), "pdf")) {
@@ -244,7 +252,8 @@ public class AttachmentVideoUnitResource {
         }
         try {
             String filename = lectureUnitProcessingService.saveTempFileForProcessing(lectureId, file, minutesUntilDeletion);
-            return ResponseEntity.ok().body(new ObjectMapper().writeValueAsString(filename));
+            // Explicitly set JSON content type to prevent XSS — the filename derives from user input
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(JsonObjectMapper.get().writeValueAsString(filename));
         }
         catch (IOException e) {
             log.error("Could not save file {}", originalFilename, e);
@@ -404,6 +413,18 @@ public class AttachmentVideoUnitResource {
         }
         if (!filePath.toString().endsWith(".pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
+        }
+    }
+
+    /**
+     * Rejects URLs that look like YouTube links (recognized host) but cannot be parsed to a valid 11-character video id.
+     * Non-YouTube URLs are accepted unchanged; blank or {@code null} sources also pass.
+     *
+     * @param videoSource the videoSource URL from the request payload
+     */
+    private void validateYouTubeVideoSource(String videoSource) {
+        if (videoSource != null && !videoSource.isBlank() && youTubeUrlService.hasYouTubeHost(videoSource) && youTubeUrlService.extractYouTubeVideoId(videoSource).isEmpty()) {
+            throw new BadRequestAlertException("Invalid YouTube URL format", ENTITY_NAME, "invalidYouTubeUrl");
         }
     }
 

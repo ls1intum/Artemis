@@ -27,9 +27,9 @@ export default defineConfig({
         ['list'],
         ['junit', { outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/results-${process.env.PLAYWRIGHT_TEST_TYPE}.xml` : './test-reports/results.xml' }],
         ...(process.env.PLAYWRIGHT_COVERAGE !== 'off'
-            ? [
+            ? ([
                   [
-                      'monocart-reporter' as const,
+                      'monocart-reporter',
                       {
                           outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/monocart-report-${process.env.PLAYWRIGHT_TEST_TYPE}` : './test-reports/monocart-report',
                           coverage: {
@@ -43,11 +43,15 @@ export default defineConfig({
                           },
                       },
                   ],
-              ]
+              ] as const)
             : []),
     ],
     globalSetup: require.resolve('./init/global-setup.ts'),
 
+    /* Increase default expect timeout from 5s to 10s for CI environments under parallel load */
+    expect: {
+        timeout: parseNumber(process.env.EXPECT_TIMEOUT_MS) ?? 10000,
+    },
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
         /* Base URL to use in actions like `await page.goto('/')`. */

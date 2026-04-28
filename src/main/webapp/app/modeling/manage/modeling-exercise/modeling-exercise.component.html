@@ -8,14 +8,9 @@
                             <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(modelingExercises)" [ngModel]="allChecked" />
                         </th>
                     }
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.due"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="assessmentDueDate"><span jhiTranslate="artemisApp.exercise.assessmentDue"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dates"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     @if (course.presentationScore) {
                         <th jhiSortBy="presentationScoreEnabled">
                             <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"></span>&nbsp;<fa-icon [icon]="faSort" />
@@ -23,7 +18,7 @@
                     }
                     <th><span jhiTranslate="artemisApp.modelingExercise.diagramType"></span></th>
                     <th class="d-md-table-cell"><span jhiTranslate="artemisApp.exercise.categories"></span></th>
-                    <th></th>
+                    <th style="width: 1%"></th>
                 </tr>
             </thead>
             <tbody>
@@ -34,15 +29,6 @@
                                 <input class="form-check-input" type="checkbox" (change)="toggleExercise(modelingExercise)" [ngModel]="isExerciseSelected(modelingExercise)" />
                             </td>
                         }
-                        <td>
-                            @if (modelingExercise.isAtLeastTutor) {
-                                <a [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id]">
-                                    {{ modelingExercise.id }}
-                                </a>
-                            } @else {
-                                {{ modelingExercise.id }}
-                            }
-                        </td>
                         <td id="modeling-exercise-{{ modelingExercise.id }}-title">
                             @if (modelingExercise.isAtLeastTutor) {
                                 <a [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id]">
@@ -52,18 +38,55 @@
                                 {{ modelingExercise.title }}
                             }
                         </td>
-                        <td id="modeling-exercise-{{ modelingExercise.id }}-releaseDate">{{ modelingExercise.releaseDate | artemisDate }}</td>
-                        <td id="modeling-exercise-{{ modelingExercise.id }}-dueDate">{{ modelingExercise.dueDate | artemisDate }}</td>
-                        <td id="modeling-exercise-{{ modelingExercise.id }}-assessmentDueDate">{{ modelingExercise.assessmentDueDate | artemisDate }}</td>
-                        <td id="modeling-exercise-{{ modelingExercise.id }}-maxPoints">{{ modelingExercise.maxPoints }}</td>
-                        <td id="modeling-exercise-{{ modelingExercise.id }}-bonusPoints">{{ modelingExercise.bonusPoints }}</td>
-                        <td id="modeling-exercise-{{ modelingExercise.id }}-included">{{ exerciseService.isIncludedInScore(modelingExercise) }}</td>
+                        <td style="white-space: nowrap">
+                            <div class="d-flex flex-column small">
+                                @if (modelingExercise.releaseDate) {
+                                    <div>
+                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.release"></span>:
+                                        {{ modelingExercise.releaseDate | artemisDate }}
+                                    </div>
+                                }
+                                @if (modelingExercise.dueDate) {
+                                    <div>
+                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.due"></span>:
+                                        {{ modelingExercise.dueDate | artemisDate }}
+                                    </div>
+                                }
+                                @if (modelingExercise.assessmentDueDate) {
+                                    <div>
+                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.assessmentDue"></span>:
+                                        {{ modelingExercise.assessmentDueDate | artemisDate }}
+                                    </div>
+                                }
+                            </div>
+                        </td>
+                        <td id="modeling-exercise-{{ modelingExercise.id }}-maxPoints">
+                            <div>
+                                {{ modelingExercise.maxPoints }}
+                                @if (modelingExercise.bonusPoints && modelingExercise.bonusPoints > 0) {
+                                    <span class="text-muted">(+{{ modelingExercise.bonusPoints }})</span>
+                                }
+                            </div>
+                            <div class="small">
+                                @switch (modelingExercise.includedInOverallScore) {
+                                    @case ('INCLUDED_COMPLETELY') {
+                                        <span class="badge bg-success" jhiTranslate="artemisApp.exercise.includedCompletely"></span>
+                                    }
+                                    @case ('INCLUDED_AS_BONUS') {
+                                        <span class="badge bg-warning" jhiTranslate="artemisApp.exercise.includedAsBonus"></span>
+                                    }
+                                    @case ('NOT_INCLUDED') {
+                                        <span class="badge bg-secondary" jhiTranslate="artemisApp.exercise.notIncluded"></span>
+                                    }
+                                }
+                            </div>
+                        </td>
                         @if (course.presentationScore) {
                             <td>{{ modelingExercise.presentationScoreEnabled }}</td>
                         }
                         <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
                         <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="modelingExercise" /></td>
-                        <td class="text-end">
+                        <td class="text-end" style="white-space: nowrap">
                             <div class="btn-group flex-btn-group-container">
                                 <!-- Participations -->
                                 @if (modelingExercise.isAtLeastTutor) {

@@ -27,6 +27,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 
 /**
@@ -44,7 +45,7 @@ public class AeolusRequestMockProvider {
 
     private MockRestServiceServer mockServer;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
     /**
      * Constructor for the AeolusRequestMockProvider

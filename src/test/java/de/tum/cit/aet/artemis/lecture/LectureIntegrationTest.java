@@ -323,6 +323,36 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         testGetLecture(lecture1.getId());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_youtubeUnit_populatesYoutubeVideoId() throws Exception {
+        attachmentVideoUnit.setVideoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream()
+                .filter(unit -> unit instanceof LectureDetailsDTO.AttachmentUnitDTO).map(unit -> (LectureDetailsDTO.AttachmentUnitDTO) unit)
+                .filter(unit -> unit.id().equals(attachmentVideoUnit.getId())).findFirst().orElseThrow();
+        assertThat(attachmentUnitDTO.videoSourceType()).isEqualTo(de.tum.cit.aet.artemis.videosource.domain.VideoSourceType.YOUTUBE);
+        assertThat(attachmentUnitDTO.youtubeVideoId()).isEqualTo("dQw4w9WgXcQ");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_nonYoutubeUnit_bothFieldsNull() throws Exception {
+        attachmentVideoUnit.setVideoSource("https://live.rbg.tum.de/w/foo/123");
+        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream()
+                .filter(unit -> unit instanceof LectureDetailsDTO.AttachmentUnitDTO).map(unit -> (LectureDetailsDTO.AttachmentUnitDTO) unit)
+                .filter(unit -> unit.id().equals(attachmentVideoUnit.getId())).findFirst().orElseThrow();
+        assertThat(attachmentUnitDTO.videoSourceType()).isNull();
+        assertThat(attachmentUnitDTO.youtubeVideoId()).isNull();
+    }
+
     private void testGetLecture(Long lectureId) throws Exception {
         Lecture originalLecture = request.get("/api/lecture/lectures/" + lectureId, HttpStatus.OK, Lecture.class);
         assertThat(originalLecture.getId()).isEqualTo(lectureId);

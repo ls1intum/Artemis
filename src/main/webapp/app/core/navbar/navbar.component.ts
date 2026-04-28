@@ -190,10 +190,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.gitBranchName = profileInfo.git.branch;
         this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
         this.gitUsername = profileInfo.git.commit.user.name;
-        this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
+        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
         this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
-        this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
-        this.ltiEnabled = profileInfo?.activeModuleFeatures.includes(MODULE_FEATURE_LTI);
+        this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled = isActive;
@@ -341,7 +341,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         plagiarism_cases: 'artemisApp.plagiarism.cases.pageTitle',
         tutorial_groups_management: 'artemisApp.pages.tutorialGroupsManagement.title',
         tutorial_groups: 'artemisApp.breadcrumb.title',
-        registered_students: 'artemisApp.pages.registeredStudents.title',
+        registrations: 'artemisApp.pages.tutorialGroupRegistrations.title',
         sessions: 'artemisApp.pages.tutorialGroupSessionManagement.title',
         tutorial_free_days: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
         tutorial_groups_checklist: 'artemisApp.pages.checklist.title',
@@ -793,7 +793,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     logout() {
         this.collapseNavbar();
-        this.router.navigate(['/']).then((res) => {
+        this.router.navigate(['/sign-in']).then((res) => {
             if (res) {
                 this.participationWebsocketService.resetLocalCache();
                 this.loginService.logout(true);

@@ -13,7 +13,8 @@ import { ImprintComponent } from 'app/core/legal/imprint.component';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ImprintComponent', () => {
     setupTestBed({ zoneless: true });
@@ -29,7 +30,8 @@ describe('ImprintComponent', () => {
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 SessionStorageService,
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                provideHttpClient(withFetch()),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ImprintComponent);

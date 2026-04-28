@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 chrono = { version = "0.4.38", default-features = false }
-rand = "0.8.5"
+rand = "0.9.3"
 # %static-code-analysis-start%
 
 [lints.rust]

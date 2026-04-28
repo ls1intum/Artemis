@@ -1,5 +1,4 @@
 import { Page } from '@playwright/test';
-import { MODELING_EDITOR_CANVAS } from '../../../constants';
 import { getExercise } from '../../../utils';
 
 export class ModelingEditor {
@@ -49,32 +48,21 @@ export class ModelingEditor {
                 const attrId = 'e2e-a-' + Math.random().toString(36).slice(2, 11);
                 const methodId = 'e2e-m-' + Math.random().toString(36).slice(2, 11);
 
-                model.elements[id] = {
+                // Apollon v4 format: nodes[] array with embedded attributes/methods in data
+                if (!model.nodes) model.nodes = [];
+                model.nodes.push({
                     id,
-                    name: 'TestClass',
-                    type: 'Class',
-                    owner: null,
-                    bounds: { x, y, width: 200, height: 100 },
-                    attributes: [attrId],
-                    methods: [methodId],
-                };
-                model.elements[attrId] = {
-                    id: attrId,
-                    name: '+ attribute: Type',
-                    type: 'ClassAttribute',
-                    owner: id,
-                    bounds: { x: 0, y: 40, width: 200, height: 30 },
-                };
-                model.elements[methodId] = {
-                    id: methodId,
-                    name: '+ method(): void',
-                    type: 'ClassMethod',
-                    owner: id,
-                    bounds: { x: 0, y: 70, width: 200, height: 30 },
-                };
-                model.interactive.elements[id] = true;
-                model.interactive.elements[attrId] = true;
-                model.interactive.elements[methodId] = true;
+                    width: 200,
+                    height: 100,
+                    type: 'class',
+                    position: { x, y },
+                    data: {
+                        name: 'TestClass',
+                        attributes: [{ id: attrId, name: '+ attribute: Type' }],
+                        methods: [{ id: methodId, name: '+ method(): void' }],
+                    },
+                    measured: { width: 200, height: 100 },
+                });
 
                 editor.model = model;
             },
@@ -84,10 +72,8 @@ export class ModelingEditor {
 
     async addComponentToModel(exerciseID: number, componentNumber: number, x?: number, y?: number) {
         const exerciseElement = getExercise(this.page, exerciseID);
-        const sidebar = exerciseElement.locator('#modeling-editor-sidebar');
+        const sidebar = exerciseElement.locator('jhi-modeling-editor aside');
         await sidebar.waitFor({ state: 'visible' });
-        const canvas = exerciseElement.locator(MODELING_EDITOR_CANVAS);
-        await canvas.waitFor({ state: 'visible' });
         const selector = `#exercise-${exerciseID} jhi-modeling-editor`;
         await this.waitForApollonEditor(selector);
         const posX = x ?? 100 + componentNumber * 250;
@@ -96,31 +82,21 @@ export class ModelingEditor {
     }
 
     getModelingCanvas() {
-        return this.page.locator('#modeling-editor-canvas');
+        return this.page.locator('jhi-modeling-editor aside').locator('..');
     }
 
     async waitForExampleSolutionEditor() {
-        const sidebar = this.page.locator('#modeling-editor-sidebar');
+        const sidebar = this.page.locator('jhi-modeling-editor aside');
         await sidebar.waitFor({ state: 'visible', timeout: 30000 });
-        const canvas = this.page.locator(MODELING_EDITOR_CANVAS);
-        await canvas.waitFor({ state: 'visible', timeout: 30000 });
         await this.waitForApollonEditor('jhi-modeling-editor');
     }
 
     async addComponentToExampleSolutionModel(componentNumber: number) {
-        const sidebar = this.page.locator('#modeling-editor-sidebar');
+        const sidebar = this.page.locator('jhi-modeling-editor aside');
         await sidebar.waitFor({ state: 'visible' });
-        const canvas = this.page.locator(MODELING_EDITOR_CANVAS);
-        await canvas.waitFor({ state: 'visible' });
         const selector = 'jhi-modeling-editor';
         await this.waitForApollonEditor(selector);
         await this.addElementViaEditorAPI(selector, 100 + componentNumber * 250, 100);
-    }
-
-    async submit() {
-        const responsePromise = this.page.waitForResponse(`api/modeling/exercises/*/modeling-submissions`);
-        await this.page.locator('#submit-modeling-submission').first().click();
-        return await responsePromise;
     }
 
     async clickCreateNewExampleSubmission() {

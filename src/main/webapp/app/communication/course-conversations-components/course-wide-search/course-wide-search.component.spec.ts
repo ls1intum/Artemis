@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Directive, EventEmitter, Input, Output } from '@angular/core';
+import { Directive, input, output } from '@angular/core';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -28,19 +28,19 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
     selector: '[infiniteScroll], [infinite-scroll], [data-infinite-scroll]',
 })
 class InfiniteScrollStubDirective {
-    @Output() scrolled = new EventEmitter<void>();
-    @Output() scrolledUp = new EventEmitter<void>();
+    readonly scrolled = output<void>();
+    readonly scrolledUp = output<void>();
 
-    @Input() infiniteScrollDistance = 2;
-    @Input() infiniteScrollUpDistance = 1.5;
-    @Input() infiniteScrollThrottle = 150;
-    @Input() infiniteScrollDisabled = false;
-    @Input() infiniteScrollContainer: any = null;
-    @Input() scrollWindow = true;
-    @Input() immediateCheck = false;
-    @Input() horizontal = false;
-    @Input() alwaysCallback = false;
-    @Input() fromRoot = false;
+    readonly infiniteScrollDistance = input(2);
+    readonly infiniteScrollUpDistance = input(1.5);
+    readonly infiniteScrollThrottle = input(150);
+    readonly infiniteScrollDisabled = input(false);
+    readonly infiniteScrollContainer = input<any>(null);
+    readonly scrollWindow = input(true);
+    readonly immediateCheck = input(false);
+    readonly horizontal = input(false);
+    readonly alwaysCallback = input(false);
+    readonly fromRoot = input(false);
 }
 describe('CourseWideSearchComponent', () => {
     setupTestBed({ zoneless: true });

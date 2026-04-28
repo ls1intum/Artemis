@@ -46,10 +46,10 @@ export class TutorialGroupsConfigurationApiService extends BaseService {
     public create(courseId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupConfiguration>>;
     public create(courseId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
-            throw new Error('Required parameter courseId was null or undefined when calling create2.');
+            throw new Error('Required parameter courseId was null or undefined when calling create.');
         }
         if (tutorialGroupConfiguration === null || tutorialGroupConfiguration === undefined) {
-            throw new Error('Required parameter tutorialGroupConfiguration was null or undefined when calling create2.');
+            throw new Error('Required parameter tutorialGroupConfiguration was null or undefined when calling create.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -114,7 +114,7 @@ export class TutorialGroupsConfigurationApiService extends BaseService {
     public getOneOfCourse(courseId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupConfiguration>>;
     public getOneOfCourse(courseId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
-            throw new Error('Required parameter courseId was null or undefined when calling getOneOfCourse1.');
+            throw new Error('Required parameter courseId was null or undefined when calling getOneOfCourse.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -171,13 +171,13 @@ export class TutorialGroupsConfigurationApiService extends BaseService {
     public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupConfiguration>>;
     public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
-            throw new Error('Required parameter courseId was null or undefined when calling update2.');
+            throw new Error('Required parameter courseId was null or undefined when calling update.');
         }
         if (tutorialGroupsConfigurationId === null || tutorialGroupsConfigurationId === undefined) {
-            throw new Error('Required parameter tutorialGroupsConfigurationId was null or undefined when calling update2.');
+            throw new Error('Required parameter tutorialGroupsConfigurationId was null or undefined when calling update.');
         }
         if (tutorialGroupConfiguration === null || tutorialGroupConfiguration === undefined) {
-            throw new Error('Required parameter tutorialGroupConfiguration was null or undefined when calling update2.');
+            throw new Error('Required parameter tutorialGroupConfiguration was null or undefined when calling update.');
         }
 
         let localVarHeaders = this.defaultHeaders;

@@ -17,8 +17,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
-import org.mockito.Captor;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -50,10 +48,8 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     @Autowired
     BuildJobContainerService buildJobContainerService;
 
-    @Mock
     CreateContainerCmd createContainerCmd;
 
-    @Captor
     ArgumentCaptor<HostConfig> hostConfigCaptor;
 
     private ExecCreateCmd execCreateCmd;
@@ -62,6 +58,8 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
 
     @BeforeEach
     void setUp() {
+        createContainerCmd = mock(CreateContainerCmd.class);
+        hostConfigCaptor = ArgumentCaptor.forClass(HostConfig.class);
         ReflectionTestUtils.setField(buildJobContainerService, "buildAgentConfiguration", buildAgentConfiguration);
         ReflectionTestUtils.setField(buildJobContainerService, "maxCpuCount", MAX_XXX_VALUE);
         ReflectionTestUtils.setField(buildJobContainerService, "maxMemory", MAX_XXX_VALUE);

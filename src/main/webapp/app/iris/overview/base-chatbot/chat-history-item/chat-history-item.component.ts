@@ -4,7 +4,7 @@ import { DatePipe, NgClass } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChalkboardUser, faEllipsisVertical, faKeyboard, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faEllipsisVertical, faFont, faKeyboard, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -83,6 +83,8 @@ export class ChatHistoryItemComponent {
         switch (session.chatMode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
                 return faKeyboard;
+            case ChatServiceMode.TEXT_EXERCISE:
+                return faFont;
             case ChatServiceMode.LECTURE:
                 return faChalkboardUser;
             default:
@@ -95,6 +97,9 @@ export class ChatHistoryItemComponent {
         switch (session.chatMode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
                 key = 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise';
+                break;
+            case ChatServiceMode.TEXT_EXERCISE:
+                key = 'artemisApp.iris.chatHistory.relatedEntityTooltip.textExercise';
                 break;
             case ChatServiceMode.LECTURE:
                 key = 'artemisApp.iris.chatHistory.relatedEntityTooltip.lecture';
@@ -111,6 +116,7 @@ export class ChatHistoryItemComponent {
         }
         switch (session.chatMode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
+            case ChatServiceMode.TEXT_EXERCISE:
                 return `../exercises/${session.entityId}`;
             case ChatServiceMode.LECTURE:
                 return `../lectures/${session.entityId}`;

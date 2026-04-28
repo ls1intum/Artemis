@@ -184,10 +184,14 @@ public class QuizExerciseImportService extends ExerciseImportService {
         if (original.getBackgroundFilePath() != null) {
             URI backgroundFilePublicPath = URI.create(original.getBackgroundFilePath());
             URI backgroundFileIntendedPath = URI.create(FileUtil.BACKGROUND_FILE_SUBPATH);
+            // Validate the path before any filesystem access to prevent path traversal
             FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(original.getBackgroundFilePath());
-            if (Files.exists(FilePathConverter.fileSystemPathForExternalUri(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND))) {
-                FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
-                Path oldPath = FilePathConverter.fileSystemPathForExternalUri(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND);
+            FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
+            Path oldPath = FilePathConverter.fileSystemPathForExternalUri(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND).normalize();
+            if (!oldPath.startsWith(FilePathConverter.getDragAndDropBackgroundFilePath().normalize())) {
+                throw new IllegalArgumentException("Invalid background file path: resolved path is outside the expected directory");
+            }
+            if (Files.exists(oldPath)) {
                 Path newPath = FileUtil.copyExistingFileToTarget(oldPath, FilePathConverter.getDragAndDropBackgroundFilePath(), FilePathType.DRAG_AND_DROP_BACKGROUND);
                 copy.setBackgroundFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, FilePathType.DRAG_AND_DROP_BACKGROUND, null).toString());
             }
@@ -238,10 +242,14 @@ public class QuizExerciseImportService extends ExerciseImportService {
         }
         URI pictureFilePublicPath = URI.create(source.getPictureFilePath());
         URI pictureFileIntendedPath = URI.create(FileUtil.PICTURE_FILE_SUBPATH);
+        // Validate the path before any filesystem access to prevent path traversal
         FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(source.getPictureFilePath());
-        if (Files.exists(FilePathConverter.fileSystemPathForExternalUri(pictureFilePublicPath, FilePathType.DRAG_ITEM))) {
-            FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
-            Path oldPath = FilePathConverter.fileSystemPathForExternalUri(pictureFilePublicPath, FilePathType.DRAG_ITEM);
+        FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
+        Path oldPath = FilePathConverter.fileSystemPathForExternalUri(pictureFilePublicPath, FilePathType.DRAG_ITEM).normalize();
+        if (!oldPath.startsWith(FilePathConverter.getDragItemFilePath().normalize())) {
+            throw new IllegalArgumentException("Invalid drag item file path: resolved path is outside the expected directory");
+        }
+        if (Files.exists(oldPath)) {
             Path newPath = FileUtil.copyExistingFileToTarget(oldPath, FilePathConverter.getDragItemFilePath(), FilePathType.DRAG_ITEM);
             target.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, FilePathType.DRAG_ITEM, null).toString());
         }

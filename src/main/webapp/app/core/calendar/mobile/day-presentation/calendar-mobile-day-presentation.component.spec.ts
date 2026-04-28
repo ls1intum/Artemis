@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { CalendarMobileDayPresentationComponent } from './calendar-mobile-day-presentation.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { MockComponent } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,7 +27,21 @@ describe('CalendarMobileDayPresentationComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CalendarMobileDayPresentationComponent, CalendarDayBadgeComponent, MockComponent(CalendarEventsPerDaySectionComponent)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                {
+                    provide: CalendarService,
+                    useValue: {
+                        eventMap: signal(new Map()),
+                        subscriptionToken: signal(undefined),
+                        eventFilterOptions: [],
+                        includedEventFilterOptions: signal([]),
+                        reloadEvents: vi.fn(),
+                        toggleEventFilterOption: vi.fn(),
+                        loadEventsForCurrentMonth: vi.fn(),
+                    },
+                },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CalendarMobileDayPresentationComponent);

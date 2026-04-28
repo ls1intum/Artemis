@@ -44,6 +44,9 @@ import { editor } from 'monaco-editor';
 import { MonacoBinding } from 'y-monaco';
 import { ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { InlineRefinementButtonComponent } from 'app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { getFirstCommentByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -70,6 +73,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private profileService = inject(ProfileService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private problemStatementSyncService = inject(ProblemStatementSyncService);
+    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     /**
      * Legacy manual diff state used inside the `effect()` below.
@@ -241,25 +245,27 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      **/
     saveInstructions(event: any) {
         event.stopPropagation();
+        this.persistProblemStatement().subscribe();
+    }
+
+    private persistProblemStatement(): Observable<void> {
         this.savingInstructions = true;
-        const problemStatementToSave = this.exercise().problemStatement?.trim() || undefined;
-        return this.programmingExerciseService
-            .updateProblemStatement(this.exercise().id!, problemStatementToSave)
-            .pipe(
-                tap(() => {
-                    this.unsavedChanges = false;
-                    this.onProblemStatementSaved.emit();
-                }),
-                catchError(() => {
-                    // TODO: move to programming exercise translations
-                    this.alertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
-                    return EMPTY;
-                }),
-                finalize(() => {
-                    this.savingInstructions = false;
-                }),
-            )
-            .subscribe();
+        const currentProblemStatement = this.getCurrentContent() ?? this.exercise().problemStatement;
+        const problemStatementToSave = currentProblemStatement?.trim() || undefined;
+        return this.programmingExerciseService.updateProblemStatement(this.exercise().id!, problemStatementToSave).pipe(
+            tap(() => {
+                this.unsavedChanges = false;
+                this.onProblemStatementSaved.emit();
+            }),
+            map(() => undefined),
+            catchError(() => {
+                this.alertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
+                return EMPTY;
+            }),
+            finalize(() => {
+                this.savingInstructions = false;
+            }),
+        );
     }
 
     @HostListener('document:keydown.control.s', ['$event'])
@@ -483,6 +489,27 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     /**
+     * Persists the current problem statement and marks the corresponding inline fix as applied.
+     *
+     * @param payload The thread id whose consistency inline fix was applied in the editor.
+     */
+    onApplyInlineFix(payload: { threadId: number }): void {
+        if (this.savingInstructions) {
+            return;
+        }
+
+        const thread = this.exerciseReviewCommentService.threads().find((candidate) => candidate.id === payload.threadId);
+        const firstComment = getFirstCommentByCreatedDateThenId(thread?.comments);
+        if (!firstComment || firstComment.type !== CommentType.CONSISTENCY_CHECK) {
+            return;
+        }
+
+        this.persistProblemStatement().subscribe(() => {
+            this.exerciseReviewCommentService.markInlineFixAppliedInContext(firstComment.id);
+        });
+    }
+
+    /**
      * Applies the refined content to the editor in diff mode.
      * @param refined The new content to show in the modified editor.
      */
@@ -529,7 +556,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.teardownProblemStatementSync();
         this.suppressUnsavedForNextProblemStatementChange = false;
         this.dirtySignalSuppressedDuringInitialSync = false;
-        this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, initialText);
+        // Keep fallback content LF-only before seeding Yjs. If a Windows client seeds CRLF,
+        // Monaco/Yjs offsets diverge by one char per line break on LF peers.
+        const normalizedText = this.normalizeLineEndings(initialText);
+        this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, normalizedText);
+        model.setValue('');
+        this.enforceLfEol(model);
         this.createProblemStatementBinding(this.problemStatementSyncState, model, editorInstance);
         this.problemStatementInitialSyncFinalizedSubscription = this.problemStatementSyncService.initialSyncFinalized$.subscribe(
             ({ contentChangedDuringFinalize, contentDivergedFromFallback }) => {
@@ -544,11 +576,29 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         );
         this.problemStatementStateReplacementSubscription = this.problemStatementSyncService.stateReplaced$.subscribe((syncState) => {
             this.problemStatementSyncState = syncState;
+            // Detach the old binding before mutating the model so that the setValue does not
+            // propagate as a spurious delete+insert through the old Y.Doc to peers.
+            this.problemStatementBinding?.destroy();
+            this.problemStatementBinding = undefined;
             // Force model content to the replacement Yjs state to avoid merge/appending when rebinding.
             this.suppressUnsavedForNextProblemStatementChange = true;
-            model.setValue(syncState.text.toString());
+            // Late leader replacement can carry content originally seeded from Windows peers.
+            // Normalize + enforce LF to keep local model offsets consistent with Y.Text.
+            const replacedText = this.normalizeLineEndings(syncState.text.toString());
+            model.setValue(replacedText);
+            this.enforceLfEol(model);
             this.createProblemStatementBinding(syncState, model, editorInstance);
         });
+    }
+
+    /** Normalize CRLF to LF so all peers use the same newline width for offset math. */
+    private normalizeLineEndings(content: string): string {
+        return content.replace(/\r\n/g, '\n');
+    }
+
+    /** Enforce LF on Monaco model to avoid CRLF/LF positional drift in collaborative edits. */
+    private enforceLfEol(model: editor.ITextModel): void {
+        model.setEOL(editor.EndOfLineSequence.LF);
     }
 
     /**

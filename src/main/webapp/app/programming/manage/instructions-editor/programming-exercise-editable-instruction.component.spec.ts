@@ -44,6 +44,10 @@ import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-in
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { editor } from 'test/helpers/mocks/mock-monaco-editor';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { signal } from '@angular/core';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -53,6 +57,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let alertService: AlertService;
+    let exerciseReviewCommentService: ExerciseReviewCommentService;
 
     let subscribeForTestCaseSpy: jest.SpyInstance;
     let getLatestResultWithFeedbacksStub: jest.SpyInstance;
@@ -120,6 +125,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: ProblemStatementSyncService, useValue: problemStatementSyncServiceMock },
+                MockProvider(ExerciseReviewCommentService, { threads: signal([]), markInlineFixAppliedInContext: jest.fn() }),
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(ProfileService, {
                     getProfileInfo: () => mockProfileInfo,
@@ -142,6 +148,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 gradingService = TestBed.inject(ProgrammingExerciseGradingService);
                 (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
                 programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+                exerciseReviewCommentService = TestBed.inject(ExerciseReviewCommentService);
                 subscribeForTestCaseSpy = jest.spyOn(gradingService, 'subscribeForTestCases');
                 getLatestResultWithFeedbacksStub = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
                 generateHtmlSubjectStub = jest.spyOn(comp.generateHtmlSubject, 'next');
@@ -480,6 +487,24 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(problemStatementSavedSpy).toHaveBeenCalledOnce();
     });
 
+    it('should prefer current editor content when saving the problem statement', () => {
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'stale input value' } as ProgrammingExercise);
+        fixture.detectChanges();
+
+        comp.markdownEditorMonaco = {
+            monacoEditor: {
+                getText: jest.fn().mockReturnValue('live editor value'),
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+        comp.saveInstructions({ stopPropagation: () => {} } as Event);
+
+        expect(updateProblemStatement).toHaveBeenCalledExactlyOnceWith(exercise.id, 'live editor value');
+    });
+
     it('should log an error on save', () => {
         const updateProblemStatementSpy = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(() => undefined));
         const logErrorSpy = jest.spyOn(alertService, 'error');
@@ -646,6 +671,68 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(comp.selectionPositionInfo()).toBeUndefined();
     });
 
+    it('should persist problem statement and mark inline fix as applied', () => {
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'stale input value' } as ProgrammingExercise);
+        fixture.detectChanges();
+
+        comp.markdownEditorMonaco = {
+            monacoEditor: {
+                getText: jest.fn().mockReturnValue('live editor value'),
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+        (exerciseReviewCommentService.threads as any).set([
+            {
+                id: 10,
+                comments: [
+                    {
+                        id: 20,
+                        type: CommentType.CONSISTENCY_CHECK,
+                        createdDate: '2024-01-01T00:00:00Z',
+                        content: {
+                            contentType: CommentContentType.CONSISTENCY_CHECK,
+                            text: 'issue',
+                        },
+                    },
+                ],
+            },
+        ]);
+        const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+        comp.onApplyInlineFix({ threadId: 10 });
+
+        expect(updateProblemStatement).toHaveBeenCalledExactlyOnceWith(exercise.id, 'live editor value');
+        expect(exerciseReviewCommentService.markInlineFixAppliedInContext).toHaveBeenCalledExactlyOnceWith(20);
+    });
+
+    it('should ignore inline fix application while instructions are already saving', () => {
+        comp.savingInstructions = true;
+
+        comp.onApplyInlineFix({ threadId: 10 });
+
+        expect(exerciseReviewCommentService.markInlineFixAppliedInContext).not.toHaveBeenCalled();
+    });
+
+    it('should delegate diff-mode refinement actions to the markdown editor', () => {
+        const updateProblemStatementSpy = jest.spyOn(comp, 'updateProblemStatement');
+        const applyRefinedContent = jest.fn();
+        const revertAll = jest.fn();
+        comp.markdownEditorMonaco = {
+            applyRefinedContent,
+            revertAll,
+            monacoEditor: {
+                getText: jest.fn().mockReturnValue('reverted content'),
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        comp.applyRefinedContent('refined content');
+        comp.revertAll();
+
+        expect(applyRefinedContent).toHaveBeenCalledExactlyOnceWith('refined content');
+        expect(revertAll).toHaveBeenCalledOnce();
+        expect(updateProblemStatementSpy).toHaveBeenCalledExactlyOnceWith('reverted content');
+    });
+
     it('should get current content from editor', () => {
         const mockGetText = jest.fn().mockReturnValue('editor content');
         comp.markdownEditorMonaco = {
@@ -686,5 +773,153 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(comp.inlineRefinementPosition()).toBeUndefined();
         expect(comp.selectedTextForRefinement()).toBe('');
         expect(comp.selectionPositionInfo()).toBeUndefined();
+    });
+
+    /**
+     * CRLF normalization tests for problem statement sync.
+     *
+     * Background: Yjs (CRDT) and Monaco use flat character offsets for insert/delete
+     * operations. If one peer's Monaco model uses CRLF (2 chars per newline) while
+     * another uses LF (1 char), their offsets diverge by 1 per line break, causing
+     * all collaborative edits after the first newline to land at wrong positions.
+     *
+     * The code editor path already normalizes CRLF → LF and enforces LF EOL on the
+     * Monaco model at every binding point. These tests verify the problem statement
+     * path now does the same:
+     *
+     * 1. Initial seed: CRLF in the exercise's problemStatement is stripped before
+     *    passing to ProblemStatementSyncService.init(), preventing CRLF from entering
+     *    the Yjs document.
+     *
+     * 2. Model preparation: The Monaco model is cleared (setValue('')) and its EOL is
+     *    set to LF before creating the MonacoBinding, ensuring the binding starts
+     *    from a known-clean state.
+     *
+     * 3. Late leader replacement (stateReplaced$): When a new leader sends its full
+     *    Yjs state, the replacement text is normalized and EOL is re-enforced after
+     *    setValue(), because Monaco's setValue() resets EOL detection based on the
+     *    content it receives.
+     */
+    describe('CRLF normalization for problem statement sync', () => {
+        const setupSyncTest = () => {
+            const mockModel = editor.create().getModel();
+            const setValueSpy = jest.spyOn(mockModel, 'setValue');
+            const setEOLSpy = jest.spyOn(mockModel, 'setEOL');
+            const mockEditorInstance = editor.create();
+            jest.spyOn(mockEditorInstance, 'getModel').mockReturnValue(mockModel);
+
+            comp.markdownEditorMonaco = {
+                monacoEditor: {
+                    getModel: () => mockModel,
+                    getEditor: () => mockEditorInstance,
+                },
+            } as unknown as MarkdownEditorMonacoComponent;
+
+            return { mockModel, setValueSpy, setEOLSpy };
+        };
+
+        it('should normalize CRLF to LF in initial problem statement before passing to sync service', fakeAsync(() => {
+            const crlfContent = 'line1\r\nline2\r\nline3';
+            const exerciseWithCrlf = { id: 30, templateParticipation, problemStatement: crlfContent } as ProgrammingExercise;
+            setRequiredInputs(fixture, exerciseWithCrlf);
+            fixture.detectChanges();
+
+            setupSyncTest();
+            comp.ngAfterViewInit();
+            tick();
+
+            // init() must receive LF-only content so the Yjs document is never seeded with CRLF
+            expect(problemStatementSyncServiceMock.init).toHaveBeenCalledWith(exerciseWithCrlf.id, 'line1\nline2\nline3');
+
+            fixture.destroy();
+            flush();
+        }));
+
+        it('should clear model and enforce LF EOL before creating the binding', fakeAsync(() => {
+            const exerciseWithStatement = { id: 30, templateParticipation, problemStatement: 'content' } as ProgrammingExercise;
+            setRequiredInputs(fixture, exerciseWithStatement);
+            fixture.detectChanges();
+
+            const { setValueSpy, setEOLSpy } = setupSyncTest();
+            comp.ngAfterViewInit();
+            tick();
+
+            // Model must be cleared before binding so MonacoBinding starts from empty state
+            expect(setValueSpy).toHaveBeenCalledWith('');
+            // EOL must be enforced to LF so Monaco's offset math matches Yjs
+            expect(setEOLSpy).toHaveBeenCalledWith(editor.EndOfLineSequence.LF);
+
+            fixture.destroy();
+            flush();
+        }));
+
+        it('should normalize CRLF and re-enforce LF EOL on late leader replacement via stateReplaced$', fakeAsync(() => {
+            const exerciseWithStatement = { id: 30, templateParticipation, problemStatement: 'initial' } as ProgrammingExercise;
+            setRequiredInputs(fixture, exerciseWithStatement);
+            fixture.detectChanges();
+
+            const { setValueSpy, setEOLSpy } = setupSyncTest();
+            comp.ngAfterViewInit();
+            tick();
+
+            // Clear spies from initial setup to isolate stateReplaced$ assertions
+            setValueSpy.mockClear();
+            setEOLSpy.mockClear();
+
+            // Simulate a late leader sending state with CRLF content.
+            // This can happen when a Windows peer seeded the Yjs doc with CRLF.
+            const replacementDoc = new Y.Doc();
+            const replacementText = replacementDoc.getText('problem-statement');
+            replacementText.insert(0, 'replaced\r\nwith\r\ncrlf');
+            const replacementAwareness = {} as any;
+
+            stateReplaced$.next({ doc: replacementDoc, text: replacementText, awareness: replacementAwareness });
+
+            // setValue must receive normalized (LF-only) content
+            expect(setValueSpy).toHaveBeenCalledWith('replaced\nwith\ncrlf');
+            // EOL must be re-enforced after setValue because setValue resets Monaco's EOL detection
+            expect(setEOLSpy).toHaveBeenCalledWith(editor.EndOfLineSequence.LF);
+
+            fixture.destroy();
+            flush();
+        }));
+
+        it('should destroy old binding before calling setValue during state replacement', fakeAsync(() => {
+            const exerciseWithStatement = { id: 30, templateParticipation, problemStatement: 'initial' } as ProgrammingExercise;
+            setRequiredInputs(fixture, exerciseWithStatement);
+            fixture.detectChanges();
+
+            const { setValueSpy } = setupSyncTest();
+            comp.ngAfterViewInit();
+            tick();
+
+            setValueSpy.mockClear();
+
+            // Track call order: the binding's destroy wrapper must fire before setValue.
+            // createProblemStatementBinding wraps the mock's destroy with a guard, so we
+            // intercept the wrapper directly on the live binding reference.
+            const callOrder: string[] = [];
+            const currentBinding = (comp as any).problemStatementBinding;
+            const originalWrappedDestroy = currentBinding.destroy;
+            currentBinding.destroy = () => {
+                callOrder.push('destroy');
+                originalWrappedDestroy();
+            };
+            setValueSpy.mockImplementation(() => callOrder.push('setValue'));
+
+            const replacementDoc = new Y.Doc();
+            const replacementText = replacementDoc.getText('problem-statement');
+            replacementText.insert(0, 'new content');
+            const replacementAwareness = {} as any;
+
+            stateReplaced$.next({ doc: replacementDoc, text: replacementText, awareness: replacementAwareness });
+
+            // Old binding must be detached before mutating the model to prevent
+            // spurious delete+insert propagation through the stale Y.Doc to peers.
+            expect(callOrder).toEqual(['destroy', 'setValue']);
+
+            fixture.destroy();
+            flush();
+        }));
     });
 });

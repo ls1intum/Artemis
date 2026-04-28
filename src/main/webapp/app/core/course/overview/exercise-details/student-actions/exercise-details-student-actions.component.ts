@@ -97,6 +97,7 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly isGeneratingFeedback = input<boolean>(false);
 
     readonly generatingFeedback = output<void>();
+    readonly newParticipation = output<StudentParticipation>();
 
     private readonly _uninitializedQuiz = signal(false);
     private readonly _quizNotStarted = signal(false);
@@ -155,6 +156,7 @@ export class ExerciseDetailsStudentActionsComponent {
         }
         this._studentParticipations.set(updatedParticipations);
         this.updateParticipations();
+        this.newParticipation.emit(newParticipation);
     }
 
     updateParticipations() {

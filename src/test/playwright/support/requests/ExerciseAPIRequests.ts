@@ -17,9 +17,7 @@ import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_an
 import quizTemplate from '../../fixtures/exercise/quiz/template.json';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 import {
-    Exercise,
     ExerciseMode,
-    ExerciseType,
     MODELING_EXERCISE_BASE,
     PROGRAMMING_EXERCISE_BASE,
     ProgrammingExerciseAssessmentType,
@@ -30,13 +28,13 @@ import {
     UPLOAD_EXERCISE_BASE,
 } from '../constants';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
+import { BUILD_FINISH_TIMEOUT } from '../timeouts';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
 import { Fixtures } from '../../fixtures/fixtures';
@@ -51,8 +49,9 @@ type PatchProgrammingExerciseTestVisibilityDto = {
     visibility: Visibility;
 }[];
 
-const MAX_RETRIES: number = 40;
 const RETRY_DELAY: number = 3000;
+// Align with BUILD_FINISH_TIMEOUT so solution builds have enough time to complete even under CI load
+const MAX_RETRIES: number = Math.ceil(BUILD_FINISH_TIMEOUT / RETRY_DELAY);
 
 export class ExerciseAPIRequests {
     private readonly page: Page;
@@ -539,7 +538,7 @@ export class ExerciseAPIRequests {
         let url: string;
         let newQuizExercise: any;
         let quizBatches: any[] = [];
-        if (Object.hasOwn(body, 'course')) {
+        if ('course' in body) {
             url = `api/quiz/courses/${body.course.id}/quiz-exercises`;
             const dates = {
                 releaseDate: dayjsToString(releaseDate),
@@ -723,25 +722,6 @@ export class ExerciseAPIRequests {
         return await this.page.request.patch(`${PROGRAMMING_EXERCISE_BASE}/${programmingExerciseId}/update-test-cases`, { data: updatedTestCaseSettings });
     }
 
-    private async updateExercise(exercise: Exercise, type: ExerciseType) {
-        let url: string;
-        switch (type) {
-            case ExerciseType.PROGRAMMING:
-                url = PROGRAMMING_EXERCISE_BASE;
-                break;
-            case ExerciseType.TEXT:
-                url = TEXT_EXERCISE_BASE;
-                break;
-            case ExerciseType.MODELING:
-                url = MODELING_EXERCISE_BASE;
-                break;
-            case ExerciseType.QUIZ:
-            default:
-                throw new Error(`Exercise type '${type}' is not supported yet!`);
-        }
-        return await this.page.request.put(url, { data: exercise });
-    }
-
     /**
      * Configures all SCA categories for a programming exercise to be GRADED via API.
      * This is faster than configuring through the UI.
@@ -775,9 +755,6 @@ export class ExerciseAPIRequests {
      * completes before the solution build, resulting in score=0.
      */
     async waitForSolutionBuild(exerciseId: number) {
-        const MAX_RETRIES = 20;
-        const RETRY_DELAY = 3000;
-
         for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
             const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/test-cases`);
             const testCases = await response.json();

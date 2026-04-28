@@ -17,8 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -67,7 +65,7 @@ public class AeolusTemplateResource {
      */
     @GetMapping({ "templates/{language}/{projectType}", "templates/{language}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<String> getAeolusTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
+    public ResponseEntity<Windfile> getAeolusTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
             @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns) {
         log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}", language, projectType,
@@ -115,7 +113,7 @@ public class AeolusTemplateResource {
      * @param sequentialRuns    Whether the sequential runs template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
-    private ResponseEntity<String> getAeolusTemplateFileContentWithResponse(ProgrammingLanguage language, String projectTypePrefix, boolean staticAnalysis,
+    private ResponseEntity<Windfile> getAeolusTemplateFileContentWithResponse(ProgrammingLanguage language, String projectTypePrefix, boolean staticAnalysis,
             boolean sequentialRuns) {
         try {
             Optional<ProjectType> optionalProjectType = Optional.empty();
@@ -124,17 +122,13 @@ public class AeolusTemplateResource {
             }
             Windfile windfile = aeolusTemplateService.getWindfileFor(language, optionalProjectType, staticAnalysis, sequentialRuns);
             if (windfile == null) {
-                return new ResponseEntity<>(null, null, HttpStatus.NOT_FOUND);
+                return ResponseEntity.notFound().build();
             }
-            HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.setContentType(MediaType.APPLICATION_JSON);
-            String json = new ObjectMapper().writeValueAsString(windfile);
-            return new ResponseEntity<>(json, responseHeaders, HttpStatus.OK);
+            return ResponseEntity.ok(windfile);
         }
         catch (IOException ex) {
             log.warn("Error when retrieving aeolus template file", ex);
-            HttpHeaders responseHeaders = new HttpHeaders();
-            return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
+            return ResponseEntity.notFound().build();
         }
     }
 
