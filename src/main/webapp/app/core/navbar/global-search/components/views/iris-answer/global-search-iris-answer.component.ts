@@ -45,7 +45,7 @@ export class GlobalSearchIrisAnswerComponent {
 
     constructor() {
         // Measure answer overflow after each new result; reset when the result clears.
-        effect(() => {
+        effect((onCleanup) => {
             const r = this.irisResult();
             untracked(() => {
                 this.isExpanded.set(false);
@@ -53,7 +53,7 @@ export class GlobalSearchIrisAnswerComponent {
                 this.moreOpen.set(false);
             });
             if (!r?.answer) return;
-            setTimeout(() => {
+            const measureTimeout = setTimeout(() => {
                 const el = this.answerBody()?.nativeElement;
                 if (el) {
                     const rawLineHeight = getComputedStyle(el).lineHeight;
@@ -61,6 +61,7 @@ export class GlobalSearchIrisAnswerComponent {
                     untracked(() => this.isOverflowing.set(el.scrollHeight > lineHeight * 4));
                 }
             }, ANSWER_MEASURE_DELAY_MS);
+            onCleanup(() => clearTimeout(measureTimeout));
         });
 
         // Iris answer pipeline — runs alongside the main search.
@@ -75,14 +76,14 @@ export class GlobalSearchIrisAnswerComponent {
                 }),
                 switchMap((query) => {
                     if (!query.trim()) {
-                        return of(null);
+                        return of(undefined);
                     }
-                    return this.lectureSearchService.ask(query).pipe(catchError(() => of(null)));
+                    return this.lectureSearchService.ask(query).pipe(catchError(() => of(undefined)));
                 }),
                 takeUntilDestroyed(),
             )
-            .subscribe((update: IrisSearchStatusUpdate | null) => {
-                if (update === null) return;
+            .subscribe((update: IrisSearchStatusUpdate | undefined) => {
+                if (update === undefined) return;
                 if (update.isThinking) {
                     this.irisThinking.set(true);
                 } else {

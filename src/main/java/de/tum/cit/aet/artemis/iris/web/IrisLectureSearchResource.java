@@ -63,7 +63,16 @@ public class IrisLectureSearchResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> ask(@RequestBody @Valid PyrisSearchAskRequestDTO requestDTO, Principal principal) {
         var jobToken = pyrisJobService.addGlobalSearchAnswerJob(principal.getName());
-        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), jobToken);
+        try {
+            pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), jobToken);
+        }
+        catch (RuntimeException e) {
+            var job = pyrisJobService.getJob(jobToken);
+            if (job != null) {
+                pyrisJobService.removeJob(job);
+            }
+            throw e;
+        }
         return ResponseEntity.accepted().build();
     }
 }
