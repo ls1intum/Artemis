@@ -25,7 +25,8 @@ import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model'
 import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
-import { PageableResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
+import { PageableResult } from 'app/shared/table/pageable-table';
+import { ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -278,16 +279,20 @@ export class ExamManagementService {
      * @param params Page index, page size, search term, sort column, and sort direction.
      * @returns A page of {@link ExamStudentDTO} rows with date fields converted to Dayjs instances.
      */
-    findExamStudentsPaged(courseId: number, examId: number, params: SearchTermPageableSearch): Observable<PageableResult<ExamStudentDTO>> {
+    findExamStudentsPaged(courseId: number, examId: number, search: ExamStudentSearch): Observable<PageableResult<ExamStudentDTO>> {
+        const httpParams: Record<string, string | number> = {
+            page: search.page,
+            pageSize: search.pageSize,
+            sortingOrder: search.sortingOrder,
+            sortedColumn: search.sortedColumn,
+            searchTerm: search.searchTerm,
+        };
+        if (search.filterProp) {
+            httpParams['filterProp'] = search.filterProp;
+        }
         return this.http
             .get<ExamStudentDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-students/paged`, {
-                params: {
-                    page: params.page,
-                    pageSize: params.pageSize,
-                    sortingOrder: params.sortingOrder,
-                    sortedColumn: params.sortedColumn,
-                    searchTerm: params.searchTerm,
-                },
+                params: httpParams,
                 observe: 'response',
             })
             .pipe(

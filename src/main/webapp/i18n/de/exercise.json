@@ -236,6 +236,7 @@
             "submissionCount": "Abgaben",
             "score": "Punktzahl",
             "duration": "Dauer",
+            "filter": "Filtern",
             "scoresFilter": "Filter: {{ filter }}",
             "showBuildFailed": "Fehlgeschlagene Builds",
             "showUnsuccessful": "Nicht erfolgreiche",

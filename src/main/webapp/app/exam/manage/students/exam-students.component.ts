@@ -46,8 +46,9 @@ import { ProgressBar } from 'primeng/progressbar';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
-import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
+import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 
@@ -83,6 +84,7 @@ interface MenuCommandEvent {
         ProgressBar,
         TableViewComponent,
         ConfirmDialogModule,
+        FilterDropdownComponent,
     ],
 })
 export class ExamStudentsComponent implements OnDestroy {
@@ -147,6 +149,24 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly isAdmin = signal(false);
     readonly isTestExam = computed(() => this.exam()?.testExam ?? false);
     readonly isLoading = signal(true);
+
+    readonly activeFilter = signal('All');
+    readonly examStudentFilterGroups = computed<FilterGroup[]>(() => {
+        const groups: FilterGroup[] = [
+            {
+                labelKey: 'artemisApp.examManagement.examStudents.filterGroup.progress',
+                items: ['ExamMissing', 'NotStarted', 'Started', 'Submitted'],
+            },
+        ];
+        if (this.hasExamEnded()) {
+            groups.push({
+                labelKey: 'artemisApp.examManagement.examStudents.filterGroup.attendance',
+                items: ['DidNotAttend', 'AttendanceNotChecked', 'AttendanceChecked'],
+            });
+        }
+        return groups;
+    });
+    private lastLazyEvent: TableLazyLoadEvent | undefined;
 
     private removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
     private reloadRequest$ = new Subject<void>();
@@ -374,20 +394,32 @@ export class ExamStudentsComponent implements OnDestroy {
         this.dialogErrorSource.unsubscribe();
     }
 
+    onFilterChange(filter: string): void {
+        this.activeFilter.set(filter);
+        if (this.lastLazyEvent) {
+            this.loadExamStudents(this.lastLazyEvent);
+        }
+    }
+
     loadExamStudents(event: TableLazyLoadEvent): void {
+        this.lastLazyEvent = event;
         const examId = this.exam().id;
         if (!examId) {
             return;
         }
 
         const query = buildDbQueryFromLazyEvent(event);
+        const search: ExamStudentSearch = {
+            ...query,
+            filterProp: this.activeFilter() !== 'All' ? this.activeFilter() : undefined,
+        };
         this.isLoading.set(true);
-        this.examManagementService.findExamStudentsPaged(this.courseId(), examId, query).subscribe({
+        this.examManagementService.findExamStudentsPaged(this.courseId(), examId, search).subscribe({
             next: (result) => {
                 this.rows.set(result.content);
                 this.totalRows.set(result.totalElements);
-                if (!query.searchTerm) {
-                    this.totalExamStudents.set(result.totalElements);
+                if (!search.searchTerm && !search.filterProp) {
+                    this.totalExamStudents.set(result.totalElements ?? 0);
                 }
                 this.isLoading.set(false);
             },

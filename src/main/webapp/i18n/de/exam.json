@@ -616,6 +616,20 @@
                     "viewExam": "Klausur anzeigen",
                     "remove": "Deregistrieren"
                 },
+                "filter": {
+                    "All": "Alle",
+                    "ExamMissing": "Prüfung fehlt",
+                    "NotStarted": "Nicht gestartet",
+                    "Started": "Gestartet",
+                    "Submitted": "Eingereicht",
+                    "DidNotAttend": "Nicht teilgenommen",
+                    "AttendanceNotChecked": "Anwesenheitsprüfung fehlgeschlagen",
+                    "AttendanceChecked": "Anwesenheitsprüfung bestanden"
+                },
+                "filterGroup": {
+                    "progress": "Fortschritt",
+                    "attendance": "Anwesenheit"
+                },
                 "menu": {
                     "manageStudents": "Studierende registrieren",
                     "examLogistics": "Klausurlogistik",

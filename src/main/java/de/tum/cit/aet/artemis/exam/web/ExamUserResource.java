@@ -5,8 +5,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.validation.Valid;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -26,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -40,6 +37,7 @@ import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentSearchDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
@@ -184,12 +182,12 @@ public class ExamUserResource {
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam
-     * @param search   search term and pagination / sorting info; whitelisted sort columns only
+     * @param search   search term, pagination / sorting info, and an optional filter value (e.g. {@code "Submitted"}, {@code "AttendanceNotChecked"})
      * @return ResponseEntity containing a page of {@link ExamStudentDTO} with status 200 (OK) and pagination headers
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exam-students/paged")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<ExamStudentDTO>> getExamStudentsPaged(@PathVariable long courseId, @PathVariable long examId, @Valid SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<List<ExamStudentDTO>> getExamStudentsPaged(@PathVariable long courseId, @PathVariable long examId, ExamStudentSearchDTO search) {
         log.debug("REST request to get paged exam-students for exam: {}", examId);
         examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
         Page<ExamStudentDTO> page = examUserService.findExamStudentsForExamPaged(examId, search);

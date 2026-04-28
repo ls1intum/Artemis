@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser_;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam_;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 
 /**
  * Specifications for filtering, searching, and ordering {@link ExamUser} entities for the paginated exam-students view.
@@ -45,6 +46,116 @@ public final class ExamUserSpecs {
     /** LIKE-escape for user input. Escapes backslash, percent, and underscore so they are treated literally. */
     private static String escapeForLike(String term) {
         return term.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    }
+
+    /**
+     * Narrows the result set to a specific student progress state or attendance check state.
+     * Recognised values: {@code "ExamMissing"}, {@code "NotStarted"}, {@code "Started"}, {@code "Submitted"},
+     * {@code "AttendanceChecked"}, {@code "AttendanceNotChecked"}, {@code "DidNotAttend"}. Blank or {@code null} values return a no-op.
+     *
+     * @param filter the filter value from the frontend; unrecognised values are treated as no-op
+     * @return specification applying the requested filter predicate
+     */
+    @NonNull
+    public static Specification<ExamUser> filteredBy(@Nullable String filter) {
+        if (filter == null || filter.isBlank()) {
+            return noOp();
+        }
+        return switch (filter) {
+            case "ExamMissing" -> isExamMissing();
+            case "NotStarted" -> isNotStarted();
+            case "Started" -> isStarted();
+            case "Submitted" -> isSubmitted();
+            case "AttendanceChecked" -> isAttendanceChecked();
+            case "AttendanceNotChecked" -> isAttendanceNotChecked();
+            case "DidNotAttend" -> isDidNotAttend();
+            default -> noOp();
+        };
+    }
+
+    /** Matches exam users for whom no non-test-run StudentExam exists. */
+    @NonNull
+    private static Specification<ExamUser> isExamMissing() {
+        return (root, query, builder) -> {
+            Subquery<Integer> sub = query.subquery(Integer.class);
+            Root<StudentExam> se = sub.from(StudentExam.class);
+            sub.select(builder.literal(1));
+            sub.where(builder.and(builder.equal(se.get(StudentExam_.USER), root.get(ExamUser_.USER)), builder.equal(se.get(StudentExam_.EXAM), root.get(ExamUser_.EXAM)),
+                    builder.or(builder.isNull(se.get(StudentExam_.TEST_RUN)), builder.isFalse(se.get(StudentExam_.TEST_RUN)))));
+            return builder.not(builder.exists(sub));
+        };
+    }
+
+    /** Matches exam users whose non-test-run StudentExam exists but has not been started. */
+    @NonNull
+    private static Specification<ExamUser> isNotStarted() {
+        return (root, query, builder) -> {
+            Subquery<Integer> sub = query.subquery(Integer.class);
+            Root<StudentExam> se = sub.from(StudentExam.class);
+            sub.select(builder.literal(1));
+            sub.where(builder.and(builder.equal(se.get(StudentExam_.USER), root.get(ExamUser_.USER)), builder.equal(se.get(StudentExam_.EXAM), root.get(ExamUser_.EXAM)),
+                    builder.or(builder.isNull(se.get(StudentExam_.TEST_RUN)), builder.isFalse(se.get(StudentExam_.TEST_RUN))),
+                    builder.or(builder.isNull(se.get(StudentExam_.STARTED)), builder.isFalse(se.get(StudentExam_.STARTED)))));
+            return builder.exists(sub);
+        };
+    }
+
+    /** Matches exam users whose non-test-run StudentExam has been started but not yet submitted. */
+    @NonNull
+    private static Specification<ExamUser> isStarted() {
+        return (root, query, builder) -> {
+            Subquery<Integer> sub = query.subquery(Integer.class);
+            Root<StudentExam> se = sub.from(StudentExam.class);
+            sub.select(builder.literal(1));
+            sub.where(builder.and(builder.equal(se.get(StudentExam_.USER), root.get(ExamUser_.USER)), builder.equal(se.get(StudentExam_.EXAM), root.get(ExamUser_.EXAM)),
+                    builder.or(builder.isNull(se.get(StudentExam_.TEST_RUN)), builder.isFalse(se.get(StudentExam_.TEST_RUN))), builder.isTrue(se.get(StudentExam_.STARTED)),
+                    builder.or(builder.isNull(se.get(StudentExam_.SUBMITTED)), builder.isFalse(se.get(StudentExam_.SUBMITTED)))));
+            return builder.exists(sub);
+        };
+    }
+
+    /** Matches exam users whose non-test-run StudentExam has been submitted. */
+    @NonNull
+    private static Specification<ExamUser> isSubmitted() {
+        return (root, query, builder) -> {
+            Subquery<Integer> sub = query.subquery(Integer.class);
+            Root<StudentExam> se = sub.from(StudentExam.class);
+            sub.select(builder.literal(1));
+            sub.where(builder.and(builder.equal(se.get(StudentExam_.USER), root.get(ExamUser_.USER)), builder.equal(se.get(StudentExam_.EXAM), root.get(ExamUser_.EXAM)),
+                    builder.or(builder.isNull(se.get(StudentExam_.TEST_RUN)), builder.isFalse(se.get(StudentExam_.TEST_RUN))), builder.isTrue(se.get(StudentExam_.SUBMITTED))));
+            return builder.exists(sub);
+        };
+    }
+
+    /** Matches exam users who have a signing image and all attendance checks completed. */
+    @NonNull
+    private static Specification<ExamUser> isAttendanceChecked() {
+        return (root, query, builder) -> builder.and(builder.isNotNull(root.get(ExamUser_.SIGNING_IMAGE_PATH)), builder.notEqual(root.get(ExamUser_.SIGNING_IMAGE_PATH), ""),
+                builder.isTrue(root.get(ExamUser_.DID_CHECK_IMAGE)), builder.isTrue(root.get(ExamUser_.DID_CHECK_NAME)), builder.isTrue(root.get(ExamUser_.DID_CHECK_LOGIN)),
+                builder.isTrue(root.get(ExamUser_.DID_CHECK_REGISTRATION_NUMBER)));
+    }
+
+    /** Matches exam users whose non-test-run StudentExam was started but attendance checks are incomplete. */
+    @NonNull
+    private static Specification<ExamUser> isAttendanceNotChecked() {
+        return (root, query, builder) -> {
+            Subquery<Integer> sub = query.subquery(Integer.class);
+            Root<StudentExam> se = sub.from(StudentExam.class);
+            sub.select(builder.literal(1));
+            sub.where(builder.and(builder.equal(se.get(StudentExam_.USER), root.get(ExamUser_.USER)), builder.equal(se.get(StudentExam_.EXAM), root.get(ExamUser_.EXAM)),
+                    builder.or(builder.isNull(se.get(StudentExam_.TEST_RUN)), builder.isFalse(se.get(StudentExam_.TEST_RUN))), builder.isTrue(se.get(StudentExam_.STARTED))));
+            Predicate hasStarted = builder.exists(sub);
+            Predicate checkIncomplete = builder.or(builder.isNull(root.get(ExamUser_.SIGNING_IMAGE_PATH)), builder.equal(root.get(ExamUser_.SIGNING_IMAGE_PATH), ""),
+                    builder.isFalse(root.get(ExamUser_.DID_CHECK_IMAGE)), builder.isFalse(root.get(ExamUser_.DID_CHECK_NAME)), builder.isFalse(root.get(ExamUser_.DID_CHECK_LOGIN)),
+                    builder.isFalse(root.get(ExamUser_.DID_CHECK_REGISTRATION_NUMBER)));
+            return builder.and(hasStarted, checkIncomplete);
+        };
+    }
+
+    /** Matches exam users who never started the exam: either no student exam was generated (ExamMissing) or the student exam was not started (NotStarted). */
+    @NonNull
+    private static Specification<ExamUser> isDidNotAttend() {
+        return Specification.where(isExamMissing()).or(isNotStarted());
     }
 
     /**
@@ -150,6 +261,16 @@ public final class ExamUserSpecs {
                     Expression<String> last = builder.lower(builder.coalesce(user.get(User_.LAST_NAME), ""));
                     orders.add(asc ? builder.asc(first) : builder.desc(first));
                     orders.add(asc ? builder.asc(last) : builder.desc(last));
+                }
+                case "progress" -> {
+                    Subquery<String> sub = query.subquery(String.class);
+                    Root<StudentExam> se = sub.from(StudentExam.class);
+                    sub.select(builder.<String>selectCase().when(builder.isTrue(se.get(StudentExam_.SUBMITTED)), ExamStudentDTO.PROGRESS_SUBMITTED)
+                            .when(builder.isTrue(se.get(StudentExam_.STARTED)), ExamStudentDTO.PROGRESS_STARTED).otherwise(ExamStudentDTO.PROGRESS_NOT_STARTED));
+                    sub.where(builder.and(builder.equal(se.get(StudentExam_.USER), user), builder.equal(se.get(StudentExam_.EXAM), root.get(ExamUser_.EXAM)),
+                            builder.or(builder.isNull(se.get(StudentExam_.TEST_RUN)), builder.isFalse(se.get(StudentExam_.TEST_RUN)))));
+                    Expression<String> progressExpr = builder.coalesce(sub, ExamStudentDTO.PROGRESS_EXAM_MISSING);
+                    orders.add(asc ? builder.asc(progressExpr) : builder.desc(progressExpr));
                 }
                 default -> {
                     // no custom ordering

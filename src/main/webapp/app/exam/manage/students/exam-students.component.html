@@ -133,6 +133,12 @@
         [disabled]="isTestExam() || hasExamStarted() || !hasRegisteredUsers()"
         severity="secondary"
     />
+    <jhi-filter-dropdown
+        [groupedFilters]="examStudentFilterGroups()"
+        [activeFilter]="activeFilter()"
+        [translationPrefix]="'artemisApp.examManagement.examStudents.filter.'"
+        (filterChange)="onFilterChange($event)"
+    />
 </ng-template>
 
 <!-- Row action buttons -->

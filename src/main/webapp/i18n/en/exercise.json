@@ -236,6 +236,7 @@
             "submissionCount": "Submissions",
             "score": "Points",
             "duration": "Duration",
+            "filter": "Filter",
             "scoresFilter": "Filter: {{ filter }}",
             "showBuildFailed": "Build Failed",
             "showUnsuccessful": "Unsuccessful",

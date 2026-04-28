@@ -34,7 +34,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.ImageDTO;
-import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -47,6 +46,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentSearchDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExportExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
@@ -295,10 +295,10 @@ public class ExamUserService {
      * targeted queries — one per entity type, both scoped to the current page only.
      *
      * @param examId the exam to query
-     * @param search search term, page index, page size, sort column, and sort direction
+     * @param search search term, page index, page size, sort column, sort direction, and an optional filter value (e.g. {@code "Submitted"}, {@code "AttendanceNotChecked"})
      * @return a page of {@link ExamStudentDTO} in the requested order
      */
-    public Page<ExamStudentDTO> findExamStudentsForExamPaged(long examId, SearchTermPageableSearchDTO<String> search) {
+    public Page<ExamStudentDTO> findExamStudentsForExamPaged(long examId, ExamStudentSearchDTO search) {
         Page<Long> idPage = examUserRepository.findExamUserIdsForExam(examId, search);
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {

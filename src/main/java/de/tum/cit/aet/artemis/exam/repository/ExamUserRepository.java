@@ -20,10 +20,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
-import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentSearchDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 
 @Conditional(ExamEnabled.class)
@@ -94,20 +94,20 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
     Optional<ExamUser> findWithExamWithExamUsersById(long examUserId);
 
     /**
-     * Returns a page of {@link ExamUser} IDs for the given exam, filtered by the optional search term and ordered by
-     * the requested column. Sorting is applied via {@code query.orderBy} inside the specification rather than through
-     * {@link Pageable#getSort()} because the working-time sort requires a correlated subquery that {@link Sort} cannot express.
+     * Returns a page of {@link ExamUser} IDs for the given exam, filtered and searched according to {@link ExamStudentSearchDTO}.
+     * Sorting is applied via {@code query.orderBy} inside the specification rather than through {@link Pageable#getSort()}
+     * because the working-time sort requires a correlated subquery that {@link Sort} cannot express.
      *
      * @param examId the exam whose registered students are queried
-     * @param search search term, page index, page size, sort column, and sort direction
+     * @param search search term, page index, page size, sort column, sort direction, and an optional filter value
      * @return a page of {@link ExamUser} IDs in the requested order
      */
-    default Page<Long> findExamUserIdsForExam(long examId, SearchTermPageableSearchDTO<String> search) {
-        SortingOrder sortOrder = search.getSortingOrder() != null ? search.getSortingOrder() : SortingOrder.ASCENDING;
-        Specification<ExamUser> spec = Specification.where(ExamUserSpecs.forExam(examId)).and(ExamUserSpecs.searchByUserFields(search.getSearchTerm()))
-                .and(ExamUserSpecs.ordered(search.getSortedColumn(), sortOrder));
+    default Page<Long> findExamUserIdsForExam(long examId, ExamStudentSearchDTO search) {
+        SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
+        Specification<ExamUser> spec = Specification.where(ExamUserSpecs.forExam(examId)).and(ExamUserSpecs.searchByUserFields(search.searchTerm()))
+                .and(ExamUserSpecs.filteredBy(search.filterProp())).and(ExamUserSpecs.ordered(search.sortedColumn(), sortOrder));
 
-        Pageable unsortedPageable = PageRequest.of(search.getPage(), search.getPageSize(), Sort.unsorted());
+        Pageable unsortedPageable = PageRequest.of(search.page(), search.pageSize(), Sort.unsorted());
         return findAll(spec, unsortedPageable).map(ExamUser::getId);
     }
 

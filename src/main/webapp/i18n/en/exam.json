@@ -616,6 +616,20 @@
                     "viewExam": "View exam",
                     "remove": "Deregister"
                 },
+                "filter": {
+                    "All": "All",
+                    "ExamMissing": "Exam missing",
+                    "NotStarted": "Not started",
+                    "Started": "Started",
+                    "Submitted": "Submitted",
+                    "DidNotAttend": "Did not attend",
+                    "AttendanceNotChecked": "Attendance check failed",
+                    "AttendanceChecked": "Attendance check passed"
+                },
+                "filterGroup": {
+                    "progress": "Progress",
+                    "attendance": "Attendance"
+                },
                 "menu": {
                     "manageStudents": "Register students",
                     "examLogistics": "Exam logistics",
