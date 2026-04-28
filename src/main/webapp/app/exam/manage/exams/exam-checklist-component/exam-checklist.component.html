@@ -157,7 +157,7 @@
                                 </ul>
                             </td>
                             <td>
-                                <a [routerLink]="getExamRoutesByIdentifier()('students')" class="btn btn-info" data-testid="students-button-register">
+                                <a [routerLink]="getExamRoutesByIdentifier()('students')" class="btn btn-info" data-testid="students-button-at-least-one-student">
                                     <fa-icon [icon]="faUser" />
                                     <span jhiTranslate="artemisApp.examManagement.students"></span>
                                 </a>
@@ -181,9 +181,9 @@
                                 </ul>
                             </td>
                             <td>
-                                <a [routerLink]="getExamRoutesByIdentifier()('student-exams')" class="btn btn-primary" data-testid="student-exams-button-generate">
-                                    <fa-icon [icon]="faEye" />
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
+                                <a [routerLink]="getExamRoutesByIdentifier()('students')" class="btn btn-info" data-testid="students-button-all-exams-generated">
+                                    <fa-icon [icon]="faUser" />
+                                    <span jhiTranslate="artemisApp.examManagement.students"></span>
                                 </a>
                             </td>
                         </tr>
@@ -208,9 +208,9 @@
                                 </ul>
                             </td>
                             <td>
-                                <a [routerLink]="getExamRoutesByIdentifier()('student-exams')" class="btn btn-primary" data-testid="student-exams-button-prepare-start">
-                                    <fa-icon [icon]="faEye" />
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
+                                <a [routerLink]="getExamRoutesByIdentifier()('students')" class="btn btn-info" data-testid="students-button-all-exercises-prepared">
+                                    <fa-icon [icon]="faUser" />
+                                    <span jhiTranslate="artemisApp.examManagement.students"></span>
                                 </a>
                             </td>
                         </tr>
@@ -339,9 +339,9 @@
                             }
                         </td>
                         <td>
-                            <a [routerLink]="getExamRoutesByIdentifier()('student-exams')" class="btn btn-primary">
-                                <fa-icon [icon]="faEye" />
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
+                            <a [routerLink]="getExamRoutesByIdentifier()('students')" class="btn btn-info">
+                                <fa-icon [icon]="faUser" />
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.students"></span>
                             </a>
                         </td>
                     </tr>
