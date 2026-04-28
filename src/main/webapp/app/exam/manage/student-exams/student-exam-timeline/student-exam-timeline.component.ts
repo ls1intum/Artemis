@@ -287,7 +287,11 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
      */
 
     private findFirstSubmission(): FileUploadSubmission | SubmissionVersion | ProgrammingSubmission | undefined {
-        return this.findCorrespondingSubmissionForTimestamp(this.submissionTimeStamps[0]?.toDate().getTime());
+        const firstTimestamp = this.submissionTimeStamps[0];
+        if (!firstTimestamp) {
+            return undefined;
+        }
+        return this.findCorrespondingSubmissionForTimestamp(firstTimestamp.valueOf());
     }
 
     initializeExercise(exercise: Exercise, submission: Submission | SubmissionVersion | undefined) {
@@ -346,13 +350,15 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     /**
      * Finds the submission for the current timestamp.
      * @param timestamp The timestamp for which the submission should be found.
+     * @param exerciseId Optional exercise ID to restrict the search to a specific exercise.
      */
-    private findCorrespondingSubmissionForTimestamp(timestamp: number): SubmissionVersion | ProgrammingSubmission | FileUploadSubmission | undefined {
+    private findCorrespondingSubmissionForTimestamp(timestamp: number, exerciseId?: number): SubmissionVersion | ProgrammingSubmission | FileUploadSubmission | undefined {
         const comparisonObject = dayjs(timestamp);
+        const matchesExercise = (id: number | undefined) => exerciseId === undefined || id === exerciseId;
         return (
-            this.submissionVersions.find((sv) => sv.createdDate.isSame(comparisonObject)) ??
-            this.programmingSubmissions.find((ps) => ps.submissionDate?.isSame(comparisonObject)) ??
-            this.fileUploadSubmissions.find((fs) => fs.submissionDate?.isSame(comparisonObject))
+            this.submissionVersions.find((sv) => matchesExercise(sv.submission?.participation?.exercise?.id) && sv.createdDate.isSame(comparisonObject)) ??
+            this.programmingSubmissions.find((ps) => matchesExercise(ps.participation?.exercise?.id) && ps.submissionDate?.isSame(comparisonObject)) ??
+            this.fileUploadSubmissions.find((fs) => matchesExercise(fs.participation?.exercise?.id) && fs.submissionDate?.isSame(comparisonObject))
         );
     }
 
@@ -372,7 +378,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
                 (s) => s.submissionDate!,
                 exercise.id!,
             );
-            return this.findCorrespondingSubmissionForTimestamp(timestampWithSmallestDiff);
+            return this.findCorrespondingSubmissionForTimestamp(timestampWithSmallestDiff, exercise.id);
         }
         const timestampWithSmallestDiff = this.findClosestTimestampForExercise(
             this.submissionVersions,
@@ -380,7 +386,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
             (s) => s.createdDate,
             exercise.id!,
         );
-        return this.findCorrespondingSubmissionForTimestamp(timestampWithSmallestDiff);
+        return this.findCorrespondingSubmissionForTimestamp(timestampWithSmallestDiff, exercise.id);
     }
 
     /**
