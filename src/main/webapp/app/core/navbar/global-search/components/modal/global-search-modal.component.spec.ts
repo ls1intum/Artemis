@@ -264,8 +264,8 @@ describe('GlobalSearchModalComponent', () => {
     });
 
     describe('Search Pipeline', () => {
-        const queryResults: GlobalSearchResult[] = [{ id: '1', type: 'exercise', title: 'Test Exercise', badge: 'Programming', metadata: {} }];
-        const filteredResults: GlobalSearchResult[] = [{ id: '2', type: 'exercise', title: 'Filtered Exercise', badge: 'Quiz', metadata: {} }];
+        const queryResults: GlobalSearchResult[] = [{ id: '1', type: 'exercise', title: 'Test Exercise', badge: 'programming', metadata: {} }];
+        const filteredResults: GlobalSearchResult[] = [{ id: '2', type: 'exercise', title: 'Filtered Exercise', badge: 'quiz', metadata: {} }];
 
         beforeEach(() => {
             vi.useFakeTimers();
@@ -273,6 +273,26 @@ describe('GlobalSearchModalComponent', () => {
 
         afterEach(() => {
             vi.useRealTimers();
+        });
+
+        it('should remove rightmost filter when Backspace is pressed and query is empty', () => {
+            component['activeFilters'].set(['exercise', 'lecture']);
+            component['searchQuery'].set('');
+
+            const event = new KeyboardEvent('keydown', { key: 'Backspace' });
+            component['onSearchKeyDown'](event);
+
+            expect(component['activeFilters']()).toEqual(['exercise']);
+        });
+
+        it('should not remove filter when Backspace is pressed but query is not empty', () => {
+            component['activeFilters'].set(['exercise']);
+            component['searchQuery'].set('a');
+
+            const event = new KeyboardEvent('keydown', { key: 'Backspace' });
+            component['onSearchKeyDown'](event);
+
+            expect(component['activeFilters']()).toEqual(['exercise']);
         });
 
         it('should re-trigger search when filter changes even if query stays the same', () => {
