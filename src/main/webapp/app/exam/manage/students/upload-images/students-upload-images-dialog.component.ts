@@ -1,19 +1,19 @@
-import { Component, OnDestroy, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, OnDestroy, ViewEncapsulation, inject, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DialogModule } from 'primeng/dialog';
 
 class NotFoundExamUserType {
     numberOfUsersNotFound: number;
@@ -24,10 +24,9 @@ class NotFoundExamUserType {
     selector: 'jhi-student-upload-images-dialog',
     templateUrl: './students-upload-images-dialog.component.html',
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, NgClass, ArtemisTranslatePipe],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, NgClass, ArtemisTranslatePipe, DialogModule],
 })
 export class StudentsUploadImagesDialogComponent implements OnDestroy {
-    private activeModal = inject(NgbActiveModal);
     private alertService = inject(AlertService);
     private examManagementService = inject(ExamManagementService);
 
@@ -38,6 +37,9 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
 
     courseId = input.required<number>();
     exam = input.required<Exam>();
+
+    dialogVisible = model(false);
+    uploadDone = output<void>();
 
     isParsing = false;
     hasParsed = false;
@@ -51,24 +53,30 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     faCheck = faCheck;
     faCircleNotch = faCircleNotch;
     faUpload = faUpload;
-    faArrowRight = faArrowRight;
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
     }
 
+    openDialog() {
+        this.resetDialog();
+        this.dialogVisible.set(true);
+    }
+
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.dialogVisible.set(false);
     }
 
     onFinish() {
-        this.activeModal.close();
+        this.dialogVisible.set(false);
+        this.uploadDone.emit();
     }
 
-    private resetDialog() {
+    resetDialog() {
         this.isParsing = false;
         this.notFoundUsers = undefined;
         this.hasParsed = false;
+        this.file = undefined!;
     }
 
     onPDFFileSelect(event: any) {

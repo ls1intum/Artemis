@@ -4,7 +4,6 @@ import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { User } from 'app/core/user/user.model';
 import { EMPTY, Subject, forkJoin, of } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -23,7 +22,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
 import { StudentsReseatingDialogComponent } from 'app/exam/manage/students/room-distribution/students-reseating-dialog.component';
 import { StudentsExportDialogComponent } from 'app/exam/manage/students/export-users/students-export-dialog.component';
-import { MenuItem } from 'primeng/api';
+import { ConfirmationService, MenuItem } from 'primeng/api';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ExamStudentsMenuButtonComponent } from 'app/exam/manage/students/exam-students-menu-button/exam-students-menu-button.component';
@@ -31,7 +30,6 @@ import { ExamAddStudentsDialogComponent } from 'app/exam/manage/students/add-stu
 import { ButtonDirective } from 'primeng/button';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -49,6 +47,7 @@ import { TableLazyLoadEvent } from 'primeng/table';
 import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
 import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 
@@ -59,9 +58,11 @@ interface MenuCommandEvent {
 @Component({
     selector: 'jhi-exam-students',
     templateUrl: './exam-students.component.html',
+    providers: [ConfirmationService],
     imports: [
         TranslateDirective,
         UsersImportDialogComponent,
+        StudentsUploadImagesDialogComponent,
         StudentsExportDialogComponent,
         StudentsRoomDistributionDialogComponent,
         FaIconComponent,
@@ -81,6 +82,7 @@ interface MenuCommandEvent {
         Tooltip,
         ProgressBar,
         TableViewComponent,
+        ConfirmDialogModule,
     ],
 })
 export class ExamStudentsComponent implements OnDestroy {
@@ -92,7 +94,7 @@ export class ExamStudentsComponent implements OnDestroy {
     private examManagementService = inject(ExamManagementService);
     private accountService = inject(AccountService);
     private deleteDialogService = inject(DeleteDialogService);
-    private modalService = inject(NgbModal);
+    private confirmationService = inject(ConfirmationService);
     private router = inject(Router);
     private alertService = inject(AlertService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
@@ -100,6 +102,7 @@ export class ExamStudentsComponent implements OnDestroy {
     private examChecklistService = inject(ExamChecklistService);
 
     readonly usersImportDialog = viewChild.required(UsersImportDialogComponent);
+    readonly studentsUploadImagesDialog = viewChild.required(StudentsUploadImagesDialogComponent);
     readonly studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
     readonly studentsRoomDistributionDialog = viewChild.required(StudentsRoomDistributionDialogComponent);
     readonly addStudentsDialog = viewChild.required(ExamAddStudentsDialogComponent);
@@ -425,13 +428,7 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     openUploadImagesDialog() {
-        const modalRef: NgbModalRef = this.modalService.open(StudentsUploadImagesDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.courseId = this.courseId; // passing the signal itself here else eslint error
-        modalRef.componentInstance.exam = this.exam; // same here
-        modalRef.result.then(
-            () => this.reloadExamWithRegisteredUsers(),
-            () => {},
-        );
+        this.studentsUploadImagesDialog().openDialog();
     }
 
     openVerifyAttendance() {
@@ -526,13 +523,16 @@ export class ExamStudentsComponent implements OnDestroy {
      * Asks for confirmation if some exams already exist.
      */
     handleGenerateStudentExams(event: Event | undefined) {
-        if (this.studentExamCount()) {
-            const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
-            modalRef.componentInstance.title = 'artemisApp.studentExams.generateStudentExams';
-            modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.studentExams.studentExamGenerationModalText');
-            modalRef.result.then(() => {
-                this.openIndividualExamsStatusPopover(undefined, true);
-                this.generateStudentExams();
+        if (this.totalExamStudents() > 0) {
+            this.confirmationService.confirm({
+                header: this.artemisTranslatePipe.transform('artemisApp.studentExams.generateStudentExams'),
+                message: this.artemisTranslatePipe.transform('artemisApp.studentExams.studentExamGenerationModalText'),
+                rejectButtonProps: { label: this.artemisTranslatePipe.transform('global.form.cancel'), severity: 'secondary' },
+                acceptButtonProps: { label: this.artemisTranslatePipe.transform('global.form.confirm'), severity: 'danger' },
+                accept: () => {
+                    this.openIndividualExamsStatusPopover(undefined, true);
+                    this.generateStudentExams();
+                },
             });
         } else {
             this.openIndividualExamsStatusPopover(event);

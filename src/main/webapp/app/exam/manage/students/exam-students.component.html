@@ -312,3 +312,5 @@
 <jhi-students-export-dialog [courseId]="courseId()" [exam]="exam()" />
 <jhi-students-reseating-dialog [courseId]="courseId()" [exam]="exam()" (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()" #reseatingDialog />
 <jhi-exam-add-students-dialog [courseId]="courseId()" [exam]="exam()" (studentsChanged)="reloadExamWithRegisteredUsers()" />
+<jhi-student-upload-images-dialog [courseId]="courseId()" [exam]="exam()" (uploadDone)="reloadExamWithRegisteredUsers()" />
+<p-confirmDialog [style]="{ width: '50rem' }" [pt]="{ message: { style: { whiteSpace: 'pre-line' } } }" />
