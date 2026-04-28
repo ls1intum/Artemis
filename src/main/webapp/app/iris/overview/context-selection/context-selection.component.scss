@@ -36,11 +36,15 @@
 
     .iris-context-chip {
         max-width: 14rem;
-        background-color: transparent;
-        border: 1px solid var(--iris-accent-border-color);
+        background-color: color-mix(in srgb, var(--primary) 12%, transparent);
+        border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
         border-radius: 9999px;
         padding: 2px 6px 2px 10px;
         gap: 4px;
+        color: var(--bs-body-color);
+        transition:
+            background-color 0.15s ease,
+            border-color 0.15s ease;
 
         .p-chip-label {
             display: inline-flex;
@@ -59,8 +63,13 @@
             margin-left: 6px;
         }
 
-        &:hover .p-chip-remove-icon {
-            display: inline-flex;
+        &:hover {
+            background-color: color-mix(in srgb, var(--primary) 22%, transparent);
+            border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+
+            .p-chip-remove-icon {
+                display: inline-flex;
+            }
         }
     }
 }
