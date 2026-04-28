@@ -102,6 +102,21 @@ describe('LectureSearchService', () => {
             req.flush(null, { status: 202, statusText: 'Accepted' });
         });
 
+        it('should emit a thinking update before the final result', () => {
+            const received: IrisSearchStatusUpdate[] = [];
+            service.ask('what are signals?').subscribe((result) => received.push(result));
+
+            const req = httpTesting.expectOne('api/iris/search-answer');
+            req.flush(null, { status: 202, statusText: 'Accepted' });
+
+            wsSubject.next({ isThinking: true });
+            wsSubject.next({ isThinking: false, answer: 'Signals are reactive.', sources: [] });
+
+            expect(received).toHaveLength(2);
+            expect(received[0].isThinking).toBe(true);
+            expect(received[1].isThinking).toBe(false);
+        });
+
         it('should return the answer and sources from the server via WebSocket', () => {
             const mockResult: IrisSearchStatusUpdate = {
                 isThinking: false,
@@ -129,6 +144,20 @@ describe('LectureSearchService', () => {
             wsSubject.next(mockResult);
 
             expect(actualResult).toEqual(mockResult);
+        });
+
+        it('should error if the WebSocket does not respond within the timeout', () => {
+            vi.useFakeTimers();
+            let errorReceived: unknown;
+            service.ask('timed out query').subscribe({ error: (e) => (errorReceived = e) });
+
+            const req = httpTesting.expectOne('api/iris/search-answer');
+            req.flush(null, { status: 202, statusText: 'Accepted' });
+
+            vi.advanceTimersByTime(30_001);
+
+            expect(errorReceived).toBeDefined();
+            vi.useRealTimers();
         });
     });
 });
