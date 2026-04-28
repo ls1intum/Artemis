@@ -37,7 +37,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { By } from '@angular/platform-browser';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
@@ -653,27 +652,24 @@ describe('ExamUpdateComponent', () => {
             expect(component.validateWorkingTime).toBeFalse();
         });
 
-        it('should bind correct title into jhi-button and compute correct save title text', () => {
+        it('should compute correct save title text', () => {
             fixture.detectChanges();
             expect(component.saveTitle).toBe('entity.action.save');
-            const button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.title()).toBe('entity.action.save');
         });
 
-        it('should bind isSaving into jhi-button isLoading', () => {
+        it('should show loading state on save button when saving', () => {
             fixture.detectChanges();
 
             component.isSaving = true;
             fixture.changeDetectorRef.detectChanges();
 
-            let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.isLoading()).toBeTrue();
+            const button = fixture.debugElement.query(By.css('#save-exam'));
+            expect(button.nativeElement.classList).toContain('p-button-loading');
 
             component.isSaving = false;
             fixture.changeDetectorRef.detectChanges();
 
-            button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.isLoading()).toBeFalse();
+            expect(button.nativeElement.classList).not.toContain('p-button-loading');
         });
 
         it('should toggle save button disabled state based on form validity and configuration validity', fakeAsync(() => {
@@ -690,16 +686,16 @@ describe('ExamUpdateComponent', () => {
 
             //Step 1: Test case where the configuration and the form are valid
             expect(component.isValidConfiguration).toBeTrue();
-            let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.disabled()).toBeFalse();
+            let button = fixture.debugElement.query(By.css('#save-exam')).nativeElement;
+            expect(button.disabled).toBeFalse();
 
             // Step 2: Test case where the configuration is invalid
             examWithoutExercises.startDate = now.add(5, 'hours');
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.isValidConfiguration).toBeFalse();
-            button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.disabled()).toBeTrue();
+            button = fixture.debugElement.query(By.css('#save-exam')).nativeElement;
+            expect(button.disabled).toBeTrue();
 
             // Step 3: Test case where the configuration is valid again, but the form is invalid
             examWithoutExercises.startDate = now.add(2, 'hours');
@@ -708,8 +704,8 @@ describe('ExamUpdateComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.isValidConfiguration).toBeTrue();
-            button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.disabled()).toBeTrue();
+            button = fixture.debugElement.query(By.css('#save-exam')).nativeElement;
+            expect(button.disabled).toBeTrue();
         }));
 
         it('should open confirmation modal when dates changed for ongoing exam', fakeAsync(() => {
@@ -1141,11 +1137,9 @@ describe('ExamUpdateComponent', () => {
             expect(alertSpy).toHaveBeenCalledOnce();
         });
 
-        it('should bind correct title into jhi-button and compute correct save title text', () => {
+        it('should compute correct save title text for import', () => {
             fixture.detectChanges();
             expect(component.saveTitle).toBe('entity.action.import');
-            const button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.title()).toBe('entity.action.import');
         });
     });
 });

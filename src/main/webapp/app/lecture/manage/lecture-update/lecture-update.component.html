@@ -49,14 +49,14 @@
                         </div>
                     </div>
                     <jhi-lecture-update-period [lecture]="lecture()" [validateDatesFunction]="onDatesValuesChanged" />
-                    <div class="flex-grow-1 d-flex justify-content-end">
-                        <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
+                    <div class="flex-grow-1 d-flex justify-content-end gap-2">
+                        <button pButton type="button" id="cancel-save" severity="secondary" (click)="previousState()">
                             <fa-icon [icon]="faBan" class="me-1" /><span jhiTranslate="entity.action.cancel"></span>
                         </button>
                         <button
+                            pButton
                             type="submit"
                             id="save-entity"
-                            class="btn btn-primary ms-2"
                             [disabled]="editForm.form.invalid || isSaving || processUnitMode || !isChangeMadeToTitleOrPeriodSection || !areSectionsValid()"
                         >
                             <fa-icon [icon]="faSave" class="me-1" /><span jhiTranslate="entity.action.save"></span>

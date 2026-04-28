@@ -7,13 +7,14 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonDirective } from 'primeng/button';
 
 @Component({
     selector: 'jhi-create-test-run-modal',
     templateUrl: './create-test-run-modal.component.html',
     providers: [ArtemisDurationFromSecondsPipe],
     styles: ['.table tr.active td { background-color:#3e8acc; color: white; }'],
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, ButtonDirective],
 })
 export class CreateTestRunModalComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);

@@ -16,11 +16,12 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ButtonDirective } from 'primeng/button';
 
 @Component({
     selector: 'jhi-external-submission-dialog',
     templateUrl: './external-submission-dialog.component.html',
-    imports: [FormsModule, TranslateDirective, NgClass, FaIconComponent, HtmlForMarkdownPipe],
+    imports: [FormsModule, TranslateDirective, NgClass, FaIconComponent, HtmlForMarkdownPipe, ButtonDirective],
 })
 export class ExternalSubmissionDialogComponent implements OnInit {
     private externalSubmissionService = inject(ExternalSubmissionService);

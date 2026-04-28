@@ -60,13 +60,12 @@
                 </tbody>
             </table>
         </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="cancel()" jhiTranslate="global.form.cancel"></button>
+        <div class="modal-footer d-flex gap-2">
+            <button pButton type="button" severity="secondary" (click)="cancel()" jhiTranslate="global.form.cancel"></button>
             <button
+                pButton
                 id="createTestRunButton"
                 type="button"
-                class="btn btn-primary"
-                data-dismiss="modal"
                 [disabled]="!testRunConfigured"
                 (click)="createTestRun()"
                 jhiTranslate="artemisApp.examManagement.testRun.setup"

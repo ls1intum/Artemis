@@ -12,11 +12,12 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ButtonDirective } from 'primeng/button';
 
 @Component({
     selector: 'jhi-exercise-group-update',
     templateUrl: './exercise-group-update.component.html',
-    imports: [TranslateDirective, FormsModule, NgbAlert, FaIconComponent],
+    imports: [TranslateDirective, FormsModule, NgbAlert, FaIconComponent, ButtonDirective],
 })
 export class ExerciseGroupUpdateComponent implements OnInit {
     private route = inject(ActivatedRoute);

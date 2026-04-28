@@ -43,6 +43,7 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { ButtonDirective } from 'primeng/button';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/shared/service/file.service';
 import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
@@ -75,6 +76,7 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
         RouterLink,
+        ButtonDirective,
     ],
 })
 export class CourseUpdateComponent implements OnInit {

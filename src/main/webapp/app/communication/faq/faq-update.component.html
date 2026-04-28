@@ -47,12 +47,12 @@
                         </div>
                     </div>
                 }
-                <div class="d-flex">
-                    <div class="flex-grow-1">
-                        <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
+                <div class="d-flex gap-2">
+                    <div class="flex-grow-1 d-flex gap-2">
+                        <button pButton type="button" id="cancel-save" severity="secondary" (click)="previousState()">
                             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                         </button>
-                        <button type="submit" id="save-entity" [disabled]="!isAllowedToSave || isSaving" class="btn btn-primary">
+                        <button pButton type="submit" id="save-entity" [disabled]="!isAllowedToSave || isSaving">
                             <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                         </button>
                     </div>

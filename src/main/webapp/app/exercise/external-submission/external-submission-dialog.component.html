@@ -105,12 +105,8 @@
             <label for="resultRated" class="form-check-label" jhiTranslate="artemisApp.result.rated"></label>
         </div>
     </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
-            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-        </button>
-        <button type="submit" [disabled]="editForm.invalid || isSaving" class="btn btn-primary">
-            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
-        </button>
+    <div class="modal-footer d-flex gap-2">
+        <button pButton type="button" severity="secondary" (click)="clear()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
+        <button pButton type="submit" [disabled]="editForm.invalid || isSaving"><fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span></button>
     </div>
 </form>

@@ -98,19 +98,17 @@
         &nbsp;
         <div class="form-group">
             @if (!successful) {
-                <button [disabled]="busy" type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
+                <button pButton [disabled]="busy" type="button" severity="secondary" (click)="clear()">
                     <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
             }
             @if (!successful && !failed) {
-                <button [disabled]="busy" type="submit" (click)="confirmChange()" class="btn btn-primary">
+                <button pButton [disabled]="busy" type="submit" (click)="confirmChange()">
                     <fa-icon [icon]="faCheckCircle" />&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.confirm"></span>
                 </button>
             }
             @if (successful && !failed) {
-                <button type="submit" (click)="closeAndNavigate()" class="btn btn-primary">
-                    <fa-icon [icon]="faCheckCircle" />&nbsp;<span jhiTranslate="entity.action.close"></span>
-                </button>
+                <button pButton type="submit" (click)="closeAndNavigate()"><fa-icon [icon]="faCheckCircle" />&nbsp;<span jhiTranslate="entity.action.close"></span></button>
             }
         </div>
     </div>

@@ -29,7 +29,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonDirective } from 'primeng/button';
 import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 
 @Component({
@@ -49,7 +49,7 @@ import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confi
         ExamExerciseImportComponent,
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
-        ButtonComponent,
+        ButtonDirective,
         ConfirmEntityNameComponent,
     ],
 })
@@ -67,8 +67,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly faBan = faBan;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly documentationType: DocumentationType = 'Exams';
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
 
     exam: Exam;
     course: Course;

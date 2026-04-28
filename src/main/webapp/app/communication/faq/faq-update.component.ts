@@ -23,13 +23,14 @@ import { FormsModule } from '@angular/forms';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaqConsistencyComponent } from 'app/communication/faq/faq-consistency.component';
+import { ButtonDirective } from 'primeng/button';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
 @Component({
     selector: 'jhi-faq-update',
     templateUrl: './faq-update.component.html',
     styleUrls: ['./faq-update.component.scss'],
-    imports: [CategorySelectorComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule, FaqConsistencyComponent],
+    imports: [CategorySelectorComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule, FaqConsistencyComponent, ButtonDirective],
 })
 export class FaqUpdateComponent implements OnInit {
     private alertService = inject(AlertService);

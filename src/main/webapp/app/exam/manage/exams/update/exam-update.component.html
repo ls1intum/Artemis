@@ -313,19 +313,16 @@
                 <label for="startText" jhiTranslate="artemisApp.examManagement.confirmationEndText"></label>
                 <jhi-markdown-editor-monaco id="confirmationEndText" class="markdown-editor" [(markdown)]="exam.confirmationEndText" />
             </div>
-            <div>
-                <button type="button" class="btn btn-secondary" (click)="resetToPreviousState()">
+            <div class="d-flex gap-2">
+                <button pButton type="button" severity="secondary" (click)="resetToPreviousState()">
                     <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
-                <jhi-button
-                    id="save-exam"
-                    [btnType]="ButtonType.PRIMARY"
-                    [btnSize]="ButtonSize.MEDIUM"
-                    [disabled]="editForm.form.invalid || !isValidConfiguration"
-                    [isLoading]="isSaving"
-                    [icon]="faSave"
-                    [title]="saveTitle"
-                />
+                <button pButton type="submit" id="save-exam" [disabled]="editForm.form.invalid || !isValidConfiguration" [loading]="isSaving">
+                    @if (!isSaving) {
+                        <fa-icon [icon]="faSave" />
+                    }
+                    &nbsp;<span [jhiTranslate]="saveTitle"></span>
+                </button>
 
                 <ng-template #renderedWarning>
                     <div jhiTranslate="artemisApp.examManagement.reviewDatesInvalidExplanation"></div>

@@ -11,12 +11,13 @@ import { faBan, faCheck, faCheckCircle, faSpinner, faTimes } from '@fortawesome/
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ButtonDirective } from 'primeng/button';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',
     templateUrl: './quiz-re-evaluate-warning.component.html',
     styleUrls: ['../../../shared/quiz.scss'],
-    imports: [TranslateDirective, FaIconComponent],
+    imports: [TranslateDirective, FaIconComponent, ButtonDirective],
 })
 export class QuizReEvaluateWarningComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);

@@ -25,6 +25,7 @@ import { DocumentationButtonComponent, DocumentationType } from 'app/shared/comp
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TooltipModule } from 'primeng/tooltip';
+import { ButtonDirective } from 'primeng/button';
 import { TranslateService } from '@ngx-translate/core';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
@@ -65,6 +66,7 @@ interface CreateLectureOption {
         CheckboxModule,
         TooltipModule,
         CourseTitleBarTitleDirective,
+        ButtonDirective,
     ],
 })
 export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsavedChangesComponent {
