@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.repository.conversation;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,9 +25,13 @@ public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneCha
      * <p>
      * We join the conversionParticipants twice, because the first time we use it for filtering the chats and binding it to the user ID. The second time, we fetch all participants;
      * as it's a one-to-one chat, two.
+     * <p>
+     * Empty one-to-one chats (no messages) are hidden unless they were created within the last day,
+     * so newly created conversations remain accessible until they either receive a message or expire.
      *
-     * @param courseId the ID of the course to search in
-     * @param userId   the ID of the user to search for
+     * @param courseId        the ID of the course to search in
+     * @param userId          the ID of the user to search for
+     * @param recentThreshold the cutoff date; empty chats created before this are hidden
      * @return a list of one-to-one chats
      */
     @Query("""
@@ -38,11 +43,12 @@ public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneCha
                 LEFT JOIN FETCH user.groups
                 LEFT JOIN FETCH oneToOneChat.course
             WHERE oneToOneChat.course.id = :courseId
-                AND oneToOneChat.lastMessageDate IS NOT NULL
+                AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creationDate >= :recentThreshold)
                 AND matchingParticipant.user.id = :userId
             ORDER BY oneToOneChat.lastMessageDate DESC
             """)
-    List<OneToOneChat> findAllWithParticipantsAndUserGroupsByCourseIdAndUserId(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    List<OneToOneChat> findAllWithParticipantsAndUserGroupsByCourseIdAndUserId(@Param("courseId") Long courseId, @Param("userId") Long userId,
+            @Param("recentThreshold") ZonedDateTime recentThreshold);
 
     /**
      * Find a one-to-one chat between two users in a given course.
