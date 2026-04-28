@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
@@ -511,7 +512,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(returnedPosts).allMatch(post -> post.getConversation() instanceof Channel);
 
         // The filtered result should have fewer posts than the unfiltered result (since DM posts exist)
-        var dmPosts = allPosts.stream().filter(post -> post.getConversation() instanceof OneToOneChat).toList();
+        var dmPosts = allPosts.stream().filter(post -> post.getConversation() instanceof OneToOneChat || post.getConversation() instanceof GroupChat).toList();
         assertThat(dmPosts).isNotEmpty();
         assertThat(returnedPosts).hasSize(allPosts.size() - dmPosts.size());
     }
