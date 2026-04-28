@@ -43,12 +43,11 @@ public class V0ToV1Migration implements WeaviateMigration {
      */
     private static final String[] DIRECT_MAPPINGS = { SearchableEntitySchema.Properties.COURSE_ID, SearchableEntitySchema.Properties.TITLE,
             SearchableEntitySchema.Properties.SHORT_NAME, SearchableEntitySchema.Properties.RELEASE_DATE, SearchableEntitySchema.Properties.START_DATE,
-            SearchableEntitySchema.Properties.DUE_DATE, SearchableEntitySchema.Properties.EXERCISE_TYPE, SearchableEntitySchema.Properties.DIFFICULTY,
-            SearchableEntitySchema.Properties.MAX_POINTS, SearchableEntitySchema.Properties.IS_EXAM_EXERCISE, SearchableEntitySchema.Properties.EXAM_ID,
-            SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE, SearchableEntitySchema.Properties.EXAM_START_DATE, SearchableEntitySchema.Properties.EXAM_END_DATE,
-            SearchableEntitySchema.Properties.TEST_EXAM, SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE, SearchableEntitySchema.Properties.PROJECT_TYPE,
-            SearchableEntitySchema.Properties.DIAGRAM_TYPE, SearchableEntitySchema.Properties.QUIZ_MODE, SearchableEntitySchema.Properties.QUIZ_DURATION,
-            SearchableEntitySchema.Properties.FILE_PATTERN, };
+            SearchableEntitySchema.Properties.DUE_DATE, SearchableEntitySchema.Properties.DIFFICULTY, SearchableEntitySchema.Properties.MAX_POINTS,
+            SearchableEntitySchema.Properties.IS_EXAM_EXERCISE, SearchableEntitySchema.Properties.EXAM_ID, SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE,
+            SearchableEntitySchema.Properties.EXAM_START_DATE, SearchableEntitySchema.Properties.EXAM_END_DATE, SearchableEntitySchema.Properties.TEST_EXAM,
+            SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE, SearchableEntitySchema.Properties.PROJECT_TYPE, SearchableEntitySchema.Properties.DIAGRAM_TYPE,
+            SearchableEntitySchema.Properties.QUIZ_MODE, SearchableEntitySchema.Properties.QUIZ_DURATION, SearchableEntitySchema.Properties.FILE_PATTERN, };
 
     @Override
     public int targetVersion() {
@@ -187,9 +186,14 @@ public class V0ToV1Migration implements WeaviateMigration {
         // (e.g. "FILE_UPLOAD", "PROGRAMMING"). In v1, "type" is the entity discriminator ("exercise"),
         // and the exercise type is moved to "exercise_type" using ExerciseType.getValue() format
         // (e.g. "file-upload", "programming"). Normalize the value to the v1 format.
-        Object typeValue = oldProps.get("type");
-        if (typeValue != null && !SearchableEntitySchema.TypeValues.EXERCISE.equals(typeValue)) {
-            String normalized = typeValue.toString().toLowerCase().replace('_', '-');
+        // Note: Some legacy objects might already have "exercise_type" set in the old format.
+        Object rawExerciseType = oldProps.get(SearchableEntitySchema.Properties.EXERCISE_TYPE);
+        if (rawExerciseType == null) {
+            rawExerciseType = oldProps.get("type");
+        }
+
+        if (rawExerciseType != null && !SearchableEntitySchema.TypeValues.EXERCISE.equals(rawExerciseType)) {
+            String normalized = rawExerciseType.toString().toLowerCase().replace('_', '-');
             newProps.put(SearchableEntitySchema.Properties.EXERCISE_TYPE, normalized);
         }
 
