@@ -507,8 +507,7 @@ export class ExerciseHeaderActionsComponent {
 
     submitAndShowPopover() {
         this.onSubmitExercise()?.();
-        const participation = this._practiceParticipation() ?? this._gradedParticipation();
-        if (countSuccessfulAthenaFeedbackRequests(participation) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
+        if (countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
             return;
         }
         this.submitPopoverRef()?.open();
