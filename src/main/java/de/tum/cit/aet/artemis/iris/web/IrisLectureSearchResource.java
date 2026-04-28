@@ -63,16 +63,11 @@ public class IrisLectureSearchResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> ask(@RequestBody @Valid PyrisSearchAskRequestDTO requestDTO, Principal principal) {
         var jobToken = pyrisJobService.addGlobalSearchAnswerJob(principal.getName());
-        try {
-            pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), jobToken);
-        }
-        catch (RuntimeException e) {
-            var job = pyrisJobService.getJob(jobToken);
-            if (job != null) {
-                pyrisJobService.removeJob(job);
-            }
-            throw e;
-        }
+        // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
+        // Pyris may have received the request and already started the pipeline. Removing the token
+        // would break WebSocket routing for any callbacks that arrive later.
+        // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
+        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), jobToken);
         return ResponseEntity.accepted().build();
     }
 }
