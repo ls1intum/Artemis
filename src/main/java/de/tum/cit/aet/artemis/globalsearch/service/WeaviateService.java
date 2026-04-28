@@ -98,7 +98,13 @@ public class WeaviateService {
             ensureCollectionExists(schema);
         }
 
-        migrationService.runPendingMigrations();
+        try {
+            migrationService.runPendingMigrations();
+        }
+        catch (Exception e) {
+            log.error("Weaviate migration failed during startup, but the server will continue. Search may return incomplete results until entities are re-indexed: {}",
+                    e.getMessage());
+        }
 
         log.info("Weaviate collection initialization complete");
     }
