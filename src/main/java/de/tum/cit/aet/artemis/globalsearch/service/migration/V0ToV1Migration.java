@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateUuidUtil;
+import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
 
@@ -121,7 +122,7 @@ public class V0ToV1Migration implements WeaviateMigration {
                             newCollection.data.insert(newProps, insertOptions -> insertOptions.uuid(uuid));
                         }
                     }
-                    catch (io.weaviate.client6.v1.api.WeaviateApiException e) {
+                    catch (WeaviateApiException e) {
                         if (e.getMessage() != null && e.getMessage().contains("already exists")) {
                             newCollection.data.replace(uuid, replaceOptions -> replaceOptions.properties(newProps));
                         }
