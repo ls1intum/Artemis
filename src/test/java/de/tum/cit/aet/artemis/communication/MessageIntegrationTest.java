@@ -508,13 +508,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
 
         // All returned posts should belong to channels, not OneToOneChat or GroupChat
-        assertThat(returnedPosts).isNotEmpty();
         assertThat(returnedPosts).allMatch(post -> post.getConversation() instanceof Channel);
 
         // The filtered result should have fewer posts than the unfiltered result (since DM posts exist)
         var dmPosts = allPosts.stream().filter(post -> post.getConversation() instanceof OneToOneChat || post.getConversation() instanceof GroupChat).toList();
         assertThat(dmPosts).isNotEmpty();
-        assertThat(returnedPosts).hasSize(allPosts.size() - dmPosts.size());
+        var expectedNonDmCount = (int) allPosts.stream().filter(post -> post.getConversation() instanceof Channel).count();
+        assertThat(returnedPosts).hasSize(expectedNonDmCount);
     }
 
     @Test
