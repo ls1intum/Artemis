@@ -9,8 +9,8 @@ export class ProgrammingExerciseParticipationsPage {
         this.page = page;
     }
 
-    getParticipation(participationId: number) {
-        return this.getParticipationByText(participationId.toString());
+    getParticipation(buildPlanId: string) {
+        return this.page.getByRole('table').getByRole('row').filter({ hasText: buildPlanId });
     }
 
     getStudentParticipation(user: UserCredentials) {
@@ -20,13 +20,6 @@ export class ProgrammingExerciseParticipationsPage {
             .getByRole('table')
             .getByRole('row')
             .filter({ hasText: new RegExp(usernamePattern, 'i') });
-    }
-
-    private getParticipationByText(text: string) {
-        return this.page
-            .getByRole('table')
-            .getByRole('row')
-            .filter({ hasText: `${text}` });
     }
 
     public async openStudentParticipationSubmissions(user: UserCredentials) {
@@ -48,14 +41,14 @@ export class ProgrammingExerciseParticipationsPage {
         }
     }
 
-    private async getParticipationCell(participationId: number, columnName: string) {
-        let participationRow: Locator = this.getParticipation(participationId);
+    private async getParticipationCell(buildPlanId: string, columnName: string) {
+        let participationRow: Locator = this.getParticipation(buildPlanId);
         return await this.getParticipationCellByLocator(participationRow, columnName);
     }
 
-    async openRepositoryOnNewPage(participationId: number): Promise<RepositoryPage> {
-        console.log(`[openRepositoryOnNewPage] Opening repository for participation ${participationId}`);
-        const participation = this.getParticipation(participationId);
+    async openRepositoryOnNewPage(buildPlanId: string): Promise<RepositoryPage> {
+        console.log(`[openRepositoryOnNewPage] Opening repository for participation with build plan ${buildPlanId}`);
+        const participation = this.getParticipation(buildPlanId);
         await participation.locator('.code-button').click();
         console.log('[openRepositoryOnNewPage] Clicked code button, waiting for popover...');
 
@@ -85,19 +78,19 @@ export class ProgrammingExerciseParticipationsPage {
     }
 
     async checkParticipationBuildPlan(participation: any) {
-        const buildPlanIdCell = await this.getParticipationCell(participation.id, 'Build Plan Id');
+        const buildPlanIdCell = await this.getParticipationCell(participation.buildPlanId, 'Build Plan Id');
         expect(buildPlanIdCell).not.toBeUndefined();
         await expect(buildPlanIdCell!.filter({ hasText: participation.buildPlanId })).toBeVisible();
     }
 
-    async checkParticipationTeam(participationId: number, teamName: string) {
-        const teamCell = await this.getParticipationCell(participationId, 'Team');
+    async checkParticipationTeam(buildPlanId: string, teamName: string) {
+        const teamCell = await this.getParticipationCell(buildPlanId, 'Team');
         expect(teamCell).not.toBeUndefined();
         await expect(teamCell!.filter({ hasText: teamName })).toBeVisible();
     }
 
-    async checkParticipationStudents(participationId: number, studentUsernames: string[]) {
-        const studentsCell = await this.getParticipationCell(participationId, 'Students');
+    async checkParticipationStudents(buildPlanId: string, studentUsernames: string[]) {
+        const studentsCell = await this.getParticipationCell(buildPlanId, 'Students');
         expect(studentsCell).not.toBeUndefined();
         for (const studentName of studentUsernames) {
             await expect(studentsCell!.filter({ hasText: studentName })).toBeVisible();

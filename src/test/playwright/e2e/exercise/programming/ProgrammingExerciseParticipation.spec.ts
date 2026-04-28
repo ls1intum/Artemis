@@ -227,12 +227,12 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
                 await navigationBar.openCourseManagement();
                 await courseManagement.openExercisesOfCourse(course.id!);
                 await courseManagementExercises.openExerciseParticipations(exercise.id!);
-                await programmingExerciseParticipations.getParticipation(participation.id!).waitFor({ state: 'visible' });
-                await programmingExerciseParticipations.checkParticipationTeam(participation.id!, team.name!);
+                await programmingExerciseParticipations.getParticipation(participation.buildPlanId!).waitFor({ state: 'visible' });
+                await programmingExerciseParticipations.checkParticipationTeam(participation.buildPlanId!, team.name!);
                 await programmingExerciseParticipations.checkParticipationBuildPlan(participation);
                 const studentUsernames = submissions.map(({ student }) => student.username!);
-                await programmingExerciseParticipations.checkParticipationStudents(participation.id!, studentUsernames);
-                const programmingExerciseRepository = await programmingExerciseParticipations.openRepositoryOnNewPage(participation.id!);
+                await programmingExerciseParticipations.checkParticipationStudents(participation.buildPlanId!, studentUsernames);
+                const programmingExerciseRepository = await programmingExerciseParticipations.openRepositoryOnNewPage(participation.buildPlanId!);
                 await programmingExerciseRepository.openCommitHistory();
                 const commitMessage = 'Changes by Online Editor';
                 const commits: ExerciseCommit[] = submissions.map(({ submission }) => ({ message: commitMessage, result: submission.expectedResult }));
