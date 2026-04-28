@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import de.tum.cit.aet.artemis.globalsearch.service.migration.V0ToV1Migration;
 import de.tum.cit.aet.artemis.globalsearch.service.migration.WeaviateMigration;
+import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.VectorConfig;
@@ -166,12 +167,22 @@ public class WeaviateMigrationService {
         if (client.collections.exists(name)) {
             return;
         }
-        client.collections.create(name, c -> {
-            c.vectorConfig(VectorConfig.selfProvided());
-            c.properties(Property.integer(SCHEMA_VERSION_PROPERTY));
-            return c;
-        });
-        log.info("Created schema version tracking collection '{}'", name);
+        try {
+            client.collections.create(name, c -> {
+                c.vectorConfig(VectorConfig.selfProvided());
+                c.properties(Property.integer(SCHEMA_VERSION_PROPERTY));
+                return c;
+            });
+            log.info("Created schema version tracking collection '{}'", name);
+        }
+        catch (WeaviateApiException e) {
+            if (e.getMessage() != null && e.getMessage().contains("already exists")) {
+                log.debug("Collection '{}' was created concurrently, ignoring", name);
+            }
+            else {
+                throw e;
+            }
+        }
     }
 
     /**

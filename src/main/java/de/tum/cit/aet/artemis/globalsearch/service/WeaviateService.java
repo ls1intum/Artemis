@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
-import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -52,8 +49,6 @@ public class WeaviateService {
 
     private final WeaviateConfigurationProperties properties;
 
-    private final boolean isTestProfile;
-
     private final boolean isOpenApiDocsGeneration;
 
     private final WeaviateMigrationService migrationService;
@@ -71,7 +66,6 @@ public class WeaviateService {
     public WeaviateService(WeaviateClient client, WeaviateConfigurationProperties properties, Environment environment, WeaviateMigrationService migrationService) {
         this.client = client;
         this.properties = properties;
-        this.isTestProfile = environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST));
         this.isOpenApiDocsGeneration = Boolean.parseBoolean(environment.getProperty("artemis.openapi-docs-generation", "false"));
         this.migrationService = migrationService;
     }
@@ -181,10 +175,10 @@ public class WeaviateService {
             throw new WeaviateException("Failed to create Weaviate collection '" + collectionName + "': " + e.getMessage(), e);
         }
         catch (WeaviateApiException e) {
-            // In test environments, multiple Spring contexts may share one Weaviate instance,
-            // causing a race condition between the exists() check and create() call.
-            if (isTestProfile && e.getMessage() != null && e.getMessage().contains("already exists")) {
-                log.debug("Collection '{}' was created concurrently (test environment), ignoring", collectionName);
+            // Multiple Spring contexts (or concurrent startups) may race between the
+            // exists() check and the create() call, causing an "already exists" error.
+            if (e.getMessage() != null && e.getMessage().contains("already exists")) {
+                log.debug("Collection '{}' was created concurrently, ignoring", collectionName);
             }
             else {
                 log.error("Failed to create collection '{}': {}", collectionName, e.getMessage(), e);
