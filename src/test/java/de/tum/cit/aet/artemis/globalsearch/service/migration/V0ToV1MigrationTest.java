@@ -149,6 +149,23 @@ class V0ToV1MigrationTest {
     }
 
     @Test
+    void transformProperties_handlesModelingExercise() {
+        Map<String, Object> oldProps = new HashMap<>();
+        oldProps.put("exercise_id", 101L);
+        oldProps.put("course_id", 5L);
+        oldProps.put("title", "UML Diagram");
+        oldProps.put("type", "modeling");
+        oldProps.put("diagram_type", "CLASS_DIAGRAM");
+
+        Map<String, Object> newProps = V0ToV1Migration.transformProperties(oldProps);
+
+        assertThat(newProps.get(SearchableEntitySchema.Properties.TYPE)).isEqualTo(SearchableEntitySchema.TypeValues.EXERCISE);
+        assertThat(newProps.get(SearchableEntitySchema.Properties.EXERCISE_TYPE)).isEqualTo("modeling");
+        assertThat(newProps.get(SearchableEntitySchema.Properties.DIAGRAM_TYPE)).isEqualTo("CLASS_DIAGRAM");
+        assertThat(newProps.get(SearchableEntitySchema.Properties.ENTITY_ID)).isEqualTo(101L);
+    }
+
+    @Test
     void targetVersion_isOne() {
         var migration = new V0ToV1Migration();
         assertThat(migration.targetVersion()).isEqualTo(1);
