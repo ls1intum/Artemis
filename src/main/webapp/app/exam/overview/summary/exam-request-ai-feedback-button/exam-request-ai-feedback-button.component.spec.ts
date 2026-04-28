@@ -141,7 +141,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
             setStudentExam({ ...studentExamForTestExam, submitted: true });
             component.ngOnInit();
-            component.isRequestingFeedback = true;
+            component.isRequestingFeedback.set(true);
             fixture.detectChanges();
 
             const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
@@ -162,8 +162,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             button.nativeElement.click();
 
             expect(requestSpy).toHaveBeenCalledOnce();
-            expect(component.feedbackRequested).toBe(true);
-            expect(component.isRequestingFeedback).toBe(false);
+            expect(component.feedbackRequested()).toBe(true);
+            expect(component.isRequestingFeedback()).toBe(false);
             expect(localStorage.getItem(feedbackRequestedKey)).toBe('true');
         });
 
@@ -178,7 +178,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             fixture.detectChanges();
 
             const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
-            expect(component.feedbackRequested).toBe(true);
+            expect(component.feedbackRequested()).toBe(true);
             expect(button.nativeElement.disabled).toBe(true);
         });
 
@@ -211,8 +211,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
             button.nativeElement.click();
 
-            expect(component.feedbackRequested).toBe(false);
-            expect(component.isRequestingFeedback).toBe(false);
+            expect(component.feedbackRequested()).toBe(false);
+            expect(component.isRequestingFeedback()).toBe(false);
         });
     });
 
@@ -228,8 +228,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
             expect(usageSpy).toHaveBeenCalledOnce();
             expect(usageSpy).toHaveBeenCalledWith(1, studentExamForTestExam.exam!.id, studentExamForTestExam.id);
-            expect(component.athenaFeedbackUsed).toBe(3);
-            expect(component.athenaFeedbackLimit).toBe(10);
+            expect(component.athenaFeedbackUsed()).toBe(3);
+            expect(component.athenaFeedbackLimit()).toBe(10);
         });
 
         it('should skip fetching usage for a real (non-test) exam', () => {
@@ -281,13 +281,13 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
             // handleAthenaResult should now be a no-op for this attempt.
             (component as any).handleAthenaResult({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
-            expect(component.athenaFeedbackUsed).toBe(3);
+            expect(component.athenaFeedbackUsed()).toBe(3);
         });
     });
 
     describe('handleAthenaResult', () => {
         function primeCounter(initial: number): void {
-            component.athenaFeedbackUsed = initial;
+            component.athenaFeedbackUsed.set(initial);
             (component as any).currentAttemptCounted = false;
         }
 
@@ -296,17 +296,17 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
             (component as any).handleAthenaResult({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
 
-            expect(component.athenaFeedbackUsed).toBe(2);
+            expect(component.athenaFeedbackUsed()).toBe(2);
             expect((component as any).currentAttemptCounted).toBe(true);
         });
 
         it('should not increment when the same attempt has already been counted', () => {
-            component.athenaFeedbackUsed = 1;
+            component.athenaFeedbackUsed.set(1);
             (component as any).currentAttemptCounted = true;
 
             (component as any).handleAthenaResult({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
 
-            expect(component.athenaFeedbackUsed).toBe(1);
+            expect(component.athenaFeedbackUsed()).toBe(1);
         });
 
         it('should not increment for an unsuccessful result', () => {
@@ -314,7 +314,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
             (component as any).handleAthenaResult({ successful: false, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
 
-            expect(component.athenaFeedbackUsed).toBe(1);
+            expect(component.athenaFeedbackUsed()).toBe(1);
             expect((component as any).currentAttemptCounted).toBe(false);
         });
 
@@ -323,7 +323,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
             (component as any).handleAthenaResult({ successful: true, completionDate: undefined, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
 
-            expect(component.athenaFeedbackUsed).toBe(1);
+            expect(component.athenaFeedbackUsed()).toBe(1);
         });
     });
 
@@ -379,11 +379,11 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             // The stream skips its initial value (per component's `skip(1)`), so only the push below should count.
             resultSubject.next({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
 
-            expect(component.athenaFeedbackUsed).toBe(1);
+            expect(component.athenaFeedbackUsed()).toBe(1);
 
             // A second Athena result for the same attempt must not double-count.
             resultSubject.next({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
-            expect(component.athenaFeedbackUsed).toBe(1);
+            expect(component.athenaFeedbackUsed()).toBe(1);
         });
 
         it('should unsubscribe websocket subscriptions on destroy', () => {

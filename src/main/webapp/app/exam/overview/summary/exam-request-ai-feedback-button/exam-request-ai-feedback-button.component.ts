@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, computed, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Subscription, filter, skip } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faRobot, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -44,17 +44,17 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
     protected readonly faRobot = faRobot;
     protected readonly faSpinner = faSpinner;
 
-    athenaEnabled = false;
-    isRequestingFeedback = false;
-    feedbackRequested = false;
-    hasUserAcceptedLLMUsage = false;
+    readonly athenaEnabled = signal(false);
+    readonly isRequestingFeedback = signal(false);
+    readonly feedbackRequested = signal(false);
+    readonly hasUserAcceptedLLMUsage = signal(false);
 
-    athenaFeedbackUsed = 0;
-    athenaFeedbackLimit = 0;
+    readonly athenaFeedbackUsed = signal(0);
+    readonly athenaFeedbackLimit = signal(0);
 
     readonly isVisible = computed(() => {
         const exam = this.studentExam();
-        return !!exam?.exam?.testExam && this.athenaEnabled && !!exam.submitted && !this.testExamConduction();
+        return !!exam?.exam?.testExam && this.athenaEnabled() && !!exam.submitted && !this.testExamConduction();
     });
 
     get hasAnyAthenaResultForCurrentAttempt(): boolean {
@@ -73,8 +73,8 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
     private currentAttemptCounted = false;
 
     ngOnInit(): void {
-        this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
-        this.feedbackRequested = this.localStorageService.retrieve<boolean>(this.getFeedbackRequestedStorageKey()) ?? false;
+        this.athenaEnabled.set(this.profileService.isProfileActive(PROFILE_ATHENA));
+        this.feedbackRequested.set(this.localStorageService.retrieve<boolean>(this.getFeedbackRequestedStorageKey()) ?? false);
         this.setUserAcceptedLLMUsage();
         this.loadAthenaFeedbackUsage();
     }
@@ -87,11 +87,11 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
 
     private setUserAcceptedLLMUsage(): void {
         const selection = this.accountService.userIdentity()?.selectedLLMUsage;
-        this.hasUserAcceptedLLMUsage = selection === LLMSelectionDecision.CLOUD_AI;
+        this.hasUserAcceptedLLMUsage.set(selection === LLMSelectionDecision.CLOUD_AI);
     }
 
     async requestAIFeedback(): Promise<void> {
-        if (!this.hasUserAcceptedLLMUsage) {
+        if (!this.hasUserAcceptedLLMUsage()) {
             await this.showLLMSelectionModal();
             return;
         }
@@ -102,7 +102,7 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
         const choice = await this.llmModalService.open(this.accountService.userIdentity()?.selectedLLMUsage);
         if (choice === LLMSelectionDecision.CLOUD_AI) {
             this.llmSelectionSubscription = this.userService.updateLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI).subscribe(() => {
-                this.hasUserAcceptedLLMUsage = true;
+                this.hasUserAcceptedLLMUsage.set(true);
                 this.accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
                 this.triggerFeedbackRequest();
             });
@@ -118,16 +118,16 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
         if (!ids) {
             return;
         }
-        this.isRequestingFeedback = true;
+        this.isRequestingFeedback.set(true);
         this.feedbackSubscription = this.examParticipationService.requestAthenaFeedback(ids.courseId, ids.examId, ids.studentExamId).subscribe({
             next: () => {
-                this.feedbackRequested = true;
-                this.isRequestingFeedback = false;
+                this.feedbackRequested.set(true);
+                this.isRequestingFeedback.set(false);
                 this.localStorageService.store(this.getFeedbackRequestedStorageKey(), true);
                 this.alertService.success('artemisApp.exam.examSummary.feedbackRequestSent');
             },
             error: (error: HttpErrorResponse) => {
-                this.isRequestingFeedback = false;
+                this.isRequestingFeedback.set(false);
                 this.alertService.error(`artemisApp.exercise.${error.error?.errorKey}`);
             },
         });
@@ -143,8 +143,8 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
         }
         this.examParticipationService.getAthenaFeedbackUsage(ids.courseId, ids.examId, ids.studentExamId).subscribe({
             next: (usage) => {
-                this.athenaFeedbackUsed = usage.used;
-                this.athenaFeedbackLimit = usage.limit;
+                this.athenaFeedbackUsed.set(usage.used);
+                this.athenaFeedbackLimit.set(usage.limit);
                 // If the server already counts this attempt as consumed, don't bump again on incoming websocket results.
                 this.currentAttemptCounted = this.hasAnyAthenaResultForCurrentAttempt;
                 this.subscribeToAthenaResultsForCurrentAttempt();
@@ -189,7 +189,7 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
         if (!result.completionDate || !result.successful || this.currentAttemptCounted) {
             return;
         }
-        this.athenaFeedbackUsed += 1;
+        this.athenaFeedbackUsed.update((used) => used + 1);
         this.currentAttemptCounted = true;
     }
 

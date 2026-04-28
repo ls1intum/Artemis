@@ -3,20 +3,22 @@
         id="requestAIFeedbackButton"
         class="btn btn-secondary float-end me-2"
         (click)="requestAIFeedback()"
-        [disabled]="isRequestingFeedback || feedbackRequested || hasAnyAthenaResultForCurrentAttempt || (athenaFeedbackLimit > 0 && athenaFeedbackUsed >= athenaFeedbackLimit)"
+        [disabled]="
+            isRequestingFeedback() || feedbackRequested() || hasAnyAthenaResultForCurrentAttempt || (athenaFeedbackLimit() > 0 && athenaFeedbackUsed() >= athenaFeedbackLimit())
+        "
     >
-        @if (isRequestingFeedback) {
+        @if (isRequestingFeedback()) {
             <fa-icon [icon]="faSpinner" animation="spin" />
         } @else {
             <fa-icon [icon]="faRobot" />
         }
-        @if (feedbackRequested) {
+        @if (feedbackRequested()) {
             <span jhiTranslate="artemisApp.exam.examSummary.feedbackRequested"></span>
         } @else {
             <span jhiTranslate="artemisApp.exam.examSummary.requestAIFeedback"></span>
         }
-        @if (athenaFeedbackLimit > 0) {
-            <span class="ms-1">({{ athenaFeedbackUsed }} / {{ athenaFeedbackLimit }})</span>
+        @if (athenaFeedbackLimit() > 0) {
+            <span class="ms-1">({{ athenaFeedbackUsed() }} / {{ athenaFeedbackLimit() }})</span>
         }
     </button>
 }
