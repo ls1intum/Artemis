@@ -31,7 +31,7 @@ describe('GlobalSearchModalComponent', () => {
     let searchOverlayService: SearchOverlayService;
 
     // JSDOM does not implement scrollIntoView; mock it to prevent TypeError in the navigation-view effect
-    HTMLElement.prototype.scrollIntoView = vi.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
 
     // JSDOM's CSSStyleDeclaration proxy rejects CSS custom property assignments via index notation
     // (e.g. el.style['--p-dialog-border-radius'] = '…') — Angular's NoneEncapsulationDomRenderer uses
@@ -39,6 +39,7 @@ describe('GlobalSearchModalComponent', () => {
     // Wrapping the style getter redirects custom-property assignments through setProperty() instead.
     const originalStyleDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'style')!;
     beforeAll(() => {
+        HTMLElement.prototype.scrollIntoView = vi.fn();
         Object.defineProperty(HTMLElement.prototype, 'style', {
             get() {
                 const style = originalStyleDescriptor.get!.call(this) as CSSStyleDeclaration;
@@ -63,6 +64,7 @@ describe('GlobalSearchModalComponent', () => {
     });
 
     afterAll(() => {
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
         Object.defineProperty(HTMLElement.prototype, 'style', originalStyleDescriptor);
     });
 

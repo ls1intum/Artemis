@@ -83,7 +83,10 @@ export class GlobalSearchIrisAnswerComponent {
                 takeUntilDestroyed(),
             )
             .subscribe((update: IrisSearchStatusUpdate | undefined) => {
-                if (update === undefined) return;
+                if (update === undefined) {
+                    this.irisThinking.set(false);
+                    return;
+                }
                 if (update.isThinking) {
                     this.irisThinking.set(true);
                 } else {
