@@ -49,7 +49,8 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 /**
  * Integration test for the Athena feedback request in {@link StudentExamService#requestAthenaFeedbackForTestExam}:
- * happy path, real-exam rejection, cross-attempt rate limit, per-submission guard, and unsubmitted exam.
+ * happy path, real-exam rejection, cross-attempt rate limit, mixed-batch dispatch when one submission already has
+ * an Athena result, and unsubmitted exam.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class StudentExamAthenaFeedbackIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
@@ -232,35 +233,51 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    void requestAthenaFeedback_shouldRejectWhenSubmissionAlreadyHasAthenaResult() {
+    void requestAthenaFeedback_shouldStillDispatchPeersWhenOneSubmissionAlreadyHasAthenaResult() {
         Exam testExam = examUtilService.addTestExam(course);
         testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
         testExam.setStartDate(ZonedDateTime.now().minusHours(1));
         testExam.setEndDate(ZonedDateTime.now().plusHours(1));
         testExam = examRepository.save(testExam);
-        TextExercise textExercise = addTextExerciseToExam(testExam);
+        testExam = examUtilService.addTextModelingProgrammingExercisesToExam(testExam, false, false);
+
+        TextExercise textExercise = (TextExercise) testExam.getExerciseGroups().getFirst().getExercises().iterator().next();
+        ModelingExercise modelingExercise = (ModelingExercise) testExam.getExerciseGroups().get(1).getExercises().iterator().next();
 
         StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
         studentExam.addExercise(textExercise);
+        studentExam.addExercise(modelingExercise);
 
-        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
-        TextSubmission submission = new TextSubmission();
-        submission.setText("Answer for which Athena feedback was already generated.");
-        submission.setSubmitted(true);
-        submission.setSubmissionDate(ZonedDateTime.now());
-        submission.setParticipation(participation);
-        participation.addSubmission(submission);
-        studentParticipationRepository.save(participation);
+        // text submission already has an Athena result — must not block the modeling peer
+        StudentParticipation textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
+        TextSubmission textSubmission = new TextSubmission();
+        textSubmission.setText("Answer for which Athena feedback was already generated.");
+        textSubmission.setSubmitted(true);
+        textSubmission.setSubmissionDate(ZonedDateTime.now());
+        textSubmission.setParticipation(textParticipation);
+        textParticipation.addSubmission(textSubmission);
+        studentParticipationRepository.save(textParticipation);
 
         Result athenaResult = new Result();
         athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         athenaResult.setSuccessful(true);
         athenaResult.setScore(100D);
         athenaResult.setCompletionDate(ZonedDateTime.now());
-        athenaResult.setSubmission(submission);
+        athenaResult.setSubmission(textSubmission);
         resultRepository.save(athenaResult);
 
-        studentExam.getStudentParticipations().add(participation);
+        // modeling submission has no result yet — should still get dispatched
+        StudentParticipation modelingParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, student.getLogin());
+        ModelingSubmission modelingSubmission = new ModelingSubmission();
+        modelingSubmission.setModel("{\"version\":\"4.0.0\",\"type\":\"ClassDiagram\",\"nodes\":[{\"id\":\"n1\"}],\"edges\":[]}");
+        modelingSubmission.setSubmitted(true);
+        modelingSubmission.setSubmissionDate(ZonedDateTime.now());
+        modelingSubmission.setParticipation(modelingParticipation);
+        modelingParticipation.addSubmission(modelingSubmission);
+        studentParticipationRepository.save(modelingParticipation);
+
+        studentExam.getStudentParticipations().add(textParticipation);
+        studentExam.getStudentParticipations().add(modelingParticipation);
         studentExam = studentExamRepository.save(studentExam);
 
         studentExam.setSubmitted(true);
@@ -269,10 +286,9 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractSpringIntegration
 
         detachExerciseParticipationsCollection(studentExam);
 
-        StudentExam finalStudentExam = studentExam;
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+        studentExamService.requestAthenaFeedbackForTestExam(studentExam, student);
 
-        verify(textFeedbackApi, never()).generateAutomaticFeedbackForTestExamAsync(any(), any());
+        verify(modelingFeedbackApi, times(1)).generateAutomaticFeedbackForTestExamAsync(any(StudentParticipation.class), eq(modelingExercise));
     }
 
     private void seedAttemptWithAthenaResult(Exam testExam, TextExercise textExercise) {

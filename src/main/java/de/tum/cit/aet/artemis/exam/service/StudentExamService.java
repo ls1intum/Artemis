@@ -31,7 +31,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -221,16 +220,16 @@ public class StudentExamService {
      * Requests Athena AI feedback for all text and modeling participations of a submitted test exam.
      * Called explicitly by the student via the test exam summary button.
      * <p>
-     * Mirrors the course-exercise pattern in {@code AthenaFeedbackSuggestionsService}: rejects the request if any
-     * text or modeling submission in this attempt already has an Athena-generated result (per-submission guard),
-     * and rejects it if the student has already accumulated {@link #allowedFeedbackRequests} successful Athena
-     * results across all of their test-exam attempts for this exam (cross-attempt cap).
+     * Rejects the request if the student has already accumulated {@link #allowedFeedbackRequests} successful Athena
+     * results across all of their test-exam attempts for this exam (cross-attempt cap). Individual submissions that
+     * already have an Athena result are skipped silently inside the async dispatch in
+     * {@code generateAutomaticFeedbackForTestExamAsync}, so remaining unassessed submissions in the same attempt
+     * still get processed.
      *
      * @param studentExam the submitted student exam
      * @param currentUser the user requesting feedback
-     * @throws BadRequestAlertException if the exam is not a test exam, not submitted, Athena is unavailable, the
-     *                                      request limit is reached, or an Athena result already exists for one of
-     *                                      the submissions
+     * @throws BadRequestAlertException if the exam is not a test exam, not submitted, Athena is unavailable, or the
+     *                                      request limit is reached
      */
     public void requestAthenaFeedbackForTestExam(StudentExam studentExam, User currentUser) {
         if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
@@ -249,18 +248,6 @@ public class StudentExamService {
         }
 
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
-        for (StudentParticipation participation : participations) {
-            Exercise exercise = participation.getExercise();
-            if (!(exercise instanceof TextExercise) && !(exercise instanceof ModelingExercise)) {
-                continue;
-            }
-            Submission latestSubmission = participation.findLatestSubmission().orElse(null);
-            if (latestSubmission != null && latestSubmission.getLatestResult() != null
-                    && latestSubmission.getLatestResult().getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA) {
-                throw new BadRequestAlertException("Submission already has an Athena result", "submission", "submissionAlreadyHasAthenaResult", true);
-            }
-        }
-
         for (StudentParticipation participation : participations) {
             Exercise exercise = participation.getExercise();
             if (exercise instanceof TextExercise textExercise) {
