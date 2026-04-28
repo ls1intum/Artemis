@@ -24,6 +24,8 @@ import de.tum.cit.aet.artemis.communication.domain.Reaction_;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel_;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation_;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.core.domain.Course_;
 import de.tum.cit.aet.artemis.core.domain.User_;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
@@ -284,6 +286,25 @@ public class MessageSpecs {
                 return criteriaBuilder.conjunction();
             }
             return criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), DisplayPriority.PINNED.name());
+        };
+    }
+
+    /**
+     * Specification to exclude direct messages (OneToOneChat and GroupChat) from results
+     *
+     * @param excludeDirectMessages whether direct messages should be excluded
+     * @return specification used to chain DB operations
+     */
+    @NonNull
+    public static Specification<Post> getExcludeDirectMessagesSpecification(boolean excludeDirectMessages) {
+        return (root, query, criteriaBuilder) -> {
+            if (!excludeDirectMessages) {
+                return criteriaBuilder.conjunction();
+            }
+            final var conversationJoin = root.join(Post_.conversation, JoinType.LEFT);
+            Predicate isNotOneToOneChat = criteriaBuilder.notEqual(conversationJoin.type(), criteriaBuilder.literal(OneToOneChat.class));
+            Predicate isNotGroupChat = criteriaBuilder.notEqual(conversationJoin.type(), criteriaBuilder.literal(GroupChat.class));
+            return criteriaBuilder.and(isNotOneToOneChat, isNotGroupChat);
         };
     }
 }

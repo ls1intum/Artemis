@@ -491,6 +491,33 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetMessagesExcludingDirectMessages() throws Exception {
+        // First query without the filter to get all messages
+        var paramsAll = new LinkedMultiValueMap<String, String>();
+        paramsAll.add("conversationIds", existingConversationIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        paramsAll.add("size", "50");
+        List<Post> allPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, paramsAll);
+
+        // Now query with the DM exclusion filter
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationIds", existingConversationIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("filterToExcludeDirectMessages", "true");
+        params.add("size", "50");
+
+        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+
+        // All returned posts should belong to channels, not OneToOneChat or GroupChat
+        assertThat(returnedPosts).isNotEmpty();
+        assertThat(returnedPosts).allMatch(post -> post.getConversation() instanceof Channel);
+
+        // The filtered result should have fewer posts than the unfiltered result (since DM posts exist)
+        var dmPosts = allPosts.stream().filter(post -> post.getConversation() instanceof OneToOneChat).toList();
+        assertThat(dmPosts).isNotEmpty();
+        assertThat(returnedPosts).hasSize(allPosts.size() - dmPosts.size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetCourseWideMessagesFromOneChannel() throws Exception {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();

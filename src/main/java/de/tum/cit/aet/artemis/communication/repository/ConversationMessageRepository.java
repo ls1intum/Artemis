@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.repository;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getAnsweredOrReactedSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getConversationsSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getCourseWideChannelsSpecification;
+import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getExcludeDirectMessagesSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getPinnedSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSearchTextAndAuthorSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSortSpecification;
@@ -59,6 +60,7 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
             .and(getAnsweredOrReactedSpecification(Boolean.TRUE.equals(postContextFilter.filterToAnsweredOrReacted()), userId))
             .and(getUnresolvedSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnresolved())))
             .and(getPinnedSpecification(Boolean.TRUE.equals(postContextFilter.pinnedOnly())))
+            .and(getExcludeDirectMessagesSpecification(Boolean.TRUE.equals(postContextFilter.filterToExcludeDirectMessages())))
             .and(getSortSpecification(true, postContextFilter.postSortCriterion(), postContextFilter.sortingOrder()));
             // @formatter:on
     }
