@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +39,20 @@ public class V0ToV1Migration implements WeaviateMigration {
     public static final String LEGACY_EXERCISES_COLLECTION = "Exercises";
 
     private static final int PAGE_SIZE = 100;
+
+    /**
+     * Matches ISO date-time strings that are missing the seconds component,
+     * e.g. {@code 2026-04-24T20:25Z} or {@code 2026-04-24T20:25+02:00}.
+     * Weaviate requires full RFC3339 with seconds ({@code 2026-04-24T20:25:00Z}).
+     */
+    private static final Pattern MISSING_SECONDS = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2})(Z|[+-])");
+
+    /**
+     * Date properties that may need RFC3339 normalization during migration.
+     */
+    private static final Set<String> DATE_PROPERTIES = Set.of(SearchableEntitySchema.Properties.RELEASE_DATE, SearchableEntitySchema.Properties.START_DATE,
+            SearchableEntitySchema.Properties.DUE_DATE, SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE, SearchableEntitySchema.Properties.EXAM_START_DATE,
+            SearchableEntitySchema.Properties.EXAM_END_DATE);
 
     /**
      * Properties that kept the same name between the v0 {@code Exercises} and v1
@@ -201,6 +218,9 @@ public class V0ToV1Migration implements WeaviateMigration {
         for (String prop : DIRECT_MAPPINGS) {
             Object value = oldProps.get(prop);
             if (value != null) {
+                if (DATE_PROPERTIES.contains(prop) && value instanceof String dateStr) {
+                    value = normalizeRfc3339Date(dateStr);
+                }
                 newProps.put(prop, value);
             }
         }
@@ -211,6 +231,22 @@ public class V0ToV1Migration implements WeaviateMigration {
         newProps.values().removeIf(Objects::isNull);
 
         return newProps;
+    }
+
+    /**
+     * Ensures a date string has the seconds component required by RFC3339.
+     * Weaviate rejects dates like {@code 2026-04-24T20:25Z} — this method
+     * normalizes them to {@code 2026-04-24T20:25:00Z}.
+     *
+     * @param dateStr the date string from the legacy collection
+     * @return the normalized RFC3339 date string
+     */
+    static String normalizeRfc3339Date(String dateStr) {
+        Matcher matcher = MISSING_SECONDS.matcher(dateStr);
+        if (matcher.find()) {
+            return matcher.replaceFirst("$1:00$2");
+        }
+        return dateStr;
     }
 
 }
