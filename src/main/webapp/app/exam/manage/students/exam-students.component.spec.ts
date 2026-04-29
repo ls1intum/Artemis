@@ -442,8 +442,9 @@ describe('ExamStudentsComponent', () => {
     });
 
     describe('handleGenerateStudentExams', () => {
-        it('should show a confirmation dialog when students are already registered', () => {
+        it('should show a confirmation dialog when student exams already exist', () => {
             fixture.detectChanges();
+            component.studentExamCount.set(2);
             const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
             const confirmSpy = vi.spyOn(confirmationService, 'confirm');
 
@@ -452,11 +453,11 @@ describe('ExamStudentsComponent', () => {
             expect(confirmSpy).toHaveBeenCalled();
         });
 
-        it('should call generateStudentExams directly when no students are registered', () => {
+        it('should call generateStudentExams directly when no student exams exist yet', () => {
             fixture.detectChanges();
             vi.spyOn(component as any, 'openIndividualExamsStatusPopover').mockImplementation(() => {});
             const generateSpy = vi.spyOn(examManagementService, 'generateStudentExams').mockReturnValue(of(new HttpResponse({ body: [] as any })));
-            component.totalExamStudents.set(0);
+            component.studentExamCount.set(0);
 
             component.handleGenerateStudentExams(undefined);
 

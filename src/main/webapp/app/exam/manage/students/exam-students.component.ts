@@ -537,7 +537,7 @@ export class ExamStudentsComponent implements OnDestroy {
      * Asks for confirmation if some exams already exist.
      */
     handleGenerateStudentExams(event: Event | undefined) {
-        if (this.totalExamStudents() > 0) {
+        if (this.studentExamCount() > 0) {
             this.confirmationService.confirm({
                 header: this.artemisTranslatePipe.transform('artemisApp.studentExams.generateStudentExams'),
                 message: this.artemisTranslatePipe.transform('artemisApp.studentExams.studentExamGenerationModalText'),
