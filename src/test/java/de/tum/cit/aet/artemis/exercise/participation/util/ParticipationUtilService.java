@@ -77,7 +77,7 @@ import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
@@ -963,7 +963,7 @@ public class ParticipationUtilService {
     }
 
     public void mockCreationOfExerciseParticipation(boolean useGradedParticipationOfResult, Result gradedResult, ProgrammingExercise programmingExercise, UriService uriService,
-            VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws URISyntaxException {
+            VersionControlService versionControlService, ContinuousIntegrationBuildPlanService continuousIntegrationService) throws URISyntaxException {
         String templateRepoName;
         if (useGradedParticipationOfResult) {
             templateRepoName = uriService
@@ -981,10 +981,10 @@ public class ParticipationUtilService {
      *
      * @param templateRepoName             The expected sourceRepositoryName when calling the LocalVC service
      * @param versionControlService        The VersionControlService (real LocalVC service)
-     * @param continuousIntegrationService The mocked ContinuousIntegrationService
+     * @param continuousIntegrationService The mocked ContinuousIntegrationBuildPlanService
      */
     public void mockCreationOfExerciseParticipation(String templateRepoName, VersionControlService versionControlService,
-            ContinuousIntegrationService continuousIntegrationService) {
+            ContinuousIntegrationBuildPlanService continuousIntegrationService) {
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
 
@@ -993,18 +993,18 @@ public class ParticipationUtilService {
      * URL.
      *
      * @param versionControlService        The VersionControlService (real LocalVC service)
-     * @param continuousIntegrationService The mocked ContinuousIntegrationService
+     * @param continuousIntegrationService The mocked ContinuousIntegrationBuildPlanService
      */
-    public void mockCreationOfExerciseParticipation(VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) {
+    public void mockCreationOfExerciseParticipation(VersionControlService versionControlService, ContinuousIntegrationBuildPlanService continuousIntegrationService) {
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
 
     /**
      * Mocks methods in VC and CI system needed for the creation of a StudentParticipation given the ProgrammingExercise.
      *
-     * @param continuousIntegrationService The mocked ContinuousIntegrationService
+     * @param continuousIntegrationService The mocked ContinuousIntegrationBuildPlanService
      */
-    private void mockCreationOfExerciseParticipationInternal(ContinuousIntegrationService continuousIntegrationService) {
+    private void mockCreationOfExerciseParticipationInternal(ContinuousIntegrationBuildPlanService continuousIntegrationService) {
         doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any());
     }

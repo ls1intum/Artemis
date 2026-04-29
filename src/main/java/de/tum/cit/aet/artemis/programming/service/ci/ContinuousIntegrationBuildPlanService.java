@@ -3,15 +3,16 @@ package de.tum.cit.aet.artemis.programming.service.ci;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 /**
- * Abstract service for managing entities related to continuous integration.
+ * Service for managing build plans on a continuous integration server.
+ * This interface is only implemented by CI systems that manage build plans (e.g. Jenkins).
+ * Stateless CI systems (e.g. LocalCI, Hades) do not implement this interface.
  */
-public interface ContinuousIntegrationService extends StatelessCIService {
+public interface ContinuousIntegrationBuildPlanService {
 
     /**
      * Creates the base build plan for the given programming exercise
@@ -23,7 +24,6 @@ public interface ContinuousIntegrationService extends StatelessCIService {
      * @param solutionRepositoryUri the URI of the solution repository. Only used for HASKELL exercises with
      *                                  checkoutSolutionRepository=true. Otherwise, ignored.
      */
-    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
             VcsRepositoryUri solutionRepositoryUri);
 
@@ -32,7 +32,6 @@ public interface ContinuousIntegrationService extends StatelessCIService {
      *
      * @param exercise for which the build plans should be recreated
      */
-    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException;
 
     /**
@@ -47,7 +46,6 @@ public interface ContinuousIntegrationService extends StatelessCIService {
      * @param targetProjectExists whether the target project already exists or not
      * @return The key of the new build plan
      */
-    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists);
 
@@ -61,7 +59,6 @@ public interface ContinuousIntegrationService extends StatelessCIService {
      *
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
      */
-    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void configureBuildPlan(ProgrammingExerciseParticipation participation);
 
     /**
@@ -69,7 +66,6 @@ public interface ContinuousIntegrationService extends StatelessCIService {
      *
      * @param projectKey unique identifier for the project on CI system
      */
-    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void deleteProject(String projectKey);
 
     /**
@@ -78,20 +74,7 @@ public interface ContinuousIntegrationService extends StatelessCIService {
      * @param projectKey  The key of the related programming exercise
      * @param buildPlanId unique identifier for build plan on CI system
      */
-    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void deleteBuildPlan(String projectKey, String buildPlanId);
-
-    /**
-     * Get the plan key of the finished build, the information of the build get passed via the requestBody.
-     * The requestBody must match the information passed from the jenkins-server-notification-plugin,
-     * the body is described here: <a href= "https://github.com/ls1intum/jenkins-server-notification-plugin">...</a>
-     *
-     * @param requestBody The request Body received from the CI-Server.
-     * @return the plan key of the build
-     * @throws ContinuousIntegrationException if the Body could not be parsed
-     */
-    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
-    String getPlanKey(Object requestBody) throws ContinuousIntegrationException;
 
     /**
      * Check if the given build plan ID is valid and accessible.
@@ -100,7 +83,6 @@ public interface ContinuousIntegrationService extends StatelessCIService {
      * @param buildPlanId unique identifier for build plan on CI system
      * @return true if build plan is valid otherwise false
      */
-    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     boolean checkIfBuildPlanExists(String projectKey, String buildPlanId);
 
     /**
@@ -110,7 +92,6 @@ public interface ContinuousIntegrationService extends StatelessCIService {
      * @param projectName to check if a project with the same name already exists
      * @return an error message if the project exists, null otherwise
      */
-    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     String checkIfProjectExists(String projectKey, String projectName);
 
     /**
@@ -119,7 +100,6 @@ public interface ContinuousIntegrationService extends StatelessCIService {
      * @param projectKey The key of the project for which to enable the plan
      * @param planKey    to identify the plan in the CI service.
      */
-    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void enablePlan(String projectKey, String planKey);
 
     /**
@@ -133,23 +113,12 @@ public interface ContinuousIntegrationService extends StatelessCIService {
      * @param existingRepoUri The url of the existing repository (which should be replaced).
      * @param newBranch       The default branch for the new repository
      */
-    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri, String newBranch);
-
-    /**
-     * Checks if the underlying CI server is up and running and gives some additional information about the running
-     * services if available
-     *
-     * @return The health of the CI service containing if it is up and running and any additional data, or the throwing exception otherwise
-     */
-    ConnectorHealth health();
 
     /**
      * Creates a project on the CI server.
      *
      * @param programmingExercise for which a project should be created
      */
-    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void createProjectForExercise(ProgrammingExercise programmingExercise) throws ContinuousIntegrationException;
-
 }

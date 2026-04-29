@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Service
@@ -86,7 +86,7 @@ public class ProgrammingExerciseValidationService {
 
     private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<ContinuousIntegrationBuildPlanService> continuousIntegrationService;
 
     private final ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
 
@@ -98,7 +98,7 @@ public class ProgrammingExerciseValidationService {
 
     public ProgrammingExerciseValidationService(AuxiliaryRepositoryService auxiliaryRepositoryService, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService,
+            Optional<ContinuousIntegrationBuildPlanService> continuousIntegrationService, ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService,
             Optional<VersionControlService> versionControlService1, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -329,7 +329,7 @@ public class ProgrammingExerciseValidationService {
         }
 
         if (continuousIntegrationService.isEmpty()) {
-            log.debug("ContinuousIntegrationService is not available, skipping check if project exists on CI server");
+            log.debug("ContinuousIntegrationBuildPlanService is not available, skipping check if project exists on CI server");
             return;
         }
 
@@ -360,7 +360,7 @@ public class ProgrammingExerciseValidationService {
         }
 
         if (continuousIntegrationService.isEmpty()) {
-            log.debug("ContinuousIntegrationService is not available, skipping check if project exists on CI server");
+            log.debug("ContinuousIntegrationBuildPlanService is not available, skipping check if project exists on CI server");
             return false;
         }
 
@@ -390,7 +390,7 @@ public class ProgrammingExerciseValidationService {
         }
 
         if (continuousIntegrationService.isPresent()) {
-            ContinuousIntegrationService continuousIntegration = continuousIntegrationService.get();
+            ContinuousIntegrationBuildPlanService continuousIntegration = continuousIntegrationService.get();
 
             if (!continuousIntegration.checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
                 throw new BadRequestAlertException("The Template Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID);

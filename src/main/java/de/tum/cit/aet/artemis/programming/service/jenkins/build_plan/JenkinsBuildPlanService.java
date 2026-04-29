@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildPlanService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsEndpoints;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsInternalUrlService;
@@ -324,25 +324,25 @@ public class JenkinsBuildPlanService {
      * @return the build status
      * @throws JenkinsException thrown in case of errors
      */
-    public ContinuousIntegrationService.BuildStatus getBuildStatusOfPlan(String projectKey, String planKey) throws JenkinsException {
+    public StatelessCIService.BuildStatus getBuildStatusOfPlan(String projectKey, String planKey) throws JenkinsException {
         var job = jenkinsJobService.getJob(projectKey, planKey);
         if (job == null) {
             // Plan doesn't exist.
-            return ContinuousIntegrationService.BuildStatus.INACTIVE;
+            return StatelessCIService.BuildStatus.INACTIVE;
         }
 
         if (job.inQueue()) {
-            return ContinuousIntegrationService.BuildStatus.QUEUED;
+            return StatelessCIService.BuildStatus.QUEUED;
         }
 
         try {
             URI uri = JenkinsEndpoints.LAST_BUILD.buildEndpoint(jenkinsServerUri, projectKey, planKey).build(true).toUri();
             var buildStatus = restTemplate.getForObject(uri, JenkinsBuildStatusDTO.class);
-            return buildStatus != null && buildStatus.building ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
+            return buildStatus != null && buildStatus.building ? StatelessCIService.BuildStatus.BUILDING : StatelessCIService.BuildStatus.INACTIVE;
         }
         catch (HttpClientErrorException e) {
             log.error("Error while trying to fetch build status from Jenkins for {}: {}", planKey, e.getMessage());
-            return ContinuousIntegrationService.BuildStatus.INACTIVE;
+            return StatelessCIService.BuildStatus.INACTIVE;
         }
     }
 

@@ -47,7 +47,7 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
 
     @BeforeEach
     void setup() throws Exception {
-        programmingExerciseIntegrationTestService.setup(TEST_PREFIX, this, versionControlService, continuousIntegrationService);
+        programmingExerciseIntegrationTestService.setup(TEST_PREFIX, this, versionControlService, null);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();

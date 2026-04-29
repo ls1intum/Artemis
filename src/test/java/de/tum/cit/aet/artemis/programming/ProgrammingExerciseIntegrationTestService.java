@@ -104,7 +104,7 @@ import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryReposito
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -251,11 +251,11 @@ public class ProgrammingExerciseIntegrationTestService {
     private VersionControlService versionControlService;
 
     // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
-    private ContinuousIntegrationService continuousIntegrationService;
+    private ContinuousIntegrationBuildPlanService continuousIntegrationService;
 
     private File plagiarismChecksTestReposDir;
 
-    void setup(String userPrefix, MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
+    void setup(String userPrefix, MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationBuildPlanService continuousIntegrationService)
             throws Exception {
         this.userPrefix = userPrefix;
         this.mockDelegate = mockDelegate;
@@ -1441,7 +1441,9 @@ public class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockConnectorRequestsForImport(programmingExercise, exerciseToBeImported, false, false);
         mockDelegate.mockConnectorRequestsForSetup(exerciseToBeImported, false, false, false);
         mockBuildPlanAndRepositoryCheck(programmingExercise);
-        doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
+        if (continuousIntegrationService != null) {
+            doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
+        }
 
         var response = request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceId, exerciseToBeImported, ProgrammingExercise.class, HttpStatus.OK);
 

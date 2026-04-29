@@ -18,7 +18,7 @@ class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingInteg
 
     @BeforeEach
     void initTestCase() throws Exception {
-        programmingExerciseIntegrationTestService.setup(TEST_PREFIX, this, versionControlService, continuousIntegrationService);
+        programmingExerciseIntegrationTestService.setup(TEST_PREFIX, this, versionControlService, null);
     }
 
     @AfterEach

@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -83,9 +82,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
 
     private Course course1;
 
@@ -185,8 +181,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     void testStartExerciseWithProgrammingExercise() throws Exception {
         ProgrammingExercise programmingExercise = createProgrammingExercise();
 
-        participationUtilService.mockCreationOfExerciseParticipation(versionControlService, continuousIntegrationService);
-
         createStudentExams(programmingExercise);
 
         var studentParticipations = invokePrepareExerciseStart();
@@ -220,8 +214,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         examRepository.save(exam);
 
         ProgrammingExercise programmingExercise = createProgrammingExercise();
-
-        participationUtilService.mockCreationOfExerciseParticipation(versionControlService, continuousIntegrationService);
 
         createStudentExams(programmingExercise);
 

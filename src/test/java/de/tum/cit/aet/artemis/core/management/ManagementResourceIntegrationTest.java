@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -90,7 +90,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         var programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusHours(2), course);
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
-        doReturn(ContinuousIntegrationService.BuildStatus.BUILDING).when(continuousIntegrationService).getBuildStatus(any());
+        doReturn(StatelessCIService.BuildStatus.BUILDING).when(continuousIntegrationService).getBuildStatus(any());
 
         mockTriggerFailedBuild(participation);
 

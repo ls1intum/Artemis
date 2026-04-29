@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
@@ -63,14 +63,14 @@ public class ContinuousIntegrationTestService {
 
     private MockDelegate mockDelegate;
 
-    private ContinuousIntegrationService continuousIntegrationService;
+    private StatelessCIService continuousIntegrationService;
 
     public ProgrammingExercise programmingExercise;
 
     /**
      * This method initializes the test case by setting up a local repo
      */
-    public void setup(String testPrefix, MockDelegate mockDelegate, ContinuousIntegrationService continuousIntegrationService) throws Exception {
+    public void setup(String testPrefix, MockDelegate mockDelegate, StatelessCIService continuousIntegrationService) throws Exception {
         this.mockDelegate = mockDelegate;
         this.continuousIntegrationService = continuousIntegrationService;
 
@@ -112,8 +112,8 @@ public class ContinuousIntegrationTestService {
         mockDelegate.mockGetBuildPlan(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId(), false, false, false, false);
 
         // INACTIVE // same as not found
-        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
-        assertThat(buildStatus).as("buildStatus is inactive").isEqualTo(ContinuousIntegrationService.BuildStatus.INACTIVE);
+        StatelessCIService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
+        assertThat(buildStatus).as("buildStatus is inactive").isEqualTo(StatelessCIService.BuildStatus.INACTIVE);
     }
 
     public void testGetBuildStatusInactive1() throws Exception {
@@ -121,8 +121,8 @@ public class ContinuousIntegrationTestService {
         var buildPlanId = participation.getBuildPlanId();
         mockDelegate.mockGetBuildPlan(projectKey, buildPlanId, true, false, false, false);
 
-        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
-        assertThat(buildStatus).as("buildStatus is inactive").isEqualTo(ContinuousIntegrationService.BuildStatus.INACTIVE);
+        StatelessCIService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
+        assertThat(buildStatus).as("buildStatus is inactive").isEqualTo(StatelessCIService.BuildStatus.INACTIVE);
     }
 
     public void testGetBuildStatusInactive2() throws Exception {
@@ -130,8 +130,8 @@ public class ContinuousIntegrationTestService {
         var buildPlanId = participation.getBuildPlanId();
         mockDelegate.mockGetBuildPlan(projectKey, buildPlanId, true, false, true, false);
 
-        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
-        assertThat(buildStatus).as("buildStatus is inactive").isEqualTo(ContinuousIntegrationService.BuildStatus.INACTIVE);
+        StatelessCIService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
+        assertThat(buildStatus).as("buildStatus is inactive").isEqualTo(StatelessCIService.BuildStatus.INACTIVE);
     }
 
     public void testGetBuildStatusQueued() throws Exception {
@@ -139,8 +139,8 @@ public class ContinuousIntegrationTestService {
         var buildPlanId = participation.getBuildPlanId();
         mockDelegate.mockGetBuildPlan(projectKey, buildPlanId, true, true, false, false);
 
-        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
-        assertThat(buildStatus).as("buildStatus is queued").isEqualTo(ContinuousIntegrationService.BuildStatus.QUEUED);
+        StatelessCIService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
+        assertThat(buildStatus).as("buildStatus is queued").isEqualTo(StatelessCIService.BuildStatus.QUEUED);
     }
 
     public void testGetBuildStatusBuilding() throws Exception {
@@ -148,8 +148,8 @@ public class ContinuousIntegrationTestService {
         var buildPlanId = participation.getBuildPlanId();
         mockDelegate.mockGetBuildPlan(projectKey, buildPlanId, true, true, true, false);
 
-        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
-        assertThat(buildStatus).as("buildStatus is building").isEqualTo(ContinuousIntegrationService.BuildStatus.BUILDING);
+        StatelessCIService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
+        assertThat(buildStatus).as("buildStatus is building").isEqualTo(StatelessCIService.BuildStatus.BUILDING);
     }
 
     public void testGetBuildStatusFails() throws Exception {
@@ -157,8 +157,8 @@ public class ContinuousIntegrationTestService {
         var buildPlanId = participation.getBuildPlanId();
         mockDelegate.mockGetBuildPlan(projectKey, buildPlanId, true, true, true, true);
 
-        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
-        assertThat(buildStatus).isEqualTo(ContinuousIntegrationService.BuildStatus.INACTIVE);
+        StatelessCIService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
+        assertThat(buildStatus).isEqualTo(StatelessCIService.BuildStatus.INACTIVE);
     }
 
     public void testHealthRunning() throws Exception {

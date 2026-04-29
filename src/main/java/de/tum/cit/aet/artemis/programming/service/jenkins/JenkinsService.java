@@ -32,7 +32,8 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationBuildPlanService;
+import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
@@ -41,7 +42,7 @@ import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTrig
 @Profile(PROFILE_JENKINS)
 @Lazy
 @Service
-public class JenkinsService implements ContinuousIntegrationService {
+public class JenkinsService implements StatelessCIService, ContinuousIntegrationBuildPlanService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
 

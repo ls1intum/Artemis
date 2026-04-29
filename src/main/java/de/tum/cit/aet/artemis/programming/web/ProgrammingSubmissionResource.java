@@ -55,7 +55,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
 
 /**
@@ -186,8 +185,8 @@ public class ProgrammingSubmissionResource {
         // if the build plan was not cleaned yet, we can try to access the current build state, as the build might still be running (because it was slow or queued)
         if (programmingExerciseParticipation.getBuildPlanId() != null) {
             // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
-            ContinuousIntegrationService.BuildStatus buildStatus = statelessCIService.orElseThrow().getBuildStatus(programmingExerciseParticipation);
-            if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
+            StatelessCIService.BuildStatus buildStatus = statelessCIService.orElseThrow().getBuildStatus(programmingExerciseParticipation);
+            if (buildStatus == StatelessCIService.BuildStatus.BUILDING || buildStatus == StatelessCIService.BuildStatus.QUEUED) {
                 // We inform the user through the websocket that the submission is still in progress (build is running/queued, result should arrive soon).
                 // This resets the pending submission timer in the client.
                 programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
