@@ -245,6 +245,11 @@ export class IrisChatControllerService {
 
     clearChat(): void {
         this.close();
+        // Guard parity with switchToNewSession: createNewSession throws synchronously without
+        // an identifier, and a synchronous throw escapes the subscribe error handler entirely.
+        if (!this.sessionCreationIdentifier) {
+            return;
+        }
         this.createNewSession()
             .pipe(takeUntil(this.contextSwitch$), takeUntilDestroyed(this.destroyRef))
             .subscribe({
