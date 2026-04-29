@@ -178,6 +178,10 @@ export class IrisChatControllerService {
             // The chat-history list is per-course, so a course change must clear it; otherwise
             // loadChatSessions would briefly show the previous course's history before the new
             // request resolves. Same applies to latestStartedSession (a per-course pointer).
+            // Also emit contextSwitch$ so any in-flight heartbeat for the old course is dropped
+            // before checkHeartbeat() starts a new request — otherwise a slow stale response
+            // can clobber active/rateLimitInfo for the new course.
+            this.contextSwitch$.next();
             this.chatSessions.next([]);
             this.latestStartedSession = undefined;
             this.checkHeartbeat();
@@ -582,9 +586,12 @@ export class IrisChatControllerService {
 
         // Backend payload — fail closed if the JSON is malformed or shaped wrong, otherwise the
         // exception escapes session initialization and the chat is unusable for that context.
+        // Filter to strings: the field is typed `string[]`, but `Array.isArray` only validates
+        // the container — without the per-item check, [1, {}] would silently pass through.
         try {
             const parsed = JSON.parse(str);
-            this.suggestions.next(Array.isArray(parsed) ? parsed : []);
+            const validated = Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
+            this.suggestions.next(validated);
         } catch (error) {
             captureException(error, { tags: { category: 'Iris' } });
             this.suggestions.next([]);
@@ -729,9 +736,10 @@ export class IrisChatControllerService {
         }
         // Avoid `firstValueFrom().then(...)` here — a Promise resolution can't be cancelled,
         // so an in-flight request resolving after host destroy would still mutate the
-        // (now-detached) controller. Pipe through takeUntilDestroyed so the response is dropped.
+        // (now-detached) controller. takeUntil(contextSwitch$) drops the response if the host
+        // switches course mid-flight; takeUntilDestroyed drops it on host destroy.
         this.getIrisStatus(courseId)
-            .pipe(takeUntilDestroyed(this.destroyRef))
+            .pipe(takeUntil(this.contextSwitch$), takeUntilDestroyed(this.destroyRef))
             .subscribe((response: HttpResponse<IrisStatusDTO>) => {
                 if (response.body) {
                     this.isActive = Boolean(response.body.active);

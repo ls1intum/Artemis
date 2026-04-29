@@ -55,6 +55,7 @@ describe('TutorSuggestionComponent', () => {
     let profileService: ProfileService;
     let accountService: AccountService;
     let featureToggleService: FeatureToggleService;
+    let getActiveStatusSpy: ReturnType<typeof vi.spyOn>;
     const courseSettings = mockCourseSettings(1, true);
 
     const websocketServiceMock = {
@@ -96,8 +97,10 @@ describe('TutorSuggestionComponent', () => {
 
         // Prototype-spy BEFORE createComponent: `irisActive$` is a class field initializer
         // that calls `controller.getActiveStatus()` during component construction, so an
-        // instance-level spy installed after createComponent would be too late.
-        vi.spyOn(IrisChatControllerService.prototype, 'getActiveStatus').mockReturnValue(of(true));
+        // instance-level spy installed after createComponent would be too late. Hoisted to a
+        // describe-scoped variable so tests can assert on the constructor-time call without
+        // a redundant re-spyOn (which would obscure the timing intent for readers).
+        getActiveStatusSpy = vi.spyOn(IrisChatControllerService.prototype, 'getActiveStatus').mockReturnValue(of(true));
 
         fixture = TestBed.createComponent(TutorSuggestionComponent);
         component = fixture.componentInstance;
@@ -121,7 +124,8 @@ describe('TutorSuggestionComponent', () => {
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
         const setContextSpy = vi.spyOn(IrisChatControllerService.prototype, 'setContext').mockReturnValue(undefined);
         const getFeatureToggleSpy = vi.spyOn(featureToggleService, 'getFeatureToggleActive');
-        const getActiveStatusSpy = vi.spyOn(IrisChatControllerService.prototype, 'getActiveStatus');
+        // getActiveStatusSpy is installed in beforeEach (see comment there) and observes the
+        // constructor-time call from `irisActive$`'s field initializer.
         fixture.detectChanges();
         expect(setContextSpy).toHaveBeenCalledWith(1, ChatServiceMode.TUTOR_SUGGESTION, 1);
         expect(getFeatureToggleSpy).toHaveBeenCalledWith(FeatureToggle.TutorSuggestions);
