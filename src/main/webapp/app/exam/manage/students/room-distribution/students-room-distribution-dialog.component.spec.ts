@@ -91,7 +91,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     it('should not have selected rooms and distribute button disabled on first open', () => {
         fixture.detectChanges();
         expect(component.hasSelectedRooms()).toBe(false);
-        const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
+        const button = document.body.querySelector('#finish-button') as HTMLButtonElement;
         expect(button.disabled).toBe(true);
     });
 
@@ -106,7 +106,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         component.pickSelectedRoom({ item: rooms[0] });
         fixture.changeDetectorRef.detectChanges();
 
-        const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
+        const button = document.body.querySelector('#finish-button') as HTMLButtonElement;
         expect(component.hasSelectedRooms()).toBe(true);
         expect(button.hidden).toBe(false);
     });
@@ -121,7 +121,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.hasSelectedRooms()).toBe(false);
-        const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
+        const button = document.body.querySelector('#finish-button') as HTMLButtonElement;
         expect(button.disabled).toBe(true);
     });
 
@@ -173,7 +173,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should update reserve percentage when typing valid numbers', () => {
         fixture.detectChanges();
-        const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
+        const input: HTMLInputElement = document.body.querySelector('#reserveFactor') as HTMLInputElement;
 
         dispatchInputEvent(input, '25');
         fixture.changeDetectorRef.detectChanges();
@@ -186,7 +186,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should reset reserve factor to latest value when invalid input is entered', () => {
         fixture.detectChanges();
-        const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
+        const input: HTMLInputElement = document.body.querySelector('#reserveFactor') as HTMLInputElement;
 
         dispatchInputEvent(input, '25');
         fixture.changeDetectorRef.detectChanges();
@@ -223,7 +223,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should toggle use narrow layouts when switch is pressed', () => {
         fixture.detectChanges();
-        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowNarrowLayoutsToggle');
+        const checkbox: HTMLInputElement = document.body.querySelector('#allowNarrowLayoutsToggle') as HTMLInputElement;
 
         expect(component.allowNarrowLayouts()).toBe(false);
 
