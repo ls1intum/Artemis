@@ -72,7 +72,6 @@ describe('ExamDetailComponent', () => {
                         component: DummyComponent,
                     },
                     { path: 'course-management/:courseId/exams/:examId/scores', component: DummyComponent },
-                    { path: 'course-management/:courseId/exams/:examId/student-exams', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/test-runs', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/students', component: DummyComponent },
                     { path: 'course-management/:courseId/exams', component: DummyComponent },
@@ -165,15 +164,6 @@ describe('ExamDetailComponent', () => {
         editButton.click();
         await fixture.whenStable();
         expect(location.path()).toBe('/course-management/1/exams/1/edit');
-    });
-
-    it('should correctly route to student exams subpage', async () => {
-        const location = TestBed.inject(Location);
-        fixture.detectChanges();
-        const studentExamsButton = fixture.debugElement.query(By.css('#studentExamsButton')).nativeElement;
-        studentExamsButton.click();
-        await fixture.whenStable();
-        expect(location.path()).toBe('/course-management/1/exams/1/student-exams');
     });
 
     it('should correctly route to dashboard', async () => {
