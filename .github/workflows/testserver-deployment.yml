@@ -49,7 +49,7 @@ jobs:
   # Log the inputs for debugging
   log-inputs:
     name: Log Inputs
-    runs-on: [self-hosted, deploy-artemis]
+    runs-on: [self-hosted, artemis-test-deployment]
     steps:
       - name: Print Inputs
         run: |
@@ -60,7 +60,7 @@ jobs:
 
   determine-build-context:
     name: Determine Build Context
-    runs-on: [self-hosted, deploy-artemis]
+    runs-on: [self-hosted, artemis-test-deployment]
     needs: log-inputs
     outputs:
       pr_number: ${{ steps.get_pr.outputs.pr_number }}
@@ -141,7 +141,7 @@ jobs:
     name: Check Existing Build of Pull Request
     if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
     needs: determine-build-context
-    runs-on: [self-hosted, deploy-artemis]
+    runs-on: [self-hosted, artemis-test-deployment]
     steps:
       - name: Get latest successful build for branch
         id: check_build
@@ -161,7 +161,7 @@ jobs:
     name: Check Existing Build of main or develop branch
     if: ${{ needs.determine-build-context.outputs.is_main_or_develop == 'true' }}
     needs: determine-build-context
-    runs-on: [self-hosted, deploy-artemis]
+    runs-on: [self-hosted, artemis-test-deployment]
     steps:
       - name: Get latest successful build for main or develop branch
         id: check_main_build
@@ -179,7 +179,7 @@ jobs:
 
   check-database-migration-approval:
     name: Check Database Migration Approval
-    runs-on: [self-hosted, deploy-artemis]
+    runs-on: [self-hosted, artemis-test-deployment]
     needs: [determine-build-context]
     if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
     steps:
@@ -213,7 +213,7 @@ jobs:
     # Use always() since one of the jobs will always skip
     if: always() && (needs.conditional-build.result == 'success' || needs.check-existing-build-for-pull-request.result == 'success' || needs.check-existing-build-for-branch.result == 'success') && (needs.check-database-migration-approval.result == 'success' || needs.check-database-migration-approval.result == 'skipped')
     name: Deploy to Test-Server
-    runs-on: [self-hosted, deploy-artemis]
+    runs-on: [self-hosted, artemis-test-deployment]
     environment:
       name: ${{ github.event.inputs.environment_name }}
       url: ${{ vars.DEPLOYMENT_URL }}

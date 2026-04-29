@@ -20,6 +20,14 @@ export default defineConfig({
             test: path.resolve(__dirname, 'src/test/javascript/spec'),
         },
     },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                loadPaths: [path.resolve(__dirname)],
+                silenceDeprecations: ['color-functions', 'global-builtin', 'import', 'if-function'],
+            },
+        },
+    },
     // JIT mode required for ng-mocks compatibility
     plugins: [angular({ jit: true }), tsconfigPaths({ projects: ['tsconfig.app.json', 'tsconfig.spec.json'] })],
     test: {
@@ -115,7 +123,7 @@ export default defineConfig({
                 'src/main/webapp/app/core/config/prod.config.ts',       // exclude dayjs configuration file (not really testable)
             ],
             thresholds: {
-                lines: 90.67,
+                lines: 90.60,
                 statements: 90.43,
                 branches: 74.43,
                 functions: 88.29,

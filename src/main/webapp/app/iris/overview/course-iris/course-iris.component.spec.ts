@@ -2,10 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { CourseIrisComponent } from './course-iris.component';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
+import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { MockProvider } from 'ng-mocks';
 
 @Component({
     selector: 'jhi-course-chatbot',
@@ -24,9 +26,12 @@ describe('CourseIrisComponent', () => {
     let component: CourseIrisComponent;
     let fixture: ComponentFixture<CourseIrisComponent>;
     let paramMapSubject: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+    let llmOptedOutSubject: Subject<void>;
+    let router: Router;
 
     beforeEach(async () => {
         paramMapSubject = new BehaviorSubject(convertToParamMap({ courseId: '123' }));
+        llmOptedOutSubject = new Subject<void>();
 
         await TestBed.configureTestingModule({
             imports: [CourseIrisComponent],
@@ -39,6 +44,9 @@ describe('CourseIrisComponent', () => {
                         },
                     },
                 },
+                MockProvider(IrisChatService, {
+                    llmOptedOut$: llmOptedOutSubject.asObservable(),
+                }),
             ],
         })
             .overrideComponent(CourseIrisComponent, {
@@ -49,6 +57,8 @@ describe('CourseIrisComponent', () => {
 
         fixture = TestBed.createComponent(CourseIrisComponent);
         component = fixture.componentInstance;
+        router = TestBed.inject(Router);
+        vi.spyOn(router, 'navigate').mockResolvedValue(true);
         fixture.detectChanges();
     });
 
@@ -89,5 +99,31 @@ describe('CourseIrisComponent', () => {
 
     it('should initialize isCollapsed to false', () => {
         expect(component.isCollapsed).toBe(false);
+    });
+
+    it('should navigate to exercises when the user opts out of AI via the chat service', async () => {
+        await fixture.whenStable();
+
+        llmOptedOutSubject.next();
+
+        expect(router.navigate).toHaveBeenCalledWith(['/courses', 123, 'exercises']);
+    });
+
+    it('should not navigate if the course id is not resolved yet when the opt-out event fires', async () => {
+        paramMapSubject.next(convertToParamMap({}));
+        await fixture.whenStable();
+
+        llmOptedOutSubject.next();
+
+        expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    it('should not navigate on opt-out after the component is destroyed', async () => {
+        await fixture.whenStable();
+        fixture.destroy();
+
+        llmOptedOutSubject.next();
+
+        expect(router.navigate).not.toHaveBeenCalled();
     });
 });

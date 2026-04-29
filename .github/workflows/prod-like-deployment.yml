@@ -33,7 +33,7 @@ env:
 
 jobs:
   check-build-status:
-    runs-on: [self-hosted, deploy-artemis]
+    runs-on: [self-hosted, artemis-prod-deployment]
     outputs:
       build_workflow_run_id: ${{ steps.set_build_workflow_id.outputs.workflow_id }}
       build_workflow_name: ${{ steps.select_build_workflow.outputs.workflow_name }}
@@ -110,7 +110,7 @@ jobs:
 
   deploy:
     needs: check-build-status
-    runs-on: [self-hosted, deploy-artemis]
+    runs-on: [self-hosted, artemis-prod-deployment]
     environment:
       name: ${{ github.event.inputs.environment_name }}
       url: ${{ vars.DEPLOYMENT_URL }}
