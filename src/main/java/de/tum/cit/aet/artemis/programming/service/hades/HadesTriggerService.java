@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -49,11 +48,12 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
             log.debug("Triggering build for participation {} via external CI connector", participation.getId());
 
             // Prepare the build trigger request DTO
-            Long exerciseID = participation.getProgrammingExercise().getId();
+            var exercise = participation.getProgrammingExercise();
+            Long exerciseID = exercise.getId();
             Long participationID = participation.getId();
 
-            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.findByIdElseThrow(exerciseID);
-            String buildScript = buildConfig.getBuildScript();
+            programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(exercise);
+            String buildScript = exercise.getBuildConfig().getBuildScript();
 
             // Create the submission repository DTO
             var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString().replace("localhost", "192.168.0.112"), null, null, null);
