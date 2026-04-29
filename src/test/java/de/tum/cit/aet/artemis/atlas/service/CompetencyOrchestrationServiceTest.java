@@ -130,7 +130,7 @@ class CompetencyOrchestrationServiceTest {
     }
 
     private void stubRunMap() {
-        when(hazelcastInstance.<Long, RunInfo> getMap("atlas-orchestrator-runs")).thenReturn(runMap);
+        when(hazelcastInstance.<Long, RunInfo>getMap("atlas-orchestrator-runs")).thenReturn(runMap);
     }
 
     private static ProgrammingExercise courseExercise(long id) {
