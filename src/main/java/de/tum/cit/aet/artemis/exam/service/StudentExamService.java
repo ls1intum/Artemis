@@ -250,6 +250,15 @@ public class StudentExamService {
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
         for (StudentParticipation participation : participations) {
             Exercise exercise = participation.getExercise();
+            if (exercise instanceof TextExercise && textFeedbackApi.isEmpty()) {
+                throw new BadRequestAlertException("Athena feedback for text exercises is not available", "StudentExam", "textAthenaNotAvailable");
+            }
+            if (exercise instanceof ModelingExercise && modelingFeedbackApi.isEmpty()) {
+                throw new BadRequestAlertException("Athena feedback for modeling exercises is not available", "StudentExam", "modelingAthenaNotAvailable");
+            }
+        }
+        for (StudentParticipation participation : participations) {
+            Exercise exercise = participation.getExercise();
             if (exercise instanceof TextExercise textExercise) {
                 textFeedbackApi.ifPresent(api -> api.generateAutomaticFeedbackForTestExamAsync(participation, textExercise));
             }

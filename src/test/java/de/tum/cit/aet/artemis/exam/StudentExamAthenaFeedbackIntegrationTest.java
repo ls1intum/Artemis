@@ -37,8 +37,7 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -74,16 +73,13 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
     private StudentExamTestRepository studentExamRepository;
 
     @Autowired
-    private StudentParticipationTestRepository studentParticipationRepository;
-
-    @Autowired
     private ParticipationUtilService participationUtilService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
+    private ExerciseTestRepository exerciseRepository;
 
     private Course course;
 
@@ -161,7 +157,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         studentExam.addExercise(modelingExercise);
 
         StudentParticipation modelingParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, student.getLogin());
-        addModelingSubmission(modelingParticipation, "{\"version\":\"4.0.0\",\"type\":\"ClassDiagram\",\"nodes\":[{\"id\":\"n1\"}],\"edges\":[]}");
+        addModelingSubmission(modelingParticipation);
 
         studentExam.getStudentParticipations().add(modelingParticipation);
         studentExam = studentExamRepository.save(studentExam);
@@ -257,7 +253,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
         // modeling submission has no result yet — should still get dispatched
         StudentParticipation modelingParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, student.getLogin());
-        addModelingSubmission(modelingParticipation, "{\"version\":\"4.0.0\",\"type\":\"ClassDiagram\",\"nodes\":[{\"id\":\"n1\"}],\"edges\":[]}");
+        addModelingSubmission(modelingParticipation);
 
         studentExam.getStudentParticipations().add(textParticipation);
         studentExam.getStudentParticipations().add(modelingParticipation);
@@ -301,9 +297,9 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         return (TextSubmission) participationUtilService.addSubmission(participation, submission);
     }
 
-    private void addModelingSubmission(StudentParticipation participation, String model) {
+    private void addModelingSubmission(StudentParticipation participation) {
         ModelingSubmission submission = new ModelingSubmission();
-        submission.setModel(model);
+        submission.setModel("{\"version\":\"4.0.0\",\"type\":\"ClassDiagram\",\"nodes\":[{\"id\":\"n1\"}],\"edges\":[]}");
         submission.setSubmitted(true);
         submission.setSubmissionDate(ZonedDateTime.now());
         participationUtilService.addSubmission(participation, submission);

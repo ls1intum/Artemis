@@ -93,7 +93,11 @@ public class TextExerciseFeedbackService {
         if (submissionOptional.isEmpty()) {
             return;
         }
-        TextSubmission textSubmission = (TextSubmission) submissionOptional.get();
+        if (!(submissionOptional.get() instanceof TextSubmission textSubmission)) {
+            log.warn("Skipping Athena feedback for participation {} on text exercise {}: latest submission {} is not a TextSubmission", participation.getId(), textExercise.getId(),
+                    submissionOptional.get().getId());
+            return;
+        }
         if (textSubmission.isEmpty()) {
             return;
         }

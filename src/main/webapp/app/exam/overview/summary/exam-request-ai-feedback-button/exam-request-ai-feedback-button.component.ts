@@ -128,7 +128,8 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
             },
             error: (error: HttpErrorResponse) => {
                 this.isRequestingFeedback.set(false);
-                this.alertService.error(`artemisApp.exercise.${error.error?.errorKey}`);
+                const errorKey = error.error?.errorKey;
+                this.alertService.error(errorKey ? `artemisApp.exercise.${errorKey}` : `error.http.${error.status}`);
             },
         });
     }
@@ -146,6 +147,11 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
                 this.athenaFeedbackUsed.set(usage.used);
                 this.athenaFeedbackLimit.set(usage.limit);
                 // If the server already counts this attempt as consumed, don't bump again on incoming websocket results.
+                this.currentAttemptCounted = this.hasAnyAthenaResultForCurrentAttempt;
+                this.subscribeToAthenaResultsForCurrentAttempt();
+            },
+            error: () => {
+                this.alertService.error('artemisApp.exam.examSummary.feedbackUsageLoadFailed');
                 this.currentAttemptCounted = this.hasAnyAthenaResultForCurrentAttempt;
                 this.subscribeToAthenaResultsForCurrentAttempt();
             },
