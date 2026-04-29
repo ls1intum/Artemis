@@ -303,8 +303,8 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
         feedbackCreationService.categorizeScaFeedback(result, feedbacks, programmingExerciseSCAEnabled);
         assertThat(feedbacks).hasSize(1);
         assertThat(result.getFeedbacks()).containsExactlyInAnyOrderElementsOf(feedbacks);
-        assertThat(result.getFeedbacks().getFirst().getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");
-        assertThat(JsonObjectMapper.get().readValue(result.getFeedbacks().getFirst().getDetailText(), StaticCodeAnalysisIssue.class).penalty()).isEqualTo(3.0);
+        assertThat(result.getFeedbacksSorted().getFirst().getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");
+        assertThat(JsonObjectMapper.get().readValue(result.getFeedbacksSorted().getFirst().getDetailText(), StaticCodeAnalysisIssue.class).penalty()).isEqualTo(3.0);
     }
 
     @Test

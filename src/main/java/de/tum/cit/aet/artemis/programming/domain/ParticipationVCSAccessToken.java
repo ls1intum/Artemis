@@ -6,9 +6,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -18,7 +15,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
  */
 @Entity
 @Table(name = "participation_vcs_access_token", uniqueConstraints = { @UniqueConstraint(columnNames = { "user_id", "participation_id" }) })
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 
 public class ParticipationVCSAccessToken extends DomainObject {
 
