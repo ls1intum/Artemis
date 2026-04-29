@@ -299,7 +299,7 @@ export class IrisChatControllerService {
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
                 this.handleSendHttpError(error);
-                return of();
+                return of(undefined);
             }),
         );
     }
