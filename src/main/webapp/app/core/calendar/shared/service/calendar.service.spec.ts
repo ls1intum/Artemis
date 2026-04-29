@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockService } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,6 +13,7 @@ import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entit
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { User } from 'app/core/user/user.model';
 
 describe('CalendarService', () => {
     setupTestBed({ zoneless: true });
@@ -256,6 +257,89 @@ describe('CalendarService', () => {
         const refreshEventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
         expect(refreshEventRequest.request.method).toBe('GET');
         refreshEventRequest.flush({});
+    });
+});
+
+describe('CalendarService - authentication state changes', () => {
+    setupTestBed({ zoneless: true });
+
+    const courseId = 42;
+    const date = dayjs('2025-10-01');
+    const expectedEventUrl = `/api/core/calendar/courses/${courseId}/calendar-events`;
+    const expectedTokenUrl = '/api/core/calendar/subscription-token';
+    const testToken = 'testToken';
+    const translateServiceMock = {
+        currentLang: 'en',
+        getCurrentLang(): string {
+            return this.currentLang;
+        },
+        onLangChange: of({ lang: 'en' }),
+    };
+
+    let authState: BehaviorSubject<User | undefined>;
+    let scoped: CalendarService;
+    let scopedHttpMock: HttpTestingController;
+
+    beforeEach(() => {
+        authState = new BehaviorSubject<User | undefined>({ id: 99 } as User);
+        const customAccountService = new MockAccountService();
+        customAccountService.userIdentity.set({ id: 99 } as User);
+        customAccountService.getAuthenticationState = () => authState.asObservable().pipe(distinctUntilChanged());
+
+        TestBed.configureTestingModule({
+            providers: [
+                CalendarService,
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AlertService, useValue: MockService(AlertService) },
+                { provide: TranslateService, useValue: translateServiceMock },
+                { provide: AccountService, useValue: customAccountService },
+            ],
+        });
+
+        scoped = TestBed.inject(CalendarService);
+        scopedHttpMock = TestBed.inject(HttpTestingController);
+        scopedHttpMock.expectOne((request) => request.url === expectedTokenUrl).flush(testToken);
+    });
+
+    afterEach(() => {
+        scopedHttpMock.verify();
+        vi.restoreAllMocks();
+    });
+
+    it('should clear event map and reload subscription token on logout/login', async () => {
+        const loadPromise = firstValueFrom(scoped.loadEventsForCurrentMonth(courseId, date));
+        scopedHttpMock.expectOne((request) => request.url === expectedEventUrl).flush({});
+        await loadPromise;
+        expect(scoped.subscriptionToken()).toBe(testToken);
+
+        authState.next(undefined);
+
+        expect(scoped.eventMap().size).toBe(0);
+        expect(scoped.subscriptionToken()).toBeUndefined();
+
+        authState.next({ id: 42 } as User);
+        scopedHttpMock.expectOne((request) => request.url === expectedTokenUrl).flush('newToken');
+        expect(scoped.subscriptionToken()).toBe('newToken');
+    });
+
+    it('should not reset state when the same user re-emits', () => {
+        authState.next({ id: 99 } as User);
+        expect(scoped.subscriptionToken()).toBe(testToken);
+    });
+
+    it('should ignore in-flight HTTP responses after reset', async () => {
+        const loadObservable = scoped.loadEventsForCurrentMonth(courseId, date);
+        const loadPromise = firstValueFrom(loadObservable);
+        const inFlightRequest = scopedHttpMock.expectOne((request) => request.url === expectedEventUrl);
+
+        authState.next(undefined);
+
+        // After reset, the in-flight response must not write back into the now-cleared event map.
+        inFlightRequest.flush({ '2025-10-01': [] });
+        await loadPromise;
+
+        expect(scoped.eventMap().size).toBe(0);
     });
 });
 

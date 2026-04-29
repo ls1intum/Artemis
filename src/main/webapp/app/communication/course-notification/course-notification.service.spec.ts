@@ -10,7 +10,8 @@ import { CourseNotificationPage } from 'app/communication/shared/entities/course
 import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
 import dayjs from 'dayjs/esm';
 import { faComments } from '@fortawesome/free-solid-svg-icons';
-import { firstValueFrom } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
+import { User } from 'app/core/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -526,6 +527,72 @@ describe('CourseNotificationService', () => {
 
             expect(result.body!.content![0].courseName).toBe('Java Programming');
             expect(result.body!.content![0].courseIconUrl).toBe('http://example.com/icon.png');
+        });
+    });
+
+    describe('authentication state changes', () => {
+        let authState: BehaviorSubject<User | undefined>;
+        let scoped: CourseNotificationService;
+        let scopedHttpMock: HttpTestingController;
+
+        beforeEach(() => {
+            authState = new BehaviorSubject<User | undefined>({ id: 99 } as User);
+            const customAccountService = new MockAccountService();
+            customAccountService.userIdentity.set({ id: 99 } as User);
+            customAccountService.getAuthenticationState = () => authState.asObservable().pipe(distinctUntilChanged());
+
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                providers: [CourseNotificationService, provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useValue: customAccountService }],
+            });
+            scoped = TestBed.inject(CourseNotificationService);
+            scopedHttpMock = TestBed.inject(HttpTestingController);
+        });
+
+        afterEach(() => {
+            scopedHttpMock.verify();
+        });
+
+        it('should clear cached notifications and counts on logout', () => {
+            const courseId = 7;
+            scoped.addNotification(courseId, { notificationId: 1 } as CourseNotification);
+            scoped.updateNotificationCountMap(courseId, 5);
+
+            authState.next(undefined);
+
+            expect(scoped['courseNotificationMap']).toEqual({});
+            expect(scoped['courseNotificationCountMap']).toEqual({});
+            expect(scoped['courseNotificationPageMap']).toEqual({});
+            expect(scoped['cachedNotificationInfo']).toBeNull();
+        });
+
+        it('should clear notifications when a different user logs in', () => {
+            scoped.addNotification(7, { notificationId: 1 } as CourseNotification);
+
+            authState.next({ id: 42 } as User);
+
+            expect(scoped['courseNotificationMap']).toEqual({});
+        });
+
+        it('should not clear notifications when the same user re-emits', () => {
+            scoped.addNotification(7, { notificationId: 1 } as CourseNotification);
+
+            authState.next({ id: 99 } as User);
+
+            expect(scoped['courseNotificationMap'][7]).toHaveLength(1);
+        });
+
+        it('should ignore in-flight pagination responses after logout', () => {
+            const courseId = 7;
+            scoped.getNextNotificationPage(courseId);
+            const inFlight = scopedHttpMock.expectOne(`/api/communication/notification/${courseId}?page=0&size=10`);
+
+            authState.next(undefined);
+
+            inFlight.flush({ content: [{ notificationId: 99 } as CourseNotification], totalPages: 1 });
+            vi.advanceTimersByTime(0);
+
+            expect(scoped['courseNotificationMap']).toEqual({});
         });
     });
 });

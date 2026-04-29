@@ -14,7 +14,8 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TestBed } from '@angular/core/testing';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
+import { User } from 'app/core/user/user.model';
 import * as Sentry from '@sentry/angular';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -172,5 +173,64 @@ describe('EntityTitleService', () => {
         const result = await firstValueFrom(service.getTitle(EntityType.EXERCISE, [1]));
 
         expect(result).toBe('Exercise Title');
+    });
+});
+
+describe('EntityTitleService - authentication state changes', () => {
+    setupTestBed({ zoneless: true });
+
+    let authState: BehaviorSubject<User | undefined>;
+    let scoped: EntityTitleService;
+
+    beforeEach(() => {
+        authState = new BehaviorSubject<User | undefined>({ id: 99 } as User);
+        const customAccountService = new MockAccountService();
+        customAccountService.userIdentity.set({ id: 99 } as User);
+        customAccountService.getAuthenticationState = () => authState.asObservable().pipe(distinctUntilChanged());
+
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useValue: customAccountService },
+                { provide: EntityTitleService, useClass: EntityTitleService },
+            ],
+        });
+        scoped = TestBed.inject(EntityTitleService);
+    });
+
+    it('should clear cached titles on logout', async () => {
+        scoped.setTitle(EntityType.COURSE, [1], 'Course Title');
+        const before = await firstValueFrom(scoped.getTitle(EntityType.COURSE, [1]));
+        expect(before).toBe('Course Title');
+
+        authState.next(undefined);
+
+        // After reset, getTitle returns a fresh subject that hasn't been populated.
+        const observable = scoped.getTitle(EntityType.COURSE, [1]);
+        let received: string | undefined;
+        const sub = observable.subscribe((title) => (received = title));
+        expect(received).toBeUndefined();
+        sub.unsubscribe();
+    });
+
+    it('should clear cached titles when a different user logs in', async () => {
+        scoped.setTitle(EntityType.COURSE, [1], 'Course Title');
+
+        authState.next({ id: 42 } as User);
+
+        let received: string | undefined;
+        const sub = scoped.getTitle(EntityType.COURSE, [1]).subscribe((title) => (received = title));
+        expect(received).toBeUndefined();
+        sub.unsubscribe();
+    });
+
+    it('should not clear titles when the same user re-emits', async () => {
+        scoped.setTitle(EntityType.COURSE, [1], 'Course Title');
+
+        authState.next({ id: 99 } as User);
+
+        const result = await firstValueFrom(scoped.getTitle(EntityType.COURSE, [1]));
+        expect(result).toBe('Course Title');
     });
 });
