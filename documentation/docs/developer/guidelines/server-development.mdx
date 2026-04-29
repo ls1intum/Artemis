@@ -7,6 +7,7 @@ import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
 * Always use the least possible access level; prefer `private` over `public` (package-private or protected can be used as well).
 * Avoid using `@Transactional` randomly. Transactions can hurt performance, introduce locking/concurrency issues, and add complexity. See: https://codete.com/blog/5-common-spring-transactional-pitfalls/
+* Do not add Hibernate `@Cache` annotations on entities or associations. Hibernate second-level cache is disabled cluster-wide; an ArchUnit rule enforces this. For DTO caching, use Spring `@Cacheable` with explicit eviction. See [Caching Guidelines](/developer/guidelines/caching) for the full rationale and the canonical eviction pattern.
 * Do not inject `EntityManager` or `EntityManagerFactory` directly into services, controllers, or other Spring beans. All database operations must go through Spring Data repositories. Direct `EntityManager` usage bypasses the repository abstraction, makes code harder to test and maintain, and can introduce subtle persistence context bugs (e.g. stale proxies after JPQL bulk operations). The only acceptable location for `EntityManager` usage is inside custom repository implementations (e.g. `RepositoryImpl`).
 * Define a constant if the same value is used more than once. This makes future changes easier.
 * Facilitate code reuse. Move duplicated code to reusable methods. Use Generics where appropriate. IntelliJ can help find and extract duplicates.

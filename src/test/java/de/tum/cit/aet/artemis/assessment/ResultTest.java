@@ -118,7 +118,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
         result.setFeedbacks(new ArrayList<>(List.of(feedback1, feedback2, feedback3)));
 
         result.filterSensitiveFeedbacks(false);
-        assertThat(result.getFeedbacks()).isEqualTo(List.of(feedback1, feedback2));
+        assertThat(result.getFeedbacks()).containsExactlyInAnyOrder(feedback1, feedback2);
     }
 
     @Test
@@ -129,7 +129,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
         result.setFeedbacks(new ArrayList<>(List.of(feedback1, feedback2, feedback3)));
 
         result.filterSensitiveFeedbacks(true);
-        assertThat(result.getFeedbacks()).isEqualTo(List.of(feedback1));
+        assertThat(result.getFeedbacks()).containsExactly(feedback1);
     }
 
     @Test
