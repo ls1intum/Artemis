@@ -166,6 +166,7 @@ export class ExamStudentsComponent implements OnDestroy {
         }
         return groups;
     });
+    private requestId = 0;
     private lastLazyEvent: TableLazyLoadEvent | undefined;
 
     private removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
@@ -208,7 +209,7 @@ export class ExamStudentsComponent implements OnDestroy {
             cols.push({
                 field: 'didExamUserAttendExam',
                 headerKey: 'artemisApp.examManagement.examStudents.table.status',
-                sort: true,
+                sort: false,
                 width: '2rem',
                 templateRef: this.attendanceTemplate(),
             });
@@ -408,6 +409,7 @@ export class ExamStudentsComponent implements OnDestroy {
             return;
         }
 
+        const currentRequestId = ++this.requestId;
         const query = buildDbQueryFromLazyEvent(event);
         const search: ExamStudentSearch = {
             ...query,
@@ -416,6 +418,9 @@ export class ExamStudentsComponent implements OnDestroy {
         this.isLoading.set(true);
         this.examManagementService.findExamStudentsPaged(this.courseId(), examId, search).subscribe({
             next: (result) => {
+                if (currentRequestId !== this.requestId) {
+                    return;
+                }
                 this.rows.set(result.content);
                 this.totalRows.set(result.totalElements);
                 if (!search.searchTerm && !search.filterProp) {
@@ -424,6 +429,9 @@ export class ExamStudentsComponent implements OnDestroy {
                 this.isLoading.set(false);
             },
             error: (err: HttpErrorResponse) => {
+                if (currentRequestId !== this.requestId) {
+                    return;
+                }
                 onError(this.alertService, err);
                 this.isLoading.set(false);
             },
