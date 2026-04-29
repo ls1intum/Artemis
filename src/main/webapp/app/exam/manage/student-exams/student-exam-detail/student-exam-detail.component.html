@@ -114,13 +114,7 @@
                     class="d-inline"
                 >
                     @if (course()?.isAtLeastInstructor) {
-                        <button
-                            class="btn btn-danger"
-                            type="button"
-                            (click)="openConfirmationModal(toggleSubmitPopUp)"
-                            [disabled]="!isExamOver() || isSaving()"
-                            id="adjust-submitted-state-button"
-                        >
+                        <button class="btn btn-danger" type="button" (click)="openConfirmationModal()" [disabled]="!isExamOver() || isSaving()" id="adjust-submitted-state-button">
                             @if (!studentExam()!.submitted) {
                                 <span jhiTranslate="entity.action.toggleToSubmitted"></span>
                             } @else {
@@ -131,38 +125,44 @@
                 </div>
             </div>
         </div>
-        <ng-template #toggleSubmitPopUp let-modal>
-            <div class="modal-header">
-                <h4 class="modal-title">
+        <p-dialog
+            [(visible)]="confirmToggleVisible"
+            [modal]="true"
+            [closable]="true"
+            [closeOnEscape]="true"
+            [dismissableMask]="false"
+            [draggable]="false"
+            [appendTo]="'body'"
+            [style]="{ width: '35dvw' }"
+            (onHide)="cancelToggleSubmission()"
+        >
+            <ng-template #header>
+                <h4 class="modal-title mb-0">
                     @if (studentExam()!.submitted) {
                         <span jhiTranslate="artemisApp.studentExams.confirmDialog.titleToUnsubmitted"></span>
                     } @else {
-                        @if (!studentExam()!.submitted) {
-                            <span jhiTranslate="artemisApp.studentExams.confirmDialog.titleToSubmitted"></span>
-                        }
+                        <span jhiTranslate="artemisApp.studentExams.confirmDialog.titleToSubmitted"></span>
                     }
                 </h4>
-                <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
-            </div>
-            <div class="modal-body">
-                <p jhiTranslate="artemisApp.studentExams.confirmDialog.question"></p>
-                @if (!studentExam()!.submitted) {
-                    <p jhiTranslate="artemisApp.studentExams.confirmDialog.submitText"></p>
-                } @else {
-                    <p jhiTranslate="artemisApp.studentExams.confirmDialog.unSubmitText"></p>
-                    <p jhiTranslate="artemisApp.studentExams.confirmDialog.warningRemove"></p>
-                }
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-danger" (click)="modal.close('confirm')">
+            </ng-template>
+            <p jhiTranslate="artemisApp.studentExams.confirmDialog.question"></p>
+            @if (!studentExam()!.submitted) {
+                <p jhiTranslate="artemisApp.studentExams.confirmDialog.submitText"></p>
+            } @else {
+                <p jhiTranslate="artemisApp.studentExams.confirmDialog.unSubmitText"></p>
+                <p jhiTranslate="artemisApp.studentExams.confirmDialog.warningRemove"></p>
+            }
+            <ng-template #footer>
+                <button type="button" class="btn btn-outline-secondary" (click)="cancelToggleSubmission()" jhiTranslate="global.form.cancel"></button>
+                <button type="button" class="btn btn-danger" (click)="confirmToggleSubmission()">
                     @if (!studentExam()!.submitted) {
                         <span jhiTranslate="artemisApp.studentExams.confirmDialog.submit"></span>
                     } @else {
                         <span jhiTranslate="artemisApp.studentExams.confirmDialog.unsubmit"></span>
                     }
                 </button>
-            </div>
-        </ng-template>
+            </ng-template>
+        </p-dialog>
         <div class="mb-3">
             <h5><span jhiTranslate="artemisApp.studentExams.summary"></span></h5>
             <div class="d-flex flex-row">

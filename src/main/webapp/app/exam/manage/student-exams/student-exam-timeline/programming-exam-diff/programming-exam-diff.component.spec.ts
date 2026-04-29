@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -9,9 +8,6 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { CachedRepositoryFilesService } from 'app/programming/manage/services/cached-repository-files.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -71,7 +67,6 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let cachedRepositoryFilesService: CachedRepositoryFilesService;
-    let modal: NgbModal;
 
     const mockDiffInformation = {
         diffInformations: [
@@ -102,7 +97,6 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         TestBed.configureTestingModule({
             imports: [ProgrammingExerciseExamDiffComponent, MockComponent(CommitsInfoComponent), MockPipe(ArtemisTranslatePipe), MockComponent(IncludedInScoreBadgeComponent)],
             providers: [
-                { provide: NgbModal, useValue: new MockNgbModalService() },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
@@ -115,7 +109,6 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         component = fixture.componentInstance;
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
-        modal = TestBed.inject(NgbModal);
         cachedRepositoryFilesService = TestBed.inject(CachedRepositoryFilesService);
         const exercise = { id: 3, title: 'programming exercise' } as ProgrammingExercise;
         const studentParticipation = {} as StudentParticipation;
@@ -173,14 +166,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         expect(getTemplateRepositorySpy).toHaveBeenCalledWith(3);
     });
 
-    it('should open the modal when showGitDiff is called', () => {
-        const repositoryDiffInformationSignal = signal<any>(undefined);
-        const diffForTemplateAndSolutionSignal = signal<boolean>(true);
-        const modalServiceSpy = vi.spyOn(modal, 'open').mockReturnValue({
-            componentInstance: { repositoryDiffInformation: repositoryDiffInformationSignal, diffForTemplateAndSolution: diffForTemplateAndSolutionSignal },
-            result: Promise.resolve(),
-            close: () => {},
-        } as any);
+    it('should open the diff dialog when showGitDiff is called', () => {
         const exercise = { id: 1 } as ProgrammingExercise;
         component.exercise.update(() => exercise);
 
@@ -192,14 +178,17 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
 
         const cachedDiffInfo = new Map<string, any>();
         const key = JSON.stringify([previousSubmission.id, currentSubmission.id]);
-        cachedDiffInfo.set(key, { someDiffInfo: 'test' });
+        const diffInfo = { someDiffInfo: 'test' };
+        cachedDiffInfo.set(key, diffInfo);
 
         // Directly set the cached diff information instead of using input()
         (component as any).cachedDiffInformation = vi.fn().mockReturnValue(cachedDiffInfo);
 
         component.fetchRepositoriesAndProcessDiff();
         component.showGitDiff();
-        expect(modalServiceSpy).toHaveBeenCalledWith(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
+
+        expect(component.diffModalVisible()).toBe(true);
+        expect(component.diffModalInformation()).toBe(diffInfo);
     });
 
     it('should use diffInformation from cache if available', async () => {
@@ -314,9 +303,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.repositoryFilesError');
     });
 
-    it('should not open modal when cached diff information is not available', () => {
-        const modalServiceSpy = vi.spyOn(modal, 'open');
-
+    it('should not open the diff dialog when cached diff information is not available', () => {
         // Set up component without cached diff information
         const previousSubmission = { id: 1, commitHash: 'abc' };
         const currentSubmission = { id: 2, commitHash: 'def' };
@@ -328,7 +315,8 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
 
         component.showGitDiff();
 
-        expect(modalServiceSpy).not.toHaveBeenCalled();
+        expect(component.diffModalVisible()).toBe(false);
+        expect(component.diffModalInformation()).toBeUndefined();
     });
 
     it('should return correct exercise information from getters', () => {

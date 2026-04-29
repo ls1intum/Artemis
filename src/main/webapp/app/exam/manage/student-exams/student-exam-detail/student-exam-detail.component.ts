@@ -8,7 +8,8 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
 import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
 import dayjs from 'dayjs/esm';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { Dialog } from 'primeng/dialog';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
@@ -37,13 +38,15 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         StudentExamDetailTableRowComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        Dialog,
     ],
 })
 export class StudentExamDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private studentExamService = inject(StudentExamService);
     private alertService = inject(AlertService);
-    private modalService = inject(NgbModal);
+
+    confirmToggleVisible = signal(false);
 
     examId = signal<number | undefined>(undefined);
     courseId = signal<number | undefined>(undefined);
@@ -249,14 +252,18 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Open a modal that requires the user's confirmation.
-     * @param content the modal content
+     * Open the confirmation dialog that requires the user's confirmation before toggling the submission state.
      */
-    openConfirmationModal(content: any) {
-        this.modalService.open(content).result.then((result: string) => {
-            if (result === 'confirm') {
-                this.toggle();
-            }
-        });
+    openConfirmationModal() {
+        this.confirmToggleVisible.set(true);
+    }
+
+    confirmToggleSubmission() {
+        this.confirmToggleVisible.set(false);
+        this.toggle();
+    }
+
+    cancelToggleSubmission() {
+        this.confirmToggleVisible.set(false);
     }
 }

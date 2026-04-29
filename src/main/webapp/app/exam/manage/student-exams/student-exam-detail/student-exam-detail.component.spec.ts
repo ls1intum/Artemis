@@ -10,7 +10,6 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -21,7 +20,6 @@ import { ParticipationType } from 'app/exercise/shared/entities/participation/pa
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -150,7 +148,6 @@ describe('StudentExamDetailComponent', () => {
                         url: of([]),
                     },
                 },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -252,22 +249,27 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.studentExam()!.submissionDate).toBeDefined();
     });
 
-    it('should open confirmation modal', async () => {
-        const modalService = TestBed.inject(NgbModal);
-
-        const mockReturnValue = { result: Promise.resolve('confirm') } as NgbModalRef;
-        const modalServiceSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-
+    it('should open the confirmation dialog and toggle on confirm', () => {
         const toggleSpy = vi.spyOn(studentExamDetailComponent, 'toggle').mockImplementation(() => {});
 
-        const content = 'Modal content';
-        studentExamDetailComponent.openConfirmationModal(content);
+        studentExamDetailComponent.openConfirmationModal();
+        expect(studentExamDetailComponent.confirmToggleVisible()).toBe(true);
+        expect(toggleSpy).not.toHaveBeenCalled();
 
-        await mockReturnValue.result;
-
-        expect(modalServiceSpy).toHaveBeenCalledOnce();
-        expect(modalServiceSpy).toHaveBeenCalledWith(content);
+        studentExamDetailComponent.confirmToggleSubmission();
+        expect(studentExamDetailComponent.confirmToggleVisible()).toBe(false);
         expect(toggleSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should close the confirmation dialog on cancel without toggling', () => {
+        const toggleSpy = vi.spyOn(studentExamDetailComponent, 'toggle').mockImplementation(() => {});
+
+        studentExamDetailComponent.openConfirmationModal();
+        expect(studentExamDetailComponent.confirmToggleVisible()).toBe(true);
+
+        studentExamDetailComponent.cancelToggleSubmission();
+        expect(studentExamDetailComponent.confirmToggleVisible()).toBe(false);
+        expect(toggleSpy).not.toHaveBeenCalled();
     });
 
     it.each([

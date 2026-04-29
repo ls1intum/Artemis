@@ -16,10 +16,8 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -50,7 +48,6 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
             providers: [
                 provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },

@@ -16,7 +16,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -39,7 +38,6 @@ import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { By } from '@angular/platform-browser';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -714,20 +712,7 @@ describe('ExamUpdateComponent', () => {
             expect(button.disabled()).toBe(true);
         });
 
-        it('should open confirmation modal when dates changed for ongoing exam', async () => {
-            const modalService = TestBed.inject(NgbModal);
-            const mockModalRef = {
-                componentInstance: {
-                    title: '',
-                    text: '',
-                    contentRef: null,
-                    confirmDisabled: false,
-                },
-                result: new Promise<void>(() => {}),
-            } as any;
-
-            const modalSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
-
+        it('should open the confirmation dialog when dates changed for an ongoing exam', async () => {
             // Set up an ongoing exam
             examWithoutExercises.id = 1;
             examWithoutExercises.title = 'Test Exam Title';
@@ -746,29 +731,12 @@ describe('ExamUpdateComponent', () => {
             component.handleSubmit();
             await Promise.resolve();
 
-            expect(modalSpy).toHaveBeenCalledOnce();
-            expect(modalSpy).toHaveBeenCalledWith(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
-            expect(component['activeModalRef']).toBe(mockModalRef);
+            expect(component.confirmDateChangeVisible()).toBe(true);
             expect(component.confirmEntityNameValue()).toBe('');
-            expect(mockModalRef.componentInstance.confirmDisabled).toBe(true);
-            expect(mockModalRef.componentInstance.title).toBe('artemisApp.examManagement.dateChange.title');
+            expect(component.confirmDisabled()).toBe(true);
         });
 
-        it('should set confirmDisabled to true initially when opening modal', async () => {
-            const modalService = TestBed.inject(NgbModal);
-            const mockModalRef = {
-                componentInstance: {
-                    title: '',
-                    text: '',
-                    contentRef: null,
-                    confirmDisabled: false,
-                },
-                result: new Promise<void>(() => {}),
-            } as any;
-
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
-
-            // Set up an ongoing exam
+        it('should keep the confirm button disabled until the entered name matches the exam title', async () => {
             examWithoutExercises.id = 1;
             examWithoutExercises.title = 'My Exam';
             examWithoutExercises.startDate = dayjs().subtract(1, 'hours');
@@ -779,18 +747,16 @@ describe('ExamUpdateComponent', () => {
             fixture.detectChanges();
             await Promise.resolve();
 
-            // Change the dates
             examWithoutExercises.startDate = dayjs().subtract(30, 'minutes');
 
             component.handleSubmit();
             await Promise.resolve();
 
-            expect(mockModalRef.componentInstance.confirmDisabled).toBe(true);
+            expect(component.confirmDateChangeVisible()).toBe(true);
+            expect(component.confirmDisabled()).toBe(true);
         });
 
-        it('should not open modal when dates have not changed', async () => {
-            const modalService = TestBed.inject(NgbModal);
-            const modalSpy = vi.spyOn(modalService, 'open');
+        it('should not open the confirmation dialog when dates have not changed', async () => {
             const navigateSpy = vi.spyOn(router, 'navigate');
             const saveSpy = vi.spyOn(examManagementService, 'update').mockReturnValue(
                 of(
@@ -818,7 +784,7 @@ describe('ExamUpdateComponent', () => {
             component.handleSubmit();
             await Promise.resolve();
 
-            expect(modalSpy).not.toHaveBeenCalled();
+            expect(component.confirmDateChangeVisible()).toBe(false);
             expect(saveSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledOnce();
         });
@@ -827,46 +793,72 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.title = 'Exact Title Match';
             fixture.detectChanges();
 
-            const mockModalRef = {
-                componentInstance: {
-                    confirmDisabled: true,
-                },
-            } as any;
-
-            component['activeModalRef'] = mockModalRef;
-
             component.onConfirmNameChange('Exact Title Match');
 
             expect(component.confirmEntityNameValue()).toBe('Exact Title Match');
-            expect(mockModalRef.componentInstance.confirmDisabled).toBe(false);
+            expect(component.confirmDisabled()).toBe(false);
         });
 
         it('should disable confirm button when entered value does not match exam title', () => {
             examWithoutExercises.title = 'Correct Title';
             fixture.detectChanges();
 
-            const mockModalRef = {
-                componentInstance: {
-                    confirmDisabled: false,
-                },
-            } as any;
-
-            component['activeModalRef'] = mockModalRef;
-
             component.onConfirmNameChange('Wrong Title');
 
             expect(component.confirmEntityNameValue()).toBe('Wrong Title');
-            expect(mockModalRef.componentInstance.confirmDisabled).toBe(true);
+            expect(component.confirmDisabled()).toBe(true);
         });
 
-        it('should handle onConfirmNameChange when no modal is active', () => {
-            examWithoutExercises.title = 'Some Exam';
+        it('should save and close the dialog when confirming the date change', async () => {
+            const saveSpy = vi.spyOn(examManagementService, 'update').mockReturnValue(
+                of(
+                    new HttpResponse<Exam>({
+                        body: {
+                            ...examWithoutExercises,
+                            id: 1,
+                        },
+                    }),
+                ),
+            );
+
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            component.exam.id = 1;
+            component.exam.title = 'Confirm Title';
+            component.confirmDateChangeVisible.set(true);
+            component.onConfirmNameChange('Confirm Title');
+
+            component.confirmDateChange();
+            await Promise.resolve();
+
+            expect(component.confirmDateChangeVisible()).toBe(false);
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not save when confirming while the entered name does not match', () => {
+            const saveSpy = vi.spyOn(examManagementService, 'update');
+
             fixture.detectChanges();
 
-            component['activeModalRef'] = null;
+            component.exam.title = 'Some Title';
+            component.confirmDateChangeVisible.set(true);
+            component.onConfirmNameChange('Wrong');
 
-            expect(() => component.onConfirmNameChange('Some Value')).not.toThrow();
-            expect(component.confirmEntityNameValue()).toBe('Some Value');
+            component.confirmDateChange();
+
+            expect(component.confirmDateChangeVisible()).toBe(true);
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('should close the dialog without saving when cancelling', () => {
+            const saveSpy = vi.spyOn(examManagementService, 'update');
+
+            component.confirmDateChangeVisible.set(true);
+            component.cancelDateChange();
+
+            expect(component.confirmDateChangeVisible()).toBe(false);
+            expect(saveSpy).not.toHaveBeenCalled();
         });
     });
 
