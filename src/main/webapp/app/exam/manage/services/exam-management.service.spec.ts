@@ -1,7 +1,9 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+﻿import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
+import { SortingOrder } from 'app/shared/table/pageable-table';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import dayjs from 'dayjs/esm';
@@ -687,4 +689,119 @@ describe('Exam Management Service Tests', () => {
         req.flush(true);
         tick();
     }));
+
+    describe('findExamStudentsPaged', () => {
+        const examId = 1;
+        const baseSearch: ExamStudentSearch = {
+            page: 0,
+            pageSize: 20,
+            sortingOrder: SortingOrder.ASCENDING,
+            sortedColumn: 'name',
+            searchTerm: '',
+        };
+
+        it('should send GET request with correct URL and params', fakeAsync(() => {
+            // GIVEN
+            const mockBody: ExamStudentDTO[] = [{ id: 10, login: 'student1' }];
+
+            // WHEN
+            service.findExamStudentsPaged(course.id!, examId, baseSearch).subscribe((result) => {
+                expect(result.content).toHaveLength(1);
+                expect(result.content[0].login).toBe('student1');
+                expect(result.totalElements).toBe(1);
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/exam-students/paged`);
+            expect(req.request.params.get('page')).toBe('0');
+            expect(req.request.params.get('pageSize')).toBe('20');
+            expect(req.request.params.get('sortingOrder')).toBe(SortingOrder.ASCENDING);
+            expect(req.request.params.get('sortedColumn')).toBe('name');
+            expect(req.request.params.get('searchTerm')).toBe('');
+            expect(req.request.params.has('filterProp')).toBeFalse();
+
+            // CLEANUP
+            req.flush(mockBody, { headers: { 'X-Total-Count': '1' } });
+            tick();
+        }));
+
+        it('should include filterProp in params when provided', fakeAsync(() => {
+            // GIVEN
+            const searchWithFilter: ExamStudentSearch = { ...baseSearch, filterProp: 'Submitted' };
+
+            // WHEN
+            service.findExamStudentsPaged(course.id!, examId, searchWithFilter).subscribe();
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/exam-students/paged`);
+            expect(req.request.params.get('filterProp')).toBe('Submitted');
+
+            // CLEANUP
+            req.flush([]);
+            tick();
+        }));
+
+        it('should read totalElements from X-Total-Count header', fakeAsync(() => {
+            // GIVEN
+            let capturedTotal: number | undefined;
+
+            // WHEN
+            service.findExamStudentsPaged(course.id!, examId, baseSearch).subscribe((result) => {
+                capturedTotal = result.totalElements;
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/exam-students/paged`);
+
+            // CLEANUP
+            req.flush([], { headers: { 'X-Total-Count': '42' } });
+            tick();
+
+            expect(capturedTotal).toBe(42);
+        }));
+
+        it('should convert startedDate and submissionDate from server format', fakeAsync(() => {
+            // GIVEN
+            const isoDate = '2024-06-15T10:00:00Z';
+            const mockBody: ExamStudentDTO[] = [{ id: 10, startedDate: isoDate as any, submissionDate: isoDate as any }];
+            let capturedRow: ExamStudentDTO | undefined;
+
+            // WHEN
+            service.findExamStudentsPaged(course.id!, examId, baseSearch).subscribe((result) => {
+                capturedRow = result.content[0];
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/exam-students/paged`);
+
+            // CLEANUP
+            req.flush(mockBody, { headers: { 'X-Total-Count': '1' } });
+            tick();
+
+            expect(capturedRow?.startedDate).toBeDefined();
+            expect(capturedRow?.submissionDate).toBeDefined();
+            // convertDateFromServer wraps them in dayjs — verify they are dayjs objects
+            expect(typeof capturedRow?.startedDate?.isValid).toBe('function');
+            expect(typeof capturedRow?.submissionDate?.isValid).toBe('function');
+        }));
+
+        it('should default totalElements to 0 when X-Total-Count header is absent', fakeAsync(() => {
+            // GIVEN
+            let capturedTotal: number | undefined;
+
+            // WHEN
+            service.findExamStudentsPaged(course.id!, examId, baseSearch).subscribe((result) => {
+                capturedTotal = result.totalElements;
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/exam-students/paged`);
+
+            // CLEANUP
+            req.flush([]);
+            tick();
+
+            expect(capturedTotal).toBe(0);
+        }));
+    });
 });

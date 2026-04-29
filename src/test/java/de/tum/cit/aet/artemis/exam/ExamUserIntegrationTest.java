@@ -20,6 +20,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,8 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.ResourceUtils;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -35,16 +38,21 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExportExamUserDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "examuser";
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
 
     private Course course1;
 
@@ -378,6 +386,248 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
             course2 = course;
         }
         return studentExams;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStudentsPaged_returnsAllRegisteredStudents() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        var params = pageParams("");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(4);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetExamStudentsPaged_allowedForTutor() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, pageParams(""));
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetExamStudentsPaged_forbiddenForStudent() throws Exception {
+        request.getList(pagedUrl(exam1), HttpStatus.FORBIDDEN, ExamStudentDTO.class, pageParams(""));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStudentsPaged_filterSubmitted_returnsOnlySubmittedStudents() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        var params = pageParams("Submitted");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(result.getFirst().progress()).isEqualTo(ExamStudentDTO.PROGRESS_SUBMITTED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStudentsPaged_filterStarted_returnsOnlyStartedStudents() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        var params = pageParams("Started");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student2");
+        assertThat(result.getFirst().progress()).isEqualTo(ExamStudentDTO.PROGRESS_STARTED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStudentsPaged_filterNotStarted_returnsOnlyNotStartedStudents() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        var params = pageParams("NotStarted");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student3");
+        assertThat(result.getFirst().progress()).isEqualTo(ExamStudentDTO.PROGRESS_NOT_STARTED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStudentsPaged_filterExamMissing_returnsOnlyExamMissingStudents() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        var params = pageParams("ExamMissing");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student4");
+        assertThat(result.getFirst().progress()).isEqualTo(ExamStudentDTO.PROGRESS_EXAM_MISSING);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStudentsPaged_filterDidNotAttend_returnsExamMissingAndNotStartedStudents() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        // student3 (NotStarted) + student4 (ExamMissing) = 2 students who did not attend
+        var params = pageParams("DidNotAttend");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(2);
+        assertThat(result.stream().map(ExamStudentDTO::login).toList()).containsExactlyInAnyOrder(TEST_PREFIX + "student3", TEST_PREFIX + "student4");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStudentsPaged_returnsTotalMissingExamsHeader() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        // 1 of 4 students (student4) has no StudentExam
+        var result = request.performMvcRequest(MockMvcRequestBuilders.get(pagedUrl(paginationExam)).params(pageParams(""))).andExpect(status().isOk()).andReturn();
+        assertThat(result.getResponse().getHeader("X-Total-Missing-Exams")).isEqualTo("1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStudentsPaged_filterAttendanceChecked_returnsFullyCheckedStudents() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        var params = pageParams("AttendanceChecked");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(result.getFirst().didCheckImage()).isTrue();
+        assertThat(result.getFirst().didCheckLogin()).isTrue();
+        assertThat(result.getFirst().didCheckName()).isTrue();
+        assertThat(result.getFirst().didCheckRegistrationNumber()).isTrue();
+        assertThat(result.getFirst().signingImagePath()).isNotBlank();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStudentsPaged_filterAttendanceNotChecked_returnsStartedWithIncompleteChecks() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        var params = pageParams("AttendanceNotChecked");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        // student2 started but attendance not fully checked
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStudentsPaged_searchByLogin_returnsMatchingStudent() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", "0");
+        params.add("pageSize", "50");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "name");
+        params.add("searchTerm", TEST_PREFIX + "student1");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStudentsPaged_secondPage_returnsCorrectSubset() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", "0");
+        params.add("pageSize", "2");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "login");
+        params.add("searchTerm", "");
+        List<ExamStudentDTO> page0 = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(page0).hasSize(2);
+
+        params.set("page", "1");
+        List<ExamStudentDTO> page1 = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(page1).hasSize(2);
+
+        // all logins across both pages are distinct
+        var allLogins = new ArrayList<>(page0.stream().map(ExamStudentDTO::login).toList());
+        allLogins.addAll(page1.stream().map(ExamStudentDTO::login).toList());
+        assertThat(allLogins).doesNotHaveDuplicates().hasSize(4);
+    }
+
+    private String pagedUrl(Exam exam) {
+        return "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exam-students/paged";
+    }
+
+    private MultiValueMap<String, String> pageParams(String filterProp) {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", "0");
+        params.add("pageSize", "50");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "name");
+        params.add("searchTerm", "");
+        if (!filterProp.isBlank()) {
+            params.add("filterProp", filterProp);
+        }
+        return params;
+    }
+
+    /**
+     * Creates a fresh exam on {@code course1} with 4 students in distinct states:
+     * <ul>
+     * <li>student1 – submitted, attendance fully checked</li>
+     * <li>student2 – started, attendance not checked</li>
+     * <li>student3 – not started (has StudentExam, started = false)</li>
+     * <li>student4 – exam missing (no StudentExam)</li>
+     * </ul>
+     */
+    private Exam createPaginationTestExam() {
+        var s1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var s2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var s3 = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        var s4 = userUtilService.getUserByLogin(TEST_PREFIX + "student4");
+
+        Exam exam = new Exam();
+        exam.setCourse(course1);
+        exam.setTitle("Pagination Test Exam");
+        exam.setStartDate(ZonedDateTime.now().minusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        exam.setWorkingTime(2 * 60 * 60);
+        exam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+        exam.setTestExam(false);
+        exam = examRepository.save(exam);
+
+        // Register all 4 students
+        examUserRepository.save(buildExamUser(exam, s1, true, "signing/path/student1.png"));
+        examUserRepository.save(buildExamUser(exam, s2, false, null));
+        examUserRepository.save(buildExamUser(exam, s3, false, null));
+        examUserRepository.save(buildExamUser(exam, s4, false, null));
+
+        // student1: submitted
+        StudentExam se1 = buildStudentExam(exam, s1);
+        se1.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(30));
+        se1.setSubmitted(true);
+        se1.setSubmissionDate(ZonedDateTime.now().minusMinutes(10));
+        studentExamRepository.save(se1);
+
+        // student2: started only
+        StudentExam se2 = buildStudentExam(exam, s2);
+        se2.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(20));
+        studentExamRepository.save(se2);
+
+        // student3: has StudentExam but not started
+        studentExamRepository.save(buildStudentExam(exam, s3));
+
+        // student4: no StudentExam (ExamMissing)
+
+        return exam;
+    }
+
+    private ExamUser buildExamUser(Exam exam, User user, boolean attendanceChecked, String signingImagePath) {
+        ExamUser eu = new ExamUser();
+        eu.setUser(user);
+        eu.setExam(exam);
+        if (attendanceChecked) {
+            eu.setDidCheckImage(true);
+            eu.setDidCheckName(true);
+            eu.setDidCheckLogin(true);
+            eu.setDidCheckRegistrationNumber(true);
+            eu.setSigningImagePath(signingImagePath);
+        }
+        return eu;
+    }
+
+    private StudentExam buildStudentExam(Exam exam, User user) {
+        StudentExam se = new StudentExam();
+        se.setExam(exam);
+        se.setUser(user);
+        se.setTestRun(false);
+        se.setWorkingTime(exam.getDuration());
+        return se;
     }
 
     @Test
