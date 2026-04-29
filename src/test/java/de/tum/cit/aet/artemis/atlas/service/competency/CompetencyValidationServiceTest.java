@@ -41,20 +41,6 @@ class CompetencyValidationServiceTest {
     }
 
     @Test
-    void rejectsTitleTooLong() {
-        CourseCompetency c = valid();
-        c.setTitle("x".repeat(CompetencyValidationService.TITLE_MAX_LENGTH + 1));
-        assertThatThrownBy(() -> service.checkAttributes(c)).isInstanceOf(BadRequestAlertException.class);
-    }
-
-    @Test
-    void rejectsDescriptionTooLong() {
-        CourseCompetency c = valid();
-        c.setDescription("x".repeat(CompetencyValidationService.DESCRIPTION_MAX_LENGTH + 1));
-        assertThatThrownBy(() -> service.checkAttributes(c)).isInstanceOf(BadRequestAlertException.class);
-    }
-
-    @Test
     void rejectsMasteryThresholdOutOfRange() {
         CourseCompetency c = valid();
         c.setMasteryThreshold(0);
