@@ -408,7 +408,6 @@ describe('TutorSuggestionComponent', () => {
             vi.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
             vi.spyOn(IrisChatControllerService.prototype, 'currentStages').mockReturnValue(of([]));
             vi.spyOn(IrisChatControllerService.prototype, 'currentError').mockReturnValue(of());
-            vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
             const requestTutorSuggestionSpy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
             vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
             vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(concat(of([])));

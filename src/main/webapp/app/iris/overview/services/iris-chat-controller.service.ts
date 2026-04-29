@@ -580,8 +580,15 @@ export class IrisChatControllerService {
             return;
         }
 
-        const suggestions = JSON.parse(str);
-        this.suggestions.next(suggestions);
+        // Backend payload — fail closed if the JSON is malformed or shaped wrong, otherwise the
+        // exception escapes session initialization and the chat is unusable for that context.
+        try {
+            const parsed = JSON.parse(str);
+            this.suggestions.next(Array.isArray(parsed) ? parsed : []);
+        } catch (error) {
+            captureException(error, { tags: { category: 'Iris' } });
+            this.suggestions.next([]);
+        }
     }
 
     private handleWebsocketMessage(payload: IrisChatWebsocketDTO): void {
@@ -590,10 +597,12 @@ export class IrisChatControllerService {
         }
         if (payload.sessionTitle && this.sessionId) {
             if (this.latestStartedSession?.id === this.sessionId) {
-                this.latestStartedSession = { ...this.latestStartedSession, title: payload.sessionTitle };
+                this.latestStartedSession = Object.assign({}, this.latestStartedSession, { title: payload.sessionTitle });
             }
 
-            const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? { ...session, title: payload.sessionTitle } : session));
+            const updatedSessions = this.chatSessions
+                .getValue()
+                .map((session) => (session.id === this.sessionId ? Object.assign({}, session, { title: payload.sessionTitle }) : session));
             this.chatSessions.next(updatedSessions);
         }
         if (payload.citationInfo?.length) {
@@ -653,14 +662,19 @@ export class IrisChatControllerService {
             throw new Error('Session creation identifier not set');
         }
 
+        // Propagate the raw IrisErrorMessageKey rather than wrapping it in a JS Error: the
+        // handleNewSession error callback is typed `(error: IrisErrorMessageKey) => ...` and
+        // forwards the value into `this.error.next(...)`, which the UI translates as an i18n
+        // key. Wrapping in `new Error(...)` would store the Error object instead, breaking the
+        // translation lookup and showing nothing.
         return this.irisChatHttpService.getCurrentSessionOrCreateIfNotExists(this.sessionCreationIdentifier).pipe(
             map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
                     return response.body;
                 }
-                throw new Error(IrisErrorMessageKey.SESSION_LOAD_FAILED);
+                throw IrisErrorMessageKey.SESSION_LOAD_FAILED;
             }),
-            catchError(() => throwError(() => new Error(IrisErrorMessageKey.SESSION_LOAD_FAILED))),
+            catchError(() => throwError(() => IrisErrorMessageKey.SESSION_LOAD_FAILED)),
         );
     }
 
@@ -673,9 +687,9 @@ export class IrisChatControllerService {
                 if (response.body) {
                     return response.body;
                 }
-                throw new Error(IrisErrorMessageKey.SESSION_CREATION_FAILED);
+                throw IrisErrorMessageKey.SESSION_CREATION_FAILED;
             }),
-            catchError(() => throwError(() => new Error(IrisErrorMessageKey.SESSION_CREATION_FAILED))),
+            catchError(() => throwError(() => IrisErrorMessageKey.SESSION_CREATION_FAILED)),
         );
     }
 

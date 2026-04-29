@@ -411,11 +411,12 @@ export class AccountService implements IAccountService {
 
             // Return a new reference so signal consumers (e.g. the NO_AI redirect via toObservable)
             // are notified — Angular signal equality is reference-based and an in-place mutation is silent.
-            return {
-                ...currentUserIdentity,
+            // Object.assign onto a fresh User preserves the prototype chain so consumers that rely on
+            // class-only properties (instanceof, methods) keep behaving correctly.
+            return Object.assign(new User(), currentUserIdentity, {
                 selectedLLMUsageTimestamp: dayjs(),
                 selectedLLMUsage: accepted,
-            };
+            });
         });
     }
 
@@ -427,9 +428,9 @@ export class AccountService implements IAccountService {
                         return currentUserIdentity;
                     }
 
-                    // Return a new reference so signal consumers are notified;
-                    // in-place mutation is silent under the signal's reference equality.
-                    return { ...currentUserIdentity, memirisEnabled };
+                    // Return a new reference so signal consumers are notified; same rationale as
+                    // setUserLLMSelectionDecision above.
+                    return Object.assign(new User(), currentUserIdentity, { memirisEnabled });
                 });
             },
             error: (_) => {},

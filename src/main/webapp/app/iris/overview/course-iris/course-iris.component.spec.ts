@@ -32,7 +32,7 @@ describe('CourseIrisComponent', () => {
 
     const setUserSelection = (decision: LLMSelectionDecision | undefined) => {
         // Mirror the production immutable update so toObservable emits.
-        userIdentitySignal.set({ ...(userIdentitySignal() ?? ({} as User)), selectedLLMUsage: decision } as User);
+        userIdentitySignal.set(Object.assign({}, userIdentitySignal() ?? ({} as User), { selectedLLMUsage: decision }) as User);
     };
 
     beforeEach(async () => {

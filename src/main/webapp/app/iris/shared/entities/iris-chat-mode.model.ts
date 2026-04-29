@@ -6,7 +6,7 @@ export enum ChatServiceMode {
     TUTOR_SUGGESTION = 'TUTOR_SUGGESTION',
 }
 
-export function chatModeToUrlComponent(mode: ChatServiceMode): string | undefined {
+export function chatModeToUrlComponent(mode: ChatServiceMode): string {
     switch (mode) {
         case ChatServiceMode.COURSE:
             return 'course-chat';
@@ -18,7 +18,12 @@ export function chatModeToUrlComponent(mode: ChatServiceMode): string | undefine
             return 'text-exercise-chat';
         case ChatServiceMode.TUTOR_SUGGESTION:
             return 'tutor-suggestion';
-        default:
-            return undefined;
+        default: {
+            // Exhaustive check: TypeScript fails the compile if a new ChatServiceMode is added
+            // without a matching case. The `never` assignment is the type system's way of
+            // proving the switch is total.
+            const unreachable: never = mode;
+            return unreachable;
+        }
     }
 }
