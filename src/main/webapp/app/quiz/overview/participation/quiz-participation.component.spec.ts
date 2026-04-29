@@ -544,32 +544,29 @@ describe('QuizParticipationComponent - live mode', () => {
         expect(component.shouldTreatAsSubmittedForUi).toBe(true);
     });
 
-    it('should show missed deadline message and hide quiz UI when deadline passed and student did not participate', () => {
-        component.waitingForQuizStart = false;
-        component.remainingTimeSeconds = 0;
-        component.submission.submitted = false;
-        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+    it('should show missed deadline message and hide quiz UI when quiz ended and student did not submit', () => {
+        vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(
+            of({ body: { exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: false }] } } as HttpResponse<StudentParticipation>),
+        );
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('#missed-deadline-message')).not.toBeNull();
         expect(fixture.nativeElement.querySelector('#quiz-header')).toBeNull();
     });
 
-    it('should not show missed deadline message when student has answers', () => {
-        component.waitingForQuizStart = false;
-        component.remainingTimeSeconds = 0;
-        component.submission.submitted = true;
-        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(true);
+    it('should not show missed deadline message when student submitted', () => {
+        vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(
+            of({ body: { exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: true }] } } as HttpResponse<StudentParticipation>),
+        );
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
     });
 
     it('should not show missed deadline message when deadline has not passed', () => {
-        component.waitingForQuizStart = false;
-        component.remainingTimeSeconds = 30;
-        component.submission.submitted = false;
-        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+        vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(
+            of({ body: { exercise: quizExercise as QuizExercise, submissions: [{ submitted: false }] } } as HttpResponse<StudentParticipation>),
+        );
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
