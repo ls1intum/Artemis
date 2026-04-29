@@ -28,7 +28,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
+import de.tum.cit.aet.artemis.atlas.config.AtlasAgentProperties;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphEdgeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
@@ -67,8 +67,7 @@ class AtlasAgentServiceTest {
 
     private static final double TEST_TEMPERATURE = 0.2;
 
-    /** Only chat-* fields are read by {@link AtlasAgentDelegationService}; orchestrator-* values are placeholders. */
-    private static final AtlasOrchestratorProperties TEST_PROPERTIES = new AtlasOrchestratorProperties(TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE, "gpt-5.4", 1.0, "medium");
+    private static final AtlasAgentProperties TEST_PROPERTIES = new AtlasAgentProperties(TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE);
 
     private AtlasAgentPreviewService previewService;
 

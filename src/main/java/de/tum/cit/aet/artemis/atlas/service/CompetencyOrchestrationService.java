@@ -104,9 +104,9 @@ public class CompetencyOrchestrationService {
         this.templateService = templateService;
         this.chatClient = chatClient;
         this.orchestratorToolCallbackProvider = toolCallbackFactory.createOrchestratorProvider();
-        this.deploymentName = properties.orchestratorModel();
-        this.temperature = properties.orchestratorTemperature();
-        this.reasoningEffort = properties.orchestratorReasoningEffort();
+        this.deploymentName = properties.model();
+        this.temperature = properties.temperature();
+        this.reasoningEffort = properties.reasoningEffort();
         this.hazelcastInstance = hazelcastInstance;
     }
 

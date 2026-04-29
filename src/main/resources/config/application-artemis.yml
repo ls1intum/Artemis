@@ -95,22 +95,13 @@ artemis:
         input-cost-per-million-eur: 0.23
         output-cost-per-million-eur: 1.84
   atlas:
-    agent:
-      # chat-*         — used by the conversational Atlas agent (AtlasAgentService)
-      # orchestrator-* — used by the competency orchestrator (CompetencyOrchestrationService)
-      # NOTE: chat-model / orchestrator-model are Azure deployment aliases — replace with the deployment
-      # names registered in your own Azure OpenAI resource.
-      # BREAKING (commit c5408b6c, post-9.1.x):
-      #   artemis.atlas.model       -> artemis.atlas.agent.chat-model
-      #   artemis.atlas.temperature -> artemis.atlas.agent.chat-temperature
-      # Operators upgrading from 9.1.x must rename these overrides in application-prod.yml; the
-      # AtlasOrchestratorProperties record uses strict @ConfigurationProperties binding so unknown
-      # artemis.atlas.agent keys will fail loudly at boot rather than silently fall back to defaults.
-      chat-model: gpt-5.4-mini
-      chat-temperature: 0.8
-      orchestrator-model: gpt-5.4
-      orchestrator-temperature: 1.0
-      orchestrator-reasoning-effort: medium
+    # *-model values are Azure deployment aliases — replace with your own deployment names.
+    chat-model: gpt-5.4-mini
+    chat-temperature: 0.8
+    orchestrator:
+      model: gpt-5.4
+      temperature: 1.0
+      reasoning-effort: medium
     atlasml:
       enabled: false # If disabled, no artifacts of the AtlasML service are accessible. This might impact the experience for instructors, i.e. some of the AI recommendations are not available.
       base-url: <your-atlasml-url> # Required address to you own AtlasML instance

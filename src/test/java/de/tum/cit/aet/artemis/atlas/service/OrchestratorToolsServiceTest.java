@@ -132,7 +132,7 @@ class OrchestratorToolsServiceTest {
     }
 
     @Test
-    void getExerciseContent_examExercise_isRejectedDefenseInDepth() {
+    void getExerciseContent_examExercise_isRejectedDefenseInDepth() throws Exception {
         // Defense in depth: even if an exam exercise reaches the tool layer (the orchestrator's
         // run() should reject it earlier), no read tool may walk the lazy
         // exerciseGroup.exam.course chain to expose course-wide data.
@@ -141,7 +141,8 @@ class OrchestratorToolsServiceTest {
 
         String result = service.getExerciseContent(20L, toolContext);
 
-        assertThat(result).contains("does not belong to the current course");
+        // Assert on the JSON `error` key, not the wording, so message copy edits do not break this test.
+        assertThat(new ObjectMapper().readTree(result).get("error").asText()).contains("20");
     }
 
     // Helpers --------------------------------------------------------------------------------------

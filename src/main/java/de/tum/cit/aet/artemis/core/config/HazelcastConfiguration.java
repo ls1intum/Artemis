@@ -1363,7 +1363,6 @@ public class HazelcastConfiguration {
      * <li><strong>atlas-session-pending-operations:</strong> Long-lived session state for competency operations</li>
      * <li><strong>atlas-session-pending-relations:</strong> Long-lived session state for relation operations</li>
      * <li><strong>atlas-execution-plan:</strong> Long-lived session state for multi-step execution plans</li>
-     * ° *
      * <li><strong>atlas-session-exercise-preview:</strong> Cross-node fallback for exercise mapping preview DTOs</li>
      * </ul>
      *

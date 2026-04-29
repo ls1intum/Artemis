@@ -14,8 +14,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasAgentProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
-import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 
 /** Delegates messages to AI agents; extracted from {@code AtlasAgentService} to break a circular dependency with {@code AtlasAgentToolsService}. */
 @Lazy
@@ -34,7 +34,7 @@ public class AtlasAgentDelegationService {
     private final double temperature;
 
     public AtlasAgentDelegationService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ChatMemory chatMemory,
-            AtlasOrchestratorProperties properties) {
+            AtlasAgentProperties properties) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.chatMemory = chatMemory;

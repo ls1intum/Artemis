@@ -12,6 +12,9 @@ public record CompetencyOrchestrationResultDTO(Status status, String summary, @N
     public CompetencyOrchestrationResultDTO {
         Objects.requireNonNull(status, "status must not be null");
         Objects.requireNonNull(summary, "summary must not be null");
+        if (status == Status.SUCCESS && summary.isBlank()) {
+            throw new IllegalArgumentException("summary must not be blank when status is SUCCESS");
+        }
         if (status == Status.FAILED && failureReason == null) {
             throw new IllegalArgumentException("failureReason must be set when status is FAILED");
         }

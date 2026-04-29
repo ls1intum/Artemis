@@ -9,11 +9,11 @@ import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestrati
     standalone: true,
     selector: 'jhi-host',
     imports: [OrchestrationResultDialogComponent],
-    template: '<jhi-orchestration-result-dialog [(visible)]="visible" [summary]="summary" />',
+    template: '<jhi-orchestration-result-dialog [(visible)]="visible" [summary]="summary()" />',
 })
 class HostComponent {
     readonly visible = signal(true);
-    summary = '';
+    readonly summary = signal('');
 }
 
 describe('OrchestrationResultDialogComponent', () => {
@@ -37,5 +37,18 @@ describe('OrchestrationResultDialogComponent', () => {
         expect(dialog.visible()).toBeTruthy();
         dialog['close']();
         expect(dialog.visible()).toBeFalsy();
+    });
+
+    it('renders the summary text inside .summary-box when summary is set', () => {
+        fixture.componentInstance.summary.set('Hello competency world.');
+        fixture.detectChanges();
+
+        expect(document.querySelector('.summary-box')?.textContent?.trim()).toBe('Hello competency world.');
+    });
+
+    it('renders the empty-state translation key when summary is missing', () => {
+        // summary signal already starts at '' from the host component.
+        expect(document.querySelector('.summary-box')).toBeNull();
+        expect(document.querySelector('p[jhitranslate="artemisApp.atlasOrchestrator.resultDialog.empty"]')).not.toBeNull();
     });
 });
