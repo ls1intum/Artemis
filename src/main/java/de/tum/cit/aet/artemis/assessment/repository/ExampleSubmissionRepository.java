@@ -81,7 +81,7 @@ public interface ExampleSubmissionRepository extends ArtemisJpaRepository<Exampl
             return List.of();
         }
 
-        return result.getFeedbacks();
+        return result.getFeedbacksSorted();
     }
 
     default ExampleSubmission findByIdWithEagerResultAndFeedbackElseThrow(long exampleSubmissionId) {
