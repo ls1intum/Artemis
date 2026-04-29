@@ -24,6 +24,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { SubmissionProcessingDTO } from 'app/programming/shared/entities/submission-processing-dto';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('ProgrammingSubmissionService', () => {
     let websocketService: WebsocketService;
@@ -89,6 +91,7 @@ describe('ProgrammingSubmissionService', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .compileComponents()

@@ -1,8 +1,9 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { captureException } from '@sentry/angular';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { EMPTY, Observable, ReplaySubject, Subject } from 'rxjs';
+import { EMPTY, Observable, ReplaySubject, Subject, Subscription } from 'rxjs';
+import { AccountService } from 'app/core/auth/account.service';
 
 export enum EntityType {
     COURSE = 'COURSE',
@@ -21,10 +22,42 @@ const FETCH_FALLBACK_TIMEOUT = 3000;
  * Provides titles for entities, currently used by breadcrumbs
  */
 @Injectable({ providedIn: 'root' })
-export class EntityTitleService {
+export class EntityTitleService implements OnDestroy {
     private http = inject(HttpClient);
+    private readonly accountService = inject(AccountService);
 
     private readonly titleSubjects = new Map<string, { subject: Subject<string>; timeout?: ReturnType<typeof setTimeout> }>();
+
+    private currentUserId?: number;
+    private authenticationStateSubscription: Subscription;
+
+    constructor() {
+        this.currentUserId = this.accountService.userIdentity()?.id;
+        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
+            if (this.currentUserId !== user?.id) {
+                this.currentUserId = user?.id;
+                this.resetState();
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.authenticationStateSubscription?.unsubscribe();
+    }
+
+    /**
+     * Clears the cached title subjects and any pending fetch timeouts. Called on logout / user change
+     * so the next user does not see the previous user's entity titles in breadcrumbs.
+     */
+    private resetState(): void {
+        this.titleSubjects.forEach(({ subject, timeout }) => {
+            if (timeout) {
+                clearTimeout(timeout);
+            }
+            subject.complete();
+        });
+        this.titleSubjects.clear();
+    }
 
     /**
      * Returns an observable that will provide the title of the entity.

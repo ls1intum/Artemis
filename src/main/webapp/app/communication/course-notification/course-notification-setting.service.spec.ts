@@ -10,6 +10,8 @@ import { CourseNotificationSettingSpecification } from 'app/communication/shared
 import { CourseNotificationChannel } from 'app/communication/shared/entities/course-notification/course-notification-channel';
 import { CourseNotificationChannelSetting } from 'app/communication/shared/entities/course-notification/course-notification-channel-setting';
 import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('CourseNotificationSettingService', () => {
     setupTestBed({ zoneless: true });
@@ -20,7 +22,7 @@ describe('CourseNotificationSettingService', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         TestBed.configureTestingModule({
-            providers: [CourseNotificationSettingService, provideHttpClient(), provideHttpClientTesting()],
+            providers: [CourseNotificationSettingService, provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         });
 
         service = TestBed.inject(CourseNotificationSettingService);

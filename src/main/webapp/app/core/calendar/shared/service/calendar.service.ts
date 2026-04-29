@@ -1,22 +1,24 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable, catchError, map, throwError } from 'rxjs';
+import { Observable, Subscription, catchError, map, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { CalendarEvent, CalendarEventDTO, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 import { AlertService } from 'app/shared/service/alert.service';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 type CalendarEventMapResponse = HttpResponse<Record<string, CalendarEventDTO[]>>;
 
 @Injectable({
     providedIn: 'root',
 })
-export class CalendarService {
+export class CalendarService implements OnDestroy {
     private readonly httpClient = inject(HttpClient);
     private readonly alertService = inject(AlertService);
     private readonly translateService = inject(TranslateService);
+    private readonly accountService = inject(AccountService);
     private readonly resourceUrl = '/api/core/calendar';
 
     private currentLocale = getCurrentLocaleSignal(this.translateService);
@@ -30,13 +32,55 @@ export class CalendarService {
     eventFilterOptions: CalendarEventFilterOption[] = this.buildEventFilterOptions();
     includedEventFilterOptions = signal<CalendarEventFilterOption[]>(this.eventFilterOptions);
 
+    /**
+     * Incremented every time {@link resetState} runs. In-flight HTTP responses capture the generation
+     * at call time and short-circuit if it no longer matches, preventing them from repopulating cleared
+     * state with the previous user's data.
+     */
+    private stateGeneration = 0;
+
+    private currentUserId?: number;
+    private authenticationStateSubscription: Subscription;
+
     constructor() {
-        this.loadSubscriptionToken();
+        const initialUser = this.accountService.userIdentity();
+        this.currentUserId = initialUser?.id;
+        // Load the subscription token for the initially-known user before subscribing to auth state,
+        // so the synchronous replay emission from a BehaviorSubject doesn't trigger a duplicate request.
+        if (initialUser) {
+            this.loadSubscriptionToken();
+        }
+        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
+            if (this.currentUserId !== user?.id) {
+                this.currentUserId = user?.id;
+                this.resetState();
+                if (user) {
+                    this.loadSubscriptionToken();
+                }
+            }
+        });
 
         effect(() => {
             this.currentLocale();
             this.reloadEvents();
         });
+    }
+
+    ngOnDestroy(): void {
+        this.authenticationStateSubscription?.unsubscribe();
+    }
+
+    /**
+     * Clears all calendar state. Called on logout / user change to avoid leaking the previous user's
+     * calendar events or subscription token.
+     */
+    private resetState(): void {
+        this.stateGeneration++;
+        this.currentCourseId = undefined;
+        this.firstDayOfCurrentMonth = undefined;
+        this.currentSubscriptionToken.set(undefined);
+        this.currentEventMap.set(new Map());
+        this.includedEventFilterOptions.set(this.eventFilterOptions);
     }
 
     reloadEvents() {
@@ -56,6 +100,7 @@ export class CalendarService {
         const language = this.currentLocale() === 'de' ? 'GERMAN' : 'ENGLISH';
         const parameters = new HttpParams().set('monthKeys', monthKeys).set('timeZone', timeZone).set('language', language);
 
+        const generation = this.stateGeneration;
         return this.httpClient
             .get<Record<string, CalendarEventDTO[]>>(`${this.resourceUrl}/courses/${courseId}/calendar-events`, {
                 params: parameters,
@@ -63,6 +108,7 @@ export class CalendarService {
             })
             .pipe(
                 map((res: CalendarEventMapResponse) => {
+                    if (this.stateGeneration !== generation) return;
                     const parsed = this.createCalendarEventMap(res.body ?? {});
                     this.currentEventMap.set(parsed);
                     this.currentCourseId = courseId;
@@ -86,15 +132,18 @@ export class CalendarService {
     }
 
     private loadSubscriptionToken() {
+        const generation = this.stateGeneration;
         this.httpClient
             .get(`${this.resourceUrl}/subscription-token`, {
                 responseType: 'text',
             })
             .pipe(
                 map((token: string) => {
+                    if (this.stateGeneration !== generation) return;
                     this.currentSubscriptionToken.set(token);
                 }),
                 catchError((error) => {
+                    if (this.stateGeneration !== generation) return throwError(() => error);
                     this.alertService.addErrorAlert('artemisApp.calendar.tokenLoadingError');
                     return throwError(() => error);
                 }),

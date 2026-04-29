@@ -13,6 +13,8 @@ import { faComments } from '@fortawesome/free-solid-svg-icons';
 import { firstValueFrom } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('CourseNotificationService', () => {
     setupTestBed({ zoneless: true });
@@ -23,7 +25,7 @@ describe('CourseNotificationService', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         TestBed.configureTestingModule({
-            providers: [CourseNotificationService, provideHttpClient(), provideHttpClientTesting()],
+            providers: [CourseNotificationService, provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         });
 
         service = TestBed.inject(CourseNotificationService);

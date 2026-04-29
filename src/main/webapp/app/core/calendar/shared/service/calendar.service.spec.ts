@@ -11,6 +11,8 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('CalendarService', () => {
     setupTestBed({ zoneless: true });
@@ -80,6 +82,7 @@ describe('CalendarService', () => {
                 provideHttpClientTesting(),
                 { provide: AlertService, useValue: MockService(AlertService) },
                 { provide: TranslateService, useValue: translateServiceMock },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         });
 

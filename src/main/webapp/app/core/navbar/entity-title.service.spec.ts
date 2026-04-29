@@ -17,6 +17,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { firstValueFrom, of } from 'rxjs';
 import * as Sentry from '@sentry/angular';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('EntityTitleService', () => {
     setupTestBed({ zoneless: true });
@@ -28,6 +30,7 @@ describe('EntityTitleService', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                { provide: AccountService, useClass: MockAccountService },
                 // Override the service to get a fresh instance for each test
                 { provide: EntityTitleService, useClass: EntityTitleService },
             ],
