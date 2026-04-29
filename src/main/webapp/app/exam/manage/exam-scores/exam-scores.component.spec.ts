@@ -364,6 +364,7 @@ describe('ExamScoresComponent', () => {
         const newExerciseGroup = new ExerciseGroup();
         newExerciseGroup.title = 'group';
         newExerciseGroup.id = 2;
+        (newExerciseGroup as unknown as { containedExercises: never[] }).containedExercises = [];
         examScoreDTO.exerciseGroups.push(newExerciseGroup);
         fixture.detectChanges();
 
