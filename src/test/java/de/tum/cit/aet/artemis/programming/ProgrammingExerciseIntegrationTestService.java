@@ -2044,9 +2044,9 @@ public class ProgrammingExerciseIntegrationTestService {
         request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.FORBIDDEN, File.class);
     }
 
-    void testExportAuxiliaryRepositoryUnprocessableEntity() throws Exception {
+    void testExportAuxiliaryRepositoryUnprocessableContent() throws Exception {
         AuxiliaryRepository repository = addAuxiliaryRepositoryToExercise();
-        request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.UNPROCESSABLE_ENTITY, File.class);
+        request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.UNPROCESSABLE_CONTENT, File.class);
     }
 
     void testExportAuxiliaryRepositoryExerciseAccessForbidden() throws Exception {
