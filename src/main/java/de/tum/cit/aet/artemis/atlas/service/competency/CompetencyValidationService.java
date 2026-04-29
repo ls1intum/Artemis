@@ -33,6 +33,11 @@ public class CompetencyValidationService {
         checkAttributes(competency);
     }
 
+    /**
+     * Throws {@link BadRequestAlertException} on the first attribute violation.
+     *
+     * @param competency the competency to validate
+     */
     public void checkAttributes(CourseCompetency competency) {
         String title = competency.getTitle();
         if (title == null || title.isBlank()) {
