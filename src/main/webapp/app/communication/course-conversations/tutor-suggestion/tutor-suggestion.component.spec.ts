@@ -53,7 +53,6 @@ describe('TutorSuggestionComponent', () => {
     let fixture: ComponentFixture<TutorSuggestionComponent>;
     let courseSettingsService: IrisSettingsService;
     let profileService: ProfileService;
-    let chatService: IrisChatControllerService;
     let accountService: AccountService;
     let featureToggleService: FeatureToggleService;
     const courseSettings = mockCourseSettings(1, true);
@@ -103,9 +102,6 @@ describe('TutorSuggestionComponent', () => {
         fixture = TestBed.createComponent(TutorSuggestionComponent);
         component = fixture.componentInstance;
         componentRef = fixture.componentRef;
-
-        // Component-scoped controller; resolve through the component's injector.
-        chatService = fixture.debugElement.injector.get(IrisChatControllerService);
 
         courseSettingsService = TestBed.inject(IrisSettingsService);
         profileService = TestBed.inject(ProfileService);
