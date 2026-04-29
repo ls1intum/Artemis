@@ -1,4 +1,5 @@
 import '@angular/compiler';
+import { setupZoneTestEnv } from 'jest-preset-angular/setup-env/zone';
 import 'app/shared/util/map.extension';
 import 'app/shared/util/string.extension';
 import 'app/shared/util/array.extension';
@@ -8,6 +9,8 @@ import 'jest-extended';
 import failOnConsole from 'jest-fail-on-console';
 import { TextDecoder, TextEncoder } from 'util';
 import { MockClipboardItem } from './helpers/mocks/service/mock-clipboard-item';
+
+setupZoneTestEnv();
 
 /*
  * Monaco-editor 0.55+ uses the CSS Typed Object Model API (CSS.supports(), CSS.escape(), etc.)
