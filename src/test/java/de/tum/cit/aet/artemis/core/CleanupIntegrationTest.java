@@ -631,7 +631,9 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     private TextBlock createTextBlockForFeedback(Feedback feedback) {
         TextBlock textBlock = new TextBlock();
         textBlock.setFeedback(feedback);
-        textBlock.setText("text" + feedback.hashCode());
+        // Use the persisted feedback id (not feedback.hashCode(), which is now a constant for HashSet stability)
+        // so each TextBlock has a unique text → unique computeId() → no PK collisions on save.
+        textBlock.setText("text" + feedback.getId());
         textBlock.computeId();
         return textBlockRepository.save(textBlock);
     }

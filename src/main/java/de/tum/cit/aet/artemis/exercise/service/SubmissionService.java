@@ -428,9 +428,9 @@ public class SubmissionService {
      * @return the list of newly created feedbacks
      */
     public List<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
-        List<Feedback> oldFeedback = oldResult.getFeedbacks();
+        Collection<Feedback> oldFeedback = oldResult.getFeedbacks();
         copyFeedbackToResult(newResult, oldFeedback);
-        return newResult.getFeedbacks();
+        return newResult.getFeedbacksSorted();
     }
 
     /**
@@ -439,7 +439,7 @@ public class SubmissionService {
      * @param result    the result to copy feedback to
      * @param feedbacks the feedbacks which are copied
      */
-    private void copyFeedbackToResult(Result result, List<Feedback> feedbacks) {
+    private void copyFeedbackToResult(Result result, Collection<Feedback> feedbacks) {
         if (feedbacks == null) {
             return;
         }

@@ -331,8 +331,8 @@ public class ResultService {
      * @param shouldSave   whether the result should be saved or not
      * @return the updated (and potentially saved) result
      */
-    public Result storeFeedbackInResult(@NonNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
-        var savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
+    public Result storeFeedbackInResult(@NonNull Result result, Collection<Feedback> feedbackList, boolean shouldSave) {
+        var savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, new ArrayList<>(feedbackList));
         result.setFeedbacks(savedFeedbacks);
         return shouldSaveResult(result, shouldSave);
     }
@@ -814,11 +814,11 @@ public class ResultService {
      * {@link Result#updateAllFeedbackItems} method, which is designed for manual feedback management. Using this method with automatic assessments could
      * lead to unintended behavior or data inconsistencies.
      *
-     * @param feedbackList The list of {@link Feedback} objects for which the long feedback texts are to be deleted. Only feedback items that have long feedback texts and a
+     * @param feedbackList The collection of {@link Feedback} objects for which the long feedback texts are to be deleted. Only feedback items that have long feedback texts and a
      *                         non-null ID will be processed.
      * @param result       The {@link Result} object associated with the feedback items, used to update feedback list before processing.
      */
-    public void deleteLongFeedback(List<Feedback> feedbackList, Result result) {
+    public void deleteLongFeedback(Collection<Feedback> feedbackList, Result result) {
         if (feedbackList == null) {
             return;
         }
