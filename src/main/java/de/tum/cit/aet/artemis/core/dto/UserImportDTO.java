@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.core.dto;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
 
-import java.util.Objects;
-
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
@@ -17,21 +15,4 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UserImportDTO(@Size(max = 50) String login, @Size(max = 50) String firstName, @Size(max = 50) String lastName, @Size(max = 10) String registrationNumber,
         @Email @Size(max = 100) String email, @Size(min = PASSWORD_MIN_LENGTH, max = PASSWORD_MAX_LENGTH) String password) {
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        UserImportDTO that = (UserImportDTO) obj;
-        return Objects.equals(registrationNumber, that.registrationNumber) || Objects.equals(login, that.login) || Objects.equals(email, that.email);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(registrationNumber) ^ Objects.hash(login) ^ Objects.hash(email);
-    }
 }

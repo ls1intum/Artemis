@@ -61,8 +61,6 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Autowired
     protected LdapAuthenticationProvider ldapAuthenticationProvider;
 
-    private static final String NON_EXISTING_LOGIN = TEST_PREFIX + "na";
-
     private static final String EMAIL = TEST_PREFIX + "student1@test.de";
 
     private static final String LOGIN = TEST_PREFIX + "student1";
@@ -119,10 +117,10 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     @WithMockUser(username = "admin", roles = { "ADMIN" })
     void testImportUsers() throws Exception {
         UserImportDTO existingUser = new UserImportDTO(LOGIN, "", "", "", "", null);
-        UserImportDTO nonExistingUser = new UserImportDTO(NON_EXISTING_LOGIN, "", "", "", "", null);
+        UserImportDTO nonExistingUser = new UserImportDTO(NONEXISTENT_LOGIN, "", "", "", "", null);
         var output = request.postListWithResponseBody("/api/core/admin/users/import", List.of(existingUser, nonExistingUser), UserImportDTO.class, HttpStatus.OK);
         assertThat(output).hasSize(1);
-        assertThat(output.getFirst().login()).isEqualTo(NON_EXISTING_LOGIN);
+        assertThat(output.getFirst().login()).isEqualTo(NONEXISTENT_LOGIN);
     }
 
     @Test
