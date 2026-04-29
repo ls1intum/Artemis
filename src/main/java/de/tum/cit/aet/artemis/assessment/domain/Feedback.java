@@ -486,4 +486,22 @@ public class Feedback extends DomainObject {
         return "Feedback{" + "text='" + text + '\'' + ", detailText='" + detailText + '\'' + ", hasLongFeedbackText=" + hasLongFeedbackText + ", reference='" + reference + '\''
                 + ", credits=" + credits + ", positive=" + positive + ", type=" + type + ", visibility=" + visibility + '}';
     }
+
+    /**
+     * Stable hash code that does not change across the unsaved → persisted transition.
+     *
+     * <p>
+     * {@link DomainObject#hashCode()} is id-based, which means an unsaved Feedback (id == null,
+     * hashCode() == 0) would land in a different bucket once Hibernate assigns an id during flush.
+     * That breaks {@link java.util.HashSet} semantics: a previously-added Feedback would no longer be
+     * found by {@code contains}/{@code remove}. Since {@link Result#getFeedbacks()} is now backed by a
+     * {@link java.util.Set}, we need a hash that is stable across that lifecycle. Returning a constant
+     * forces all Feedback instances into the same bucket; the (id-based) {@code equals} contract still
+     * distinguishes them. The performance impact is negligible — Result.feedbacks is small (per single
+     * submission), so the linear scan cost replaces what was already a linear scan elsewhere.
+     */
+    @Override
+    public int hashCode() {
+        return Feedback.class.hashCode();
+    }
 }

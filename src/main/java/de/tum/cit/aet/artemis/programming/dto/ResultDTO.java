@@ -50,7 +50,7 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
     }
 
     public static ResultDTO of(Result result) {
-        return of(result, result.getFeedbacks());
+        return of(result, result.getFeedbacksSorted());
     }
 
     /**
