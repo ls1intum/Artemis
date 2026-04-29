@@ -563,6 +563,17 @@ describe('QuizParticipationComponent - live mode', () => {
         expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
     });
 
+    it('should not show missed deadline message when student effectively submitted', () => {
+        vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(
+            of({ body: { exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: false }] } } as HttpResponse<StudentParticipation>),
+        );
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(true);
+        component.remainingTimeSeconds = -1;
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
+    });
+
     it('should not show missed deadline message when deadline has not passed', () => {
         vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(
             of({ body: { exercise: quizExercise as QuizExercise, submissions: [{ submitted: false }] } } as HttpResponse<StudentParticipation>),
