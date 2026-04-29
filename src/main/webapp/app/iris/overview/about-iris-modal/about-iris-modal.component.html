@@ -67,8 +67,8 @@
         </div>
     </div>
 
-    @if (!hideTryButton) {
-        <!-- Try Iris button -->
+    @if (controller) {
+        <!-- Try Iris button: only visible when opened from inside a chat host that provides the controller. -->
         <div class="try-iris-btn-wrapper">
             <button type="button" pButton class="try-iris-btn" (click)="tryIris()" jhiTranslate="artemisApp.iris.aboutIrisModal.tryIris"></button>
         </div>

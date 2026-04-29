@@ -26,6 +26,7 @@ import {
     DestroyRef,
     ElementRef,
     HostListener,
+    ViewContainerRef,
     computed,
     effect,
     inject,
@@ -45,7 +46,6 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/butto
 import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
-import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import {
     IrisMessageContent,
     IrisMessageContentType,
@@ -61,7 +61,8 @@ import {
 import { IrisMcqQuestionComponent } from 'app/iris/overview/mcq-question/iris-mcq-question.component';
 import { IrisMcqCarouselComponent } from 'app/iris/overview/mcq-question/iris-mcq-carousel.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-chat-mode.model';
+import { IrisChatControllerService } from 'app/iris/overview/services/iris-chat-controller.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import * as _ from 'lodash-es';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
@@ -157,13 +158,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     // Must match the values in src/main/resources/i18n/messages*.properties (iris.chat.session.newChatTitle)
     // and src/main/webapp/i18n/*/iris.json (artemisApp.iris.chatHistory.newChat).
     private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
-    protected statusService = inject(IrisStatusService);
-    protected chatService = inject(IrisChatService);
+    protected controller = inject(IrisChatControllerService);
     protected route = inject(ActivatedRoute);
     protected llmModalService = inject(LLMSelectionModalService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly clipboard = inject(Clipboard);
     private readonly irisChatHttpService = inject(IrisChatHttpService);
+    protected readonly viewContainerRef = inject(ViewContainerRef);
 
     // Icons
     protected readonly faPaperPlane = faPaperPlane;
@@ -201,23 +202,23 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     // Observable-derived signals (using toSignal for reactive state)
-    private readonly currentRelatedEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
-    private readonly currentChatMode = toSignal(this.chatService.currentChatMode(), { initialValue: undefined });
+    private readonly currentRelatedEntityId = toSignal(this.controller.currentRelatedEntityId(), { initialValue: undefined });
+    private readonly currentChatMode = toSignal(this.controller.currentChatMode(), { initialValue: undefined });
     readonly relatedEntityRoute = computed<string | undefined>(() => this.computeRelatedEntityRoute(this.currentChatMode(), this.currentRelatedEntityId()));
     readonly relatedEntityLinkButtonLabel = computed<string | undefined>(() => this.computeRelatedEntityLinkButtonLabel(this.currentChatMode()));
 
-    readonly currentSessionId = toSignal(this.chatService.currentSessionId(), { initialValue: undefined });
-    readonly chatSessions = toSignal(this.chatService.availableChatSessions(), { initialValue: [] as IrisSessionDTO[] });
-    readonly stages = toSignal(this.chatService.currentStages(), { initialValue: [] as IrisStageDTO[] });
-    readonly suggestions = toSignal(this.chatService.currentSuggestions(), { initialValue: [] as string[] });
-    readonly error = toSignal(this.chatService.currentError(), { initialValue: undefined });
-    readonly numNewMessages = toSignal(this.chatService.currentNumNewMessages(), { initialValue: 0 });
-    readonly rateLimitInfo = toSignal(this.statusService.currentRatelimitInfo(), { requireSync: true });
-    readonly active = toSignal(this.statusService.getActiveStatus(), { initialValue: true });
-    readonly citationInfo = toSignal(this.chatService.currentCitationInfo(), { initialValue: [] as IrisCitationMetaDTO[] });
+    readonly currentSessionId = toSignal(this.controller.currentSessionId(), { initialValue: undefined });
+    readonly chatSessions = toSignal(this.controller.availableChatSessions(), { initialValue: [] as IrisSessionDTO[] });
+    readonly stages = toSignal(this.controller.currentStages(), { initialValue: [] as IrisStageDTO[] });
+    readonly suggestions = toSignal(this.controller.currentSuggestions(), { initialValue: [] as string[] });
+    readonly error = toSignal(this.controller.currentError(), { initialValue: undefined });
+    readonly numNewMessages = toSignal(this.controller.currentNumNewMessages(), { initialValue: 0 });
+    readonly rateLimitInfo = toSignal(this.controller.currentRatelimitInfo(), { requireSync: true });
+    readonly active = toSignal(this.controller.getActiveStatus(), { initialValue: true });
+    readonly citationInfo = toSignal(this.controller.currentCitationInfo(), { initialValue: [] as IrisCitationMetaDTO[] });
 
     // Messages with processing
-    private readonly rawMessages = toSignal(this.chatService.currentMessages(), { initialValue: [] as IrisMessage[] });
+    private readonly rawMessages = toSignal(this.controller.currentMessages(), { initialValue: [] as IrisMessage[] });
     readonly messages = computed(() => this.processMessages(this.rawMessages()));
 
     // Computed state
@@ -685,7 +686,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 this.reopenChat.emit();
                 break;
             case LLMSelectionDecision.NO_AI:
-                this.chatService.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
+                this.controller.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
                 break;
             case LLM_MODAL_DISMISSED:
                 break;
@@ -706,11 +707,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      * Handles the send button click event and sends the user's message.
      */
     onSend(): void {
-        this.chatService.messagesRead();
+        this.controller.messagesRead();
         const content = this.newMessageTextContent().trim();
         if (content) {
             this.isLoading.set(true);
-            this.chatService
+            this.controller
                 .sendMessage(content)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe(() => {
@@ -727,10 +728,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
         let observable;
         if (message.id) {
-            observable = this.chatService.resendMessage(message);
+            observable = this.controller.resendMessage(message);
             this.resendAnimationActive.set(true);
         } else if (message.content?.[0]?.textContent) {
-            observable = this.chatService.sendMessage(message.content[0].textContent);
+            observable = this.controller.sendMessage(message.content[0].textContent);
         } else {
             this.resendAnimationActive.set(false);
             return;
@@ -740,7 +741,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         observable.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.resendAnimationActive.set(false);
             this.isLoading.set(false);
-            this.chatService.messagesRead();
+            this.controller.messagesRead();
         });
     }
 
@@ -754,7 +755,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             return;
         }
         message.helpful = !!helpful;
-        this.chatService.rateMessage(message, helpful).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+        this.controller.rateMessage(message, helpful).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     }
 
     onMcqAnswerChanged(message: IrisMessage, event: { selectedIndex: number | undefined; submitted: boolean }): void {
@@ -853,7 +854,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      * Accepts the permission to use the chat widget.
      */
     acceptPermission(decision: LLMSelectionDecision) {
-        this.chatService.updateLLMUsageConsent(decision);
+        this.controller.updateLLMUsageConsent(decision);
         this.userAccepted.set(decision);
     }
 
@@ -862,7 +863,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      * It emits a close event which should be handled by the parent component.
      */
     closeChat() {
-        this.chatService.messagesRead();
+        this.controller.messagesRead();
         this.closeClicked.emit();
     }
 
@@ -994,7 +995,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             this.openNewSession();
             return;
         }
-        this.chatService.switchToSession(session);
+        this.controller.switchToSession(session);
     }
 
     onDeleteSession(session: IrisSessionDTO) {
@@ -1007,7 +1008,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             acceptButtonStyleClass: 'p-button-danger',
             rejectButtonStyleClass: 'p-button-secondary',
             accept: () => {
-                this.chatService
+                this.controller
                     .deleteSession(session.id)
                     .pipe(takeUntilDestroyed(this.destroyRef))
                     .subscribe({
@@ -1105,13 +1106,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     openNewSession() {
         if (this.isChatHistoryAvailable()) {
             // Dashboard: always create a new session with the course as context
-            const courseId = this.chatService.getCourseId();
+            const courseId = this.controller.courseId();
             if (courseId !== undefined) {
-                this.chatService.switchToNewSession(ChatServiceMode.COURSE, courseId);
+                this.controller.switchToNewSession(ChatServiceMode.COURSE, courseId);
                 return;
             }
         }
-        this.chatService.clearChat();
+        this.controller.clearChat();
     }
 
     openAboutIrisModal(): void {
@@ -1128,6 +1129,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 backdropClass: 'about-iris-backdrop',
                 width: '40rem',
                 maxWidth: '95vw',
+                // Inherit this component's injector so the modal resolves the host's controller.
+                viewContainerRef: this.viewContainerRef,
             });
         } else {
             this.aboutIrisDialogRef?.close();
@@ -1140,6 +1143,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                     maskStyleClass: 'about-iris-dialog',
                     width: '40rem',
                     breakpoints: { '640px': '95vw' },
+                    // PrimeNG DialogService has no injector inheritance; pass the controller
+                    // through `data` so the modal can fall back to it via dialogConfig.data.
+                    data: { controller: this.controller },
                 }) ?? undefined;
         }
     }

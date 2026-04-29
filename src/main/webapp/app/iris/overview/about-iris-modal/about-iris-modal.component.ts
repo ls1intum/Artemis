@@ -7,7 +7,7 @@ import { faBook, faBrain, faCompass, faLightbulb, faShieldHalved, faThumbsUp, fa
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisChatControllerService } from 'app/iris/overview/services/iris-chat-controller.service';
 import { ButtonDirective } from 'primeng/button';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
@@ -32,10 +32,16 @@ export class AboutIrisModalComponent {
     private readonly dynamicDialogRef = inject(DynamicDialogRef, { optional: true });
     private readonly matDialogRef = inject(MatDialogRef, { optional: true });
     private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
-    private readonly chatService = inject(IrisChatService);
     private readonly accountService = inject(AccountService);
 
-    readonly hideTryButton = this.dialogConfig?.data?.hideTryButton === true;
+    // Resolve the host's controller via dual transport: CDK MatDialog propagates DI through
+    // the host's viewContainerRef, while PrimeNG DialogService cannot — so the chat host
+    // additionally passes the controller via `data: { controller }`. Outside a chat host
+    // (control-center, onboarding) neither transport supplies one, so the "try Iris" button
+    // is structurally unreachable.
+    private readonly injectedController = inject(IrisChatControllerService, { optional: true });
+    private readonly dialogControllerData = this.dialogConfig?.data?.controller as IrisChatControllerService | undefined;
+    protected readonly controller: IrisChatControllerService | undefined = this.injectedController ?? this.dialogControllerData;
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faXmark = faXmark;
@@ -91,7 +97,12 @@ export class AboutIrisModalComponent {
     }
 
     tryIris(): void {
-        this.chatService.clearChat();
+        if (!this.controller) {
+            // Defensive: the template gates the button on `controller`, but guard the method too
+            // so an accidental wire-up cannot trigger a no-op chat reset against a missing controller.
+            return;
+        }
+        this.controller.clearChat();
         this.dynamicDialogRef?.close();
         this.matDialogRef?.close();
     }

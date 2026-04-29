@@ -8,7 +8,7 @@ import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MatDialogRef } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { AboutIrisModalComponent } from './about-iris-modal.component';
-import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisChatControllerService } from 'app/iris/overview/services/iris-chat-controller.service';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -17,27 +17,26 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import type { User } from 'app/core/user/user.model';
 
-describe('AboutIrisModalComponent', () => {
+describe('AboutIrisModalComponent — opened from chat host (PrimeNG dialog with controller via data)', () => {
     setupTestBed({ zoneless: true });
 
     let component: AboutIrisModalComponent;
     let fixture: ComponentFixture<AboutIrisModalComponent>;
     let dialogRef: { close: ReturnType<typeof vi.fn> };
-    let chatService: { clearChat: ReturnType<typeof vi.fn> };
+    let controller: { clearChat: ReturnType<typeof vi.fn> };
     const userIdentitySignal = signal<User | undefined>(undefined);
 
     beforeEach(async () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         dialogRef = { close: vi.fn() };
-        chatService = { clearChat: vi.fn() };
+        controller = { clearChat: vi.fn() };
 
         TestBed.configureTestingModule({
             imports: [AboutIrisModalComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 { provide: DynamicDialogRef, useValue: dialogRef },
-                { provide: DynamicDialogConfig, useValue: { data: {} } },
-                { provide: IrisChatService, useValue: chatService },
+                { provide: DynamicDialogConfig, useValue: { data: { controller } } },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useValue: { userIdentity: userIdentitySignal } },
             ],
@@ -82,12 +81,12 @@ describe('AboutIrisModalComponent', () => {
     it('close() should call dialogRef.close() without clearing chat', () => {
         component.close();
         expect(dialogRef.close).toHaveBeenCalledOnce();
-        expect(chatService.clearChat).not.toHaveBeenCalled();
+        expect(controller.clearChat).not.toHaveBeenCalled();
     });
 
-    it('tryIris() should clear chat and close dialog', () => {
+    it('tryIris() should clear chat via controller and close dialog', () => {
         component.tryIris();
-        expect(chatService.clearChat).toHaveBeenCalledOnce();
+        expect(controller.clearChat).toHaveBeenCalledOnce();
         expect(dialogRef.close).toHaveBeenCalledOnce();
     });
 
@@ -99,6 +98,10 @@ describe('AboutIrisModalComponent', () => {
         fixture.debugElement.query(By.css(selector)).nativeElement.click();
         await fixture.whenStable();
         expect(component[method]).toHaveBeenCalled();
+    });
+
+    it('should render the try Iris button when a controller is resolved', () => {
+        expect(fixture.debugElement.query(By.css('.try-iris-btn'))).not.toBeNull();
     });
 
     describe('privacyDescKey', () => {
@@ -124,26 +127,27 @@ describe('AboutIrisModalComponent', () => {
     });
 });
 
-describe('AboutIrisModalComponent (MatDialogRef only)', () => {
+describe('AboutIrisModalComponent — opened from chat widget (MatDialog with viewContainerRef)', () => {
     setupTestBed({ zoneless: true });
 
     let component: AboutIrisModalComponent;
     let fixture: ComponentFixture<AboutIrisModalComponent>;
     let matDialogRef: { close: ReturnType<typeof vi.fn> };
-    let chatService: { clearChat: ReturnType<typeof vi.fn> };
+    let controller: { clearChat: ReturnType<typeof vi.fn> };
     const userIdentitySignal = signal<User | undefined>(undefined);
 
     beforeEach(async () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         matDialogRef = { close: vi.fn() };
-        chatService = { clearChat: vi.fn() };
+        controller = { clearChat: vi.fn() };
 
         TestBed.configureTestingModule({
             imports: [AboutIrisModalComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 { provide: MatDialogRef, useValue: matDialogRef },
-                { provide: IrisChatService, useValue: chatService },
+                // Inherited via the host's viewContainerRef in production.
+                { provide: IrisChatControllerService, useValue: controller },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useValue: { userIdentity: userIdentitySignal } },
             ],
@@ -166,12 +170,54 @@ describe('AboutIrisModalComponent (MatDialogRef only)', () => {
     it('close() should call matDialogRef.close()', () => {
         component.close();
         expect(matDialogRef.close).toHaveBeenCalledOnce();
-        expect(chatService.clearChat).not.toHaveBeenCalled();
+        expect(controller.clearChat).not.toHaveBeenCalled();
     });
 
     it('tryIris() should clear chat and close MatDialog', () => {
         component.tryIris();
-        expect(chatService.clearChat).toHaveBeenCalledOnce();
+        expect(controller.clearChat).toHaveBeenCalledOnce();
         expect(matDialogRef.close).toHaveBeenCalledOnce();
+    });
+});
+
+describe('AboutIrisModalComponent — opened outside any chat host (no controller)', () => {
+    setupTestBed({ zoneless: true });
+
+    let component: AboutIrisModalComponent;
+    let fixture: ComponentFixture<AboutIrisModalComponent>;
+    let dialogRef: { close: ReturnType<typeof vi.fn> };
+    const userIdentitySignal = signal<User | undefined>(undefined);
+
+    beforeEach(async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        dialogRef = { close: vi.fn() };
+
+        TestBed.configureTestingModule({
+            imports: [AboutIrisModalComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            providers: [
+                { provide: DynamicDialogRef, useValue: dialogRef },
+                { provide: DynamicDialogConfig, useValue: { data: {} } },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useValue: { userIdentity: userIdentitySignal } },
+            ],
+        });
+
+        fixture = TestBed.createComponent(AboutIrisModalComponent);
+        component = fixture.componentInstance;
+        await fixture.whenStable();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should NOT render the try Iris button without a controller', () => {
+        expect(fixture.debugElement.query(By.css('.try-iris-btn'))).toBeNull();
+    });
+
+    it('tryIris() should be a defensive no-op when no controller is available', () => {
+        component.tryIris();
+        expect(dialogRef.close).not.toHaveBeenCalled();
     });
 });

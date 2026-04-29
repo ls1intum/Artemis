@@ -9,7 +9,7 @@ import { NavigationStart, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { IrisBaseChatbotComponent } from '../../base-chatbot/iris-base-chatbot.component';
-import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisChatControllerService } from 'app/iris/overview/services/iris-chat-controller.service';
 
 @Component({
     selector: 'jhi-chatbot-widget',
@@ -23,7 +23,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     private document = inject<Document>(DOCUMENT);
     private router = inject(Router);
     private dialog = inject(MatDialog);
-    private chatService = inject(IrisChatService);
+    private controller = inject(IrisChatControllerService);
 
     readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), {
         initialValue: this.breakpointObserver.isMatched(Breakpoints.Handset),
@@ -185,7 +185,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
      * Closes the chat widget and signals that it should reopen after LLM selection.
      */
     reopenDialog() {
-        this.chatService.setShouldReopenChat(true);
+        this.controller.setShouldReopenChat(true);
         this.dialog.closeAll();
     }
 }

@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
@@ -6,8 +7,8 @@ import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AccountService } from 'app/core/auth/account.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
-import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -22,11 +23,12 @@ import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service'
 })
 export class AiExperienceSettingsComponent implements OnInit {
     private readonly accountService = inject(AccountService);
+    private readonly userService = inject(UserService);
     private readonly irisChatHttpService = inject(IrisChatHttpService);
-    private readonly irisChatService = inject(IrisChatService);
     private readonly irisMemoriesHttpService = inject(IrisMemoriesHttpService);
     private readonly alertService = inject(AlertService);
     private readonly llmModalService = inject(LLMSelectionModalService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly ActionType = ActionType;
     protected readonly LLMSelectionDecision = LLMSelectionDecision;
@@ -49,9 +51,21 @@ export class AiExperienceSettingsComponent implements OnInit {
         const choice = await this.llmModalService.open(this.currentSelection());
 
         if (choice && choice !== LLM_MODAL_DISMISSED) {
-            this.irisChatService.updateLLMUsageConsent(choice);
-            this.accountService.setUserLLMSelectionDecision(choice);
-            this.updateSelectionFromUser();
+            // Persist server-side, then mirror to local account state. Settings has no chat-host
+            // concerns, so we go directly through userService + accountService instead of routing
+            // through a chat controller.
+            this.userService
+                .updateLLMSelectionDecision(choice)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: () => {
+                        this.accountService.setUserLLMSelectionDecision(choice);
+                        this.updateSelectionFromUser();
+                    },
+                    error: () => {
+                        this.alertService.error('artemisApp.userSettings.aiExperienceSettingsPage.updateFailed');
+                    },
+                });
         }
     }
 

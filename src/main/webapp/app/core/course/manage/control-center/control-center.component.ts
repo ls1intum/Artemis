@@ -32,7 +32,6 @@ export class ControlCenterComponent {
                 maskStyleClass: 'about-iris-dialog',
                 width: '40rem',
                 breakpoints: { '640px': '95vw' },
-                data: { hideTryButton: true },
             }) ?? undefined;
     }
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { faChalkboardUser, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -6,7 +6,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-chat-mode.model';
+import { IrisChatControllerService } from 'app/iris/overview/services/iris-chat-controller.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
@@ -41,14 +42,16 @@ const EXERCISE_TYPE_TO_CHAT_MODE: Record<string, ChatServiceMode> = {
 })
 export class ContextSelectionComponent {
     private readonly courseStorageService = inject(CourseStorageService);
-    private readonly chatService = inject(IrisChatService);
+    private readonly controller = inject(IrisChatControllerService);
 
     readonly disabled = input<boolean>(false);
 
-    readonly courseId = signal<number | undefined>(this.chatService.getCourseId());
+    // Read directly from the controller's signal so context-selection mirrors the host's
+    // courseId without needing its own input or duplicate state.
+    readonly courseId = this.controller.courseId;
 
-    private readonly currentMode = toSignal(this.chatService.currentChatMode(), { initialValue: undefined });
-    private readonly currentEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
+    private readonly currentMode = toSignal(this.controller.currentChatMode(), { initialValue: undefined });
+    private readonly currentEntityId = toSignal(this.controller.currentRelatedEntityId(), { initialValue: undefined });
 
     readonly courseName = computed<string>(() => {
         const courseId = this.courseId();
@@ -132,7 +135,7 @@ export class ContextSelectionComponent {
             .flatMap((g) => g.items)
             .find((o) => o.value === value);
         if (option) {
-            this.chatService.switchToNewSession(option.mode, option.entityId);
+            this.controller.switchToNewSession(option.mode, option.entityId);
         }
     }
 }

@@ -11,7 +11,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
-import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { of, throwError } from 'rxjs';
@@ -29,7 +29,7 @@ describe('AiExperienceSettingsComponent', () => {
     let fixture: ComponentFixture<AiExperienceSettingsComponent>;
     let irisChatHttpService: IrisChatHttpService;
     let irisMemoriesHttpService: IrisMemoriesHttpService;
-    let irisChatService: IrisChatService;
+    let userService: UserService;
     let accountService: AccountService;
     let alertService: AlertService;
     let llmModalService: LLMSelectionModalService;
@@ -39,7 +39,7 @@ describe('AiExperienceSettingsComponent', () => {
             imports: [AiExperienceSettingsComponent],
             providers: [
                 MockProvider(IrisChatHttpService),
-                MockProvider(IrisChatService),
+                MockProvider(UserService, { updateLLMSelectionDecision: () => of(new HttpResponse<void>()) }),
                 MockProvider(IrisMemoriesHttpService),
                 MockProvider(TranslateService),
                 MockProvider(AlertService),
@@ -60,7 +60,7 @@ describe('AiExperienceSettingsComponent', () => {
         component = fixture.componentInstance;
         irisChatHttpService = TestBed.inject(IrisChatHttpService);
         irisMemoriesHttpService = TestBed.inject(IrisMemoriesHttpService);
-        irisChatService = TestBed.inject(IrisChatService);
+        userService = TestBed.inject(UserService);
         accountService = TestBed.inject(AccountService);
         alertService = TestBed.inject(AlertService);
         llmModalService = TestBed.inject(LLMSelectionModalService);
@@ -170,13 +170,14 @@ describe('AiExperienceSettingsComponent', () => {
         fixture.detectChanges();
 
         const openSpy = vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
-        const updateConsentSpy = vi.spyOn(irisChatService, 'updateLLMUsageConsent').mockImplementation(() => {});
+        const updateDecisionSpy = vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>()));
         const setDecisionSpy = vi.spyOn(accountService, 'setUserLLMSelectionDecision').mockImplementation(() => {});
 
         await component.openSelectionModal();
+        await fixture.whenStable();
 
         expect(openSpy).toHaveBeenCalled();
-        expect(updateConsentSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+        expect(updateDecisionSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
         expect(setDecisionSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
     });
 
@@ -213,12 +214,12 @@ describe('AiExperienceSettingsComponent', () => {
         fixture.detectChanges();
 
         vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
-        const updateConsentSpy = vi.spyOn(irisChatService, 'updateLLMUsageConsent');
+        const updateDecisionSpy = vi.spyOn(userService, 'updateLLMSelectionDecision');
         const setDecisionSpy = vi.spyOn(accountService, 'setUserLLMSelectionDecision');
 
         await component.openSelectionModal();
 
-        expect(updateConsentSpy).not.toHaveBeenCalled();
+        expect(updateDecisionSpy).not.toHaveBeenCalled();
         expect(setDecisionSpy).not.toHaveBeenCalled();
     });
 });

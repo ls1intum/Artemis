@@ -409,9 +409,13 @@ export class AccountService implements IAccountService {
                 return currentUserIdentity;
             }
 
-            currentUserIdentity.selectedLLMUsageTimestamp = dayjs();
-            currentUserIdentity.selectedLLMUsage = accepted;
-            return currentUserIdentity;
+            // Return a new reference so signal consumers (e.g. the NO_AI redirect via toObservable)
+            // are notified — Angular signal equality is reference-based and an in-place mutation is silent.
+            return {
+                ...currentUserIdentity,
+                selectedLLMUsageTimestamp: dayjs(),
+                selectedLLMUsage: accepted,
+            };
         });
     }
 
@@ -423,8 +427,9 @@ export class AccountService implements IAccountService {
                         return currentUserIdentity;
                     }
 
-                    currentUserIdentity.memirisEnabled = memirisEnabled;
-                    return currentUserIdentity;
+                    // Return a new reference so signal consumers are notified;
+                    // in-place mutation is silent under the signal's reference equality.
+                    return { ...currentUserIdentity, memirisEnabled };
                 });
             },
             error: (_) => {},

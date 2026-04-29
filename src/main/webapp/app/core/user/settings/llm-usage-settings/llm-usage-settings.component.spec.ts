@@ -4,11 +4,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LlmUsageSettingsComponent } from './llm-usage-settings.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { MockDirective, MockPipe } from 'ng-mocks';
+import { HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,7 +21,7 @@ describe('LlmUsageSettingsComponent', () => {
 
     let component: LlmUsageSettingsComponent;
     let fixture: ComponentFixture<LlmUsageSettingsComponent>;
-    let irisChatService: IrisChatService;
+    let userService: UserService;
     let accountService: AccountService;
     let llmModalService: LLMSelectionModalService;
 
@@ -31,8 +33,8 @@ describe('LlmUsageSettingsComponent', () => {
     } as User;
 
     beforeEach(async () => {
-        const irisChatServiceMock = {
-            updateLLMUsageConsent: vi.fn(),
+        const userServiceMock = {
+            updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
         };
 
         const accountServiceMock = {
@@ -47,7 +49,7 @@ describe('LlmUsageSettingsComponent', () => {
         await TestBed.configureTestingModule({
             imports: [LlmUsageSettingsComponent, MockDirective(TranslateDirective), MockPipe(ArtemisDatePipe)],
             providers: [
-                { provide: IrisChatService, useValue: irisChatServiceMock },
+                { provide: UserService, useValue: userServiceMock },
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: LLMSelectionModalService, useValue: llmModalServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -56,7 +58,7 @@ describe('LlmUsageSettingsComponent', () => {
 
         fixture = TestBed.createComponent(LlmUsageSettingsComponent);
         component = fixture.componentInstance;
-        irisChatService = TestBed.inject(IrisChatService);
+        userService = TestBed.inject(UserService);
         accountService = TestBed.inject(AccountService);
         llmModalService = TestBed.inject(LLMSelectionModalService);
     });
@@ -122,7 +124,6 @@ describe('LlmUsageSettingsComponent', () => {
 
             await component.openSelectionModal();
 
-            // Default mockUser has CLOUD_AI selected, so open receives CLOUD_AI
             expect(llmModalService.open).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
             expect(updateSpy).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
         });
@@ -212,10 +213,11 @@ describe('LlmUsageSettingsComponent', () => {
     });
 
     describe('updateLLMSelectionDecision', () => {
-        it('should call irisChatService.updateLLMUsageConsent', () => {
+        it('should call userService.updateLLMSelectionDecision then accountService.setUserLLMSelectionDecision', () => {
             component.updateLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
 
-            expect(irisChatService.updateLLMUsageConsent).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+            expect(userService.updateLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+            expect(accountService.setUserLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
         });
 
         it('should call accountService.setUserLLMSelectionDecision', () => {
@@ -235,21 +237,21 @@ describe('LlmUsageSettingsComponent', () => {
         it('should handle CLOUD_AI decision', () => {
             component.updateLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
 
-            expect(irisChatService.updateLLMUsageConsent).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+            expect(userService.updateLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
             expect(accountService.setUserLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
         });
 
         it('should handle LOCAL_AI decision', () => {
             component.updateLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI);
 
-            expect(irisChatService.updateLLMUsageConsent).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
+            expect(userService.updateLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
             expect(accountService.setUserLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
         });
 
         it('should handle NO_AI decision', () => {
             component.updateLLMSelectionDecision(LLMSelectionDecision.NO_AI);
 
-            expect(irisChatService.updateLLMUsageConsent).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
+            expect(userService.updateLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
             expect(accountService.setUserLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
         });
     });

@@ -26,7 +26,8 @@
                 "onPremiseAccepted": "You have selected On-premise AI on {{acceptedDate}}.",
                 "AIDeclined": "You have explicitly declined AI usage on {{acceptedDate}}.",
                 "noAISelected": "You haven't made a decision on the usage of LLMs.",
-                "chooseAI": "Change Selection"
+                "chooseAI": "Change Selection",
+                "updateFailed": "Could not save your AI selection. Please try again."
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Here you can set a public SSH key to clone git repositories via SSH. For more details see the documentation.",
@@ -263,6 +264,7 @@
                 "deleteQuestion": "Are you sure you want to delete all your AI interactions and long-term memories? This action cannot be undone.",
                 "deleteSuccess": "All AI interactions and long-term memories have been successfully deleted.",
                 "deleteFailure": "Failed to delete AI data. Please try again.",
+                "updateFailed": "Could not save your AI selection. Please try again.",
                 "typeDeleteAllToConfirm": "To confirm, please type"
             },
             "quizTrainingSettings": {

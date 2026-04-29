@@ -8,7 +8,7 @@ import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/sha
 import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-chat-mode.model';
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 
 const map = new Map<string, any>();

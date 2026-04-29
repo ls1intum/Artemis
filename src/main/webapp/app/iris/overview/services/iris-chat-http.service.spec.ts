@@ -5,7 +5,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { take } from 'rxjs/operators';
 import { irisExercise, mockClientMessage, mockConversation, mockServerMessage } from 'test/helpers/sample/iris-sample-data';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-chat-mode.model';
 import { provideHttpClient } from '@angular/common/http';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';

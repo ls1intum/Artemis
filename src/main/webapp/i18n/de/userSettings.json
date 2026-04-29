@@ -26,7 +26,8 @@
                 "onPremiseAccepted": "Du hast lokale KI am {{acceptedDate}} ausgewählt.",
                 "AIDeclined": "Du hast die Nutzung von LLMs am {{acceptedDate}} explizit abgelehnt.",
                 "noAISelected": "Du hast noch keine Entscheidung über die Verwendung von LLMs getroffen.",
-                "chooseAI": "Auswahl ändern"
+                "chooseAI": "Auswahl ändern",
+                "updateFailed": "Deine KI-Auswahl konnte nicht gespeichert werden. Bitte versuche es erneut."
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Hier kannst du einen öffentlichen SSH-Schlüssel festlegen, um Git-Repositories über SSH zu klonen. Weitere Einzelheiten findest du in der Dokumentation.",
@@ -263,6 +264,7 @@
                 "deleteQuestion": "Bist du sicher, dass du alle deine KI-Interaktionen und Langzeiterinnerungen löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
                 "deleteSuccess": "Alle KI-Interaktionen und Langzeiterinnerungen wurden erfolgreich gelöscht.",
                 "deleteFailure": "KI-Daten konnten nicht gelöscht werden. Bitte versuche es erneut.",
+                "updateFailed": "Deine KI-Auswahl konnte nicht gespeichert werden. Bitte versuche es erneut.",
                 "typeDeleteAllToConfirm": "Zum Bestätigen bitte eingeben"
             },
             "quizTrainingSettings": {

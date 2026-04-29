@@ -9,10 +9,12 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-chat-mode.model';
+import { IrisChatControllerService } from 'app/iris/overview/services/iris-chat-controller.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { AccountService } from 'app/core/auth/account.service';
-import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
+import { BehaviorSubject, EMPTY } from 'rxjs';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
@@ -51,17 +53,14 @@ describe('TutorSuggestionComponent', () => {
     let fixture: ComponentFixture<TutorSuggestionComponent>;
     let courseSettingsService: IrisSettingsService;
     let profileService: ProfileService;
-    let chatService: IrisChatService;
+    let chatService: IrisChatControllerService;
     let accountService: AccountService;
     let featureToggleService: FeatureToggleService;
-    let irisStatusService: IrisStatusService;
     const courseSettings = mockCourseSettings(1, true);
 
-    const statusMock = {
-        currentRatelimitInfo: vi.fn().mockReturnValue(of({})),
-        handleRateLimitInfo: vi.fn(),
-        getActiveStatus: vi.fn().mockReturnValue(of({})),
-        setCurrentCourse: vi.fn(),
+    const websocketServiceMock = {
+        subscribe: vi.fn().mockReturnValue(EMPTY),
+        connectionState: new BehaviorSubject({ connected: true, wasEverConnectedBefore: false }),
     } as any;
     const mockUserService = {
         updateLLMSelectionDecision: vi.fn(),
@@ -83,7 +82,7 @@ describe('TutorSuggestionComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useValue: mockUserService },
-                { provide: IrisStatusService, useValue: statusMock },
+                { provide: WebsocketService, useValue: websocketServiceMock },
                 MockProvider(IrisSettingsService),
                 MockProvider(ProfileService),
                 MockProvider(FeatureToggleService),
@@ -96,15 +95,17 @@ describe('TutorSuggestionComponent', () => {
             add: { imports: [MockIrisBaseChatbotComponent, MockPipe(ArtemisTimeAgoPipe)] },
         });
 
+        // Prototype-spy BEFORE createComponent: `irisActive$` is a class field initializer
+        // that calls `controller.getActiveStatus()` during component construction, so an
+        // instance-level spy installed after createComponent would be too late.
+        vi.spyOn(IrisChatControllerService.prototype, 'getActiveStatus').mockReturnValue(of(true));
+
         fixture = TestBed.createComponent(TutorSuggestionComponent);
-        chatService = TestBed.inject(IrisChatService);
-        chatService.setCourseId(123);
-
-        irisStatusService = TestBed.inject(IrisStatusService);
-        vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
-
         component = fixture.componentInstance;
         componentRef = fixture.componentRef;
+
+        // Component-scoped controller; resolve through the component's injector.
+        chatService = fixture.debugElement.injector.get(IrisChatControllerService);
 
         courseSettingsService = TestBed.inject(IrisSettingsService);
         profileService = TestBed.inject(ProfileService);
@@ -112,7 +113,6 @@ describe('TutorSuggestionComponent', () => {
         featureToggleService = TestBed.inject(FeatureToggleService);
 
         vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-        chatService.setCourseId(123);
         accountService.userIdentity.set({ selectedLLMUsageTimestamp: dayjs() } as User);
 
         componentRef.setInput('post', { id: 1 } as any);
@@ -123,11 +123,11 @@ describe('TutorSuggestionComponent', () => {
         vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
         vi.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-        const switchToSpy = vi.spyOn(chatService, 'switchTo').mockReturnValue(undefined);
+        const setContextSpy = vi.spyOn(IrisChatControllerService.prototype, 'setContext').mockReturnValue(undefined);
         const getFeatureToggleSpy = vi.spyOn(featureToggleService, 'getFeatureToggleActive');
-        const getActiveStatusSpy = vi.spyOn(irisStatusService, 'getActiveStatus');
+        const getActiveStatusSpy = vi.spyOn(IrisChatControllerService.prototype, 'getActiveStatus');
         fixture.detectChanges();
-        expect(switchToSpy).toHaveBeenCalledWith(ChatServiceMode.TUTOR_SUGGESTION, 1);
+        expect(setContextSpy).toHaveBeenCalledWith(1, ChatServiceMode.TUTOR_SUGGESTION, 1);
         expect(getFeatureToggleSpy).toHaveBeenCalledWith(FeatureToggle.TutorSuggestions);
         expect(getActiveStatusSpy).toHaveBeenCalled();
     });
@@ -136,21 +136,21 @@ describe('TutorSuggestionComponent', () => {
         vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
         const getCourseSettingsSpy = vi.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
         const profileServiceMock = vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-        const switchToSpy = vi.spyOn(chatService, 'switchTo').mockReturnValue(undefined);
+        const setContextSpy = vi.spyOn(IrisChatControllerService.prototype, 'setContext').mockReturnValue(undefined);
         vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-        vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
+        vi.spyOn(IrisChatControllerService.prototype, 'getActiveStatus').mockReturnValue(of(true));
         fixture.detectChanges();
         vi.advanceTimersByTime(0);
         expect(profileServiceMock).toHaveBeenCalledOnce();
         expect(getCourseSettingsSpy).toHaveBeenCalledOnce();
-        expect(switchToSpy).toHaveBeenCalledWith(ChatServiceMode.TUTOR_SUGGESTION, 1);
+        expect(setContextSpy).toHaveBeenCalledWith(1, ChatServiceMode.TUTOR_SUGGESTION, 1);
     });
 
     describe('should set irisEnabled to', () => {
         it('false if Iris module feature is not enabled', () => {
             vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
             vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-            vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
+            vi.spyOn(IrisChatControllerService.prototype, 'getActiveStatus').mockReturnValue(of(true));
 
             fixture = TestBed.createComponent(TutorSuggestionComponent);
             component = fixture.componentInstance;
@@ -168,7 +168,7 @@ describe('TutorSuggestionComponent', () => {
         it('false if settings are not available', () => {
             vi.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(undefined));
             vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-            vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
+            vi.spyOn(IrisChatControllerService.prototype, 'getActiveStatus').mockReturnValue(of(true));
 
             fixture = TestBed.createComponent(TutorSuggestionComponent);
             component = fixture.componentInstance;
@@ -186,7 +186,7 @@ describe('TutorSuggestionComponent', () => {
         it('false if course id is not available', () => {
             componentRef.setInput('course', null);
             vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-            vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
+            vi.spyOn(IrisChatControllerService.prototype, 'getActiveStatus').mockReturnValue(of(true));
 
             fixture = TestBed.createComponent(TutorSuggestionComponent);
             component = fixture.componentInstance;
@@ -203,7 +203,7 @@ describe('TutorSuggestionComponent', () => {
         it('false if post id is not available', () => {
             componentRef.setInput('post', null);
             vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-            vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
+            vi.spyOn(IrisChatControllerService.prototype, 'getActiveStatus').mockReturnValue(of(true));
 
             fixture = TestBed.createComponent(TutorSuggestionComponent);
             component = fixture.componentInstance;
@@ -222,7 +222,7 @@ describe('TutorSuggestionComponent', () => {
             vi.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
             vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
             vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-            vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
+            vi.spyOn(IrisChatControllerService.prototype, 'getActiveStatus').mockReturnValue(of(true));
             fixture.detectChanges();
             vi.advanceTimersByTime(0);
             expect(component['irisEnabled']).toBe(true);
@@ -237,7 +237,7 @@ describe('TutorSuggestionComponent', () => {
     });
 
     it('should call requestSuggestion when post input changes', () => {
-        const requestTutorSuggestionSpy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+        const requestTutorSuggestionSpy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
         setUpForRequestSuggestion();
         // Trigger the effect by changing the post input
         componentRef.setInput('post', { id: 2 } as any);
@@ -247,8 +247,8 @@ describe('TutorSuggestionComponent', () => {
     });
 
     it('should not call requestSuggestion if iris is active but no sessionId', () => {
-        vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(undefined));
-        vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
+        vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(undefined));
+        vi.spyOn(IrisChatControllerService.prototype, 'getActiveStatus').mockReturnValue(of(true));
         const requestSuggestionSpy = vi.spyOn(component as any, 'requestSuggestion');
         (component as any).subscribeToIrisActivation();
         vi.advanceTimersByTime(0);
@@ -259,12 +259,12 @@ describe('TutorSuggestionComponent', () => {
         vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
         vi.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
-        vi.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
+        vi.spyOn(IrisChatControllerService.prototype, 'currentStages').mockReturnValue(of([]));
 
-        vi.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([])));
-        vi.spyOn(chatService, 'currentError').mockReturnValue(of());
-        vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
-        vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+        vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(concat(of([])));
+        vi.spyOn(IrisChatControllerService.prototype, 'currentError').mockReturnValue(of());
+        vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
+        vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
         component.ngOnInit();
         const irisUnsubSpy = vi.spyOn(component['irisSettingsSubscription'], 'unsubscribe');
         const msgUnsubSpy = vi.spyOn(component['messagesSubscription'], 'unsubscribe');
@@ -283,9 +283,9 @@ describe('TutorSuggestionComponent', () => {
 
     it('should update suggestion in fetchMessages if last message is an Artifact', () => {
         const mockMessages = [{ id: 1, sender: 'USER' } as IrisMessage, { id: 2, sender: 'ARTIFACT' } as IrisMessage];
-        vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
-        vi.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
-        vi.spyOn(chatService, 'currentError').mockReturnValue(of());
+        vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of(mockMessages));
+        vi.spyOn(IrisChatControllerService.prototype, 'currentStages').mockReturnValue(of([]));
+        vi.spyOn(IrisChatControllerService.prototype, 'currentError').mockReturnValue(of());
         component['fetchMessages']();
         vi.advanceTimersByTime(0);
         expect(component.suggestion).toEqual(mockMessages[1]);
@@ -294,23 +294,23 @@ describe('TutorSuggestionComponent', () => {
 
     describe('requestSuggestion', () => {
         it('should request suggestion when there are no messages after error fallback', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(
                 concat(
                     throwError(() => new Error('empty')),
                     of([]),
                 ),
             );
-            const requestTutorSuggestionSpy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            const requestTutorSuggestionSpy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
             expect(requestTutorSuggestionSpy).toHaveBeenCalled();
         });
 
         it('should request suggestion if messages array is empty', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
-            const requestTutorSuggestionSpy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(concat(of([]), of([])));
+            const requestTutorSuggestionSpy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
             expect(requestTutorSuggestionSpy).toHaveBeenCalled();
@@ -318,25 +318,25 @@ describe('TutorSuggestionComponent', () => {
 
         it('should not request suggestion if post is undefined', () => {
             componentRef.setInput('post', undefined as any);
-            const spy = vi.spyOn(chatService, 'requestTutorSuggestion');
+            const spy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion');
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
             expect(spy).not.toHaveBeenCalled();
         });
 
         it('should request suggestion when second message emission contains LLM message', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
-            const requestTutorSuggestionSpy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(concat(of([]), of([])));
+            const requestTutorSuggestionSpy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
             expect(requestTutorSuggestionSpy).toHaveBeenCalled();
         });
 
         it('should set error and still request suggestion if currentMessages fails', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(throwError(() => new Error('fail')));
-            const requestTutorSuggestionSpy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(throwError(() => new Error('fail')));
+            const requestTutorSuggestionSpy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
             expect(component['error']).toBe(IrisErrorMessageKey.SESSION_LOAD_FAILED);
@@ -344,38 +344,38 @@ describe('TutorSuggestionComponent', () => {
         });
 
         it('should not request suggestion when last message is not from LLM', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
             const mockMessages = [{ id: 1, sender: 'USER' }] as IrisMessage[];
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
-            const requestTutorSuggestionSpy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of(mockMessages));
+            const requestTutorSuggestionSpy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
             expect(requestTutorSuggestionSpy).not.toHaveBeenCalled();
         });
 
         it('should not request suggestion if last message is from LLM and no new answer', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(
                 of([
                     { id: 1, sender: 'USER' },
                     { id: 2, sender: 'LLM' },
                 ] as IrisMessage[]),
             );
             vi.spyOn(component as any, 'checkForNewAnswerAndRequestSuggestion').mockReturnValue(false);
-            const spy = vi.spyOn(chatService, 'requestTutorSuggestion');
+            const spy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion');
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
             expect(spy).not.toHaveBeenCalled();
         });
 
         it('should not request suggestion if last message is from LLM or ARTIFACT', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
             const mockMessages = [
                 { id: 1, sender: 'USER' },
                 { id: 2, sender: 'LLM' },
             ] as IrisMessage[];
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
-            const requestTutorSuggestionSpy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of(mockMessages));
+            const requestTutorSuggestionSpy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
 
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
@@ -384,9 +384,9 @@ describe('TutorSuggestionComponent', () => {
         });
 
         it('should handle error when currentMessages fails and proceed with empty array', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(throwError(() => new Error('test')));
-            const requestTutorSuggestionSpy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(throwError(() => new Error('test')));
+            const requestTutorSuggestionSpy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
 
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
@@ -396,9 +396,9 @@ describe('TutorSuggestionComponent', () => {
         });
 
         it('should set error if requestTutorSuggestion fails', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
-            vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(throwError(() => new Error('test')));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(concat(of([]), of([])));
+            vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(throwError(() => new Error('test')));
 
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
@@ -410,12 +410,12 @@ describe('TutorSuggestionComponent', () => {
             vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
             vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
             vi.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
-            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
-            vi.spyOn(chatService, 'currentError').mockReturnValue(of());
-            vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
-            const requestTutorSuggestionSpy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([])));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentStages').mockReturnValue(of([]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentError').mockReturnValue(of());
+            vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
+            const requestTutorSuggestionSpy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(concat(of([])));
             component.ngOnInit();
             vi.advanceTimersByTime(0);
             expect(requestTutorSuggestionSpy).not.toHaveBeenCalled();
@@ -424,7 +424,7 @@ describe('TutorSuggestionComponent', () => {
         // --- Additional tests for requestSuggestion branch coverage ---
         it('should not request suggestion if irisEnabled is false', () => {
             component['irisEnabled'] = false;
-            const spy = vi.spyOn(chatService, 'requestTutorSuggestion');
+            const spy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion');
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
             expect(spy).not.toHaveBeenCalled();
@@ -432,17 +432,17 @@ describe('TutorSuggestionComponent', () => {
 
         it('should not proceed if post is null', () => {
             componentRef.setInput('post', null as any);
-            const spy = vi.spyOn(chatService, 'requestTutorSuggestion');
+            const spy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion');
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
             expect(spy).not.toHaveBeenCalled();
         });
 
         it('should not request suggestion if last message is ARTIFACT and no new answer', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([{ id: 2, sender: 'ARTIFACT' } as IrisMessage]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([{ id: 2, sender: 'ARTIFACT' } as IrisMessage]));
             vi.spyOn(component as any, 'checkForNewAnswerAndRequestSuggestion').mockReturnValue(false);
-            const spy = vi.spyOn(chatService, 'requestTutorSuggestion');
+            const spy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion');
             component['irisEnabled'] = true;
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
@@ -450,9 +450,9 @@ describe('TutorSuggestionComponent', () => {
         });
 
         it('should process first non-empty emission and request suggestion', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([{ id: 1, sender: 'USER' } as IrisMessage])));
-            const spy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(concat(of([]), of([{ id: 1, sender: 'USER' } as IrisMessage])));
+            const spy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
             component['irisEnabled'] = true;
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
@@ -460,14 +460,14 @@ describe('TutorSuggestionComponent', () => {
         });
 
         it('should recover from error in messages stream and still call suggestion', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(
                 concat(
                     throwError(() => new Error('fail')),
                     of([{ id: 1, sender: 'USER' } as IrisMessage]),
                 ),
             );
-            const spy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            const spy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
             component['irisEnabled'] = true;
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
@@ -475,18 +475,18 @@ describe('TutorSuggestionComponent', () => {
         });
 
         it('should emit SESSION_LOAD_FAILED on message fetch error', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(throwError(() => new Error('fetch error')));
-            vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(throwError(() => new Error('fetch error')));
+            vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
             expect(component['error']).toBe(IrisErrorMessageKey.SESSION_LOAD_FAILED);
         });
 
         it('should not request suggestion if messages are only from LLM', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([{ id: 1, sender: 'LLM' } as IrisMessage]));
-            const spy = vi.spyOn(chatService, 'requestTutorSuggestion');
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([{ id: 1, sender: 'LLM' } as IrisMessage]));
+            const spy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion');
             component['irisEnabled'] = true;
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
@@ -628,9 +628,9 @@ describe('TutorSuggestionComponent', () => {
             componentRef.setInput('post', { id: 1, answers: [{ id: 1, creationDate: dayjs('2024-07-01T12:00:00Z').toISOString() }] } as any);
             component.suggestions = [{ id: 10, sender: 'ARTIFACT', sentAt: dayjs('2024-07-01T10:00:00Z').toISOString() } as any];
             vi.spyOn(component as any, 'checkForNewAnswerAndRequestSuggestion').mockReturnValue(true);
-            vi.spyOn(component['chatService'], 'currentSessionId').mockReturnValue(of(123));
-            vi.spyOn(component['chatService'], 'currentMessages').mockReturnValue(of([]));
-            vi.spyOn(component['chatService'], 'requestTutorSuggestion').mockReturnValue(of());
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([]));
+            vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
             setUpForRequestSuggestion();
         });
 
@@ -643,7 +643,7 @@ describe('TutorSuggestionComponent', () => {
 
         it('should call requestTutorSuggestion if checkForNewAnswerAndRequestSuggestion returns true', () => {
             (component as any).checkForNewAnswerAndRequestSuggestion.mockReturnValue(true);
-            const reqSpy = vi.spyOn(component['chatService'], 'requestTutorSuggestion');
+            const reqSpy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion');
             (component as any).requestSuggestion();
             vi.advanceTimersByTime(0);
             expect(reqSpy).toHaveBeenCalled();
@@ -651,8 +651,8 @@ describe('TutorSuggestionComponent', () => {
 
         it('should not call requestTutorSuggestion if checkForNewAnswerAndRequestSuggestion returns false and last message from LLM/ARTIFACT', () => {
             (component as any).checkForNewAnswerAndRequestSuggestion.mockReturnValue(false);
-            vi.spyOn(component['chatService'], 'currentMessages').mockReturnValue(of([{ sender: 'LLM' } as any]));
-            const reqSpy = vi.spyOn(component['chatService'], 'requestTutorSuggestion');
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([{ sender: 'LLM' } as any]));
+            const reqSpy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion');
             (component as any).requestSuggestion();
             vi.advanceTimersByTime(0);
             expect(reqSpy).not.toHaveBeenCalled();
@@ -661,13 +661,13 @@ describe('TutorSuggestionComponent', () => {
 
     describe('userRequestedNewSuggestion', () => {
         it('should call requestTutorSuggestion on success', () => {
-            const spy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            const spy = vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(of());
             component.userRequestedNewSuggestion();
             expect(spy).toHaveBeenCalled();
         });
 
         it('should set error when requestTutorSuggestion fails', () => {
-            vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(throwError(() => new Error('fail')));
+            vi.spyOn(IrisChatControllerService.prototype, 'requestTutorSuggestion').mockReturnValue(throwError(() => new Error('fail')));
             component.userRequestedNewSuggestion();
             expect(component['error']).toBe(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
         });
@@ -675,8 +675,8 @@ describe('TutorSuggestionComponent', () => {
 
     describe('subscribeToIrisActivation', () => {
         it('should call requestSuggestion when active and session id is available', () => {
-            vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(321));
+            vi.spyOn(IrisChatControllerService.prototype, 'getActiveStatus').mockReturnValue(of(true));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(321));
             const spy = vi.spyOn(component as any, 'requestSuggestion');
 
             (component as any).subscribeToIrisActivation();
@@ -686,12 +686,12 @@ describe('TutorSuggestionComponent', () => {
     });
 
     function setUpForRequestSuggestion() {
-        vi.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
-        vi.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
-        vi.spyOn(chatService, 'currentError').mockReturnValue(of());
-        vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+        vi.spyOn(IrisChatControllerService.prototype, 'currentStages').mockReturnValue(of([]));
+        vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(concat(of([]), of([])));
+        vi.spyOn(IrisChatControllerService.prototype, 'currentError').mockReturnValue(of());
+        vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(123));
         component['irisEnabled'] = true;
         vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-        vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
+        vi.spyOn(IrisChatControllerService.prototype, 'getActiveStatus').mockReturnValue(of(true));
     }
 });

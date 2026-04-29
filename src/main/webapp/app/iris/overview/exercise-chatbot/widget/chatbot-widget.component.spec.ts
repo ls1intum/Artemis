@@ -22,7 +22,7 @@ import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/l
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
-import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisChatControllerService } from 'app/iris/overview/services/iris-chat-controller.service';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { MockIrisBaseChatbotComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component.mock';
 import { MockProvider } from 'ng-mocks';
@@ -62,7 +62,7 @@ describe('IrisChatbotWidgetComponent', () => {
         await TestBed.configureTestingModule({
             imports: [IrisChatbotWidgetComponent],
             providers: [
-                MockProvider(IrisChatService),
+                MockProvider(IrisChatControllerService),
                 { provide: MatDialog, useValue: { closeAll: vi.fn() } },
                 { provide: Router, useValue: { events: routerEvents$.asObservable() } },
                 { provide: MAT_DIALOG_DATA, useValue: { isChatGptWrapper: false } },

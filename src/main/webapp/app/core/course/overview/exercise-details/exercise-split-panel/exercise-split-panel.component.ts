@@ -14,7 +14,8 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared/components/resizable-panels/resizable-panels.component';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-chat-mode.model';
+import { IrisChatControllerService } from 'app/iris/overview/services/iris-chat-controller.service';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -59,9 +60,10 @@ import { DiscussionSectionComponent } from 'app/communication/shared/discussion-
         DiscussionSectionComponent,
         PanelModule,
     ],
+    providers: [IrisChatControllerService],
 })
 export class ExerciseSplitPanelComponent {
-    private readonly chatService = inject(IrisChatService);
+    private readonly controller = inject(IrisChatControllerService);
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly childrenOutletContexts = inject(ChildrenOutletContexts);
@@ -187,8 +189,14 @@ export class ExerciseSplitPanelComponent {
         effect(() => {
             const exercise = this.exercise();
             const mode = ExerciseSplitPanelComponent.getChatMode(exercise.type!);
+            const courseId = this.courseId();
             if (this.showIris() && exercise.id && mode) {
-                this.chatService.switchTo(mode, exercise.id);
+                this.controller.setContext(courseId, mode, exercise.id);
+            } else {
+                // Switching to an exercise without Iris (e.g. quiz) MUST close the prior session
+                // and tear down its websocket. The host-scoped controller stays alive across
+                // `<jhi-iris-base-chatbot>` mount/unmount, so we explicitly clear the identifier.
+                this.controller.setContext(courseId);
             }
         });
         effect(() => {

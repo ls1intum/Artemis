@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, viewChild } from '@angular/core';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-chat-mode.model';
+import { IrisChatControllerService } from 'app/iris/overview/services/iris-chat-controller.service';
 import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.component';
 
 @Component({
@@ -7,10 +8,11 @@ import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.comp
     templateUrl: './course-chatbot.component.html',
     styleUrl: './course-chatbot.component.scss',
     imports: [IrisBaseChatbotComponent],
+    providers: [IrisChatControllerService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseChatbotComponent {
-    private readonly chatService = inject(IrisChatService);
+    private readonly controller = inject(IrisChatControllerService);
     private readonly irisBaseChatbot = viewChild(IrisBaseChatbotComponent);
 
     readonly courseId = input<number>();
@@ -19,8 +21,7 @@ export class CourseChatbotComponent {
         effect(() => {
             const courseId = this.courseId();
             if (courseId !== undefined) {
-                this.chatService.setCourseId(courseId);
-                this.chatService.switchTo(ChatServiceMode.COURSE, courseId);
+                this.controller.setContext(courseId, ChatServiceMode.COURSE, courseId);
             }
         });
     }

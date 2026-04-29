@@ -13,11 +13,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { UserService } from 'app/core/user/shared/user.service';
-import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
-import { BehaviorSubject, of } from 'rxjs';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-chat-mode.model';
+import { IrisChatControllerService } from 'app/iris/overview/services/iris-chat-controller.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { BehaviorSubject, EMPTY, of } from 'rxjs';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import {
@@ -64,16 +65,16 @@ describe('IrisBaseChatbotComponent', () => {
     let component: IrisBaseChatbotComponent;
     let fixture: ComponentFixture<IrisBaseChatbotComponent>;
 
-    let chatService: IrisChatService;
+    let chatService: IrisChatControllerService;
     let httpService: IrisChatHttpService;
-    let wsMock: IrisWebsocketService;
     let accountService: AccountService;
 
-    const statusMock = {
-        currentRatelimitInfo: vi.fn().mockReturnValue(of({})),
-        handleRateLimitInfo: vi.fn(),
-        getActiveStatus: vi.fn().mockReturnValue(of({})),
-        setCurrentCourse: vi.fn(),
+    const websocketServiceMock = {
+        subscribe: vi.fn().mockReturnValue(EMPTY),
+        connectionState: new BehaviorSubject({ connected: true, wasEverConnectedBefore: false }),
+    } as any;
+    const profileServiceMock = {
+        isModuleFeatureActive: vi.fn().mockReturnValue(true),
     } as any;
     const mockLLMModalService = {
         open: vi.fn().mockResolvedValue(LLM_MODAL_DISMISSED),
@@ -101,19 +102,46 @@ describe('IrisBaseChatbotComponent', () => {
                 LocalStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
-                { provide: HttpClient, useValue: {} },
+                {
+                    provide: HttpClient,
+                    useValue: {
+                        // The controller's heartbeat (`getIrisStatus`) is the only direct HttpClient
+                        // user — return EMPTY so it never fires real requests in tests.
+                        get: vi.fn().mockReturnValue(EMPTY),
+                    },
+                },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useValue: mockUserService },
-                { provide: IrisStatusService, useValue: statusMock },
+                { provide: WebsocketService, useValue: websocketServiceMock },
+                { provide: ProfileService, useValue: profileServiceMock },
                 { provide: LLMSelectionModalService, useValue: mockLLMModalService },
                 MockProvider(AlertService),
                 MockProvider(DialogService),
                 MockProvider(ActivatedRoute),
                 MockProvider(IrisChatHttpService),
-                MockProvider(IrisWebsocketService),
                 MockProvider(CourseStorageService),
             ],
         })
+            .overrideComponent(IrisBaseChatbotComponent, {
+                add: {
+                    providers: [
+                        {
+                            // Component-scoped factory: each fixture gets a fresh controller, but
+                            // we set `active=true` post-construction. The old test relied on
+                            // `statusMock.getActiveStatus.mockReturnValue(of({}))` (a truthy {}
+                            // emission); the real controller's activeSubject defaults to false.
+                            // This keeps the prior assumption of "active by default in tests"
+                            // without changing production behaviour.
+                            provide: IrisChatControllerService,
+                            useFactory: () => {
+                                const controller = new IrisChatControllerService();
+                                controller.activeSubject.next(true);
+                                return controller;
+                            },
+                        },
+                    ],
+                },
+            })
             .compileComponents()
             .then(() => {
                 vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -121,11 +149,10 @@ describe('IrisBaseChatbotComponent', () => {
                 window.scroll = vi.fn();
                 window.HTMLElement.prototype.scrollTo = vi.fn();
 
-                // Set up services BEFORE creating component
-                chatService = TestBed.inject(IrisChatService);
-                chatService.setCourseId(456);
+                // Reset cross-test state on the websocket mock
+                websocketServiceMock.subscribe.mockReset().mockReturnValue(EMPTY);
+
                 httpService = TestBed.inject(IrisChatHttpService);
-                wsMock = TestBed.inject(IrisWebsocketService);
                 accountService = TestBed.inject(AccountService);
 
                 // Set user identity BEFORE creating component (constructor reads this)
@@ -135,6 +162,11 @@ describe('IrisBaseChatbotComponent', () => {
                 // Now create component
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 component = fixture.componentInstance;
+
+                // The controller is component-scoped (provided via overrideComponent), so resolve
+                // it through the component's injector — TestBed.inject would not see it.
+                chatService = fixture.debugElement.injector.get(IrisChatControllerService);
+                chatService.setContext(456);
 
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
                 fixture.detectChanges();
@@ -169,7 +201,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should call API when user accept the policy', () => {
-        const chatServiceSpy = vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
+        const chatServiceSpy = vi.spyOn(IrisChatControllerService.prototype, 'updateLLMUsageConsent').mockImplementation(() => {});
 
         component.acceptPermission(LLMSelectionDecision.CLOUD_AI);
 
@@ -181,7 +213,7 @@ describe('IrisBaseChatbotComponent', () => {
     it('should add user message on send', async () => {
         // given
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        websocketServiceMock.subscribe.mockReturnValueOnce(EMPTY);
         const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
         const content = 'Hello';
@@ -190,9 +222,9 @@ describe('IrisBaseChatbotComponent', () => {
 
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
-        const stub = vi.spyOn(chatService, 'sendMessage');
+        const stub = vi.spyOn(IrisChatControllerService.prototype, 'sendMessage');
         component.newMessageTextContent.set(content);
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        chatService.setContext(456, ChatServiceMode.COURSE, 123);
 
         // when
         component.onSend();
@@ -208,7 +240,7 @@ describe('IrisBaseChatbotComponent', () => {
     it('should resend message', async () => {
         // given
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        websocketServiceMock.subscribe.mockReturnValueOnce(EMPTY);
         const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
         const content = 'Hello';
@@ -217,9 +249,9 @@ describe('IrisBaseChatbotComponent', () => {
         vi.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
-        const stub = vi.spyOn(chatService, 'resendMessage');
+        const stub = vi.spyOn(IrisChatControllerService.prototype, 'resendMessage');
         component.newMessageTextContent.set(content);
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        chatService.setContext(456, ChatServiceMode.COURSE, 123);
 
         // when
         component.resendMessage(createdMessage);
@@ -236,14 +268,14 @@ describe('IrisBaseChatbotComponent', () => {
         // given
         const id = 123;
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        websocketServiceMock.subscribe.mockReturnValueOnce(EMPTY);
         vi.spyOn(httpService, 'rateMessage').mockReturnValueOnce(of({} as HttpResponse<IrisMessageResponseDTO>));
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
         const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
         const message = mockServerMessage;
-        const stub = vi.spyOn(chatService, 'rateMessage');
-        chatService.switchTo(ChatServiceMode.COURSE, id);
+        const stub = vi.spyOn(IrisChatControllerService.prototype, 'rateMessage');
+        chatService.setContext(456, ChatServiceMode.COURSE, id);
 
         // when
         component.rateMessage(message, true);
@@ -259,7 +291,7 @@ describe('IrisBaseChatbotComponent', () => {
     it('should clear newMessage on send', async () => {
         // given
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        websocketServiceMock.subscribe.mockReturnValueOnce(EMPTY);
         const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
         const content = 'Hello';
@@ -269,7 +301,7 @@ describe('IrisBaseChatbotComponent', () => {
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
         component.newMessageTextContent.set(content);
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        chatService.setContext(456, ChatServiceMode.COURSE, 123);
 
         // when
         component.onSend();
@@ -282,12 +314,12 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should not send a message if newMessageTextContent is empty', async () => {
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        websocketServiceMock.subscribe.mockReturnValueOnce(EMPTY);
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
         vi.spyOn(httpService, 'createMessage');
 
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        chatService.setContext(456, ChatServiceMode.COURSE, 123);
 
         component.onSend();
 
@@ -297,12 +329,12 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should set the appropriate message styles based on the sender', async () => {
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        websocketServiceMock.subscribe.mockReturnValueOnce(EMPTY);
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
         const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
         component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        chatService.setContext(456, ChatServiceMode.COURSE, 123);
 
         component.ngAfterViewInit();
         fixture.detectChanges();
@@ -319,7 +351,7 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should render memories indicator for messages with memories', async () => {
         const messagesWithMemories = [mockClientMessageWithMemories, mockServerMessageWithMemories];
-        vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(messagesWithMemories));
+        vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of(messagesWithMemories));
 
         fixture = TestBed.createComponent(IrisBaseChatbotComponent);
         component = fixture.componentInstance;
@@ -334,11 +366,11 @@ describe('IrisBaseChatbotComponent', () => {
     it('should not scroll to bottom when there is no new unread messages', async () => {
         // given
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        websocketServiceMock.subscribe.mockReturnValueOnce(EMPTY);
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
         const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        chatService.setContext(456, ChatServiceMode.COURSE, 123);
 
         // when
         component.ngAfterViewInit();
@@ -353,12 +385,15 @@ describe('IrisBaseChatbotComponent', () => {
     it('should scroll to bottom when there is new unread messages', async () => {
         // given - set up mocks before component creation for proper toSignal initialization
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
+        websocketServiceMock.subscribe.mockReturnValueOnce(of(mockWebsocketServerMessage));
         const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
         // Recreate component with mocked services
         fixture = TestBed.createComponent(IrisBaseChatbotComponent);
         component = fixture.componentInstance;
+        // The component-scoped controller is a fresh instance per fixture — refresh
+        // the local `chatService` reference so subsequent `setContext` hits the new one.
+        chatService = fixture.debugElement.injector.get(IrisChatControllerService);
         fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
 
         // Set up spy on scrollToBottom after component is created but before switchTo
@@ -366,7 +401,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         fixture.detectChanges();
 
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        chatService.setContext(456, ChatServiceMode.COURSE, 123);
 
         // when
         component.ngAfterViewInit();
@@ -501,7 +536,7 @@ describe('IrisBaseChatbotComponent', () => {
     it('should handle suggestion click correctly', () => {
         const suggestion = 'test suggestion';
         vi.spyOn(component, 'onSend');
-        vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined));
+        vi.spyOn(IrisChatControllerService.prototype, 'sendMessage').mockReturnValue(of(undefined));
 
         component.onSuggestionClick(suggestion);
 
@@ -512,7 +547,7 @@ describe('IrisBaseChatbotComponent', () => {
     it('should set clickedSuggestion when clicking a suggestion', () => {
         const suggestion = 'test suggestion';
         vi.spyOn(component, 'onSend');
-        vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined));
+        vi.spyOn(IrisChatControllerService.prototype, 'sendMessage').mockReturnValue(of(undefined));
 
         component.onSuggestionClick(suggestion);
 
@@ -525,8 +560,8 @@ describe('IrisBaseChatbotComponent', () => {
 
         beforeEach(() => {
             // Mock observables before component creation for toSignal to pick up
-            vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of(mockMessages));
 
             // Recreate component with mocked observables
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
@@ -566,8 +601,8 @@ describe('IrisBaseChatbotComponent', () => {
 
     describe('suggestions not rendered', () => {
         it('should not render suggestions when suggestions array is empty', () => {
-            vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of([]));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSuggestions').mockReturnValue(of([]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -579,12 +614,14 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should not render suggestions if the rate limit is exceeded', () => {
-            vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(['suggestion1', 'suggestion2']));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
-            statusMock.currentRatelimitInfo.mockReturnValue(of({ currentMessageCount: 100, rateLimit: 100, rateLimitTimeframeHours: 1 }));
-
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
+            chatService = fixture.debugElement.injector.get(IrisChatControllerService);
+
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSuggestions').mockReturnValue(of(['suggestion1', 'suggestion2']));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
+            chatService.currentRatelimitInfoSubject.next({ currentMessageCount: 100, rateLimit: 100, rateLimitTimeframeHours: 1 });
+
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
 
@@ -593,12 +630,14 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should not render suggestions if the user is not active', () => {
-            vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(['suggestion1', 'suggestion2']));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
-            statusMock.getActiveStatus.mockReturnValue(of(false));
-
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
+            chatService = fixture.debugElement.injector.get(IrisChatControllerService);
+
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSuggestions').mockReturnValue(of(['suggestion1', 'suggestion2']));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
+            chatService.activeSubject.next(false);
+
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
 
@@ -608,9 +647,9 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should not render suggestions if hasActiveStage is true', () => {
             const activeStage = { state: IrisStageStateDTO.IN_PROGRESS } as IrisStageDTO;
-            vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(['suggestion1', 'suggestion2']));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
-            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([activeStage]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSuggestions').mockReturnValue(of(['suggestion1', 'suggestion2']));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentStages').mockReturnValue(of([activeStage]));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -625,12 +664,12 @@ describe('IrisBaseChatbotComponent', () => {
     describe('clear chat session', () => {
         it('should clear chat session when clear button is clicked', async () => {
             vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+            websocketServiceMock.subscribe.mockReturnValueOnce(EMPTY);
             vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
-            vi.spyOn(chatService, 'clearChat').mockReturnValueOnce();
+            vi.spyOn(IrisChatControllerService.prototype, 'clearChat').mockReturnValueOnce();
             const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
-            chatService.switchTo(ChatServiceMode.COURSE, 123);
+            chatService.setContext(456, ChatServiceMode.COURSE, 123);
 
             fixture.detectChanges();
             await fixture.whenStable();
@@ -678,8 +717,8 @@ describe('IrisBaseChatbotComponent', () => {
             entityId: 1,
             entityName: 'Course 1',
         };
-        const clearChatSpy = vi.spyOn(chatService, 'clearChat').mockReturnValue();
-        const switchToSessionSpy = vi.spyOn(chatService, 'switchToSession').mockReturnValue();
+        const clearChatSpy = vi.spyOn(IrisChatControllerService.prototype, 'clearChat').mockReturnValue();
+        const switchToSessionSpy = vi.spyOn(IrisChatControllerService.prototype, 'switchToSession').mockReturnValue();
 
         component.onSessionClick(newChatSession);
 
@@ -696,7 +735,7 @@ describe('IrisBaseChatbotComponent', () => {
             entityId: 1,
             entityName: 'Course 1',
         };
-        const switchToSessionSpy = vi.spyOn(chatService, 'switchToSession').mockReturnValue();
+        const switchToSessionSpy = vi.spyOn(IrisChatControllerService.prototype, 'switchToSession').mockReturnValue();
 
         component.onSessionClick(mockSession);
 
@@ -716,7 +755,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should call chatService.clearChat when openNewSession is executed', () => {
-        const clearChatSpy = vi.spyOn(chatService, 'clearChat').mockReturnValue();
+        const clearChatSpy = vi.spyOn(IrisChatControllerService.prototype, 'clearChat').mockReturnValue();
         component.openNewSession();
         expect(clearChatSpy).toHaveBeenCalledOnce();
     });
@@ -760,7 +799,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         beforeEach(() => {
             // Mock chatSessions before component creation (chatSessions is readonly from toSignal)
-            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([...sortedSessions]));
+            vi.spyOn(IrisChatControllerService.prototype, 'availableChatSessions').mockReturnValue(of([...sortedSessions]));
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
@@ -845,7 +884,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         beforeEach(() => {
             // Mock chatSessions before component creation (chatSessions is readonly from toSignal)
-            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([...sortedSessions]));
+            vi.spyOn(IrisChatControllerService.prototype, 'availableChatSessions').mockReturnValue(of([...sortedSessions]));
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
@@ -969,8 +1008,8 @@ describe('IrisBaseChatbotComponent', () => {
     describe('Related entity button', () => {
         it('should display correct related entity button when lecture session selected', async () => {
             // Mock the service observables before component creation
-            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.LECTURE));
-            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(55));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.LECTURE));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(55));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -989,8 +1028,8 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should display correct related entity button when programming exercise session selected', async () => {
             // Mock the service observables before component creation
-            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
-            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(99));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(99));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1008,8 +1047,8 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should display correct related entity button when text exercise session selected', async () => {
-            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.TEXT_EXERCISE));
-            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(77));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.TEXT_EXERCISE));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(77));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1077,7 +1116,7 @@ describe('IrisBaseChatbotComponent', () => {
         it('should set userAccepted to CLOUD_AI when user selects cloud in modal', async () => {
             accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
             vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
-            vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
+            vi.spyOn(IrisChatControllerService.prototype, 'updateLLMUsageConsent').mockImplementation(() => {});
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1093,7 +1132,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should set userAccepted to LOCAL_AI when user selects local in modal', async () => {
             vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLMSelectionDecision.LOCAL_AI);
-            vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
+            vi.spyOn(IrisChatControllerService.prototype, 'updateLLMUsageConsent').mockImplementation(() => {});
 
             await component.showAISelectionModal();
 
@@ -1102,7 +1141,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should close chat when user selects no_ai in modal', async () => {
             vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLMSelectionDecision.NO_AI);
-            vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
+            vi.spyOn(IrisChatControllerService.prototype, 'updateLLMUsageConsent').mockImplementation(() => {});
             vi.spyOn(component.closeClicked, 'emit');
 
             await component.showAISelectionModal();
@@ -1173,8 +1212,8 @@ describe('IrisBaseChatbotComponent', () => {
         const mockMessages = [mockClientMessage, mockServerMessage];
 
         beforeEach(() => {
-            vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of(mockMessages));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1244,11 +1283,11 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         beforeEach(() => {
-            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession1, exerciseSession2, otherEntitySession, lectureSession]));
-            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
-            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
+            vi.spyOn(IrisChatControllerService.prototype, 'availableChatSessions').mockReturnValue(of([exerciseSession1, exerciseSession2, otherEntitySession, lectureSession]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(42));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(10));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1262,7 +1301,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should display "New Chat" when current session id is undefined', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(undefined));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(undefined));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1304,13 +1343,13 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should still build grouped menu when current session id is undefined', () => {
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(undefined));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(undefined));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
             fixture.componentRef.setInput('layout', 'widget');
-            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
-            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(42));
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
 
@@ -1323,7 +1362,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should call onSessionClick when a today session menu item is clicked', () => {
-            vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {});
+            vi.spyOn(IrisChatControllerService.prototype, 'switchToSession').mockImplementation(() => {});
             const onSessionClickSpy = vi.spyOn(component, 'onSessionClick');
             const mockEvent = new MouseEvent('click');
             component.toggleSessionMenu(mockEvent);
@@ -1334,7 +1373,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should call onSessionClick when an older session menu item is clicked', () => {
-            vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {});
+            vi.spyOn(IrisChatControllerService.prototype, 'switchToSession').mockImplementation(() => {});
             const onSessionClickSpy = vi.spyOn(component, 'onSessionClick');
             const mockEvent = new MouseEvent('click');
             component.toggleSessionMenu(mockEvent);
@@ -1383,11 +1422,11 @@ describe('IrisBaseChatbotComponent', () => {
         };
 
         it('should not render session title trigger in empty embedded mode without related sessions', () => {
-            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([embeddedSession]));
-            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
-            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+            vi.spyOn(IrisChatControllerService.prototype, 'availableChatSessions').mockReturnValue(of([embeddedSession]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(42));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(20));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([]));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1400,11 +1439,11 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should render session title trigger in empty embedded mode with related sessions', () => {
-            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([embeddedSession, embeddedPastSession]));
-            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
-            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+            vi.spyOn(IrisChatControllerService.prototype, 'availableChatSessions').mockReturnValue(of([embeddedSession, embeddedPastSession]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(42));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(20));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([]));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1417,11 +1456,11 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should not render session title trigger when only unrelated past sessions exist in embedded mode', () => {
-            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([embeddedSession, unrelatedSession]));
-            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
-            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+            vi.spyOn(IrisChatControllerService.prototype, 'availableChatSessions').mockReturnValue(of([embeddedSession, unrelatedSession]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(42));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(20));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([]));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1451,11 +1490,11 @@ describe('IrisBaseChatbotComponent', () => {
         };
 
         it.each(['widget', 'embedded'] as const)('should not render session title trigger after switching to course context without past course sessions (%s layout)', (layout) => {
-            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([freshCourseSession]));
-            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
-            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(7));
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(30));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+            vi.spyOn(IrisChatControllerService.prototype, 'availableChatSessions').mockReturnValue(of([freshCourseSession]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(7));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(30));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([]));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1470,11 +1509,11 @@ describe('IrisBaseChatbotComponent', () => {
         it.each(['widget', 'embedded'] as const)(
             'should render session title trigger after switching to course context when a past course session exists (%s layout)',
             (layout) => {
-                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([freshCourseSession, pastCourseSession]));
-                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
-                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(7));
-                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(30));
-                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+                vi.spyOn(IrisChatControllerService.prototype, 'availableChatSessions').mockReturnValue(of([freshCourseSession, pastCourseSession]));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(7));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(30));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([]));
 
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 component = fixture.componentInstance;
@@ -1488,8 +1527,8 @@ describe('IrisBaseChatbotComponent', () => {
         );
 
         it('should return an empty activeSuggestionChips list when currentChatMode is undefined', () => {
-            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(undefined as unknown as ChatServiceMode));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(undefined as unknown as ChatServiceMode));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([]));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1509,11 +1548,11 @@ describe('IrisBaseChatbotComponent', () => {
                 sentAt: dayjs(),
             } as IrisUserMessage;
 
-            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([freshCourseSession]));
-            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
-            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(7));
-            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(30));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([userMessage]));
+            vi.spyOn(IrisChatControllerService.prototype, 'availableChatSessions').mockReturnValue(of([freshCourseSession]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(7));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(30));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([userMessage]));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1563,7 +1602,7 @@ describe('IrisBaseChatbotComponent', () => {
                 confirmation.accept!();
                 return confirmationService;
             });
-            const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
+            const deleteSessionSpy = vi.spyOn(IrisChatControllerService.prototype, 'deleteSession').mockReturnValue(of(undefined));
 
             component.onDeleteSession(mockSession);
 
@@ -1575,7 +1614,7 @@ describe('IrisBaseChatbotComponent', () => {
                 confirmation.accept!();
                 return confirmationService;
             });
-            vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
+            vi.spyOn(IrisChatControllerService.prototype, 'deleteSession').mockReturnValue(of(undefined));
             const successSpy = vi.spyOn(alertService, 'success');
 
             component.onDeleteSession(mockSession);
@@ -1590,7 +1629,7 @@ describe('IrisBaseChatbotComponent', () => {
                 }
                 return confirmationService;
             });
-            const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession');
+            const deleteSessionSpy = vi.spyOn(IrisChatControllerService.prototype, 'deleteSession');
 
             component.onDeleteSession(mockSession);
 
@@ -1652,7 +1691,7 @@ describe('IrisBaseChatbotComponent', () => {
                 sentAt: dayjs(),
             } as IrisAssistantMessage;
 
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mcqMessage]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([mcqMessage]));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1679,8 +1718,8 @@ describe('IrisBaseChatbotComponent', () => {
                 internal: false,
                 chatMessage: 'Analyzing your code...',
             };
-            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([stageWithChat]));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentStages').mockReturnValue(of([stageWithChat]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of(mockMessages));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1700,8 +1739,8 @@ describe('IrisBaseChatbotComponent', () => {
                 message: 'Processing...',
                 internal: false,
             };
-            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([stageWithoutChat]));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentStages').mockReturnValue(of([stageWithoutChat]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of(mockMessages));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1722,8 +1761,8 @@ describe('IrisBaseChatbotComponent', () => {
                 internal: false,
                 chatMessage: 'Finished analysis',
             };
-            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([doneStage]));
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentStages').mockReturnValue(of([doneStage]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of(mockMessages));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1746,8 +1785,8 @@ describe('IrisBaseChatbotComponent', () => {
                     chatMessage: 'Initial message',
                 },
             ]);
-            vi.spyOn(chatService, 'currentStages').mockReturnValue(stagesSubject.asObservable());
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentStages').mockReturnValue(stagesSubject.asObservable());
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of(mockMessages));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1793,7 +1832,7 @@ describe('IrisBaseChatbotComponent', () => {
                 sentAt: dayjs(),
             } as IrisUserMessage;
 
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([userMessage, llmMessage]));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([userMessage, llmMessage]));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1843,11 +1882,14 @@ describe('IrisBaseChatbotComponent', () => {
 
     describe('suggestion chips', () => {
         beforeEach(() => {
-            statusMock.getActiveStatus.mockReturnValue(of({}));
-            statusMock.currentRatelimitInfo.mockReturnValue(of({}));
-            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
+            // Spy on the prototype BEFORE createComponent so the component's
+            // toSignal(currentChatMode) subscription captures COURSE mode at construction.
+            // Setting the spy after createComponent leaves toSignal subscribed to the
+            // original observable, which emits undefined and yields no chips.
+            vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
+            chatService = fixture.debugElement.injector.get(IrisChatControllerService);
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
         });
 
@@ -1858,9 +1900,10 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should disable suggestion chips when iris is unavailable', () => {
-            statusMock.getActiveStatus.mockReturnValue(of(false));
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
+            chatService = fixture.debugElement.injector.get(IrisChatControllerService);
+            chatService.activeSubject.next(false);
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
 
@@ -1892,10 +1935,10 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should not render suggestion chips when messages exist', () => {
             vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+            websocketServiceMock.subscribe.mockReturnValueOnce(EMPTY);
             vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
-            chatService.switchTo(ChatServiceMode.COURSE, 456);
+            chatService.setContext(456, ChatServiceMode.COURSE, 456);
             fixture.detectChanges();
 
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
@@ -1984,7 +2027,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         const recreateFixtureForMode = (mode: ChatServiceMode) => {
-            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(mode));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(mode));
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
@@ -2036,11 +2079,15 @@ describe('IrisBaseChatbotComponent', () => {
 
         describe('exercise mode', () => {
             beforeEach(() => {
-                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession]));
-                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
-                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
-                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
-                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+                // Spy on the prototype so the new fixture's component-scoped controller
+                // (different instance than the outer beforeEach's `chatService`) also picks
+                // up the mock — toSignal() subscribes during construction, which happens
+                // BEFORE we can grab the new instance to spy on it.
+                vi.spyOn(IrisChatControllerService.prototype, 'availableChatSessions').mockReturnValue(of([exerciseSession]));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(42));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(10));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([]));
 
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 component = fixture.componentInstance;
@@ -2133,11 +2180,11 @@ describe('IrisBaseChatbotComponent', () => {
 
         describe('exercise mode with existing messages', () => {
             beforeEach(() => {
-                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession]));
-                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
-                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
-                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
-                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage]));
+                vi.spyOn(IrisChatControllerService.prototype, 'availableChatSessions').mockReturnValue(of([exerciseSession]));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(42));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(10));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([mockClientMessage]));
 
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 component = fixture.componentInstance;
@@ -2166,11 +2213,11 @@ describe('IrisBaseChatbotComponent', () => {
 
         describe('lecture mode', () => {
             beforeEach(() => {
-                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([lectureSession]));
-                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.LECTURE));
-                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(55));
-                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
-                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+                vi.spyOn(IrisChatControllerService.prototype, 'availableChatSessions').mockReturnValue(of([lectureSession]));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.LECTURE));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(55));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(20));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([]));
 
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 component = fixture.componentInstance;
@@ -2199,11 +2246,11 @@ describe('IrisBaseChatbotComponent', () => {
 
         describe('lecture mode with existing messages', () => {
             beforeEach(() => {
-                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([lectureSession]));
-                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.LECTURE));
-                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(55));
-                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
-                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage]));
+                vi.spyOn(IrisChatControllerService.prototype, 'availableChatSessions').mockReturnValue(of([lectureSession]));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.LECTURE));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(55));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(20));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([mockClientMessage]));
 
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 component = fixture.componentInstance;
@@ -2218,8 +2265,8 @@ describe('IrisBaseChatbotComponent', () => {
 
         describe('course mode (no cycling)', () => {
             beforeEach(() => {
-                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
-                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([]));
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 component = fixture.componentInstance;
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
@@ -2243,11 +2290,11 @@ describe('IrisBaseChatbotComponent', () => {
 
         describe('ghost text', () => {
             beforeEach(() => {
-                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession]));
-                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
-                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
-                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
-                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+                vi.spyOn(IrisChatControllerService.prototype, 'availableChatSessions').mockReturnValue(of([exerciseSession]));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentRelatedEntityId').mockReturnValue(of(42));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentSessionId').mockReturnValue(of(10));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentMessages').mockReturnValue(of([]));
 
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 component = fixture.componentInstance;
@@ -2342,7 +2389,7 @@ describe('IrisBaseChatbotComponent', () => {
 
             it('should not show ghost text on course screen', () => {
                 // Recreate with course mode
-                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
+                vi.spyOn(IrisChatControllerService.prototype, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 component = fixture.componentInstance;
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
@@ -2357,7 +2404,7 @@ describe('IrisBaseChatbotComponent', () => {
 
     describe('shouldShowStatusBar', () => {
         function createComponentWithStages(stages: IrisStageDTO[]): IrisBaseChatbotComponent {
-            vi.spyOn(chatService, 'currentStages').mockReturnValue(of(stages));
+            vi.spyOn(IrisChatControllerService.prototype, 'currentStages').mockReturnValue(of(stages));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             const comp = fixture.componentInstance;

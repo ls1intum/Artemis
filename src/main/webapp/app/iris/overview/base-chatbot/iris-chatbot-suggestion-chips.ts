@@ -1,7 +1,7 @@
 import { Signal, computed } from '@angular/core';
 import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { faBrain, faCompass, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-chat-mode.model';
 
 export interface IrisSuggestionChip {
     icon: IconDefinition;

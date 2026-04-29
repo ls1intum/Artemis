@@ -33,7 +33,7 @@ import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.servi
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { MODULE_FEATURE_IRIS, PROFILE_ATHENA } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-chat-mode.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
 import { ScienceService } from 'app/shared/science/science.service';

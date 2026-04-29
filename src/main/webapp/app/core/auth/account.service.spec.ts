@@ -753,6 +753,20 @@ describe('AccountService', () => {
             accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
             expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
         });
+
+        it('should return a new object reference so signal consumers are notified', () => {
+            // This regression test guards the immutable update — without it, signal-based watchers
+            // (e.g. the NO_AI redirect in CourseIrisComponent) would silently never fire because
+            // Angular signals compare by reference equality.
+            accountService.userIdentity.set({ id: 1, groups: ['USER'], selectedLLMUsage: LLMSelectionDecision.LOCAL_AI } as User);
+            const oldRef = accountService.userIdentity();
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
+
+            const newRef = accountService.userIdentity();
+            expect(newRef).not.toBe(oldRef);
+            expect(newRef?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
+        });
     });
 
     describe('test save', () => {
@@ -954,6 +968,22 @@ describe('AccountService', () => {
             req.flush({});
 
             expect(accountService.userIdentity()?.memirisEnabled).toBe(true);
+        });
+
+        it('should return a new object reference so signal consumers are notified', () => {
+            // Same regression guard as setUserLLMSelectionDecision — protects future reactive
+            // consumers of `userIdentity` from a silent in-place mutation.
+            accountService.userIdentity.set({ id: 1, groups: ['USER'], memirisEnabled: false } as User);
+            const oldRef = accountService.userIdentity();
+
+            accountService.setUserEnabledMemiris(true);
+
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/core/account/enable-memiris' });
+            req.flush({});
+
+            const newRef = accountService.userIdentity();
+            expect(newRef).not.toBe(oldRef);
+            expect(newRef?.memirisEnabled).toBe(true);
         });
 
         it('should not update user when user identity is undefined', () => {
