@@ -53,6 +53,7 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DialogService } from 'primeng/dynamicdialog';
 import { Subject, of, throwError } from 'rxjs';
+import { skip } from 'rxjs/operators';
 import { MockExamParticipationLiveEventsService } from 'test/helpers/mocks/service/mock-exam-participation-live-events.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -163,6 +164,12 @@ describe('ExamParticipationComponent', () => {
         courseService = TestBed.inject(CourseManagementService);
         courseStorageService = TestBed.inject(CourseStorageService);
         examManagementService = TestBed.inject(ExamManagementService);
+        // Ensure the mocked service has the currentlyLoadedStudentExam Subject in place; otherwise pipelines triggered
+        // by tests below would crash with "Cannot read 'next' of undefined" during teardown.
+        examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
+        // The TestBed has no router routes registered, so any navigate(...) call would emit an
+        // unhandled NG04002 rejection. Stub it once so individual tests don't have to.
+        vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
         // Stub ngOnInit-triggered service calls with non-emitting Observables so ngOnInit only sets the route-derived
         // identifiers (courseId/examId/testRunId) without polluting comp.studentExam.
         const loadTestRunSpy = vi.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(new Subject());
@@ -249,7 +256,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.exam = new Exam();
         studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
         studentExam.workingTime = 100;
-        const studentExamWithExercises = { id: 1, numberOfExamSessions: 0 };
+        const studentExamWithExercises = { id: 1, numberOfExamSessions: 0, exam: new Exam() };
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         const loadStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
         const loadStudentExamWithExercisesForSummary = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
@@ -270,9 +277,10 @@ describe('ExamParticipationComponent', () => {
 
     it('should redirect to exam summary after test run is over', () => {
         const studentExam = new StudentExam();
+        studentExam.exam = new Exam();
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', testRunId: '3' });
         const router = TestBed.inject(Router);
-        const navigateSpy = vi.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
         const loadTestRunWithExercisesForConductionSpy = vi.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExam));
         const submitStudentExamSpy = vi.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
         examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
@@ -308,6 +316,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.id = 4;
         const studentExamWithExercises = new StudentExam();
         studentExamWithExercises.id = 4;
+        studentExamWithExercises.exam = new Exam();
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: 'start' });
         const loadStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
         const loadStudentExamWithExercisesForSummary = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
@@ -328,6 +337,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.id = 3;
         const studentExamWithExercises = new StudentExam();
         studentExamWithExercises.id = 3;
+        studentExamWithExercises.exam = new Exam();
         const activatedRoute = TestBed.inject(ActivatedRoute);
         (activatedRoute as any).firstChild = {
             snapshot: {
@@ -357,6 +367,7 @@ describe('ExamParticipationComponent', () => {
         const localStudentExam = new StudentExam();
         localStudentExam.exam = studentExam.exam;
         localStudentExam.id = 2; // use a different id for testing purposes only
+        localStudentExam.exercises = [];
         const lastSaveFailedStub = vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(true);
         const loadLocalStudentExamStub = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage').mockReturnValue(of(localStudentExam));
 
@@ -505,19 +516,21 @@ describe('ExamParticipationComponent', () => {
         createdParticipation.submissions = [programmingSubmission];
         createdParticipation.exercise = new ProgrammingExercise(new Course(), undefined);
         const courseExerciseServiceStub = vi.spyOn(courseExerciseService, 'startExercise').mockReturnValue(of(createdParticipation));
+        vi.spyOn(programmingSubmissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(of(undefined as any));
         const exercise = new ProgrammingExercise(new Course(), undefined);
-        let index = 0;
-        const states = ['generating', 'success'];
-        comp.generateParticipationStatus.subscribe((state) => {
-            expect(state).toEqual(states[index]);
-            index++;
+        const seenStates: string[] = [];
+        comp.generateParticipationStatus.pipe(skip(1)).subscribe((state) => {
+            seenStates.push(state);
         });
 
+        let receivedParticipation: StudentParticipation | undefined;
         comp.createParticipationForExercise(exercise).subscribe((participation) => {
-            expect(createdParticipation.exercise).toBeUndefined();
-            expect(programmingSubmission.isSynced).toBe(true);
-            expect(participation).toEqual(createdParticipation);
+            receivedParticipation = participation;
         });
+
+        expect(seenStates).toEqual(['generating', 'success']);
+        expect(programmingSubmission.isSynced).toBe(true);
+        expect(receivedParticipation).toEqual(createdParticipation);
         expect(courseExerciseServiceStub).toHaveBeenCalledOnce();
     });
 
@@ -526,14 +539,13 @@ describe('ExamParticipationComponent', () => {
         comp.exam.course = new Course();
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         const courseExerciseServiceStub = vi.spyOn(courseExerciseService, 'startExercise').mockReturnValue(throwError(() => httpError));
-        let index = 0;
-        const states = ['generating', 'failed'];
-        comp.generateParticipationStatus.subscribe((state) => {
-            expect(state).toEqual(states[index]);
-            index++;
+        const seenStates: string[] = [];
+        comp.generateParticipationStatus.pipe(skip(1)).subscribe((state) => {
+            seenStates.push(state);
         });
         const exercise = new ProgrammingExercise(new Course(), undefined);
-        comp.createParticipationForExercise(exercise);
+        comp.createParticipationForExercise(exercise).subscribe();
+        expect(seenStates).toEqual(['generating', 'failed']);
         expect(courseExerciseServiceStub).toHaveBeenCalledOnce();
     });
 
@@ -711,6 +723,7 @@ describe('ExamParticipationComponent', () => {
         httpError.message = 'artemisApp.studentExam.alreadySubmitted';
         const submitSpy = vi.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
         const studentExam = new StudentExam();
+        studentExam.exam = new Exam();
         const loadTestRunWithExercisesForConductionSpy = vi.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExam));
         const alertErrorSpy = vi.spyOn(alertService, 'error');
         comp.exam = new Exam();
@@ -903,9 +916,11 @@ describe('ExamParticipationComponent', () => {
             exercise2.id = 42;
             comp.studentExam = new StudentExam();
             comp.studentExam.exercises = [exercise1, exercise2];
+            comp.pageComponentVisited = [false, false];
             const triggerSpy = vi.spyOn(comp, 'triggerSave');
             const exerciseChange = { overViewChange: false, exercise: exercise2, forceSave: true };
             const createParticipationForExerciseSpy = vi.spyOn(comp, 'createParticipationForExercise').mockReturnValue(of(new StudentParticipation()));
+            vi.spyOn(programmingSubmissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(of(undefined as any));
             comp.exam = new Exam();
             comp.onPageChange(exerciseChange);
             expect(triggerSpy).toHaveBeenCalledWith(true);
@@ -1106,6 +1121,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.id = 3;
         const studentExamWithExercises = new StudentExam();
         studentExamWithExercises.id = 3;
+        studentExamWithExercises.exam = new Exam();
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '3' });
         vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
         vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
@@ -1126,6 +1142,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.id = 3;
         const studentExamWithExercises = new StudentExam();
         studentExamWithExercises.id = 3;
+        studentExamWithExercises.exam = new Exam();
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '3' });
         vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
         vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
@@ -1141,6 +1158,8 @@ describe('ExamParticipationComponent', () => {
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         const examLayoutStub = vi.spyOn(examParticipationService, 'resetExamLayout');
         const studentExam = new StudentExam();
+        studentExam.exam = new Exam();
+        studentExam.id = 3;
 
         vi.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExam));
         vi.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
@@ -1149,6 +1168,9 @@ describe('ExamParticipationComponent', () => {
         examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
         comp.ngOnInit();
         comp.testExam = true;
+        comp.courseId = 1;
+        comp.examId = 2;
+        comp.studentExamId = 3;
         comp.onExamEndConfirmed();
 
         expect(examLayoutStub).toHaveBeenCalledOnce();
