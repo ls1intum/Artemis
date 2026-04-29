@@ -24,7 +24,7 @@ import { User } from 'app/core/user/user.model';
     template: '',
     standalone: true,
 })
-class StubBaseChatbot {}
+class StubBaseChatbotComponent {}
 
 /**
  * Structural-invariant test: the controller is component-scoped, so two consecutive host mounts
@@ -72,7 +72,7 @@ describe('IrisChatControllerService — cross-user isolation invariant (via Cour
         })
             .overrideComponent(CourseChatbotComponent, {
                 remove: { imports: [IrisBaseChatbotComponent] },
-                add: { imports: [StubBaseChatbot] },
+                add: { imports: [StubBaseChatbotComponent] },
             })
             .compileComponents();
     });
