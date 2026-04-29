@@ -262,6 +262,10 @@ public class StudentExamService {
     /**
      * Returns how many test-exam attempts of the given user have produced a successful Athena feedback result, paired
      * with the configured cap. Each attempt counts as one request regardless of how many exercises it contains.
+     *
+     * @param userId the id of the student whose test-exam attempts should be counted
+     * @param examId the id of the exam the attempts belong to
+     * @return the number of attempts that already produced an Athena result and the configured cap
      */
     public AthenaFeedbackUsageDTO getAthenaFeedbackUsage(Long userId, Long examId) {
         long used = studentExamRepository.countTestExamAttemptsWithAthenaResultByUserIdAndExamId(userId, examId);

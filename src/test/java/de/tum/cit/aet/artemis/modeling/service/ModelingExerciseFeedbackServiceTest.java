@@ -21,8 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -53,7 +53,7 @@ class ModelingExerciseFeedbackServiceTest {
     private ResultService resultService;
 
     @Mock
-    private ResultRepository resultRepository;
+    private ResultTestRepository resultRepository;
 
     @Mock
     private ResultWebsocketService resultWebsocketService;
