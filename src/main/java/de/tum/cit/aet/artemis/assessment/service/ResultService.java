@@ -206,17 +206,16 @@ public class ResultService {
      * <b>IMPORTANT — Two deletion paths exist due to Hibernate constraints:</b>
      * <p>
      * The {@link Result} entity has {@code @OneToMany(cascade = ALL, orphanRemoval = true)} relationships to
-     * {@link Feedback} and {@link de.tum.cit.aet.artemis.assessment.domain.AssessmentNote AssessmentNote},
-     * and feedbacks use an L2 cache ({@code @Cache} on the collection). The deletion strategy depends on
-     * whether the {@code feedbacks} collection was eagerly loaded (initialized) or is still a lazy proxy:
+     * {@link Feedback} and {@link de.tum.cit.aet.artemis.assessment.domain.AssessmentNote AssessmentNote}. The
+     * deletion strategy depends on whether the {@code feedbacks} collection was eagerly loaded (initialized)
+     * or is still a lazy proxy:
      * <p>
      * <b>Path 1 — Feedbacks initialized:</b>
      * Only non-cascaded references (complaints, ratings, participant scores) are deleted via JPQL.
      * Feedbacks and long feedback texts are left for Hibernate cascade during {@code em.remove()}.
      * We use {@code deleteById} (not {@code delete(result)}) to load a fresh managed entity, avoiding
-     * {@code em.merge()} on a potentially detached entity — merge would re-initialize the feedbacks
-     * collection from the L2 cache, which causes {@code JpaObjectRetrievalFailureException} if the
-     * cached references are stale. {@code deleteById} fires {@code @PreRemove} in {@link ResultListener}.
+     * {@code em.merge()} on a potentially detached entity. {@code deleteById} fires {@code @PreRemove} in
+     * {@link ResultListener}.
      * <p>
      * <b>Path 2 — Feedbacks NOT initialized (lazy proxy):</b>
      * We MUST NOT touch the feedbacks collection or call JPA delete, as either would trigger lazy
@@ -227,9 +226,8 @@ public class ResultService {
      * <p>
      * <b>DO NOT CHANGE</b> the two-path structure or the deletion order without carefully considering:
      * (1) Hibernate lazy-loading behavior for uninitialized collections,
-     * (2) the L2 cache on {@code Result.feedbacks} and how JPQL bypasses it,
-     * (3) FK constraints between {@code long_feedback_text -> feedback -> result} and {@code assessment_note -> result},
-     * (4) the {@code @PreRemove} lifecycle callback in {@link ResultListener} and which callers compensate for its absence.
+     * (2) FK constraints between {@code long_feedback_text -> feedback -> result} and {@code assessment_note -> result},
+     * (3) the {@code @PreRemove} lifecycle callback in {@link ResultListener} and which callers compensate for its absence.
      *
      * @param result                      the result to delete
      * @param shouldClearParticipantScore true when deleting a single result (synchronously clears stale participant score
@@ -243,13 +241,9 @@ public class ResultService {
         deleteNonCascadedResultReferences(resultId, shouldClearParticipantScore);
 
         if (Hibernate.isInitialized(result.getFeedbacks())) {
-            // Path 1: Feedbacks were eagerly loaded. Let Hibernate cascade handle feedbacks
-            // and long feedback texts. DO NOT bulk-delete feedbacks via JPQL because it bypasses
-            // both the persistence context and the L2 cache (@Cache on Result.feedbacks), leaving
-            // stale cached references that cause JpaObjectRetrievalFailureException when the result
-            // is subsequently merged and deleted.
-            // Use deleteById (not delete(result)) to load a fresh managed entity into the
-            // persistence context, avoiding em.merge() on a potentially detached entity.
+            // Path 1: Feedbacks were eagerly loaded. Let Hibernate cascade handle feedbacks and long feedback texts.
+            // Use deleteById (not delete(result)) to load a fresh managed entity into the persistence context,
+            // avoiding em.merge() on a potentially detached entity.
             resultRepository.deleteById(resultId);
         }
         else {
