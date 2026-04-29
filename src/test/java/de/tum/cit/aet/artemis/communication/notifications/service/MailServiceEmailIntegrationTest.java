@@ -25,10 +25,11 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
 
+import de.tum.cit.aet.artemis.communication.dto.DataExportEmailDTO;
+import de.tum.cit.aet.artemis.communication.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
-import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
 import de.tum.cit.aet.artemis.core.dto.ComponentVulnerabilitiesDTO;
@@ -100,7 +101,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void activationEmail_shouldRenderAndDeliverInEnglish() throws Exception {
         recipient.setActivationKey("abc123-activation-key");
 
-        testMailService.sendActivationEmail(recipient);
+        testMailService.sendActivationEmail(MailRecipientDTO.from(recipient));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("testuser");
@@ -113,7 +114,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         recipient.setLangKey("de");
         recipient.setActivationKey("de-activation-key-456");
 
-        testMailService.sendActivationEmail(recipient);
+        testMailService.sendActivationEmail(MailRecipientDTO.from(recipient));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("de-activation-key-456");
@@ -126,7 +127,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void passwordResetEmail_shouldRenderAndDeliverInEnglish() throws Exception {
         recipient.setResetKey("reset-key-789");
 
-        testMailService.sendPasswordResetMail(recipient);
+        testMailService.sendPasswordResetMail(MailRecipientDTO.from(recipient));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("reset-key-789");
@@ -138,7 +139,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         recipient.setLangKey("de");
         recipient.setResetKey("de-reset-key-012");
 
-        testMailService.sendPasswordResetMail(recipient);
+        testMailService.sendPasswordResetMail(MailRecipientDTO.from(recipient));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("de-reset-key-012");
@@ -151,7 +152,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void saml2SetPasswordEmail_shouldRenderAndDeliverInEnglish() throws Exception {
         recipient.setResetKey("saml-reset-key-345");
 
-        testMailService.sendSAML2SetPasswordMail(recipient);
+        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.from(recipient));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("saml-reset-key-345");
@@ -162,7 +163,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         recipient.setLangKey("de");
         recipient.setResetKey("de-saml-key-678");
 
-        testMailService.sendSAML2SetPasswordMail(recipient);
+        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.from(recipient));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("de-saml-key-678");
@@ -287,10 +288,9 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void dataExportCreatedEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-        var dataExport = new DataExport();
-        dataExport.setId(42L);
+        var dataExport = new DataExportEmailDTO(42L, recipient.getLogin());
 
-        testMailService.sendDataExportCreatedEmail(recipient, dataExport);
+        testMailService.sendDataExportCreatedEmail(MailRecipientDTO.from(recipient), dataExport);
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("privacy/data-exports/42");
@@ -300,10 +300,9 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void dataExportCreatedEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
 
-        var dataExport = new DataExport();
-        dataExport.setId(99L);
+        var dataExport = new DataExportEmailDTO(99L, recipient.getLogin());
 
-        testMailService.sendDataExportCreatedEmail(recipient, dataExport);
+        testMailService.sendDataExportCreatedEmail(MailRecipientDTO.from(recipient), dataExport);
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("privacy/data-exports/99");
@@ -313,13 +312,9 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void dataExportFailedAdminEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-        var exportUser = new User();
-        exportUser.setLogin("faileduser");
+        var dataExport = new DataExportEmailDTO(1L, "faileduser");
 
-        var dataExport = new DataExport();
-        dataExport.setUser(exportUser);
-
-        testMailService.sendDataExportFailedEmailToAdmin(recipient, dataExport, new RuntimeException("Disk full"));
+        testMailService.sendDataExportFailedEmailToAdmin(MailRecipientDTO.from(recipient), dataExport, new RuntimeException("Disk full"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("faileduser");
@@ -331,13 +326,9 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void dataExportFailedAdminEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
 
-        var exportUser = new User();
-        exportUser.setLogin("fehlbenutzer");
+        var dataExport = new DataExportEmailDTO(2L, "fehlbenutzer");
 
-        var dataExport = new DataExport();
-        dataExport.setUser(exportUser);
-
-        testMailService.sendDataExportFailedEmailToAdmin(recipient, dataExport, new RuntimeException("Festplatte voll"));
+        testMailService.sendDataExportFailedEmailToAdmin(MailRecipientDTO.from(recipient), dataExport, new RuntimeException("Festplatte voll"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("fehlbenutzer");
@@ -349,13 +340,9 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void dataExportEmailFailedAdminEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-        var exportUser = new User();
-        exportUser.setLogin("emailfailuser");
+        var dataExport = new DataExportEmailDTO(3L, "emailfailuser");
 
-        var dataExport = new DataExport();
-        dataExport.setUser(exportUser);
-
-        testMailService.sendDataExportEmailFailedEmailToAdmin(recipient, dataExport, new RuntimeException("SMTP connection refused"));
+        testMailService.sendDataExportEmailFailedEmailToAdmin(MailRecipientDTO.from(recipient), dataExport, new RuntimeException("SMTP connection refused"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("emailfailuser");
@@ -367,13 +354,9 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void dataExportEmailFailedAdminEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
 
-        var exportUser = new User();
-        exportUser.setLogin("emailfehlnutzer");
+        var dataExport = new DataExportEmailDTO(4L, "emailfehlnutzer");
 
-        var dataExport = new DataExport();
-        dataExport.setUser(exportUser);
-
-        testMailService.sendDataExportEmailFailedEmailToAdmin(recipient, dataExport, new RuntimeException("SMTP Verbindung abgelehnt"));
+        testMailService.sendDataExportEmailFailedEmailToAdmin(MailRecipientDTO.from(recipient), dataExport, new RuntimeException("SMTP Verbindung abgelehnt"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("emailfehlnutzer");
@@ -385,21 +368,11 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void successfulDataExportsAdminEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-        var user1 = new User();
-        user1.setLogin("exportuser1");
-        var export1 = new DataExport();
-        export1.setUser(user1);
+        var dataExports = new LinkedHashSet<DataExportEmailDTO>();
+        dataExports.add(new DataExportEmailDTO(11L, "exportuser1"));
+        dataExports.add(new DataExportEmailDTO(12L, "exportuser2"));
 
-        var user2 = new User();
-        user2.setLogin("exportuser2");
-        var export2 = new DataExport();
-        export2.setUser(user2);
-
-        var dataExports = new LinkedHashSet<DataExport>();
-        dataExports.add(export1);
-        dataExports.add(export2);
-
-        testMailService.sendSuccessfulDataExportsEmailToAdmin(recipient, dataExports);
+        testMailService.sendSuccessfulDataExportsEmailToAdmin(MailRecipientDTO.from(recipient), dataExports);
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("exportuser1");
@@ -410,15 +383,10 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void successfulDataExportsAdminEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
 
-        var user1 = new User();
-        user1.setLogin("exportnutzer1");
-        var export1 = new DataExport();
-        export1.setUser(user1);
+        var dataExports = new LinkedHashSet<DataExportEmailDTO>();
+        dataExports.add(new DataExportEmailDTO(21L, "exportnutzer1"));
 
-        var dataExports = new LinkedHashSet<DataExport>();
-        dataExports.add(export1);
-
-        testMailService.sendSuccessfulDataExportsEmailToAdmin(recipient, dataExports);
+        testMailService.sendSuccessfulDataExportsEmailToAdmin(MailRecipientDTO.from(recipient), dataExports);
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("exportnutzer1");
@@ -428,7 +396,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void buildAgentSelfPausedEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-        testMailService.sendBuildAgentSelfPausedEmailToAdmin(recipient, "build-agent-01", 5);
+        testMailService.sendBuildAgentSelfPausedEmailToAdmin(MailRecipientDTO.from(recipient), "build-agent-01", 5);
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("build-agent-01");
@@ -439,7 +407,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void buildAgentSelfPausedEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
 
-        testMailService.sendBuildAgentSelfPausedEmailToAdmin(recipient, "build-agent-02", 10);
+        testMailService.sendBuildAgentSelfPausedEmailToAdmin(MailRecipientDTO.from(recipient), "build-agent-02", 10);
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("build-agent-02");
@@ -455,7 +423,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var vulnerabilities = new ComponentVulnerabilitiesDTO(List.of(component), 1, 0, 1, 0, 0, "2026-02-17T10:00:00Z");
         var versionInfo = new ArtemisVersionDTO("7.8.0", "7.9.0", true, "https://github.com/ls1intum/Artemis/releases/tag/7.9.0", null, "2026-02-17");
 
-        testMailService.sendVulnerabilityScanResultEmail(recipient, vulnerabilities, versionInfo, true);
+        testMailService.sendVulnerabilityScanResultEmail(MailRecipientDTO.from(recipient), vulnerabilities, versionInfo, true);
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("CVE-2025-1234");
@@ -474,7 +442,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var vulnerabilities = new ComponentVulnerabilitiesDTO(List.of(), 0, 0, 0, 0, 0, "2026-02-17T10:00:00Z");
         var versionInfo = new ArtemisVersionDTO("7.8.0", null, false, null, null, "2026-02-17");
 
-        testMailService.sendVulnerabilityScanResultEmail(recipient, vulnerabilities, versionInfo, false);
+        testMailService.sendVulnerabilityScanResultEmail(MailRecipientDTO.from(recipient), vulnerabilities, versionInfo, false);
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("7.8.0");

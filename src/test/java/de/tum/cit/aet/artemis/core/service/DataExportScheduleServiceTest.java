@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -26,9 +27,10 @@ import org.springframework.scheduling.config.CronTask;
 import org.springframework.scheduling.config.ScheduledTask;
 import org.springframework.scheduling.config.ScheduledTaskHolder;
 
+import de.tum.cit.aet.artemis.communication.dto.DataExportEmailDTO;
+import de.tum.cit.aet.artemis.communication.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.DataExportTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -84,7 +86,8 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationIndependent
         doThrow(new RuntimeException("error")).doNothing().doNothing().when(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyLong());
         dataExportScheduleService.createDataExportsAndDeleteOldOnes();
         var dataExportsAfterCreation = dataExportRepository.findAllSuccessfullyCreatedDataExports();
-        verify(mailService).sendSuccessfulDataExportsEmailToAdmin(any(User.class), anyString(), anyString(), eq(Set.copyOf(dataExportsAfterCreation)));
+        Set<DataExportEmailDTO> expectedDtos = dataExportsAfterCreation.stream().map(DataExportEmailDTO::from).collect(Collectors.toSet());
+        verify(mailService).sendSuccessfulDataExportsEmailToAdmin(any(MailRecipientDTO.class), anyString(), anyString(), eq(expectedDtos));
 
     }
 

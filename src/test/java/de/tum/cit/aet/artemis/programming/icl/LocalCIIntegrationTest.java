@@ -77,6 +77,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
+import de.tum.cit.aet.artemis.communication.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -906,6 +907,6 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         buildAgentInformation.put(memberAddress, updatedInfo);
         await().until(() -> buildAgentInformation.get(memberAddress).status() == BuildAgentStatus.SELF_PAUSED);
         // Increase timeout to 5000ms to avoid flaky test failures due to slow listener processing
-        verify(mailService, timeout(5000)).sendBuildAgentSelfPausedEmailToAdmin(any(User.class), eq(buildAgent.buildAgent().name()), eq(consecutiveFailedBuildJobs));
+        verify(mailService, timeout(5000)).sendBuildAgentSelfPausedEmailToAdmin(any(MailRecipientDTO.class), eq(buildAgent.buildAgent().name()), eq(consecutiveFailedBuildJobs));
     }
 }
