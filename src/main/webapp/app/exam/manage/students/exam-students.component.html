@@ -313,10 +313,10 @@
     }
 </ng-template>
 
-<jhi-students-room-distribution-dialog [courseId]="courseId()" [exam]="exam()" (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()" />
-<jhi-users-import-dialog [courseId]="courseId()" [exam]="exam()" [examUserMode]="true" (importCompleted)="reloadExamWithRegisteredUsers()" />
+<jhi-students-room-distribution-dialog [courseId]="courseId()" [exam]="exam()" (onSave)="reloadStudentsView(); reseatingDialog.updateRoomsUsedInExam()" />
+<jhi-users-import-dialog [courseId]="courseId()" [exam]="exam()" [examUserMode]="true" (importCompleted)="reloadStudentsView()" />
 <jhi-students-export-dialog [courseId]="courseId()" [exam]="exam()" />
-<jhi-students-reseating-dialog [courseId]="courseId()" [exam]="exam()" (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()" #reseatingDialog />
-<jhi-exam-add-students-dialog [courseId]="courseId()" [exam]="exam()" (studentsChanged)="reloadExamWithRegisteredUsers()" />
-<jhi-student-upload-images-dialog [courseId]="courseId()" [exam]="exam()" (uploadDone)="reloadExamWithRegisteredUsers()" />
+<jhi-students-reseating-dialog [courseId]="courseId()" [exam]="exam()" (onSave)="reloadStudentsView(); reseatingDialog.updateRoomsUsedInExam()" #reseatingDialog />
+<jhi-exam-add-students-dialog [courseId]="courseId()" [exam]="exam()" (studentsChanged)="reloadStudentsView()" />
+<jhi-student-upload-images-dialog [courseId]="courseId()" [exam]="exam()" (uploadDone)="reloadStudentsView()" />
 <p-confirmDialog [style]="{ width: '50rem' }" [pt]="{ message: { style: { whiteSpace: 'pre-line' } } }" />

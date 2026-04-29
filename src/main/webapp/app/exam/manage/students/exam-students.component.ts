@@ -1,8 +1,8 @@
 import { Component, ElementRef, EventEmitter, OnDestroy, TemplateRef, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { User } from 'app/core/user/user.model';
-import { EMPTY, Subject, forkJoin, of } from 'rxjs';
+import { Subject, forkJoin, of } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -170,7 +170,6 @@ export class ExamStudentsComponent implements OnDestroy {
     private lastLazyEvent: TableLazyLoadEvent | undefined;
 
     private removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
-    private reloadRequest$ = new Subject<void>();
     private examData$ = new Subject<Exam>();
 
     readonly exercisePreparationStatus = signal<ExamExerciseStartPreparationStatus | undefined>(undefined);
@@ -303,28 +302,6 @@ export class ExamStudentsComponent implements OnDestroy {
             error: (err) => onError(this.alertService, err),
         });
 
-        this.reloadRequest$
-            .pipe(
-                takeUntilDestroyed(),
-                switchMap(() => {
-                    const examId = this.exam().id;
-                    if (!examId) {
-                        return EMPTY;
-                    }
-                    return this.examManagementService.find(this.courseId(), examId, true).pipe(
-                        catchError((err: HttpErrorResponse) => {
-                            onError(this.alertService, err);
-                            return EMPTY;
-                        }),
-                    );
-                }),
-            )
-            .subscribe((examResponse: HttpResponse<Exam>) => {
-                if (examResponse.body) {
-                    this.examData$.next(examResponse.body);
-                }
-            });
-
         this.examData$
             .pipe(
                 takeUntilDestroyed(),
@@ -332,10 +309,6 @@ export class ExamStudentsComponent implements OnDestroy {
                     this.exam.set(exam);
                     this.hasExamStarted.set(exam.startDate?.isBefore(dayjs()) || false);
                     this.hasExamEnded.set(exam.endDate?.isBefore(dayjs()) || false);
-                    // Seed unfiltered total from route data so the badge appears before the first table load.
-                    if (this.totalExamStudents() === 0 && exam.examUsers?.length) {
-                        this.totalExamStudents.set(exam.examUsers.length);
-                    }
                 }),
                 switchMap((exam: Exam) => {
                     const courseId = this.courseId();
@@ -496,11 +469,12 @@ export class ExamStudentsComponent implements OnDestroy {
         showPopover();
     }
 
-    reloadExamWithRegisteredUsers() {
-        if (!this.exam().id) {
+    reloadStudentsView() {
+        const exam = this.exam();
+        if (!exam.id) {
             return;
         }
-        this.reloadRequest$.next();
+        this.examData$.next(exam);
         this.tableViewRef()?.reset();
     }
 
@@ -518,7 +492,7 @@ export class ExamStudentsComponent implements OnDestroy {
 
         this.examManagementService.removeStudentFromExam(this.courseId(), examId, examUser.login, event.deleteParticipationsAndSubmission).subscribe({
             next: () => {
-                this.reloadExamWithRegisteredUsers();
+                this.reloadStudentsView();
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -536,7 +510,7 @@ export class ExamStudentsComponent implements OnDestroy {
 
         this.examManagementService.removeAllStudentsFromExam(this.courseId(), examId, event.deleteParticipationsAndSubmission).subscribe({
             next: () => {
-                this.reloadExamWithRegisteredUsers();
+                this.reloadStudentsView();
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -551,7 +525,7 @@ export class ExamStudentsComponent implements OnDestroy {
         if (exam?.id) {
             this.examManagementService.addAllStudentsOfCourseToExam(this.courseId(), exam.id).subscribe({
                 next: () => {
-                    this.reloadExamWithRegisteredUsers();
+                    this.reloadStudentsView();
                 },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
@@ -594,7 +568,7 @@ export class ExamStudentsComponent implements OnDestroy {
         this.examManagementService.generateMissingStudentExams(this.courseId(), examId).subscribe({
             next: (res) => {
                 this.alertService.success('artemisApp.studentExams.missingStudentExamGenerationSuccess', { number: res?.body?.length ?? 0 });
-                this.reloadExamWithRegisteredUsers();
+                this.reloadStudentsView();
             },
             error: (err: HttpErrorResponse) => {
                 this.handleError('artemisApp.studentExams.missingStudentExamGenerationError', err);
@@ -693,7 +667,7 @@ export class ExamStudentsComponent implements OnDestroy {
         this.examManagementService.generateStudentExams(this.courseId(), examId).subscribe({
             next: (res) => {
                 this.alertService.success('artemisApp.studentExams.studentExamGenerationSuccess', { number: res?.body?.length ?? 0 });
-                this.reloadExamWithRegisteredUsers();
+                this.reloadStudentsView();
             },
             error: (err: HttpErrorResponse) => {
                 this.handleError('artemisApp.studentExams.studentExamGenerationError', err);

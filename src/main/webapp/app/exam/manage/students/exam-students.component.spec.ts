@@ -116,13 +116,11 @@ describe('ExamStudentsComponent', () => {
         fixture?.destroy();
     });
 
-    it('should initialize with courseId, exam, and seeded totalExamStudents', () => {
+    it('should initialize with courseId and exam', () => {
         fixture.detectChanges();
 
         expect(component.courseId()).toBe(course.id);
         expect(component.exam()).toEqual(examWithCourse);
-        // totalExamStudents seeded from exam.examUsers.length before first table load
-        expect(component.totalExamStudents()).toBe(examWithCourse.examUsers!.length);
     });
 
     it('should set studentExamCount and isAllExercisesPrepared from checklist', () => {
@@ -281,26 +279,30 @@ describe('ExamStudentsComponent', () => {
         });
     });
 
-    describe('reloadExamWithRegisteredUsers', () => {
-        it('should call find with withStudents=true and update the exam signal', () => {
+    describe('reloadStudentsView', () => {
+        it('should refresh exam stats without re-fetching the exam', () => {
             fixture.detectChanges();
-            const updatedExam = { ...examWithCourse, title: 'Updated' };
-            vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: updatedExam })));
-
-            component.reloadExamWithRegisteredUsers();
-
-            expect(examManagementService.find).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
-            expect(component.exam()).toEqual(updatedExam);
-        });
-
-        it('should not call find when exam has no id', () => {
-            fixture.detectChanges();
-            component.exam.set({ ...examWithCourse, id: undefined });
+            const examChecklistService = TestBed.inject(ExamChecklistService);
+            const statsSpy = vi.spyOn(examChecklistService, 'getExamStatistics');
             const findSpy = vi.spyOn(examManagementService, 'find');
 
-            component.reloadExamWithRegisteredUsers();
+            component.reloadStudentsView();
 
             expect(findSpy).not.toHaveBeenCalled();
+            expect(statsSpy).toHaveBeenCalledWith(component.exam());
+        });
+
+        it('should do nothing when exam has no id', () => {
+            fixture.detectChanges();
+            component.exam.set({ ...examWithCourse, id: undefined });
+            const examChecklistService = TestBed.inject(ExamChecklistService);
+            const statsSpy = vi.spyOn(examChecklistService, 'getExamStatistics');
+            const findSpy = vi.spyOn(examManagementService, 'find');
+
+            component.reloadStudentsView();
+
+            expect(findSpy).not.toHaveBeenCalled();
+            expect(statsSpy).not.toHaveBeenCalled();
         });
     });
 
@@ -308,18 +310,17 @@ describe('ExamStudentsComponent', () => {
         it('should call removeStudentFromExam with login from DTO and trigger reload', () => {
             fixture.detectChanges();
             const removeSpy = vi.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse<void>()));
-            const findSpy = vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithCourse })));
+            const reloadSpy = vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
 
             component.removeFromExam(mockDto, { deleteParticipationsAndSubmission: false });
 
             expect(removeSpy).toHaveBeenCalledWith(course.id, examWithCourse.id, mockDto.login, false);
-            expect(findSpy).toHaveBeenCalled();
+            expect(reloadSpy).toHaveBeenCalled();
         });
 
         it('should pass deleteParticipationsAndSubmission=true when checked', () => {
             fixture.detectChanges();
             const removeSpy = vi.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse<void>()));
-            vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithCourse })));
 
             component.removeFromExam(mockDto, { deleteParticipationsAndSubmission: true });
 
@@ -340,12 +341,12 @@ describe('ExamStudentsComponent', () => {
         it('should call removeAllStudentsFromExam and trigger reload on success', () => {
             fixture.detectChanges();
             const removeSpy = vi.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
-            const findSpy = vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: { ...examWithCourse, examUsers: [] } })));
+            const reloadSpy = vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
 
             component.removeAllStudents({ deleteParticipationsAndSubmission: false });
 
             expect(removeSpy).toHaveBeenCalledWith(course.id, examWithCourse.id, false);
-            expect(findSpy).toHaveBeenCalled();
+            expect(reloadSpy).toHaveBeenCalled();
         });
     });
 
@@ -353,12 +354,12 @@ describe('ExamStudentsComponent', () => {
         it('should call addAllStudentsOfCourseToExam and trigger reload on success', () => {
             fixture.detectChanges();
             const addSpy = vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(of(new HttpResponse<void>()));
-            const findSpy = vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithCourse })));
+            const reloadSpy = vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
 
             component.registerAllStudentsFromCourse();
 
             expect(addSpy).toHaveBeenCalledWith(course.id, examWithCourse.id);
-            expect(findSpy).toHaveBeenCalled();
+            expect(reloadSpy).toHaveBeenCalled();
         });
     });
 
@@ -368,7 +369,7 @@ describe('ExamStudentsComponent', () => {
             const generateSpy = vi
                 .spyOn(examManagementService, 'generateMissingStudentExams')
                 .mockReturnValue(of(new HttpResponse({ body: [{} as StudentExam, {} as StudentExam] })));
-            const reloadSpy = vi.spyOn(component, 'reloadExamWithRegisteredUsers').mockImplementation(() => {});
+            const reloadSpy = vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
             const successSpy = vi.spyOn(alertService, 'success');
 
             component.generateMissingStudentExams();
