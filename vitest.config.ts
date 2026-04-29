@@ -116,6 +116,10 @@ export default defineConfig({
                 'src/main/webapp/app/exam/manage/exercise-groups/**/*.ts', // include exam manage exercise groups for code coverage
                 'src/main/webapp/app/exam/manage/suspicious-behavior/**/*.ts', // include exam manage suspicious behavior for code coverage
                 'src/main/webapp/app/exam/manage/services/**/*.ts', // include exam manage services for code coverage
+                'src/main/webapp/app/exam/manage/exam-management/**/*.ts', // include exam management for code coverage
+                'src/main/webapp/app/exam/manage/exam-scores/**/*.ts', // include exam scores for code coverage
+                'src/main/webapp/app/exam/manage/exam-status/**/*.ts', // include exam status for code coverage
+                'src/main/webapp/app/exam/manage/exams/**/*.ts', // include exams (detail/import/update/checklist/mode-picker) for code coverage
                 'src/main/webapp/app/exam/overview/**/*.ts', // include exam overview for code coverage
                 'src/main/webapp/app/exam/shared/**/*.ts', // include exam shared for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
