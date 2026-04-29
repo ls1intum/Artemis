@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.user;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.DEFAULT_LANGUAGE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
@@ -46,8 +47,8 @@ import de.tum.cit.aet.artemis.communication.service.UserCourseNotificationStatus
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
+import de.tum.cit.aet.artemis.core.dto.UserImportDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.AccountRegistrationBlockedException;
@@ -718,21 +719,60 @@ public class UserService {
     }
 
     /**
-     * This method first tries to find and then to add each user of the given list to the course
+     * Imports the given users into the admin user management.
+     * <p>
+     * For every user, the method first attempts to find an existing user in the Artemis database or in the connected
+     * LDAP. If {@code createInternalUsers} is {@code true} and the user can neither be found nor be created (e.g.
+     * because the chosen login already belongs to a deleted user), the user is reported back as not imported. If
+     * {@code createInternalUsers} is {@code false}, the existing behavior of only matching against existing users is
+     * preserved.
      *
-     * @param userDtos users to be added to the course
-     * @return a list of not found users
+     * @param userDtos            the users that should be imported
+     * @param createInternalUsers if {@code true}, users that cannot be found are created as internal Artemis users
+     * @return the users that could not be imported
      */
-    public List<StudentDTO> importUsers(List<StudentDTO> userDtos) {
-        List<StudentDTO> notFoundUsers = new ArrayList<>();
+    public List<UserImportDTO> importUsers(List<UserImportDTO> userDtos, boolean createInternalUsers) {
+        List<UserImportDTO> notImportedUsers = new ArrayList<>();
         for (var userDto : userDtos) {
-            var optionalStudent = findUser(userDto.registrationNumber(), userDto.login(), userDto.email());
-            if (optionalStudent.isEmpty()) {
-                notFoundUsers.add(userDto);
+            var existingUser = findUser(userDto.registrationNumber(), userDto.login(), userDto.email());
+            if (existingUser.isPresent()) {
+                continue;
+            }
+            if (!createInternalUsers) {
+                notImportedUsers.add(userDto);
+                continue;
+            }
+            try {
+                createInternalUserFromImport(userDto);
+            }
+            catch (Exception ex) {
+                log.warn("Could not create internal user from CSV import for login '{}', email '{}': {}", userDto.login(), userDto.email(), ex.getMessage());
+                notImportedUsers.add(userDto);
             }
         }
+        return notImportedUsers;
+    }
 
-        return notFoundUsers;
+    private void createInternalUserFromImport(UserImportDTO userDto) {
+        if (!StringUtils.hasText(userDto.login())) {
+            throw new IllegalArgumentException("Login is required to create an internal user");
+        }
+        String password = StringUtils.hasText(userDto.password()) ? userDto.password() : null;
+        // reuse the same validation that the regular admin create-user endpoint uses
+        checkUsernameAndPasswordValidityElseThrow(userDto.login(), password);
+
+        String login = userDto.login().toLowerCase(Locale.ROOT);
+        if (userRepository.findOneByLogin(login).isPresent()) {
+            throw new IllegalStateException("Login already in use: " + login);
+        }
+        if (StringUtils.hasText(userDto.email()) && userRepository.findOneByEmailIgnoreCase(userDto.email()).isPresent()) {
+            throw new IllegalStateException("Email already in use: " + userDto.email());
+        }
+        String email = StringUtils.hasText(userDto.email()) ? userDto.email().toLowerCase(Locale.ROOT) : null;
+        User newUser = userCreationService.createUser(login, password, null, userDto.firstName(), userDto.lastName(), email, userDto.registrationNumber(), null, DEFAULT_LANGUAGE,
+                true);
+        // imported users are immediately usable: skip the activation key flow because admins have just provisioned them
+        userCreationService.activateUser(newUser);
     }
 
     /**

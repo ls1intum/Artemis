@@ -5,8 +5,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,8 +24,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.UserImportDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -38,6 +43,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private PasswordService passwordService;
 
     @Nested
     class AdminTryingToEscalatePrivilegesUpdateUser {
@@ -677,6 +685,86 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             User updatedAdmin = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(defaultAdmin.getId());
             assertThat(updatedAdmin.getFirstName()).isEqualTo("UpdatedDefaultAdmin");
             assertThat(updatedAdmin.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
+        }
+    }
+
+    @Nested
+    class ImportUsers {
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void importUsers_withoutCreateInternal_returnsNotFoundAsBefore() throws Exception {
+            User existing = userUtilService.createAndSaveUser(TEST_PREFIX + "importexisting");
+            UserImportDTO existingDto = new UserImportDTO(existing.getLogin(), null, null, null, null, null);
+            UserImportDTO missingDto = new UserImportDTO(TEST_PREFIX + "importmissing", "Mary", "Missing", null, null, null);
+
+            mockMvc.perform(post("/api/core/admin/users/import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(List.of(existingDto, missingDto))))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].login").value(TEST_PREFIX + "importmissing"));
+
+            // The missing user must NOT have been created when createInternalUsers is omitted (default behavior)
+            assertThat(userUtilService.userExistsWithLogin(TEST_PREFIX + "importmissing")).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void importUsers_createInternalUsers_createsMissingUsersAndReportsEmpty() throws Exception {
+            String newLogin = TEST_PREFIX + "importnew";
+            UserImportDTO newUserDto = new UserImportDTO(newLogin, "Ada", "Lovelace", null, newLogin + "@example.com", "secret123");
+
+            mockMvc.perform(post("/api/core/admin/users/import").param("createInternalUsers", "true").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(List.of(newUserDto)))).andExpect(status().isOk()).andExpect(content().json("[]"));
+
+            assertThat(userUtilService.userExistsWithLogin(newLogin)).isTrue();
+            User created = userUtilService.getUserByLogin(newLogin);
+            assertThat(created.isInternal()).isTrue();
+            assertThat(created.getActivated()).isTrue();
+            assertThat(created.getFirstName()).isEqualTo("Ada");
+            assertThat(created.getLastName()).isEqualTo("Lovelace");
+            assertThat(created.getEmail()).isEqualTo(newLogin + "@example.com");
+            // password from the CSV must be honored, hashed, and verifiable via the password encoder
+            assertThat(passwordService.checkPasswordMatch("secret123", created.getPassword())).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void importUsers_createInternalUsers_skipsAlreadyExistingUsers() throws Exception {
+            User existing = userUtilService.createAndSaveUser(TEST_PREFIX + "importexisting2");
+            UserImportDTO existingDto = new UserImportDTO(existing.getLogin(), "Other", "Name", null, null, "anotherpw1");
+
+            mockMvc.perform(post("/api/core/admin/users/import").param("createInternalUsers", "true").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(List.of(existingDto)))).andExpect(status().isOk()).andExpect(content().json("[]"));
+
+            // Existing user must NOT be overwritten
+            User unchanged = userUtilService.getUserByLogin(existing.getLogin());
+            assertThat(unchanged.getFirstName()).isNotEqualTo("Other");
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void importUsers_createInternalUsers_invalidPasswordReportsAsNotImported() throws Exception {
+            String newLogin = TEST_PREFIX + "importshortpw";
+            UserImportDTO tooShortPwDto = new UserImportDTO(newLogin, "Short", "Password", null, newLogin + "@example.com", "short");
+
+            mockMvc.perform(post("/api/core/admin/users/import").param("createInternalUsers", "true").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(List.of(tooShortPwDto)))).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
+                    .andExpect(jsonPath("$[0].login").value(newLogin));
+
+            assertThat(userUtilService.userExistsWithLogin(newLogin)).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void importUsers_createInternalUsers_generatesRandomPasswordWhenAbsent() throws Exception {
+            String newLogin = TEST_PREFIX + "importnopw";
+            UserImportDTO noPwDto = new UserImportDTO(newLogin, "Grace", "Hopper", null, newLogin + "@example.com", null);
+
+            mockMvc.perform(post("/api/core/admin/users/import").param("createInternalUsers", "true").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(List.of(noPwDto)))).andExpect(status().isOk()).andExpect(content().json("[]"));
+
+            User created = userUtilService.getUserByLogin(newLogin);
+            assertThat(created.isInternal()).isTrue();
+            // a hashed password must always be set so that the user can be reset later
+            assertThat(created.getPassword()).isNotBlank();
         }
     }
 }

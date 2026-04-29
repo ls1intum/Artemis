@@ -23,6 +23,9 @@
                             <th>Login</th>
                             <th [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
                             <th [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation Number</th>
+                            @if (adminUserMode()) {
+                                <th [jhiTranslate]="'artemisApp.importUsers.password'">Password</th>
+                            }
                         </tr>
                     </thead>
                     <tbody>
@@ -30,16 +33,25 @@
                             <td>user_1</td>
                             <td></td>
                             <td></td>
+                            @if (adminUserMode()) {
+                                <td>secret_pw_1</td>
+                            }
                         </tr>
                         <tr>
                             <td></td>
                             <td>user_2&#64;artemis.org</td>
                             <td></td>
+                            @if (adminUserMode()) {
+                                <td></td>
+                            }
                         </tr>
                         <tr>
                             <td></td>
                             <td></td>
                             <td>11712345</td>
+                            @if (adminUserMode()) {
+                                <td></td>
+                            }
                         </tr>
                     </tbody>
                 </table>
@@ -85,6 +97,20 @@
             </div>
             <div class="mt-2">
                 <input id="importCSV" type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
+                @if (adminUserMode()) {
+                    <div class="form-check mt-3">
+                        <input
+                            id="createInternalUsersCheckbox"
+                            class="form-check-input"
+                            type="checkbox"
+                            name="createInternalUsers"
+                            [(ngModel)]="createInternalUsers"
+                            [disabled]="isImporting || hasImported"
+                        />
+                        <label class="form-check-label" for="createInternalUsersCheckbox" jhiTranslate="artemisApp.importUsers.createInternalUsers.label"></label>
+                        <jhi-help-icon text="artemisApp.importUsers.createInternalUsers.tooltip" class="ms-1" />
+                    </div>
+                }
                 @if (validationError || noUsersFoundError) {
                     <div class="mt-4 mb-2 text-danger">
                         <div [jhiTranslate]="'artemisApp.importUsers.usersForImport.importFailed'"></div>
@@ -120,6 +146,9 @@
                             <th scope="col" [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
                             <th scope="col" [jhiTranslate]="'artemisApp.importUsers.firstName'">First name</th>
                             <th scope="col" [jhiTranslate]="'artemisApp.importUsers.lastName'">Last name</th>
+                            @if (adminUserMode()) {
+                                <th scope="col" [jhiTranslate]="'artemisApp.importUsers.password'">Password</th>
+                            }
                         </tr>
                     </thead>
                     <tbody class="table-body--students">
@@ -131,6 +160,15 @@
                                 <td>{{ user.email }}</td>
                                 <td>{{ user.firstName }}</td>
                                 <td>{{ user.lastName }}</td>
+                                @if (adminUserMode()) {
+                                    <td>
+                                        @if (user.password) {
+                                            <span jhiTranslate="artemisApp.importUsers.passwordProvided"></span>
+                                        } @else {
+                                            <span class="text-muted" jhiTranslate="artemisApp.importUsers.passwordRandom"></span>
+                                        }
+                                    </td>
+                                }
                             </tr>
                         }
                     </tbody>

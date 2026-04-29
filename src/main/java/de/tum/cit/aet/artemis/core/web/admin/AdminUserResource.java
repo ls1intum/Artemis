@@ -33,13 +33,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
+import de.tum.cit.aet.artemis.core.dto.UserImportDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
@@ -295,20 +296,28 @@ public class AdminUserResource {
     }
 
     /**
-     * POST users/import : Import multiple users to the user management
-     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login)
+     * POST users/import : Import multiple users to the user management.
+     * The passed list of {@link UserImportDTO}s must include at least one unique user identifier per entry
+     * (i.e. registration number OR email OR login).
      * <p>
-     * This method first tries to find the user in the internal Artemis user database (because the user is probably already using Artemis).
-     * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
+     * This method first tries to find each user in the internal Artemis user database (because the user is probably
+     * already using Artemis). If the user cannot be found, it additionally searches the connected LDAP (if configured).
+     * <p>
+     * If {@code createInternalUsers} is set to {@code true}, users that cannot be found are created as internal Artemis
+     * users. In that case, an optional {@code password} per entry is honored; if no password is supplied, a random one
+     * is generated. This is intended for admins who want to provision multiple internal users (e.g. test personas) at
+     * once, without having to issue a password reset for each of them.
      *
-     * @param userDtos the list of users (with at one unique user identifier) who should be imported to Artemis
-     * @return the list of users who could not be imported, because they could NOT be found in the Artemis database and could NOT be found in the connected LDAP
+     * @param userDtos            the list of users (each with at least one unique identifier) who should be imported
+     * @param createInternalUsers whether to create users that cannot be found as internal Artemis users
+     * @return the list of users who could not be imported (neither found nor — when requested — created)
      */
     @PostMapping("users/import")
-    public ResponseEntity<List<StudentDTO>> importUsers(@RequestBody List<StudentDTO> userDtos) {
-        log.debug("REST request to import {} to Artemis", userDtos);
-        List<StudentDTO> notFoundStudentsDtos = userService.importUsers(userDtos);
-        return ResponseEntity.ok().body(notFoundStudentsDtos);
+    public ResponseEntity<List<UserImportDTO>> importUsers(@RequestBody List<UserImportDTO> userDtos,
+            @RequestParam(value = "createInternalUsers", defaultValue = "false") boolean createInternalUsers) {
+        log.debug("REST request to import {} users to Artemis (createInternalUsers={})", userDtos.size(), createInternalUsers);
+        List<UserImportDTO> notImportedUsers = userService.importUsers(userDtos, createInternalUsers);
+        return ResponseEntity.ok().body(notImportedUsers);
     }
 
     /**

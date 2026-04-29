@@ -96,8 +96,22 @@ describe('AdminUserService', () => {
                 expect(response.body?.length).toBe(0);
             });
 
-            const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/import` });
+            const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === `${resourceUrl}/import`);
             expect(req.request.body).toEqual(users);
+            expect(req.request.params.has('createInternalUsers')).toBe(false);
+            req.flush([]);
+        });
+
+        it('should pass createInternalUsers=true as query parameter when requested', () => {
+            const users: Partial<User>[] = [{ login: 'user1', password: 'secret123' }];
+
+            adminService.importAll(users, true).subscribe((response) => {
+                expect(response.body?.length).toBe(0);
+            });
+
+            const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === `${resourceUrl}/import`);
+            expect(req.request.body).toEqual(users);
+            expect(req.request.params.get('createInternalUsers')).toBe('true');
             req.flush([]);
         });
     });

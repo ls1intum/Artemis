@@ -22,12 +22,16 @@ export class AdminUserService {
     }
 
     /**
-     * Import a list of users from ldap to artemis
+     * Import a list of users to Artemis. By default users are looked up in the database / LDAP. When
+     * {@code createInternalUsers} is true, users that cannot be found are created as internal Artemis users (honoring an
+     * optional password per entry).
      * @param users The list of users to be imported.
-     * @return Observable<HttpResponse<User[]>> with not found Users
+     * @param createInternalUsers If true, missing users are created as internal users.
+     * @return Observable<HttpResponse<User[]>> with the users that could not be imported.
      */
-    importAll(users: Partial<User>[]): Observable<HttpResponse<User[]>> {
-        return this.http.post<User[]>(`${this.resourceUrl}/import`, users, { observe: 'response' });
+    importAll(users: Partial<User>[], createInternalUsers = false): Observable<HttpResponse<User[]>> {
+        const params = createInternalUsers ? { createInternalUsers: 'true' } : undefined;
+        return this.http.post<User[]>(`${this.resourceUrl}/import`, users, { observe: 'response', params });
     }
 
     /**

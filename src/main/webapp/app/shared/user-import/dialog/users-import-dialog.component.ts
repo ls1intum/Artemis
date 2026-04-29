@@ -58,6 +58,11 @@ export class UsersImportDialogComponent implements OnDestroy {
     noUsersFoundError?: boolean;
     isImporting = false;
     hasImported = false;
+    /**
+     * Admin-only: when enabled, users that cannot be found in the database or LDAP are created as internal Artemis
+     * users using the optional password column from the CSV (or a generated one if absent).
+     */
+    createInternalUsers = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -161,7 +166,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         } else if (this.adminUserMode()) {
             // convert StudentDTO to User
             const artemisUsers = this.usersToImport.map((student) => ({ ...student, visibleRegistrationNumber: student.registrationNumber }));
-            this.adminUserService.importAll(artemisUsers).subscribe({
+            this.adminUserService.importAll(artemisUsers, this.createInternalUsers).subscribe({
                 next: (res) => {
                     const convertedStudents =
                         res.body?.map((user) => ({
@@ -271,6 +276,7 @@ export class UsersImportDialogComponent implements OnDestroy {
 
     open(): void {
         this.resetDialog();
+        this.createInternalUsers = false;
         this.dialogVisible.set(true);
     }
 

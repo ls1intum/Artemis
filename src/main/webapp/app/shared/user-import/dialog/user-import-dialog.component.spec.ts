@@ -20,6 +20,7 @@ import { Router } from '@angular/router';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
+import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { DialogModule } from 'primeng/dialog';
 import * as readUsersFromCsv from 'app/shared/user-import/util/read-users-from-csv';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -450,16 +451,57 @@ describe('UsersImportDialogComponent', () => {
         component.usersToImport = usersToImport;
         component.importUsers();
 
-        expect(adminUserService.importAll).toHaveBeenCalledWith([
-            { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: 'test@mail', visibleRegistrationNumber: '1' },
-            { registrationNumber: '2', firstName: 'Ada', lastName: 'Lovelace', login: 'ada', email: 'ada@example.com', visibleRegistrationNumber: '2' },
-        ]);
+        expect(adminUserService.importAll).toHaveBeenCalledWith(
+            [
+                { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: 'test@mail', visibleRegistrationNumber: '1' },
+                { registrationNumber: '2', firstName: 'Ada', lastName: 'Lovelace', login: 'ada', email: 'ada@example.com', visibleRegistrationNumber: '2' },
+            ],
+            false,
+        );
         expect(component.isImporting).toBeFalse();
         expect(component.hasImported).toBeTrue();
         expect(component.notFoundUsers).toMatchObject([
             { registrationNumber: '3', firstName: 'Alan', lastName: 'Turing', login: 'alan', email: 'alan@example.com', visibleRegistrationNumber: '3' },
             { registrationNumber: '4', firstName: 'Grace', lastName: 'Hopper', login: 'grace', email: 'grace@example.com', visibleRegistrationNumber: '4' },
         ]);
+    });
+
+    it('should forward the createInternalUsers flag to the admin user service when enabled', () => {
+        fixture.componentRef.setInput('exam', undefined);
+        fixture.componentRef.setInput('adminUserMode', true);
+        const usersToImport: StudentDTO[] = [
+            { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'newlogin', email: 'new@example.com', password: 'secret123' },
+        ];
+
+        jest.spyOn(adminUserService, 'importAll').mockReturnValue(of(new HttpResponse<User[]>({ body: [] })));
+
+        component.usersToImport = usersToImport;
+        component.createInternalUsers = true;
+        component.importUsers();
+
+        expect(adminUserService.importAll).toHaveBeenCalledWith(
+            [
+                {
+                    registrationNumber: '1',
+                    firstName: 'Max',
+                    lastName: 'Mustermann',
+                    login: 'newlogin',
+                    email: 'new@example.com',
+                    password: 'secret123',
+                    visibleRegistrationNumber: '1',
+                },
+            ],
+            true,
+        );
+        expect(component.isImporting).toBeFalse();
+        expect(component.hasImported).toBeTrue();
+        expect(component.notFoundUsers).toEqual([]);
+    });
+
+    it('should reset createInternalUsers when reopening the dialog', () => {
+        component.createInternalUsers = true;
+        component.open();
+        expect(component.createInternalUsers).toBeFalse();
     });
 
     it('should show a generic error when importUsers does not match any import mode', () => {
