@@ -341,6 +341,23 @@ describe('CalendarService - authentication state changes', () => {
 
         expect(scoped.eventMap().size).toBe(0);
     });
+
+    it('should not show an error alert for in-flight events requests that fail after reset', async () => {
+        const alertService = TestBed.inject(AlertService);
+        const alertSpy = vi.spyOn(alertService, 'addErrorAlert');
+
+        const loadPromise = firstValueFrom(scoped.loadEventsForCurrentMonth(courseId, date)).catch(() => undefined);
+        const inFlightRequest = scopedHttpMock.expectOne((request) => request.url === expectedEventUrl);
+
+        authState.next(undefined);
+
+        // The request fails after the user logged out. The catchError must short-circuit before the
+        // alert is shown so we don't pop a toast on the next user's screen.
+        inFlightRequest.flush(null, { status: 500, statusText: 'Server Error' });
+        await loadPromise;
+
+        expect(alertSpy).not.toHaveBeenCalled();
+    });
 });
 
 function expectCalendarEventToMatch(

@@ -14,7 +14,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TestBed } from '@angular/core/testing';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { BehaviorSubject, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, Subject, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import * as Sentry from '@sentry/angular';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
@@ -232,5 +232,27 @@ describe('EntityTitleService - authentication state changes', () => {
 
         const result = await firstValueFrom(scoped.getTitle(EntityType.COURSE, [1]));
         expect(result).toBe('Course Title');
+    });
+
+    it('should ignore in-flight title fetches that resolve after a logout', () => {
+        const http = TestBed.inject(HttpClient);
+        const inFlight = new Subject<HttpResponse<string>>();
+        vi.spyOn(http, 'get').mockReturnValue(inFlight.asObservable());
+
+        // Bypass the 3s fallback timer and exercise fetchTitle directly to keep the test
+        // synchronous and immune to injector teardown between tests.
+        (scoped as unknown as { fetchTitle: (type: EntityType, ids: number[]) => void }).fetchTitle(EntityType.COURSE, [1]);
+
+        authState.next(undefined);
+
+        // The HTTP response arrives after logout. The fetch handler must short-circuit so it does
+        // not seed a fresh subject (via setTitle's computeIfAbsent) with the previous user's title.
+        inFlight.next(new HttpResponse<string>({ body: 'Stale Title' }));
+        inFlight.complete();
+
+        let received: string | undefined;
+        const after = scoped.getTitle(EntityType.COURSE, [1]).subscribe((title) => (received = title));
+        expect(received).toBeUndefined();
+        after.unsubscribe();
     });
 });

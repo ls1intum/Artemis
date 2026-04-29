@@ -115,6 +115,7 @@ export class CalendarService implements OnDestroy {
                     this.firstDayOfCurrentMonth = firstDayOfCurrentMonth;
                 }),
                 catchError((error) => {
+                    if (this.stateGeneration !== generation) return throwError(() => error);
                     this.alertService.addErrorAlert('artemisApp.calendar.eventsLoadingError');
                     return throwError(() => error);
                 }),

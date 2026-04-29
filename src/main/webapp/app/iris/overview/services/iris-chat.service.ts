@@ -306,9 +306,11 @@ export class IrisChatService implements OnDestroy {
         if (!this.sessionId) {
             return throwError(() => new Error('Not initialized'));
         }
+        const generation = this.stateGeneration;
         return this.irisChatHttpService.createTutorSuggestion(this.sessionId).pipe(
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
+                if (this.stateGeneration !== generation) return of(undefined);
                 this.handleSendHttpError(error);
                 return of(undefined);
             }),

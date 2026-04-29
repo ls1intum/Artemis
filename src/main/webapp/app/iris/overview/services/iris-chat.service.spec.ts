@@ -791,5 +791,24 @@ describe('IrisChatService', () => {
             // for the previous user.
             expect(scopedService.messages.getValue()).toEqual([]);
         });
+
+        it('should not allow an in-flight requestTutorSuggestion catchError to surface an error after logout', async () => {
+            const inFlight = new Subject<HttpResponse<IrisMessageResponseDTO>>();
+            const httpServiceMock = TestBed.inject(IrisChatHttpService);
+            vi.spyOn(httpServiceMock, 'createTutorSuggestion').mockReturnValue(inFlight.asObservable());
+
+            scopedService.sessionId = 1;
+
+            const callerResult = firstValueFrom(scopedService.requestTutorSuggestion());
+
+            authState.next(undefined);
+
+            // The HTTP request fails after logout. The catchError must short-circuit because the
+            // generation has changed, so it does not write a stale error key to the next user's session.
+            inFlight.error(new HttpErrorResponse({ status: 500 }));
+            await callerResult;
+
+            expect(scopedService.error.getValue()).toBeUndefined();
+        });
     });
 });

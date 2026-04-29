@@ -28,6 +28,13 @@ export class EntityTitleService implements OnDestroy {
 
     private readonly titleSubjects = new Map<string, { subject: Subject<string>; timeout?: ReturnType<typeof setTimeout> }>();
 
+    /**
+     * Incremented on every {@link resetState} run. Captured by {@link fetchTitle} when it issues
+     * an HTTP request, so a late response cannot repopulate the cache with the previous user's
+     * title after a logout / user change.
+     */
+    private stateGeneration = 0;
+
     private currentUserId?: number;
     private authenticationStateSubscription: Subscription;
 
@@ -50,6 +57,7 @@ export class EntityTitleService implements OnDestroy {
      * so the next user does not see the previous user's entity titles in breadcrumbs.
      */
     private resetState(): void {
+        this.stateGeneration++;
         this.titleSubjects.forEach(({ subject, timeout }) => {
             if (timeout) {
                 clearTimeout(timeout);
@@ -166,7 +174,12 @@ export class EntityTitleService implements OnDestroy {
                 break;
         }
 
+        const generation = this.stateGeneration;
         this.http.get(`${resourceUrl}/${ids[0]}/title`, { observe: 'response', responseType: 'text' }).subscribe((response: HttpResponse<string>) => {
+            // Skip the write-back if a logout / user change happened between the request being issued
+            // and the response arriving — otherwise we would repopulate the cleared cache (and via
+            // setTitle's computeIfAbsent, seed a fresh subject) with the previous user's title.
+            if (this.stateGeneration !== generation) return;
             if (response.body) {
                 this.setTitle(type, ids, response.body);
             }
