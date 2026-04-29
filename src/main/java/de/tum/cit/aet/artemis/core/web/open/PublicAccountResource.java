@@ -259,7 +259,7 @@ public class PublicAccountResource {
             }
             var internalUser = internalUsers.getFirst();
             if (userService.prepareUserForPasswordReset(internalUser)) {
-                mailService.sendPasswordResetMail(MailRecipientDTO.from(internalUsers.getFirst()));
+                mailService.sendPasswordResetMail(MailRecipientDTO.from(internalUser));
             }
         }
         else {
