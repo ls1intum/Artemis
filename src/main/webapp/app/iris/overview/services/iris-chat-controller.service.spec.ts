@@ -285,7 +285,7 @@ describe('IrisChatControllerService', () => {
             service.messages.next([{ id: 1, sender: IrisSender.LLM, content: [] } as any]);
             vi.spyOn(httpService, 'rateMessage').mockReturnValue(of(new HttpResponse({ body: { id: 1, sender: IrisSender.LLM, content: [], helpful: true } as any })));
             await firstValueFrom(service.rateMessage(mockServerMessage as any, true));
-            expect(service.messages.value[0].helpful).toBe(true);
+            expect((service.messages.value[0] as IrisAssistantMessage).helpful).toBe(true);
         });
 
         it('emits RATE_MESSAGE_FAILED on error', async () => {
