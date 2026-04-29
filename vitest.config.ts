@@ -34,12 +34,6 @@ export default defineConfig({
         globals: true,
         pool: 'forks',
         environment: 'jsdom',
-        // Many existing tests use the `subscribe(resp => expect(...))` pattern
-        // which leaks AssertionErrors as async unhandled exceptions even when
-        // the assertions themselves match (or are validated by the httpMock).
-        // Jest tolerated this; Vitest 4 would otherwise fail the run on the
-        // unhandled rejections. The assertions themselves still fail tests.
-        dangerouslyIgnoreUnhandledErrors: true,
         setupFiles: ['src/test/javascript/spec/vitest-test-setup.ts'],
         include: [
             'src/main/webapp/app/fileupload/**/*.spec.ts', // include fileupload tests
