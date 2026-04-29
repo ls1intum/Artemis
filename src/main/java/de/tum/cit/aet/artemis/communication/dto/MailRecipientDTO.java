@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.communication.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
@@ -10,6 +12,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * accessor names must stay aligned with the property paths used in those templates
  * (e.g. {@code user.login}, {@code user.activationKey}, {@code user.getName()}).
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, String resetKey) {
 
     /**
