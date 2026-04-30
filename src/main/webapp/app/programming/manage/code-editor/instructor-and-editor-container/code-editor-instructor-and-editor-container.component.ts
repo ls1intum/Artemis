@@ -511,13 +511,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param repositoryType currently selected repository in the editor
      * @returns the matching supported generation repository, or `undefined` for unsupported tabs
      */
-    private mapRepositoryTypeToCodeGenerationRequest(repositoryType: RepositoryType): SupportedCodeGenerationRepositoryType | undefined {
+    private mapRepositoryTypeToCodeGenerationRequest(repositoryType: RepositoryType | CodeGenerationRequest.RepositoryTypeEnum): SupportedCodeGenerationRepositoryType | undefined {
         switch (repositoryType) {
             case RepositoryType.TEMPLATE:
+            case CodeGenerationRequest.RepositoryTypeEnum.Exercise:
                 return RepositoryType.TEMPLATE;
             case RepositoryType.SOLUTION:
+            case CodeGenerationRequest.RepositoryTypeEnum.Solution:
                 return RepositoryType.SOLUTION;
             case RepositoryType.TESTS:
+            case CodeGenerationRequest.RepositoryTypeEnum.Tests:
                 return RepositoryType.TESTS;
             default:
                 return undefined;

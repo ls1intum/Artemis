@@ -1,12 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { HyperionQuizQuestionGenerationApiService } from 'app/openapi/api/hyperionQuizQuestionGenerationApi.service';
-import { GeneratedQuizQuestion } from 'app/openapi/model/generatedQuizQuestion';
-import { QuizQuestionRefinementRequest } from 'app/openapi/model/quizQuestionRefinementRequest';
-import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
-import { QuizQuestionBulkRefinementRequest } from 'app/openapi/model/quizQuestionBulkRefinementRequest';
-import { QuizQuestionRefinementSuccessDTO } from 'app/openapi/model/quizQuestionRefinementSuccessDTO';
+import { HyperionQuizQuestionGenerationApiService } from '../../../../openapi/api/hyperionQuizQuestionGenerationApi.service';
+import { GeneratedQuizQuestion } from '../../../../openapi/model/generatedQuizQuestion';
+import { QuizQuestionRefinementRequest } from '../../../../openapi/model/quizQuestionRefinementRequest';
+import { QuizQuestionGenerationRequest } from '../../../../openapi/model/quizQuestionGenerationRequest';
+import { QuizQuestionBulkRefinementRequest } from '../../../../openapi/model/quizQuestionBulkRefinementRequest';
+import { QuizQuestionRefinementSuccessDTO } from '../../../../openapi/model/quizQuestionRefinementSuccessDTO';
+import { QuizQuestionRefinementResponse } from '../../../../openapi/model/quizQuestionRefinementResponse';
 import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -53,10 +54,16 @@ export class QuizAiGenerationService {
         };
 
         return this.hyperionQuizQuestionGenerationApiService.refineQuizQuestion(courseId, request).pipe(
-            map((response) => ({
-                refinedQuestion: this.applyRefinedContentToQuestion(question, this.toGeneratedQuestion(response.question, 0)),
-                reasoning: response.reasoning,
-            })),
+            map((response: QuizQuestionRefinementResponse) => {
+                if (response.type === QuizQuestionRefinementSuccessDTO.TypeEnum.Success) {
+                    const success = response as QuizQuestionRefinementSuccessDTO;
+                    return {
+                        refinedQuestion: this.applyRefinedContentToQuestion(question, this.toGeneratedQuestion(success.question, 0)),
+                        reasoning: success.reasoning,
+                    };
+                }
+                throw new Error('Failed to refine question');
+            }),
         );
     }
 
@@ -91,8 +98,9 @@ export class QuizAiGenerationService {
                 const results = new Map<MultipleChoiceQuestion, string>();
                 response.refinements.forEach((refinement, index) => {
                     if (refinement.type === QuizQuestionRefinementSuccessDTO.TypeEnum.Success) {
-                        this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(refinement.question, index));
-                        results.set(questions[index], refinement.reasoning);
+                        const success = refinement as QuizQuestionRefinementSuccessDTO;
+                        this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(success.question, index));
+                        results.set(questions[index], success.reasoning);
                     }
                 });
                 return results;
