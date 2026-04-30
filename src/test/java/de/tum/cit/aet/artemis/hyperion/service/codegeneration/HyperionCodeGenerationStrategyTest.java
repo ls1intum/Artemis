@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -200,6 +201,17 @@ class HyperionCodeGenerationServiceTest {
 
         assertThat(strategy.getLastBuildEnvironmentContext()).startsWith("password=[REDACTED]").hasSize(12000).doesNotContain("secret-value");
         assertThat(strategy.getLastConsistencyIssues()).startsWith("token=[REDACTED]").hasSize(10000).doesNotContain("secret-value");
+    }
+
+    @Test
+    void generateCode_withLargeMultilinePromptContext_redactsSecretsWithoutOverflow() throws Exception {
+        String repeatedLine = "visible.property=%s\n".formatted("x".repeat(200));
+        String buildEnvironmentContext = repeatedLine.repeat(40) + "password=super-secret-value\n" + repeatedLine.repeat(2460);
+
+        setupMockTemplateAndChatResponses("{\"solutionPlan\":\"plan\",\"files\":[]}");
+
+        assertThatCode(() -> strategy.generateCode(user, exercise, 1L, "logs", "repo structure", buildEnvironmentContext, "diagnostic detail")).doesNotThrowAnyException();
+        assertThat(strategy.getLastBuildEnvironmentContext()).contains("password=[REDACTED]").doesNotContain("super-secret-value").hasSize(12000);
     }
 
     @Test

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +70,7 @@ public abstract class HyperionCodeGenerationService {
             "(?is)(<\\s*(?:password|passwd|pwd|token|secret|secretKey|apiKey|accessKey|clientSecret|privateKey)\\s*>)(.*?)(<\\s*/\\s*(?:password|passwd|pwd|token|secret|secretKey|apiKey|accessKey|clientSecret|privateKey)\\s*>)");
 
     private static final Pattern SENSITIVE_KEY_VALUE_PATTERN = Pattern.compile(
-            "(?im)^(\\s*(?:export\\s+)?[\"']?(?:[A-Za-z0-9]+[_.-])*(?:api[_-]?key|access[_-]?key|secret[_-]?key|client[_-]?secret|private[_-]?key|ssh[_-]?key|auth[_-]?token|bearer[_-]?token|aws_access_key_id|aws_secret_access_key|x-api-key|secret|token|password|passwd|pwd|credentials?)[\"']?\\s*[:=]\\s*)(.+?)\\s*$");
+            "(?i)^(\\s*(?:export\\s+)?[\"']?(?:[A-Za-z0-9]+[_.-])*(?:api[_-]?key|access[_-]?key|secret[_-]?key|client[_-]?secret|private[_-]?key|ssh[_-]?key|auth[_-]?token|bearer[_-]?token|aws_access_key_id|aws_secret_access_key|x-api-key|secret|token|password|passwd|pwd|credentials?)[\"']?\\s*[:=]\\s*)(\\S.*?)\\s*$");
 
     private static final String USER_FRIENDLY_CHANNEL_TIMEOUT_MESSAGE = "The AI took too long to respond and this generation request timed out after 15 minutes. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.";
 
@@ -175,7 +176,11 @@ public abstract class HyperionCodeGenerationService {
         redacted = BEARER_TOKEN_PATTERN.matcher(redacted).replaceAll("$1" + REDACTED_PLACEHOLDER);
         redacted = CREDENTIAL_URL_PATTERN.matcher(redacted).replaceAll("$1" + REDACTED_PLACEHOLDER + "$3");
         redacted = XML_SECRET_TAG_PATTERN.matcher(redacted).replaceAll("$1" + REDACTED_PLACEHOLDER + "$3");
-        return SENSITIVE_KEY_VALUE_PATTERN.matcher(redacted).replaceAll("$1" + REDACTED_PLACEHOLDER);
+        return redacted.lines().map(this::redactSensitiveKeyValueLine).collect(Collectors.joining("\n"));
+    }
+
+    private String redactSensitiveKeyValueLine(String line) {
+        return SENSITIVE_KEY_VALUE_PATTERN.matcher(line).replaceAll("$1" + REDACTED_PLACEHOLDER);
     }
 
     /**

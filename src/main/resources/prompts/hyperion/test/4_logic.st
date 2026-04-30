@@ -19,7 +19,6 @@ Your task is to implement the core logic for each test method based on the testi
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
-If there are no issues listed above, skip the following steps.
 **Hard Safety Rules:**
 1. Use only imports, classes, constructors, methods, fields, and helpers that exist in the provided repository context or in the files you are generating.
 2. Do not invent helper classes or utilities such as `TestDataFactory`, `TestUtils`, fixture classes, builders, or custom assertions unless they are already present in the provided context or you explicitly generate them in the output.
