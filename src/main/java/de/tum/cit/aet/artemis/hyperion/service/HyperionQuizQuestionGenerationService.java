@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionBulkRefinementRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionBulkRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
@@ -162,7 +164,30 @@ public class HyperionQuizQuestionGenerationService {
 
         GeneratedQuizQuestionDTO refinedQuestion = mapAndValidateQuestion(output.question());
         String reasoning = sanitizeInput(output.reasoning());
-        return new QuizQuestionRefinementResponseDTO(refinedQuestion, reasoning);
+        return new QuizQuestionRefinementResponseDTO.SuccessDTO(refinedQuestion, reasoning);
+    }
+
+    /**
+     * Refine all provided quiz questions using a single refinement prompt.
+     * Each question is refined independently; results are returned in the same order as the input.
+     *
+     * @param course  the course context
+     * @param request the questions and refinement instructions
+     * @return one refinement result per input question, in the same order
+     */
+    @Observed(name = "hyperion.quiz.refine-all", contextualName = "bulk quiz question refinement", lowCardinalityKeyValues = { "ai.span", "true" })
+    public QuizQuestionBulkRefinementResponseDTO refineAllQuizQuestions(Course course, QuizQuestionBulkRefinementRequestDTO request) {
+        log.debug("Bulk-refining {} quiz questions for course [{}]", request.questions().size(), course.getId());
+        List<QuizQuestionRefinementResponseDTO> refinements = request.questions().parallelStream().map(question -> {
+            try {
+                return refineQuizQuestion(course, new QuizQuestionRefinementRequestDTO(question, request.refinementPrompt()));
+            }
+            catch (Exception e) {
+                log.warn("Failed to refine quiz question for course [{}]: {}", course.getId(), e.getMessage());
+                return new QuizQuestionRefinementResponseDTO.FailureDTO(e.getMessage());
+            }
+        }).toList();
+        return new QuizQuestionBulkRefinementResponseDTO(refinements);
     }
 
     private List<GeneratedQuizQuestionDTO> mapAndValidateGeneratedQuestions(@Nullable GeneratedQuestionsOutput generatedQuestions) {
