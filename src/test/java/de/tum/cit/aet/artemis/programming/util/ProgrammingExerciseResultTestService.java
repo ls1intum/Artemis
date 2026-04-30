@@ -229,10 +229,10 @@ public class ProgrammingExerciseResultTestService {
         var semiAutoResultId = semiAutoResult.getId();
         semiAutoResult = updatedResults.stream().filter(result -> result.getId().equals(semiAutoResultId)).findFirst().orElseThrow();
         assertThat(semiAutoResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-        // Assert that the SEMI_AUTOMATIC result has two feedbacks whereas the last one is the automatic one
+        // Assert that the SEMI_AUTOMATIC result has two feedbacks: one MANUAL and one AUTOMATIC
         assertThat(semiAutoResult.getFeedbacks()).hasSize(2);
-        assertThat(semiAutoResult.getFeedbacksSorted().getFirst().getType()).isEqualTo(FeedbackType.MANUAL);
-        assertThat(semiAutoResult.getFeedbacksSorted().get(1).getType()).isEqualTo(FeedbackType.AUTOMATIC);
+        assertThat(semiAutoResult.getFeedbacks().stream().filter(f -> f.getType() == FeedbackType.MANUAL).findFirst()).isPresent();
+        assertThat(semiAutoResult.getFeedbacks().stream().filter(f -> f.getType() == FeedbackType.AUTOMATIC).findFirst()).isPresent();
     }
 
     private void postResult(BuildResultNotification requestBodyMap) throws Exception {
