@@ -196,7 +196,7 @@ public class HadesService implements StatelessCIService {
     private HttpHeaders createAuthHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBasicAuth("hades", hadesAuthKey);
+        headers.setBasicAuth("", hadesAuthKey);
         return headers;
     }
 }
