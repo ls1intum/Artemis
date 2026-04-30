@@ -5,8 +5,9 @@ set -e
 # Local Multi-Node E2E Test Runner for Artemis
 # =============================================================================
 # Mirrors the UX of run-e2e-tests-local-fast.sh but boots a full
-# production-faithful multi-node stack so that clustered Hazelcast L2 cache,
-# ActiveMQ STOMP relay, and round-robin LB behaviour are actually exercised.
+# production-faithful multi-node stack so that clustered Hazelcast IMaps,
+# Spring @Cacheable cache coherence, ActiveMQ STOMP relay, and round-robin LB
+# behaviour are actually exercised.
 #
 # Stack:
 #   - Postgres

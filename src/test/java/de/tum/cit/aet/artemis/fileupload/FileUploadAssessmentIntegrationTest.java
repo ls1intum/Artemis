@@ -88,8 +88,8 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(result.isRated()).isTrue();
         assertThat(result.getScore()).isEqualTo(60); // total score 3P (60%) because gradingInstructionWithLimit was applied twice but only counts once
         assertThat(result.getFeedbacks()).hasSize(4);
-        assertThat(result.getFeedbacks().getFirst().getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
-        assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
+        assertThat(result.getFeedbacksSorted().getFirst().getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
+        assertThat(result.getFeedbacksSorted().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
         assertThat(result.getAssessmentNote().getNote()).isEqualTo("text");
         assertThat(result.getAssessor()).isEqualTo(result.getAssessmentNote().getCreator());
 
@@ -218,8 +218,8 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(result.isRated()).isTrue();
         assertThat(((StudentParticipation) result.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
         assertThat(result.getFeedbacks()).hasSize(3);
-        assertThat(result.getFeedbacks().getFirst().getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
-        assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
+        assertThat(result.getFeedbacksSorted().getFirst().getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
+        assertThat(result.getFeedbacksSorted().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
     }
 
     @Test
