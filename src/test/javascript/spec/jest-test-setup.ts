@@ -1,4 +1,5 @@
 import '@angular/compiler';
+import { getTestBed } from '@angular/core/testing';
 import { setupZoneTestEnv } from 'jest-preset-angular/setup-env/zone';
 import 'app/shared/util/map.extension';
 import 'app/shared/util/string.extension';
@@ -10,6 +11,11 @@ import failOnConsole from 'jest-fail-on-console';
 import { TextDecoder, TextEncoder } from 'util';
 import { MockClipboardItem } from './helpers/mocks/service/mock-clipboard-item';
 
+try {
+    getTestBed().resetTestEnvironment();
+} catch {
+    // First init — nothing to reset
+}
 setupZoneTestEnv();
 
 /*

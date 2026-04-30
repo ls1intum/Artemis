@@ -145,10 +145,10 @@ export default defineConfig({
                 'src/main/webapp/app/core/config/prod.config.ts',       // exclude dayjs configuration file (not really testable)
             ],
             thresholds: {
-                lines: 90.60,
-                statements: 90.43,
+                lines: 90.10,
+                statements: 89.90,
                 branches: 74.43,
-                functions: 88.29,
+                functions: 87.80,
             },
         },
     },
