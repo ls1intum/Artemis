@@ -3,11 +3,13 @@ package de.tum.cit.aet.artemis.globalsearch.service;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
@@ -78,8 +80,20 @@ public class WeaviateMigrationService {
 
     private final String collectionPrefix;
 
-    public WeaviateMigrationService(WeaviateClient client, WeaviateConfigurationProperties properties) {
-        this.client = client;
+    /**
+     * The client parameter is {@code Optional} because during OpenAPI docs generation
+     * no Weaviate server is available and the {@code WeaviateClient} bean is excluded
+     * via {@code @ConditionalOnProperty}. Outside of docs generation, the client must
+     * be present.
+     *
+     * @throws IllegalStateException if the client is not available outside of OpenAPI docs generation
+     */
+    public WeaviateMigrationService(Optional<WeaviateClient> clientOptional, WeaviateConfigurationProperties properties, Environment environment) {
+        this.client = clientOptional.orElse(null);
+        boolean isOpenApiDocsGeneration = Boolean.parseBoolean(environment.getProperty("artemis.openapi-docs-generation", "false"));
+        if (clientOptional.isEmpty() && !isOpenApiDocsGeneration) {
+            throw new IllegalStateException("WeaviateClient bean is required when Weaviate is enabled and not in OpenAPI docs generation mode");
+        }
         this.collectionPrefix = properties.collectionPrefix();
     }
 

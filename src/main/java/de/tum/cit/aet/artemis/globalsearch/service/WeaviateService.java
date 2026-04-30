@@ -62,11 +62,24 @@ public class WeaviateService {
      * <b>public field</b>. A CGLIB lazy-proxy only intercepts method calls — direct
      * field access bypasses the proxy and returns {@code null}, which causes a
      * {@link NullPointerException} in {@link #ensureCollectionExists}.
+     * <p>
+     * The client parameter is {@code Optional} because during OpenAPI docs generation
+     * ({@code artemis.openapi-docs-generation=true}) no Weaviate server is available.
+     * The {@link WeaviateClientConfiguration#weaviateClient()} bean method returns
+     * {@code null} in that mode, so no {@code WeaviateClient} bean is registered.
+     * Using {@code Optional} here prevents a {@code NoSuchBeanDefinitionException}
+     * from cascading through the entire dependency tree and crashing the application.
+     *
+     * @throws IllegalStateException if the client is not available outside of OpenAPI docs generation
      */
-    public WeaviateService(WeaviateClient client, WeaviateConfigurationProperties properties, Environment environment, WeaviateMigrationService migrationService) {
-        this.client = client;
-        this.properties = properties;
+    public WeaviateService(Optional<WeaviateClient> clientOptional, WeaviateConfigurationProperties properties, Environment environment,
+            WeaviateMigrationService migrationService) {
         this.isOpenApiDocsGeneration = Boolean.parseBoolean(environment.getProperty("artemis.openapi-docs-generation", "false"));
+        if (clientOptional.isEmpty() && !isOpenApiDocsGeneration) {
+            throw new IllegalStateException("WeaviateClient bean is required when Weaviate is enabled and not in OpenAPI docs generation mode");
+        }
+        this.client = clientOptional.orElse(null);
+        this.properties = properties;
         this.migrationService = migrationService;
     }
 
