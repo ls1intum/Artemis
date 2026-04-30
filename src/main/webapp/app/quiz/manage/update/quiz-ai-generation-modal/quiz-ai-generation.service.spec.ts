@@ -132,6 +132,21 @@ describe('QuizAiGenerationService', () => {
             expect(req.request.body.question.title).toBe('Untitled Question');
             flushRefineResponse(req, 'single-choice', 2);
         });
+
+        it('should throw an error when the response type is not success', () => {
+            const question = buildMultipleChoiceQuestion(false);
+            let error: Error | undefined;
+
+            service.refineMultipleChoiceQuestion(1, question, 'improve').subscribe({
+                error: (e) => (error = e),
+            });
+
+            const req = expectRefineRequest(1);
+            req.flush({ type: 'failure', error: 'LLM error' });
+
+            expect(error).toBeDefined();
+            expect(error!.message).toBe('Failed to refine question');
+        });
     });
 
     describe('refineAllMultipleChoiceQuestions', () => {
