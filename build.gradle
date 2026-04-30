@@ -386,7 +386,7 @@ dependencies {
     implementation "org.springframework.data:spring-data-ldap"
     implementation "org.springframework.ldap:spring-ldap-core"
 
-    // Spring Cloud 2025.1.1 (Oakwood) — individual module version is 5.0.1. Kept explicit because the
+    // Spring Cloud 2025.1.1 (Oakwood) — individual module versions are pinned because the
     // spring-cloud-dependencies BOM does not publish versions for these specific modules.
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:5.0.1"
     implementation "org.springframework.cloud:spring-cloud-starter-config:5.0.2"
