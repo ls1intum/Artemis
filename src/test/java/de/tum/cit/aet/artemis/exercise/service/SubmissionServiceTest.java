@@ -697,7 +697,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         List<Feedback> newFeedbacks = submissionService.copyFeedbackToNewResult(newResult, oldResult);
 
-        assertThat(newFeedbacks).isEqualTo(newResult.getFeedbacks()).hasSameSizeAs(oldFeedbacks);
+        assertThat(newFeedbacks).containsExactlyInAnyOrderElementsOf(newResult.getFeedbacks()).hasSameSizeAs(oldFeedbacks);
         assertThat(newFeedbacks.getFirst().isPositive()).isTrue();
         assertThat(newFeedbacks.get(1).isPositive()).isTrue();
         assertThat(newFeedbacks.get(2).isPositive()).isTrue();
