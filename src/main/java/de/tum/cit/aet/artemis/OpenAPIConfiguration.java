@@ -203,12 +203,8 @@ public class OpenAPIConfiguration {
         }
 
         if (schema.getDiscriminator() != null && schema.getDiscriminator().getMapping() != null) {
-            Map<String, String> mapping = schema.getDiscriminator().getMapping();
-            mapping.forEach((key, value) -> {
-                if (value != null && value.endsWith("DTO")) {
-                    mapping.put(key, value.substring(0, value.length() - DTO_NUMBER_OF_CHARACTERS));
-                }
-            });
+            schema.getDiscriminator().getMapping()
+                    .replaceAll((key, value) -> value != null && value.endsWith("DTO") ? value.substring(0, value.length() - DTO_NUMBER_OF_CHARACTERS) : value);
         }
     }
 
