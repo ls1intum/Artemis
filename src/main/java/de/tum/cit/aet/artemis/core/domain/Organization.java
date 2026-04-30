@@ -9,8 +9,6 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -18,7 +16,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Entity
 @Table(name = "organization")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Organization extends DomainObject {
 
@@ -46,12 +43,10 @@ public class Organization extends DomainObject {
     private String emailPattern;
 
     @ManyToMany(mappedBy = "organizations")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("organization")
     private Set<User> users = new HashSet<>();
 
     @ManyToMany(mappedBy = "organizations")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("organization")
     private Set<Course> courses = new HashSet<>();
 

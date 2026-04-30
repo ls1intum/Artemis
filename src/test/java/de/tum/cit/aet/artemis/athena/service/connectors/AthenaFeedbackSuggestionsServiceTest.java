@@ -111,6 +111,21 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testFeedbackSuggestionsTextWithNullSuggestionId() throws NetworkingException {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpectWithNullId("text", jsonPath("$.exercise.id").value(textExercise.getId()),
+                jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(textSubmission.getId()),
+                jsonPath("$.submission.text").value(textSubmission.getText()));
+
+        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true);
+
+        assertThat(suggestions.getFirst().id()).isNull();
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        assertThat(suggestions.getFirst().indexStart()).isEqualTo(3);
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
     void testTextFeedbackSuggestionsReturnsEmptyWhenModuleMissing() throws NetworkingException {
         textExercise.setFeedbackSuggestionModule(null);
 
