@@ -58,6 +58,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -1096,8 +1097,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     assertThat(result.getScore()).isZero();
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                     result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
-                    assertThat(result.getFeedbacks()).isNotEmpty();
-                    assertThat(result.getFeedbacksSorted().getFirst().getDetailText()).isEqualTo("You did not submit your exam");
+                    assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactly("You did not submit your exam");
                 }
                 else {
                     fail("StudentParticipation which is part of an unsubmitted StudentExam contains no submission or result after automatic assessment of unsubmitted student exams call.");
@@ -1132,8 +1132,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                         assertThat(result.getScore()).isZero();
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                         result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
-                        assertThat(result.getFeedbacks()).isNotEmpty();
-                        assertThat(result.getFeedbacksSorted().getFirst().getDetailText()).isEqualTo("You did not submit your exam");
+                        assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactly("You did not submit your exam");
                     }
                 }
                 else {
@@ -1174,8 +1173,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     assertThat(result.getScore()).isZero();
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                     result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
-                    assertThat(result.getFeedbacks()).isNotEmpty();
-                    assertThat(result.getFeedbacksSorted().getFirst().getDetailText()).isEqualTo("Empty submission");
+                    assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactly("Empty submission");
                 }
                 else {
                     fail("StudentParticipation which is part of an unsubmitted StudentExam contains no submission or result after automatic assessment of unsubmitted student exams call.");
@@ -1216,8 +1214,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                         assertThat(result.getScore()).isZero();
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                         result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
-                        assertThat(result.getFeedbacks()).isNotEmpty();
-                        assertThat(result.getFeedbacksSorted().getFirst().getDetailText()).isEqualTo("Empty submission");
+                        assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactly("Empty submission");
                     }
                 }
                 else {

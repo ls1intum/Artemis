@@ -1312,7 +1312,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         secondCorrectionFeedback.setCredits(10.0);
         secondCorrectionFeedback.setPositive(true);
         submissionWithoutSecondAssessment.getLatestResult().getFeedbacks().add(secondCorrectionFeedback);
-        textAssessmentDTO.setFeedbacks(submissionWithoutSecondAssessment.getLatestResult().getFeedbacksSorted());
+        textAssessmentDTO.setFeedbacks(new ArrayList<>(submissionWithoutSecondAssessment.getLatestResult().getFeedbacks()));
 
         // assess submission and submit
         Result secondSubmittedManualResult = request.postWithResponseBody("/api/text/participations/" + submissionWithoutFirstAssessment.getParticipation().getId() + "/results/"
