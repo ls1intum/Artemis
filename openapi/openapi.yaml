@@ -948,8 +948,11 @@ components:
         summary: {type: string, description: Short summary of what was changed}
     Success:
       allOf:
+      - {$ref: '#/components/schemas/QuizQuestionRefinementResponse'}
       - type: object
         properties:
+          question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: The
+              refined quiz question}
           reasoning: {type: string, description: Brief explanation of what was changed
               during refinement, minLength: 1}
           type: {type: string}
@@ -1071,6 +1074,7 @@ components:
       required: [problemStatementText]
     Failure:
       allOf:
+      - {$ref: '#/components/schemas/QuizQuestionRefinementResponse'}
       - type: object
         properties:
           error: {type: string, description: Error message describing why the refinement
@@ -1333,7 +1337,9 @@ components:
       description: Discriminated response for a single quiz question refinement, either
         a success with the refined question or a failure with an error message
       discriminator: {propertyName: type}
-      oneOf: []
+      oneOf:
+      - {$ref: '#/components/schemas/Success'}
+      - {$ref: '#/components/schemas/Failure'}
       properties:
         type: {type: string}
       required: [type]

@@ -7,12 +7,18 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { QuizQuestionRefinementResponse } from './quizQuestionRefinementResponse';
+import { GeneratedQuizQuestion } from './generatedQuizQuestion';
 
 
 /**
  * Successful refinement result containing the refined question and an explanation of the changes
  */
-export interface Success { 
+export interface Success extends QuizQuestionRefinementResponse { 
+    /**
+     * The refined quiz question
+     */
+    question: GeneratedQuizQuestion;
     /**
      * Brief explanation of what was changed during refinement
      */

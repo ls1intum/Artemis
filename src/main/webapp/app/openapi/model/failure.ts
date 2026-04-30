@@ -7,12 +7,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-
+import { QuizQuestionRefinementResponse } from './quizQuestionRefinementResponse';
 
 /**
  * Failed refinement result containing an error message
  */
-export interface Failure { 
+export interface Failure extends QuizQuestionRefinementResponse { 
     /**
      * Error message describing why the refinement failed
      */
