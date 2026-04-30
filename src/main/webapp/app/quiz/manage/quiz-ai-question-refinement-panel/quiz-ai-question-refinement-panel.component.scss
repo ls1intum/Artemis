@@ -41,6 +41,33 @@
     margin-bottom: 0.45rem;
 }
 
+.quiz-ai-refinement-panel button.refinement-explanation-dismiss {
+    align-items: center;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: var(--text-color-secondary);
+    cursor: pointer;
+    display: flex;
+    font-size: 0.75rem;
+    height: 1.5rem;
+    justify-content: center;
+    margin-left: auto;
+    outline: none;
+    padding: 0;
+    width: 1.5rem;
+}
+
+.quiz-ai-refinement-panel button.refinement-explanation-dismiss:hover {
+    background: rgba(var(--bs-body-color-rgb), 0.08);
+    color: var(--text-color);
+}
+
+.quiz-ai-refinement-panel button.refinement-explanation-dismiss:focus-visible {
+    box-shadow: 0 0 0 2px var(--bs-primary);
+    outline: none;
+}
+
 .quiz-ai-refinement-panel .refinement-explanation-icon {
     color: var(--bs-primary);
     font-size: 0.85rem;
