@@ -113,12 +113,14 @@ describe('YouTubePlayerComponent', () => {
         vi.useRealTimers();
     });
 
-    it('uses the ready event target as player instance when none is preset', () => {
-        const eventPlayer = { getCurrentTime: () => 15, seekTo: vi.fn() };
+    it('prefers the Angular playerComponent viewChild over the event target on ready', () => {
+        const viewChildPlayer = { getCurrentTime: () => 15, seekTo: vi.fn() };
+        const eventPlayer = { getCurrentTime: () => 0, seekTo: vi.fn() };
 
+        (component as any).playerComponent = () => viewChildPlayer as any;
         component.onPlayerReady({ target: eventPlayer } as any);
 
-        expect((component as any).youtubePlayer).toBe(eventPlayer);
+        expect((component as any).youtubePlayer).toBe(viewChildPlayer);
         expect(component['currentSegmentIndex']()).toBe(1);
     });
 
