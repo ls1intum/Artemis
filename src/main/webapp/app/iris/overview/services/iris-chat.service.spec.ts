@@ -793,7 +793,7 @@ describe('IrisChatService', () => {
         });
 
         it('should not allow an in-flight requestTutorSuggestion catchError to surface an error after logout', async () => {
-            const inFlight = new Subject<HttpResponse<IrisMessageResponseDTO>>();
+            const inFlight = new Subject<HttpResponse<void>>();
             const httpServiceMock = TestBed.inject(IrisChatHttpService);
             vi.spyOn(httpServiceMock, 'createTutorSuggestion').mockReturnValue(inFlight.asObservable());
 
