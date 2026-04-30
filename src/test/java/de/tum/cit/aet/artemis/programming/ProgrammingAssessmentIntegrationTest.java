@@ -485,8 +485,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         // Result has to be manual to be updated
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
-        // Remove feedbacks, change text and score.
-        manualResult.setFeedbacks(List.of(manualResult.getFeedbacks().iterator().next()));
+        // Remove feedbacks, change text and score. Keep the "theory" feedback (+2 credits) deterministically so the asserted score below is stable.
+        Feedback keptFeedback = manualResult.getFeedbacks().stream().filter(f -> "theory".equals(f.getReference())).findFirst().orElseThrow();
+        manualResult.setFeedbacks(List.of(keptFeedback));
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         manualResult.setScore(points);
         manualResult = resultRepository.save(manualResult);
@@ -511,8 +512,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         programmingSubmission.setParticipation(programmingExerciseStudentParticipation);
         manualResult.setSubmission(programmingSubmission);
 
-        // Remove feedbacks, change text and score.
-        manualResult.setFeedbacks(List.of(manualResult.getFeedbacks().iterator().next()));
+        // Remove feedbacks, change text and score. Keep the "theory" feedback deterministically; this test only asserts size, but a stable
+        // selection avoids flakes if other parts of the response start depending on the kept feedback.
+        Feedback keptFeedback = manualResult.getFeedbacks().stream().filter(f -> "theory".equals(f.getReference())).findFirst().orElseThrow();
+        manualResult.setFeedbacks(List.of(keptFeedback));
         manualResult.setScore(77D);
         manualResult.rated(true);
 

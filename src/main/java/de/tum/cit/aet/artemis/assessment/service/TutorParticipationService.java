@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStat
 import static de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus.REVIEWED_INSTRUCTIONS;
 import static de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus.TRAINED;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -149,7 +150,11 @@ public class TutorParticipationService {
     }
 
     private Optional<FeedbackCorrectionErrorType> checkTutorFeedbackForErrors(Feedback tutorFeedback, Collection<Feedback> instructorFeedback) {
-        List<Feedback> matchingInstructorFeedback = instructorFeedback.stream().filter(feedback -> {
+        // The MANUAL_UNREFERENCED branch below mutates instructorFeedback via remove(...) to track which instructor feedbacks are still
+        // available for matching. Callers may pass an immutable view (Set.of()) or a Hibernate-managed PersistentSet (from
+        // result.getFeedbacks()) — mutating either is unsafe. Work on a defensive copy so removals stay local to this validation pass.
+        List<Feedback> remainingInstructorFeedback = new ArrayList<>(instructorFeedback);
+        List<Feedback> matchingInstructorFeedback = remainingInstructorFeedback.stream().filter(feedback -> {
             // If tutor feedback is unreferenced, then instructor feedback is a potential match if it is also unreferenced
             if (tutorFeedback.getType() == MANUAL_UNREFERENCED) {
                 return feedback.getType() == MANUAL_UNREFERENCED;
@@ -171,7 +176,7 @@ public class TutorParticipationService {
 
                 // This instructor feedback can not be used to match other tutor unreferenced feedback
                 if (isMatch) {
-                    instructorFeedback.remove(feedback);
+                    remainingInstructorFeedback.remove(feedback);
                 }
                 return isMatch;
             });
