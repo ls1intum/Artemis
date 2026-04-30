@@ -937,6 +937,42 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(startCodeGenerationSpy).toHaveBeenCalledWith([RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS], true);
         });
 
+        it('should not auto-start generation from navigation state while generation is already running', () => {
+            window.history.replaceState({ [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true }, '', window.location.href);
+
+            const route = TestBed.inject(ActivatedRoute) as any;
+            route.params = of({ exerciseId: '42', repositoryType: RepositoryType.SOLUTION, repositoryId: '2' });
+
+            fixture.destroy();
+            fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+            comp = fixture.componentInstance;
+            comp.exercise = createMockExercise();
+            comp.isGeneratingCode.set(true);
+
+            (comp as any).codeEditorContainer = {
+                actions: { executeRefresh: jest.fn(), onSave: jest.fn() },
+                selectedFile: undefined as string | undefined,
+                selectedRepository: jest.fn().mockReturnValue('SOLUTION'),
+                problemStatementIdentifier: 'problem_statement.md',
+                jumpToLine: jest.fn(),
+                initializeProperties: jest.fn(),
+                monacoEditor: { clearReviewCommentDrafts: jest.fn() },
+            };
+            (comp as any).editableInstructions = jest.fn().mockReturnValue({
+                jumpToLine: jest.fn(),
+                clearReviewCommentDrafts: jest.fn(),
+            });
+
+            const startCodeGenerationSpy = jest.spyOn(comp as any, 'startCodeGeneration').mockImplementation(() => {});
+            const replaceStateSpy = jest.spyOn(window.history, 'replaceState');
+
+            fixture.detectChanges();
+            (comp as any).applyDomainChange(DomainType.PARTICIPATION, comp.exercise.solutionParticipation);
+
+            expect(startCodeGenerationSpy).not.toHaveBeenCalled();
+            expect(replaceStateSpy).not.toHaveBeenCalled();
+        });
+
         it('should mark auto-started generation requests as initial auto generation', async () => {
             const solutionJob$ = new Subject<any>();
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValueOnce(of({ jobId: 'job-solution' }));
@@ -1167,6 +1203,55 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             (comp as any).restoreCodeGenerationState();
 
             expect(sessionStorageService.retrieve('programming-exercise.code-generation.status.42')).toBeUndefined();
+        });
+
+        it('should discard expired persisted code generation statuses', () => {
+            const removeSpy = jest.spyOn(sessionStorageService, 'remove');
+            sessionStorageService.store('programming-exercise.code-generation.status.42', {
+                updatedAt: Date.now() - 3_600_001,
+                statuses: [
+                    {
+                        repositoryType: RepositoryType.SOLUTION,
+                        enabled: true,
+                        state: 'running',
+                        fileActivities: [],
+                    },
+                ],
+            });
+
+            expect((comp as any).loadPersistedCodeGenerationState()).toBeUndefined();
+            expect(removeSpy).toHaveBeenCalledWith('programming-exercise.code-generation.status.42');
+        });
+
+        it('should discard malformed persisted code generation statuses', () => {
+            const removeSpy = jest.spyOn(sessionStorageService, 'remove');
+            jest.spyOn(sessionStorageService, 'retrieve').mockImplementation(() => {
+                throw new Error('malformed session data');
+            });
+
+            expect((comp as any).loadPersistedCodeGenerationState()).toBeUndefined();
+            expect(removeSpy).toHaveBeenCalledWith('programming-exercise.code-generation.status.42');
+        });
+
+        it('should clear persisted code generation statuses when restoring the active job fails', () => {
+            const clearSpy = jest.spyOn(comp as any, 'clearJobSubscription');
+            sessionStorageService.store('programming-exercise.code-generation.status.42', {
+                updatedAt: Date.now(),
+                statuses: [
+                    {
+                        repositoryType: RepositoryType.SOLUTION,
+                        enabled: true,
+                        state: 'running',
+                        fileActivities: [],
+                    },
+                ],
+            });
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(throwError(() => new Error('restore failed')));
+
+            (comp as any).restoreCodeGenerationState();
+
+            expect(sessionStorageService.retrieve('programming-exercise.code-generation.status.42')).toBeUndefined();
+            expect(clearSpy).toHaveBeenCalledWith(true);
         });
     });
 
