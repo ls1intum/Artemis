@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.exception.WeaviateAuthenticationException;
@@ -27,8 +28,11 @@ public class WeaviateClientConfiguration {
 
     private final WeaviateConfigurationProperties weaviateProperties;
 
-    public WeaviateClientConfiguration(WeaviateConfigurationProperties weaviateProperties) {
+    private final boolean isOpenApiDocsGeneration;
+
+    public WeaviateClientConfiguration(WeaviateConfigurationProperties weaviateProperties, Environment environment) {
         this.weaviateProperties = weaviateProperties;
+        this.isOpenApiDocsGeneration = Boolean.parseBoolean(environment.getProperty("artemis.openapi-docs-generation", "false"));
     }
 
     /**
@@ -46,6 +50,12 @@ public class WeaviateClientConfiguration {
      */
     @Bean(destroyMethod = "close")
     public WeaviateClient weaviateClient() {
+        // We do not have a weaviate instance running when generating the docs, so the openAPI docs generation would fail without this check
+        if (isOpenApiDocsGeneration) {
+            log.info("OpenAPI docs generation mode: skipping Weaviate client initialization");
+            return null;
+        }
+
         try {
             boolean usesOpenAiVectorizer = SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(weaviateProperties.vectorizerModule());
             boolean hasGpuApiKey = StringUtils.hasText(weaviateProperties.gpuApiKey());
@@ -55,11 +65,7 @@ public class WeaviateClientConfiguration {
                     : createLocalClient(hasApiKey, hasGpuApiKey, usesOpenAiVectorizer);
 
             logClientConfiguration(hasApiKey, hasGpuApiKey);
-
-            // We do not have a weaviate instance running when generating the docs, so the openAPI docs generation would fail without this check
-            if (!isOpenApiDocsGeneration) {
-                verifyReadiness(client);
-            }
+            verifyReadiness(client);
             return client;
         }
         catch (Exception exception) {
