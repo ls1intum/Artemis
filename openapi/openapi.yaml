@@ -4,7 +4,7 @@ info:
   contact: {name: Stephan Krusche, email: krusche@tum.de}
   version: 9.1.2
 servers:
-- {url: 'http://localhost:8089', description: Generated server url}
+- {url: 'http://localhost:8080', description: Generated server url}
 paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}:
     get:
@@ -950,8 +950,6 @@ components:
       allOf:
       - type: object
         properties:
-          question: {$ref: '#/components/schemas/GeneratedQuizQuestionDTO', description: The
-              refined quiz question}
           reasoning: {type: string, description: Brief explanation of what was changed
               during refinement, minLength: 1}
           type: {type: string}

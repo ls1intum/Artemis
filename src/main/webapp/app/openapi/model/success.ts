@@ -7,25 +7,16 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { GeneratedQuizQuestion } from './generatedQuizQuestion';
 
 
 /**
  * Successful refinement result containing the refined question and an explanation of the changes
  */
-export interface QuizQuestionRefinementSuccessDTO { 
-    type: QuizQuestionRefinementSuccessDTO.TypeEnum;
-    question: GeneratedQuizQuestion;
+export interface Success { 
     /**
      * Brief explanation of what was changed during refinement
      */
     reasoning: string;
+    type?: string;
 }
-export namespace QuizQuestionRefinementSuccessDTO {
-    export const TypeEnum = {
-        Success: 'success'
-    } as const;
-    export type TypeEnum = typeof TypeEnum[keyof typeof TypeEnum];
-}
-
 
