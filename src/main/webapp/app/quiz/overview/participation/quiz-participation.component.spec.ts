@@ -502,8 +502,9 @@ describe('QuizParticipationComponent - live mode', () => {
     it('shouldTreatAsSubmittedForUi should be true when submission is submitted', () => {
         component.submission.submitted = true;
         component.remainingTimeSeconds = -100;
+        component.syncSubmitState();
 
-        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
     });
 
     it('shouldTreatAsSubmittedForUi should be true after timeout if there is any answer', () => {
@@ -511,8 +512,9 @@ describe('QuizParticipationComponent - live mode', () => {
         component.remainingTimeSeconds = -1;
 
         vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(true);
+        component.syncSubmitState();
 
-        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
     });
 
     it('shouldTreatAsSubmittedForUi should be false after timeout if there is no answer', () => {
@@ -520,8 +522,9 @@ describe('QuizParticipationComponent - live mode', () => {
         component.remainingTimeSeconds = -1;
 
         vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+        component.syncSubmitState();
 
-        expect(component.shouldTreatAsSubmittedForUi).toBe(false);
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(false);
     });
 
     it('shouldTreatAsSubmittedForUi should be true after timeout if submissionDate exists even without answers', () => {
@@ -530,8 +533,9 @@ describe('QuizParticipationComponent - live mode', () => {
 
         vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
         component.submission.submissionDate = dayjs();
+        component.syncSubmitState();
 
-        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
     });
 
     it('shouldTreatAsSubmittedForUi should be true after timeout if submission id exists even without answers', () => {
@@ -540,8 +544,9 @@ describe('QuizParticipationComponent - live mode', () => {
 
         vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
         component.submission.id = 42;
+        component.syncSubmitState();
 
-        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
     });
 
     it('should show missed deadline message and hide quiz UI when quiz ended and student did not submit', () => {
@@ -561,6 +566,7 @@ describe('QuizParticipationComponent - live mode', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).not.toBeNull();
     });
 
     it('should not show missed deadline message when student effectively submitted', () => {
@@ -572,6 +578,7 @@ describe('QuizParticipationComponent - live mode', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).not.toBeNull();
     });
 
     it('should not show missed deadline message when deadline has not passed', () => {
@@ -581,6 +588,7 @@ describe('QuizParticipationComponent - live mode', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).not.toBeNull();
     });
 });
 
