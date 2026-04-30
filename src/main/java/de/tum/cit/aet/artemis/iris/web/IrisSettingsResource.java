@@ -43,7 +43,7 @@ public class IrisSettingsResource {
 
     @GetMapping("courses/{courseId}/iris-settings")
     @EnforceAtLeastStudentInCourse
-    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> getCourseSettings(@PathVariable Long courseId) {
         courseRepository.findByIdElseThrow(courseId);
         return ResponseEntity.ok(irisSettingsService.getCourseSettingsWithRateLimit(courseId));

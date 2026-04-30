@@ -150,8 +150,10 @@ public class JWTFilter extends GenericFilterBean {
             // Resolve the Spring Security authentication from the JWT
             Authentication authentication = this.tokenProvider.getAuthentication(jwtToken);
 
-            // Only consider rotating secure, cookie-based tokens without tool-specific data
-            boolean tokenIsConsideredSecure = "cookie".equals(source) && this.tokenProvider.getTools(jwtToken) == null;
+            // Only consider rotating secure, cookie-based tokens without tool-specific data.
+            // We check the raw claim instead of the parsed enum so a token with an unknown/legacy
+            // tools value is treated as scoped (no rotation), never silently promoted to unscoped.
+            boolean tokenIsConsideredSecure = "cookie".equals(source) && !this.tokenProvider.hasToolsClaim(jwtToken);
             if (tokenIsConsideredSecure && authentication != null) {
                 rotateTokenSilently(jwtToken, authentication, httpServletResponse);
             }

@@ -69,7 +69,7 @@ public class PlantUmlResource {
      */
     @GetMapping("svg")
     @EnforceAtLeastStudent
-    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<String> generateSvg(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
             throws IOException {
         long start = System.nanoTime();
