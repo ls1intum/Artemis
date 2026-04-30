@@ -262,7 +262,7 @@ public class TokenProvider {
      * @return {@code true} if a {@code tools} claim is present, {@code false} otherwise
      */
     public boolean hasToolsClaim(String authToken) {
-        return parseClaims(authToken).get(TOOLS_KEY, String.class) != null;
+        return parseClaims(authToken).containsKey(TOOLS_KEY);
     }
 
     /**
