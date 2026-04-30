@@ -1113,6 +1113,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 }>('programming-exercise.code-generation.status.42'),
             ).toEqual(
                 expect.objectContaining({
+                    queuedRepositories: [],
+                    initialAutoGeneration: false,
                     statuses: expect.arrayContaining([
                         expect.objectContaining({
                             repositoryType: RepositoryType.SOLUTION,
@@ -1129,6 +1131,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const subscribeSpy = jest.spyOn(comp as any, 'subscribeToJob').mockImplementation();
             sessionStorageService.store('programming-exercise.code-generation.status.42', {
                 updatedAt: Date.now(),
+                queuedRepositories: [RepositoryType.TESTS],
+                activeRepository: RepositoryType.TEMPLATE,
+                initialAutoGeneration: true,
                 statuses: [
                     {
                         repositoryType: RepositoryType.TEMPLATE,
@@ -1172,6 +1177,101 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                     fileActivities: [expect.objectContaining({ path: 'src/test/java/NewTest.java' })],
                 }),
             );
+            expect((comp as any).queuedCodeGenerationRepositories).toEqual([RepositoryType.TESTS]);
+            expect((comp as any).currentCodeGenerationUsesInitialIterationLimit).toBeTrue();
+        });
+
+        it('should continue queued repositories after restoring an active generation job', async () => {
+            sessionStorageService.store('programming-exercise.code-generation.status.42', {
+                updatedAt: Date.now(),
+                queuedRepositories: [RepositoryType.TEMPLATE, RepositoryType.TESTS],
+                activeRepository: RepositoryType.SOLUTION,
+                initialAutoGeneration: true,
+                statuses: [
+                    {
+                        repositoryType: RepositoryType.SOLUTION,
+                        enabled: true,
+                        state: 'running',
+                        fileActivities: [],
+                    },
+                    {
+                        repositoryType: RepositoryType.TEMPLATE,
+                        enabled: true,
+                        state: 'queued',
+                        fileActivities: [],
+                    },
+                    {
+                        repositoryType: RepositoryType.TESTS,
+                        enabled: true,
+                        state: 'queued',
+                        fileActivities: [],
+                    },
+                ],
+            });
+
+            const solutionJob$ = new Subject<any>();
+            const templateJob$ = new Subject<any>();
+            (codeGenerationApi.generateCode as jest.Mock)
+                .mockReturnValueOnce(of({ jobId: 'job-solution', repositoryType: RepositoryType.SOLUTION }))
+                .mockReturnValueOnce(of({}))
+                .mockReturnValueOnce(of({ jobId: 'job-template' }));
+            (ws.subscribeToJob as jest.Mock).mockReturnValueOnce(solutionJob$.asObservable()).mockReturnValueOnce(templateJob$.asObservable());
+
+            (comp as any).restoreCodeGenerationState();
+            solutionJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
+            await Promise.resolve();
+
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true });
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, {
+                repositoryType: RepositoryType.TEMPLATE,
+                checkOnly: false,
+                initialAutoGeneration: true,
+            });
+            expect((comp as any).activeCodeGenerationRepository).toBe(RepositoryType.TEMPLATE);
+            expect((comp as any).queuedCodeGenerationRepositories).toEqual([RepositoryType.TESTS]);
+        });
+
+        it('should resume the persisted queue when refresh happens during slot release polling', () => {
+            const subscribeSpy = jest.spyOn(comp as any, 'subscribeToJob').mockImplementation();
+            sessionStorageService.store('programming-exercise.code-generation.status.42', {
+                updatedAt: Date.now(),
+                queuedRepositories: [RepositoryType.TEMPLATE, RepositoryType.TESTS],
+                initialAutoGeneration: true,
+                statuses: [
+                    {
+                        repositoryType: RepositoryType.SOLUTION,
+                        enabled: true,
+                        state: 'success',
+                        attempts: 1,
+                        fileActivities: [],
+                    },
+                    {
+                        repositoryType: RepositoryType.TEMPLATE,
+                        enabled: true,
+                        state: 'queued',
+                        fileActivities: [],
+                    },
+                    {
+                        repositoryType: RepositoryType.TESTS,
+                        enabled: true,
+                        state: 'queued',
+                        fileActivities: [],
+                    },
+                ],
+            });
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValueOnce(of({})).mockReturnValueOnce(of({ jobId: 'job-template' }));
+
+            (comp as any).restoreCodeGenerationState();
+
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(1, 42, { checkOnly: true });
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, {
+                repositoryType: RepositoryType.TEMPLATE,
+                checkOnly: false,
+                initialAutoGeneration: true,
+            });
+            expect(subscribeSpy).toHaveBeenCalledWith('job-template', RepositoryType.TEMPLATE);
+            expect((comp as any).activeCodeGenerationRepository).toBe(RepositoryType.TEMPLATE);
+            expect((comp as any).queuedCodeGenerationRepositories).toEqual([RepositoryType.TESTS]);
         });
 
         it('should clear the restore subscription when the check-only response contains an unsupported repository type', () => {

@@ -132,6 +132,9 @@ interface CodeGenerationRepositoryStatus {
 interface PersistedCodeGenerationState {
     updatedAt: number;
     statuses: CodeGenerationRepositoryStatus[];
+    queuedRepositories: SupportedCodeGenerationRepositoryType[];
+    activeRepository?: SupportedCodeGenerationRepositoryType;
+    initialAutoGeneration: boolean;
 }
 
 interface ConsistencyIssueNavigationIssue {
@@ -383,6 +386,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.initializeCodeGenerationRunStatuses(repositories);
         this.queuedCodeGenerationRepositories = [...repositories];
         this.activeCodeGenerationRepository = undefined;
+        this.persistCodeGenerationState();
         this.runNextCodeGeneration();
     }
 
@@ -504,20 +508,26 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.clearCodeGenerationStatusSubscription();
         const request = this.createCheckOnlyCodeGenerationRequest();
         const requestId = this.restoreRequestId;
+        const persistedState = this.loadPersistedCodeGenerationState();
         this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, request).subscribe({
             next: (res) => {
                 if (requestId !== this.restoreRequestId) {
                     return;
                 }
                 if (res?.jobId) {
-                    const repositoryType = res.repositoryType ? this.mapRepositoryTypeToCodeGenerationRequest(res.repositoryType) : undefined;
+                    const repositoryType = res.repositoryType ? this.mapRepositoryTypeToCodeGenerationRequest(res.repositoryType) : persistedState?.activeRepository;
                     if (!repositoryType) {
                         this.clearPersistedCodeGenerationState();
                         this.clearJobSubscription(true);
                         return;
                     }
-                    this.restorePersistedCodeGenerationStatuses(repositoryType);
+                    this.restorePersistedCodeGenerationStatuses(repositoryType, persistedState);
                     this.subscribeToJob(res.jobId, repositoryType);
+                } else if (persistedState?.queuedRepositories.length) {
+                    this.restorePersistedCodeGenerationQueue(persistedState);
+                    this.clearCodeGenerationStatusSubscription();
+                    this.clearSlotReleasePoll();
+                    this.runNextCodeGeneration();
                 } else {
                     this.clearPersistedCodeGenerationState();
                     this.clearJobSubscription(true);
@@ -776,10 +786,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.activeCodeGenerationRepository = undefined;
 
         if (hasMoreRepositories) {
+            this.persistCodeGenerationState();
             this.waitForCodeGenerationSlotRelease();
         } else {
             this.isGeneratingCode.set(false);
             this.currentCodeGenerationUsesInitialIterationLimit = false;
+            this.clearPersistedCodeGenerationState();
         }
     }
 
@@ -804,9 +816,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.markQueuedCodeGenerationRepositoriesSkipped(repositoryType);
         this.queuedCodeGenerationRepositories = [];
         this.activeCodeGenerationRepository = undefined;
+        this.currentCodeGenerationUsesInitialIterationLimit = false;
         this.clearCodeGenerationStatusSubscription();
         this.clearSlotReleasePoll();
         this.clearJobSubscription(true);
+        this.clearPersistedCodeGenerationState();
         if (showAlert) {
             this.codeGenAlertService.addAlert({
                 type: alertTranslationKey === 'artemisApp.programmingExercise.codeGeneration.timeout' ? AlertType.WARNING : AlertType.DANGER,
@@ -1091,8 +1105,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.scheduleCodeGenerationStatusPopoverRealign();
     }
 
-    private restorePersistedCodeGenerationStatuses(repositoryType: SupportedCodeGenerationRepositoryType) {
-        const persistedState = this.loadPersistedCodeGenerationState();
+    private restorePersistedCodeGenerationStatuses(repositoryType: SupportedCodeGenerationRepositoryType, persistedState?: PersistedCodeGenerationState) {
         if (persistedState) {
             this.codeGenerationStatuses.set(
                 persistedState.statuses.map((status) =>
@@ -1105,11 +1118,25 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         : status,
                 ),
             );
+            this.queuedCodeGenerationRepositories = [...persistedState.queuedRepositories];
+            this.currentCodeGenerationUsesInitialIterationLimit = persistedState.initialAutoGeneration;
         } else {
             this.initializeCodeGenerationRunStatuses([repositoryType]);
             this.updateCodeGenerationStatus(repositoryType, (status) => ({ ...status, state: 'running' }));
+            this.queuedCodeGenerationRepositories = [];
+            this.currentCodeGenerationUsesInitialIterationLimit = false;
         }
         this.activeCodeGenerationRepository = repositoryType;
+        this.isGeneratingCode.set(true);
+        this.persistCodeGenerationState();
+    }
+
+    private restorePersistedCodeGenerationQueue(persistedState: PersistedCodeGenerationState) {
+        this.codeGenerationStatuses.set(persistedState.statuses);
+        this.queuedCodeGenerationRepositories = [...persistedState.queuedRepositories];
+        this.activeCodeGenerationRepository = undefined;
+        this.currentCodeGenerationUsesInitialIterationLimit = persistedState.initialAutoGeneration;
+        this.isGeneratingCode.set(true);
         this.persistCodeGenerationState();
     }
 
@@ -1121,6 +1148,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.sessionStorageService.store<PersistedCodeGenerationState>(this.getCodeGenerationStateStorageKey(exerciseId), {
             updatedAt: Date.now(),
             statuses: this.codeGenerationStatuses(),
+            queuedRepositories: [...this.queuedCodeGenerationRepositories],
+            activeRepository: this.activeCodeGenerationRepository,
+            initialAutoGeneration: this.currentCodeGenerationUsesInitialIterationLimit,
         });
     }
 
@@ -1144,7 +1174,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 return;
             }
 
-            return { ...persistedState, statuses };
+            const activeRepository = this.sanitizePersistedCodeGenerationRepositoryType(persistedState.activeRepository);
+            const queuedRepositories = this.sanitizePersistedCodeGenerationQueuedRepositories(persistedState.queuedRepositories, activeRepository);
+
+            return {
+                ...persistedState,
+                statuses,
+                queuedRepositories,
+                activeRepository,
+                initialAutoGeneration: !!persistedState.initialAutoGeneration,
+            };
         } catch {
             this.sessionStorageService.remove(key);
             return;
@@ -1192,6 +1231,29 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 timestamp: typeof activity.timestamp === 'number' ? activity.timestamp : Date.now(),
             }))
             .filter((activity) => !!activity.path);
+    }
+
+    private sanitizePersistedCodeGenerationQueuedRepositories(
+        queuedRepositories: SupportedCodeGenerationRepositoryType[] | undefined,
+        activeRepository?: SupportedCodeGenerationRepositoryType,
+    ): SupportedCodeGenerationRepositoryType[] {
+        if (!Array.isArray(queuedRepositories)) {
+            return [];
+        }
+
+        const seenRepositories = new Set<SupportedCodeGenerationRepositoryType>();
+        return queuedRepositories.filter((repositoryType): repositoryType is SupportedCodeGenerationRepositoryType => {
+            if (!this.isSupportedCodeGenerationRepositoryType(repositoryType) || repositoryType === activeRepository || seenRepositories.has(repositoryType)) {
+                return false;
+            }
+
+            seenRepositories.add(repositoryType);
+            return true;
+        });
+    }
+
+    private sanitizePersistedCodeGenerationRepositoryType(repositoryType: unknown): SupportedCodeGenerationRepositoryType | undefined {
+        return this.isSupportedCodeGenerationRepositoryType(repositoryType) ? repositoryType : undefined;
     }
 
     private clearPersistedCodeGenerationState() {
