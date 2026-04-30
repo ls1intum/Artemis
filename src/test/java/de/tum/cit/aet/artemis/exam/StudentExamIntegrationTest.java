@@ -1097,7 +1097,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                     result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                     assertThat(result.getFeedbacks()).isNotEmpty();
-                    assertThat(result.getFeedbacks().getFirst().getDetailText()).isEqualTo("You did not submit your exam");
+                    assertThat(result.getFeedbacksSorted().getFirst().getDetailText()).isEqualTo("You did not submit your exam");
                 }
                 else {
                     fail("StudentParticipation which is part of an unsubmitted StudentExam contains no submission or result after automatic assessment of unsubmitted student exams call.");
@@ -1133,7 +1133,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                         result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                         assertThat(result.getFeedbacks()).isNotEmpty();
-                        assertThat(result.getFeedbacks().getFirst().getDetailText()).isEqualTo("You did not submit your exam");
+                        assertThat(result.getFeedbacksSorted().getFirst().getDetailText()).isEqualTo("You did not submit your exam");
                     }
                 }
                 else {
@@ -1175,7 +1175,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                     result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                     assertThat(result.getFeedbacks()).isNotEmpty();
-                    assertThat(result.getFeedbacks().getFirst().getDetailText()).isEqualTo("Empty submission");
+                    assertThat(result.getFeedbacksSorted().getFirst().getDetailText()).isEqualTo("Empty submission");
                 }
                 else {
                     fail("StudentParticipation which is part of an unsubmitted StudentExam contains no submission or result after automatic assessment of unsubmitted student exams call.");
@@ -1217,7 +1217,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                         result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                         assertThat(result.getFeedbacks()).isNotEmpty();
-                        assertThat(result.getFeedbacks().getFirst().getDetailText()).isEqualTo("Empty submission");
+                        assertThat(result.getFeedbacksSorted().getFirst().getDetailText()).isEqualTo("Empty submission");
                     }
                 }
                 else {

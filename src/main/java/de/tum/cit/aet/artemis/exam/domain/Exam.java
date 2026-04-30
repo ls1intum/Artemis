@@ -19,8 +19,6 @@ import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -38,7 +36,6 @@ import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
 
 @Entity
 @Table(name = "exam")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Exam extends DomainObject {
 
@@ -144,7 +141,6 @@ public class Exam extends DomainObject {
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderColumn(name = "exercise_group_order")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "exam", allowSetters = true)
     private List<ExerciseGroup> exerciseGroups = new ArrayList<>();
 
