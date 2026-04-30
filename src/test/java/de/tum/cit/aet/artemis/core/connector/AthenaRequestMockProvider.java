@@ -189,6 +189,21 @@ public class AthenaRequestMockProvider {
      * @param expectedContents The expected contents of the request
      */
     public void mockGetFeedbackSuggestionsAndExpect(String moduleType, RequestMatcher... expectedContents) {
+        mockGetFeedbackSuggestionsAndExpect(moduleType, false, expectedContents);
+    }
+
+    /**
+     * Mocks the /feedback_suggestions API from Athena used to retrieve feedback suggestions for a submission
+     * with a suggestion that has a null id.
+     *
+     * @param moduleType       The type of the module: "text" or "programming"
+     * @param expectedContents The expected contents of the request
+     */
+    public void mockGetFeedbackSuggestionsAndExpectWithNullId(String moduleType, RequestMatcher... expectedContents) {
+        mockGetFeedbackSuggestionsAndExpect(moduleType, true, expectedContents);
+    }
+
+    private void mockGetFeedbackSuggestionsAndExpect(String moduleType, boolean shouldUseNullId, RequestMatcher... expectedContents) {
         ResponseActions responseActions = mockServer
                 .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/feedback_suggestions"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
@@ -197,8 +212,15 @@ public class AthenaRequestMockProvider {
             responseActions.andExpect(matcher);
         }
 
-        ObjectNode suggestion = mapper.createObjectNode().put("id", 1L).put("exerciseId", 1L).put("submissionId", 1L).put("title", "Not so good")
-                .put("description", "This needs to be improved").put("credits", -1.0);
+        ObjectNode suggestion = mapper.createObjectNode().put("exerciseId", 1L).put("submissionId", 1L).put("title", "Not so good").put("description", "This needs to be improved")
+                .put("credits", -1.0);
+
+        if (shouldUseNullId) {
+            suggestion.putNull("id");
+        }
+        else {
+            suggestion.put("id", 1L);
+        }
 
         suggestion = switch (moduleType) {
             case "text" -> suggestion.put("indexStart", 3).put("indexEnd", 9);
