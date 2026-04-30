@@ -254,18 +254,6 @@ public class TokenProvider {
     }
 
     /**
-     * Checks whether the token carries any {@code tools} claim, regardless of whether the value
-     * matches a known {@link ToolTokenType}. Used by callers that must distinguish unscoped session
-     * tokens from any kind of scoped tool token without risking an enum-parse failure on legacy values.
-     *
-     * @param authToken the JWT to inspect
-     * @return {@code true} if a {@code tools} claim is present, {@code false} otherwise
-     */
-    public boolean hasToolsClaim(String authToken) {
-        return parseClaims(authToken).containsKey(TOOLS_KEY);
-    }
-
-    /**
      * @param authToken of which the tools should be extracted
      * @return {@link ToolTokenType} if the token contains a tool, null otherwise
      */

@@ -175,42 +175,6 @@ class TokenProviderTest {
     }
 
     @Nested
-    class HasToolsClaimTests {
-
-        @Test
-        void shouldReturnTrueForKnownToolValue() {
-            String token = Jwts.builder().claim("tools", ToolTokenType.SCORPIO.toString()).signWith(key, Jwts.SIG.HS512).compact();
-
-            assertThat(tokenProvider.hasToolsClaim(token)).isTrue();
-        }
-
-        @Test
-        void shouldReturnTrueForUnknownLegacyToolValue() {
-            // Simulates a stale cookie issued by an earlier deployment that knew an enum value we have since removed.
-            // Must be treated as scoped (no rotation), not crash, not promote to unscoped.
-            String token = Jwts.builder().claim("tools", "ARTEMIS_EXTENSION").signWith(key, Jwts.SIG.HS512).compact();
-
-            assertThat(tokenProvider.hasToolsClaim(token)).isTrue();
-        }
-
-        @Test
-        void shouldReturnTrueForNonStringToolValue() {
-            // Defensive: a malformed token where tools is e.g. a number must not throw RequiredTypeException.
-            String token = Jwts.builder().claim("tools", 42).signWith(key, Jwts.SIG.HS512).compact();
-
-            assertThat(tokenProvider.hasToolsClaim(token)).isTrue();
-        }
-
-        @Test
-        void shouldReturnFalseWhenClaimIsMissing() {
-            String token = Jwts.builder().claim("someOtherClaim", true).signWith(key, Jwts.SIG.HS512).compact();
-
-            assertThat(tokenProvider.hasToolsClaim(token)).isFalse();
-        }
-
-    }
-
-    @Nested
     class GetAuthenticationMethodTests {
 
         @Test
