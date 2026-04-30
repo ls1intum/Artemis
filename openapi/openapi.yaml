@@ -947,18 +947,16 @@ components:
             applied}
         summary: {type: string, description: Short summary of what was changed}
     Success:
-      allOf:
-      - {$ref: '#/components/schemas/QuizQuestionRefinementResponse'}
-      - type: object
-        properties:
-          question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: The
-              refined quiz question}
-          reasoning: {type: string, description: Brief explanation of what was changed
-              during refinement, minLength: 1}
-          type: {type: string}
       description: Successful refinement result containing the refined question and
         an explanation of the changes
       required: [question, reasoning]
+      type: object
+      properties:
+        question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: The
+            refined quiz question}
+        reasoning: {type: string, description: Brief explanation of what was changed
+            during refinement, minLength: 1}
+        type: {type: string}
     CreateOrUpdateTutorialGroupRequest:
       type: object
       properties:
@@ -1073,15 +1071,13 @@ components:
             text to be improved, minLength: 1}
       required: [problemStatementText]
     Failure:
-      allOf:
-      - {$ref: '#/components/schemas/QuizQuestionRefinementResponse'}
-      - type: object
-        properties:
-          error: {type: string, description: Error message describing why the refinement
-              failed, minLength: 1}
-          type: {type: string}
       description: Failed refinement result containing an error message
       required: [error]
+      type: object
+      properties:
+        error: {type: string, description: Error message describing why the refinement
+            failed, minLength: 1}
+        type: {type: string}
     Tokens:
       type: object
       description: Response containing consistency check tokens

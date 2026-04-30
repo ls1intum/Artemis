@@ -95,6 +95,7 @@
                 pruneInvalidReferences(specificationMap, componentsMap)
 
             removeOperationsWithNullSchemas(prunedSpecificationMap)
+            flattenDiscriminatorAllOfBackReferences(prunedSpecificationMap)
 
             outputFile.text = yamlParser.dump(prunedSpecificationMap)
             println "✔ Pruned specification written to ${outputFile}"
@@ -170,6 +171,59 @@
         listValue
             .collect { pruneNode(it, componentsMap) }
             .findAll { it != null }
+    }
+
+    /**
+     * Flattens allOf back-references from discriminator subtypes to their oneOf parent.
+     *
+     * <p>When a schema uses {@code oneOf} with a {@code discriminator}, springdoc generates subtypes
+     * with {@code allOf: [$ref: parent, {type: object, properties: ...}]}. The typescript-angular
+     * generator turns this into {@code interface Sub extends Parent}, but since the parent is
+     * generated as a {@code type} alias (union), TypeScript rejects it. This method removes
+     * the back-reference and inlines the remaining allOf entry.</p>
+     */
+    private static void flattenDiscriminatorAllOfBackReferences(Map<String, Object> specificationMap) {
+        Map<String, Object> schemas = (specificationMap.components as Map<String, Object>)?.schemas as Map<String, Object>
+        if (schemas == null) return
+
+        schemas.each { String schemaName, Object schemaValue ->
+            if (!(schemaValue instanceof Map)) return
+            Map<String, Object> schema = schemaValue as Map<String, Object>
+
+            if (!schema.containsKey('oneOf') || !schema.containsKey('discriminator')) return
+
+            List<Map<String, Object>> oneOfRefs = schema.oneOf as List<Map<String, Object>>
+            oneOfRefs?.each { Map<String, Object> ref ->
+                String refPath = ref['$ref'] as String
+                if (!refPath?.startsWith('#/components/schemas/')) return
+
+                String subtypeName = refPath.substring('#/components/schemas/'.length())
+                Map<String, Object> subtype = schemas[subtypeName] as Map<String, Object>
+                if (subtype?.containsKey('allOf')) {
+                    flattenAllOfBackReference(subtype, schemaName)
+                }
+            }
+        }
+    }
+
+    private static void flattenAllOfBackReference(Map<String, Object> subtype, String parentSchemaName) {
+        List<Object> allOfList = subtype.allOf as List<Object>
+        if (allOfList == null) return
+
+        String parentRef = "#/components/schemas/${parentSchemaName}"
+        allOfList.removeIf { item ->
+            item instanceof Map && (item as Map)['$ref'] == parentRef
+        }
+
+        if (allOfList.size() == 1 && allOfList[0] instanceof Map) {
+            Map<String, Object> remaining = allOfList[0] as Map<String, Object>
+            subtype.remove('allOf')
+            remaining.each { String k, Object v ->
+                if (!subtype.containsKey(k)) {
+                    subtype[k] = v
+                }
+            }
+        }
     }
 
     private static void removeOperationsWithNullSchemas(Map<String, Object> specificationMap) {

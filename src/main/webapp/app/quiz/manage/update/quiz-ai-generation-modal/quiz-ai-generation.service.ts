@@ -6,8 +6,8 @@ import { GeneratedQuizQuestion } from '../../../../openapi/model/generatedQuizQu
 import { QuizQuestionRefinementRequest } from '../../../../openapi/model/quizQuestionRefinementRequest';
 import { QuizQuestionGenerationRequest } from '../../../../openapi/model/quizQuestionGenerationRequest';
 import { QuizQuestionBulkRefinementRequest } from '../../../../openapi/model/quizQuestionBulkRefinementRequest';
-import { QuizQuestionRefinementSuccessDTO } from '../../../../openapi/model/quizQuestionRefinementSuccessDTO';
 import { QuizQuestionRefinementResponse } from '../../../../openapi/model/quizQuestionRefinementResponse';
+import { Success } from '../../../../openapi/model/success';
 import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -55,8 +55,8 @@ export class QuizAiGenerationService {
 
         return this.hyperionQuizQuestionGenerationApiService.refineQuizQuestion(courseId, request).pipe(
             map((response: QuizQuestionRefinementResponse) => {
-                if (response.type === QuizQuestionRefinementSuccessDTO.TypeEnum.Success) {
-                    const success = response as QuizQuestionRefinementSuccessDTO;
+                if (response.type === 'success') {
+                    const success = response as Success;
                     return {
                         refinedQuestion: this.applyRefinedContentToQuestion(question, this.toGeneratedQuestion(success.question, 0)),
                         reasoning: success.reasoning,
@@ -97,8 +97,8 @@ export class QuizAiGenerationService {
             map((response) => {
                 const results = new Map<MultipleChoiceQuestion, string>();
                 response.refinements.forEach((refinement, index) => {
-                    if (refinement.type === QuizQuestionRefinementSuccessDTO.TypeEnum.Success) {
-                        const success = refinement as QuizQuestionRefinementSuccessDTO;
+                    if (refinement.type === 'success') {
+                        const success = refinement as Success;
                         this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(success.question, index));
                         results.set(questions[index], success.reasoning);
                     }
