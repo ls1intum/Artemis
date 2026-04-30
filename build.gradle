@@ -181,7 +181,6 @@ configurations.configureEach {
     exclude group: "org.springframework.boot", module: "spring-boot-starter-cache"
     exclude group: "net.logstash.logback", module: "logstash-logback-encoder"
 
-    // javax.cache:cache-api is now needed for hibernate-jcache L2 cache bridge
     exclude group: "javax.transaction", module: "javax.transaction-api"
 
     // JPlag depends on those, but they are not really needed
@@ -343,19 +342,15 @@ dependencies {
     // Required for synchronization between nodes and build agents (LocalCI)
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
-    // Required for Hibernate multi node caching via JCache bridge (hazelcast-hibernate53 is incompatible with Hibernate 7).
-    // Pinned one minor ahead of the Spring Boot 4.0.5 BOM (7.2.7) to pick up HHH-20209 (race in JavaTypeRegistry
-    // during parallel UNION queries) and HHH-20231 (2L-cached native queries with same SQL but different result
-    // type). Drop this override once Spring Boot's BOM catches up to 7.2.12+.
-    implementation "org.hibernate.orm:hibernate-jcache:7.2.12.Final"
-    implementation "javax.cache:cache-api:1.1.1"
     // alternative for Hazelcast
     implementation "org.redisson:redisson:${redisson_version}"
     implementation "org.redisson:redisson-spring-boot-starter:${redisson_version}"
 
 
-    // Hibernate ORM — pinned to 7.2.12.Final (patch bumps over the 7.2.7 shipped by Spring Boot 4.0.5 BOM).
-    // See the note on hibernate-jcache above for the rationale; keep all four artifacts in lockstep.
+    // Hibernate ORM — pinned to 7.2.12.Final (patch bumps over the 7.2.7 shipped by Spring Boot 4.0.5 BOM)
+    // to pick up HHH-20209 (race in JavaTypeRegistry during parallel UNION queries) and HHH-20231
+    // (cached native queries with same SQL but different result type). Drop this override once Spring Boot's
+    // BOM catches up to 7.2.12+. Keep hibernate-core and hibernate-envers in lockstep.
     implementation "org.hibernate.orm:hibernate-core:7.2.12.Final"
     implementation "org.hibernate.orm:hibernate-envers:7.2.12.Final"
 
@@ -493,7 +488,7 @@ dependencies {
     implementation("net.bytebuddy:byte-buddy-agent") { version {        strictly byte_buddy_version } }
     annotationProcessor("net.bytebuddy:byte-buddy-agent") { version {   strictly byte_buddy_version } }
 
-    // Hibernate annotation processors — kept in lockstep with hibernate-core/envers/jcache above.
+    // Hibernate annotation processors — kept in lockstep with hibernate-core/envers above.
     annotationProcessor "org.hibernate.orm:hibernate-processor:7.2.12.Final"
     annotationProcessor "org.hibernate.orm:hibernate-core:7.2.12.Final"
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
