@@ -55,7 +55,11 @@ public class WeaviateClientConfiguration {
                     : createLocalClient(hasApiKey, hasGpuApiKey, usesOpenAiVectorizer);
 
             logClientConfiguration(hasApiKey, hasGpuApiKey);
-            verifyReadiness(client);
+
+            // We do not have a weaviate instance running when generating the docs, so the openAPI docs generation would fail without this check
+            if (!isOpenApiDocsGeneration) {
+                verifyReadiness(client);
+            }
             return client;
         }
         catch (Exception exception) {
