@@ -140,10 +140,10 @@
         Map<String, Object> mapValue,
         Map<String, Map<String, Object>> componentsMap
     ) {
-        if (mapValue.size() == 1 && mapValue.containsKey('$ref')) {
+        if (mapValue.containsKey('$ref')) {
             String referenceString = mapValue['$ref'] as String
-        // Matches strings like "#/components/{componentType}/{componentName}",
-        def componentMatcher = (referenceString =~ /^#\/components\/([^\/]+)\/(.+)$/)
+            // Matches strings like "#/components/{componentType}/{componentName}",
+            def componentMatcher = (referenceString =~ /^#\/components\/([^\/]+)\/(.+)$/)
             if (componentMatcher.matches()) {
                 def componentTypeIndex = 1
                 def componentNameIndex = 2
