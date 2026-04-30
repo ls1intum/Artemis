@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -695,13 +696,17 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         Result newResult = new Result();
         newResult.setExerciseId(examTextExercise.getId());
 
-        List<Feedback> newFeedbacks = submissionService.copyFeedbackToNewResult(newResult, oldResult);
+        Set<Feedback> newFeedbacks = submissionService.copyFeedbackToNewResult(newResult, oldResult);
 
-        assertThat(newFeedbacks).isEqualTo(newResult.getFeedbacks()).hasSameSizeAs(oldFeedbacks);
-        assertThat(newFeedbacks.getFirst().isPositive()).isTrue();
-        assertThat(newFeedbacks.get(1).isPositive()).isTrue();
-        assertThat(newFeedbacks.get(2).isPositive()).isTrue();
-        assertThat(newFeedbacks.get(2).getCredits()).isZero();
-        assertThat(newFeedbacks.get(3).isPositive()).isFalse();
+        assertThat(newFeedbacks).containsExactlyInAnyOrderElementsOf(newResult.getFeedbacks()).hasSameSizeAs(oldFeedbacks);
+        Feedback positiveCreditsFeedback = newFeedbacks.stream().filter(f -> "Feedback 1".equals(f.getText())).findFirst().orElseThrow();
+        Feedback automaticFeedback = newFeedbacks.stream().filter(f -> f.getType() == FeedbackType.AUTOMATIC).findFirst().orElseThrow();
+        Feedback noCreditsFeedback = newFeedbacks.stream().filter(f -> "test".equals(f.getDetailText())).findFirst().orElseThrow();
+        Feedback negativeCreditsFeedback = newFeedbacks.stream().filter(f -> f.getCredits() != null && f.getCredits() < 0).findFirst().orElseThrow();
+        assertThat(positiveCreditsFeedback.isPositive()).isTrue();
+        assertThat(automaticFeedback.isPositive()).isTrue();
+        assertThat(noCreditsFeedback.isPositive()).isTrue();
+        assertThat(noCreditsFeedback.getCredits()).isZero();
+        assertThat(negativeCreditsFeedback.isPositive()).isFalse();
     }
 }
