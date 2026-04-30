@@ -141,7 +141,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private readonly _submitTitleKey = signal('entity.action.submit');
     readonly isSubmitDisabled = this._isSubmitDisabled.asReadonly();
     readonly submitTitleKey = this._submitTitleKey.asReadonly();
-    readonly shouldTreatAsSubmittedForUi = signal(false);
+    private readonly _shouldTreatAsSubmittedForUi = signal(false);
+    readonly shouldTreatAsSubmittedForUi = this._shouldTreatAsSubmittedForUi.asReadonly();
 
     quizId: number;
     courseId: number;
@@ -1151,7 +1152,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     syncSubmitState(): void {
         const submittedForUi = this.computeShouldTreatAsSubmittedForUi();
-        this.shouldTreatAsSubmittedForUi.set(submittedForUi);
+        this._shouldTreatAsSubmittedForUi.set(submittedForUi);
         const disabled = submittedForUi || this.isSubmitting || this.waitingForQuizStart || this.remainingTimeSeconds < 0;
         this._isSubmitDisabled.set(disabled);
         this._submitTitleKey.set(submittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');
