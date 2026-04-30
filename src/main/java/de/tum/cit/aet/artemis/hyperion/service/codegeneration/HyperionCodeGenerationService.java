@@ -69,8 +69,12 @@ public abstract class HyperionCodeGenerationService {
     private static final Pattern XML_SECRET_TAG_PATTERN = Pattern.compile(
             "(?is)(<\\s*(?:password|passwd|pwd|token|secret|secretKey|apiKey|accessKey|clientSecret|privateKey)\\s*>)(.*?)(<\\s*/\\s*(?:password|passwd|pwd|token|secret|secretKey|apiKey|accessKey|clientSecret|privateKey)\\s*>)");
 
-    private static final Pattern SENSITIVE_KEY_VALUE_PATTERN = Pattern.compile(
-            "(?i)^(\\s*(?:export\\s+)?[\"']?(?:[A-Za-z0-9]+[_.-])*(?:api[_-]?key|access[_-]?key|secret[_-]?key|client[_-]?secret|private[_-]?key|ssh[_-]?key|auth[_-]?token|bearer[_-]?token|aws_access_key_id|aws_secret_access_key|x-api-key|secret|token|password|passwd|pwd|credentials?)[\"']?\\s*[:=]\\s*)(\\S.*?)\\s*$");
+    private static final Pattern SENSITIVE_KEY_VALUE_PATTERN = Pattern.compile("^(\\s*(?:export\\s+)?[\"']?)([A-Za-z0-9][A-Za-z0-9_.-]*)([\"']?\\s*[:=]\\s*)(\\S.*?)\\s*$");
+
+    private static final List<String> SENSITIVE_KEY_NAMES = List.of("apikey", "api_key", "api-key", "accesskey", "access_key", "access-key", "secretkey", "secret_key",
+            "secret-key", "clientsecret", "client_secret", "client-secret", "privatekey", "private_key", "private-key", "sshkey", "ssh_key", "ssh-key", "authtoken", "auth_token",
+            "auth-token", "bearertoken", "bearer_token", "bearer-token", "aws_access_key_id", "aws_secret_access_key", "x-api-key", "secret", "token", "password", "passwd", "pwd",
+            "credential", "credentials");
 
     private static final String USER_FRIENDLY_CHANNEL_TIMEOUT_MESSAGE = "The AI took too long to respond and this generation request timed out after 15 minutes. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.";
 
@@ -180,7 +184,17 @@ public abstract class HyperionCodeGenerationService {
     }
 
     private String redactSensitiveKeyValueLine(String line) {
-        return SENSITIVE_KEY_VALUE_PATTERN.matcher(line).replaceAll("$1" + REDACTED_PLACEHOLDER);
+        Matcher matcher = SENSITIVE_KEY_VALUE_PATTERN.matcher(line);
+        if (!matcher.matches() || !isSensitiveKeyName(matcher.group(2))) {
+            return line;
+        }
+        return matcher.group(1) + matcher.group(2) + matcher.group(3) + REDACTED_PLACEHOLDER;
+    }
+
+    private boolean isSensitiveKeyName(String keyName) {
+        String normalizedKeyName = keyName.toLowerCase(Locale.ROOT);
+        return SENSITIVE_KEY_NAMES.stream().anyMatch(sensitiveName -> normalizedKeyName.equals(sensitiveName) || normalizedKeyName.endsWith("." + sensitiveName)
+                || normalizedKeyName.endsWith("_" + sensitiveName) || normalizedKeyName.endsWith("-" + sensitiveName));
     }
 
     /**
