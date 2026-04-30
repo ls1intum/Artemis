@@ -50,7 +50,7 @@ describe('QuizAiGenerationService', () => {
 
     function flushRefineResponse(req: ReturnType<HttpTestingController['expectOne']>, type: 'single-choice' | 'multiple-choice', optionCount: number): void {
         const options = Array.from({ length: optionCount }, (_, i) => ({ text: `Option ${i}`, correct: i === 0 }));
-        req.flush({ question: { type, title: 'A Question', questionText: 'Some question text?', options }, reasoning: 'Some explanation.' });
+        req.flush({ type: 'success', question: { type, title: 'A Question', questionText: 'Some question text?', options }, reasoning: 'Some explanation.' });
     }
 
     describe('refineMultipleChoiceQuestion', () => {
@@ -95,6 +95,7 @@ describe('QuizAiGenerationService', () => {
 
             const req = expectRefineRequest(1);
             req.flush({
+                type: 'success',
                 question: {
                     type: 'multiple-choice',
                     title: 'Refined Title',
