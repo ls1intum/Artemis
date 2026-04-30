@@ -13,16 +13,21 @@
         tr td {
             padding: 8px 16px !important;
         }
+        tr:last-child td {
+            border-bottom: none !important;
+        }
         .p-datatable-header {
             padding: 0 0 12px 0 !important;
-            border-bottom: none;
         }
         .p-paginator {
             padding-bottom: 0 !important;
-            justify-content: start !important;
+            justify-content: center !important;
+            border-color: var(--p-datatable-header-border-color);
+            border-style: solid;
+            border-width: 1px 0 0 0;
 
             // Reduce nav button size (Aura default: 2.5rem × 2.5rem)
-            --p-paginator-padding: 0.25rem 0;
+            --p-paginator-padding: 0.5rem 0;
             --p-paginator-nav-button-width: 2.1875rem;
             --p-paginator-nav-button-height: 2.1875rem;
 

@@ -191,8 +191,7 @@ export class ExamStudentsComponent implements OnDestroy {
         scrollHeight: 'flex',
         rowActionsFrozen: true,
         pageSize: 10,
-        // TODO: after participations merged
-        // searchPlaceholderKey: 'artemisApp.studentExams.searchForStudents',
+        searchPlaceholder: 'artemisApp.studentExams.searchForStudents',
     };
 
     readonly columns = computed<ColumnDef<ExamStudentDTO>[]>(() => {

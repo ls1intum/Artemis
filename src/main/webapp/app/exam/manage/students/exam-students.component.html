@@ -5,7 +5,7 @@
             <span class="text-body-secondary">({{ exam().title }})</span>
         </h3>
 
-        <div class="d-flex flex-column flex-shrink-0 gap-1 align-items-start ms-md-auto">
+        <div class="d-flex flex-column flex-shrink-0 align-items-start ms-md-auto">
             @if (hasRegisteredUsers()) {
                 <button
                     #individualExamsStatusButton
@@ -115,6 +115,7 @@
     <jhi-exam-students-menu-button
         [model]="manageStudentsMenuActions()"
         label="artemisApp.examManagement.examStudents.menu.manageStudents"
+        buttonClass="p-button-sm"
         buttonIconClass="pi pi-user-edit"
         [disabled]="isTestExam()"
         severity="secondary"
@@ -122,6 +123,7 @@
     <jhi-exam-students-menu-button
         [model]="examLogisticsMenuActions()"
         label="artemisApp.examManagement.examStudents.menu.examLogistics"
+        buttonClass="p-button-sm"
         buttonIconClass="pi pi-th-large"
         [disabled]="isTestExam() || !hasRegisteredUsers()"
         severity="secondary"
@@ -129,6 +131,7 @@
     <jhi-exam-students-menu-button
         [model]="studentExamsMenuActions()"
         label="artemisApp.examManagement.examStudents.menu.manageStudentExams"
+        buttonClass="p-button-sm"
         buttonIconClass="pi pi-file-edit"
         [disabled]="isTestExam() || hasExamStarted() || !hasRegisteredUsers()"
         severity="secondary"

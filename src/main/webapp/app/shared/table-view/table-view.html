@@ -26,7 +26,7 @@
             <div class="d-flex align-items-center gap-2" [style.flex-direction]="resolvedOptions().tableActionsAlignment === 'right' ? 'row' : 'row-reverse'">
                 @if (resolvedOptions().showSearch) {
                     <div class="flex-grow-1">
-                        <jhi-search-filter (newSearchEvent)="onGlobalSearch($event)" />
+                        <jhi-search-filter [placeholderKey]="resolvedOptions().searchPlaceholder" (newSearchEvent)="onGlobalSearch($event)" />
                     </div>
                 }
                 @if (tableActions()) {
@@ -121,7 +121,7 @@
 
         <ng-template #emptymessage>
             <tr>
-                <td [colSpan]="cols().length + (rowActions() ? 1 : 0)" class="text-secondary">
+                <td [colSpan]="cols().length + (rowActions() ? 1 : 0)" class="text-secondary text-center">
                     <span [jhiTranslate]="resolvedOptions().emptyMessageTranslation"></span>
                 </td>
             </tr>

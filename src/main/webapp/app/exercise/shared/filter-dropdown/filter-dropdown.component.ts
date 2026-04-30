@@ -2,7 +2,6 @@ import { Component, ViewEncapsulation, computed, input, output } from '@angular/
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SelectModule } from 'primeng/select';
-import { NgTemplateOutlet } from '@angular/common';
 
 export interface FilterGroup {
     /** i18n key for the group header label. Empty string renders no header. */
@@ -14,7 +13,7 @@ export interface FilterGroup {
     selector: 'jhi-filter-dropdown',
     templateUrl: './filter-dropdown.component.html',
     styleUrls: ['./filter-dropdown.component.scss'],
-    imports: [FormsModule, ArtemisTranslatePipe, SelectModule, NgTemplateOutlet],
+    imports: [FormsModule, ArtemisTranslatePipe, SelectModule],
     encapsulation: ViewEncapsulation.None,
 })
 export class FilterDropdownComponent {

@@ -1,5 +1,5 @@
 import { NgComponentOutlet, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, TemplateRef, Type, ViewEncapsulation, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, TemplateRef, Type, ViewEncapsulation, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -55,6 +55,8 @@ export interface TableConfig {
     pageSizeOptions: number[] | undefined;
     /** Show the search filter in the table caption bar. Default: true */
     showSearch: boolean;
+    /** Translation key for the search input placeholder. Default: 'artemisApp.course.exercise.search.searchPlaceholder' */
+    searchPlaceholder: string;
     /** Translation key for the message shown when the table has no rows. Default: 'artemisApp.dataTable.search.noResults' */
     emptyMessageTranslation: string;
     /** Enable scrollable mode with fixed headers. Default: false */
@@ -86,6 +88,7 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
     pageSize: 50,
     pageSizeOptions: [10, 20, 50, 100, 200],
     showSearch: true,
+    searchPlaceholder: 'artemisApp.course.exercise.search.searchPlaceholder',
     emptyMessageTranslation: 'artemisApp.dataTable.search.noResults',
     scrollable: false,
     scrollHeight: undefined,
@@ -99,7 +102,6 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
     templateUrl: './table-view.html',
     styleUrl: './table-view.scss',
     encapsulation: ViewEncapsulation.None,
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TableViewComponent<T> {
     private static readonly SEARCH_DEBOUNCE_MS = 300;
@@ -149,6 +151,7 @@ export class TableViewComponent<T> {
             pageSize: opts.pageSize ?? DEFAULT_TABLE_CONFIG.pageSize,
             pageSizeOptions: opts.hidePageSizeOptions ? undefined : (opts.pageSizeOptions ?? DEFAULT_TABLE_CONFIG.pageSizeOptions),
             showSearch: opts.showSearch ?? DEFAULT_TABLE_CONFIG.showSearch,
+            searchPlaceholder: opts.searchPlaceholder ?? DEFAULT_TABLE_CONFIG.searchPlaceholder,
             emptyMessageTranslation: opts.emptyMessageTranslation ?? DEFAULT_TABLE_CONFIG.emptyMessageTranslation,
             scrollable: opts.scrollable ?? DEFAULT_TABLE_CONFIG.scrollable,
             scrollHeight: opts.scrollHeight ?? DEFAULT_TABLE_CONFIG.scrollHeight,

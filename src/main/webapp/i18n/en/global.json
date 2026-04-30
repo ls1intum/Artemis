@@ -317,7 +317,7 @@
             "dev": "Development",
             "test": "Test Server"
         },
-        "item-count": "Showing {{first}} - {{second}} of {{total}} items."
+        "item-count": "Showing {{first}} to {{second}} of {{total}} items"
     },
     "entity": {
         "actions": "Actions",
