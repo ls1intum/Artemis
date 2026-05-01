@@ -871,6 +871,17 @@ components:
       properties:
         login: {type: string, maxLength: 50, minLength: 0}
         registrationNumber: {type: string, maxLength: 10, minLength: 0}
+    QuizQuestionRefinementSuccess:
+      description: Successful refinement result containing the refined question and
+        an explanation of the changes
+      required: [question, reasoning]
+      type: object
+      properties:
+        question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: The
+            refined quiz question}
+        reasoning: {type: string, description: Brief explanation of what was changed
+            during refinement, minLength: 1}
+        type: {type: string}
     ChecklistAnalysisRequest:
       type: object
       description: Request to analyze a problem statement for quality, competencies,
@@ -946,17 +957,6 @@ components:
         applied: {type: boolean, description: Whether the action was successfully
             applied}
         summary: {type: string, description: Short summary of what was changed}
-    QuizQuestionRefinementSuccess:
-      description: Successful refinement result containing the refined question and
-        an explanation of the changes
-      required: [question, reasoning]
-      type: object
-      properties:
-        question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: The
-            refined quiz question}
-        reasoning: {type: string, description: Brief explanation of what was changed
-            during refinement, minLength: 1}
-        type: {type: string}
     CreateOrUpdateTutorialGroupRequest:
       type: object
       properties:
@@ -1070,14 +1070,6 @@ components:
         problemStatementText: {type: string, description: Original problem statement
             text to be improved, minLength: 1}
       required: [problemStatementText]
-    QuizQuestionRefinementFailure:
-      description: Failed refinement result containing an error message
-      required: [error]
-      type: object
-      properties:
-        error: {type: string, description: Error message describing why the refinement
-            failed, minLength: 1}
-        type: {type: string}
     Tokens:
       type: object
       description: Response containing consistency check tokens
@@ -1504,6 +1496,14 @@ components:
         attendanceCount: {type: integer, format: int32}
       required: [dateChanged, end, id, isCancelled, isCancelledByFreePeriod, location,
         locationChanged, start, timeChanged]
+    QuizQuestionRefinementFailure:
+      description: Failed refinement result containing an error message
+      required: [error]
+      type: object
+      properties:
+        error: {type: string, description: Error message describing why the refinement
+            failed, minLength: 1}
+        type: {type: string}
     ConversationUser:
       type: object
       properties:

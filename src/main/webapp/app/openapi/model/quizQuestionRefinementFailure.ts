@@ -12,7 +12,7 @@
 /**
  * Failed refinement result containing an error message
  */
-export interface QuizQuestionRefinementFailure {
+export interface QuizQuestionRefinementFailure { 
     /**
      * Error message describing why the refinement failed
      */

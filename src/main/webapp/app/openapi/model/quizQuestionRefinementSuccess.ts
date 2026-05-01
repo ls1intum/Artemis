@@ -13,7 +13,7 @@ import { GeneratedQuizQuestion } from './generatedQuizQuestion';
 /**
  * Successful refinement result containing the refined question and an explanation of the changes
  */
-export interface QuizQuestionRefinementSuccess {
+export interface QuizQuestionRefinementSuccess { 
     /**
      * The refined quiz question
      */

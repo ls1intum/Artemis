@@ -29,7 +29,6 @@ model/createOrUpdateTutorialGroupRequest.ts
 model/createOrUpdateTutorialGroupSessionRequest.ts
 model/difficultyAssessment.ts
 model/examSeat.ts
-model/failure.ts
 model/generatedQuizAnswerOption.ts
 model/generatedQuizQuestion.ts
 model/inferredCompetency.ts
@@ -46,13 +45,14 @@ model/quizQuestionBulkRefinementRequest.ts
 model/quizQuestionBulkRefinementResponse.ts
 model/quizQuestionGenerationRequest.ts
 model/quizQuestionGenerationResponse.ts
+model/quizQuestionRefinementFailure.ts
 model/quizQuestionRefinementRequest.ts
 model/quizQuestionRefinementResponse.ts
+model/quizQuestionRefinementSuccess.ts
 model/rewriteFaqRequest.ts
 model/rewriteFaqResponse.ts
 model/student.ts
 model/studentExport.ts
-model/success.ts
 model/timing.ts
 model/tokens.ts
 model/tutorialGroupConfiguration.ts
