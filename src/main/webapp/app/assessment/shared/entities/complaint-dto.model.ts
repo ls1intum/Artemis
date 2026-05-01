@@ -13,7 +13,7 @@ export class ComplaintDTO {
     public complaintType?: ComplaintType;
     public complaintIsAccepted?: boolean;
     public complaintResponse?: ComplaintResponseDTO;
-    public result: ResultSimpleDTO;
+    public result?: ResultSimpleDTO;
     public participant?: ParticipantDTO;
 }
 

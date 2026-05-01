@@ -4,7 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -33,7 +32,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithParticipationDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submittedTime, ComplaintType complaintType, Boolean complaintIsAccepted,
-        ComplaintResponseDTO complaintResponse, @NotNull ResultSimpleDTO result, ParticipantDTO participant) {
+        ComplaintResponseDTO complaintResponse, ResultSimpleDTO result, ParticipantDTO participant) {
 
     /**
      * DTO containing the minimal information of the participant needed in the complaint.
@@ -108,7 +107,6 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
      */
     public static ComplaintDTO of(Complaint complaint) {
         Objects.requireNonNull(complaint, "The complaint must be set");
-        Objects.requireNonNull(complaint.getResult(), "The associated result must exist");
 
         ResultSimpleDTO resultDTO = ResultSimpleDTO.of(complaint.getResult());
         ComplaintResponseDTO complaintResponseDTO = complaint.getComplaintResponse() != null ? ComplaintResponseDTO.of(complaint.getComplaintResponse()) : null;
