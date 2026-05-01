@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
-import de.tum.cit.aet.artemis.core.dto.UserWithIdAndLoginDTO;
+import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 
 /**
  * DTO for a complaint response.
@@ -25,11 +25,11 @@ import de.tum.cit.aet.artemis.core.dto.UserWithIdAndLoginDTO;
  * @param lockEndDate         the time when the lock will end (can be {@code null} if the lock has already ended or if the response is not a lock response)
  * @param complaintIsAccepted whether the complaint was accepted
  * @param complaintId         the ID of the associated complaint
- * @param reviewer            the name and login of the reviewer who submitted the response
+ * @param reviewer            the id, name and login of the reviewer who submitted the response
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ComplaintResponseDTO(@NotNull Long id, String responseText, ZonedDateTime submittedTime, Boolean isCurrentlyLocked, ZonedDateTime lockEndDate,
-        Boolean complaintIsAccepted, @NotNull Long complaintId, UserWithIdAndLoginDTO reviewer) {
+        Boolean complaintIsAccepted, @NotNull Long complaintId, UserPublicInfoDTO reviewer) {
 
     /**
      * Creates a {@link ComplaintResponseDTO} from a {@link ComplaintResponse} entity.
@@ -42,9 +42,9 @@ public record ComplaintResponseDTO(@NotNull Long id, String responseText, ZonedD
         Objects.requireNonNull(entity, "The complaint response must be set");
         Objects.requireNonNull(entity.getComplaint(), "The associated complaint must exist");
 
-        UserWithIdAndLoginDTO reviewerDTO = null;
+        UserPublicInfoDTO reviewerDTO = null;
         if (entity.getReviewer() != null) {
-            reviewerDTO = new UserWithIdAndLoginDTO(entity.getReviewer().getId(), entity.getReviewer().getLogin());
+            reviewerDTO = new UserPublicInfoDTO(entity.getReviewer());
         }
 
         return new ComplaintResponseDTO(entity.getId(), entity.getResponseText(), entity.getSubmittedTime(), entity.isCurrentlyLocked(), entity.lockEndDate(),
