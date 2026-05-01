@@ -24,42 +24,48 @@ public interface QuizConfiguration {
      */
     default void reconnectJSONIgnoreAttributes() {// iterate through quizQuestions to add missing pointer back to quizExercise
         // Note: This is necessary because of the @IgnoreJSON in question and answerOption
-        // that prevents infinite recursive JSON serialization.
+        // that prevents infinite recursive JSON serialization. Back-references are set unconditionally
+        // (including for entities with id == null) so freshly-deserialised graphs persist correctly under the
+        // bidirectional mapping where the child @ManyToOne owns the FK column.
         for (QuizQuestion quizQuestion : getQuizQuestions()) {
-            if (quizQuestion.getId() != null) {
-                setQuestionParent(quizQuestion);
-                // reconnect QuestionStatistics
-                if (quizQuestion.getQuizQuestionStatistic() != null) {
-                    setQuizQuestion(quizQuestion.getQuizQuestionStatistic(), quizQuestion);
-                }
-                // do the same for answerOptions (if quizQuestion is multiple choice)
-                if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
-                    MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
-                    // reconnect answerCounters
+            setQuestionParent(quizQuestion);
+            // reconnect QuestionStatistics
+            if (quizQuestion.getQuizQuestionStatistic() != null) {
+                setQuizQuestion(quizQuestion.getQuizQuestionStatistic(), quizQuestion);
+            }
+            // do the same for answerOptions (if quizQuestion is multiple choice)
+            if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
+                MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
+                // reconnect answerCounters (statistic is null on transient questions before initializeStatistic())
+                if (mcStatistic != null) {
                     setQuizQuestionStatistics(mcStatistic.getAnswerCounters(), mcQuestion, mcStatistic);
-                    // reconnect answerOptions
-                    setQuizQuestions(mcQuestion.getAnswerOptions(), mcQuestion);
                 }
-                if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
-                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
-                    // reconnect dropLocations
-                    setQuizQuestions(dragAndDropQuestion.getDropLocations(), dragAndDropQuestion);
-                    // reconnect dragItems
-                    setQuizQuestions(dragAndDropQuestion.getDragItems(), dragAndDropQuestion);
-                    // reconnect correctMappings
-                    setQuizQuestions(dragAndDropQuestion.getCorrectMappings(), dragAndDropQuestion);
-                    // reconnect dropLocationCounters
+                // reconnect answerOptions
+                setQuizQuestions(mcQuestion.getAnswerOptions(), mcQuestion);
+            }
+            if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
+                DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
+                // reconnect dropLocations
+                setQuizQuestions(dragAndDropQuestion.getDropLocations(), dragAndDropQuestion);
+                // reconnect dragItems
+                setQuizQuestions(dragAndDropQuestion.getDragItems(), dragAndDropQuestion);
+                // reconnect correctMappings
+                setQuizQuestions(dragAndDropQuestion.getCorrectMappings(), dragAndDropQuestion);
+                // reconnect dropLocationCounters (statistic is null on transient questions before initializeStatistic())
+                if (dragAndDropStatistic != null) {
                     setQuizQuestionStatistics(dragAndDropStatistic.getDropLocationCounters(), dragAndDropQuestion, dragAndDropStatistic);
                 }
-                if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                    ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
-                    // reconnect spots
-                    setQuizQuestions(shortAnswerQuestion.getSpots(), shortAnswerQuestion);
-                    // reconnect solutions
-                    setQuizQuestions(shortAnswerQuestion.getSolutions(), shortAnswerQuestion);
-                    // reconnect correctMappings
-                    setQuizQuestions(shortAnswerQuestion.getCorrectMappings(), shortAnswerQuestion);
-                    // reconnect spotCounters
+            }
+            if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
+                ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
+                // reconnect spots
+                setQuizQuestions(shortAnswerQuestion.getSpots(), shortAnswerQuestion);
+                // reconnect solutions
+                setQuizQuestions(shortAnswerQuestion.getSolutions(), shortAnswerQuestion);
+                // reconnect correctMappings
+                setQuizQuestions(shortAnswerQuestion.getCorrectMappings(), shortAnswerQuestion);
+                // reconnect spotCounters (statistic is null on transient questions before initializeStatistic())
+                if (shortAnswerStatistic != null) {
                     setQuizQuestionStatistics(shortAnswerStatistic.getShortAnswerSpotCounters(), shortAnswerQuestion, shortAnswerStatistic);
                 }
             }
@@ -93,8 +99,11 @@ public interface QuizConfiguration {
      */
     default <SC extends QuizQuestionStatisticComponent<S, C, Q>, S extends QuizQuestionStatistic, C extends QuizQuestionComponent<Q>, Q extends QuizQuestion> void setQuizQuestionStatistics(
             Collection<SC> statisticComponents, Q quizQuestion, S quizQuestionStatistic) {
+        // Back-references are set unconditionally (including for entities with id == null) to match the parent
+        // setQuizQuestion contract above; otherwise transient counters created during reevaluate would INSERT with
+        // a null FK to the statistic.
         for (SC statisticComponent : statisticComponents) {
-            if (statisticComponent.getId() != null) {
+            if (statisticComponent != null) {
                 statisticComponent.setQuizQuestionStatistic(quizQuestionStatistic);
                 if (!(quizQuestion instanceof MultipleChoiceQuestion)) {
                     setQuizQuestion(statisticComponent.getQuizQuestionComponent(), quizQuestion);
@@ -111,7 +120,7 @@ public interface QuizConfiguration {
      * @param <Q>          the subclass of QuizQuestion to be set to
      */
     default <Q extends QuizQuestion> void setQuizQuestion(QuizQuestionComponent<Q> component, Q quizQuestion) {
-        if (component != null && component.getId() != null) {
+        if (component != null) {
             component.setQuestion(quizQuestion);
         }
     }

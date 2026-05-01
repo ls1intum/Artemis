@@ -20,6 +20,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderColumn;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Transient;
 
 import org.hibernate.Hibernate;
@@ -70,12 +72,14 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     @JoinColumn(unique = true)
     private QuizPointStatistic quizPointStatistic;
 
-    // TODO: test if we should use mappedBy here as well
     // No @Cache here on purpose: this collection is mutated on every quiz edit/import and re-read on every student participation.
     // NONSTRICT_READ_WRITE on a clustered L2 cache produced partial / stale reads that were the #12574 / #12584 bug class.
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderColumn
-    @JoinColumn(name = "exercise_id")
+    // Bidirectional mapping: QuizQuestion.exercise owns the exercise_id FK, so a parent saveAndFlush issues targeted
+    // UPDATEs on the order column instead of the DELETE+INSERT cascade that produced #12584.
+    // See documentation/docs/developer/guidelines/database.mdx → "Ordered Collection with Duplicates (List)" for the
+    // mandatory rules — any new @OrderColumn relationship must follow them, or pick the Set + @OrderBy alternative.
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderColumn(name = "quiz_questions_order")
     private List<QuizQuestion> quizQuestions = new ArrayList<>();
 
     // No @Cache here on purpose: quizBatches is mutated on every student join in BATCHED mode, so the cache is actively hot
@@ -218,12 +222,42 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     }
 
     public void setQuizQuestions(List<QuizQuestion> quizQuestions) {
+        // Direct field assignment so callers like filterSensitiveInformation can replace a lazy-initialized PersistentList
+        // without triggering session-less initialization. Back-references are set defensively in
+        // ensureQuizQuestionBackReferences via @PrePersist / @PreUpdate.
         this.quizQuestions = quizQuestions;
     }
 
+    /**
+     * Adds a single quiz question and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     *
+     * @param quizQuestion the question to add
+     */
     public void addQuestions(QuizQuestion quizQuestion) {
+        if (this.quizQuestions == null) {
+            this.quizQuestions = new ArrayList<>();
+        }
         this.quizQuestions.add(quizQuestion);
         quizQuestion.setExercise(this);
+    }
+
+    /**
+     * Defensive back-reference fixup: with bidirectional mappedBy the child @ManyToOne owns the FK, so any QuizQuestion
+     * added via {@code getQuizQuestions().add(...)} (bypassing {@link #addQuestions}) would otherwise INSERT with
+     * {@code exercise_id = NULL}. Guarded by {@code Hibernate.isInitialized} so the hook does not force a lazy
+     * load on flush of an unrelated change (mirrors {@link de.tum.cit.aet.artemis.lecture.domain.Lecture#updateLectureUnitOrder}).
+     */
+    @PrePersist
+    @PreUpdate
+    private void ensureQuizQuestionBackReferences() {
+        if (quizQuestions == null || !Hibernate.isInitialized(quizQuestions)) {
+            return;
+        }
+        for (QuizQuestion question : quizQuestions) {
+            if (question != null && question.getExercise() != this) {
+                question.setExercise(this);
+            }
+        }
     }
 
     /**

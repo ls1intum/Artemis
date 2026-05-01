@@ -10,9 +10,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -32,25 +33,24 @@ public class ShortAnswerQuestion extends QuizQuestion {
 
     // No @Cache on the three child collections below: they are the parent collections of ShortAnswerSpot / ShortAnswerSolution /
     // ShortAnswerMapping references resolved during submission merge cascade. See #12574 / #12584 for why the clustered NONSTRICT cache failed.
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
+    // Bidirectional mapping: each child owns the question_id FK via its @ManyToOne back-reference, so a parent saveAndFlush
+    // issues targeted UPDATEs on the order column instead of the DELETE+INSERT cascade that produced #12584.
+    // See documentation/docs/developer/guidelines/database.mdx → "Ordered Collection with Duplicates (List)" for the
+    // mandatory rules — any new @OrderColumn relationship must follow them, or pick the Set + @OrderBy alternative.
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OrderColumn(name = "spots_order")
     private List<ShortAnswerSpot> spots = new ArrayList<>();
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OrderColumn(name = "solutions_order")
     private List<ShortAnswerSolution> solutions = new ArrayList<>();
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
+    // Stored as a Bag (List without @OrderColumn): see DragAndDropQuestion.correctMappings rationale. Position carries no
+    // semantic meaning — each mapping is identified by its (spot, solution) pair. We avoid HashSet because
+    // DomainObject.hashCode is id-based and breaks for transient entities. The Bag has no @OrderColumn, so Hibernate
+    // does not DELETE+INSERT on parent save (the #12584 failure mode requires the unidirectional + @JoinColumn shape).
+    // The legacy correct_mappings_order column on short_answer_mapping is now orphaned; drop in a follow-up Liquibase changeset.
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
 
     @Column(name = "similarity_value")
@@ -64,7 +64,29 @@ public class ShortAnswerQuestion extends QuizQuestion {
     }
 
     public void setSpots(List<ShortAnswerSpot> shortAnswerSpots) {
+        // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
         this.spots = shortAnswerSpots;
+    }
+
+    /**
+     * Adds a single spot and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     *
+     * @param shortAnswerSpot the spot to add
+     * @return this question for fluent chaining
+     */
+    public ShortAnswerQuestion addSpot(ShortAnswerSpot shortAnswerSpot) {
+        if (this.spots == null) {
+            this.spots = new ArrayList<>();
+        }
+        this.spots.add(shortAnswerSpot);
+        shortAnswerSpot.setQuestion(this);
+        return this;
+    }
+
+    public ShortAnswerQuestion removeSpot(ShortAnswerSpot shortAnswerSpot) {
+        this.spots.remove(shortAnswerSpot);
+        shortAnswerSpot.setQuestion(null);
+        return this;
     }
 
     public List<ShortAnswerSolution> getSolutions() {
@@ -72,10 +94,20 @@ public class ShortAnswerQuestion extends QuizQuestion {
     }
 
     public void setSolutions(List<ShortAnswerSolution> shortAnswerSolutions) {
+        // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
         this.solutions = shortAnswerSolutions;
     }
 
+    /**
+     * Adds a single solution and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     *
+     * @param shortAnswerSolution the solution to add
+     * @return this question for fluent chaining
+     */
     public ShortAnswerQuestion addSolution(ShortAnswerSolution shortAnswerSolution) {
+        if (this.solutions == null) {
+            this.solutions = new ArrayList<>();
+        }
         this.solutions.add(shortAnswerSolution);
         shortAnswerSolution.setQuestion(this);
         return this;
@@ -92,10 +124,20 @@ public class ShortAnswerQuestion extends QuizQuestion {
     }
 
     public void setCorrectMappings(List<ShortAnswerMapping> shortAnswerMappings) {
+        // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
         this.correctMappings = shortAnswerMappings;
     }
 
+    /**
+     * Adds a single mapping and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     *
+     * @param shortAnswerMapping the mapping to add
+     * @return this question for fluent chaining
+     */
     public ShortAnswerQuestion addCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
+        if (this.correctMappings == null) {
+            this.correctMappings = new ArrayList<>();
+        }
         this.correctMappings.add(shortAnswerMapping);
         shortAnswerMapping.setQuestion(this);
         return this;
@@ -333,6 +375,37 @@ public class ShortAnswerQuestion extends QuizQuestion {
             updateNecessary = true;
         }
         return updateNecessary;
+    }
+
+    /**
+     * Defensive back-reference fixup: with bidirectional mappedBy the child @ManyToOne owns the FK, so any child added
+     * via {@code getSpots().add(...)} / {@code getSolutions().add(...)} / {@code getCorrectMappings().add(...)}
+     * (bypassing the helpers) would otherwise INSERT with {@code question_id = NULL}.
+     */
+    @PrePersist
+    @PreUpdate
+    private void ensureChildBackReferences() {
+        if (spots != null) {
+            for (ShortAnswerSpot spot : spots) {
+                if (spot != null && spot.getQuestion() != this) {
+                    spot.setQuestion(this);
+                }
+            }
+        }
+        if (solutions != null) {
+            for (ShortAnswerSolution solution : solutions) {
+                if (solution != null && solution.getQuestion() != this) {
+                    solution.setQuestion(this);
+                }
+            }
+        }
+        if (correctMappings != null) {
+            for (ShortAnswerMapping mapping : correctMappings) {
+                if (mapping != null && mapping.getQuestion() != this) {
+                    mapping.setQuestion(this);
+                }
+            }
+        }
     }
 
     @Override

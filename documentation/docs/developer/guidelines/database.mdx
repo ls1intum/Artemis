@@ -164,15 +164,14 @@ private Result result;
 
 ### OneToMany
 
-A `Collection` or `Map` of objects. It is the inverse of a **ManyToOne** relationship. Example: one `Result` has a list of `Feedback` elements.
-For ordered OneToMany relations see the [ordered collections section](#choosing-collection-types) below.
+A `Collection` or `Map` of objects. It is the inverse of a **ManyToOne** relationship. Example: one `Result` has a set of `Feedback` elements.
+Default to a `Set` unless presentation order is semantically meaningful — see the [ordered collections section](#choosing-collection-types) below for when (and how) to use a `List`.
 
 ```java
 // Result.java
 @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
-@OrderColumn
 @JsonIgnoreProperties(value = "result", allowSetters = true)
-private List<Feedback> feedbacks = new ArrayList<>();
+private Set<Feedback> feedbacks = new HashSet<>();
 ```
 
 ### ManyToOne
@@ -230,9 +229,8 @@ Propagates all operations mentioned below from the parent object to the child ob
 ```java
 // Result.java
 @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
-@OrderColumn
 @JsonIgnoreProperties(value = "result", allowSetters = true)
-private List<Feedback> feedbacks = new ArrayList<>();
+private Set<Feedback> feedbacks = new HashSet<>();
 ```
 
 ### CascadeType.PERSIST
@@ -515,44 +513,104 @@ private TreeSet<String> allowedVariants = new TreeSet<>();
 
 #### Ordered Collection with Duplicates (List)
 
-When you want to order the collection of (potentially duplicated) objects of the relationship, then always use a `List`. It is important to note here that there is no inherent order in a database table. One could argue that you can use the `id` field for the ordering, but there are edge cases where this can lead to problems. Therefore, for an ordered collection with duplicates, **always** annotate it with `@OrderColumn`. An order column indicates to Hibernate that we want to order our collection based on a specific column of our data table. By default, the column name it expects is *tableNameS_order*. For ordered collections, we also recommend that you annotate them with `cascade = CascadeType.ALL` and `orphanRemoval = true`.
+If you genuinely need a `List` whose database position is meaningful and you cannot derive the order from a domain field (e.g., a timestamp, a `displayOrder` int, a numbered `spotNr`), Hibernate offers `@OrderColumn`. **Treat it as a sharp tool**: it has caused multiple production incidents in this codebase (issues [#12574](https://github.com/ls1intum/Artemis/issues/12574), [#12584](https://github.com/ls1intum/Artemis/issues/12584)). Read the rules below before using it, and prefer `Set` or `@OrderBy` on a domain field whenever you can.
 
-<details>
-<summary>Example: Ordered Collection with List</summary>
-
-```java
-//Result.java
-@OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
-@OrderColumn
-@JsonIgnoreProperties(value = "result", allowSetters = true)
-private List<Feedback> feedbacks = new ArrayList<>();
-```
-
-<Callout variant={CalloutVariant.info}>
-
-    Hibernate will take care of the ordering for you but you must create the order column in the database. This is not created automatically!
-
+<Callout variant={CalloutVariant.danger}>
+    <strong>Mandatory rules for <code>@OrderColumn</code>:</strong>
+    <ul>
+        <li><strong>Bidirectional only.</strong> The relationship must be <code>@OneToMany(mappedBy = "...")</code> with the child entity owning the FK via its own <code>@ManyToOne</code> + explicit <code>@JoinColumn(name = "...")</code>. The unidirectional shape — <code>@OneToMany + @JoinColumn + @OrderColumn</code> — causes Hibernate to <code>DELETE</code>+<code>INSERT</code> the entire child collection on every parent save, regenerating primary keys and breaking in-flight references (this is the exact #12584 ID-regeneration bug).</li>
+        <li><strong>One owning side.</strong> If the child has a <code>@ManyToOne</code> back-reference, the parent <em>must not</em> additionally declare <code>@JoinColumn(name = "...")</code> on its <code>@OneToMany</code>; both sides claiming the same column corrupts the FK on save.</li>
+        <li><strong>Always set the back-reference</strong> when adding a child. Use a parent helper (<code>parent.addChild(child)</code> that calls <code>child.setParent(this)</code>) — never <code>parent.getChildren().add(child)</code> from outside.</li>
+        <li><strong>Defensive <code>@PrePersist</code> / <code>@PreUpdate</code> hook</strong> on the parent that re-asserts <code>child.setParent(this)</code> on every element. This catches every test factory and DTO mapper that bypasses the helper. See the four quiz-domain entities (<code>MultipleChoiceQuestion</code>, <code>DragAndDropQuestion</code>, <code>ShortAnswerQuestion</code>, <code>QuizExercise</code>) for the canonical implementation.</li>
+        <li><strong>No L2 cache</strong> on the collection (<code>@Cache</code> is forbidden cluster-wide anyway, see <a href="caching">caching guidelines</a>).</li>
+        <li><strong>Always load the full collection before mutating it.</strong> A partial fetch (<code>JOIN FETCH ... WHERE ...</code> that filters child rows) returns a list with <code>null</code> padding at the missing index slots.</li>
+        <li><strong>Name the order column explicitly:</strong> <code>@OrderColumn(name = "answer_options_order")</code>. Don't rely on Hibernate's default-naming heuristic surviving future changes.</li>
+        <li><strong>Direct field assignment in setters.</strong> A defensive <code>setX(list)</code> that calls <code>this.x.clear()</code> on the existing collection will throw <code>LazyInitializationException</code> when callers like <code>filterSensitiveInformation</code> swap out a managed <code>PersistentList</code> after the session has closed. Keep <code>setX</code> as a plain field assignment; rely on the <code>@PrePersist</code>/<code>@PreUpdate</code> hook above for back-reference fixup.</li>
+    </ul>
 </Callout>
 
-With ordered collections, you have to be very careful with the way you persist the objects in the database. You must first persist the child object without a relation to the parent object. Then, you recreate the association and persist the parent object. Example of how to correctly persist objects in an ordered collection:
+<details>
+<summary>Example: Bidirectional <code>@OrderColumn</code> (the canonical pattern)</summary>
 
 ```java
-// ProgrammingAssessmentService
-List<Feedback> savedFeedbacks = new ArrayList<>();
-result.getFeedbacks().forEach(feedback -> {
-   // cut association to parent object
-   feedback.setResult(null);
-   // persist the child object without an association to the parent object. IMPORTANT: Use the object returned from the database!
-   feedback = feedbackRepository.save(feedback);
-   // restore the association to the parent object
-   feedback.setResult(result);
-   savedFeedbacks.add(feedback);
-});
+// MultipleChoiceQuestion.java — owning side declares the relationship
+@OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+@OrderColumn(name = "answer_options_order")
+private List<AnswerOption> answerOptions = new ArrayList<>();
 
-// set the association of the parent to its child objects which are now persisted in the database
-result.setFeedbacks(savedFeedbacks);
-// persist the parent object
-return resultRepository.save(result);
+public void addAnswerOption(AnswerOption answerOption) {
+    if (answerOptions == null) {
+        answerOptions = new ArrayList<>();
+    }
+    answerOptions.add(answerOption);
+    answerOption.setQuestion(this);
+}
+
+@PrePersist
+@PreUpdate
+private void ensureAnswerOptionBackReferences() {
+    if (answerOptions != null) {
+        for (AnswerOption option : answerOptions) {
+            if (option != null && option.getQuestion() != this) {
+                option.setQuestion(this);
+            }
+        }
+    }
+}
+```
+
+```java
+// AnswerOption.java — child owns the FK column
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "question_id")
+@JsonIgnore
+private MultipleChoiceQuestion question;
+```
+
+</details>
+
+<Callout variant={CalloutVariant.info}>
+    Hibernate manages the order column for you, but the column must already exist in the database — it is not created automatically. Match <code>@OrderColumn(name = "...")</code> to the existing physical column.
+</Callout>
+
+#### Preferred alternative: `Set` + explicit `displayOrder` + `@OrderBy`
+
+For most ordered relationships, an explicit integer `displayOrder` field on the child plus `@OrderBy("displayOrder ASC")` on the parent is a strict improvement over `@OrderColumn`:
+
+- The order is a visible domain field — easy to grep, log, and assert on in tests.
+- `@OrderBy` resolves at SQL `ORDER BY` time, so partial fetches just return the matching rows in order with no `null` padding.
+- Concurrent writes do not race on a single index column — each writer updates its own row's `displayOrder`.
+- The relationship can be a `Set` (typically `LinkedHashSet`), which avoids the [`MultipleBagFetchException`](https://stackoverflow.com/questions/4334970/hibernate-throws-multiplebagfetchexception-cannot-simultaneously-fetch-multipl) when multiple ordered collections are fetched together.
+
+This is the pattern used by `Lecture.lectureUnits` (`Lecture.java:67-87`, `Lecture.java:263-275`) and is the recommended default. Use `@OrderColumn` only when you have weighed the rules above and decided that owning a domain-visible order field is not appropriate.
+
+<details>
+<summary>Example: Set + explicit displayOrder</summary>
+
+```java
+// Lecture.java
+@OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true)
+@OrderBy("lectureUnitOrder ASC")
+@JsonIgnoreProperties("lecture")
+private Set<LectureUnit> lectureUnits = new LinkedHashSet<>();
+
+@PrePersist
+@PreUpdate
+public void updateLectureUnitOrder() {
+    if (Hibernate.isInitialized(lectureUnits)) {
+        int order = 0;
+        for (LectureUnit unit : lectureUnits) {
+            if (unit == null) continue;
+            unit.setLectureUnitOrder(order++);
+        }
+    }
+}
+```
+
+```java
+// LectureUnit.java
+@Column(name = "lecture_unit_order", nullable = false)
+private int lectureUnitOrder;
 ```
 
 </details>
@@ -574,34 +632,23 @@ Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long id);
 
 </details>
 
-### JpaSystemException with @OrderColumn
+### JpaSystemException / "null index column for collection" with @OrderColumn
 
-`JpaSystemException: null index column for collection` caused by `@OrderColumn` annotation.
+`JpaSystemException: null index column for collection` (or `IllegalArgumentException: Illegal null value for list index`) is almost always a symptom of one of the rules in the [ordered collections section](#ordered-collection-with-duplicates-list) being violated. Before adding workarounds, check:
 
-There is a problem with the way you save the associated objects. You must follow this procedure:
+1. **Is the relationship unidirectional?** If the parent has both `@OneToMany ... @JoinColumn(name = "...")` *and* `@OrderColumn`, convert it to bidirectional (`mappedBy`) and let the child own the FK via its own `@ManyToOne` + `@JoinColumn`. This is the root cause of the #12584 ID-regeneration class of bugs and resolves the null-index error in nearly every case.
+2. **Is the FK column claimed twice?** If the child also has a `@ManyToOne` to the parent without an explicit `@JoinColumn`, JPA defaults to the same column the parent's `@JoinColumn` claims. Pick one owner — the child — and remove the parent's `@JoinColumn`.
+3. **Is the back-reference set on every child before save?** Add a `@PrePersist`/`@PreUpdate` hook on the parent that asserts `child.setParent(this)` on every element. See the four quiz-domain entities for the pattern.
+4. **Is the collection partially fetched?** A `JOIN FETCH ... WHERE ...` that filters child rows returns a list with `null` slots. Either fetch the full collection or stop using `@OrderColumn` and migrate to `Set` + `@OrderBy` on a domain field.
+5. **Is some code path saving children directly?** A `childRepository.save(...)` or `@Modifying @Query` that inserts/deletes child rows without going through the parent's collection desyncs the order column. Route through `parent.addChild(child)` + `parentRepository.save(parent)`.
 
-1. Save the child entity (e.g., [Feedback](https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/assessment/domain/Feedback.java)) without connection to the parent entity (e.g., [Result](https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/assessment/domain/Result.java))
-2. Add back the connection of the child entity to the parent entity.
-3. Save the parent entity.
-4. Always use the returned value after saving the entity, see: `feedback = feedbackRepository.save(feedback);`
-
-<Callout variant={CalloutVariant.info}>
-  For more information see the ordered collections section above.
-</Callout>
+The historical "save the child without parent reference, then save the parent" recipe was a workaround for the unidirectional-`@OrderColumn` failure mode and is no longer recommended. Fix the mapping instead.
 
 ### Null Values in Ordered Collections
 
-There are `null` values in your ordered collection: You must annotate the ordered collection with `CascadeType.ALL` and `orphanRemoval = true`.
+`null` slots appear in an ordered collection when:
 
-<details>
-<summary>Example: Prevent Null Values in Ordered Collections</summary>
+- The collection was partially fetched with a `WHERE` clause that filtered some children out (Hibernate keeps the indices stable by padding with `null`); or
+- A previous save under unidirectional `@OrderColumn` raced and left an index gap.
 
-```java
-//Result.java
-@OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
-@OrderColumn
-@JsonIgnoreProperties(value = "result", allowSetters = true)
-private List<Feedback> feedbacks = new ArrayList<>();
-```
-
-</details>
+Either fetch the full collection before mutating it, or — preferably — replace `@OrderColumn` with `Set` + `@OrderBy` on a domain field (see [the alternative pattern](#preferred-alternative-set--explicit-displayorder--orderby) above). Defensive Java-side filtering (e.g., `removeNullResults`) is a smell, not a fix.

@@ -79,6 +79,7 @@ public abstract class QuizQuestion extends DomainObject {
     private QuizQuestionStatistic quizQuestionStatistic;
 
     @ManyToOne
+    @JoinColumn(name = "exercise_id")
     @JsonIgnore
     private QuizExercise exercise;
 

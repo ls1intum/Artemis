@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -40,6 +41,7 @@ public class DragAndDropMapping extends DomainObject implements QuizQuestionComp
     private DragAndDropSubmittedAnswer submittedAnswer;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_id")
     @JsonIgnore
     private DragAndDropQuestion question;
 

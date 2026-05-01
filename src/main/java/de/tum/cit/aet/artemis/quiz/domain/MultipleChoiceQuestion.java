@@ -10,9 +10,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -32,9 +33,12 @@ public class MultipleChoiceQuestion extends QuizQuestion {
 
     // No @Cache here on purpose: the parent collection of AnswerOption references that get resolved during merge cascade.
     // A stale cached collection here is the exact failure mode that caused #12574 / #12584 on the clustered L2 cache.
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
+    // Bidirectional mapping: AnswerOption.question owns the question_id FK, so a parent saveAndFlush issues targeted
+    // UPDATEs on the order column instead of the DELETE+INSERT cascade that produced the #12584 ID-regeneration class.
+    // See documentation/docs/developer/guidelines/database.mdx → "Ordered Collection with Duplicates (List)" for the
+    // mandatory rules — any new @OrderColumn relationship must follow them, or pick the Set + @OrderBy alternative.
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OrderColumn(name = "answer_options_order")
     private List<AnswerOption> answerOptions = new ArrayList<>();
 
     @Column(name = "single_choice")
@@ -45,6 +49,9 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     }
 
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
+        // Direct field assignment so callers like filterSensitiveInformation can replace a lazy-initialized PersistentList
+        // without triggering session-less initialization. Back-references are set defensively in
+        // ensureAnswerOptionBackReferences via @PrePersist / @PreUpdate.
         this.answerOptions = answerOptions;
     }
 
@@ -244,9 +251,46 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         return question;
     }
 
-    // helper methods
+    /**
+     * Adds a single answer option and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     *
+     * @param answerOption the answer option to add
+     */
     public void addAnswerOption(AnswerOption answerOption) {
+        if (answerOptions == null) {
+            answerOptions = new ArrayList<>();
+        }
         answerOptions.add(answerOption);
         answerOption.setQuestion(this);
+    }
+
+    /**
+     * Removes a single answer option and clears its back-reference. Mirrors the remove* helpers on the other quiz
+     * entities for symmetry; with {@code orphanRemoval = true} the option will also be deleted on the next flush.
+     *
+     * @param answerOption the answer option to remove
+     */
+    public void removeAnswerOption(AnswerOption answerOption) {
+        if (answerOptions != null) {
+            answerOptions.remove(answerOption);
+        }
+        answerOption.setQuestion(null);
+    }
+
+    /**
+     * Defensive back-reference fixup: with bidirectional mappedBy the child @ManyToOne owns the FK, so any AnswerOption
+     * added via {@code getAnswerOptions().add(...)} (bypassing {@link #addAnswerOption}) would otherwise INSERT with
+     * {@code question_id = NULL}. Mirrors {@link de.tum.cit.aet.artemis.lecture.domain.Lecture#updateLectureUnitOrder}.
+     */
+    @PrePersist
+    @PreUpdate
+    private void ensureAnswerOptionBackReferences() {
+        if (answerOptions != null) {
+            for (AnswerOption option : answerOptions) {
+                if (option != null && option.getQuestion() != this) {
+                    option.setQuestion(this);
+                }
+            }
+        }
     }
 }

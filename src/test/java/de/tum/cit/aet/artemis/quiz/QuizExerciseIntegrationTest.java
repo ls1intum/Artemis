@@ -1067,7 +1067,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
             newMapping.setSolution(newSolution);
             newMapping.setSpot(shortAnswerQuestion.getSpots().getFirst());
             newMapping.setShortAnswerSpotIndex(0);
-            shortAnswerQuestion.getCorrectMappings().add(newMapping);
+            shortAnswerQuestion.addCorrectMapping(newMapping);
             quizExercise.getQuizQuestions().remove(2);
             quizExercise.getQuizQuestions().add(shortAnswerQuestion);
         }
@@ -2464,14 +2464,17 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
 
         DragAndDropQuestion dnd = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
-        dnd.getDropLocations().removeFirst();
-        dnd.getCorrectMappings().removeFirst();
-        dnd.getDragItems().removeFirst();
+        DropLocation removedDropLocation = dnd.getDropLocations().removeFirst();
+        DragItem removedDragItem = dnd.getDragItems().removeFirst();
+        // Remove any mapping that references the removed drag item or drop location to keep the graph consistent.
+        // (correctMappings is a Bag; iteration order is not guaranteed across loads, so we filter by reference equality
+        // instead of relying on positional removeFirst.)
+        dnd.getCorrectMappings().removeIf(m -> m.getDragItem() == removedDragItem || m.getDropLocation() == removedDropLocation);
 
         ShortAnswerQuestion sa = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
-        sa.getSpots().removeFirst();
-        sa.getSolutions().removeFirst();
-        sa.getCorrectMappings().removeFirst();
+        ShortAnswerSpot removedSpot = sa.getSpots().removeFirst();
+        ShortAnswerSolution removedSolution = sa.getSolutions().removeFirst();
+        sa.getCorrectMappings().removeIf(m -> m.getSpot() == removedSpot || m.getSolution() == removedSolution);
     }
 
     private QuizExercise createMultipleChoiceQuizExercise() {

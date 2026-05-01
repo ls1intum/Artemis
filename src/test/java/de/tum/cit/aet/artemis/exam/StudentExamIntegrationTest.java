@@ -3004,7 +3004,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
             // load Quiz Submissions Submitted Answers (for comparison)
             // TODO: Hibernate 7 increased quiz query count from 3 to 8 due to EAGER @ManyToOne on SubmittedAnswer.quizQuestion — needs FetchType.LAZY
-            final int quizQueryCount = 8;
+            // The bidirectional @OrderColumn refactor (#12584 fix) added 2 more — Hibernate now issues per-child-collection
+            // SELECTs to refresh the order indices on the question's EAGER child Lists when the question is touched.
+            final int quizQueryCount = 10;
 
             // When
             assertThatDb(() -> request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction,

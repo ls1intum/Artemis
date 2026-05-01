@@ -270,7 +270,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 DragAndDropMapping newMapping = new DragAndDropMapping();
                 newMapping.setDragItem(dragItem);
                 newMapping.setDropLocation(dropLocation);
-                originalQuestion.getCorrectMappings().add(newMapping);
+                originalQuestion.addCorrectMapping(newMapping);
                 recalculationNecessary = true;
             }
         }
@@ -451,7 +451,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         ShortAnswerMapping newMapping = new ShortAnswerMapping();
         newMapping.setSpot(spot);
         newMapping.setSolution(solution);
-        originalQuestion.getCorrectMappings().add(newMapping);
+        originalQuestion.addCorrectMapping(newMapping);
         return true;
     }
 
