@@ -351,10 +351,11 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(exampleSubmission.getId()).isNotNull();
         assertThat(((TextSubmission) exampleSubmission.getSubmission()).getText()).isEqualTo(submission.getText());
         assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks()).isNotEmpty();
-        assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacksSorted().getFirst().getCredits()).isEqualTo(feedback.getCredits());
+        Feedback importedFeedback = exampleSubmission.getSubmission().getLatestResult().getFeedbacks().iterator().next();
+        assertThat(importedFeedback.getCredits()).isEqualTo(feedback.getCredits());
         assertThat(copiedTextBlocks).isNotEmpty();
         assertThat(copiedTextBlocks.getFirst().getText()).isEqualTo(textBlock.getText());
-        assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacksSorted().getFirst().getReference()).isEqualTo(copiedTextBlocks.getFirst().getId());
+        assertThat(importedFeedback.getReference()).isEqualTo(copiedTextBlocks.getFirst().getId());
     }
 
     @Test
@@ -390,8 +391,8 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         Optional<Result> orginalResult = resultRepository.findDistinctWithFeedbackBySubmissionId(originalSubmission.getId());
 
         ExampleSubmission exampleSubmission = importExampleSubmission(exercise.getId(), originalSubmission.getId(), HttpStatus.OK);
-        assertThat(exampleSubmission.getSubmission().getResults().getFirst().getFeedbacksSorted().getFirst().getGradingInstruction().getId())
-                .isEqualTo(orginalResult.orElseThrow().getFeedbacksSorted().getFirst().getGradingInstruction().getId());
+        assertThat(exampleSubmission.getSubmission().getResults().getFirst().getFeedbacks().iterator().next().getGradingInstruction().getId())
+                .isEqualTo(orginalResult.orElseThrow().getFeedbacks().iterator().next().getGradingInstruction().getId());
     }
 
     @Test

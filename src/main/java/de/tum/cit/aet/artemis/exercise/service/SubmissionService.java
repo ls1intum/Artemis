@@ -425,12 +425,12 @@ public class SubmissionService {
      *
      * @param newResult new result to copy feedback to
      * @param oldResult old result to copy feedback from
-     * @return the list of newly created feedbacks
+     * @return the set of newly created feedbacks
      */
-    public List<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
+    public Set<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
         Collection<Feedback> oldFeedback = oldResult.getFeedbacks();
         copyFeedbackToResult(newResult, oldFeedback);
-        return newResult.getFeedbacksSorted();
+        return newResult.getFeedbacks();
     }
 
     /**
