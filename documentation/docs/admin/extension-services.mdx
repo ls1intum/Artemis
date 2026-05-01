@@ -39,12 +39,12 @@ Artemis can run its global keyword and semantic search directly against Weaviate
 
 ### Deploying Weaviate
 
-The Artemis repository ships its own Weaviate compose files for development; for production, use the same images and reuse the configuration documented in the [Weaviate Setup developer guide](../developer/weaviate-setup.mdx) (env files, vectorizer choice, API-key auth). You do not need any EduTelligence component for this path.
+The Artemis repository ships its own Weaviate compose files for development; for production, use the same images and reuse the configuration documented in the [Weaviate Setup developer guide](/developer/weaviate-setup) (env files, vectorizer choice, API-key auth). You do not need any EduTelligence component for this path.
 
 A typical standalone production layout:
 
 - One Weaviate container (e.g. behind Traefik with TLS).
-- Anonymous access disabled, API key authentication enabled (see the developer guide's [Authentication](../developer/weaviate-setup.mdx#authentication) section).
+- Anonymous access disabled, API key authentication enabled (see the developer guide's [Authentication](/developer/weaviate-setup#authentication) section).
 - Either `text2vec-openai` (OpenAI-compatible API such as Ollama or a TUM GPU server) or self-provided vectors (`vectorizer-module: none`) depending on your embedding strategy.
 
 ### Configuring Artemis
