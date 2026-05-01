@@ -855,7 +855,8 @@ public class ProgrammingExerciseGradingService {
      */
     private void setCreditsForTestCaseFeedback(double credits, final ProgrammingExerciseTestCase testCase, final Result result) {
         // We need to compare testcases ignoring the case, because the testcaseRepository is case-insensitive
-        result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && fb.getTestCase().equals(testCase)).findFirst()
+        // SCA (static code analysis) feedback also has type AUTOMATIC but no test case attached, so guard against null.
+        result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && Objects.equals(fb.getTestCase(), testCase)).findFirst()
                 .ifPresent(feedback -> feedback.setCredits(credits));
     }
 
