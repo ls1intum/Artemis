@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithParticipationDTO;
  *
  * <p>
  * This DTO represents a reduced view of the {@link Complaint} entity and is intended
- * to be used for serialization over the API. It includes only the necessary fields for the client and omits any sensitive or unnecessary information.
+ * to be used for serialization over the API.
  * </p>
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -95,7 +95,10 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
                 feedbackDTOs = result.getFeedbacks().stream().filter(Objects::nonNull).map(FeedbackDTO::of).toList();
             }
             String exerciseTitle = null;
-            if (result.getSubmission() != null && result.getSubmission().getParticipation() != null && result.getSubmission().getParticipation().getExercise() != null) {
+            if (result.getSubmission() != null && Hibernate.isInitialized(result.getSubmission()) && result.getSubmission().getParticipation() != null
+                    && Hibernate.isInitialized(result.getSubmission().getParticipation()) && result.getSubmission().getParticipation().getExercise() != null
+                    && Hibernate.isInitialized(result.getSubmission().getParticipation().getExercise())) {
+
                 exerciseTitle = result.getSubmission().getParticipation().getExercise().getTitle();
             }
             return new ResultSimpleDTO(result.getId(), result.getCompletionDate(), result.getScore(), result.isRated(), result.getAssessmentType(),

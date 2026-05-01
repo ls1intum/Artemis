@@ -39,6 +39,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingAssessmentComponent } from '../modeling-assessment.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -488,26 +489,28 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             assessmentAfterComplaint.onError();
             return;
         }
-        this.modelingAssessmentService
-            .updateAssessmentAfterComplaint(this.feedback, assessmentAfterComplaint.complaintResponse, this.submission!.id!, this.result?.assessmentNote?.note)
-            .subscribe({
-                next: (response) => {
-                    assessmentAfterComplaint.onSuccess();
-                    this.result = response.body!;
-                    this.alertService.closeAll();
-                    this.alertService.success('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
-                },
-                error: (httpErrorResponse: HttpErrorResponse) => {
-                    assessmentAfterComplaint.onError();
-                    this.alertService.closeAll();
-                    const error = httpErrorResponse.error;
-                    if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                        this.alertService.error(error.message, error.params);
-                    } else {
-                        this.alertService.error('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
-                    }
-                },
-            });
+
+        const feedbacks = this.getFeedbacksForUpdateAfterComplaint();
+        const complaintResponse = this.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
+
+        this.modelingAssessmentService.updateAssessmentAfterComplaint(feedbacks, complaintResponse, this.submission!.id!, this.result?.assessmentNote?.note).subscribe({
+            next: (response) => {
+                assessmentAfterComplaint.onSuccess();
+                this.result = response.body!;
+                this.alertService.closeAll();
+                this.alertService.success('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
+            },
+            error: (httpErrorResponse: HttpErrorResponse) => {
+                assessmentAfterComplaint.onError();
+                this.alertService.closeAll();
+                const error = httpErrorResponse.error;
+                if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                    this.alertService.error(error.message, error.params);
+                } else {
+                    this.alertService.error('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+                }
+            },
+        });
     }
 
     /**
@@ -651,5 +654,37 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
         }
+    }
+
+    /**
+     * Returns feedbacks without circular references.
+     */
+    private getFeedbacksForUpdateAfterComplaint(): Feedback[] {
+        return this.feedback.map((feedback) => {
+            const sanitizedFeedback = { ...feedback } as Feedback;
+
+            // Break circular structure:
+            // feedback.result -> result.submission -> submission.results -> result
+            sanitizedFeedback.result = undefined;
+
+            return sanitizedFeedback;
+        });
+    }
+
+    /**
+     * Returns a complaint response payload without circular references.
+     */
+    private getComplaintResponseForUpdateAfterComplaint(complaintResponse: ComplaintResponse): ComplaintResponse {
+        const sanitizedComplaintResponse = { ...complaintResponse } as ComplaintResponse;
+
+        if (complaintResponse.complaint) {
+            sanitizedComplaintResponse.complaint = {
+                id: complaintResponse.complaint.id,
+                accepted: complaintResponse.complaint.accepted,
+                complaintType: complaintResponse.complaint.complaintType,
+            } as Complaint;
+        }
+
+        return sanitizedComplaintResponse;
     }
 }

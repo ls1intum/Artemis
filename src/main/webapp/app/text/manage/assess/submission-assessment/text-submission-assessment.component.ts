@@ -44,6 +44,7 @@ import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessm
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -436,11 +437,14 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             return;
         }
 
+        const feedbacks = this.getFeedbacksForUpdateAfterComplaint();
+        const complaintResponse = this.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
+
         this.assessmentsService
             .updateAssessmentAfterComplaint(
-                this.assessments,
+                feedbacks,
                 this.textBlocksWithFeedback,
-                assessmentAfterComplaint.complaintResponse,
+                complaintResponse,
                 this.submission?.id!, // eslint-disable-line @typescript-eslint/no-non-null-asserted-optional-chain
                 this.participation?.id!, // eslint-disable-line @typescript-eslint/no-non-null-asserted-optional-chain
                 this.result?.assessmentNote?.note,
@@ -562,5 +566,37 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
         }
+    }
+
+    /**
+     * Returns feedbacks without circular references.
+     */
+    private getFeedbacksForUpdateAfterComplaint(): Feedback[] {
+        return this.assessments.map((feedback) => {
+            const sanitizedFeedback = { ...feedback } as Feedback;
+
+            // Break circular structure:
+            // feedback.result -> result.submission -> submission.results -> result
+            sanitizedFeedback.result = undefined;
+
+            return sanitizedFeedback;
+        });
+    }
+
+    /**
+     * Returns a complaint response payload without circular references.
+     */
+    private getComplaintResponseForUpdateAfterComplaint(complaintResponse: ComplaintResponse): ComplaintResponse {
+        const sanitizedComplaintResponse = { ...complaintResponse } as ComplaintResponse;
+
+        if (complaintResponse.complaint) {
+            sanitizedComplaintResponse.complaint = {
+                id: complaintResponse.complaint.id,
+                accepted: complaintResponse.complaint.accepted,
+                complaintType: complaintResponse.complaint.complaintType,
+            } as Complaint;
+        }
+
+        return sanitizedComplaintResponse;
     }
 }

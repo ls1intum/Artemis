@@ -47,6 +47,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../repo-export/export-button/programming-assessment-repo-export-button.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -504,27 +505,28 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             return;
         }
 
+        const feedbacks = this.getFeedbacksForUpdateAfterComplaint();
+        const complaintResponse = this.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
+
         this.setFeedbacksForManualResult();
-        this.manualResultService
-            .updateAfterComplaint(this.manualResult!.feedbacks!, assessmentAfterComplaint.complaintResponse, this.submission!.id!, this.manualResult!.assessmentNote?.note)
-            .subscribe({
-                next: (result: Result) => {
-                    assessmentAfterComplaint.onSuccess();
-                    this!.submission!.results![0] = this.manualResult = result;
-                    this.alertService.closeAll();
-                    this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
-                },
-                error: (httpErrorResponse: HttpErrorResponse) => {
-                    assessmentAfterComplaint.onError();
-                    this.alertService.closeAll();
-                    const error = httpErrorResponse.error;
-                    if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                        this.alertService.error(error.message, error.params);
-                    } else {
-                        this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
-                    }
-                },
-            });
+        this.manualResultService.updateAfterComplaint(feedbacks, complaintResponse, this.submission!.id!, this.manualResult!.assessmentNote?.note).subscribe({
+            next: (result: Result) => {
+                assessmentAfterComplaint.onSuccess();
+                this!.submission!.results![0] = this.manualResult = result;
+                this.alertService.closeAll();
+                this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
+            },
+            error: (httpErrorResponse: HttpErrorResponse) => {
+                assessmentAfterComplaint.onError();
+                this.alertService.closeAll();
+                const error = httpErrorResponse.error;
+                if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                    this.alertService.error(error.message, error.params);
+                } else {
+                    this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
+                }
+            },
+        });
     }
 
     /**
@@ -746,6 +748,38 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         totalScore = getPositiveAndCappedTotalScore(totalScore, maxPoints);
 
         return totalScore;
+    }
+
+    /**
+     * Returns feedbacks without circular references.
+     */
+    private getFeedbacksForUpdateAfterComplaint(): Feedback[] {
+        return this.manualResult!.feedbacks!.map((feedback) => {
+            const sanitizedFeedback = { ...feedback } as Feedback;
+
+            // Break circular structure:
+            // feedback.result -> result.submission -> submission.results -> result
+            sanitizedFeedback.result = undefined;
+
+            return sanitizedFeedback;
+        });
+    }
+
+    /**
+     * Returns a complaint response payload without circular references.
+     */
+    private getComplaintResponseForUpdateAfterComplaint(complaintResponse: ComplaintResponse): ComplaintResponse {
+        const sanitizedComplaintResponse = { ...complaintResponse } as ComplaintResponse;
+
+        if (complaintResponse.complaint) {
+            sanitizedComplaintResponse.complaint = {
+                id: complaintResponse.complaint.id,
+                accepted: complaintResponse.complaint.accepted,
+                complaintType: complaintResponse.complaint.complaintType,
+            } as Complaint;
+        }
+
+        return sanitizedComplaintResponse;
     }
 }
 
