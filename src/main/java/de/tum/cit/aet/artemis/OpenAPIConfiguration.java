@@ -204,7 +204,9 @@ public class OpenAPIConfiguration {
 
         if (schema.getDiscriminator() != null && schema.getDiscriminator().getMapping() != null) {
             schema.getDiscriminator().getMapping()
-                    .replaceAll((key, value) -> value != null && value.endsWith("DTO") ? value.substring(0, value.length() - DTO_NUMBER_OF_CHARACTERS) : value);
+                    .replaceAll((key, value) -> value != null && value.startsWith("#/components/schemas/") && value.endsWith("DTO")
+                            ? value.substring(0, value.length() - DTO_NUMBER_OF_CHARACTERS)
+                            : value);
         }
     }
 
