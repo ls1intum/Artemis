@@ -57,6 +57,17 @@ public class DeimosAnalysisService {
         this.gitService = gitService;
     }
 
+    /**
+     * Analyzes the provided participation ids and returns an aggregated run summary.
+     *
+     * @param runId            the unique id of the current batch run
+     * @param triggerType      the trigger type that started the analysis
+     * @param scope            the scope the run belongs to (course or exercise)
+     * @param from             the start of the selected analysis window
+     * @param to               the end of the selected analysis window
+     * @param participationIds the participation ids to analyze
+     * @return the aggregated analysis summary for the run
+     */
     public DeimosBatchSummaryDTO analyze(String runId, DeimosTriggerType triggerType, DeimosBatchScope scope, ZonedDateTime from, ZonedDateTime to, List<Long> participationIds) {
         long analyzed = 0;
         long failed = 0;
