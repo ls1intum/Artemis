@@ -1,11 +1,12 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CourseNotificationSettingSpecification } from 'app/communication/shared/entities/course-notification/course-notification-setting-specification';
 import { CourseNotificationChannelSetting } from 'app/communication/shared/entities/course-notification/course-notification-channel-setting';
 import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * Service for managing course notification settings.
@@ -14,12 +15,41 @@ import { CourseNotificationSettingPreset } from 'app/communication/shared/entiti
 @Injectable({
     providedIn: 'root',
 })
-export class CourseNotificationSettingService {
+export class CourseNotificationSettingService implements OnDestroy {
     private readonly apiEndpoint = '/api/communication/notification/';
 
     private http = inject(HttpClient);
+    private readonly accountService = inject(AccountService);
 
     private settingInfoSubjects: Record<number, BehaviorSubject<CourseNotificationSettingInfo | undefined>> = {};
+
+    private stateGeneration = 0;
+    private currentUserId?: number;
+    private authenticationStateSubscription: Subscription;
+
+    constructor() {
+        this.currentUserId = this.accountService.userIdentity()?.id;
+        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
+            if (this.currentUserId !== user?.id) {
+                this.currentUserId = user?.id;
+                this.resetState();
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.authenticationStateSubscription?.unsubscribe();
+    }
+
+    /**
+     * Clears the cached per-course setting subjects. Called on logout / user change so the next user
+     * does not see the previous user's notification settings.
+     */
+    private resetState(): void {
+        this.stateGeneration++;
+        Object.values(this.settingInfoSubjects).forEach((subject) => subject.complete());
+        this.settingInfoSubjects = {};
+    }
 
     /**
      * Gets or creates a BehaviorSubject for a specific course's setting info
@@ -49,10 +79,12 @@ export class CourseNotificationSettingService {
             return subject.asObservable().pipe(map((value) => value as CourseNotificationSettingInfo));
         }
 
+        const generation = this.stateGeneration;
         this.http
             .get<CourseNotificationSettingInfo>(this.apiEndpoint + courseId + '/settings', { observe: 'response' })
             .pipe(
                 tap((response) => {
+                    if (this.stateGeneration !== generation) return;
                     if (response.body) {
                         subject.next(response.body);
                     }
