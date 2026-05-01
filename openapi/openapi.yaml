@@ -881,7 +881,10 @@ components:
             refined quiz question}
         reasoning: {type: string, description: Brief explanation of what was changed
             during refinement, minLength: 1}
-        type: {type: string}
+        type:
+          type: string
+          enum: [success]
+          example: success
     ChecklistAnalysisRequest:
       type: object
       description: Request to analyze a problem statement for quality, competencies,
@@ -1503,7 +1506,10 @@ components:
       properties:
         error: {type: string, description: Error message describing why the refinement
             failed, minLength: 1}
-        type: {type: string}
+        type:
+          type: string
+          enum: [failure]
+          example: failure
     ConversationUser:
       type: object
       properties:

@@ -7,7 +7,6 @@ import { QuizQuestionRefinementRequest } from 'app/openapi/model/quizQuestionRef
 import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
 import { QuizQuestionBulkRefinementRequest } from 'app/openapi/model/quizQuestionBulkRefinementRequest';
 import { QuizQuestionRefinementResponse } from 'app/openapi/model/quizQuestionRefinementResponse';
-import { QuizQuestionRefinementSuccess } from 'app/openapi/model/quizQuestionRefinementSuccess';
 import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -56,10 +55,9 @@ export class QuizAiGenerationService {
         return this.hyperionQuizQuestionGenerationApiService.refineQuizQuestion(courseId, request).pipe(
             map((response: QuizQuestionRefinementResponse) => {
                 if (response.type === 'success') {
-                    const success = response as QuizQuestionRefinementSuccess;
                     return {
-                        refinedQuestion: this.applyRefinedContentToQuestion(question, this.toGeneratedQuestion(success.question, 0)),
-                        reasoning: success.reasoning,
+                        refinedQuestion: this.applyRefinedContentToQuestion(question, this.toGeneratedQuestion(response.question, 0)),
+                        reasoning: response.reasoning,
                     };
                 }
                 throw new Error('Failed to refine question');
@@ -98,9 +96,8 @@ export class QuizAiGenerationService {
                 const results = new Map<MultipleChoiceQuestion, string>();
                 response.refinements.forEach((refinement, index) => {
                     if (refinement.type === 'success') {
-                        const success = refinement as QuizQuestionRefinementSuccess;
-                        this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(success.question, index));
-                        results.set(questions[index], success.reasoning);
+                        this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(refinement.question, index));
+                        results.set(questions[index], refinement.reasoning);
                     }
                 });
                 return results;

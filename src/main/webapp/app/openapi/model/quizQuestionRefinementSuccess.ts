@@ -22,6 +22,13 @@ export interface QuizQuestionRefinementSuccess {
      * Brief explanation of what was changed during refinement
      */
     reasoning: string;
-    type?: string;
+    type?: QuizQuestionRefinementSuccess.TypeEnum;
 }
+export namespace QuizQuestionRefinementSuccess {
+    export const TypeEnum = {
+        Success: 'success'
+    } as const;
+    export type TypeEnum = typeof TypeEnum[keyof typeof TypeEnum];
+}
+
 

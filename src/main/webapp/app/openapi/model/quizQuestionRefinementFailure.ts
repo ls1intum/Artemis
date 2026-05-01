@@ -17,6 +17,13 @@ export interface QuizQuestionRefinementFailure {
      * Error message describing why the refinement failed
      */
     error: string;
-    type?: string;
+    type?: QuizQuestionRefinementFailure.TypeEnum;
 }
+export namespace QuizQuestionRefinementFailure {
+    export const TypeEnum = {
+        Failure: 'failure'
+    } as const;
+    export type TypeEnum = typeof TypeEnum[keyof typeof TypeEnum];
+}
+
 
