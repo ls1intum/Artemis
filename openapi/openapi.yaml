@@ -946,7 +946,7 @@ components:
         applied: {type: boolean, description: Whether the action was successfully
             applied}
         summary: {type: string, description: Short summary of what was changed}
-    Success:
+    QuizQuestionRefinementSuccess:
       description: Successful refinement result containing the refined question and
         an explanation of the changes
       required: [question, reasoning]
@@ -1070,7 +1070,7 @@ components:
         problemStatementText: {type: string, description: Original problem statement
             text to be improved, minLength: 1}
       required: [problemStatementText]
-    Failure:
+    QuizQuestionRefinementFailure:
       description: Failed refinement result containing an error message
       required: [error]
       type: object
@@ -1334,8 +1334,8 @@ components:
         a success with the refined question or a failure with an error message
       discriminator: {propertyName: type}
       oneOf:
-      - {$ref: '#/components/schemas/Success'}
-      - {$ref: '#/components/schemas/Failure'}
+      - {$ref: '#/components/schemas/QuizQuestionRefinementSuccess'}
+      - {$ref: '#/components/schemas/QuizQuestionRefinementFailure'}
       properties:
         type: {type: string}
       required: [type]

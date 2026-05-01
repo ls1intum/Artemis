@@ -13,33 +13,35 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Discriminated response for a single quiz question refinement.
- * On success the {@code type} field is {@code "success"} and {@link SuccessDTO} fields are populated.
- * On per-question failure the {@code type} field is {@code "failure"} and {@link FailureDTO} fields are populated.
+ * On success the {@code type} field is {@code "success"} and {@link QuizQuestionRefinementSuccessDTO} fields are populated.
+ * On per-question failure the {@code type} field is {@code "failure"} and {@link QuizQuestionRefinementFailureDTO} fields are populated.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
-@JsonSubTypes({ @JsonSubTypes.Type(value = QuizQuestionRefinementResponseDTO.SuccessDTO.class, name = "success"),
-        @JsonSubTypes.Type(value = QuizQuestionRefinementResponseDTO.FailureDTO.class, name = "failure") })
+@JsonSubTypes({ @JsonSubTypes.Type(value = QuizQuestionRefinementResponseDTO.QuizQuestionRefinementSuccessDTO.class, name = "success"),
+        @JsonSubTypes.Type(value = QuizQuestionRefinementResponseDTO.QuizQuestionRefinementFailureDTO.class, name = "failure") })
 @Schema(description = "Discriminated response for a single quiz question refinement, either a success with the refined question or a failure with an error message", oneOf = {
-        QuizQuestionRefinementResponseDTO.SuccessDTO.class, QuizQuestionRefinementResponseDTO.FailureDTO.class }, discriminatorProperty = "type")
-public sealed interface QuizQuestionRefinementResponseDTO permits QuizQuestionRefinementResponseDTO.SuccessDTO, QuizQuestionRefinementResponseDTO.FailureDTO {
+        QuizQuestionRefinementResponseDTO.QuizQuestionRefinementSuccessDTO.class,
+        QuizQuestionRefinementResponseDTO.QuizQuestionRefinementFailureDTO.class }, discriminatorProperty = "type")
+public sealed interface QuizQuestionRefinementResponseDTO
+        permits QuizQuestionRefinementResponseDTO.QuizQuestionRefinementSuccessDTO, QuizQuestionRefinementResponseDTO.QuizQuestionRefinementFailureDTO {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @Schema(description = "Successful refinement result containing the refined question and an explanation of the changes")
-    record SuccessDTO(@NotNull @Valid @Schema(description = "The refined quiz question") GeneratedQuizQuestionDTO question,
+    record QuizQuestionRefinementSuccessDTO(@NotNull @Valid @Schema(description = "The refined quiz question") GeneratedQuizQuestionDTO question,
             @NotBlank @Schema(description = "Brief explanation of what was changed during refinement") String reasoning, @JsonProperty("type") String type)
             implements QuizQuestionRefinementResponseDTO {
 
-        public SuccessDTO(GeneratedQuizQuestionDTO question, String reasoning) {
+        public QuizQuestionRefinementSuccessDTO(GeneratedQuizQuestionDTO question, String reasoning) {
             this(question, reasoning, "success");
         }
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @Schema(description = "Failed refinement result containing an error message")
-    record FailureDTO(@NotBlank @Schema(description = "Error message describing why the refinement failed") String error, @JsonProperty("type") String type)
+    record QuizQuestionRefinementFailureDTO(@NotBlank @Schema(description = "Error message describing why the refinement failed") String error, @JsonProperty("type") String type)
             implements QuizQuestionRefinementResponseDTO {
 
-        public FailureDTO(String error) {
+        public QuizQuestionRefinementFailureDTO(String error) {
             this(error, "failure");
         }
     }

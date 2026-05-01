@@ -1,5 +1,5 @@
-import { Failure } from './failure';
-import { Success } from './success';
+import { QuizQuestionRefinementFailure } from './quizQuestionRefinementFailure';
+import { QuizQuestionRefinementSuccess } from './quizQuestionRefinementSuccess';
 
 
 /**
@@ -10,5 +10,5 @@ import { Success } from './success';
  * Discriminated response for a single quiz question refinement, either a success with the refined question or a failure with an error message
  * @export
  */
-export type QuizQuestionRefinementResponse = Failure | Success;
+export type QuizQuestionRefinementResponse = QuizQuestionRefinementFailure | QuizQuestionRefinementSuccess;
 

@@ -7,7 +7,7 @@ import { QuizQuestionRefinementRequest } from '../../../../openapi/model/quizQue
 import { QuizQuestionGenerationRequest } from '../../../../openapi/model/quizQuestionGenerationRequest';
 import { QuizQuestionBulkRefinementRequest } from '../../../../openapi/model/quizQuestionBulkRefinementRequest';
 import { QuizQuestionRefinementResponse } from '../../../../openapi/model/quizQuestionRefinementResponse';
-import { Success } from '../../../../openapi/model/success';
+import { QuizQuestionRefinementSuccess } from '../../../../openapi/model/quizQuestionRefinementSuccess';
 import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -56,7 +56,7 @@ export class QuizAiGenerationService {
         return this.hyperionQuizQuestionGenerationApiService.refineQuizQuestion(courseId, request).pipe(
             map((response: QuizQuestionRefinementResponse) => {
                 if (response.type === 'success') {
-                    const success = response as Success;
+                    const success = response as QuizQuestionRefinementSuccess;
                     return {
                         refinedQuestion: this.applyRefinedContentToQuestion(question, this.toGeneratedQuestion(success.question, 0)),
                         reasoning: success.reasoning,
@@ -98,7 +98,7 @@ export class QuizAiGenerationService {
                 const results = new Map<MultipleChoiceQuestion, string>();
                 response.refinements.forEach((refinement, index) => {
                     if (refinement.type === 'success') {
-                        const success = refinement as Success;
+                        const success = refinement as QuizQuestionRefinementSuccess;
                         this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(success.question, index));
                         results.set(questions[index], success.reasoning);
                     }
