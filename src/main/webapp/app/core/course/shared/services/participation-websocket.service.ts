@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subscription, of, pipe } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -13,6 +13,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { deepClone } from 'app/shared/util/deep-clone.util';
 import { SubmissionUpdateResult } from 'app/exercise/shared/entities/submission/submission-updated-with-result.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * Websocket destination for user-specific participation results.
@@ -85,9 +86,50 @@ export interface IParticipationWebsocketService {
 }
 
 @Injectable({ providedIn: 'root' })
-export class ParticipationWebsocketService implements IParticipationWebsocketService {
+export class ParticipationWebsocketService implements IParticipationWebsocketService, OnDestroy {
     private websocketService = inject(WebsocketService);
     private participationService = inject(ParticipationService);
+    private readonly accountService = inject(AccountService);
+
+    private currentUserId?: number;
+    private authenticationStateSubscription: Subscription;
+
+    constructor() {
+        this.currentUserId = this.accountService.userIdentity()?.id;
+        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
+            if (this.currentUserId !== user?.id) {
+                this.currentUserId = user?.id;
+                this.resetStateOnUserChange();
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.authenticationStateSubscription?.unsubscribe();
+    }
+
+    /**
+     * Tears down all participation state and websocket subscriptions on logout / user change so the
+     * next user does not inherit the previous user's cached participations or live result streams.
+     *
+     * We don't reuse {@link resetLocalCache} here because that path keys off cached participations:
+     * it would miss the personal websocket subscription if no participations were cached, and it
+     * silently abandons existing result/participation subjects without completing them — leaving
+     * any lingering subscribers stuck on a stale stream.
+     */
+    private resetStateOnUserChange(): void {
+        this.openPersonalWebsocketSubscription?.unsubscribe();
+        this.openPersonalWebsocketSubscription = undefined;
+        this.openResultWebsocketSubscriptions.forEach((subscription) => subscription.unsubscribe());
+        this.openResultWebsocketSubscriptions.clear();
+        this.resultObservables.forEach((subject) => subject.complete());
+        this.resultObservables.clear();
+        this.participationObservable?.complete();
+        this.participationObservable = undefined;
+        this.cachedParticipations.clear();
+        this.subscribedExercises.clear();
+        this.participationSubscriptionTypes.clear();
+    }
 
     /**
      * Cache of student participations by participationId.
