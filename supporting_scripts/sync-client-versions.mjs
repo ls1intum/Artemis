@@ -66,6 +66,7 @@ function writePkg(path, pkg) {
 const ANGULAR_INDEPENDENT_PACKAGES = new Set([
     '@angular/cdk',             // Angular Components team, separate releases
     '@angular/material',        // Angular Components team, separate releases
+    '@angular/youtube-player',  // Angular Components team, separate releases
     '@angular-devkit/build-angular', // Angular CLI team, separate releases
     '@angular/build',           // Angular CLI team, separate releases
     '@angular/cli',             // Angular CLI team, separate releases
