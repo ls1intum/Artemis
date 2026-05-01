@@ -14,6 +14,8 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { User } from 'app/core/user/user.model';
 import { firstValueFrom } from 'rxjs';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('Organization Service', () => {
     setupTestBed({ zoneless: true });
@@ -24,7 +26,14 @@ describe('Organization Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: Router, useValue: { navigate: () => {} } }, LocalStorageService, SessionStorageService],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: Router, useValue: { navigate: () => {} } },
+                LocalStorageService,
+                SessionStorageService,
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         });
         service = TestBed.inject(OrganizationManagementService);
         httpMock = TestBed.inject(HttpTestingController);
