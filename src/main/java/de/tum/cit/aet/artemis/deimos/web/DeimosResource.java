@@ -41,17 +41,17 @@ public class DeimosResource implements DeimosBatchApi {
     }
 
     @Override
-    @PostMapping("/courses/{courseId}/deimos/batch")
+    @PostMapping("courses/{course-id}/deimos/batch")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<DeimosBatchTriggerResponseDTO> triggerCourseBatch(@PathVariable long courseId, @Valid @RequestBody DeimosBatchRequestDTO request) {
+    public ResponseEntity<DeimosBatchTriggerResponseDTO> triggerCourseBatch(@PathVariable("course-id") long courseId, @Valid @RequestBody DeimosBatchRequestDTO request) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.accepted().body(deimosBatchService.triggerCourseBatch(courseId, request, user));
     }
 
     @Override
-    @PostMapping("/programming-exercises/{exerciseId}/deimos/batch")
+    @PostMapping("programming-exercises/{exercise-id}/deimos/batch")
     @EnforceAtLeastInstructorInExercise
-    public ResponseEntity<DeimosBatchTriggerResponseDTO> triggerExerciseBatch(@PathVariable long exerciseId, @Valid @RequestBody DeimosBatchRequestDTO request) {
+    public ResponseEntity<DeimosBatchTriggerResponseDTO> triggerExerciseBatch(@PathVariable("exercise-id") long exerciseId, @Valid @RequestBody DeimosBatchRequestDTO request) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.accepted().body(deimosBatchService.triggerExerciseBatch(exerciseId, request, user));
     }
