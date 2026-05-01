@@ -106,6 +106,10 @@ public class QuizQuestionProgress extends DomainObject {
 * You don't need to filter or sort by inner JSON fields.
 * The structure changes over time, and flexibility is required.
 
+### Caching
+
+Hibernate second-level cache is intentionally disabled in Artemis; do not reach for `@Cache` to "fix" a slow endpoint. Address performance through DTO projections, fetch joins, `@EntityGraph`, and proper indexes first. If a Spring `@Cacheable` is genuinely warranted (measured bottleneck, read-heavy with low write throughput), it must ship with explicit eviction. See [Caching Guidelines](/developer/guidelines/caching) for the policy, the rationale specific to Artemis at scale, and the canonical Hibernate-event-listener eviction pattern.
+
 ## Large Scale Testing
 
 ### Test with Realistic Data Loads

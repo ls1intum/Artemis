@@ -21,6 +21,67 @@
     width: 100%;
 }
 
+.global-refinement-fab-container {
+    bottom: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 1.5rem;
+    pointer-events: none;
+    position: sticky;
+    z-index: 9;
+
+    > * {
+        pointer-events: auto;
+    }
+}
+
+button.global-refinement-fab.p-button {
+    border-radius: 50%;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    height: 3rem;
+    width: 3rem;
+}
+
+.global-refinement-fab-expanded {
+    align-items: center;
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 2rem;
+    box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.35),
+        0 1px 6px rgba(0, 0, 0, 0.2);
+    display: flex;
+    gap: 0.4rem;
+    padding: 0.4rem;
+}
+
+button.global-refinement-fab-action-button.p-button {
+    border-radius: 50%;
+    flex-shrink: 0;
+    height: 2.75rem;
+    width: 2.75rem;
+}
+
+button.global-refinement-fab-close-button.p-button {
+    background: var(--p-surface-0) !important;
+    border-color: var(--bs-border-color) !important;
+    color: var(--bs-body-color) !important;
+}
+
+:root[prime-ng-use-dark-theme='true'] button.global-refinement-fab-close-button.p-button {
+    background: var(--p-surface-900) !important;
+}
+
+.global-refinement-fab-textarea {
+    flex: 1;
+    font-size: var(--bs-body-font-size);
+    height: 2.75rem;
+    min-width: 32rem;
+    padding-bottom: calc((2.75rem - 1.5em) / 2);
+    padding-top: calc((2.75rem - 1.5em) / 2);
+    resize: none;
+}
+
 .quiz-is-active-background {
     @include position-style(fixed, 0, 0, 0, 0, 6);
 
