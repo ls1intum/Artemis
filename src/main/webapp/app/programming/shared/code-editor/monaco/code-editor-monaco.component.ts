@@ -335,6 +335,12 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             }
             const mimeType = this.fileTypeService.getImageMimeType(fileName);
             const typedBlob = mimeType ? new Blob([blob], { type: mimeType }) : blob;
+            // If two fetches for the same file resolve back-to-back (e.g. ngOnChanges re-entering via editorWasRefreshed),
+            // both pass the stale check above. Revoke the previous URL before replacing it so we do not orphan a blob handle.
+            const previousUrl = this.imagePreviewUrl();
+            if (previousUrl) {
+                URL.revokeObjectURL(previousUrl);
+            }
             this.imagePreviewUrl.set(URL.createObjectURL(typedBlob));
         } catch (error) {
             // The user may have switched files while the request was in flight; don't clobber the new file's state.

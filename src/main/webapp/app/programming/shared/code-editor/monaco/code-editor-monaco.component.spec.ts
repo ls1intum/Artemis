@@ -551,6 +551,30 @@ describe('CodeEditorMonacoComponent', () => {
             expect(errorCallbackStub).not.toHaveBeenCalled();
         });
 
+        it('should revoke the previous URL when two in-flight loads for the same file resolve back-to-back', async () => {
+            const fileName = 'assets/logo.png';
+            const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
+            const firstSubject = new Subject<Blob>();
+            const secondSubject = new Subject<Blob>();
+            const getFileAsBlobSpy = jest.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValueOnce(firstSubject).mockReturnValueOnce(secondSubject);
+            createObjectURLMock.mockReturnValueOnce('blob:first-url').mockReturnValueOnce('blob:second-url');
+            fixture.componentRef.setInput('selectedFile', fileName);
+
+            // Kick off two loads for the same file before either resolves (mirrors the editorWasRefreshed re-entry path).
+            const firstPending = comp.selectFileInEditor(fileName);
+            const secondPending = comp.selectFileInEditor(fileName);
+            firstSubject.next(blob);
+            firstSubject.complete();
+            secondSubject.next(blob);
+            secondSubject.complete();
+            await Promise.all([firstPending, secondPending]);
+
+            expect(getFileAsBlobSpy).toHaveBeenCalledTimes(2);
+            expect(createObjectURLMock).toHaveBeenCalledTimes(2);
+            expect(revokeObjectURLMock).toHaveBeenCalledWith('blob:first-url');
+            expect(comp.imagePreviewUrl()).toBe('blob:second-url');
+        });
+
         it('should revoke the previously generated image preview URL when switching files', async () => {
             const imageFileName = 'assets/logo.png';
             const otherFileName = 'src/Main.java';
