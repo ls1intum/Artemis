@@ -28,4 +28,24 @@ describe('FileTypeService', () => {
         const result = service.isBinaryContent(content);
         expect(result).toBe(isBinary);
     });
+
+    it.each([
+        { fileName: 'logo.png', isImage: true, mimeType: 'image/png' },
+        { fileName: 'icon.PNG', isImage: true, mimeType: 'image/png' },
+        { fileName: 'photo.jpg', isImage: true, mimeType: 'image/jpeg' },
+        { fileName: 'photo.jpeg', isImage: true, mimeType: 'image/jpeg' },
+        { fileName: 'animated.gif', isImage: true, mimeType: 'image/gif' },
+        { fileName: 'old.bmp', isImage: true, mimeType: 'image/bmp' },
+        { fileName: 'modern.webp', isImage: true, mimeType: 'image/webp' },
+        { fileName: 'vector.svg', isImage: true, mimeType: 'image/svg+xml' },
+        { fileName: 'favicon.ico', isImage: true, mimeType: 'image/x-icon' },
+        { fileName: 'src/path/to/picture.png', isImage: true, mimeType: 'image/png' },
+        { fileName: 'README.md', isImage: false, mimeType: undefined },
+        { fileName: 'archive.tar.gz', isImage: false, mimeType: undefined },
+        { fileName: 'noextension', isImage: false, mimeType: undefined },
+        { fileName: '', isImage: false, mimeType: undefined },
+    ])('should detect image files by extension', ({ fileName, isImage, mimeType }) => {
+        expect(service.isImageFile(fileName)).toBe(isImage);
+        expect(service.getImageMimeType(fileName)).toBe(mimeType);
+    });
 });

@@ -473,6 +473,88 @@ describe('CodeEditorMonacoComponent', () => {
         expect(comp.binaryFileSelected()).toBeTrue();
     });
 
+    describe('image previews', () => {
+        let createObjectURLMock: jest.Mock;
+        let revokeObjectURLMock: jest.Mock;
+
+        beforeEach(() => {
+            createObjectURLMock = jest.fn().mockReturnValue('blob:mock-url');
+            revokeObjectURLMock = jest.fn();
+            (URL as any).createObjectURL = createObjectURLMock;
+            (URL as any).revokeObjectURL = revokeObjectURLMock;
+        });
+
+        it('should fetch image files as a blob and create a preview URL instead of using the editor', async () => {
+            const fileName = 'assets/logo.png';
+            const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
+            const getFileAsBlobSpy = jest.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(of(blob));
+            const changeModelSpy = jest.spyOn(comp.editor(), 'changeModel');
+            fixture.componentRef.setInput('selectedFile', fileName);
+
+            await comp.selectFileInEditor(fileName);
+
+            expect(getFileAsBlobSpy).toHaveBeenCalledWith(fileName);
+            expect(createObjectURLMock).toHaveBeenCalledOnce();
+            expect(comp.imagePreviewUrl()).toBe('blob:mock-url');
+            expect(comp.imagePreviewError()).toBeFalse();
+            expect(comp.binaryFileSelected()).toBeFalse();
+            expect(loadFileFromRepositoryStub).not.toHaveBeenCalledWith(fileName);
+            expect(changeModelSpy).not.toHaveBeenCalled();
+        });
+
+        it('should ignore an in-flight image load when the user switches files', async () => {
+            const fileName = 'assets/logo.png';
+            const otherFileName = 'src/Main.java';
+            const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
+            jest.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(of(blob));
+
+            const pendingSelection = comp.selectFileInEditor(fileName);
+            fixture.componentRef.setInput('selectedFile', otherFileName);
+            await pendingSelection;
+
+            expect(createObjectURLMock).not.toHaveBeenCalled();
+            expect(comp.imagePreviewUrl()).toBeUndefined();
+        });
+
+        it('should set image preview error and emit when image loading fails', async () => {
+            const fileName = 'assets/broken.png';
+            const errorCallbackStub = jest.fn();
+            comp.onError.subscribe(errorCallbackStub);
+            const failingSubject = new Subject<Blob>();
+            jest.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(failingSubject);
+            fixture.componentRef.setInput('selectedFile', fileName);
+
+            const pending = comp.selectFileInEditor(fileName);
+            failingSubject.error(new Error('boom'));
+            await pending;
+
+            expect(comp.imagePreviewError()).toBeTrue();
+            expect(comp.imagePreviewUrl()).toBeUndefined();
+            expect(errorCallbackStub).toHaveBeenCalledExactlyOnceWith('loadingFailed');
+        });
+
+        it('should revoke the previously generated image preview URL when switching files', async () => {
+            const imageFileName = 'assets/logo.png';
+            const otherFileName = 'src/Main.java';
+            const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
+            jest.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(of(blob));
+            jest.spyOn(comp.editor(), 'changeModel').mockImplementation();
+            jest.spyOn(comp.editor(), 'setPosition').mockImplementation();
+            jest.spyOn(comp.editor(), 'setScrollTop').mockImplementation();
+            loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: 'class Main {}' }));
+            fixture.componentRef.setInput('selectedFile', imageFileName);
+
+            await comp.selectFileInEditor(imageFileName);
+            expect(comp.imagePreviewUrl()).toBe('blob:mock-url');
+
+            fixture.componentRef.setInput('selectedFile', otherFileName);
+            await comp.selectFileInEditor(otherFileName);
+
+            expect(revokeObjectURLMock).toHaveBeenCalledWith('blob:mock-url');
+            expect(comp.imagePreviewUrl()).toBeUndefined();
+        });
+    });
+
     it.each([
         [new ConnectionError(), 'loadingFailedInternetDisconnected'],
         [new Error(), 'loadingFailed'],

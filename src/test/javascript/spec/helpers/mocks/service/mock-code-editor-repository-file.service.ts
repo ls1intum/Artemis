@@ -9,6 +9,8 @@ export class MockCodeEditorRepositoryFileService implements ICodeEditorRepositor
     getRepositoryContentForPlagiarismView = () => EMPTY;
     getFile = (fileName: string) => EMPTY;
 
+    getFileAsBlob = (fileName: string) => EMPTY;
+
     getFileForPlagiarismView = (fileName: string) => EMPTY;
     createFile = (fileName: string) => EMPTY;
     createFolder = (fileName: string) => EMPTY;

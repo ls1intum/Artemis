@@ -38,6 +38,7 @@
             "generatingFeedback": "Feedback wird generiert...",
             "selectFile": "Wähle eine Datei aus, um zu beginnen!",
             "binaryFileSelected": "Diese Datei ist eine Binärdatei, die nicht angezeigt werden kann.",
+            "imageFileLoadingFailed": "Das Bild konnte nicht geladen werden.",
             "downloadBuildResult": "Build-Ergebnis herunterladen",
             "saving": "Speichert",
             "saveFiles": "Speichern",
