@@ -144,7 +144,8 @@ public class AthenaResource {
             return ResponseEntity.ok(modules);
         }
         catch (NetworkingException e) {
-            throw new InternalServerErrorException("Could not fetch available Athena modules for " + exerciseType.getExerciseTypeAsReadableString() + " exercises");
+            log.warn("Could not fetch Athena modules for {} exercises — Athena may be unreachable: {}", exerciseType.getExerciseTypeAsReadableString(), e.getMessage());
+            return ResponseEntity.ok(List.of());
         }
     }
 

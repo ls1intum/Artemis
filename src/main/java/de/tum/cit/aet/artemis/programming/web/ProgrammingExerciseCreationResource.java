@@ -125,6 +125,10 @@ public class ProgrammingExerciseCreationResource {
         // Check that only allowed athena modules are used
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME), () -> programmingExercise.setFeedbackSuggestionModule(null));
 
+        // Detach athenaConfig before save to prevent cascade-persist with null exercise FK
+        var requestedAthenaConfig = programmingExercise.getAthenaConfig();
+        programmingExercise.setAthenaConfig(null);
+
         try {
             // Setup all repositories etc
             ProgrammingExercise newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(programmingExercise, emptyRepositories);
@@ -134,11 +138,13 @@ public class ProgrammingExerciseCreationResource {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
 
+            // Prevent lazy-loading of athenaConfig during response serialization; set explicitly below if needed
+            newProgrammingExercise.setAthenaConfig(null);
+
             // Create or update Athena config if modules are provided
-            if (programmingExercise.getAthenaConfig() != null) {
-                var athenaConfig = programmingExercise.getAthenaConfig();
-                ExerciseAthenaConfig createdConfig = exerciseAthenaConfigService.createOrUpdateConfig(newProgrammingExercise, athenaConfig.getPreliminaryFeedbackModule(),
-                        athenaConfig.getGradedFeedbackModule());
+            if (requestedAthenaConfig != null) {
+                ExerciseAthenaConfig createdConfig = exerciseAthenaConfigService.createOrUpdateConfig(newProgrammingExercise, requestedAthenaConfig.getPreliminaryFeedbackModule(),
+                        requestedAthenaConfig.getGradedFeedbackModule());
                 newProgrammingExercise.setAthenaConfig(createdConfig);
             }
 

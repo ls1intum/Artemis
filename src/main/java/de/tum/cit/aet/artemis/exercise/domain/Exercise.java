@@ -138,6 +138,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private String feedbackSuggestionModule;
 
     @OneToOne(mappedBy = "exercise", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("exercise")
     private ExerciseAthenaConfig athenaConfig;
 
     @ManyToOne
@@ -694,6 +695,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @return the preliminary feedback module, or null if not configured
      */
     @Transient
+    @JsonIgnore
     public String getPreliminaryFeedbackModule() {
         if (athenaConfig != null) {
             return athenaConfig.getPreliminaryFeedbackModule();
@@ -708,6 +710,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @return the graded feedback module, or null if not configured
      */
     @Transient
+    @JsonIgnore
     public String getGradedFeedbackModule() {
         if (athenaConfig != null) {
             return athenaConfig.getGradedFeedbackModule();
