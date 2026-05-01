@@ -395,8 +395,10 @@ public class DragAndDropQuestion extends QuizQuestion {
     @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof DragAndDropQuestion dndOriginalQuestion) {
+            // correctMappings is a Bag (List without @OrderColumn); Hibernate may return rows in any order on reload,
+            // so use Set equality to avoid spuriously triggering recalculation when the only difference is row order.
             return checkDragItemsIfRecalculationIsNecessary(dndOriginalQuestion) || checkDropLocationsIfRecalculationIsNecessary(dndOriginalQuestion)
-                    || !getCorrectMappings().equals(dndOriginalQuestion.getCorrectMappings());
+                    || !new HashSet<>(getCorrectMappings()).equals(new HashSet<>(dndOriginalQuestion.getCorrectMappings()));
         }
         return false;
     }

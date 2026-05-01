@@ -27,6 +27,9 @@ public interface QuizConfiguration {
         // that prevents infinite recursive JSON serialization. Back-references are set unconditionally
         // (including for entities with id == null) so freshly-deserialised graphs persist correctly under the
         // bidirectional mapping where the child @ManyToOne owns the FK column.
+        if (getQuizQuestions() == null) {
+            return;
+        }
         for (QuizQuestion quizQuestion : getQuizQuestions()) {
             setQuestionParent(quizQuestion);
             // reconnect QuestionStatistics
@@ -81,6 +84,9 @@ public interface QuizConfiguration {
      * @param <Q>          the subclass of QuizQuestion to be set to
      */
     default <C extends QuizQuestionComponent<Q>, Q extends QuizQuestion> void setQuizQuestions(Collection<C> components, Q quizQuestion) {
+        if (components == null) {
+            return;
+        }
         for (QuizQuestionComponent<Q> mapping : components) {
             setQuizQuestion(mapping, quizQuestion);
         }
@@ -102,6 +108,9 @@ public interface QuizConfiguration {
         // Back-references are set unconditionally (including for entities with id == null) to match the parent
         // setQuizQuestion contract above; otherwise transient counters created during reevaluate would INSERT with
         // a null FK to the statistic.
+        if (statisticComponents == null) {
+            return;
+        }
         for (SC statisticComponent : statisticComponents) {
             if (statisticComponent != null) {
                 statisticComponent.setQuizQuestionStatistic(quizQuestionStatistic);

@@ -300,8 +300,10 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof ShortAnswerQuestion shortAnswerOriginalQuestion) {
+            // correctMappings is a Bag (List without @OrderColumn); Hibernate may return rows in any order on reload,
+            // so use Set equality to avoid spuriously triggering recalculation when the only difference is row order.
             return checkSolutionsIfRecalculationIsNecessary(shortAnswerOriginalQuestion) || checkSpotsIfRecalculationIsNecessary(shortAnswerOriginalQuestion)
-                    || !getCorrectMappings().equals(shortAnswerOriginalQuestion.getCorrectMappings());
+                    || !new HashSet<>(getCorrectMappings()).equals(new HashSet<>(shortAnswerOriginalQuestion.getCorrectMappings()));
         }
         return false;
     }
