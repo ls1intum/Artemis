@@ -891,7 +891,7 @@ components:
         and difficulty
       properties:
         problemStatementMarkdown: {type: string, description: Problem statement in
-            Markdown format, maxLength: 50000, minLength: 0}
+            Markdown format, maxLength: 50000, minLength: 1}
         declaredDifficulty: {type: string, description: Declared difficulty of the
             exercise, maxLength: 20, minLength: 0, pattern: EASY|MEDIUM|HARD}
         language: {type: string, description: 'Programming language, e.g. JAVA, PYTHON',
@@ -908,7 +908,7 @@ components:
           description: Type of action to apply
           enum: [FIX_QUALITY_ISSUE, FIX_ALL_QUALITY_ISSUES, ADAPT_DIFFICULTY]
         problemStatementMarkdown: {type: string, description: Current problem statement
-            markdown, maxLength: 50000, minLength: 0}
+            markdown, maxLength: 50000, minLength: 1}
         context:
           type: object
           additionalProperties: {type: string}
@@ -922,9 +922,9 @@ components:
           type: string
           description: Question type
           enum: [single-choice, multiple-choice, true-false]
-        title: {type: string, description: Question title, maxLength: 500, minLength: 0}
+        title: {type: string, description: Question title, maxLength: 500, minLength: 1}
         questionText: {type: string, description: Question text, maxLength: 10000,
-          minLength: 0}
+          minLength: 1}
         options:
           type: array
           description: Answer options
@@ -978,7 +978,7 @@ components:
         instructions
       properties:
         problemStatementText: {type: string, description: 'Original problem statement
-            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 0}
+            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 1}
         startLine: {type: integer, format: int32, description: Start line number (1-indexed),
           maximum: 10000, minimum: 1}
         endLine: {type: integer, format: int32, description: 'End line number (1-indexed,
@@ -990,7 +990,7 @@ components:
             end line (1-indexed, exclusive — points after the last selected character,
             optional for character-level targeting)', maximum: 10000, minimum: 1}
         instruction: {type: string, description: Instruction describing what should
-            change, maxLength: 500, minLength: 0}
+            change, maxLength: 500, minLength: 1}
       required: [endLine, instruction, problemStatementText, startLine]
     TutorialGroupExportData:
       type: object
@@ -1040,7 +1040,7 @@ components:
         question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: The
             existing quiz question to refine}
         refinementPrompt: {type: string, description: User instructions describing
-            how the question should be changed, maxLength: 2000, minLength: 0}
+            how the question should be changed, maxLength: 2000, minLength: 1}
       required: [question, refinementPrompt]
     ConsistencyIssue:
       type: object
@@ -1297,7 +1297,7 @@ components:
       description: Request to generate quiz questions
       properties:
         topic: {type: string, description: Main topic for the generated quiz, maxLength: 500,
-          minLength: 0}
+          minLength: 1}
         optionalPrompt: {type: string, description: Optional additional instructions,
           maxLength: 2000, minLength: 0}
         language:
@@ -1363,9 +1363,9 @@ components:
           description: The quiz questions to refine
           items: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
           maxItems: 50
-          minItems: 0
+          minItems: 1
         refinementPrompt: {type: string, description: User instructions describing
-            how all questions should be changed, maxLength: 2000, minLength: 0}
+            how all questions should be changed, maxLength: 2000, minLength: 1}
       required: [questions, refinementPrompt]
     QuizQuestionBulkRefinementResponse:
       type: object
@@ -1398,13 +1398,13 @@ components:
       description: Request to generate a problem statement
       properties:
         userPrompt: {type: string, description: User prompt describing the problem
-            statement requirements, maxLength: 1000, minLength: 0}
+            statement requirements, maxLength: 1000, minLength: 1}
       required: [userPrompt]
     GeneratedQuizAnswerOption:
       type: object
       description: One generated answer option
       properties:
-        text: {type: string, description: Answer option text, maxLength: 2000, minLength: 0}
+        text: {type: string, description: Answer option text, maxLength: 2000, minLength: 1}
         correct: {type: boolean, description: Whether this option is correct}
         hint: {type: string, description: Optional hint, maxLength: 2000, minLength: 0}
         explanation: {type: string, description: Optional explanation, maxLength: 2000,
