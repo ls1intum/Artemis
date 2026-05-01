@@ -146,7 +146,14 @@
         Map<String, Object> mapValue,
         Map<String, Map<String, Object>> componentsMap
     ) {
-        if (mapValue.containsKey('$ref')) {
+        // Short-circuit on any map that contains '$ref', regardless of sibling keys.
+        // OpenAPI 3.1 allows siblings to $ref (e.g. description, summary), but they are always
+        // plain scalar metadata — never nested schemas that could themselves carry invalid $refs.
+        // Recursing into siblings is therefore unnecessary, and checking the whole node here
+        // correctly prunes {$ref: "invalid", description: "..."} nodes that the old
+        // `size() == 1` guard would have missed.
+        boolean isReferenceNode = mapValue.containsKey('$ref')
+        if (isReferenceNode) {
             String referenceString = mapValue['$ref'] as String
             // Matches strings like "#/components/{componentType}/{componentName}",
             def componentMatcher = (referenceString =~ /^#\/components\/([^\/]+)\/(.+)$/)
