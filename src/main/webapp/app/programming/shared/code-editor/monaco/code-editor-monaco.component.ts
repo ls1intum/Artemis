@@ -337,6 +337,10 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             const typedBlob = mimeType ? new Blob([blob], { type: mimeType }) : blob;
             this.imagePreviewUrl.set(URL.createObjectURL(typedBlob));
         } catch (error) {
+            // The user may have switched files while the request was in flight; don't clobber the new file's state.
+            if (this.selectedFile() !== fileName) {
+                return;
+            }
             this.imagePreviewError.set(true);
             if (error.message === ConnectionError.message) {
                 this.onError.emit('loadingFailed' + error.message);

@@ -533,6 +533,24 @@ describe('CodeEditorMonacoComponent', () => {
             expect(errorCallbackStub).toHaveBeenCalledExactlyOnceWith('loadingFailed');
         });
 
+        it('should ignore an in-flight image load failure when the user switches files', async () => {
+            const fileName = 'assets/broken.png';
+            const otherFileName = 'src/Main.java';
+            const errorCallbackStub = jest.fn();
+            comp.onError.subscribe(errorCallbackStub);
+            const failingSubject = new Subject<Blob>();
+            jest.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(failingSubject);
+            fixture.componentRef.setInput('selectedFile', fileName);
+
+            const pending = comp.selectFileInEditor(fileName);
+            fixture.componentRef.setInput('selectedFile', otherFileName);
+            failingSubject.error(new Error('boom'));
+            await pending;
+
+            expect(comp.imagePreviewError()).toBeFalse();
+            expect(errorCallbackStub).not.toHaveBeenCalled();
+        });
+
         it('should revoke the previously generated image preview URL when switching files', async () => {
             const imageFileName = 'assets/logo.png';
             const otherFileName = 'src/Main.java';
