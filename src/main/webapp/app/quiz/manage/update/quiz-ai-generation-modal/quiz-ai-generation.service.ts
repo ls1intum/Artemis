@@ -7,6 +7,7 @@ import { QuizQuestionRefinementRequest } from 'app/openapi/model/quizQuestionRef
 import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
 import { QuizQuestionBulkRefinementRequest } from 'app/openapi/model/quizQuestionBulkRefinementRequest';
 import { QuizQuestionRefinementResponse } from 'app/openapi/model/quizQuestionRefinementResponse';
+import { QuizQuestionRefinementFailure } from 'app/openapi/model/quizQuestionRefinementFailure';
 import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -60,7 +61,7 @@ export class QuizAiGenerationService {
                         reasoning: response.reasoning,
                     };
                 }
-                throw new Error('Failed to refine question');
+                throw new Error((response as QuizQuestionRefinementFailure).error ?? 'Failed to refine question');
             }),
         );
     }

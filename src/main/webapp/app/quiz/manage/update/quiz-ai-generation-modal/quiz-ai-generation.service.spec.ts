@@ -145,7 +145,7 @@ describe('QuizAiGenerationService', () => {
             req.flush({ type: 'failure', error: 'LLM error' });
 
             expect(error).toBeDefined();
-            expect(error!.message).toBe('Failed to refine question');
+            expect(error!.message).toBe('LLM error');
         });
     });
 
