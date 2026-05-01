@@ -40,6 +40,12 @@
     img {
         max-width: 100%;
         max-height: 75vh;
+
+        // Replaced flex items default to min-width: auto (the intrinsic content size), which lets
+        // SVGs whose intrinsic dimensions exceed the panel break out of max-width: 100% — clear it
+        // so the image actually shrinks to fit the container.
+        min-width: 0;
+        min-height: 0;
         object-fit: contain;
     }
 }
