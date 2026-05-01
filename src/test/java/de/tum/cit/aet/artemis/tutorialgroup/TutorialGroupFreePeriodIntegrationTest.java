@@ -458,8 +458,8 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
     private void assertTutorialGroupFreePeriodDtoMatchesEntity(TutorialGroupFreePeriodDTO dto, TutorialGroupFreePeriod entity) {
         assertThat(dto.id()).isEqualTo(entity.getId());
-        assertThat(ZonedDateTime.parse(dto.start()).toInstant()).isEqualTo(entity.getStart().toInstant());
-        assertThat(ZonedDateTime.parse(dto.end()).toInstant()).isEqualTo(entity.getEnd().toInstant());
+        assertThat(dto.start().toInstant()).isEqualTo(entity.getStart().toInstant());
+        assertThat(dto.end().toInstant()).isEqualTo(entity.getEnd().toInstant());
         assertThat(dto.reason()).isEqualTo(entity.getReason());
     }
 
