@@ -31,6 +31,9 @@ public interface QuizConfiguration {
             return;
         }
         for (QuizQuestion quizQuestion : getQuizQuestions()) {
+            if (quizQuestion == null) {
+                continue;
+            }
             setQuestionParent(quizQuestion);
             // reconnect QuestionStatistics
             if (quizQuestion.getQuizQuestionStatistic() != null) {
