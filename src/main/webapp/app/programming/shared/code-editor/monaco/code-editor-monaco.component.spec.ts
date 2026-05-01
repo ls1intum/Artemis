@@ -507,6 +507,7 @@ describe('CodeEditorMonacoComponent', () => {
             const otherFileName = 'src/Main.java';
             const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
             jest.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(of(blob));
+            fixture.componentRef.setInput('selectedFile', fileName);
 
             const pendingSelection = comp.selectFileInEditor(fileName);
             fixture.componentRef.setInput('selectedFile', otherFileName);
