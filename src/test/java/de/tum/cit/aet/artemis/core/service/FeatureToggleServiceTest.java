@@ -15,8 +15,8 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
-    // science, TutorSuggestions, AtlasAgent, AtlasML, Memiris, RateLimit, GlobalSearch, AutonomousTutor, ApollonQuizDragAndDrop disabled by default
-    private static final int FEATURES_DISABLED_DEFAULT = 9;
+    // science, TutorSuggestions, AtlasAgent, AtlasML, Memiris, RateLimit, GlobalSearch, AutonomousTutor, ApollonQuizDragAndDrop, Deimos disabled by default
+    private static final int FEATURES_DISABLED_DEFAULT = 10;
 
     @Autowired
     private FeatureToggleService featureToggleService;
@@ -41,7 +41,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.RateLimit)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.GlobalSearch)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.ApollonQuizDragAndDrop)).isFalse();
-        assertThat(featureToggleService.isFeatureEnabled(Feature.Deimos)).isTrue();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.Deimos)).isFalse();
     }
 
     private void resetToDefaultState() {
@@ -52,8 +52,6 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         featureToggleService.enableFeature(Feature.LearningPaths);
         featureToggleService.enableFeature(Feature.StandardizedCompetencies);
         featureToggleService.enableFeature(Feature.StudentCourseAnalyticsDashboard);
-        featureToggleService.enableFeature(Feature.Deimos);
-
         // Disable features that should be disabled by default
         featureToggleService.disableFeature(Feature.Science);
         featureToggleService.disableFeature(Feature.TutorSuggestions);
@@ -64,6 +62,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         featureToggleService.disableFeature(Feature.GlobalSearch);
         featureToggleService.disableFeature(Feature.Memiris);
         featureToggleService.disableFeature(Feature.ApollonQuizDragAndDrop);
+        featureToggleService.disableFeature(Feature.Deimos);
     }
 
     @Test
