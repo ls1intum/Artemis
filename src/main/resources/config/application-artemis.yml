@@ -97,7 +97,7 @@ artemis:
   atlas:
     # *-model values are Azure deployment aliases — replace with your own deployment names.
     chat-model: gpt-5.4-mini
-    chat-temperature: 0.8
+    temperature: 0.8
     orchestrator:
       model: gpt-5.4
       temperature: 1.0

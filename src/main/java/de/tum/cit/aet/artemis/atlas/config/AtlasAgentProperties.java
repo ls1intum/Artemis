@@ -8,5 +8,5 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * Bound non-strictly because {@code orchestrator} and {@code atlasml} are siblings under the same prefix.
  */
 @ConfigurationProperties(prefix = "artemis.atlas")
-public record AtlasAgentProperties(@DefaultValue("gpt-5.4-mini") String chatModel, @DefaultValue("0.8") double chatTemperature) {
+public record AtlasAgentProperties(@DefaultValue("gpt-5.4-mini") String chatModel, @DefaultValue("0.8") double temperature) {
 }

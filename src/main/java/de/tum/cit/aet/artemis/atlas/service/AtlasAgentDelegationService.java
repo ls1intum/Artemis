@@ -39,7 +39,7 @@ public class AtlasAgentDelegationService {
         this.templateService = templateService;
         this.chatMemory = chatMemory;
         this.deploymentName = properties.chatModel();
-        this.temperature = properties.chatTemperature();
+        this.temperature = properties.temperature();
     }
 
     /** Delegates a message to an AI agent with the given prompt template and tool provider; returns the agent's response. */
