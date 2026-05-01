@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
+import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -21,6 +24,7 @@ import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 
 @Service
@@ -29,6 +33,8 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTrigge
 public class ProgrammingExerciseBuildPlanService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseBuildPlanService.class);
+
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
@@ -40,9 +46,11 @@ public class ProgrammingExerciseBuildPlanService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    public ProgrammingExerciseBuildPlanService(Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
+    public ProgrammingExerciseBuildPlanService(Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
+            Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+        this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.aeolusTemplateService = aeolusTemplateService;
@@ -61,8 +69,8 @@ public class ProgrammingExerciseBuildPlanService {
      *                                exercise should contain a fully initialized template and solution participation.
      */
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
-        // Only create build plans for systems that need them (not for external CI like Hades)
-        if (!profileService.isHadesActive()) {
+        // Only create build plans for jenkins
+        if (profileService.isProfileActive(PROFILE_JENKINS)) {
             // Get URLs for repos
             var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
             var testsRepoUri = programmingExercise.getVcsTestRepositoryUri();
@@ -132,7 +140,7 @@ public class ProgrammingExerciseBuildPlanService {
      * @param updatedProgrammingExercise     the changed programming exercise with its new values
      */
     public void updateBuildPlanForExercise(@Nullable String originalBuildPlanConfiguration, ProgrammingExercise updatedProgrammingExercise) throws JsonProcessingException {
-        if (Objects.equals(originalBuildPlanConfiguration, updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())) {
+        if (continuousIntegrationService.isEmpty() || Objects.equals(originalBuildPlanConfiguration, updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())) {
             return;
         }
         // we only update the build plan configuration if it has changed and is not null, otherwise we
