@@ -145,7 +145,7 @@ describe('QuizAiGenerationService', () => {
             req.flush({ type: 'failure', error: 'LLM error' });
 
             expect(error).toBeDefined();
-            expect(error!.message).toBe('LLM error');
+            expect(error!.message).toBe('artemisApp.quizExercise.aiGeneration.refinement.errors.failed');
         });
     });
 

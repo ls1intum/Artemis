@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { HyperionQuizQuestionGenerationApiService } from 'app/openapi/api/hyperionQuizQuestionGenerationApi.service';
@@ -7,7 +8,6 @@ import { QuizQuestionRefinementRequest } from 'app/openapi/model/quizQuestionRef
 import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
 import { QuizQuestionBulkRefinementRequest } from 'app/openapi/model/quizQuestionBulkRefinementRequest';
 import { QuizQuestionRefinementResponse } from 'app/openapi/model/quizQuestionRefinementResponse';
-import { QuizQuestionRefinementFailure } from 'app/openapi/model/quizQuestionRefinementFailure';
 import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -16,6 +16,7 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 @Injectable({ providedIn: 'root' })
 export class QuizAiGenerationService {
     private hyperionQuizQuestionGenerationApiService = inject(HyperionQuizQuestionGenerationApiService);
+    private translateService = inject(TranslateService);
 
     generateQuizQuestions(courseId: number, request: QuizQuestionGenerationRequest): Observable<GeneratedQuestion[]> {
         return this.hyperionQuizQuestionGenerationApiService
@@ -61,7 +62,7 @@ export class QuizAiGenerationService {
                         reasoning: response.reasoning,
                     };
                 }
-                throw new Error((response as QuizQuestionRefinementFailure).error ?? 'Failed to refine question');
+                throw new Error(this.translateService.instant('artemisApp.quizExercise.aiGeneration.refinement.errors.failed'));
             }),
         );
     }
