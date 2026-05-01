@@ -20,14 +20,15 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.UserWithIdAndLoginDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithParticipationDTO;
 
 /**
- * DTO for a complaint with sensitive information filtered out.
+ * DTO for transferring complaint data to the client.
  *
  * <p>
- * This DTO is used to transfer complaint data to the client
- * without exposing the full {@link Complaint} entity.
+ * This DTO represents a reduced view of the {@link Complaint} entity and is intended
+ * to be used for serialization over the API. It includes only the necessary fields for the client and omits any sensitive or unnecessary information.
  * </p>
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -47,7 +48,7 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ResultSimpleDTO(Long id, ZonedDateTime completionDate, Double score, Boolean rated, AssessmentType assessmentType, SubmissionWithParticipationDTO submission,
-            Long assessorId, List<FeedbackDTO> feedbacks) {
+            UserWithIdAndLoginDTO assessor, List<FeedbackDTO> feedbacks) {
 
         /**
          * DTO containing the {@link Feedback} information needed in the result.
@@ -85,16 +86,16 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
          */
         public static ResultSimpleDTO of(Result result) {
             Objects.requireNonNull(result, "The result must be set");
-            Long assessorId = null;
+            UserWithIdAndLoginDTO assessor = null;
             if (result.getAssessor() != null && Hibernate.isInitialized(result.getAssessor())) {
-                assessorId = result.getAssessor().getId();
+                assessor = new UserWithIdAndLoginDTO(result.getAssessor().getId(), result.getAssessor().getLogin());
             }
             List<FeedbackDTO> feedbackDTOs = null;
             if (result.getFeedbacks() != null && Hibernate.isInitialized(result.getFeedbacks())) {
                 feedbackDTOs = result.getFeedbacks().stream().filter(Objects::nonNull).map(FeedbackDTO::of).toList();
             }
             return new ResultSimpleDTO(result.getId(), result.getCompletionDate(), result.getScore(), result.isRated(), result.getAssessmentType(),
-                    result.getSubmission() != null ? SubmissionWithParticipationDTO.of(result.getSubmission()) : null, assessorId, feedbackDTOs);
+                    result.getSubmission() != null ? SubmissionWithParticipationDTO.of(result.getSubmission()) : null, assessor, feedbackDTOs);
         }
     }
 

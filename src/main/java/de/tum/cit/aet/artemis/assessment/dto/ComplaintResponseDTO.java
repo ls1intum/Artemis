@@ -43,7 +43,7 @@ public record ComplaintResponseDTO(@NotNull Long id, String responseText, ZonedD
         Objects.requireNonNull(entity.getComplaint(), "The associated complaint must exist");
 
         UserWithIdAndLoginDTO reviewerDTO = null;
-        if (entity.getReviewer() != null && entity.getReviewer().getLogin() != null) {
+        if (entity.getReviewer() != null) {
             reviewerDTO = new UserWithIdAndLoginDTO(entity.getReviewer().getId(), entity.getReviewer().getLogin());
         }
 

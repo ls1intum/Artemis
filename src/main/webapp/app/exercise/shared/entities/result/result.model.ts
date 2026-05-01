@@ -1,4 +1,4 @@
-import { User } from 'app/core/user/user.model';
+import { User, UserIdAndLoginDTO } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
 import { Submission, SubmissionWithParticipationDTO } from 'app/exercise/shared/entities/submission/submission.model';
@@ -72,6 +72,6 @@ export class ResultSimpleDTO {
     public rated?: boolean;
     public assessmentType?: AssessmentType;
     public submission?: SubmissionWithParticipationDTO;
-    public assessorId?: number;
+    public assessor?: UserIdAndLoginDTO;
     public feedbacks?: FeedbackDTO[];
 }

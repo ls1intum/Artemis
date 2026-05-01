@@ -288,9 +288,10 @@ export class ComplaintService implements IComplaintService {
             result.rated = dto.result.rated;
             result.assessmentType = dto.result.assessmentType;
 
-            if (dto.result.assessorId !== undefined) {
+            if (dto.result.assessor) {
                 result.assessor = {
-                    id: dto.result.assessorId,
+                    id: dto.result.assessor.id,
+                    login: dto.result.assessor.login,
                 } as User;
             }
 

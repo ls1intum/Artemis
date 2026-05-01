@@ -387,7 +387,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         params.add("submissionId", modelingSubmission.getId().toString());
         ComplaintDTO receivedComplaint = request.get("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
 
-        assertThat(receivedComplaint.result().assessorId()).as("assessor is not set").isNull();
+        assertThat(receivedComplaint.result().assessor()).as("assessor is not set").isNull();
     }
 
     @Test
@@ -438,7 +438,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final var received = request.get("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
 
         assertThat(received.participant()).as("The participant should always be hidden").isNull();
-        assertThat(received.result().assessorId()).as("Students should not see the initial assessor").isNull();
+        assertThat(received.result().assessor()).as("Students should not see the initial assessor").isNull();
         assertThat(received.complaintResponse().reviewer()).as("Students should not see the complaint reviewer").isNull();
     }
 
@@ -492,7 +492,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         allComplaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
 
         // Check assessor is filtered out if the user was not the assessor.
-        allComplaints.forEach(c -> assertThat(c.result().assessorId()).isNull());
+        allComplaints.forEach(c -> assertThat(c.result().assessor()).isNull());
     }
 
     @Test
