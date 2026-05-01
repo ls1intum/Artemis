@@ -44,6 +44,7 @@
                     "numberOfModelingExercises": "Modeling Exercises",
                     "numberOfQuizExercises": "Quiz Exercises",
                     "numberOfFileUploadExercises": "File Upload Exercises",
+                    "numberOfProofExercises": "Proof Exercises",
                     "numberOfParticipations": "Participations",
                     "numberOfSubmissions": "Submissions",
                     "numberOfResults": "Results",
@@ -274,6 +275,7 @@
             "quizExercises": "Quiz Exercises",
             "modelingExercises": "Modeling Exercises",
             "textExercises": "Text Exercises",
+            "proofExercises": "Proof Exercises",
             "upload": "Upload",
             "uploading": "Uploading...",
             "fileUploadExercises": "File Upload Exercises",
@@ -299,7 +301,10 @@
                         "quiz": "Quiz Exercises",
                         "modeling": "Modeling Exercises",
                         "text": "Text Exercises",
-                        "file-upload": "File Upload Exercises"
+                        "file-upload": "File Upload Exercises",
+                        "proof": "Proof Exercises"
+                    }
+                    }
                     }
                 }
             },

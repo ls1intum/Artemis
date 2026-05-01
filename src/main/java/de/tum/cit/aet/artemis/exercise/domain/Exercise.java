@@ -68,6 +68,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -89,7 +90,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
     @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),
     @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"),
     @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
-    @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload")
+    @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"),
+    @JsonSubTypes.Type(value = ProofExercise.class, name = "proof")
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

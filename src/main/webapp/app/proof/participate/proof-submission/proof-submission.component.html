@@ -1,0 +1,88 @@
+@if (proofExercise) {
+    <div [id]="'exercise-' + proofExercise?.id">
+        <jhi-header-participation-page class="d-block mb-4" [exercise]="proofExercise" [participation]="participation">
+            <span translate-label>
+                <span class="font-weight-normal">{{ proofExercise?.title }}</span>
+            </span>
+        </jhi-header-participation-page>
+
+        <div class="row">
+            <div class="col-12 col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</h4>
+                    </div>
+                    <div class="card-body">
+                        @if (proofExercise.problemStatement) {
+                            <span [innerHTML]="proofExercise.problemStatement | htmlForMarkdown"></span>
+                        }
+                        <hr />
+                        @if (proofExercise.description) {
+                            <p><strong>{{ 'artemisApp.proofExercise.description' | artemisTranslate }}:</strong></p>
+                            <span [innerHTML]="proofExercise.description | htmlForMarkdown"></span>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title" jhiTranslate="artemisApp.proofExercise.submission">Submission</h4>
+                    </div>
+                    <div class="card-body">
+                        <textarea
+                            class="form-control"
+                            rows="15"
+                            [(ngModel)]="answer"
+                            [disabled]="!!submission?.submitted"
+                            [placeholder]="'artemisApp.proofExercise.placeholder' | artemisTranslate"
+                        ></textarea>
+
+                        <div class="form-check mt-3">
+                            <input
+                                type="checkbox"
+                                class="form-check-input"
+                                id="studentCheckboxState"
+                                [(ngModel)]="studentCheckboxState"
+                                [disabled]="!!submission?.submitted"
+                            />
+                            <label class="form-check-label" for="studentCheckboxState" jhiTranslate="artemisApp.proofExercise.studentCheckboxState">
+                                I confirm this proof is complete
+                            </label>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <jhi-button
+                                [disabled]="isSaving || !!submission?.submitted"
+                                [title]="'entity.action.save'"
+                                (onClick)="save()"
+                            />
+                            <jhi-exercise-submit-button
+                                [exercise]="proofExercise"
+                                [isLoading]="isSaving"
+                                [isSubmitted]="!!submission?.submitted"
+                                (onSubmit)="submit()"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        @if (result) {
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="card-title" jhiTranslate="artemisApp.exercise.result">Result</h4>
+                        </div>
+                        <div class="card-body">
+                            <!-- Simplified result display -->
+                            <p>{{ result.score }}%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

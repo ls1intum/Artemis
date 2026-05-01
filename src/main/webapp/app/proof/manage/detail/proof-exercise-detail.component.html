@@ -1,0 +1,19 @@
+@if (proofExercise && course) {
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="d-flex align-items-center mb-2">
+                <h2 jhiTranslate="artemisApp.proofExercise.detail.title">Proof Exercise Detail</h2>
+                <jhi-documentation-button [type]="'Text'" /> <!-- TODO: Update to Proof when documentation exists -->
+            </div>
+            <jhi-non-programming-exercise-detail-common-actions [exercise]="proofExercise" [course]="course" (onExerciseRefresh)="load(proofExercise.id!)" />
+            <div class="row mt-3">
+                <div class="col-12 col-md-4">
+                    <jhi-exercise-detail-statistics [exercise]="proofExercise" [doughnutStats]="doughnutStats" />
+                </div>
+                <div class="col-12 col-md-8">
+                    <jhi-detail-overview-list [sections]="detailOverviewSections" />
+                </div>
+            </div>
+        </div>
+    </div>
+}

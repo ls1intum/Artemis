@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.proof.domain.ProofSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -64,6 +65,7 @@ public class SubmissionFilterService {
             case ModelingSubmission modelingSubmission -> isModelingSubmissionRelevantForCourseDashboard(modelingSubmission, ignoreAssessmentDueDate);
             case TextSubmission textSubmission -> isTextSubmissionRelevantForCourseDashboard(textSubmission, ignoreAssessmentDueDate);
             case FileUploadSubmission fileUploadSubmission -> isFileUploadSubmissionRelevantForCourseDashboard(fileUploadSubmission, ignoreAssessmentDueDate);
+            case ProofSubmission proofSubmission -> isProofSubmissionRelevantForCourseDashboard(proofSubmission, ignoreAssessmentDueDate);
             case QuizSubmission quizSubmission -> isQuizSubmissionRelevantForCourseDashboard(quizSubmission);
             default -> throw new IllegalArgumentException("Unsupported submission type: " + submission.getClass());
         };
@@ -125,6 +127,10 @@ public class SubmissionFilterService {
 
     private boolean isFileUploadSubmissionRelevantForCourseDashboard(FileUploadSubmission fileUploadSubmission, boolean ignoreAssessmentDueDate) {
         return isNonProgrammingSubmissionRelevantForCourseDashboard(fileUploadSubmission, ignoreAssessmentDueDate);
+    }
+
+    private boolean isProofSubmissionRelevantForCourseDashboard(ProofSubmission proofSubmission, boolean ignoreAssessmentDueDate) {
+        return isNonProgrammingSubmissionRelevantForCourseDashboard(proofSubmission, ignoreAssessmentDueDate);
     }
 
     private boolean isQuizSubmissionRelevantForCourseDashboard(QuizSubmission quizSubmission) {

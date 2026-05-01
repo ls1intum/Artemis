@@ -14,9 +14,10 @@ import { ExerciseCreateButtonsComponent } from 'app/exercise/exercise-create-but
 import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise/modeling-exercise.component';
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/exercise/text-exercise.component';
 import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise/file-upload-exercise.component';
+import { ProofExerciseComponent } from 'app/proof/manage/exercise/proof-exercise.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_PROOF, MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
@@ -36,6 +37,7 @@ import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directive
         ModelingExerciseComponent,
         TextExerciseComponent,
         FileUploadExerciseComponent,
+        ProofExerciseComponent,
         ArtemisTranslatePipe,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
@@ -56,22 +58,31 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly programmingExercisesCount = signal(0);
     readonly modelingExercisesCount = signal(0);
     readonly fileUploadExercisesCount = signal(0);
+    readonly proofExercisesCount = signal(0);
     readonly filteredQuizExercisesCount = signal(0);
     readonly filteredTextExercisesCount = signal(0);
     readonly filteredProgrammingExercisesCount = signal(0);
     readonly filteredModelingExercisesCount = signal(0);
     readonly filteredFileUploadExercisesCount = signal(0);
+    readonly filteredProofExercisesCount = signal(0);
     readonly exerciseFilter = signal<ExerciseFilter>(new ExerciseFilter(''));
 
     readonly textExerciseEnabled = signal(false);
     readonly modelingExerciseEnabled = signal(false);
     readonly fileUploadExerciseEnabled = signal(false);
+    readonly proofExerciseEnabled = signal(false);
 
     private readonly route = inject(ActivatedRoute);
     private readonly profileService = inject(ProfileService);
 
     readonly exerciseCount = computed(
-        () => this.quizExercisesCount() + this.programmingExercisesCount() + this.modelingExercisesCount() + this.fileUploadExercisesCount() + this.textExercisesCount(),
+        () =>
+            this.quizExercisesCount() +
+            this.programmingExercisesCount() +
+            this.modelingExercisesCount() +
+            this.fileUploadExercisesCount() +
+            this.textExercisesCount() +
+            this.proofExercisesCount(),
     );
 
     readonly filteredExerciseCount = computed(
@@ -80,7 +91,8 @@ export class CourseManagementExercisesComponent implements OnInit {
             this.filteredQuizExercisesCount() +
             this.filteredModelingExercisesCount() +
             this.filteredTextExercisesCount() +
-            this.filteredFileUploadExercisesCount(),
+            this.filteredFileUploadExercisesCount() +
+            this.filteredProofExercisesCount(),
     );
 
     readonly iconMap = {
@@ -89,6 +101,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         [ExerciseType.QUIZ]: getIcon(ExerciseType.QUIZ),
         [ExerciseType.TEXT]: getIcon(ExerciseType.TEXT),
         [ExerciseType.FILE_UPLOAD]: getIcon(ExerciseType.FILE_UPLOAD),
+        [ExerciseType.PROOF]: getIcon(ExerciseType.PROOF),
     };
 
     /**
@@ -104,6 +117,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.textExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT));
         this.modelingExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING));
         this.fileUploadExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD));
+        this.proofExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PROOF));
     }
     /**
      * Toggles the search bar

@@ -16,7 +16,7 @@ import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entit
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faFileUpload, faFlask, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
 
 export enum DifficultyLevel {
@@ -37,6 +37,7 @@ export enum ExerciseType {
     QUIZ = 'quiz',
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload',
+    PROOF = 'proof',
 }
 
 export type ScoresPerExerciseType = Map<ExerciseType, CourseScores>;
@@ -64,7 +65,7 @@ export const DEFAULT_PLAGIARISM_DETECTION_CONFIG: PlagiarismDetectionConfig = {
     minimumScore: 0,
 };
 
-export const exerciseTypes: ExerciseType[] = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ];
+export const exerciseTypes: ExerciseType[] = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ, ExerciseType.PROOF];
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
 export enum IncludedInOverallScore {
@@ -189,6 +190,7 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         [ExerciseType.QUIZ]: faCheckDouble,
         [ExerciseType.TEXT]: faFont,
         [ExerciseType.FILE_UPLOAD]: faFileUpload,
+        [ExerciseType.PROOF]: faFlask,
     };
 
     return icons[exerciseType] ?? (faQuestion as IconProp);
@@ -204,6 +206,7 @@ export function getIconTooltip(exerciseType?: ExerciseType): string {
         [ExerciseType.QUIZ]: 'artemisApp.exercise.isQuiz',
         [ExerciseType.TEXT]: 'artemisApp.exercise.isText',
         [ExerciseType.FILE_UPLOAD]: 'artemisApp.exercise.isFileUpload',
+        [ExerciseType.PROOF]: 'artemisApp.exercise.isProof',
     };
 
     return tooltips[exerciseType];

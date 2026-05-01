@@ -113,4 +113,23 @@
             />
         </jhi-course-exercise-card>
     }
+    @if (proofExerciseEnabled()) {
+        <jhi-course-exercise-card
+            [headingJhiTranslate]="'artemisApp.course.proofExercises'"
+            [leadingIcon]="iconMap[ExerciseType.PROOF]"
+            [exerciseCount]="proofExercisesCount()"
+            [hidden]="shouldHideExerciseCard('proof')"
+            [course]="course()!"
+        >
+            <jhi-exercise-create-buttons exerciseCreateButtons [course]="course()!" [exerciseType]="ExerciseType.PROOF" />
+            <jhi-proof-exercise
+                exercises
+                [embedded]="true"
+                [course]="course()!"
+                [exerciseFilter]="exerciseFilter()"
+                (exerciseCount)="proofExercisesCount.set($event)"
+                (filteredExerciseCount)="filteredProofExercisesCount.set($event)"
+            />
+        </jhi-course-exercise-card>
+    }
 }

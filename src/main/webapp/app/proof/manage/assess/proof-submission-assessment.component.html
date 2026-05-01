@@ -1,0 +1,54 @@
+<jhi-assessment-layout
+    [isLoading]="isLoading"
+    [isTeamMode]="false"
+    [isAssessor]="true"
+    [canOverride]="false"
+    [exercise]="proofExercise"
+    [submission]="submission"
+    [result]="result"
+    [hasAssessmentDueDatePassed]="true"
+    [exerciseDashboardLink]="['/course-management', (proofExercise?.course?.id || -1).toString(), 'assessment-dashboard', (proofExercise?.id || -1).toString()]"
+>
+    @if (!isLoading) {
+        <div class="row">
+            <div class="col-12 col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</h4>
+                    </div>
+                    <div class="card-body">
+                        @if (proofExercise.problemStatement) {
+                            <span [innerHTML]="proofExercise.problemStatement | htmlForMarkdown"></span>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title" jhiTranslate="artemisApp.proofExercise.submission">Submission</h4>
+                    </div>
+                    <div class="card-body">
+                        <p><strong jhiTranslate="artemisApp.proofExercise.proofText"></strong></p>
+                        <pre>{{ submission?.text }}</pre>
+
+                        <p>
+                            <strong jhiTranslate="artemisApp.proofExercise.studentCheckboxState"></strong>:
+                            {{ submission?.studentCheckboxState }}
+                        </p>
+                        <p>
+                            <strong jhiTranslate="artemisApp.proofExercise.predefinedCheckboxState"></strong>:
+                            {{ proofExercise?.predefinedCheckboxState }}
+                        </p>
+                        @if (result) {
+                            <p class="mt-2">
+                                <strong jhiTranslate="artemisApp.proofExercise.score"></strong>:
+                                {{ result.score }}%
+                            </p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</jhi-assessment-layout>

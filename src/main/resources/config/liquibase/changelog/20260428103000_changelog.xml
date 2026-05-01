@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="20260428103000-1-v2" author="gemini-cli">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="proof_exercise_details"/>
+            </not>
+        </preConditions>
+        <createTable tableName="proof_exercise_details">
+            <column name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseColumnNames="id"
+                                 baseTableName="proof_exercise_details"
+                                 constraintName="fk_proof_exercise_details_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="exercise"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="20260428103000-2-v2" author="gemini-cli">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="submission" columnName="text"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="submission">
+            <column name="text" type="longtext"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260428103000-3-v2" author="gemini-cli">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="submission" columnName="student_checkbox_state"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="submission">
+            <column name="student_checkbox_state" type="boolean" defaultValueBoolean="false"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260428103000-4-v2" author="gemini-cli">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="proof_exercise_details" columnName="description"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="proof_exercise_details">
+            <column name="description" type="longtext"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260428103000-5-v2" author="gemini-cli">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="proof_exercise_details" columnName="predefined_checkbox_state"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="proof_exercise_details">
+            <column name="predefined_checkbox_state" type="boolean" defaultValueBoolean="false"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260428103000-6-v3" author="gemini-cli">
+        <modifyDataType tableName="submission" columnName="discriminator" newDataType="enum('P','Q','M','T','F','R')"/>
+    </changeSet>
+
+</databaseChangeLog>

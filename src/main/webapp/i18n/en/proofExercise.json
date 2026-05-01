@@ -1,0 +1,28 @@
+{
+    "artemisApp": {
+        "proofExercise": {
+            "home": {
+                "title": "Proof Exercises",
+                "createLabel": "Create a new Proof Exercise",
+                "createOrEditLabel": "Create or edit a Proof Exercise"
+            },
+            "detail": {
+                "title": "Proof Exercise Detail"
+            },
+            "submission": "Proof Submission",
+            "placeholder": "Enter your proof here...",
+            "description": "Description",
+            "predefinedCheckboxState": "Predefined Checkbox State",
+            "studentCheckboxState": "I confirm this proof is complete",
+            "saveSuccessful": "Proof saved successfully",
+            "saveFailed": "Proof could not be saved",
+            "submitSuccessful": "Proof submitted successfully",
+            "submitFailed": "Proof could not be submitted",
+            "error": "An error occurred while loading the proof exercise",
+            "proofText": "Proof Text",
+            "score": "Score",
+            "assessedSubmission": "Your proof has been assessed.",
+            "assessedSubmissionInstructor": "This proof has been assessed."
+        }
+    }
+}

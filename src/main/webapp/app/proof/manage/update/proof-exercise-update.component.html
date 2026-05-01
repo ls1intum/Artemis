@@ -1,0 +1,100 @@
+<div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h2 id="jhi-proof-exercise-heading" jhiTranslate="artemisApp.proofExercise.home.createOrEditLabel">
+                Create or edit a Proof Exercise
+            </h2>
+
+            <div class="card p-3 mb-3 mt-3">
+                <div class="form-group" [hidden]="!proofExercise.id">
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id" [(ngModel)]="proofExercise.id" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
+                    <input type="text" class="form-control" name="title" id="field_title" [(ngModel)]="proofExercise.title" required />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
+                    <jhi-category-selector
+                        [categories]="exerciseCategories()"
+                        [existingCategories]="existingCategories()"
+                        (selectedCategories)="updateCategories($event)"
+                    />
+                </div>
+            </div>
+
+            <div class="card p-3 mb-3">
+                <div class="form-group border-bottom pb-2">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
+                    <jhi-markdown-editor-monaco
+                        id="field_problemStatement"
+                        [(markdown)]="proofExercise.problemStatement"
+                    />
+                </div>
+
+                <div class="form-group mt-3">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.exampleSolution" for="field_exampleSolution">Example Solution</label>
+                    <jhi-markdown-editor-monaco
+                        id="field_exampleSolution"
+                        [(markdown)]="proofExercise.exampleSolution"
+                    />
+                </div>
+            </div>
+
+            <div class="card p-3 mb-3">
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty" for="field_difficulty">Difficulty</label>
+                            <jhi-difficulty-picker [exercise]="proofExercise" />
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <jhi-included-in-overall-score-picker
+                            [(includedInOverallScore)]="proofExercise.includedInOverallScore"
+                            [allowNotIncluded]="true"
+                        />
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            <label class="form-control-label" jhiTranslate="artemisApp.exercise.maxPoints" for="field_maxPoints">Max Points</label>
+                            <input type="number" class="form-control" name="maxPoints" id="field_maxPoints" [(ngModel)]="proofExercise.maxPoints" required />
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints">Bonus Points</label>
+                            <input type="number" class="form-control" name="bonusPoints" id="field_bonusPoints" [(ngModel)]="proofExercise.bonusPoints" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-3 mb-3 bg-light">
+                <h4 class="card-title border-bottom pb-2">Proof Configuration</h4>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.proofExercise.description" for="field_description">Internal Description (Instructions for Students)</label>
+                    <textarea class="form-control" name="description" id="field_description" rows="5" [(ngModel)]="proofExercise.description"></textarea>
+                </div>
+                <div class="form-check mt-3">
+                    <input type="checkbox" class="form-check-input" name="predefinedCheckboxState" id="field_predefinedCheckboxState" [(ngModel)]="proofExercise.predefinedCheckboxState" />
+                    <label class="form-check-label" jhiTranslate="artemisApp.proofExercise.predefinedCheckboxState" for="field_predefinedCheckboxState">Expected Checkbox State for 100% Score</label>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
+                    <span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -23,6 +23,7 @@ import {
     faCheckDouble,
     faFileImport,
     faFileUpload,
+    faFlask,
     faFont,
     faKeyboard,
     faPlus,
@@ -34,7 +35,7 @@ import { ExamImportComponent, ExamImportDialogData } from 'app/exam/manage/exams
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_PROOF, MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -86,7 +87,7 @@ export class ExerciseGroupsComponent implements OnInit {
     exam: Exam;
     exerciseGroups?: ExerciseGroup[];
     dialogErrorSource = new Subject<string>();
-    dialogError = this.dialogErrorSource.asObservable();
+    dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
     latestIndividualEndDate?: dayjs.Dayjs;
     exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
@@ -95,6 +96,7 @@ export class ExerciseGroupsComponent implements OnInit {
     textExerciseEnabled = false;
     modelingExerciseEnabled = false;
     fileUploadExerciseEnabled = false;
+    proofExerciseEnabled = false;
     disabledExerciseTypes: string[] = [];
 
     // Icons
@@ -109,6 +111,7 @@ export class ExerciseGroupsComponent implements OnInit {
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
     faFileImport = faFileImport;
+    faFlask = faFlask;
 
     /**
      * Initialize the courseId and examId. Get all exercise groups for the exam. Setup dictionary for exercise groups which contain programming exercises.
@@ -132,6 +135,7 @@ export class ExerciseGroupsComponent implements OnInit {
         this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
         this.modelingExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING);
         this.fileUploadExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD);
+        this.proofExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PROOF);
         if (!this.textExerciseEnabled) {
             this.disabledExerciseTypes.push(ExerciseType.TEXT);
         }
@@ -140,6 +144,9 @@ export class ExerciseGroupsComponent implements OnInit {
         }
         if (!this.fileUploadExerciseEnabled) {
             this.disabledExerciseTypes.push(ExerciseType.FILE_UPLOAD);
+        }
+        if (!this.proofExerciseEnabled) {
+            this.disabledExerciseTypes.push(ExerciseType.PROOF);
         }
     }
 
@@ -215,6 +222,8 @@ export class ExerciseGroupsComponent implements OnInit {
                 return faProjectDiagram;
             case ExerciseType.PROGRAMMING:
                 return faKeyboard;
+            case ExerciseType.PROOF:
+                return faFlask;
             default:
                 return faFont;
         }

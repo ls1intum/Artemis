@@ -145,6 +145,16 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * Check if the proof module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the proof module is enabled, false otherwise
+     */
+    public boolean isProofEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.PROOF_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
      * Check if the lecture module is enabled.
      *
      * @param environment the Spring environment
@@ -231,6 +241,9 @@ public class ArtemisConfigHelper {
         }
         if (isFileUploadEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_FILEUPLOAD);
+        }
+        if (isProofEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_PROOF);
         }
         if (isLectureEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_LECTURE);

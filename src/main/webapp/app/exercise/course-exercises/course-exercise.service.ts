@@ -5,6 +5,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { ProofExercise } from 'app/proof/shared/entities/proof-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Observable, map } from 'rxjs';
@@ -60,6 +61,17 @@ export class CourseExerciseService {
         return this.http
             .get<FileUploadExercise[]>(`api/fileupload/courses/${courseId}/file-upload-exercises`, { observe: 'response' })
             .pipe(map((res: HttpResponse<FileUploadExercise[]>) => this.processExercisesHttpResponses(res)));
+    }
+
+    /**
+     * returns all proof exercises for the course corresponding to courseId
+     * Note: the exercises in the response do not contain participations and do not contain the course to save network bandwidth
+     * @param courseId - the unique identifier of the course
+     */
+    findAllProofExercisesForCourse(courseId: number): Observable<HttpResponse<ProofExercise[]>> {
+        return this.http
+            .get<ProofExercise[]>(`api/proof/courses/${courseId}/proof-exercises`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<ProofExercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
     /**

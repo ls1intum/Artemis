@@ -110,6 +110,22 @@
                             </jhi-feature-overlay>
                         }
                         @if (course?.isAtLeastEditor) {
+                            <jhi-feature-overlay [enabled]="proofExerciseEnabled">
+                                <div class="btn-group-vertical me-1 mb-1">
+                                    <a [routerLink]="[exerciseGroup.id, 'proof-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1">
+                                        <fa-icon [icon]="faPlus" />
+                                        <span class="d-none d-xl-inline" jhiTranslate="artemisApp.proofExercise.home.createLabel"></span>
+                                        <fa-icon [icon]="faFlask" />
+                                    </a>
+                                    <a (click)="openImportModal(exerciseGroup, exerciseType.PROOF)" class="btn btn-info btn-sm me-1 mb-1">
+                                        <fa-icon [icon]="faFileImport" />
+                                        <span class="d-none d-xl-inline" jhiTranslate="artemisApp.proofExercise.home.importLabel"></span>
+                                        <fa-icon [icon]="faFlask" />
+                                    </a>
+                                </div>
+                            </jhi-feature-overlay>
+                        }
+                        @if (course?.isAtLeastEditor) {
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a [routerLink]="[exerciseGroup.id, 'programming-exercises', 'new']" class="add-programming-exercise btn btn-info btn-sm me-1 mb-1">
                                     <fa-icon [icon]="faPlus" />
@@ -232,7 +248,8 @@
                                     exerciseGroup.id &&
                                     (exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING) ||
                                         exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.TEXT) ||
-                                        exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING))
+                                        exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING) ||
+                                        exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROOF))
                                 ) {
                                     <th>
                                         <span jhiTranslate="artemisApp.assessmentMode"></span>
@@ -333,10 +350,16 @@
                                         exerciseGroup.id &&
                                         (exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING) ||
                                             exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.TEXT) ||
-                                            exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.MODELING))
+                                            exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.MODELING) ||
+                                            exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROOF))
                                     ) {
                                         <td class="align-middle">
-                                            @if (exercise.type === exerciseType.PROGRAMMING || exercise.type === exerciseType.MODELING || exercise.type === exerciseType.TEXT) {
+                                            @if (
+                                                exercise.type === exerciseType.PROGRAMMING ||
+                                                exercise.type === exerciseType.MODELING ||
+                                                exercise.type === exerciseType.TEXT ||
+                                                exercise.type === exerciseType.PROOF
+                                            ) {
                                                 <div>
                                                     {{ 'artemisApp.AssessmentType.' + exercise.assessmentType | artemisTranslate }}
                                                 </div>
