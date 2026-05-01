@@ -33,7 +33,7 @@ class WeaviateHealthIndicatorTest {
     }
 
     @Test
-    void healthUp_whenWeaviateReports_ready() throws Exception {
+    void healthUp_whenWeaviateReportsReady() throws Exception {
         when(client.isReady()).thenReturn(true);
 
         Health health = healthIndicator.health();
@@ -43,7 +43,7 @@ class WeaviateHealthIndicatorTest {
     }
 
     @Test
-    void healthDown_whenWeaviateReports_notReady() throws Exception {
+    void healthDown_whenWeaviateReportsNotReady() throws Exception {
         when(client.isReady()).thenReturn(false);
 
         Health health = healthIndicator.health();

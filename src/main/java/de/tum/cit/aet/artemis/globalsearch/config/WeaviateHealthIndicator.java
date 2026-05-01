@@ -30,7 +30,10 @@ public class WeaviateHealthIndicator implements HealthIndicator {
     public Health health() {
         String address = properties.scheme() + "://" + properties.httpHost() + ":" + properties.httpPort();
         try {
-            return client.isReady() ? Health.up().withDetail("Address", address).build() : Health.down().withDetail("Address", address).withDetail("ready", false).build();
+            if (client.isReady()) {
+                return Health.up().withDetail("Address", address).build();
+            }
+            return Health.down().withDetail("Address", address).withDetail("ready", false).build();
         }
         catch (Exception e) {
             return Health.down(e).withDetail("Address", address).build();
