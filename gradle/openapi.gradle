@@ -30,6 +30,10 @@
                 "-Dspringdoc.api-docs.enabled=true",
                 "-Dspringdoc.pre-loading-enabled=true",
                 "-Dspring.main.lazy-initialization=true",
+                // Liquibase is disabled and ddl-auto=create lets Hibernate materialise the schema
+                // directly from JPA entities into the in-memory H2 DB. This is intentional: the
+                // Spring context only needs to start far enough for springdoc to introspect
+                // controllers — no real persistence happens here.
                 "-Dspring.liquibase.enabled=false",
                 "-Dspring.jpa.hibernate.ddl-auto=create",
                 "-Dspring.main.banner-mode=off"
