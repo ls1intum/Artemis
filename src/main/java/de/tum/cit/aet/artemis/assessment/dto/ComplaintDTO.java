@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.UserWithIdAndLoginDTO;
+import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithParticipationDTO;
 
 /**
@@ -48,7 +48,7 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ResultSimpleDTO(Long id, ZonedDateTime completionDate, Double score, Boolean rated, AssessmentType assessmentType, SubmissionWithParticipationDTO submission,
-            UserWithIdAndLoginDTO assessor, List<FeedbackDTO> feedbacks) {
+            UserPublicInfoDTO assessor, List<FeedbackDTO> feedbacks, String exerciseTitle) {
 
         /**
          * DTO containing the {@link Feedback} information needed in the result.
@@ -86,16 +86,20 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
          */
         public static ResultSimpleDTO of(Result result) {
             Objects.requireNonNull(result, "The result must be set");
-            UserWithIdAndLoginDTO assessor = null;
+            UserPublicInfoDTO assessor = null;
             if (result.getAssessor() != null && Hibernate.isInitialized(result.getAssessor())) {
-                assessor = new UserWithIdAndLoginDTO(result.getAssessor().getId(), result.getAssessor().getLogin());
+                assessor = new UserPublicInfoDTO(result.getAssessor());
             }
             List<FeedbackDTO> feedbackDTOs = null;
             if (result.getFeedbacks() != null && Hibernate.isInitialized(result.getFeedbacks())) {
                 feedbackDTOs = result.getFeedbacks().stream().filter(Objects::nonNull).map(FeedbackDTO::of).toList();
             }
+            String exerciseTitle = null;
+            if (result.getSubmission() != null && result.getSubmission().getParticipation() != null && result.getSubmission().getParticipation().getExercise() != null) {
+                exerciseTitle = result.getSubmission().getParticipation().getExercise().getTitle();
+            }
             return new ResultSimpleDTO(result.getId(), result.getCompletionDate(), result.getScore(), result.isRated(), result.getAssessmentType(),
-                    result.getSubmission() != null ? SubmissionWithParticipationDTO.of(result.getSubmission()) : null, assessor, feedbackDTOs);
+                    result.getSubmission() != null ? SubmissionWithParticipationDTO.of(result.getSubmission()) : null, assessor, feedbackDTOs, exerciseTitle);
         }
     }
 

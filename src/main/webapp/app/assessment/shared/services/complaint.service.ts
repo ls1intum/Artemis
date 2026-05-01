@@ -256,12 +256,14 @@ export class ComplaintService implements IComplaintService {
             if (dto.participant.isStudent === true) {
                 complaint.student = {
                     id: dto.participant.id,
+                    name: dto.participant.name,
                     login: dto.participant.login,
                 } as User;
             } else if (dto.participant.isStudent === false) {
                 complaint.team = {
                     id: dto.participant.id,
                     name: dto.participant.name,
+                    login: dto.participant.login,
                 } as Team;
             }
         }
@@ -292,6 +294,8 @@ export class ComplaintService implements IComplaintService {
                 result.assessor = {
                     id: dto.result.assessor.id,
                     login: dto.result.assessor.login,
+                    name: dto.result.assessor.name,
+                    email: dto.result.assessor.email,
                 } as User;
             }
 
@@ -305,17 +309,20 @@ export class ComplaintService implements IComplaintService {
                 } as Submission;
 
                 if (dto.result.submission.participation) {
+                    const exerciseDto = dto.result.submission.participation.exercise;
+
                     submission.participation = {
                         id: dto.result.submission.participation.id,
-                        exercise: dto.result.submission.participation.exercise
-                            ? ({
-                                  id: dto.result.submission.participation.exercise.id,
-                                  type: dto.result.submission.participation.exercise.type,
-                              } as Exercise)
-                            : undefined,
+                        exercise:
+                            exerciseDto || dto.result.exerciseTitle
+                                ? ({
+                                      id: exerciseDto?.id,
+                                      type: exerciseDto?.type,
+                                      title: dto.result.exerciseTitle,
+                                  } as Exercise)
+                                : undefined,
                     } as StudentParticipation;
                 }
-
                 result.submission = submission;
             }
             complaint.result = result;
@@ -324,10 +331,14 @@ export class ComplaintService implements IComplaintService {
             if (dto.participant.isStudent === true) {
                 complaint.student = {
                     id: dto.participant.id,
+                    name: dto.participant.name,
+                    login: dto.participant.login,
                 } as User;
             } else if (dto.participant.isStudent === false) {
                 complaint.team = {
                     id: dto.participant.id,
+                    name: dto.participant.name,
+                    login: dto.participant.login,
                 } as Team;
             }
         }
