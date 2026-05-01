@@ -233,7 +233,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
      *
      * @param quizQuestion the question to add
      */
-    public void addQuestions(QuizQuestion quizQuestion) {
+    public void addQuestion(QuizQuestion quizQuestion) {
         if (this.quizQuestions == null) {
             this.quizQuestions = new ArrayList<>();
         }
@@ -243,7 +243,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
 
     /**
      * Defensive back-reference fixup: with bidirectional mappedBy the child @ManyToOne owns the FK, so any QuizQuestion
-     * added via {@code getQuizQuestions().add(...)} (bypassing {@link #addQuestions}) would otherwise INSERT with
+     * added via {@code getQuizQuestions().add(...)} (bypassing {@link #addQuestion}) would otherwise INSERT with
      * {@code exercise_id = NULL}. Guarded by {@code Hibernate.isInitialized} so the hook does not force a lazy
      * load on flush of an unrelated change (mirrors {@link de.tum.cit.aet.artemis.lecture.domain.Lecture#updateLectureUnitOrder}).
      */

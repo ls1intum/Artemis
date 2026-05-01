@@ -113,9 +113,9 @@ public class QuizExerciseFactory {
      * @param quizExercise The quiz to which questions should be added.
      */
     public static void addQuestionsToQuizExercise(QuizExercise quizExercise) {
-        quizExercise.addQuestions(createMultipleChoiceQuestion());
-        quizExercise.addQuestions(createDragAndDropQuestion());
-        quizExercise.addQuestions(createShortAnswerQuestion());
+        quizExercise.addQuestion(createMultipleChoiceQuestion());
+        quizExercise.addQuestion(createDragAndDropQuestion());
+        quizExercise.addQuestion(createShortAnswerQuestion());
         quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.setGradingInstructions(null);
     }
@@ -419,10 +419,10 @@ public class QuizExerciseFactory {
      * @param quizExercise The quiz to which questions should be added.
      */
     public static void addAllQuestionTypesToQuizExercise(QuizExercise quizExercise) {
-        quizExercise.addQuestions(createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
-        quizExercise.addQuestions(createDragAndDropQuestionWithAllTypesOfMappings());
-        quizExercise.addQuestions(createShortAnswerQuestionWithRealisticText());
-        quizExercise.addQuestions(createSingleChoiceQuestion());
+        quizExercise.addQuestion(createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
+        quizExercise.addQuestion(createDragAndDropQuestionWithAllTypesOfMappings());
+        quizExercise.addQuestion(createShortAnswerQuestionWithRealisticText());
+        quizExercise.addQuestion(createSingleChoiceQuestion());
     }
 
     /**

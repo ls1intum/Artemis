@@ -898,7 +898,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         Course course = courseUtilService.createCourse();
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), QuizMode.SYNCHRONIZED,
                 course);
-        quizExercise.addQuestions(QuizExerciseFactory.createShortAnswerQuestion());
+        quizExercise.addQuestion(QuizExerciseFactory.createShortAnswerQuestion());
         quizExercise.setDuration(10);
         quizExercise = quizExerciseService.save(quizExercise);
 

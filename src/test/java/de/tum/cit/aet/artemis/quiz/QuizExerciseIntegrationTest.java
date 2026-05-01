@@ -2488,7 +2488,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         question.setExplanation("Explanation");
         question.copyQuestionId();
 
-        quizExercise.addQuestions(question);
+        quizExercise.addQuestion(question);
         quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.setGradingInstructions(null);
 
