@@ -146,12 +146,10 @@
         Map<String, Object> mapValue,
         Map<String, Map<String, Object>> componentsMap
     ) {
-        // Short-circuit on any map that contains '$ref', regardless of sibling keys.
-        // OpenAPI 3.1 allows siblings to $ref (e.g. description, summary), but they are always
-        // plain scalar metadata — never nested schemas that could themselves carry invalid $refs.
-        // Recursing into siblings is therefore unnecessary, and checking the whole node here
-        // correctly prunes {$ref: "invalid", description: "..."} nodes that the old
-        // `size() == 1` guard would have missed.
+        // A map with '$ref' is treated as a reference node and validated as a whole.
+        // OpenAPI 3.1 allows sibling keys on $ref nodes (e.g. description, summary),
+        // but they are always plain scalar metadata — never nested schemas with their
+        // own $refs — so recursing into them is unnecessary.
         boolean isReferenceNode = mapValue.containsKey('$ref')
         if (isReferenceNode) {
             String referenceString = mapValue['$ref'] as String
