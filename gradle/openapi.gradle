@@ -185,6 +185,9 @@
      * generator turns this into {@code interface Sub extends Parent}, but since the parent is
      * generated as a {@code type} alias (union), TypeScript rejects it. This method removes
      * the back-reference and inlines the remaining allOf entry.</p>
+     *
+     * <p>The walk is recursive: subtypes that are themselves discriminator parents (chains like
+     * grandparent → parent → child) are fully processed at arbitrary depth.</p>
      */
     private static void flattenDiscriminatorAllOfBackReferences(Map<String, Object> specificationMap) {
         Map<String, Object> schemas = (specificationMap.components as Map<String, Object>)?.schemas as Map<String, Object>
@@ -196,16 +199,26 @@
 
             if (!schema.containsKey('oneOf') || !schema.containsKey('discriminator')) return
 
-            List<Map<String, Object>> oneOfRefs = schema.oneOf as List<Map<String, Object>>
-            oneOfRefs?.each { Map<String, Object> ref ->
-                String refPath = ref['$ref'] as String
-                if (!refPath?.startsWith('#/components/schemas/')) return
+            flattenSubtypeChildren(schema, schemaName, schemas)
+        }
+    }
 
-                String subtypeName = refPath.substring('#/components/schemas/'.length())
-                Map<String, Object> subtype = schemas[subtypeName] as Map<String, Object>
-                if (subtype?.containsKey('allOf')) {
-                    flattenAllOfBackReference(subtype, schemaName)
-                }
+    private static void flattenSubtypeChildren(Map<String, Object> schema, String schemaName, Map<String, Object> schemas) {
+        List<Map<String, Object>> oneOfRefs = schema.oneOf as List<Map<String, Object>>
+        oneOfRefs?.each { Map<String, Object> ref ->
+            String refPath = ref['$ref'] as String
+            if (!refPath?.startsWith('#/components/schemas/')) return
+
+            String subtypeName = refPath.substring('#/components/schemas/'.length())
+            Map<String, Object> subtype = schemas[subtypeName] as Map<String, Object>
+            if (subtype == null) return
+
+            if (subtype.containsKey('allOf')) {
+                flattenAllOfBackReference(subtype, schemaName)
+            }
+
+            if (subtype.containsKey('oneOf') && subtype.containsKey('discriminator')) {
+                flattenSubtypeChildren(subtype, subtypeName, schemas)
             }
         }
     }
