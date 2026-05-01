@@ -53,7 +53,7 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
             Long participationID = participation.getId();
 
             programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(participation.getProgrammingExercise());
-            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.findByIdElseThrow(exerciseID);
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(exerciseID).orElseThrow();
             String buildScript = buildConfig.getBuildScript();
 
             // Create the submission repository DTO

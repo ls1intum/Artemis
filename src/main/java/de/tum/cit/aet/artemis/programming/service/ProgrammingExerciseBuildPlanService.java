@@ -61,6 +61,21 @@ public class ProgrammingExerciseBuildPlanService {
      *                                exercise should contain a fully initialized template and solution participation.
      */
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
+        // Only create build plans for systems that need them (not for external CI like Hades)
+        if (!profileService.isHadesActive()) {
+            // Get URLs for repos
+            var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
+            var testsRepoUri = programmingExercise.getVcsTestRepositoryUri();
+            var solutionRepoUri = programmingExercise.getVcsSolutionRepositoryUri();
+
+            ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
+            continuousIntegration.createProjectForExercise(programmingExercise);
+            // template build plan
+            continuousIntegration.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUri, testsRepoUri, solutionRepoUri);
+            // solution build plan
+            continuousIntegration.createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUri, testsRepoUri, solutionRepoUri);
+        }
+
         // trigger BASE and SOLUTION build plans once here
         continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
         continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
