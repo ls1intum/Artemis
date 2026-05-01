@@ -252,6 +252,19 @@ export class ComplaintService implements IComplaintService {
             complaint.complaintResponse = this.complaintResponseService.convertComplaintResponseFromServer(dto.complaintResponse);
         }
         complaint.result = result;
+        if (dto.participant) {
+            if (dto.participant.isStudent === true) {
+                complaint.student = {
+                    id: dto.participant.id,
+                    login: dto.participant.login,
+                } as User;
+            } else if (dto.participant.isStudent === false) {
+                complaint.team = {
+                    id: dto.participant.id,
+                    name: dto.participant.name,
+                } as Team;
+            }
+        }
         return complaint;
     }
 

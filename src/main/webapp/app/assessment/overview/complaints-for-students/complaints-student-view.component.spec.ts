@@ -10,7 +10,6 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { Observable, of } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
@@ -32,6 +31,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 describe('ComplaintsStudentViewComponent', () => {
     setupTestBed({ zoneless: true });
@@ -64,7 +64,7 @@ describe('ComplaintsStudentViewComponent', () => {
         examStudentReviewStart: dayjs().subtract(complaintTimeLimitDays, 'day'),
         examStudentReviewEnd: dayjs().add(complaintTimeLimitDays, 'day'),
     } as Exam;
-    const complaint = new Complaint();
+    const complaint = new ComplaintDTO();
     const numberOfComplaints = 42;
 
     let component: ComplaintsStudentViewComponent;
@@ -170,7 +170,7 @@ describe('ComplaintsStudentViewComponent', () => {
             await fixture.whenStable();
 
             expectExamDefault();
-            expect(component.complaint).toStrictEqual(complaint);
+            expect(component.complaint).toStrictEqual(complaintService.convertComplaintFromServer(complaint, component.result()!));
             expect(complaintBySubmissionMock).toHaveBeenCalledTimes(1);
             expect(numberOfAllowedComplaintsMock).toHaveBeenCalledTimes(1);
             expect(userMock).toHaveBeenCalledTimes(1);
@@ -258,7 +258,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
         it('should initialize with complaint', async () => {
             await testInitWithResultStub(of({ body: complaint } as EntityResponseType));
-            expect(component.complaint).toStrictEqual(complaint);
+            expect(component.complaint).toStrictEqual(complaintService.convertComplaintFromServer(complaint, component.result()!));
         });
 
         it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', async () => {

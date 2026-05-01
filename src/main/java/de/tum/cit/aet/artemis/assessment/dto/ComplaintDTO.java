@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Objects;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
 
@@ -17,6 +19,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithParticipationDTO;
 
@@ -25,7 +28,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithParticipationDTO;
  *
  * <p>
  * This DTO is used to transfer complaint data to the client
- * without exposing the full {@link de.tum.cit.aet.artemis.assessment.domain.Complaint} entity.
+ * without exposing the full {@link Complaint} entity.
  * </p>
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -36,7 +39,8 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
      * DTO containing the minimal information of the participant needed in the complaint.
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record ParticipantDTO(Long id, Boolean isStudent) {
+    public record ParticipantDTO(Long id, String name,
+            @Pattern(regexp = Constants.LOGIN_REGEX) @Size(min = Constants.USERNAME_MIN_LENGTH, max = Constants.USERNAME_MAX_LENGTH) String login, Boolean isStudent) {
     }
 
     /**
@@ -47,10 +51,10 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
             Long assessorId, List<FeedbackDTO> feedbacks) {
 
         /**
-         * DTO containing the {@link Feedback} information needed in complaint.
+         * DTO containing the {@link Feedback} information needed in the result.
          */
         @JsonInclude(JsonInclude.Include.NON_NULL)
-        public record FeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
+        public record FeedbackDTO(Long id, String text, String detailText, Boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
                 Visibility visibility, String testCaseName, GradingInstructionDTO gradingInstruction) {
 
             /**
@@ -109,12 +113,12 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
         ResultSimpleDTO resultDTO = ResultSimpleDTO.of(complaint.getResult());
         ComplaintResponseDTO complaintResponseDTO = complaint.getComplaintResponse() != null ? ComplaintResponseDTO.of(complaint.getComplaintResponse()) : null;
 
-        Boolean isStudent = null;
-        ParticipantDTO participantDTO;
-        if (complaint.getParticipant() != null && complaint.getParticipant().getId() != null) {
-            isStudent = complaint.getParticipant() instanceof User;
+        ParticipantDTO participantDTO = null;
+        if (complaint.getParticipant() != null) {
+            boolean isStudent = complaint.getParticipant() instanceof User;
+            participantDTO = new ParticipantDTO(complaint.getParticipant().getId(), complaint.getParticipant().getName(), complaint.getParticipant().getParticipantIdentifier(),
+                    isStudent);
         }
-        participantDTO = complaint.getParticipant() != null ? new ParticipantDTO(complaint.getParticipant().getId(), isStudent) : null;
 
         return new ComplaintDTO(complaint.getId(), complaint.getComplaintText(), complaint.getSubmittedTime(), complaint.getComplaintType(), complaint.isAccepted(),
                 complaintResponseDTO, resultDTO, participantDTO);
