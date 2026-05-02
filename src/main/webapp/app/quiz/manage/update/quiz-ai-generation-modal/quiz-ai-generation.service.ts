@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { HyperionQuizQuestionGenerationApiService } from 'app/openapi/api/hyperionQuizQuestionGenerationApi.service';
@@ -6,7 +7,7 @@ import { GeneratedQuizQuestion } from 'app/openapi/model/generatedQuizQuestion';
 import { QuizQuestionRefinementRequest } from 'app/openapi/model/quizQuestionRefinementRequest';
 import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
 import { QuizQuestionBulkRefinementRequest } from 'app/openapi/model/quizQuestionBulkRefinementRequest';
-import { QuizQuestionRefinementSuccessDTO } from 'app/openapi/model/quizQuestionRefinementSuccessDTO';
+import { QuizQuestionRefinementResponse } from 'app/openapi/model/quizQuestionRefinementResponse';
 import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -15,6 +16,7 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 @Injectable({ providedIn: 'root' })
 export class QuizAiGenerationService {
     private hyperionQuizQuestionGenerationApiService = inject(HyperionQuizQuestionGenerationApiService);
+    private translateService = inject(TranslateService);
 
     generateQuizQuestions(courseId: number, request: QuizQuestionGenerationRequest): Observable<GeneratedQuestion[]> {
         return this.hyperionQuizQuestionGenerationApiService
@@ -53,10 +55,15 @@ export class QuizAiGenerationService {
         };
 
         return this.hyperionQuizQuestionGenerationApiService.refineQuizQuestion(courseId, request).pipe(
-            map((response) => ({
-                refinedQuestion: this.applyRefinedContentToQuestion(question, this.toGeneratedQuestion(response.question, 0)),
-                reasoning: response.reasoning,
-            })),
+            map((response: QuizQuestionRefinementResponse) => {
+                if (response.type === 'success') {
+                    return {
+                        refinedQuestion: this.applyRefinedContentToQuestion(question, this.toGeneratedQuestion(response.question, 0)),
+                        reasoning: response.reasoning,
+                    };
+                }
+                throw new Error(this.translateService.instant('artemisApp.quizExercise.aiGeneration.refinement.errors.failed'));
+            }),
         );
     }
 
@@ -90,7 +97,7 @@ export class QuizAiGenerationService {
             map((response) => {
                 const results = new Map<MultipleChoiceQuestion, string>();
                 response.refinements.forEach((refinement, index) => {
-                    if (refinement.type === QuizQuestionRefinementSuccessDTO.TypeEnum.Success) {
+                    if (refinement.type === 'success') {
                         this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(refinement.question, index));
                         results.set(questions[index], refinement.reasoning);
                     }
