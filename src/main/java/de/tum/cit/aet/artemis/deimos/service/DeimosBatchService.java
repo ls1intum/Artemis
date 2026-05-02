@@ -84,6 +84,14 @@ public class DeimosBatchService {
         this.deimosTaskExecutor = deimosTaskExecutor;
     }
 
+    /**
+     * Validates and enqueues a manual Deimos batch run for a whole course.
+     *
+     * @param courseId    the course id that defines the analysis scope
+     * @param request     the requested analysis time window
+     * @param triggerUser the instructor who triggered the batch run
+     * @return accepted response containing the generated run id
+     */
     public DeimosBatchTriggerResponseDTO triggerCourseBatch(long courseId, DeimosBatchRequestDTO request, User triggerUser) {
         validateManualRequest(DeimosBatchScope.COURSE, courseId, request);
         String runId = UUID.randomUUID().toString();
@@ -96,6 +104,14 @@ public class DeimosBatchService {
         return new DeimosBatchTriggerResponseDTO(runId, "ACCEPTED");
     }
 
+    /**
+     * Validates and enqueues a manual Deimos batch run for one programming exercise.
+     *
+     * @param exerciseId  the exercise id that defines the analysis scope
+     * @param request     the requested analysis time window
+     * @param triggerUser the instructor who triggered the batch run
+     * @return accepted response containing the generated run id
+     */
     public DeimosBatchTriggerResponseDTO triggerExerciseBatch(long exerciseId, DeimosBatchRequestDTO request, User triggerUser) {
         validateManualRequest(DeimosBatchScope.EXERCISE, exerciseId, request);
         String runId = UUID.randomUUID().toString();
