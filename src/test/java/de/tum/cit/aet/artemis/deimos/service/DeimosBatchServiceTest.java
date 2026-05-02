@@ -12,6 +12,8 @@ import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.stream.LongStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +21,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -70,6 +74,15 @@ class DeimosBatchServiceTest {
     @Test
     void triggerCourseBatchRejectsOversizedWindow() {
         ZonedDateTime from = ZonedDateTime.now().minusDays(40);
+        ZonedDateTime to = ZonedDateTime.now();
+
+        assertThatThrownBy(() -> deimosBatchService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(from, to), createTriggerUser())).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("configured maximum");
+    }
+
+    @Test
+    void triggerCourseBatchRejectsWindowSlightlyAboveMaximum() {
+        ZonedDateTime from = ZonedDateTime.now().minusDays(31).minusSeconds(1);
         ZonedDateTime to = ZonedDateTime.now();
 
         assertThatThrownBy(() -> deimosBatchService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(from, to), createTriggerUser())).isInstanceOf(BadRequestAlertException.class)
@@ -129,6 +142,29 @@ class DeimosBatchServiceTest {
     }
 
     @Test
+    void triggerCourseBatchSendsFailureNotificationWhenAnalysisThrows() {
+        ZonedDateTime from = ZonedDateTime.now().minusHours(8);
+        ZonedDateTime to = ZonedDateTime.now();
+
+        when(programmingSubmissionRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(2L);
+        when(programmingSubmissionRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of(101L, 102L)));
+        when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
+        when(deimosAnalysisService.analyze(any(), eq(DeimosTriggerType.MANUAL), eq(DeimosBatchScope.COURSE), eq(from), eq(to), eq(List.of(101L, 102L))))
+                .thenThrow(new IllegalStateException("LLM unavailable"));
+
+        var triggerUser = createTriggerUser();
+        var response = deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), triggerUser);
+
+        assertThat(response.status()).isEqualTo("ACCEPTED");
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, Object>> contextCaptor = ArgumentCaptor.forClass((Class<Map<String, Object>>) (Class<?>) Map.class);
+        verify(mailSendingService).buildAndSendAsync(any(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"), contextCaptor.capture());
+        assertThat(contextCaptor.getValue().get("analyzed")).isEqualTo(0L);
+        assertThat(contextCaptor.getValue().get("failed")).isEqualTo(2L);
+        assertThat(contextCaptor.getValue().get("maliciousCount")).isEqualTo(0L);
+    }
+
+    @Test
     void triggerCourseBatchRejectsParticipationLimitExceeded() {
         ZonedDateTime from = ZonedDateTime.now().minusDays(2);
         ZonedDateTime to = ZonedDateTime.now();
@@ -146,6 +182,56 @@ class DeimosBatchServiceTest {
 
         assertThatThrownBy(() -> deimosBatchService.triggerExerciseBatch(24L, new DeimosBatchRequestDTO(from, to), createTriggerUser()))
                 .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("participation limit");
+    }
+
+    @Test
+    void triggerCourseBatchRejectsWhenQueueIsFull() throws MalformedURLException {
+        ZonedDateTime from = ZonedDateTime.now().minusHours(2);
+        ZonedDateTime to = ZonedDateTime.now();
+        when(programmingSubmissionRepository.countDistinctParticipationIdsForCourseInRange(42L, from, to)).thenReturn(10L);
+
+        var rejectingBatchService = new DeimosBatchService(programmingSubmissionRepository, deimosAnalysisService, mailSendingService, courseRepository,
+                programmingExerciseRepository, URI.create("http://localhost:8080").toURL(), task -> {
+                    throw new RejectedExecutionException("queue full");
+                });
+
+        assertThatThrownBy(() -> rejectingBatchService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(from, to), createTriggerUser()))
+                .isInstanceOf(ResponseStatusException.class).satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE));
+    }
+
+    @Test
+    void triggerExerciseBatchRejectsWhenQueueIsFull() throws MalformedURLException {
+        ZonedDateTime from = ZonedDateTime.now().minusHours(2);
+        ZonedDateTime to = ZonedDateTime.now();
+        when(programmingSubmissionRepository.countDistinctParticipationIdsForExerciseInRange(24L, from, to)).thenReturn(10L);
+
+        var rejectingBatchService = new DeimosBatchService(programmingSubmissionRepository, deimosAnalysisService, mailSendingService, courseRepository,
+                programmingExerciseRepository, URI.create("http://localhost:8080").toURL(), task -> {
+                    throw new RejectedExecutionException("queue full");
+                });
+
+        assertThatThrownBy(() -> rejectingBatchService.triggerExerciseBatch(24L, new DeimosBatchRequestDTO(from, to), createTriggerUser()))
+                .isInstanceOf(ResponseStatusException.class).satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE));
+    }
+
+    @Test
+    void triggerCourseBatchSendsFailureNotificationWhenCollectionExceedsRuntimeLimit() {
+        ZonedDateTime from = ZonedDateTime.now().minusHours(2);
+        ZonedDateTime to = ZonedDateTime.now();
+        when(programmingSubmissionRepository.countDistinctParticipationIdsForCourseInRange(42L, from, to)).thenReturn(PARTICIPATION_LIMIT);
+        when(programmingSubmissionRepository.findParticipationIdsForCourseInRange(eq(42L), eq(from), eq(to), any(Pageable.class)))
+                .thenReturn(new SliceImpl<>(LongStream.rangeClosed(1, PARTICIPATION_LIMIT + 1).boxed().toList()));
+        when(courseRepository.getCourseTitle(42L)).thenReturn("Course 42");
+
+        var response = deimosBatchService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(from, to), createTriggerUser());
+
+        assertThat(response.status()).isEqualTo("ACCEPTED");
+        verify(deimosAnalysisService, Mockito.never()).analyze(any(), any(), any(), any(), any(), any());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, Object>> contextCaptor = ArgumentCaptor.forClass((Class<Map<String, Object>>) (Class<?>) Map.class);
+        verify(mailSendingService).buildAndSendAsync(any(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"), contextCaptor.capture());
+        assertThat(contextCaptor.getValue().get("analyzed")).isEqualTo(0L);
+        assertThat(contextCaptor.getValue().get("failed")).isEqualTo(1L);
     }
 
     private static User createTriggerUser() {

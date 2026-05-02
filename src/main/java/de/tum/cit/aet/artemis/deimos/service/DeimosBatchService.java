@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
@@ -22,7 +23,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -84,26 +87,47 @@ public class DeimosBatchService {
     public DeimosBatchTriggerResponseDTO triggerCourseBatch(long courseId, DeimosBatchRequestDTO request, User triggerUser) {
         validateManualRequest(DeimosBatchScope.COURSE, courseId, request);
         String runId = UUID.randomUUID().toString();
-        deimosTaskExecutor.execute(() -> runManualBatch(runId, DeimosBatchScope.COURSE, courseId, request.from(), request.to(), triggerUser));
+        try {
+            deimosTaskExecutor.execute(() -> runManualBatch(runId, DeimosBatchScope.COURSE, courseId, request.from(), request.to(), triggerUser));
+        }
+        catch (RejectedExecutionException ex) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "The Deimos queue is currently full. Please try again shortly.", ex);
+        }
         return new DeimosBatchTriggerResponseDTO(runId, "ACCEPTED");
     }
 
     public DeimosBatchTriggerResponseDTO triggerExerciseBatch(long exerciseId, DeimosBatchRequestDTO request, User triggerUser) {
         validateManualRequest(DeimosBatchScope.EXERCISE, exerciseId, request);
         String runId = UUID.randomUUID().toString();
-        deimosTaskExecutor.execute(() -> runManualBatch(runId, DeimosBatchScope.EXERCISE, exerciseId, request.from(), request.to(), triggerUser));
+        try {
+            deimosTaskExecutor.execute(() -> runManualBatch(runId, DeimosBatchScope.EXERCISE, exerciseId, request.from(), request.to(), triggerUser));
+        }
+        catch (RejectedExecutionException ex) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "The Deimos queue is currently full. Please try again shortly.", ex);
+        }
         return new DeimosBatchTriggerResponseDTO(runId, "ACCEPTED");
     }
 
     private void runManualBatch(String runId, DeimosBatchScope scope, long scopeId, ZonedDateTime from, ZonedDateTime to, User triggerUser) {
-        List<Long> participationIds = switch (scope) {
-            case COURSE -> collectParticipationIds(pageable -> programmingSubmissionRepository.findParticipationIdsForCourseInRange(scopeId, from, to, pageable));
-            case EXERCISE -> collectParticipationIds(pageable -> programmingSubmissionRepository.findParticipationIdsForExerciseInRange(scopeId, from, to, pageable));
-        };
+        List<Long> participationIds = List.of();
+        try {
+            participationIds = switch (scope) {
+                case COURSE -> collectParticipationIds(pageable -> programmingSubmissionRepository.findParticipationIdsForCourseInRange(scopeId, from, to, pageable));
+                case EXERCISE -> collectParticipationIds(pageable -> programmingSubmissionRepository.findParticipationIdsForExerciseInRange(scopeId, from, to, pageable));
+            };
 
-        DeimosBatchSummaryDTO summary = deimosAnalysisService.analyze(runId, DeimosTriggerType.MANUAL, scope, from, to, participationIds);
-        sendManualRunFinishedNotification(scope, scopeId, summary, triggerUser);
-        log.info("Deimos manual batch {} finished with {} analyzed participations", runId, summary.analyzed());
+            DeimosBatchSummaryDTO summary = deimosAnalysisService.analyze(runId, DeimosTriggerType.MANUAL, scope, from, to, participationIds);
+            sendManualRunFinishedNotification(scope, scopeId, summary, triggerUser);
+            log.info("Deimos manual batch {} finished with {} analyzed participations", runId, summary.analyzed());
+        }
+        catch (Exception ex) {
+            long totalCandidates = participationIds.size();
+            long failed = totalCandidates > 0 ? totalCandidates : 1;
+            DeimosBatchSummaryDTO failureSummary = new DeimosBatchSummaryDTO(runId, DeimosTriggerType.MANUAL.name(), scope.name(), from, to, totalCandidates, 0, 0, 0, failed,
+                    List.of());
+            log.error("Deimos manual batch {} failed for scope {} with id {}", runId, scope, scopeId, ex);
+            sendManualRunFinishedNotification(scope, scopeId, failureSummary, triggerUser);
+        }
     }
 
     private void sendManualRunFinishedNotification(DeimosBatchScope scope, long scopeId, DeimosBatchSummaryDTO summary, User triggerUser) {
@@ -124,6 +148,10 @@ public class DeimosBatchService {
             var exerciseScopeInfo = programmingExerciseRepository.findDeimosExerciseScopeInfoById(scopeId).orElse(null);
             if (exerciseScopeInfo == null) {
                 log.warn("Skipping Deimos completion email: could not resolve exercise {}", scopeId);
+                return;
+            }
+            if (exerciseScopeInfo.courseId() == null) {
+                log.warn("Skipping Deimos completion email: could not resolve owning course for exercise {}", scopeId);
                 return;
             }
 
@@ -175,6 +203,9 @@ public class DeimosBatchService {
         while (true) {
             Slice<Long> slice = sliceProvider.apply(pageable);
             ids.addAll(slice.getContent());
+            if (ids.size() > MAX_PARTICIPATIONS_PER_RUN) {
+                throw new IllegalStateException("Participation count exceeded " + MAX_PARTICIPATIONS_PER_RUN + " during collection");
+            }
             if (!slice.hasNext()) {
                 break;
             }
@@ -187,8 +218,8 @@ public class DeimosBatchService {
         if (request.from().isAfter(request.to())) {
             throw new BadRequestAlertException("The start date must be before or equal to the end date", DEIMOS_ENTITY_NAME, "invalidRange");
         }
-        long days = Duration.between(request.from(), request.to()).toDays();
-        if (days > MAX_MANUAL_WINDOW_DAYS) {
+        Duration selectedWindow = Duration.between(request.from(), request.to());
+        if (selectedWindow.compareTo(Duration.ofDays(MAX_MANUAL_WINDOW_DAYS)) > 0) {
             throw new BadRequestAlertException("The selected window exceeds the configured maximum", DEIMOS_ENTITY_NAME, "windowTooLarge");
         }
         long participationCount = switch (scope) {

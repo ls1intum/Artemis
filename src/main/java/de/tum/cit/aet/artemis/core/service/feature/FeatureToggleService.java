@@ -130,6 +130,10 @@ public class FeatureToggleService {
             features.put(Feature.AutonomousTutor, false);
         }
 
+        if (!features.containsKey(Feature.ApollonQuizDragAndDrop)) {
+            features.put(Feature.ApollonQuizDragAndDrop, false);
+        }
+
         if (!features.containsKey(Feature.Deimos)) {
             features.put(Feature.Deimos, false);
         }
