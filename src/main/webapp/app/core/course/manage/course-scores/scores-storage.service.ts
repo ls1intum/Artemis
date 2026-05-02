@@ -1,7 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { ParticipationResultDTO } from 'app/core/course/shared/entities/course-for-dashboard-dto';
 import { ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * This service is used to store course scores and participation results (the relevant result used for the score calculation for each participation) for the currently logged-in user.
@@ -9,7 +11,9 @@ import { CourseScores } from 'app/core/course/manage/course-scores/course-scores
  * This way, multiple components that need the scores and participation results can access them without having to retrieve them again from the server.
  */
 @Injectable({ providedIn: 'root' })
-export class ScoresStorageService {
+export class ScoresStorageService implements OnDestroy {
+    private readonly accountService = inject(AccountService);
+
     /**
      * This map stores the {@link CourseScores} object for each {@link Course} that the currently logged-in user has access to. The number is the id of the course.
      */
@@ -25,6 +29,32 @@ export class ScoresStorageService {
      * This map stores the {@link Result} object for each {@link Participation} of the currently logged-in user. The number is the id of the participation.
      */
     private storedParticipationResults: Map<number, ParticipationResultDTO> = new Map();
+
+    private currentUserId?: number;
+    private authenticationStateSubscription: Subscription;
+
+    constructor() {
+        this.currentUserId = this.accountService.userIdentity()?.id;
+        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
+            if (this.currentUserId !== user?.id) {
+                this.currentUserId = user?.id;
+                this.resetState();
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.authenticationStateSubscription?.unsubscribe();
+    }
+
+    /**
+     * Clears all stored scores. Called on logout / user change to avoid leaking the previous user's scores.
+     */
+    private resetState(): void {
+        this.storedTotalScores.clear();
+        this.storedScoresPerExerciseType.clear();
+        this.storedParticipationResults.clear();
+    }
 
     getStoredTotalScores(courseId: number): CourseScores | undefined {
         return this.storedTotalScores.get(courseId);

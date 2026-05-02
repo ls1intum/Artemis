@@ -198,7 +198,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         List<Feedback> feedbacks = request.getList(
                 "/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
 
-        assertThat(feedbacks).isEqualTo(result.getFeedbacks());
+        assertThat(feedbacks).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
     }
 
     @Test

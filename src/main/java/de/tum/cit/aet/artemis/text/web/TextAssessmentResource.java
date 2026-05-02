@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.text.web;
 
 import static java.util.stream.Collectors.toSet;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -185,7 +187,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final Result result = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
         final Submission submission = result.getSubmission();
         final TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
-        final List<Feedback> feedbacksWithIds = result.getFeedbacks();
+        final Set<Feedback> feedbacksWithIds = result.getFeedbacks();
         saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
         return ResponseEntity.ok(result);
     }
@@ -493,7 +495,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param textSubmission to associate blocks with
      * @param feedbacks      the feedbacks to associate with the blocks
      */
-    private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
+    private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final Collection<Feedback> feedbacks) {
         if (textBlocks == null) {
             return;
         }
@@ -521,9 +523,9 @@ public class TextAssessmentResource extends AssessmentResource {
     /**
      * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
      */
-    private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
+    private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final Collection<Feedback> feedbacks) {
         if (athenaFeedbackApi.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
-            athenaFeedbackApi.get().sendFeedback(exercise, textSubmission, feedbacks);
+            athenaFeedbackApi.get().sendFeedback(exercise, textSubmission, new ArrayList<>(feedbacks));
         }
     }
 }
