@@ -145,7 +145,6 @@ public class DeimosAnalysisService {
 
             var sb = new StringBuilder();
             Map<String, String> previousFiles = templateFiles;
-            Map<String, String> latestFiles = templateFiles;
 
             for (int i = 0; i < submissions.size(); i++) {
                 ProgrammingSubmission submission = submissions.get(i);
@@ -164,10 +163,9 @@ public class DeimosAnalysisService {
                 }
 
                 previousFiles = currentFiles;
-                latestFiles = currentFiles;
             }
 
-            String cumulativeDiff = buildDiff(templateFiles, latestFiles);
+            String cumulativeDiff = buildDiff(templateFiles, previousFiles);
             if (!cumulativeDiff.isEmpty()) {
                 sb.append("=== Final state vs. template ===\n");
                 sb.append(cumulativeDiff);
