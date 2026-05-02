@@ -145,6 +145,7 @@ public class DeimosAnalysisService {
 
             var sb = new StringBuilder();
             Map<String, String> previousFiles = templateFiles;
+            int emittedCommits = 0;
 
             for (int i = 0; i < submissions.size(); i++) {
                 ProgrammingSubmission submission = submissions.get(i);
@@ -157,8 +158,8 @@ public class DeimosAnalysisService {
 
                 if (!incrementalDiff.isEmpty()) {
                     String timestamp = submission.getSubmissionDate() != null ? submission.getSubmissionDate().toString() : "unknown";
-                    sb.append("=== Commit ").append(i + 1).append(" (").append(submission.getCommitHash(), 0, Math.min(8, submission.getCommitHash().length())).append(", ")
-                            .append(timestamp).append(") ===\n");
+                    sb.append("=== Commit ").append(++emittedCommits).append(" (").append(submission.getCommitHash(), 0, Math.min(8, submission.getCommitHash().length()))
+                            .append(", ").append(timestamp).append(") ===\n");
                     sb.append(incrementalDiff).append("\n\n");
                 }
 
