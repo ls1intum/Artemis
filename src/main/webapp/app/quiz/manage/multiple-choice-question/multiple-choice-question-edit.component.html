@@ -22,7 +22,7 @@
                 <div class="question-score">
                     <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
                     <p-inputnumber
-                        inputId="score"
+                        [inputId]="'score-' + questionIndex()"
                         styleClass="score-input"
                         [(ngModel)]="question().points!"
                         (ngModelChange)="questionUpdated.emit()"
@@ -32,11 +32,21 @@
                 </div>
                 <div class="question-action-buttons">
                     @if (hyperionEnabled()) {
-                        <button type="button" class="question-action-btn question-action-btn--refine" aria-label="Refine question" (click)="refineAndExpand()">
+                        <button
+                            type="button"
+                            class="question-action-btn question-action-btn--refine"
+                            attr.aria-label="{{ 'artemisApp.quizExercise.refineQuestion' | artemisTranslate }}"
+                            (click)="refineAndExpand()"
+                        >
                             <fa-icon [icon]="faWandMagicSparkles" />
                         </button>
                     }
-                    <button type="button" class="question-action-btn question-action-btn--delete" aria-label="Delete question" (click)="deleteQuestion()">
+                    <button
+                        type="button"
+                        class="question-action-btn question-action-btn--delete"
+                        attr.aria-label="{{ 'artemisApp.quizExercise.deleteQuestion' | artemisTranslate }}"
+                        (click)="deleteQuestion()"
+                    >
                         <fa-icon [icon]="faTrash" />
                     </button>
                 </div>
@@ -148,7 +158,7 @@
             }
             <div [ngClass]="reEvaluationInProgress() ? 'col-12 col-lg-3' : ''">
                 <div class="form-group">
-                    <div class="flex align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2">
                         <p-checkbox
                             inputId="{{ 'cbRandomizeOrderMC' + questionIndex() }}"
                             [(ngModel)]="question().randomizeOrder"
@@ -161,7 +171,7 @@
             </div>
             @if (!reEvaluationInProgress()) {
                 <div class="form-group">
-                    <div class="flex align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2">
                         <p-checkbox
                             inputId="{{ 'cbSingleChoiceMC' + questionIndex() }}"
                             [(ngModel)]="question().singleChoice"

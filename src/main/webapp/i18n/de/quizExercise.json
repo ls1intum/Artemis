@@ -111,6 +111,8 @@
                 "editNotPossibleDuringQuiz": "Während des Quizzes ist eine Bearbeitung nicht möglich. Nach dem Ende des Quizzes kannst du eine Re-Evaluierung durchführen.",
                 "editNotPossibleAfterEnd": "Nach dem Ende der Quiz-Bearbeitungszeit ist eine Bearbeitung nicht möglich."
             },
+            "deleteQuestion": "Frage löschen",
+            "refineQuestion": "Frage verfeinern",
             "editNotPossibleDuringQuiz": "Während des Quizzes ist eine Bearbeitung nicht möglich.",
             "saveError": "Beim Speichern ist ein Fehler ist aufgetreten. Bitte überprüfe deine Eingabe und versuche es später noch einmal.",
             "export": {

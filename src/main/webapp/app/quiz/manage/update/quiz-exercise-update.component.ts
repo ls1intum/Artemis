@@ -1,3 +1,4 @@
+import { JsonPipe } from '@angular/common';
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
@@ -120,6 +121,7 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
         InputNumberModule,
         FormDateTimePickerComponent,
         QuizAiGenerationModalComponent,
+        JsonPipe,
     ],
 })
 export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
@@ -217,7 +219,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     readonly difficultyOptions = computed(() => {
         this.currentLocale();
         return [
-            { label: this.translateService.instant('artemisApp.exercise.noLevel'), value: null },
+            { label: this.translateService.instant('artemisApp.exercise.noLevel'), value: undefined },
             { label: this.translateService.instant('artemisApp.exercise.easy'), value: DifficultyLevel.EASY },
             { label: this.translateService.instant('artemisApp.exercise.medium'), value: DifficultyLevel.MEDIUM },
             { label: this.translateService.instant('artemisApp.exercise.hard'), value: DifficultyLevel.HARD },
@@ -926,18 +928,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             this.quizExercise.dueDateError ||
             this.hasErrorInQuizBatches()
         );
-    }
-
-    getInvalidReasonsTooltip(): string {
-        return this.computeInvalidReasons()
-            .map((r) => this.translateService.instant(r.translateKey, r.translateValues))
-            .join('\n');
-    }
-
-    getWarningsTooltip(): string {
-        return this.computeInvalidWarnings()
-            .map((w) => this.translateService.instant(w.translateKey, w.translateValues))
-            .join('\n');
     }
 
     get saveButtonTooltip(): string {

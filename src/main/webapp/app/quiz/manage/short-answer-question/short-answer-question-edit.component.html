@@ -31,7 +31,12 @@
                     />
                 </div>
                 <div class="question-action-buttons">
-                    <button type="button" class="question-action-btn question-action-btn--delete" aria-label="Delete question" (click)="deleteQuestion()">
+                    <button
+                        type="button"
+                        class="question-action-btn question-action-btn--delete"
+                        attr.aria-label="{{ 'artemisApp.quizExercise.deleteQuestion' | artemisTranslate }}"
+                        (click)="deleteQuestion()"
+                    >
                         <fa-icon [icon]="faTrash" />
                     </button>
                 </div>
@@ -232,7 +237,7 @@
                         </div>
                     </div>
                     <div class="col-12 col-lg-3" style="padding: 0 0.5rem">
-                        <div class="flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2">
                             <input
                                 #inputElement
                                 type="checkbox"
@@ -245,7 +250,7 @@
                         </div>
                     </div>
                     <div class="col-12 col-lg-3" style="padding: 0 0.5rem">
-                        <div class="flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2">
                             <p-checkbox
                                 inputId="{{ 'cbMatchLetterCase' + questionIndex() }}"
                                 [(ngModel)]="shortAnswerQuestion.matchLetterCase"

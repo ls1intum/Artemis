@@ -111,6 +111,8 @@
                 "editNotPossibleDuringQuiz": "During the quiz, editing is not possible. You can re-evaluate after the quiz has finished.",
                 "editNotPossibleAfterEnd": "After the end of the quiz working time, editing is not possible."
             },
+            "deleteQuestion": "Delete question",
+            "refineQuestion": "Refine question",
             "editNotPossibleDuringQuiz": "Editing is not possible during the quiz.",
             "saveError": "An error occurred while saving. Please review your input data and try again later.",
             "export": {

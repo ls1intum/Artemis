@@ -22,7 +22,7 @@
                 <div class="question-score">
                     <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
                     <p-inputnumber
-                        inputId="score"
+                        [inputId]="'score-' + questionIndex()"
                         styleClass="score-input"
                         [(ngModel)]="question().points!"
                         (ngModelChange)="questionUpdated.emit()"
@@ -31,7 +31,12 @@
                     />
                 </div>
                 <div class="question-action-buttons">
-                    <button type="button" class="question-action-btn question-action-btn--delete" aria-label="Delete question" (click)="deleteQuestion()">
+                    <button
+                        type="button"
+                        class="question-action-btn question-action-btn--delete"
+                        attr.aria-label="{{ 'artemisApp.quizExercise.deleteQuestion' | artemisTranslate }}"
+                        (click)="deleteQuestion()"
+                    >
                         <fa-icon [icon]="faTrash" />
                     </button>
                 </div>
@@ -125,7 +130,7 @@
                     <jhi-quiz-scoring-info-modal />
                 </div>
                 <div class="form-group">
-                    <div class="flex align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2">
                         <p-checkbox
                             inputId="{{ 'cbRandomizeOrderDnD' + questionIndex() }}"
                             [(ngModel)]="question().randomizeOrder"
