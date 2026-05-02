@@ -22,7 +22,7 @@
                 <div class="question-score">
                     <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
                     <p-inputnumber
-                        inputId="score"
+                        [inputId]="'score-' + questionIndex()"
                         styleClass="score-input"
                         [(ngModel)]="shortAnswerQuestion.points"
                         (ngModelChange)="questionUpdated.emit()"
