@@ -86,7 +86,14 @@ public class DeimosAnalysisService {
                     continue;
                 }
 
-                DeimosLlmRequest request = buildPrompt(participationId, programmingParticipation);
+                String commitHistory = buildParticipationCommitHistory(participationId, programmingParticipation);
+                if (commitHistory.isBlank()) {
+                    log.info("Skipping Deimos analysis for participation {}: no commit history available", participationId);
+                    failed++;
+                    continue;
+                }
+
+                DeimosLlmRequest request = buildPrompt(participationId, commitHistory);
                 DeimosLlmResponse response = deimosLlmClient.analyze(request);
                 long exerciseId = 0L;
                 if (programmingParticipation.getProgrammingExercise() != null && programmingParticipation.getProgrammingExercise().getId() != null) {
@@ -112,8 +119,7 @@ public class DeimosAnalysisService {
                 List.copyOf(analyzedParticipations));
     }
 
-    private DeimosLlmRequest buildPrompt(long participationId, ProgrammingExerciseParticipation participation) {
-        String commitHistory = buildParticipationCommitHistory(participationId, participation);
+    private DeimosLlmRequest buildPrompt(long participationId, String commitHistory) {
         String systemPrompt = deimosPromptTemplateService.render(SYSTEM_PROMPT_PATH, Map.of());
         String userPrompt = deimosPromptTemplateService.render(USER_PROMPT_PATH, Map.of("participationId", String.valueOf(participationId), "commitHistory", commitHistory));
         return new DeimosLlmRequest(participationId, systemPrompt, userPrompt);

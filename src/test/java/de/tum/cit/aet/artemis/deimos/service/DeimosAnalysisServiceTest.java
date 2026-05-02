@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.deimos.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -174,6 +175,30 @@ class DeimosAnalysisServiceTest {
         verify(deimosLlmClient).analyze(requestCaptor.capture());
 
         assertThat(requestCaptor.getValue().userPrompt()).contains("### Deleted: src/Helper.java");
+    }
+
+    @Test
+    void analyzeSkipsParticipationWhenCommitHistoryIsEmpty() {
+        long participationId = 40L;
+        var participation = Mockito.mock(ProgrammingExerciseStudentParticipation.class);
+        var exercise = new ProgrammingExercise();
+        exercise.setId(42L);
+        var repoUri = Mockito.mock(LocalVCRepositoryUri.class);
+
+        when(studentParticipationRepository.findById(participationId)).thenReturn(Optional.of(participation));
+        when(participation.getProgrammingExercise()).thenReturn(exercise);
+        when(participation.getVcsRepositoryUri()).thenReturn(repoUri);
+        when(programmingSubmissionRepository.findByParticipationIdOrderBySubmissionDateAsc(participationId)).thenReturn(List.of());
+
+        DeimosBatchSummaryDTO summary = deimosAnalysisService.analyze("run-4", DeimosTriggerType.MANUAL, DeimosBatchScope.EXERCISE, ZonedDateTime.now().minusHours(2),
+                ZonedDateTime.now(), List.of(participationId));
+
+        verify(deimosLlmClient, never()).analyze(any());
+        assertThat(summary.failed()).isEqualTo(1);
+        assertThat(summary.analyzed()).isZero();
+        assertThat(summary.maliciousCount()).isZero();
+        assertThat(summary.benignCount()).isZero();
+        assertThat(summary.analyzedParticipations()).isEmpty();
     }
 
     private static ProgrammingSubmission createSubmission(long id, String commitHash, ZonedDateTime submissionDate) {
