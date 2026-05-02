@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.lti.dto;
 
 import java.util.Objects;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -19,7 +18,7 @@ import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record OnlineCourseConfigurationDTO(Long id, @NotBlank String userPrefix, @NotNull Boolean requireExistingUser,
-        @Valid @Nullable LtiPlatformConfigurationDTO ltiPlatformConfiguration) {
+        @Nullable LtiPlatformConfigurationDTO ltiPlatformConfiguration) {
 
     public static OnlineCourseConfigurationDTO of(OnlineCourseConfiguration config) {
         return new OnlineCourseConfigurationDTO(config.getId(), config.getUserPrefix(), config.isRequireExistingUser(),

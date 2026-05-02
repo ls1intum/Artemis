@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lti;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
@@ -13,6 +14,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,9 +31,14 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
+import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.dto.LtiPlatformConfigurationDTO;
 import de.tum.cit.aet.artemis.lti.dto.LtiPlatformConfigurationUpdateDTO;
 
@@ -187,6 +195,45 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         assertThat(addedLtiPlatform.get().getAuthorizationUri()).isEqualTo(platformToCreate.getAuthorizationUri());
         assertThat(addedLtiPlatform.get().getJwkSetUri()).isEqualTo(platformToCreate.getJwkSetUri());
         assertThat(addedLtiPlatform.get().getTokenUri()).isEqualTo(platformToCreate.getTokenUri());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateOnlineCourseConfigurationAcceptsPlatformReferenceOnly() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+
+        LtiPlatformConfiguration platform = new LtiPlatformConfiguration();
+        fillLtiPlatformConfig(platform);
+        LtiPlatformConfiguration savedPlatform = ltiPlatformConfigurationRepository.save(platform);
+        doReturn(Optional.of(savedPlatform)).when(ltiPlatformConfigurationRepository).findByRegistrationId(savedPlatform.getRegistrationId());
+        doReturn(savedPlatform).when(ltiPlatformConfigurationRepository).findByIdElseThrow(savedPlatform.getId());
+        doReturn(savedPlatform).when(ltiPlatformConfigurationRepository).findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(anyLong());
+
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>(), "student", "tutor", "editor",
+                TEST_PREFIX + "instructor");
+        course.setOnlineCourse(true);
+
+        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
+        onlineCourseConfiguration.setUserPrefix("prefix");
+        onlineCourseConfiguration.setRequireExistingUser(false);
+        onlineCourseConfiguration.setCourse(course);
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        Course savedCourse = courseRepository.saveAndFlush(course);
+
+        ObjectNode platformPayload = objectMapper.createObjectNode();
+        platformPayload.put("id", savedPlatform.getId());
+        platformPayload.put("registrationId", savedPlatform.getRegistrationId());
+        ObjectNode payload = objectMapper.createObjectNode();
+        payload.put("id", savedCourse.getOnlineCourseConfiguration().getId());
+        payload.put("userPrefix", "prefix");
+        payload.put("requireExistingUser", false);
+        payload.set("ltiPlatformConfiguration", platformPayload);
+
+        MvcResult mvcResult = request.performMvcRequest(put("/api/lti/courses/{courseId}/online-course-configuration", savedCourse.getId()).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(payload))).andExpect(status().isOk()).andReturn();
+
+        JsonNode response = objectMapper.readTree(mvcResult.getResponse().getContentAsString());
+        assertThat(response.get("ltiPlatformConfiguration").get("id").asLong()).isEqualTo(savedPlatform.getId());
     }
 
     @Test
