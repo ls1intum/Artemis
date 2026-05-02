@@ -673,6 +673,8 @@ export class ExamStudentsComponent implements OnDestroy {
         this.exercisePreparationRunning.set(exPrepRunning);
         this.exercisePreparationPercentage.set(newStatus.overall ? Math.round((processedExams / newStatus.overall) * 100) : 100);
 
+        this.isAllExercisesPrepared.set(remainingExams === 0 && failedExams === 0);
+
         if (exPrepRunning && processedExams) {
             const passedSeconds = dayjs().diff(newStatus!.startedAt!, 's');
             const remainingSeconds = (passedSeconds / processedExams) * remainingExams;
@@ -684,7 +686,6 @@ export class ExamStudentsComponent implements OnDestroy {
             this.exercisePreparationEta.set((h ? h + 'h' : '') + (min || h ? min + 'm' : '') + (s || min || h ? s + 's' : ''));
         } else {
             this.exercisePreparationEta.set(undefined);
-            this.isAllExercisesPrepared.set(remainingExams === 0 && failedExams === 0);
         }
     }
 

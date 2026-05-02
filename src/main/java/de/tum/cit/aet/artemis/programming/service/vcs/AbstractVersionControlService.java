@@ -12,6 +12,7 @@ import org.eclipse.jgit.internal.JGitText;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.tum.cit.aet.artemis.core.exception.RepositoryAlreadyExistsException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -76,8 +77,12 @@ public abstract class AbstractVersionControlService implements VersionControlSer
                 : gitService.copyBareRepositoryWithoutHistory(sourceRepoUri, targetRepoUri, sourceBranch)) {
             return targetRepo.getRemoteRepositoryUri(); // should be the same as targetRepoUri
         }
-        catch (IOException | LargeObjectException ex) {
-            Path localPath = gitService.getDefaultLocalCheckOutPathOfRepo(targetRepoUri);
+        catch (RepositoryAlreadyExistsException ex) {
+            log.warn("Repository {} already exists while copying from {}. Reusing the existing repository.", targetRepoUri, sourceRepoUri);
+            return targetRepoUri;
+        }
+        catch (Exception ex) {
+            Path localPath = gitService.getLocalVCBareRepositoryPath(targetRepoUri);
             // clean up in case of an error
             try {
                 // or delete the folder if it exists

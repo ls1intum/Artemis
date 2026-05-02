@@ -1611,4 +1611,22 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     List<StudentParticipation> findByStudentIdsAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(@Param("studentIds") Collection<Long> studentIds,
             @Param("exercises") Collection<Exercise> exercises);
+
+    /**
+     * Counts all participations for an exercise that are properly initialized (INITIALIZED or FINISHED state), excluding test runs.
+     * Matches the frontend validation: participations must be in a state where students can work on the exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the number of participations in INITIALIZED or FINISHED state
+     */
+    @Query("""
+            SELECT COUNT(p)
+            FROM StudentParticipation p
+                LEFT JOIN p.exercise exercise
+            WHERE exercise.id = :exerciseId
+                AND p.testRun = FALSE
+                AND (p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.INITIALIZED
+                    OR p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.FINISHED)
+            """)
+    Long countInitializedParticipationsByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 }

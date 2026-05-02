@@ -72,6 +72,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
+import de.tum.cit.aet.artemis.core.exception.RepositoryAlreadyExistsException;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -345,6 +346,10 @@ public class GitService extends AbstractGitService {
 
     public Path getDefaultLocalCheckOutPathOfRepo(LocalVCRepositoryUri targetUrl) {
         return getLocalPathOfRepo(repoClonePath, targetUrl);
+    }
+
+    public Path getLocalVCBareRepositoryPath(LocalVCRepositoryUri targetUrl) {
+        return targetUrl.getLocalRepositoryPath(localVCBasePath);
     }
 
     /**
@@ -769,7 +774,7 @@ public class GitService extends AbstractGitService {
         var localTargetPath = localTargetRepoUri.getLocalRepositoryPath(localVCBasePath);
         try (org.eclipse.jgit.lib.Repository targetRepo = FileRepositoryBuilder.create(localTargetPath.toFile())) {
 
-            targetRepo.create(true); // true for bare
+            createBareRepositoryOrThrowAlreadyExists(targetRepo, localTargetPath);
             ObjectInserter inserter = targetRepo.newObjectInserter();
 
             // Get the HEAD tree of the source
@@ -845,7 +850,7 @@ public class GitService extends AbstractGitService {
         var localTargetRepoUri = new LocalVCRepositoryUri(targetRepoUri.toString());
         var localTargetPath = localTargetRepoUri.getLocalRepositoryPath(localVCBasePath);
         try (org.eclipse.jgit.lib.Repository targetRepo = FileRepositoryBuilder.create(localTargetPath.toFile())) {
-            targetRepo.create(true); // bare = true
+            createBareRepositoryOrThrowAlreadyExists(targetRepo, localTargetPath);
 
             try (ObjectInserter inserter = targetRepo.newObjectInserter(); RevWalk revWalk = new RevWalk(sourceRepo)) {
 
@@ -894,6 +899,15 @@ public class GitService extends AbstractGitService {
             }
 
             return getBareRepository(targetRepoUri, true);
+        }
+    }
+
+    private static void createBareRepositoryOrThrowAlreadyExists(org.eclipse.jgit.lib.Repository targetRepo, Path localTargetPath) throws IOException {
+        try {
+            targetRepo.create(true); // bare = true
+        }
+        catch (IllegalStateException ex) {
+            throw new RepositoryAlreadyExistsException(localTargetPath, ex);
         }
     }
 
