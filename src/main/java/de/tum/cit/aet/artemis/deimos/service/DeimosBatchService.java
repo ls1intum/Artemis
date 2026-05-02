@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchRequestDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO;
@@ -39,6 +40,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 @Lazy
 @Service
 public class DeimosBatchService {
+
+    private static final String DEIMOS_ENTITY_NAME = "deimos";
 
     private static final String DEIMOS_ANALYSIS_COMPLETE_EMAIL_SUBJECT = "email.deimos.analysisComplete.title";
 
@@ -182,18 +185,18 @@ public class DeimosBatchService {
 
     private void validateManualRequest(DeimosBatchScope scope, long scopeId, DeimosBatchRequestDTO request) {
         if (request.from().isAfter(request.to())) {
-            throw new IllegalArgumentException("The start date must be before or equal to the end date");
+            throw new BadRequestAlertException("The start date must be before or equal to the end date", DEIMOS_ENTITY_NAME, "invalidRange");
         }
         long days = Duration.between(request.from(), request.to()).toDays();
         if (days > MAX_MANUAL_WINDOW_DAYS) {
-            throw new IllegalArgumentException("The selected window exceeds the configured maximum");
+            throw new BadRequestAlertException("The selected window exceeds the configured maximum", DEIMOS_ENTITY_NAME, "windowTooLarge");
         }
         long participationCount = switch (scope) {
             case COURSE -> programmingSubmissionRepository.countDistinctParticipationIdsForCourseInRange(scopeId, request.from(), request.to());
             case EXERCISE -> programmingSubmissionRepository.countDistinctParticipationIdsForExerciseInRange(scopeId, request.from(), request.to());
         };
         if (participationCount > MAX_PARTICIPATIONS_PER_RUN) {
-            throw new IllegalArgumentException("The selected window exceeds the configured participation limit");
+            throw new BadRequestAlertException("The selected window exceeds the configured participation limit", DEIMOS_ENTITY_NAME, "participationLimitExceeded");
         }
     }
 }

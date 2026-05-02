@@ -22,6 +22,7 @@ import org.springframework.data.domain.SliceImpl;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchRequestDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO;
@@ -62,7 +63,7 @@ class DeimosBatchServiceTest {
         ZonedDateTime from = ZonedDateTime.now();
         ZonedDateTime to = from.minusHours(1);
 
-        assertThatThrownBy(() -> deimosBatchService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(from, to), createTriggerUser())).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> deimosBatchService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(from, to), createTriggerUser())).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("start date");
     }
 
@@ -71,7 +72,7 @@ class DeimosBatchServiceTest {
         ZonedDateTime from = ZonedDateTime.now().minusDays(40);
         ZonedDateTime to = ZonedDateTime.now();
 
-        assertThatThrownBy(() -> deimosBatchService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(from, to), createTriggerUser())).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> deimosBatchService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(from, to), createTriggerUser())).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("configured maximum");
     }
 
@@ -133,7 +134,7 @@ class DeimosBatchServiceTest {
         ZonedDateTime to = ZonedDateTime.now();
         when(programmingSubmissionRepository.countDistinctParticipationIdsForCourseInRange(42L, from, to)).thenReturn(PARTICIPATION_LIMIT + 1);
 
-        assertThatThrownBy(() -> deimosBatchService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(from, to), createTriggerUser())).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> deimosBatchService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(from, to), createTriggerUser())).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("participation limit");
     }
 
@@ -144,7 +145,7 @@ class DeimosBatchServiceTest {
         when(programmingSubmissionRepository.countDistinctParticipationIdsForExerciseInRange(24L, from, to)).thenReturn(PARTICIPATION_LIMIT + 1);
 
         assertThatThrownBy(() -> deimosBatchService.triggerExerciseBatch(24L, new DeimosBatchRequestDTO(from, to), createTriggerUser()))
-                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("participation limit");
+                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("participation limit");
     }
 
     private static User createTriggerUser() {
