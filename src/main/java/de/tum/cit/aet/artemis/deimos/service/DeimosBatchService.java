@@ -77,14 +77,14 @@ public class DeimosBatchService {
     }
 
     public DeimosBatchTriggerResponseDTO triggerCourseBatch(long courseId, DeimosBatchRequestDTO request, User triggerUser) {
-        validateManualRequest(request);
+        validateManualRequest(DeimosBatchScope.COURSE, courseId, request);
         String runId = UUID.randomUUID().toString();
         deimosTaskExecutor.execute(() -> runManualBatch(runId, DeimosBatchScope.COURSE, courseId, request.from(), request.to(), triggerUser));
         return new DeimosBatchTriggerResponseDTO(runId, "ACCEPTED");
     }
 
     public DeimosBatchTriggerResponseDTO triggerExerciseBatch(long exerciseId, DeimosBatchRequestDTO request, User triggerUser) {
-        validateManualRequest(request);
+        validateManualRequest(DeimosBatchScope.EXERCISE, exerciseId, request);
         String runId = UUID.randomUUID().toString();
         deimosTaskExecutor.execute(() -> runManualBatch(runId, DeimosBatchScope.EXERCISE, exerciseId, request.from(), request.to(), triggerUser));
         return new DeimosBatchTriggerResponseDTO(runId, "ACCEPTED");
@@ -170,9 +170,6 @@ public class DeimosBatchService {
         while (true) {
             Slice<Long> slice = sliceProvider.apply(pageable);
             ids.addAll(slice.getContent());
-            if (ids.size() > MAX_PARTICIPATIONS_PER_RUN) {
-                throw new IllegalArgumentException("Deimos batch exceeds configured participation limit");
-            }
             if (!slice.hasNext()) {
                 break;
             }
@@ -181,13 +178,20 @@ public class DeimosBatchService {
         return ids;
     }
 
-    private void validateManualRequest(DeimosBatchRequestDTO request) {
+    private void validateManualRequest(DeimosBatchScope scope, long scopeId, DeimosBatchRequestDTO request) {
         if (request.from().isAfter(request.to())) {
             throw new IllegalArgumentException("The start date must be before or equal to the end date");
         }
         long days = Duration.between(request.from(), request.to()).toDays();
         if (days > MAX_MANUAL_WINDOW_DAYS) {
             throw new IllegalArgumentException("The selected window exceeds the configured maximum");
+        }
+        long participationCount = switch (scope) {
+            case COURSE -> programmingSubmissionRepository.countDistinctParticipationIdsForCourseInRange(scopeId, request.from(), request.to());
+            case EXERCISE -> programmingSubmissionRepository.countDistinctParticipationIdsForExerciseInRange(scopeId, request.from(), request.to());
+        };
+        if (participationCount > MAX_PARTICIPATIONS_PER_RUN) {
+            throw new IllegalArgumentException("The selected window exceeds the configured participation limit");
         }
     }
 }

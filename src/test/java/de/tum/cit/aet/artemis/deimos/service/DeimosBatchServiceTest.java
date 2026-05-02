@@ -32,6 +32,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 
 class DeimosBatchServiceTest {
 
+    private static final long PARTICIPATION_LIMIT = 5000L;
+
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private DeimosAnalysisService deimosAnalysisService;
@@ -78,6 +80,7 @@ class DeimosBatchServiceTest {
         ZonedDateTime from = ZonedDateTime.now().minusDays(1);
         ZonedDateTime to = ZonedDateTime.now();
 
+        when(programmingSubmissionRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(2L);
         when(programmingSubmissionRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of(101L, 102L)));
         when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
         when(deimosAnalysisService.analyze(any(), eq(DeimosTriggerType.MANUAL), eq(DeimosBatchScope.COURSE), eq(from), eq(to), eq(List.of(101L, 102L))))
@@ -107,6 +110,7 @@ class DeimosBatchServiceTest {
         ZonedDateTime from = ZonedDateTime.now().minusHours(8);
         ZonedDateTime to = ZonedDateTime.now();
 
+        when(programmingSubmissionRepository.countDistinctParticipationIdsForExerciseInRange(12L, from, to)).thenReturn(2L);
         when(programmingSubmissionRepository.findParticipationIdsForExerciseInRange(eq(12L), eq(from), eq(to), any(Pageable.class)))
                 .thenReturn(new SliceImpl<>(List.of(201L, 202L)));
         when(programmingExerciseRepository.findDeimosExerciseScopeInfoById(12L))
@@ -121,6 +125,26 @@ class DeimosBatchServiceTest {
         var userCaptor = ArgumentCaptor.forClass(User.class);
         verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"), any());
         assertThat(userCaptor.getValue()).isEqualTo(triggerUser);
+    }
+
+    @Test
+    void triggerCourseBatchRejectsParticipationLimitExceeded() {
+        ZonedDateTime from = ZonedDateTime.now().minusDays(2);
+        ZonedDateTime to = ZonedDateTime.now();
+        when(programmingSubmissionRepository.countDistinctParticipationIdsForCourseInRange(42L, from, to)).thenReturn(PARTICIPATION_LIMIT + 1);
+
+        assertThatThrownBy(() -> deimosBatchService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(from, to), createTriggerUser())).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("participation limit");
+    }
+
+    @Test
+    void triggerExerciseBatchRejectsParticipationLimitExceeded() {
+        ZonedDateTime from = ZonedDateTime.now().minusDays(2);
+        ZonedDateTime to = ZonedDateTime.now();
+        when(programmingSubmissionRepository.countDistinctParticipationIdsForExerciseInRange(24L, from, to)).thenReturn(PARTICIPATION_LIMIT + 1);
+
+        assertThatThrownBy(() -> deimosBatchService.triggerExerciseBatch(24L, new DeimosBatchRequestDTO(from, to), createTriggerUser()))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("participation limit");
     }
 
     private static User createTriggerUser() {
