@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.deimos.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.Duration;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -15,6 +17,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.web.client.RestClient;
 
 /**
  * Dedicated Spring AI configuration for the Deimos module.
@@ -32,13 +36,29 @@ public class DeimosLlmConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(DeimosLlmConfiguration.class);
 
+    /**
+     * Creates the dedicated OpenAI API client used by Deimos with bounded connect/read timeouts.
+     *
+     * @param baseUrl         the base URL of the self-hosted LLM endpoint
+     * @param apiKey          the API key used for authentication
+     * @param completionsPath the completions endpoint path
+     * @param timeoutSeconds  timeout in seconds applied to connect/read operations
+     * @return configured OpenAI API client for Deimos
+     */
     @Bean
     @Qualifier("deimosOpenAiApi")
     @Lazy
     public OpenAiApi deimosOpenAiApi(@Value("${artemis.deimos.llm.base-url}") String baseUrl, @Value("${artemis.deimos.llm.api-key}") String apiKey,
-            @Value("${artemis.deimos.llm.completions-path:/api/chat/completions}") String completionsPath) {
-        log.info("Configuring Deimos OpenAI API: base-url={}, completions-path={}", baseUrl, completionsPath);
-        return OpenAiApi.builder().baseUrl(baseUrl).apiKey(apiKey).completionsPath(completionsPath).build();
+            @Value("${artemis.deimos.llm.completions-path:/api/chat/completions}") String completionsPath, @Value("${artemis.deimos.llm.timeout-seconds:90}") long timeoutSeconds) {
+        Duration timeout = Duration.ofSeconds(timeoutSeconds);
+        log.info("Configuring Deimos OpenAI API: base-url={}, completions-path={}, timeout={}", baseUrl, completionsPath, timeout);
+
+        var requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(timeout);
+        requestFactory.setReadTimeout(timeout);
+        RestClient.Builder restClientBuilder = RestClient.builder().requestFactory(requestFactory);
+
+        return OpenAiApi.builder().baseUrl(baseUrl).apiKey(apiKey).completionsPath(completionsPath).restClientBuilder(restClientBuilder).build();
     }
 
     @Bean
