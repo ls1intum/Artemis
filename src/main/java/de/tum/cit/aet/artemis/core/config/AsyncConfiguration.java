@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.aop.interceptor.SimpleAsyncUncaughtExceptionHandler;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.task.TaskExecutionProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,6 +46,26 @@ public class AsyncConfiguration implements AsyncConfigurer {
         executor.setMaxPoolSize(taskExecutionProperties.getPool().getMaxSize());
         executor.setQueueCapacity(taskExecutionProperties.getPool().getQueueCapacity());
         executor.setThreadNamePrefix(taskExecutionProperties.getThreadNamePrefix());
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
+     * Dedicated executor for Deimos batch runs to isolate long-running LLM workloads from the shared async infrastructure.
+     *
+     * @param corePoolSize  minimum number of threads kept in the Deimos executor
+     * @param maxPoolSize   maximum number of threads used by the Deimos executor
+     * @param queueCapacity maximum number of queued Deimos batch tasks
+     * @return async executor dedicated to Deimos workloads
+     */
+    @Bean(name = "deimosTaskExecutor")
+    public Executor deimosTaskExecutor(@Value("${artemis.deimos.executor.core-pool-size:2}") int corePoolSize, @Value("${artemis.deimos.executor.max-pool-size:4}") int maxPoolSize,
+            @Value("${artemis.deimos.executor.queue-capacity:25}") int queueCapacity) {
+        log.debug("Creating Deimos Async Task Executor (core={}, max={}, queue={})", corePoolSize, maxPoolSize, queueCapacity);
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(corePoolSize);
+        executor.setMaxPoolSize(maxPoolSize);
+        executor.setQueueCapacity(queueCapacity);
+        executor.setThreadNamePrefix("deimos-task-");
         return new ExceptionHandlingAsyncTaskExecutor(executor);
     }
 

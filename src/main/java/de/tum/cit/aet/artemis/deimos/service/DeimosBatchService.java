@@ -54,7 +54,7 @@ public class DeimosBatchService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final TaskExecutor taskExecutor;
+    private final TaskExecutor deimosTaskExecutor;
 
     private final URL artemisServerUrl;
 
@@ -66,27 +66,27 @@ public class DeimosBatchService {
 
     public DeimosBatchService(ProgrammingSubmissionRepository programmingSubmissionRepository, DeimosAnalysisService deimosAnalysisService, MailSendingService mailSendingService,
             CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository, @Value("${server.url}") URL artemisServerUrl,
-            @Qualifier("taskExecutor") TaskExecutor taskExecutor) {
+            @Qualifier("deimosTaskExecutor") TaskExecutor deimosTaskExecutor) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.deimosAnalysisService = deimosAnalysisService;
         this.mailSendingService = mailSendingService;
         this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.artemisServerUrl = artemisServerUrl;
-        this.taskExecutor = taskExecutor;
+        this.deimosTaskExecutor = deimosTaskExecutor;
     }
 
     public DeimosBatchTriggerResponseDTO triggerCourseBatch(long courseId, DeimosBatchRequestDTO request, User triggerUser) {
         validateManualRequest(request);
         String runId = UUID.randomUUID().toString();
-        taskExecutor.execute(() -> runManualBatch(runId, DeimosBatchScope.COURSE, courseId, request.from(), request.to(), triggerUser));
+        deimosTaskExecutor.execute(() -> runManualBatch(runId, DeimosBatchScope.COURSE, courseId, request.from(), request.to(), triggerUser));
         return new DeimosBatchTriggerResponseDTO(runId, "ACCEPTED");
     }
 
     public DeimosBatchTriggerResponseDTO triggerExerciseBatch(long exerciseId, DeimosBatchRequestDTO request, User triggerUser) {
         validateManualRequest(request);
         String runId = UUID.randomUUID().toString();
-        taskExecutor.execute(() -> runManualBatch(runId, DeimosBatchScope.EXERCISE, exerciseId, request.from(), request.to(), triggerUser));
+        deimosTaskExecutor.execute(() -> runManualBatch(runId, DeimosBatchScope.EXERCISE, exerciseId, request.from(), request.to(), triggerUser));
         return new DeimosBatchTriggerResponseDTO(runId, "ACCEPTED");
     }
 
