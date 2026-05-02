@@ -28,6 +28,67 @@ EduTelligence is a comprehensive suite of AI-powered microservices designed to e
 
 ---
 
+## Global Search (Standalone Weaviate)
+
+Artemis can run its global keyword and semantic search directly against Weaviate, **without** Pyris. This is useful for deployments that do not need Iris but still want global search across lectures, exercises, and channels.
+
+### When to use this section
+
+- You want to enable Artemis global search and **do not** run Pyris.
+- You run both Artemis and Pyris and want them to share a single Weaviate instance — read this section first, then continue with the [Iris & Pyris Setup Guide](#iris--pyris-setup-guide). Both consumers can coexist as long as their `collection-prefix` values differ (Artemis defaults to `Artemis_`).
+
+### Deploying Weaviate
+
+The Artemis repository ships its own Weaviate compose files for development; for production, use the same images and reuse the configuration documented in the [Weaviate Setup developer guide](/developer/weaviate-setup) (env files, vectorizer choice, API-key auth). You do not need any EduTelligence component for this path.
+
+A typical standalone production layout:
+
+- One Weaviate container (e.g. behind Traefik with TLS).
+- Anonymous access disabled, API key authentication enabled (see the developer guide's [Authentication](/developer/weaviate-setup#authentication) section).
+- Either `text2vec-openai` (OpenAI-compatible API such as Ollama or a TUM GPU server) or self-provided vectors (`vectorizer-module: none`) depending on your embedding strategy.
+
+### Configuring Artemis
+
+In `application-artemis.yml`, enable Weaviate and point it at your server:
+
+```yaml
+artemis:
+  weaviate:
+    enabled: true
+    http-host: weaviate.your-domain.com
+    http-port: 443
+    grpc-port: 50051
+    scheme: https
+    collection-prefix: Artemis_       # Differentiates from a Pyris-managed instance if you share one
+    vectorizer-module: text2vec-openai  # or "none" / "text2vec-transformers"
+    api-key: your-weaviate-api-key
+    # The following two are only needed for vectorizer-module: text2vec-openai
+    open-ai-embedding-model: Qwen/Qwen3-Embedding-8B
+    open-ai-base-url: https://gpu.aet.cit.tum.de/api/
+    gpu-api-key: your-gpu-key
+```
+
+Iris remains independent — `artemis.iris.enabled` does not have to be set for Weaviate to work.
+
+### Verifying
+
+Once Artemis starts, the Weaviate health indicator is registered automatically and shows up under `/management/health` (gated by `artemis.weaviate.enabled`). You can also probe Weaviate directly:
+
+```bash
+curl -H "Authorization: Bearer your-weaviate-api-key" \
+  https://weaviate.your-domain.com/v1/.well-known/ready
+```
+
+### Sharing one Weaviate between Artemis and Pyris
+
+If you already run a Weaviate instance for Pyris and want Artemis global search to use it as well:
+
+- Keep Pyris's `collection-prefix` (it manages its own collections).
+- Set Artemis's `collection-prefix` to a distinct value (default `Artemis_`).
+- Use a single API key with sufficient permissions, or distinct keys if you enable per-user authorization on the Weaviate server.
+
+---
+
 ## Iris & Pyris Setup Guide
 
 <Callout variant={CalloutVariant.info}>

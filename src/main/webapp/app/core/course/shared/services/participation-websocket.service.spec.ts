@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, Subject, distinctUntilChanged } from 'rxjs';
+import { User } from 'app/core/user/user.model';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -10,8 +11,10 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from '../../../../exercise/shared/entities/participation/student-participation.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 describe('ParticipationWebsocketService', () => {
     setupTestBed({ zoneless: true });
@@ -53,6 +56,7 @@ describe('ParticipationWebsocketService', () => {
             providers: [
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: ParticipationService, useClass: MockParticipationService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         });
         await TestBed.compileComponents();
@@ -226,5 +230,68 @@ describe('ParticipationWebsocketService', () => {
         participationWebsocketService.addParticipation(participation);
 
         expect(participationWebsocketService.getParticipationsForExercise(participation.exercise!.id!)).toEqual([participation]);
+    });
+
+    describe('authentication state changes', () => {
+        let authState: BehaviorSubject<User | undefined>;
+        let scoped: ParticipationWebsocketService;
+
+        beforeEach(() => {
+            authState = new BehaviorSubject<User | undefined>({ id: 99 } as User);
+            const customAccountService = new MockAccountService();
+            customAccountService.userIdentity.set({ id: 99 } as User);
+            customAccountService.getAuthenticationState = () => authState.asObservable().pipe(distinctUntilChanged());
+
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                providers: [
+                    { provide: WebsocketService, useClass: MockWebsocketService },
+                    { provide: ParticipationService, useClass: MockParticipationService },
+                    { provide: AccountService, useValue: customAccountService },
+                ],
+            });
+            scoped = TestBed.inject(ParticipationWebsocketService);
+        });
+
+        it('should clear cached participations and websocket subscriptions on logout', () => {
+            scoped.addParticipation(participation);
+            scoped.addParticipation(participation2);
+            const personalSub = scoped.subscribeForLatestResultOfParticipation(participation.id!, true);
+            // Also exercise the non-personal subscription path so both websocket maps are populated.
+            scoped.subscribeForLatestResultOfParticipation(participation2.id!, false, participation2.exercise!.id!);
+            let resultCompleted = false;
+            personalSub.subscribe({ complete: () => (resultCompleted = true) });
+            const participationStream = scoped.subscribeForParticipationChanges();
+            let participationCompleted = false;
+            participationStream.subscribe({ complete: () => (participationCompleted = true) });
+
+            authState.next(undefined);
+
+            expect(scoped.cachedParticipations.size).toBe(0);
+            expect(scoped.openResultWebsocketSubscriptions.size).toBe(0);
+            expect(scoped.openPersonalWebsocketSubscription).toBeUndefined();
+            expect(scoped.resultObservables.size).toBe(0);
+            expect(scoped.participationObservable).toBeUndefined();
+            expect(scoped.subscribedExercises.size).toBe(0);
+            expect(scoped.participationSubscriptionTypes.size).toBe(0);
+            expect(resultCompleted).toBe(true);
+            expect(participationCompleted).toBe(true);
+        });
+
+        it('should clear participations when a different user logs in', () => {
+            scoped.addParticipation(participation);
+
+            authState.next({ id: 42 } as User);
+
+            expect(scoped.cachedParticipations.size).toBe(0);
+        });
+
+        it('should not clear participations when the same user re-emits', () => {
+            scoped.addParticipation(participation);
+
+            authState.next({ id: 99 } as User);
+
+            expect(scoped.cachedParticipations.size).toBe(1);
+        });
     });
 });
