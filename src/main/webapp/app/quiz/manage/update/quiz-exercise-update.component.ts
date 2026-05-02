@@ -16,7 +16,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
-import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
+import { ExerciseTitleChannelNamePrimengComponent } from 'app/exercise/exercise-title-channel-name-primeng/exercise-title-channel-name-primeng.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Location } from '@angular/common';
@@ -71,11 +71,11 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/shared/category-selector-primeng/category-selector-primeng.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
@@ -103,11 +103,11 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
         TranslateDirective,
         DocumentationButtonComponent,
         FormsModule,
-        ExerciseTitleChannelNameComponent,
+        ExerciseTitleChannelNamePrimengComponent,
         HelpIconComponent,
-        CategorySelectorComponent,
+        CategorySelectorPrimengComponent,
         ButtonComponent,
-        CompetencySelectionComponent,
+        CompetencySelectionPrimengComponent,
         QuizQuestionListEditComponent,
         NgbTooltip,
         FaIconComponent,
@@ -219,7 +219,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     readonly difficultyOptions = computed(() => {
         this.currentLocale();
         return [
-            { label: this.translateService.instant('artemisApp.exercise.noLevel'), value: undefined },
+            { label: this.translateService.instant('artemisApp.exercise.noLevel'), value: null },
             { label: this.translateService.instant('artemisApp.exercise.easy'), value: DifficultyLevel.EASY },
             { label: this.translateService.instant('artemisApp.exercise.medium'), value: DifficultyLevel.MEDIUM },
             { label: this.translateService.instant('artemisApp.exercise.hard'), value: DifficultyLevel.HARD },
