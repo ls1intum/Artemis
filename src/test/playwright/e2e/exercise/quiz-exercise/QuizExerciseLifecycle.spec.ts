@@ -185,7 +185,7 @@ test.describe('Quiz Exercise Lifecycle', { tag: '@fast' }, () => {
             const mcQuestionTitle = page.locator('#mc-question-title');
             await expect(mcQuestionTitle).toBeVisible({ timeout: 10000 });
             await expect(mcQuestionTitle).toHaveValue(multipleChoiceTemplate.title);
-            const scoreField = page.locator('[id^="score-"]').first();
+            const scoreField = page.locator('#score').first();
             await expect(scoreField).toHaveValue(multipleChoiceTemplate.points.toString());
 
             // Preview

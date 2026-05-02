@@ -56,6 +56,7 @@
                             <jhi-exercise-title-channel-name-primeng
                                 [exercise]="quizExercise"
                                 [course]="quizExercise.course"
+                                [courseId]="quizExercise.course?.id ?? courseId"
                                 (onTitleChange)="cacheValidation()"
                                 (onChannelNameChange)="cacheValidation()"
                                 [isExamMode]="isExamMode"
@@ -77,7 +78,7 @@
                         <div class="row mt-3">
                             <div class="col-lg-4 col-sm-12">
                                 <div class="form-group">
-                                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
+                                    <label for="difficulty" class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
                                     <p-select
                                         inputId="difficulty"
                                         [options]="difficultyOptions()"
@@ -94,6 +95,7 @@
                             <div class="col-lg-4 col-sm-12">
                                 <div class="form-group">
                                     <label
+                                        for="includedInOverallScore"
                                         class="form-control-label"
                                         jhiTranslate="artemisApp.quizExercise.includedInOverallScore{{ quizExercise.course ? 'Course' : 'Exam' }}LabelShort"
                                     ></label>
@@ -112,7 +114,7 @@
                             </div>
                             <div class="col-lg-4 col-sm-12">
                                 <div class="form-group">
-                                    <label class="form-control-label" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
+                                    <label for="randomizeOrder" class="form-control-label" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
                                     <p-select
                                         inputId="randomizeOrder"
                                         [options]="randomizeOptions()"

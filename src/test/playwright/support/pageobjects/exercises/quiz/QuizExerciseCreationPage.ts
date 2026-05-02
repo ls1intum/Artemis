@@ -8,10 +8,9 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
     private readonly DEFAULT_MULTIPLE_CHOICE_ANSWER_COUNT = 4;
 
     async addMultipleChoiceQuestion(title: string, points = 1) {
-        const questionIndex = await this.page.locator('[id^="score-"]').count();
         await this.page.locator('#quiz-add-mc-question').click();
         await this.page.locator('#mc-question-title').fill(title);
-        await this.page.locator(`#score-${questionIndex}`).fill(points.toString());
+        await this.page.locator('#score').fill(points.toString());
 
         const fileContent = await Fixtures.get('exercise/quiz/multiple_choice/question.txt');
         // Use specific selector for the multiple choice question editor

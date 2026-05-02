@@ -34,6 +34,7 @@ import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
+import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -128,9 +129,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     readonly scoringTypeOptions = computed(() => {
         this.currentLocale();
         return [
-            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.all_or_nothing'), value: 'ALL_OR_NOTHING' },
-            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_with_penalty'), value: 'PROPORTIONAL_WITH_PENALTY' },
-            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_without_penalty'), value: 'PROPORTIONAL_WITHOUT_PENALTY' },
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.all_or_nothing'), value: ScoringType.ALL_OR_NOTHING },
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_with_penalty'), value: ScoringType.PROPORTIONAL_WITH_PENALTY },
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_without_penalty'), value: ScoringType.PROPORTIONAL_WITHOUT_PENALTY },
         ];
     });
     private modalService = inject(NgbModal);
