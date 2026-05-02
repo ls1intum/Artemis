@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import jakarta.validation.Valid;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchTriggerResponseDTO;
 import de.tum.cit.aet.artemis.deimos.service.DeimosBatchService;
 
 @Profile(PROFILE_CORE)
+@ConditionalOnProperty(name = "artemis.deimos.enabled", havingValue = "true")
 @Lazy
 @RestController
 @RequestMapping("api/programming")
