@@ -9,7 +9,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,8 +31,6 @@ import jakarta.persistence.Table;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -63,7 +60,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 @Entity
 @Table(name = "result")
 @EntityListeners({ AuditingEntityListener.class, ResultListener.class })
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result extends DomainObject implements Comparable<Result> {
 
@@ -309,30 +305,12 @@ public class Result extends DomainObject implements Comparable<Result> {
      * <p>
      * Returned as a {@link Set} on purpose: feedback ordering is not semantically meaningful for the
      * domain. Callers that need a specific presentation order (by credits, FeedbackType, reference, ...)
-     * should sort explicitly via {@link #getFeedbacksSorted()} or a custom comparator.
+     * should sort explicitly with a custom comparator.
      *
      * @return the live {@link Set} of feedbacks; mutations are persisted by the Hibernate session
      */
     public Set<Feedback> getFeedbacks() {
         return feedbacks;
-    }
-
-    /**
-     * Convenience accessor that returns a snapshot of the feedbacks sorted by id (insertion order under
-     * the IDENTITY generator). Use when a deterministic ordering is required for tests, JSON output, or
-     * comparison logic.
-     * <p>
-     * Marked {@link JsonIgnore}: Jackson would otherwise auto-detect this getter as a "feedbacksSorted"
-     * JSON property and iterate the underlying {@link Set}, triggering a {@link org.hibernate.LazyInitializationException}
-     * when the set is an uninitialized {@code PersistentSet} and the Hibernate session has already closed.
-     * Serialization goes through the {@code feedbacks} field, which is correctly handled by the
-     * {@link com.fasterxml.jackson.datatype.hibernate7.Hibernate7Module} via {@code REPLACE_PERSISTENT_COLLECTIONS}.
-     *
-     * @return a new list containing the feedbacks sorted by id (nulls last)
-     */
-    @JsonIgnore
-    public List<Feedback> getFeedbacksSorted() {
-        return feedbacks.stream().filter(Objects::nonNull).sorted(Comparator.comparing(Feedback::getId, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
     }
 
     public Result feedbacks(Collection<Feedback> feedbacks) {

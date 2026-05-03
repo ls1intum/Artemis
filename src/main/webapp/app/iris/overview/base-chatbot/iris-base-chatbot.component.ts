@@ -322,6 +322,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly showCloseButton = input<boolean>(false);
     readonly isChatGptWrapper = input<boolean>(false);
     readonly layout = input<'client' | 'widget' | 'embedded'>('client');
+    readonly aboutIrisDialogTransport = input<'automatic' | 'material' | 'dynamic'>('automatic');
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
 
@@ -1115,11 +1116,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     openAboutIrisModal(): void {
-        // When opened from the exercise/lecture chat widget, the chat lives inside a CDK
-        // MatDialog overlay. A PrimeNG dialog cannot render above it because the chat widget
-        // uses CSS transforms (for drag/resize) which create an isolated stacking context.
-        // Solution: open via CDK MatDialog so it stacks correctly above the chat overlay.
-        if (this.layout() === 'widget') {
+        // The floating exercise chat widget lives inside a CDK MatDialog overlay and uses CSS
+        // transforms for drag/resize. In that specific case the About dialog must also use CDK
+        // to escape the widget's stacking context. Other Iris hosts with widget-like layout,
+        // such as the lecture fullscreen sidebar, should keep using PrimeNG.
+        if (this.shouldUseMaterialAboutDialog()) {
             this.aboutIrisMatDialogRef?.close();
             this.aboutIrisMatDialogRef = this.matDialog.open(AboutIrisModalComponent, {
                 hasBackdrop: true,
@@ -1142,6 +1143,17 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                     breakpoints: { '640px': '95vw' },
                 }) ?? undefined;
         }
+    }
+
+    private shouldUseMaterialAboutDialog(): boolean {
+        const transport = this.aboutIrisDialogTransport();
+        if (transport === 'material') {
+            return true;
+        }
+        if (transport === 'dynamic') {
+            return false;
+        }
+        return this.layout() === 'widget';
     }
 
     setSearchValue(searchValue: string) {

@@ -3,6 +3,8 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizAiGenerationService } from './quiz-ai-generation.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
@@ -14,7 +16,7 @@ describe('QuizAiGenerationService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }],
         });
         service = TestBed.inject(QuizAiGenerationService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -50,7 +52,7 @@ describe('QuizAiGenerationService', () => {
 
     function flushRefineResponse(req: ReturnType<HttpTestingController['expectOne']>, type: 'single-choice' | 'multiple-choice', optionCount: number): void {
         const options = Array.from({ length: optionCount }, (_, i) => ({ text: `Option ${i}`, correct: i === 0 }));
-        req.flush({ question: { type, title: 'A Question', questionText: 'Some question text?', options }, reasoning: 'Some explanation.' });
+        req.flush({ type: 'success', question: { type, title: 'A Question', questionText: 'Some question text?', options }, reasoning: 'Some explanation.' });
     }
 
     describe('refineMultipleChoiceQuestion', () => {
@@ -95,6 +97,7 @@ describe('QuizAiGenerationService', () => {
 
             const req = expectRefineRequest(1);
             req.flush({
+                type: 'success',
                 question: {
                     type: 'multiple-choice',
                     title: 'Refined Title',
@@ -130,6 +133,21 @@ describe('QuizAiGenerationService', () => {
             const req = expectRefineRequest(1);
             expect(req.request.body.question.title).toBe('Untitled Question');
             flushRefineResponse(req, 'single-choice', 2);
+        });
+
+        it('should throw an error when the response type is not success', () => {
+            const question = buildMultipleChoiceQuestion(false);
+            let error: Error | undefined;
+
+            service.refineMultipleChoiceQuestion(1, question, 'improve').subscribe({
+                error: (e) => (error = e),
+            });
+
+            const req = expectRefineRequest(1);
+            req.flush({ type: 'failure', error: 'LLM error' });
+
+            expect(error).toBeDefined();
+            expect(error!.message).toBe('artemisApp.quizExercise.aiGeneration.refinement.errors.failed');
         });
     });
 
