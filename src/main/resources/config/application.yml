@@ -164,6 +164,10 @@ artemis:
 
     deimos:
         enabled: false
+        executor:
+            core-pool-size: 2
+            max-pool-size: 4
+            queue-capacity: 25
         llm:
             base-url: https://gpu.aet.cit.tum.de
             api-key: dummy
