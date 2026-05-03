@@ -471,7 +471,8 @@ public class StudentParticipationSpecs {
                 }
                 case "score" -> {
                     Subquery<Double> scoreSub = buildLatestResultFieldSubquery(root, query, cb, Result_.SCORE, Double.class);
-                    orders.add(asc ? cb.asc(scoreSub) : cb.desc(scoreSub));
+                    Expression<Double> scoreExpr = cb.coalesce(scoreSub, -1.0);
+                    orders.add(asc ? cb.asc(scoreExpr) : cb.desc(scoreExpr));
                 }
                 case "completionDate" -> {
                     Subquery<ZonedDateTime> dateSub = buildLatestResultFieldSubquery(root, query, cb, Result_.COMPLETION_DATE, ZonedDateTime.class);
