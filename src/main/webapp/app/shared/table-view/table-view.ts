@@ -5,11 +5,16 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { Table, TableLazyLoadEvent, TableModule, TablePageEvent } from 'primeng/table';
+import { TooltipModule } from 'primeng/tooltip';
 
 export interface ColumnDef<T> {
     field?: keyof T;
     header?: string;
     headerKey?: string;
+    /** PrimeIcons CSS class string, e.g. 'pi pi-hashtag'. Rendered as <i> in the column header. */
+    headerIcon?: string;
+    /** Translation key shown as a PrimeNG tooltip on the column header. */
+    headerTooltip?: string;
     width?: string;
     sort?: boolean;
     filter?: boolean;
@@ -93,7 +98,7 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
 
 @Component({
     selector: 'jhi-table-view',
-    imports: [NgComponentOutlet, NgTemplateOutlet, FormsModule, TableModule, TranslateDirective, ArtemisTranslatePipe, SearchFilterComponent],
+    imports: [NgComponentOutlet, NgTemplateOutlet, FormsModule, TableModule, TooltipModule, TranslateDirective, ArtemisTranslatePipe, SearchFilterComponent],
     templateUrl: './table-view.html',
     styleUrl: './table-view.scss',
     encapsulation: ViewEncapsulation.None,

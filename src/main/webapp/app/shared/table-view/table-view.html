@@ -37,10 +37,17 @@
         <ng-template #header let-columns>
             <tr>
                 @for (col of columns; track col) {
-                    <th [pSortableColumn]="col?.sort ? col.field : undefined" [style]="{ 'min-width': col?.width ?? 'auto' }">
+                    <th
+                        [pSortableColumn]="col?.sort ? col.field : undefined"
+                        [style]="{ 'min-width': col?.width ?? 'auto' }"
+                        [pTooltip]="col?.headerTooltip | artemisTranslate"
+                        tooltipPosition="top"
+                    >
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                @if (col?.headerKey) {
+                                @if (col?.headerIcon) {
+                                    <i [class]="col.headerIcon"></i>
+                                } @else if (col?.headerKey) {
                                     <span [jhiTranslate]="col.headerKey"></span>
                                 } @else {
                                     <span>{{ col?.header ?? '' }}</span>
