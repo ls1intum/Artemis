@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStat
 import static de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus.REVIEWED_INSTRUCTIONS;
 import static de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus.TRAINED;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -147,8 +148,13 @@ public class TutorParticipationService {
         return Optional.empty();
     }
 
-    private Optional<FeedbackCorrectionErrorType> checkTutorFeedbackForErrors(Feedback tutorFeedback, List<Feedback> instructorFeedback) {
-        List<Feedback> matchingInstructorFeedback = instructorFeedback.stream().filter(feedback -> {
+    /**
+     * The {@code remainingInstructorFeedback} list MUST be shared across successive calls for the same tutor example submission, because the
+     * MANUAL_UNREFERENCED branch below removes already-matched instructor feedbacks so they can't match a second tutor feedback. Callers therefore
+     * pass a mutable defensive copy (typically built from {@code result.getFeedbacks()} / the example-submission feedback set) once and reuse it.
+     */
+    private Optional<FeedbackCorrectionErrorType> checkTutorFeedbackForErrors(Feedback tutorFeedback, List<Feedback> remainingInstructorFeedback) {
+        List<Feedback> matchingInstructorFeedback = remainingInstructorFeedback.stream().filter(feedback -> {
             // If tutor feedback is unreferenced, then instructor feedback is a potential match if it is also unreferenced
             if (tutorFeedback.getType() == MANUAL_UNREFERENCED) {
                 return feedback.getType() == MANUAL_UNREFERENCED;
@@ -170,7 +176,7 @@ public class TutorParticipationService {
 
                 // This instructor feedback can not be used to match other tutor unreferenced feedback
                 if (isMatch) {
-                    instructorFeedback.remove(feedback);
+                    remainingInstructorFeedback.remove(feedback);
                 }
                 return isMatch;
             });
@@ -206,12 +212,16 @@ public class TutorParticipationService {
         var unreferencedInstructorFeedbackCount = instructorFeedback.stream().filter(feedback -> feedback.getType() == MANUAL_UNREFERENCED).toList().size();
         var unreferencedTutorFeedback = tutorFeedback.stream().filter(feedback -> feedback.getType() == MANUAL_UNREFERENCED).toList();
 
+        // Build a single mutable defensive copy that checkTutorFeedbackForErrors can prune as it consumes MANUAL_UNREFERENCED matches across tutor feedbacks.
+        // Mutating the original (a Hibernate-managed PersistentSet from result.getFeedbacks() or an immutable Set.of()) would be unsafe.
+        var remainingInstructorFeedback = new ArrayList<>(instructorFeedback);
+
         // If invalid, get all incorrect feedback and send an array of the corresponding `FeedbackCorrectionError`s to the client.
         var wrongFeedback = tutorFeedback.stream().flatMap(feedback -> {
             // If current tutor feedback is unreferenced and there are already more than enough unreferenced feedback provided, mark this feedback as unnecessary.
             var unreferencedTutorFeedbackCount = unreferencedTutorFeedback.indexOf(feedback) + 1;
             var validationError = unreferencedTutorFeedbackCount > unreferencedInstructorFeedbackCount ? Optional.of(UNNECESSARY_FEEDBACK)
-                    : checkTutorFeedbackForErrors(feedback, instructorFeedback);
+                    : checkTutorFeedbackForErrors(feedback, remainingInstructorFeedback);
             if (validationError.isEmpty()) {
                 return Stream.empty();
             }
