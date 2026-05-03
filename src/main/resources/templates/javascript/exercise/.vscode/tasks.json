@@ -4,7 +4,8 @@
         {
             "label": "Run",
             "type": "shell",
-            "command": "npm start",
+            "command": "node",
+            "args": ["./src/client.js"],
             "group": { "kind": "build", "isDefault": true },
             "options": { "cwd": "${workspaceFolder}" },
             "presentation": { "reveal": "always", "panel": "shared" }
