@@ -165,7 +165,7 @@
                                                       }
                                             "
                                             (delete)="deleteExerciseGroup(exerciseGroup.id, $event)"
-                                            [dialogError]="dialogError"
+                                            [dialogError]="dialogError$"
                                             class="delete-group mb-0"
                                         >
                                             <fa-icon [icon]="faTrash" />
@@ -178,7 +178,7 @@
                                                 deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.question"
                                                 deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
                                                 (delete)="deleteExerciseGroup(exerciseGroup.id, $event)"
-                                                [dialogError]="dialogError"
+                                                [dialogError]="dialogError$"
                                                 class="delete-group mb-0"
                                             >
                                                 <fa-icon [icon]="faTrash" />
