@@ -1,8 +1,12 @@
 package de.tum.cit.aet.artemis.exercise.repository;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.Collection;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +19,8 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 /**
  * Spring Data JPA repository for the ExerciseAthenaConfig entity.
  */
+@Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface ExerciseAthenaConfigRepository extends ArtemisJpaRepository<ExerciseAthenaConfig, Long> {
 

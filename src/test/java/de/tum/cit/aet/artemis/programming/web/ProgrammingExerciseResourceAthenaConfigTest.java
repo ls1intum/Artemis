@@ -43,7 +43,7 @@ class ProgrammingExerciseResourceAthenaConfigTest extends AbstractSpringIntegrat
 
     @BeforeEach
     void init() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
     }
 

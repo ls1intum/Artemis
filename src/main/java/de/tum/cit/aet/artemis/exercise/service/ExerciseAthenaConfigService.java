@@ -1,7 +1,11 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -9,6 +13,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseAthenaConfigRepository;
 
+@Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ExerciseAthenaConfigService {
 

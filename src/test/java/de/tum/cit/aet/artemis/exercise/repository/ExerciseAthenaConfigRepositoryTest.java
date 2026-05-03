@@ -8,7 +8,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
@@ -61,7 +60,6 @@ class ExerciseAthenaConfigRepositoryTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
-    @Transactional
     void testDeleteByExerciseId_removesConfig() {
         ExerciseAthenaConfig config = new ExerciseAthenaConfig();
         config.setExercise(textExercise);
@@ -76,7 +74,6 @@ class ExerciseAthenaConfigRepositoryTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
-    @Transactional
     void testRevokeRestrictedModulesByCourseId_clearsOnlyRestrictedModules() {
         ExerciseAthenaConfig config = new ExerciseAthenaConfig();
         config.setExercise(textExercise);
@@ -94,7 +91,6 @@ class ExerciseAthenaConfigRepositoryTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
-    @Transactional
     void testRevokeRestrictedModulesByCourseId_noMatchLeavesConfigUnchanged() {
         ExerciseAthenaConfig config = new ExerciseAthenaConfig();
         config.setExercise(textExercise);
