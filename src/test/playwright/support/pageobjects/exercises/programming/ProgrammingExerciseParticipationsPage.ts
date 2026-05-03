@@ -9,8 +9,8 @@ export class ProgrammingExerciseParticipationsPage {
         this.page = page;
     }
 
-    getParticipation(buildPlanId: string) {
-        return this.page.getByRole('table').getByRole('row').filter({ hasText: buildPlanId });
+    getParticipation(participantName: string) {
+        return this.page.getByRole('table').getByRole('row').filter({ hasText: participantName });
     }
 
     getStudentParticipation(user: UserCredentials) {
@@ -41,14 +41,14 @@ export class ProgrammingExerciseParticipationsPage {
         }
     }
 
-    private async getParticipationCell(buildPlanId: string, columnName: string) {
-        let participationRow: Locator = this.getParticipation(buildPlanId);
+    private async getParticipationCell(participantName: string, columnName: string) {
+        let participationRow: Locator = this.getParticipation(participantName);
         return await this.getParticipationCellByLocator(participationRow, columnName);
     }
 
-    async openRepositoryOnNewPage(buildPlanId: string): Promise<RepositoryPage> {
-        console.log(`[openRepositoryOnNewPage] Opening repository for participation with build plan ${buildPlanId}`);
-        const participation = this.getParticipation(buildPlanId);
+    async openRepositoryOnNewPage(participantName: string): Promise<RepositoryPage> {
+        console.log(`[openRepositoryOnNewPage] Opening repository for participation with participant ${participantName}`);
+        const participation = this.getParticipation(participantName);
         await participation.locator('.code-button').click();
         console.log('[openRepositoryOnNewPage] Clicked code button, waiting for popover...');
 
@@ -77,20 +77,14 @@ export class ProgrammingExerciseParticipationsPage {
         return new RepositoryPage(newPage);
     }
 
-    async checkParticipationBuildPlan(participation: any) {
-        const buildPlanIdCell = await this.getParticipationCell(participation.buildPlanId, 'Build Plan Id');
-        expect(buildPlanIdCell).not.toBeUndefined();
-        await expect(buildPlanIdCell!.filter({ hasText: participation.buildPlanId })).toBeVisible();
-    }
-
-    async checkParticipationTeam(buildPlanId: string, teamName: string) {
-        const teamCell = await this.getParticipationCell(buildPlanId, 'Team');
+    async checkParticipationTeam(participantName: string, teamName: string) {
+        const teamCell = await this.getParticipationCell(participantName, 'Team');
         expect(teamCell).not.toBeUndefined();
         await expect(teamCell!.filter({ hasText: teamName })).toBeVisible();
     }
 
-    async checkParticipationStudents(buildPlanId: string, studentUsernames: string[]) {
-        const studentsCell = await this.getParticipationCell(buildPlanId, 'Students');
+    async checkParticipationStudents(participantName: string, studentUsernames: string[]) {
+        const studentsCell = await this.getParticipationCell(participantName, 'Students');
         expect(studentsCell).not.toBeUndefined();
         for (const studentName of studentUsernames) {
             await expect(studentsCell!.filter({ hasText: studentName })).toBeVisible();
