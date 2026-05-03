@@ -13,6 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
+import de.tum.cit.aet.artemis.proof.dto.ProofExerciseDTO;
 import de.tum.cit.aet.artemis.proof.repository.ProofExerciseRepository;
 import de.tum.cit.aet.artemis.proof.util.ProofExerciseFactory;
 import de.tum.cit.aet.artemis.proof.util.ProofExerciseUtilService;
@@ -45,67 +46,68 @@ class ProofExerciseIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProofExercise_asInstructor_returnsCreated() throws Exception {
-        ProofExercise newExercise = ProofExerciseFactory.generateProofExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+        ProofExerciseDTO newExercise = ProofExerciseFactory.generateProofExerciseDTO(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
                 ZonedDateTime.now().plusDays(2), course);
 
-        ProofExercise result = request.postWithResponseBody("/api/proof/proof-exercises", newExercise, ProofExercise.class, HttpStatus.CREATED);
+        ProofExerciseDTO result = request.postWithResponseBody("/api/proof/proof-exercises", newExercise, ProofExerciseDTO.class, HttpStatus.CREATED);
 
         assertThat(result).isNotNull();
-        assertThat(result.getId()).isNotNull();
-        assertThat(result.getDescription()).isEqualTo(newExercise.getDescription());
-        assertThat(result.isPredefinedCheckboxState()).isEqualTo(newExercise.isPredefinedCheckboxState());
+        assertThat(result.id()).isNotNull();
+        assertThat(result.description()).isEqualTo(newExercise.description());
+        assertThat(result.predefinedCheckboxState()).isEqualTo(newExercise.predefinedCheckboxState());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createProofExercise_asStudent_returnsForbidden() throws Exception {
-        ProofExercise newExercise = ProofExerciseFactory.generateProofExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+        ProofExerciseDTO newExercise = ProofExerciseFactory.generateProofExerciseDTO(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
                 ZonedDateTime.now().plusDays(2), course);
 
-        request.postWithResponseBody("/api/proof/proof-exercises", newExercise, ProofExercise.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/proof/proof-exercises", newExercise, ProofExerciseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProofExercise_withExistingId_returnsBadRequest() throws Exception {
-        exercise.setId(exercise.getId());
+        ProofExerciseDTO exerciseWithId = ProofExerciseDTO.of(exercise);
 
-        request.postWithResponseBody("/api/proof/proof-exercises", exercise, ProofExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/proof/proof-exercises", exerciseWithId, ProofExerciseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getProofExercise_asTutor_returnsOk() throws Exception {
-        ProofExercise result = request.get("/api/proof/proof-exercises/" + exercise.getId(), HttpStatus.OK, ProofExercise.class);
+        ProofExerciseDTO result = request.get("/api/proof/proof-exercises/" + exercise.getId(), HttpStatus.OK, ProofExerciseDTO.class);
 
         assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo(exercise.getId());
-        assertThat(result.getDescription()).isEqualTo(exercise.getDescription());
+        assertThat(result.id()).isEqualTo(exercise.getId());
+        assertThat(result.description()).isEqualTo(exercise.getDescription());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getProofExercise_asStudent_returnsForbidden() throws Exception {
-        request.get("/api/proof/proof-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, ProofExercise.class);
+        request.get("/api/proof/proof-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, ProofExerciseDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getProofExercisesForCourse_returnsList() throws Exception {
-        var results = request.getList("/api/proof/courses/" + course.getId() + "/proof-exercises", HttpStatus.OK, ProofExercise.class);
+        var results = request.getList("/api/proof/courses/" + course.getId() + "/proof-exercises", HttpStatus.OK, ProofExerciseDTO.class);
 
         assertThat(results).isNotEmpty();
-        assertThat(results.getFirst().getId()).isEqualTo(exercise.getId());
+        assertThat(results.getFirst().id()).isEqualTo(exercise.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProofExercise_asInstructor_returnsOk() throws Exception {
         exercise.setDescription("Updated description");
+        ProofExerciseDTO updateDTO = ProofExerciseDTO.of(exercise);
 
-        ProofExercise result = request.putWithResponseBody("/api/proof/proof-exercises", exercise, ProofExercise.class, HttpStatus.OK);
+        ProofExerciseDTO result = request.putWithResponseBody("/api/proof/proof-exercises", updateDTO, ProofExerciseDTO.class, HttpStatus.OK);
 
-        assertThat(result.getDescription()).isEqualTo("Updated description");
+        assertThat(result.description()).isEqualTo("Updated description");
     }
 
     @Test
@@ -125,13 +127,13 @@ class ProofExerciseIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importProofExercise_asInstructor_returnsCreated() throws Exception {
-        ProofExercise importTarget = ProofExerciseFactory.generateProofExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+        ProofExerciseDTO importTarget = ProofExerciseFactory.generateProofExerciseDTO(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
                 ZonedDateTime.now().plusDays(2), course);
 
-        ProofExercise result = request.postWithResponseBody("/api/proof/proof-exercises/import/" + exercise.getId(), importTarget, ProofExercise.class, HttpStatus.CREATED);
+        ProofExerciseDTO result = request.postWithResponseBody("/api/proof/proof-exercises/import/" + exercise.getId(), importTarget, ProofExerciseDTO.class, HttpStatus.CREATED);
 
         assertThat(result).isNotNull();
-        assertThat(result.getId()).isNotEqualTo(exercise.getId());
-        assertThat(result.getDescription()).isEqualTo(exercise.getDescription());
+        assertThat(result.id()).isNotEqualTo(exercise.getId());
+        assertThat(result.description()).isEqualTo(exercise.getDescription());
     }
 }

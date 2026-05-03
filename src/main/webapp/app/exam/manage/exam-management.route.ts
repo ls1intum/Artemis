@@ -21,6 +21,7 @@ import { TextExerciseResolver } from 'app/text/manage/text-exercise/service/text
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 import { ProofSubmissionAssessmentResolverService } from 'app/proof/manage/assess/proof-submission-assessment-resolver.service';
+import { ProofExerciseResolver } from 'app/proof/manage/service/proof-exercise-resolver.service';
 
 export const examManagementRoutes: Routes = [
     {
@@ -444,6 +445,32 @@ export const examManagementRoutes: Routes = [
         data: {
             authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.fileUploadExercise.home.importLabel',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Create Proof Exercise
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/proof-exercises/new',
+        loadComponent: () => import('app/proof/manage/update/proof-exercise-update.component').then((m) => m.ProofExerciseUpdateComponent),
+        resolve: {
+            proofExercise: ProofExerciseResolver,
+        },
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+            pageTitle: 'artemisApp.proofExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Edit Proof Exercise
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/proof-exercises/:exerciseId/edit',
+        loadComponent: () => import('app/proof/manage/update/proof-exercise-update.component').then((m) => m.ProofExerciseUpdateComponent),
+        resolve: {
+            proofExercise: ProofExerciseResolver,
+        },
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+            pageTitle: 'artemisApp.proofExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

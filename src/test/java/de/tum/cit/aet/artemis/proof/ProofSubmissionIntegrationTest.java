@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
 import de.tum.cit.aet.artemis.proof.domain.ProofSubmission;
+import de.tum.cit.aet.artemis.proof.dto.ProofSubmissionDTO;
 import de.tum.cit.aet.artemis.proof.util.ProofExerciseFactory;
 import de.tum.cit.aet.artemis.proof.util.ProofExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -46,47 +47,45 @@ class ProofSubmissionIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createProofSubmission_asStudent_savesSubmission() throws Exception {
-        ProofSubmission submission = ProofExerciseFactory.generateProofSubmission(false);
+        ProofSubmissionDTO submissionDTO = ProofExerciseFactory.generateProofSubmissionDTO(false);
 
-        ProofSubmission result = request.postWithResponseBody(
-                "/api/proof/exercises/" + exercise.getId() + "/proof-submissions", submission, ProofSubmission.class, HttpStatus.OK);
+        ProofSubmissionDTO result = request.postWithResponseBody("/api/proof/exercises/" + exercise.getId() + "/proof-submissions", submissionDTO, ProofSubmissionDTO.class,
+                HttpStatus.OK);
 
         assertThat(result).isNotNull();
-        assertThat(result.getId()).isNotNull();
-        assertThat(result.getText()).isEqualTo(submission.getText());
-        assertThat(result.isStudentCheckboxState()).isEqualTo(submission.isStudentCheckboxState());
-        assertThat(result.isSubmitted()).isFalse();
-        assertThat(result.getResults()).isNullOrEmpty();
+        assertThat(result.id()).isNotNull();
+        assertThat(result.text()).isEqualTo(submissionDTO.text());
+        assertThat(result.studentCheckboxState()).isEqualTo(submissionDTO.studentCheckboxState());
+        assertThat(result.submitted()).isFalse();
+        assertThat(result.results()).isNullOrEmpty();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitProofSubmission_checkboxMatchesPredefined_scores100() throws Exception {
-        // exercise.predefinedCheckboxState = true (set in factory), submission.studentCheckboxState = true
-        ProofSubmission submission = ProofExerciseFactory.generateProofSubmission(true);
-        submission.setStudentCheckboxState(true);
+        // exercise.predefinedCheckboxState = true (set in factory), studentCheckboxState = true → match
+        ProofSubmissionDTO submissionDTO = new ProofSubmissionDTO(null, "My proof text", true, true, null, null, null);
 
-        ProofSubmission result = request.postWithResponseBody(
-                "/api/proof/exercises/" + exercise.getId() + "/proof-submissions", submission, ProofSubmission.class, HttpStatus.OK);
+        ProofSubmissionDTO result = request.postWithResponseBody("/api/proof/exercises/" + exercise.getId() + "/proof-submissions", submissionDTO, ProofSubmissionDTO.class,
+                HttpStatus.OK);
 
-        assertThat(result.isSubmitted()).isTrue();
-        assertThat(result.getResults()).isNotEmpty();
-        assertThat(result.getResults().getFirst().getScore()).isEqualTo(100.0);
+        assertThat(result.submitted()).isTrue();
+        assertThat(result.results()).isNotEmpty();
+        assertThat(result.results().getFirst().score()).isEqualTo(100.0);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitProofSubmission_checkboxMismatch_scores0() throws Exception {
-        // exercise.predefinedCheckboxState = true, submission.studentCheckboxState = false → mismatch
-        ProofSubmission submission = ProofExerciseFactory.generateProofSubmission(true);
-        submission.setStudentCheckboxState(false);
+        // exercise.predefinedCheckboxState = true, studentCheckboxState = false → mismatch
+        ProofSubmissionDTO submissionDTO = new ProofSubmissionDTO(null, "My proof text", false, true, null, null, null);
 
-        ProofSubmission result = request.postWithResponseBody(
-                "/api/proof/exercises/" + exercise.getId() + "/proof-submissions", submission, ProofSubmission.class, HttpStatus.OK);
+        ProofSubmissionDTO result = request.postWithResponseBody("/api/proof/exercises/" + exercise.getId() + "/proof-submissions", submissionDTO, ProofSubmissionDTO.class,
+                HttpStatus.OK);
 
-        assertThat(result.isSubmitted()).isTrue();
-        assertThat(result.getResults()).isNotEmpty();
-        assertThat(result.getResults().getFirst().getScore()).isEqualTo(0.0);
+        assertThat(result.submitted()).isTrue();
+        assertThat(result.results()).isNotEmpty();
+        assertThat(result.results().getFirst().score()).isEqualTo(0.0);
     }
 
     @Test
@@ -94,22 +93,20 @@ class ProofSubmissionIntegrationTest extends AbstractSpringIntegrationIndependen
     void getDataForProofEditor_withExistingSubmission_returnsSubmission() throws Exception {
         ProofSubmission saved = proofExerciseUtilService.createAndSaveSubmissionForExercise(exercise, TEST_PREFIX + "student1", false);
 
-        ProofSubmission result = request.get(
-                "/api/proof/participations/" + saved.getParticipation().getId() + "/proof-editor", HttpStatus.OK, ProofSubmission.class);
+        ProofSubmissionDTO result = request.get("/api/proof/participations/" + saved.getParticipation().getId() + "/proof-editor", HttpStatus.OK, ProofSubmissionDTO.class);
 
         assertThat(result).isNotNull();
-        assertThat(result.getText()).isEqualTo(saved.getText());
+        assertThat(result.text()).isEqualTo(saved.getText());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getDataForProofEditor_noSubmissionYet_returnsEmptySubmission() throws Exception {
-        ProofSubmission result = request.get(
-                "/api/proof/participations/" + participation.getId() + "/proof-editor", HttpStatus.OK, ProofSubmission.class);
+        ProofSubmissionDTO result = request.get("/api/proof/participations/" + participation.getId() + "/proof-editor", HttpStatus.OK, ProofSubmissionDTO.class);
 
         assertThat(result).isNotNull();
-        assertThat(result.getId()).isNull();
-        assertThat(result.getText()).isNullOrEmpty();
+        assertThat(result.id()).isNull();
+        assertThat(result.text()).isNullOrEmpty();
     }
 
     @Test
@@ -117,13 +114,12 @@ class ProofSubmissionIntegrationTest extends AbstractSpringIntegrationIndependen
     void getProofSubmissionForAssessment_asTutor_returnsSubmissionWithParticipation() throws Exception {
         ProofSubmission saved = proofExerciseUtilService.createAndSaveSubmissionForExercise(exercise, TEST_PREFIX + "student1", true);
 
-        ProofSubmission result = request.get(
-                "/api/proof/proof-submissions/" + saved.getId() + "/for-assessment", HttpStatus.OK, ProofSubmission.class);
+        ProofSubmissionDTO result = request.get("/api/proof/proof-submissions/" + saved.getId() + "/for-assessment", HttpStatus.OK, ProofSubmissionDTO.class);
 
         assertThat(result).isNotNull();
-        assertThat(result.getParticipation()).isNotNull();
-        assertThat(result.getParticipation().getExercise()).isNotNull();
-        assertThat(result.getParticipation().getExercise().getId()).isEqualTo(exercise.getId());
+        assertThat(result.participation()).isNotNull();
+        assertThat(result.participation().exercise()).isNotNull();
+        assertThat(result.participation().exercise().id()).isEqualTo(exercise.getId());
     }
 
     @Test
@@ -131,6 +127,6 @@ class ProofSubmissionIntegrationTest extends AbstractSpringIntegrationIndependen
     void getProofSubmissionForAssessment_asStudent_returnsForbidden() throws Exception {
         ProofSubmission saved = proofExerciseUtilService.createAndSaveSubmissionForExercise(exercise, TEST_PREFIX + "student1", true);
 
-        request.get("/api/proof/proof-submissions/" + saved.getId() + "/for-assessment", HttpStatus.FORBIDDEN, ProofSubmission.class);
+        request.get("/api/proof/proof-submissions/" + saved.getId() + "/for-assessment", HttpStatus.FORBIDDEN, ProofSubmissionDTO.class);
     }
 }

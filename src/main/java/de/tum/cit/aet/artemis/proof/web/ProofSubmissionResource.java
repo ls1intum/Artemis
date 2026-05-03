@@ -6,7 +6,13 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -21,6 +27,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
 import de.tum.cit.aet.artemis.proof.domain.ProofSubmission;
+import de.tum.cit.aet.artemis.proof.dto.ProofSubmissionDTO;
 import de.tum.cit.aet.artemis.proof.repository.ProofExerciseRepository;
 import de.tum.cit.aet.artemis.proof.repository.ProofSubmissionRepository;
 
@@ -54,44 +61,44 @@ public class ProofSubmissionResource {
 
     @PostMapping("exercises/{exerciseId}/proof-submissions")
     @EnforceAtLeastStudent
-    public ResponseEntity<ProofSubmission> createProofSubmission(@PathVariable Long exerciseId, @RequestBody ProofSubmission proofSubmission) {
-        log.debug("REST request to save ProofSubmission : {}", proofSubmission);
-        ProofSubmission result = saveAndEvaluate(exerciseId, proofSubmission);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<ProofSubmissionDTO> createProofSubmission(@PathVariable Long exerciseId, @RequestBody ProofSubmissionDTO proofSubmissionDTO) {
+        log.debug("REST request to save ProofSubmission for exercise : {}", exerciseId);
+        return ResponseEntity.ok(saveAndEvaluate(exerciseId, proofSubmissionDTO));
     }
 
     @PutMapping("exercises/{exerciseId}/proof-submissions")
     @EnforceAtLeastStudent
-    public ResponseEntity<ProofSubmission> updateProofSubmission(@PathVariable Long exerciseId, @RequestBody ProofSubmission proofSubmission) {
-        log.debug("REST request to update ProofSubmission : {}", proofSubmission);
-        ProofSubmission result = saveAndEvaluate(exerciseId, proofSubmission);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<ProofSubmissionDTO> updateProofSubmission(@PathVariable Long exerciseId, @RequestBody ProofSubmissionDTO proofSubmissionDTO) {
+        log.debug("REST request to update ProofSubmission for exercise : {}", exerciseId);
+        return ResponseEntity.ok(saveAndEvaluate(exerciseId, proofSubmissionDTO));
     }
 
-    private ProofSubmission saveAndEvaluate(Long exerciseId, ProofSubmission proofSubmission) {
+    private ProofSubmissionDTO saveAndEvaluate(Long exerciseId, ProofSubmissionDTO dto) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         ProofExercise proofExercise = proofExerciseRepository.findById(exerciseId).orElseThrow();
         StudentParticipation participation = studentParticipationRepository.findFirstByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, user.getLogin()).orElseThrow();
 
-        proofSubmission.setParticipation(participation);
-        proofSubmission = proofSubmissionRepository.save(proofSubmission);
+        ProofSubmission submission = dto.toEntity();
+        submission.setParticipation(participation);
+        submission = proofSubmissionRepository.save(submission);
 
-        if (proofSubmission.isSubmitted()) {
+        if (Boolean.TRUE.equals(submission.isSubmitted())) {
             Result result = new Result();
-            result.setSubmission(proofSubmission);
+            result.setSubmission(submission);
             result.setAssessmentType(AssessmentType.AUTOMATIC);
             result.setCompletionDate(ZonedDateTime.now());
             result.setRated(true);
             result.setExerciseId(exerciseId);
 
-            boolean isCorrect = proofExercise.isPredefinedCheckboxState() != null && proofExercise.isPredefinedCheckboxState().equals(proofSubmission.isStudentCheckboxState());
+            boolean isCorrect = proofExercise.isPredefinedCheckboxState() != null && proofExercise.isPredefinedCheckboxState().equals(submission.isStudentCheckboxState());
             result.setScore(isCorrect ? 100.0 : 0.0, proofExercise.getCourseViaExerciseGroupOrCourseMember());
 
             resultRepository.save(result);
-            proofSubmission.addResult(result);
+            submission.addResult(result);
         }
 
-        return proofSubmission;
+        submission.setParticipation(participation);
+        return ProofSubmissionDTO.of(submission);
     }
 
     /**
@@ -99,11 +106,11 @@ public class ProofSubmissionResource {
      * including the participation, the latest ProofSubmission, and results.
      *
      * @param participationId the participation for which to load editor data
-     * @return ResponseEntity with the latest ProofSubmission (may have empty text/checkbox if brand new)
+     * @return ResponseEntity with the latest ProofSubmission (empty if no submission yet)
      */
     @GetMapping("participations/{participationId}/proof-editor")
     @EnforceAtLeastStudent
-    public ResponseEntity<ProofSubmission> getDataForProofEditor(@PathVariable Long participationId) {
+    public ResponseEntity<ProofSubmissionDTO> getDataForProofEditor(@PathVariable Long participationId) {
         log.debug("REST request to get proof editor data for participation : {}", participationId);
         StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
 
@@ -114,28 +121,26 @@ public class ProofSubmissionResource {
             throw new AccessForbiddenException("participation", participationId);
         }
 
-        Optional<ProofSubmission> latestSubmission = participation.findLatestSubmission()
-                .filter(s -> s instanceof ProofSubmission)
-                .map(s -> (ProofSubmission) s);
+        Optional<ProofSubmission> latestSubmission = participation.findLatestSubmission().filter(s -> s instanceof ProofSubmission).map(s -> (ProofSubmission) s);
 
         ProofSubmission submission = latestSubmission.orElseGet(ProofSubmission::new);
         submission.setParticipation(participation);
-        return ResponseEntity.ok(submission);
+        return ResponseEntity.ok(ProofSubmissionDTO.of(submission));
     }
 
     @GetMapping("proof-submissions/{submissionId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<ProofSubmission> getProofSubmission(@PathVariable Long submissionId) {
+    public ResponseEntity<ProofSubmissionDTO> getProofSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get ProofSubmission : {}", submissionId);
-        ProofSubmission proofSubmission = proofSubmissionRepository.findById(submissionId).orElseThrow();
-        return ResponseEntity.ok(proofSubmission);
+        ProofSubmission submission = proofSubmissionRepository.findById(submissionId).orElseThrow();
+        return ResponseEntity.ok(ProofSubmissionDTO.of(submission));
     }
 
     @GetMapping("proof-submissions/{submissionId}/for-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<ProofSubmission> getProofSubmissionForAssessment(@PathVariable Long submissionId) {
+    public ResponseEntity<ProofSubmissionDTO> getProofSubmissionForAssessment(@PathVariable Long submissionId) {
         log.debug("REST request to get ProofSubmission for assessment : {}", submissionId);
-        ProofSubmission proofSubmission = proofSubmissionRepository.findWithEagerParticipationExerciseResultsById(submissionId).orElseThrow();
-        return ResponseEntity.ok(proofSubmission);
+        ProofSubmission submission = proofSubmissionRepository.findWithEagerParticipationExerciseResultsById(submissionId).orElseThrow();
+        return ResponseEntity.ok(ProofSubmissionDTO.of(submission));
     }
 }
