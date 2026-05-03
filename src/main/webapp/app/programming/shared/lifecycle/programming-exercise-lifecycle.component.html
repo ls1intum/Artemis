@@ -196,6 +196,17 @@
                     <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'" />
                 }
             </div>
+            @if (isAthenaEnabled && exercise.allowFeedbackRequests && availableAthenaModules.length) {
+                <div class="form-group mt-2">
+                    <label for="athenaPreliminaryModuleSelect" jhiTranslate="artemisApp.exercise.athenaPreliminaryModule"></label>
+                    <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.athenaPreliminaryModuleTooltip'" />
+                    <select id="athenaPreliminaryModuleSelect" class="form-select" [(ngModel)]="preliminaryFeedbackModule">
+                        @for (athenaModule of availableAthenaModules; track athenaModule) {
+                            <option [value]="athenaModule">{{ athenaModule }}</option>
+                        }
+                    </select>
+                </div>
+            }
         }
         @if (isEditFieldDisplayedRecord()?.showTestNamesToStudents || !isEditFieldDisplayedRecord()) {
             <div class="form-check">

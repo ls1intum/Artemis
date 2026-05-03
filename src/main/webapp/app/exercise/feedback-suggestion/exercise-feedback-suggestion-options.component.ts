@@ -42,6 +42,15 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
         this.athenaService.getAvailableModules(courseId, this.exercise).subscribe((modules) => {
             this.availableAthenaModules = modules;
             this.modulesAvailable = modules.length > 0;
+            const first = modules[0];
+            if (first) {
+                if (this.exercise.feedbackSuggestionModule && !this.gradedFeedbackModule) {
+                    this.gradedFeedbackModule = first;
+                }
+                if (this.exercise.allowFeedbackRequests && !this.preliminaryFeedbackModule) {
+                    this.preliminaryFeedbackModule = first;
+                }
+            }
         });
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
         this.initialAthenaModule = this.exercise.feedbackSuggestionModule;
@@ -109,19 +118,21 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
 
     toggleFeedbackSuggestions(event: any) {
         if (event.target.checked) {
-            this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
+            this.exercise.feedbackSuggestionModule = this.availableAthenaModules[0];
+            this.gradedFeedbackModule = this.availableAthenaModules[0];
         } else {
-            this.exercise.allowFeedbackRequests = false;
             this.exercise.feedbackSuggestionModule = undefined;
+            this.gradedFeedbackModule = undefined;
         }
     }
 
     toggleFeedbackRequests(event: any) {
         if (event.target.checked) {
-            this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
             this.exercise.allowFeedbackRequests = true;
+            this.preliminaryFeedbackModule = this.availableAthenaModules[0];
         } else {
             this.exercise.allowFeedbackRequests = false;
+            this.preliminaryFeedbackModule = undefined;
         }
     }
 

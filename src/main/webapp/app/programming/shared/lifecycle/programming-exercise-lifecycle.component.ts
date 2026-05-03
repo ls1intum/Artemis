@@ -8,7 +8,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseAthenaConfig, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programming/shared/lifecycle/test-schedule-date-picker/programming-exercise-test-schedule-date-picker.component';
 import { every } from 'lodash-es';
@@ -22,6 +22,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgStyle } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AthenaService } from 'app/assessment/shared/services/athena.service';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -43,6 +44,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     private exerciseService = inject(ExerciseService);
     private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
+    private athenaService = inject(AthenaService);
 
     protected readonly assessmentType = AssessmentType;
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -66,6 +68,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     datePickerChildrenSubscription?: Subscription;
 
     isAthenaEnabled: boolean;
+    availableAthenaModules: string[] = [];
 
     isImport = false;
     private urlSubscription: Subscription;
@@ -80,6 +83,27 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        if (this.isAthenaEnabled) {
+            const courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
+            this.athenaService.getAvailableModules(courseId, this.exercise).subscribe((modules) => {
+                this.availableAthenaModules = modules;
+                const first = modules[0];
+                if (first && this.exercise.allowFeedbackRequests && !this.preliminaryFeedbackModule) {
+                    this.preliminaryFeedbackModule = first;
+                }
+            });
+        }
+    }
+
+    get preliminaryFeedbackModule(): string | undefined {
+        return this.exercise.athenaConfig?.preliminaryFeedbackModule;
+    }
+
+    set preliminaryFeedbackModule(value: string | undefined) {
+        if (!this.exercise.athenaConfig) {
+            this.exercise.athenaConfig = {} as ExerciseAthenaConfig;
+        }
+        this.exercise.athenaConfig.preliminaryFeedbackModule = value;
     }
 
     private updateIsImportBasedOnUrl() {
@@ -158,6 +182,9 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         if (this.exercise.allowFeedbackRequests) {
             this.exercise.assessmentDueDate = undefined;
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
+            this.preliminaryFeedbackModule = this.availableAthenaModules[0];
+        } else {
+            this.preliminaryFeedbackModule = undefined;
         }
     }
 
