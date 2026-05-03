@@ -86,18 +86,6 @@
                                                     </div>
                                                 </a>
                                             }
-                                            @if (course.isAtLeastInstructor) {
-                                                <a
-                                                    [routerLink]="[exam.id, 'student-exams']"
-                                                    class="btn btn-primary btn-sm me-1 mb-1 d-flex align-items-center justify-content-center"
-                                                    id="student-exams-{{ exam.id }}"
-                                                >
-                                                    <div>
-                                                        <fa-icon [icon]="faEye" />
-                                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
-                                                    </div>
-                                                </a>
-                                            }
                                             @if (!exam.testExam && ((course.isAtLeastTutor && examHasFinished(exam)) || course.isAtLeastInstructor)) {
                                                 <a
                                                     [routerLink]="[exam.id, 'assessment-dashboard']"

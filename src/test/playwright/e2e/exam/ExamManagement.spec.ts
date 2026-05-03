@@ -151,9 +151,10 @@ test.describe('Exam management', { tag: '@fast' }, () => {
         });
 
         test('Generates student exams', async ({ page, studentExamManagement }) => {
-            await page.goto(`/course-management/${course.id}/exams/${exam.id!}/student-exams`);
+            await page.goto(`/course-management/${course.id}/exams/${exam.id!}/students`);
             await studentExamManagement.clickGenerateStudentExams();
             await page.waitForLoadState('domcontentloaded');
+            await studentExamManagement.openManageStudentExamsMenu();
             await expect(studentExamManagement.getGenerateMissingStudentExamsButton()).toBeDisabled();
         });
 
