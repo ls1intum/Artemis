@@ -40,7 +40,7 @@
             "repository": "Repository",
             "buildPlanId": "Build Plan Id",
             "initializationState": "Status",
-            "initializationDate": "Participation Start Date",
+            "initializationDate": "Start Date",
             "individualDueDate": "Individual Due Date",
             "noIndividualDueDate": "No due date",
             "editIndividualDueDate": "Edit individual due date",

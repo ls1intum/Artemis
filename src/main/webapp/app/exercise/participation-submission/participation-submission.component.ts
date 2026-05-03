@@ -98,8 +98,8 @@ export class ParticipationSubmissionComponent implements OnInit {
         const participation = this.participation();
 
         const cols: ColumnDef<Submission>[] = [
-            { header: 'Id', field: 'id', width: '80px' },
-            { headerKey: 'artemisApp.participation.participationSubmission.submissionType', field: 'type', width: '120px' },
+            { header: 'Id', field: 'id' },
+            { headerKey: 'artemisApp.participation.participationSubmission.submissionType', field: 'type', width: '90px' },
             {
                 headerKey: 'artemisApp.participation.participationSubmission.submissionDate',
                 field: 'submissionDate',
@@ -107,15 +107,16 @@ export class ParticipationSubmissionComponent implements OnInit {
                 templateRef: this.submissionDateTemplate(),
             },
             {
-                headerKey: 'artemisApp.participation.participationSubmission.resultCount',
+                headerIcon: 'pi pi-hashtag',
+                headerTooltip: 'artemisApp.participation.participationSubmission.resultCount',
                 field: 'results',
-                width: '120px',
+                width: '50px',
                 templateRef: this.resultCountTemplate(),
             },
             {
                 headerKey: 'artemisApp.participation.participationSubmission.results',
                 field: 'results',
-                width: '500px',
+                width: '300px',
                 templateRef: this.resultsTemplate(),
             },
         ];
@@ -123,7 +124,6 @@ export class ParticipationSubmissionComponent implements OnInit {
         if (isTmpOrSolution || participation?.type === ParticipationType.PROGRAMMING) {
             cols.push({
                 headerKey: 'artemisApp.programmingSubmission.commitHash',
-                width: '140px',
                 templateRef: this.commitHashTemplate(),
             });
         }
@@ -132,19 +132,17 @@ export class ParticipationSubmissionComponent implements OnInit {
             {
                 headerKey: 'artemisApp.result.assessmentType',
                 field: 'results',
-                width: '180px',
                 templateRef: this.assessmentTypeTemplate(),
             },
             {
                 headerKey: 'artemisApp.participation.participationSubmission.assessor',
                 field: 'results',
-                width: '200px',
                 templateRef: this.assessorTemplate(),
             },
             {
                 headerKey: 'artemisApp.exercise.completionDate',
                 field: 'results',
-                width: '200px',
+                width: '180px',
                 templateRef: this.completionDateTemplate(),
             },
         );

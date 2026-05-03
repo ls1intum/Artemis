@@ -116,7 +116,11 @@
 <ng-template #assessorTemplate let-params>
     <div class="d-flex flex-column">
         @for (result of params.value ?? []; track result) {
-            <div>{{ result.assessor?.name || 'n.a' }}</div>
+            @if (result.assessor?.name) {
+                <div style="min-width: 150px">{{ result.assessor?.name }}</div>
+            } @else {
+                <div>n.a</div>
+            }
         }
     </div>
 </ng-template>

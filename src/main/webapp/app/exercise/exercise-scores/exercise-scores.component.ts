@@ -16,7 +16,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
-import { faComment, faDownload, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
@@ -43,6 +43,7 @@ import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from
 import { ParticipationScoreDTO } from './participation-score-dto.model';
 import { ParticipationScoreSearch } from 'app/shared/table/pageable-table';
 import { TableLazyLoadEvent } from 'primeng/table';
+import { TooltipModule } from 'primeng/tooltip';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import dayjs from 'dayjs/esm';
@@ -78,6 +79,7 @@ export enum FilterProp {
         ExternalSubmissionButtonComponent,
         ExerciseActionButtonComponent,
         NgbPopover,
+        TooltipModule,
         ExerciseScoresExportButtonComponent,
         ProgrammingAssessmentRepoExportButtonComponent,
         SubmissionExportButtonComponent,
@@ -100,7 +102,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     protected readonly faFolderOpen = faFolderOpen;
     protected readonly faListAlt = faListAlt;
     protected readonly farFileCode = faFileCode;
-    protected readonly faComment = faComment;
     protected readonly RepositoryType = RepositoryType;
     protected readonly ExerciseType = ExerciseType;
     protected readonly FeatureToggle = FeatureToggle;
@@ -118,8 +119,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     private readonly alertService = inject(AlertService);
     private readonly breakpointObserver = inject(BreakpointObserver);
 
-    // Laptop and smaller: covers screens up to 1920px (covers most 13"–15" laptops)
-    private static readonly LAPTOP_BREAKPOINT = '(max-width: 1920px)';
+    // Laptop and smaller: covers screens up to 1400px
+    private static readonly LAPTOP_BREAKPOINT = '(max-width: 1400px)';
     readonly isLaptopOrSmaller = toSignal(this.breakpointObserver.observe(ExerciseScoresComponent.LAPTOP_BREAKPOINT).pipe(map((r) => r.matches)), {
         initialValue: this.breakpointObserver.isMatched(ExerciseScoresComponent.LAPTOP_BREAKPOINT),
     });
@@ -198,9 +199,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
         const cols: ColumnDef<ParticipationScoreDTO>[] = [
             {
-                headerKey: 'artemisApp.participation.student',
+                headerKey: ex.teamMode ? 'artemisApp.participation.team' : 'artemisApp.participation.student',
                 field: 'participantName',
-                width: '180px',
+                width: '140px',
                 sort: true,
                 templateRef: this.nameCellTemplate(),
             },
@@ -217,7 +218,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             {
                 headerKey: 'artemisApp.exercise.lastResult',
                 field: 'score',
-                width: '260px',
+                width: '200px',
                 sort: true,
                 templateRef: this.lastResultTemplate(),
             },
@@ -227,7 +228,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             cols.push({
                 headerKey: 'artemisApp.exercise.type',
                 field: 'assessmentType',
-                width: '140px',
+                width: '90px',
                 sort: true,
                 templateRef: this.assessmentTypeTemplate(),
             });
@@ -235,17 +236,17 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
         if (!compact && (ex.assessmentType === AssessmentType.MANUAL || ex.assessmentType === AssessmentType.SEMI_AUTOMATIC)) {
             cols.push({
-                headerKey: 'artemisApp.assessment.assessmentNote',
-                width: '100px',
+                headerIcon: 'pi pi-comment',
+                headerTooltip: 'artemisApp.assessment.assessmentNote',
                 templateRef: this.assessmentNoteTemplate(),
             });
         }
 
-        if (ex.type === ExerciseType.PROGRAMMING && this.afterDueDate() && !compact) {
+        if (!compact && ex.type === ExerciseType.PROGRAMMING && this.afterDueDate()) {
             cols.push({
                 headerKey: 'artemisApp.participation.practice',
                 field: 'testRun',
-                width: '110px',
+                width: '90px',
                 sort: true,
                 templateRef: this.practiceTemplate(),
             });
@@ -255,7 +256,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             {
                 headerKey: 'artemisApp.exercise.submissionCount',
                 field: 'submissionCount',
-                width: '110px',
+                width: '90px',
                 sort: true,
                 templateRef: this.submissionCountTemplate(),
             },

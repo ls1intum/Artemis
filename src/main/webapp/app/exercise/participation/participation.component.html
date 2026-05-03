@@ -147,7 +147,9 @@
 </ng-template>
 
 <ng-template #teamStudentsCellTemplate let-cell>
-    <jhi-team-students-list [students]="cell.data.teamStudents" />
+    <div style="max-width: 20vw; overflow-x: auto">
+        <jhi-team-students-list [students]="cell.data.teamStudents" />
+    </div>
 </ng-template>
 
 <ng-template #practiceCellTemplate let-cell>
@@ -174,7 +176,7 @@
 
 <ng-template #individualDueDateCellTemplate let-cell>
     @if (isEditingDueDate(cell.data.participationId)) {
-        <div class="btn-group">
+        <div class="btn-group" style="min-width: 250px">
             <jhi-date-time-picker
                 [ngModel]="getPendingDueDate(cell.data.participationId)"
                 (ngModelChange)="setPendingDueDate(cell.data.participationId, $event)"

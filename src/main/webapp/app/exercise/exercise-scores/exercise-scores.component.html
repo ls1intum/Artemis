@@ -137,17 +137,9 @@
 </ng-template>
 
 <ng-template #assessmentNoteTemplate let-cell>
-    <div class="w-100 text-center">
-        @if (cell.data.assessmentNote?.trim()) {
-            <fa-icon
-                [ngbPopover]="cell.data.assessmentNote"
-                [triggers]="'hover'"
-                [icon]="faComment"
-                [container]="'body'"
-                [popoverClass]="'max-vw-30 popover-text-truncate-4-lines'"
-            />
-        }
-    </div>
+    @if (cell.data.assessmentNote?.trim()) {
+        <i class="pi pi-comment" [pTooltip]="cell.data.assessmentNote" tooltipPosition="top"></i>
+    }
 </ng-template>
 
 <ng-template #practiceTemplate let-cell>

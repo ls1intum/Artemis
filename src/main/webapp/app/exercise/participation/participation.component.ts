@@ -202,7 +202,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             cols.push({
                 headerKey: 'artemisApp.participation.student',
                 field: 'participantName',
-                width: '140px',
+                width: '150px',
                 sort: true,
                 templateRef: this.participantNameCellTemplate(),
             });
@@ -211,13 +211,13 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 {
                     headerKey: 'artemisApp.participation.team',
                     field: 'participantName',
-                    width: '120px',
+                    width: '150px',
                     sort: true,
                     templateRef: this.participantNameCellTemplate(),
                 },
                 {
                     headerKey: 'artemisApp.participation.students',
-                    width: '280px',
+                    width: '150px',
                     sort: false,
                     templateRef: this.teamStudentsCellTemplate(),
                 },
@@ -237,7 +237,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             {
                 headerKey: 'artemisApp.participation.initializationState',
                 field: 'initializationState',
-                width: '120px',
+                width: '90px',
                 sort: true,
                 templateRef: this.initStateCellTemplate(),
             },
@@ -251,7 +251,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             {
                 headerKey: 'artemisApp.exercise.submissionCount',
                 field: 'submissionCount',
-                width: '100px',
+                width: '90px',
                 sort: true,
                 templateRef: this.submissionCountCellTemplate(),
             },
@@ -291,7 +291,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             cols.push({
                 headerKey: 'artemisApp.participation.individualDueDate',
                 field: 'individualDueDate',
-                width: '260px',
+                width: '180px',
                 sort: true,
                 templateRef: this.individualDueDateCellTemplate(),
             });
