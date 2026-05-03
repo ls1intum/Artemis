@@ -14,12 +14,8 @@ export class ProgrammingExerciseParticipationsPage {
     }
 
     getStudentParticipation(user: UserCredentials) {
-        // Match against the build plan ID which contains the username uppercased without underscores
-        const usernamePattern = user.username.replace(/_/g, '').toUpperCase();
-        return this.page
-            .getByRole('table')
-            .getByRole('row')
-            .filter({ hasText: new RegExp(usernamePattern, 'i') });
+        const namePattern = user.displayName ?? user.username;
+        return this.page.getByRole('table').getByRole('row').filter({ hasText: namePattern });
     }
 
     public async openStudentParticipationSubmissions(user: UserCredentials) {
