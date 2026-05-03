@@ -14,6 +14,8 @@ import { MockProvider } from 'ng-mocks';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { OrganizationManagementDetailComponent } from 'app/core/admin/organization-management/organization-management-detail.component';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/core/shared/entities/organization.model';
@@ -44,6 +46,7 @@ describe('OrganizationManagementDetailComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(AlertService),
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .overrideTemplate(OrganizationManagementDetailComponent, '')

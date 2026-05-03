@@ -14,5 +14,5 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Request to generate a problem statement")
 public record ProblemStatementGenerationRequestDTO(
-        @NotBlank @Size(max = 1000) @Schema(description = "User prompt describing the problem statement requirements") String userPrompt) {
+        @NotBlank @Size(min = 1, max = 1000) @Schema(description = "User prompt describing the problem statement requirements") String userPrompt) {
 }
