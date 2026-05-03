@@ -190,6 +190,9 @@ public class ProgrammingExerciseValidationService {
 
     private void validateCustomCheckoutPaths(ProgrammingExercise programmingExercise) {
         var buildConfig = programmingExercise.getBuildConfig();
+        if (buildConfig == null) {
+            throw new BadRequestAlertException("ProgrammingExercise build config must not be null", "ProgrammingExercise", "buildConfigMissing");
+        }
 
         boolean assignmentCheckoutPathIsValid = isValidCheckoutPath(buildConfig.getAssignmentCheckoutPath());
         boolean solutionCheckoutPathIsValid = isValidCheckoutPath(buildConfig.getSolutionCheckoutPath());
