@@ -650,7 +650,7 @@ describe('IrisChatService', () => {
             scopedService.messages.next([mockServerMessage]);
             scopedService.chatSessions.next([{ id: 1 } as IrisSessionDTO]);
             scopedService.latestStartedSession = { id: 1 } as IrisSessionDTO;
-            scopedService['sessionCreationIdentifier'] = 'course-chat/1';
+            scopedService['sessionContext'] = { mode: ChatServiceMode.COURSE, entityId: 1 };
             scopedService.hasJustAcceptedLLMUsage = true;
             scopedService.rateLimitInfo = { rateLimitTimeframeHours: 1 } as IrisRateLimitInformation;
 
@@ -660,7 +660,7 @@ describe('IrisChatService', () => {
             expect(scopedService.messages.getValue()).toEqual([]);
             expect(scopedService.chatSessions.getValue()).toEqual([]);
             expect(scopedService.latestStartedSession).toBeUndefined();
-            expect(scopedService['sessionCreationIdentifier']).toBeUndefined();
+            expect(scopedService['sessionContext']).toBeUndefined();
             expect(scopedService.hasJustAcceptedLLMUsage).toBe(false);
             expect(scopedService.rateLimitInfo).toBeUndefined();
             // courseId is route-derived, not user-private — it is intentionally preserved so the next
@@ -739,7 +739,7 @@ describe('IrisChatService', () => {
             vi.spyOn(httpServiceMock, 'getChatSessions').mockReturnValue(of([]));
             vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
 
-            scopedService.switchToSession({ id: 7, chatMode: ChatServiceMode.COURSE, entityId: 1, creationDate: new Date() } as IrisSessionDTO);
+            scopedService.switchToSession({ id: 7, mode: ChatServiceMode.COURSE, entityId: 1, creationDate: new Date() } as IrisSessionDTO);
             expect(scopedService['chatSessionByIdSubscription']).toBeDefined();
 
             authState.next(undefined);
