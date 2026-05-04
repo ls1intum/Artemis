@@ -241,13 +241,23 @@ Each new approach **must** run on its own git branch. The approach ID is derived
 
 ### Running Steps Independently
 
-Each module can be executed standalone. Steps 11–12 (`consistency_check.py`) are the most commonly re-run in isolation when retrying failed checks:
+Each module can be executed standalone, which is useful when the full workflow fails partway through or when only one step needs to be repeated.
+Logs produced by each script indicate exactly which step failed and which script to rerun.
 
-```bash
-python consistency_check.py
-```
+| Module | Standalone entry point | When to rerun |
+|---|---|---|
+| `exercises.py` | `python exercises.py` | Variant materialization or ZIP creation failed |
+| `course.py` | `python course.py` | Course creation or exercise ID retrieval failed |
+| `consistency_check.py` | `python consistency_check.py` | One or more consistency checks failed; most common rerun case |
+| `report.py` | `python report.py` | Report generation failed after checks completed |
+| `code_snapshot.py` | `python code_snapshot.py` | Source snapshot ZIP was not created |
+| `merge_request.py` | `python merge_request.py` | Pull request creation failed |
 
-Note the printed `approach_id` and set it manually in `report.py`, `code_snapshot.py`, and `merge_request.py` before running those scripts.
+<Callout variant={CalloutVariant.info}>
+Steps 11–12 (`consistency_check.py`) require an active session and an existing course. When running it standalone, the script automatically re-authenticates and retrieves the course ID before triggering checks.
+</Callout>
+
+When running `consistency_check.py` standalone, note the `approach_id` printed at the end and set it manually in `report.py`, `code_snapshot.py`, and `merge_request.py` before running those scripts.
 
 ---
 
