@@ -74,6 +74,15 @@ npm run test:one -- --test-path-pattern='src/main/webapp/app/path/to/spec\.ts$'
 ./run-e2e-tests-local-fast.sh --filter "Quiz"              # Run tests matching "Quiz"
 ./run-e2e-tests-local-fast.sh --filter "ExamAssessment|SystemHealth"  # Multiple patterns
 ./run-e2e-tests-local-fast.sh --stop                       # Stop all services
+
+# Multi-node E2E (catches Hazelcast cluster / L2 cache coherence regressions)
+# Boots the full production-faithful stack: Postgres, JHipster Registry (Eureka),
+# ActiveMQ, 3 Artemis nodes, nginx LB, containerised Playwright. Slower than the
+# single-node fast script, but the only way to reproduce multi-node bugs locally.
+./run-e2e-tests-local-multinode.sh                         # Full multi-node run (build WAR + image + stack + tests)
+./run-e2e-tests-local-multinode.sh --filter "Quiz"         # Multi-node, filtered
+./run-e2e-tests-local-multinode.sh --skip-build --skip-up  # Quick re-run against an already-running stack
+./run-e2e-tests-local-multinode.sh --stop                  # Tear everything down
 ```
 
 ## Project Structure
@@ -130,6 +139,12 @@ Organized by feature module:
 - Use DTOs (Java records) for REST endpoints
 - Prefer constructor injection for Spring beans
 - Use Java 25 features (records, sealed classes, pattern matching)
+
+### Caching
+- **Do not add `@Cache` (Hibernate L2) annotations on entities or associations.** Hibernate second-level cache is disabled cluster-wide and an ArchUnit rule (`ArchitectureTest.testNoHibernateSecondLevelCacheAnnotation`) fails the build if any reappears. Reason: `@Modifying @Query` repository methods bypass L2 invalidation, and the absence of service-level `@Transactional` leaves no clean place to coordinate eviction within a REST call — both produced cross-node stale-read bugs in the multi-node cluster (issue #12574, fixed in PR #12578; further cleanup in PR #12579).
+- **For DTO / projection caching, use Spring `@Cacheable` with the `HazelcastCacheManager`** (defined in `HazelcastConfiguration.cacheManager`). Always pair `@Cacheable` with explicit eviction — `@CacheEvict` on the writer service, or a Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. See `TitleCacheEvictionService` for the canonical pattern.
+- The bar for adding a new cache: a measured performance gain that justifies the eviction-correctness work. The default answer is: do not cache.
+- Full rationale, history, and patterns: `documentation/docs/developer/guidelines/caching.mdx`.
 
 ### TypeScript/Angular
 - kebab-case for filenames (`course-detail.component.ts`)

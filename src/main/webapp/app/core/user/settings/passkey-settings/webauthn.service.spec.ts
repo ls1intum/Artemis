@@ -206,6 +206,14 @@ describe('WebauthnService', () => {
             expect(console.error).toHaveBeenCalled();
         });
 
+        it('should rethrow NotAllowedError without showing alert when user cancels authenticator dialog', async () => {
+            const notAllowedError = new DOMException('User cancelled', 'NotAllowedError');
+            vi.spyOn(navigator.credentials, 'get').mockRejectedValue(notAllowedError);
+
+            await expect(service.loginWithPasskey()).rejects.toThrow(DOMException);
+            expect(alertService.addErrorAlert).not.toHaveBeenCalled();
+        });
+
         it('should handle generic error during login', async () => {
             const genericError = new Error('Network error');
             vi.spyOn(navigator.credentials, 'get').mockRejectedValue(genericError);
@@ -500,7 +508,7 @@ describe('WebauthnService', () => {
             expect(alertService.addErrorAlert).not.toHaveBeenCalled();
         });
 
-        it('should show error alert for 401 errors even when conditional', async () => {
+        it('should show deactivated error alert for 403 errors even when conditional', async () => {
             const challenge = new Uint8Array([1, 2, 3]);
             webauthnApiService.getAuthenticationOptions.mockResolvedValue({
                 challenge: encodeAsBase64Url(challenge),
@@ -510,12 +518,30 @@ describe('WebauthnService', () => {
             const mockCredential = { type: 'public-key' } as PublicKeyCredential;
             vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
             vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
-            const error401 = { status: 401 } as any;
-            webauthnApiService.loginWithPasskey.mockRejectedValue(error401);
+            const error403 = { status: 403 } as any;
+            webauthnApiService.loginWithPasskey.mockRejectedValue(error403);
             vi.spyOn(console, 'error').mockImplementation(() => {});
 
-            await expect(service.loginWithPasskey(true)).rejects.toEqual(error401);
+            await expect(service.loginWithPasskey(true)).rejects.toEqual(error403);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.loginDeactivated');
+        });
+
+        it('should show no passkey found error alert for 404 errors', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+            const mockCredential = { type: 'public-key' } as PublicKeyCredential;
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
+            vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
+            const error404 = { status: 404 } as any;
+            webauthnApiService.loginWithPasskey.mockRejectedValue(error404);
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            await expect(service.loginWithPasskey(true)).rejects.toEqual(error404);
+            expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.noPasskeyFound');
         });
 
         it('should show error alert for generic errors even when conditional', async () => {

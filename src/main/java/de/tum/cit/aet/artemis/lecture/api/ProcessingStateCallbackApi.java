@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
@@ -64,8 +65,9 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
      * @param lectureUnitId the ID of the lecture unit
      * @param jobToken      the job token from the callback (for validation)
      * @param success       whether processing succeeded
+     * @param errorCode     machine-readable error code (e.g. {@code YOUTUBE_PRIVATE}); {@code null} on success or unknown failure
      */
-    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success) {
-        processingStateCallbackService.handleIngestionComplete(lectureUnitId, jobToken, success);
+    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode) {
+        processingStateCallbackService.handleIngestionComplete(lectureUnitId, jobToken, success, errorCode);
     }
 }

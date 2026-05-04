@@ -883,7 +883,7 @@ public class ParticipationUtilService {
      * @param storedFeedback The List of Feedback stored in the database
      * @param feedbackType   The FeedbackType of the Feedback
      */
-    public void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback, FeedbackType feedbackType) {
+    public void checkFeedbackCorrectlyStored(Collection<Feedback> sentFeedback, Collection<Feedback> storedFeedback, FeedbackType feedbackType) {
         assertThat(sentFeedback).as("contains the same amount of feedback").hasSize(storedFeedback.size());
         Result storedFeedbackResult = new Result();
         Result sentFeedbackResult = new Result();

@@ -24,6 +24,7 @@
             (diffLineChange)="diffLineChange.emit($event)"
             (markdownChange)="updateProblemStatement($event)"
             (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation.emit($event)"
+            (onApplyInlineFix)="onApplyInlineFix($event)"
             (onSelectionChange)="onEditorSelectionChange($event)"
         >
             <!-- Custom preview using ProgrammingExerciseInstructionComponent for proper rendering

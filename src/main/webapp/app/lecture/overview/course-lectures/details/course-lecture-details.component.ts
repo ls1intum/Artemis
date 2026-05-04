@@ -244,11 +244,14 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
         if (targetUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             const attachmentUnit = targetUnit as AttachmentVideoUnit;
+            const hasVideo = !!attachmentUnit.videoSource;
             const isPdf = attachmentUnit.attachment?.link?.toLowerCase().endsWith('.pdf');
-
-            if (isPdf) {
+            // Clear timestamp only if unit has NO video source
+            if (!hasVideo) {
                 this.targetVideoTimestamp.set(undefined);
-            } else {
+            }
+            // Clear PDF page only if unit has NO PDF attachment
+            if (!isPdf) {
                 this.targetPdfPage.set(undefined);
             }
         } else {

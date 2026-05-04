@@ -36,6 +36,7 @@ import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbMo
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CodeGenerationRequest } from 'app/openapi/model/codeGenerationRequest';
+import { CodeGenerationJobStart } from 'app/openapi/model/codeGenerationJobStart';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -180,6 +181,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly sortedIssues = computed(() =>
         this.exerciseReviewCommentService
             .threads()
+            .filter((thread) => thread.resolved !== true)
             .map((thread) => this.mapConsistencyThreadToNavigationIssue(thread))
             .filter((issue): issue is ConsistencyIssueNavigationIssue => issue !== undefined)
             .sort(
@@ -510,13 +512,18 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param repositoryType currently selected repository in the editor
      * @returns the matching supported generation repository, or `undefined` for unsupported tabs
      */
-    private mapRepositoryTypeToCodeGenerationRequest(repositoryType: RepositoryType): SupportedCodeGenerationRepositoryType | undefined {
+    private mapRepositoryTypeToCodeGenerationRequest(
+        repositoryType: RepositoryType | CodeGenerationJobStart.RepositoryTypeEnum,
+    ): SupportedCodeGenerationRepositoryType | undefined {
         switch (repositoryType) {
             case RepositoryType.TEMPLATE:
+            case CodeGenerationJobStart.RepositoryTypeEnum.Exercise:
                 return RepositoryType.TEMPLATE;
             case RepositoryType.SOLUTION:
+            case CodeGenerationJobStart.RepositoryTypeEnum.Solution:
                 return RepositoryType.SOLUTION;
             case RepositoryType.TESTS:
+            case CodeGenerationJobStart.RepositoryTypeEnum.Tests:
                 return RepositoryType.TESTS;
             default:
                 return undefined;
@@ -1516,9 +1523,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     onEditorLoaded() {
         if (this.fileToJumpOn) {
-            // File already loaded, file load event will not fire
+            // File already loaded, no file-load event will fire.
+            // Jump directly without re-running file-sync load/rebind.
             if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
-                this.onFileLoad(this.fileToJumpOn!);
+                this.performDeferredLineJump(this.fileToJumpOn);
                 return;
             }
 
@@ -1535,6 +1543,15 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     onFileLoad(fileName: string) {
         this.onFileSyncLoad(fileName);
+        this.performDeferredLineJump(fileName);
+    }
+
+    /**
+     * Performs the pending line jump when the target file is currently active.
+     *
+     * @param fileName The file that is currently active/loaded.
+     */
+    private performDeferredLineJump(fileName: string): void {
         if (this.fileToJumpOn === fileName) {
             if (this.lineJumpOnFileLoad !== undefined) {
                 this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
