@@ -12,22 +12,11 @@
 /**
  * Successful refinement result containing the refined question and an explanation of the changes
  */
-<<<<<<<< HEAD:src/main/webapp/app/openapi/model/success.ts
-export interface Success { 
-========
 export interface QuizQuestionRefinementSuccess { 
-    /**
-     * The refined quiz question
-     */
-    question: GeneratedQuizQuestion;
->>>>>>>> refs/heads/develop:src/main/webapp/app/openapi/model/quizQuestionRefinementSuccess.ts
     /**
      * Brief explanation of what was changed during refinement
      */
     reasoning: string;
-<<<<<<<< HEAD:src/main/webapp/app/openapi/model/success.ts
-    type?: string;
-========
     type?: QuizQuestionRefinementSuccess.TypeEnum;
 }
 export namespace QuizQuestionRefinementSuccess {
@@ -35,6 +24,6 @@ export namespace QuizQuestionRefinementSuccess {
         Success: 'success'
     } as const;
     export type TypeEnum = typeof TypeEnum[keyof typeof TypeEnum];
->>>>>>>> refs/heads/develop:src/main/webapp/app/openapi/model/quizQuestionRefinementSuccess.ts
 }
+
 

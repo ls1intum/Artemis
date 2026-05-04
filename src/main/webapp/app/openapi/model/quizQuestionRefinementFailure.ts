@@ -12,18 +12,11 @@
 /**
  * Failed refinement result containing an error message
  */
-<<<<<<<< HEAD:src/main/webapp/app/openapi/model/failure.ts
-export interface Failure { 
-========
 export interface QuizQuestionRefinementFailure { 
->>>>>>>> refs/heads/develop:src/main/webapp/app/openapi/model/quizQuestionRefinementFailure.ts
     /**
      * Error message describing why the refinement failed
      */
     error: string;
-<<<<<<<< HEAD:src/main/webapp/app/openapi/model/failure.ts
-    type?: string;
-========
     type?: QuizQuestionRefinementFailure.TypeEnum;
 }
 export namespace QuizQuestionRefinementFailure {
@@ -31,6 +24,6 @@ export namespace QuizQuestionRefinementFailure {
         Failure: 'failure'
     } as const;
     export type TypeEnum = typeof TypeEnum[keyof typeof TypeEnum];
->>>>>>>> refs/heads/develop:src/main/webapp/app/openapi/model/quizQuestionRefinementFailure.ts
 }
+
 
