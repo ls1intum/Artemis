@@ -22,6 +22,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
@@ -245,14 +246,15 @@ public class PyrisConnectorService {
      * 1. A "thinking" update (~2 ms after this call) when the query is classified as a real question.
      * 2. A "result" update when the LLM finishes, containing the answer (or null for navigation queries).
      *
-     * @param query    the user's question
-     * @param limit    the maximum number of source segments to retrieve
-     * @param jobToken the Hazelcast job token used for callback authentication and WebSocket routing
+     * @param query       the user's question
+     * @param limit       the maximum number of source segments to retrieve
+     * @param jobToken    the Hazelcast job token used for callback authentication and WebSocket routing
+     * @param aiSelection the user's LLM selection (LOCAL_AI or CLOUD_AI)
      */
-    public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken) {
+    public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection) {
         var endpoint = "/api/v1/pipelines/global-search/run";
         try {
-            var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, null);
+            var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null);
             var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, List.of());
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
             if (response.getStatusCode().value() != 202) {
