@@ -18,6 +18,8 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { OrganizationManagementComponent } from 'app/core/admin/organization-management/organization-management.component';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/core/shared/entities/organization.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('OrganizationManagementComponent', () => {
     setupTestBed({ zoneless: true });
@@ -37,6 +39,7 @@ describe('OrganizationManagementComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(AlertService),
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .overrideTemplate(OrganizationManagementComponent, '')

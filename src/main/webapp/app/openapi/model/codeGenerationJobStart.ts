@@ -9,9 +9,19 @@
  */
 
 
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-
 export interface CodeGenerationJobStart { 
     jobId?: string;
-    repositoryType?: RepositoryType;
+    repositoryType?: CodeGenerationJobStart.RepositoryTypeEnum;
 }
+export namespace CodeGenerationJobStart {
+    export const RepositoryTypeEnum = {
+        Exercise: 'exercise',
+        Solution: 'solution',
+        Tests: 'tests',
+        Auxiliary: 'auxiliary',
+        User: 'user'
+    } as const;
+    export type RepositoryTypeEnum = typeof RepositoryTypeEnum[keyof typeof RepositoryTypeEnum];
+}
+
+

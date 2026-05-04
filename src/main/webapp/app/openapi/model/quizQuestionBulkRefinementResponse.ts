@@ -11,7 +11,7 @@ import { QuizQuestionRefinementResponse } from './quizQuestionRefinementResponse
 
 
 /**
- * Response containing one refinement result per input question, in the same order as request
+ * Response containing one refinement result per input question, in the same order
  */
 export interface QuizQuestionBulkRefinementResponse { 
     /**
