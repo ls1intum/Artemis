@@ -174,7 +174,7 @@ export class IrisChatService implements OnDestroy {
         this.shouldReopenChatSubject.next(false);
         // Plain fields.
         this.latestStartedSession = undefined;
-        this.sessionCreationIdentifier = undefined;
+        this.sessionContext = undefined;
         this.hasJustAcceptedLLMUsage = false;
         this.rateLimitInfo = undefined;
     }
