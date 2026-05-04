@@ -168,6 +168,8 @@ describe('FileUploadAssessmentComponent', () => {
                                 result,
                             }),
                         ),
+                        getFeedbacksForUpdateAfterComplaint: vi.fn((feedbacks: Feedback[]) => feedbacks),
+                        getComplaintResponseForUpdateAfterComplaint: vi.fn((complaintResponse: ComplaintResponse) => complaintResponse),
                     },
                 },
                 {
