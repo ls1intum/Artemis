@@ -4,10 +4,15 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,6 +42,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownRelativeToAbsolutePathAttributeProvider;
+import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
@@ -82,6 +90,17 @@ public class ProblemStatementRenderingService {
 
     private static final @Nullable String KATEX_AUTO_RENDER_JS = loadClasspathResource("problem-statement-js/katex-auto-render.js");
 
+    private static final int MAX_INLINE_IMAGES = 20;
+
+    private static final long MAX_INLINE_FILE_SIZE = 5 * 1024 * 1024;
+
+    private static final long MAX_INLINE_TOTAL_SIZE = 10 * 1024 * 1024;
+
+    private static final String MARKDOWN_FILE_API_PATH = "/api/core/files/markdown/";
+
+    private static final Map<String, String> INLINE_IMAGE_MIME_TYPES = Map.of("png", "image/png", "jpg", "image/jpeg", "jpeg", "image/jpeg", "gif", "image/gif", "webp",
+            "image/webp");
+
     private static final String CODE_BLOCK_PLACEHOLDER_PREFIX = "\u0000CODE_BLOCK_";
 
     private static final String CODE_BLOCK_PLACEHOLDER_SUFFIX = "\u0000";
@@ -119,14 +138,18 @@ public class ProblemStatementRenderingService {
 
     private final MessageSource messageSource;
 
+    private final FileService fileService;
+
     private final String serverUrl;
 
     private final HtmlRenderer commonMarkRenderer;
 
-    public ProblemStatementRenderingService(PlantUmlService plantUmlService, ObjectMapper objectMapper, MessageSource messageSource, @Value("${server.url}") String serverUrl) {
+    public ProblemStatementRenderingService(PlantUmlService plantUmlService, ObjectMapper objectMapper, MessageSource messageSource, FileService fileService,
+            @Value("${server.url}") String serverUrl) {
         this.plantUmlService = plantUmlService;
         this.objectMapper = objectMapper;
         this.messageSource = messageSource;
+        this.fileService = fileService;
         this.serverUrl = serverUrl;
         this.commonMarkRenderer = HtmlRenderer.builder().extensions(COMMONMARK_EXTENSIONS)
                 .attributeProviderFactory(ctx -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl)).build();
@@ -177,6 +200,9 @@ public class ProblemStatementRenderingService {
 
         // 7. CommonMark → sanitized HTML.
         String html = renderWithCommonMark(processed);
+
+        // 7b. Inline markdown images as base64 data URIs so the output is self-contained.
+        html = inlineMarkdownImages(html);
 
         // 8. Inject the earlier PlantUML SVGs (jsoup's HTML safelist would strip them, so we inject afterwards).
         for (int i = 0; i < inlineSvgs.size(); i++) {
@@ -398,6 +424,104 @@ public class ProblemStatementRenderingService {
     private String renderWithCommonMark(String markdown) {
         String html = commonMarkRenderer.render(COMMONMARK_PARSER.parse(markdown));
         return Jsoup.clean(html, HTML_SAFELIST);
+    }
+
+    private record InlineImage(String dataUri, long rawBytes) {
+    }
+
+    private String inlineMarkdownImages(String html) {
+        var doc = Jsoup.parseBodyFragment(html);
+        var images = doc.select("img[src]");
+        if (images.isEmpty()) {
+            return html;
+        }
+
+        Path basePath = FilePathConverter.getMarkdownFilePath();
+        Path baseReal;
+        try {
+            baseReal = basePath.toRealPath();
+        }
+        catch (IOException e) {
+            return html;
+        }
+
+        var cache = new HashMap<String, InlineImage>();
+        int inlinedCount = 0;
+        long emittedBytes = 0;
+        String absolutePrefix = serverUrl + MARKDOWN_FILE_API_PATH;
+
+        for (var img : images) {
+            String src = img.attr("src");
+            String filename;
+            if (src.startsWith(absolutePrefix)) {
+                filename = src.substring(absolutePrefix.length());
+            }
+            else if (src.startsWith(MARKDOWN_FILE_API_PATH)) {
+                filename = src.substring(MARKDOWN_FILE_API_PATH.length());
+            }
+            else {
+                continue;
+            }
+
+            try {
+                filename = URLDecoder.decode(filename.split("[?#]")[0], StandardCharsets.UTF_8);
+            }
+            catch (IllegalArgumentException e) {
+                continue;
+            }
+
+            if (!FileUtil.sanitizeFilename(filename).equals(filename) || filename.contains("..")) {
+                continue;
+            }
+
+            InlineImage cached = cache.get(filename);
+            if (cached != null) {
+                if (inlinedCount >= MAX_INLINE_IMAGES || emittedBytes + cached.rawBytes() > MAX_INLINE_TOTAL_SIZE) {
+                    continue;
+                }
+                img.attr("src", cached.dataUri());
+                emittedBytes += cached.rawBytes();
+                inlinedCount++;
+                continue;
+            }
+
+            if (inlinedCount >= MAX_INLINE_IMAGES) {
+                continue;
+            }
+
+            String ext = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+            String mime = INLINE_IMAGE_MIME_TYPES.get(ext);
+            if (mime == null) {
+                continue;
+            }
+
+            Path resolved = basePath.resolve(filename);
+            try {
+                Path fileReal = resolved.toRealPath();
+                if (!fileReal.startsWith(baseReal)) {
+                    continue;
+                }
+                long size = Files.size(fileReal);
+                if (size > MAX_INLINE_FILE_SIZE || emittedBytes + size > MAX_INLINE_TOTAL_SIZE) {
+                    continue;
+                }
+                byte[] bytes = fileService.getFileForPath(fileReal);
+                if (bytes == null) {
+                    continue;
+                }
+                String dataUri = "data:" + mime + ";base64," + Base64.getEncoder().encodeToString(bytes);
+                img.attr("src", dataUri);
+                cache.put(filename, new InlineImage(dataUri, size));
+                emittedBytes += size;
+                inlinedCount++;
+            }
+            catch (IOException e) {
+                log.warn("Could not inline markdown image {}: {}", filename, e.getMessage());
+            }
+        }
+
+        doc.outputSettings().prettyPrint(false);
+        return doc.body().html();
     }
 
     /**
