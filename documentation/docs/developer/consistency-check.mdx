@@ -38,7 +38,7 @@ Language-specific exclusions (e.g. Gradle wrapper for Java, virtual environments
 
 **Phase 2 — Structural and Semantic Analysis (concurrent)**
 
-Two prompts execute in parallel using Spring AI's reactive `ChatClient`:
+Two prompts execute in parallel using Reactor with Spring AI's `ChatClient`:
 - The **structural checker** (`consistency_structural.st`) detects return-type, parameter, constructor, attribute-type, and visibility mismatches.
 - The **semantic checker** (`consistency_semantic.st`) detects identifier naming inconsistencies.
 
@@ -204,12 +204,12 @@ pip install -r requirements.txt
 
    restart PowerShell after this line, then continue
 
-5. authenticate with GitHub CLI
+5. Authenticate with GitHub CLI
 ```shell
 gh auth login
 ```
 
-6. run benchmark script
+6. Run benchmark script
    - On **macOS/Linux**:
      ```shell
      python3 run_pecv_bench.py
