@@ -119,7 +119,7 @@ export class ExerciseSplitPanelComponent {
 
     readonly showCodeEditor = computed(() => {
         const exercise = this.exercise();
-        return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor;
+        return exercise.type === ExerciseType.PROGRAMMING && !!this.studentParticipation();
     });
 
     readonly showEditorPanel = computed(() => {
@@ -127,7 +127,7 @@ export class ExerciseSplitPanelComponent {
         if (type === ExerciseType.QUIZ) return true;
         if (!this.studentParticipation()) return false;
         if (type === ExerciseType.PROGRAMMING) {
-            return (this.exercise() as ProgrammingExercise).allowOnlineEditor ?? false;
+            return true;
         }
         return true;
     });
@@ -211,7 +211,7 @@ export class ExerciseSplitPanelComponent {
             if (currentParticipationId === String(participation.id)) return;
             if (type === ExerciseType.TEXT) {
                 this.router.navigate(['text-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
-            } else if (type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
+            } else if (type === ExerciseType.PROGRAMMING) {
                 this.router.navigate(['programming-exercises', exercise.id, 'code-editor', participation.id], { relativeTo: this.route.parent });
             } else if (type === ExerciseType.MODELING) {
                 this.router.navigate(['modeling-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });

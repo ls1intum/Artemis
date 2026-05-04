@@ -129,6 +129,14 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         this.codeEditorContainer?.commit();
     }
 
+    get onlineEditorEnabled(): boolean {
+        return this.exercise?.allowOnlineEditor ?? false;
+    }
+
+    get readOnlyCodeEditor(): boolean {
+        return !this.onlineEditorEnabled;
+    }
+
     /**
      * If a subscription exists for paramSub, unsubscribe
      */

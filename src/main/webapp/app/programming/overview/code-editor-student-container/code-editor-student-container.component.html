@@ -21,13 +21,16 @@
     @if (!loadingParticipation && !participationCouldNotBeFetched) {
         <jhi-code-editor-container
             [isProblemStatementVisible]="false"
-            [editable]="!repositoryIsLocked"
+            [editable]="onlineEditorEnabled && !repositoryIsLocked"
+            [forRepositoryView]="readOnlyCodeEditor"
+            [buildable]="onlineEditorEnabled"
             [participation]="participation"
             [showEditorInstructions]="!lightweight() && showEditorInstructions"
             [isTutorAssessment]="hasTutorAssessment"
             [readOnlyManualFeedback]="true"
             [course]="course"
             [showNavbar]="!lightweight()"
+            [showEditorActions]="onlineEditorEnabled"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
@@ -73,12 +76,14 @@
                   class="me-2"
                 />
               }
-              <jhi-programming-exercise-student-trigger-build-button
-                class="me-2"
-                [exercise]="exercise"
-                [participation]="participation"
-                [btnSize]="ButtonSize.MEDIUM"
-              />
+              @if (onlineEditorEnabled) {
+                <jhi-programming-exercise-student-trigger-build-button
+                  class="me-2"
+                  [exercise]="exercise"
+                  [participation]="participation"
+                  [btnSize]="ButtonSize.MEDIUM"
+                />
+              }
             </div>
             <jhi-programming-exercise-instructions
                 [class.d-none]="lightweight()"
