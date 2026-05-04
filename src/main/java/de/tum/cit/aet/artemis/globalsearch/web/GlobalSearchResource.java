@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
@@ -67,12 +68,15 @@ public class GlobalSearchResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final ExerciseRepository exerciseRepository;
+
     public GlobalSearchResource(SearchableEntityWeaviateService searchableEntityWeaviateService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository) {
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -120,9 +124,10 @@ public class GlobalSearchResource {
         List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), effectiveLimit);
 
         Map<Long, String> courseNameById = resolveCourseNames(rawResults);
+        Map<Long, Long> exerciseGroupIdByExerciseId = resolveExerciseGroupIds(rawResults);
         List<GlobalSearchResultDTO> resultDTOs = new ArrayList<>();
         for (Map<String, Object> properties : rawResults) {
-            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById);
+            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById, exerciseGroupIdByExerciseId);
             if (dto != null) {
                 resultDTOs.add(dto);
             }
@@ -172,6 +177,38 @@ public class GlobalSearchResource {
         Map<Long, String> courseNames = new HashMap<>();
         courseRepository.findAllById(courseIds).forEach(course -> courseNames.put(course.getId(), course.getTitle()));
         return courseNames;
+    }
+
+    /**
+     * Resolves the exercise group IDs for all exam exercises appearing in the Weaviate results.
+     * This is needed to build the correct course-management routing URL for exam exercise results.
+     */
+    private Map<Long, Long> resolveExerciseGroupIds(List<Map<String, Object>> rawResults) {
+        Set<Long> examExerciseIds = new HashSet<>();
+        for (Map<String, Object> properties : rawResults) {
+            Object type = properties.get(SearchableEntitySchema.Properties.TYPE);
+            if (!SearchableEntitySchema.TypeValues.EXERCISE.equals(type)) {
+                continue;
+            }
+            Object examId = properties.get(SearchableEntitySchema.Properties.EXAM_ID);
+            if (examId == null) {
+                continue;
+            }
+            Object rawId = properties.get(SearchableEntitySchema.Properties.ENTITY_ID);
+            if (rawId instanceof Number number) {
+                examExerciseIds.add(number.longValue());
+            }
+        }
+        if (examExerciseIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Long> result = new HashMap<>();
+        for (Object[] row : exerciseRepository.findExerciseAndGroupIdsByExerciseIds(examExerciseIds)) {
+            if (row[0] instanceof Number exerciseId && row[1] instanceof Number groupId) {
+                result.put(exerciseId.longValue(), groupId.longValue());
+            }
+        }
+        return result;
     }
 
     /**

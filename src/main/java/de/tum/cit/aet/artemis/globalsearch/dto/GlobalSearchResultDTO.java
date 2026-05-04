@@ -34,13 +34,14 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
      *                           one {@code courseRepository.findAllById(...)} lookup per search request
      * @return the unified search result DTO, or {@code null} if the type discriminator is missing or unknown
      */
-    public static GlobalSearchResultDTO fromSearchableItemProperties(Map<String, Object> properties, Map<Long, String> courseNameById) {
+    public static GlobalSearchResultDTO fromSearchableItemProperties(Map<String, Object> properties, Map<Long, String> courseNameById,
+            Map<Long, Long> exerciseGroupIdByExerciseId) {
         String type = getString(properties, SearchableEntitySchema.Properties.TYPE);
         if (type == null) {
             return null;
         }
         return switch (type) {
-            case SearchableEntitySchema.TypeValues.EXERCISE -> fromExerciseRow(properties, courseNameById);
+            case SearchableEntitySchema.TypeValues.EXERCISE -> fromExerciseRow(properties, courseNameById, exerciseGroupIdByExerciseId);
             case SearchableEntitySchema.TypeValues.LECTURE -> fromLectureRow(properties, courseNameById);
             case SearchableEntitySchema.TypeValues.LECTURE_UNIT -> fromLectureUnitRow(properties, courseNameById);
             case SearchableEntitySchema.TypeValues.EXAM -> fromExamRow(properties, courseNameById);
@@ -50,7 +51,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         };
     }
 
-    private static GlobalSearchResultDTO fromExerciseRow(Map<String, Object> properties, Map<Long, String> courseNameById) {
+    private static GlobalSearchResultDTO fromExerciseRow(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, Long> exerciseGroupIdByExerciseId) {
         String exerciseType = getString(properties, SearchableEntitySchema.Properties.EXERCISE_TYPE);
         String badge = formatExerciseTypeBadge(exerciseType);
         String title = getString(properties, SearchableEntitySchema.Properties.TITLE);
@@ -62,6 +63,14 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         putIfNotNull(metadata, "releaseDate", getString(properties, SearchableEntitySchema.Properties.RELEASE_DATE));
         putIfNotNull(metadata, "points", getDouble(properties, SearchableEntitySchema.Properties.MAX_POINTS));
         putIfNotNull(metadata, "difficulty", getString(properties, SearchableEntitySchema.Properties.DIFFICULTY));
+
+        Long examId = getLong(properties, SearchableEntitySchema.Properties.EXAM_ID);
+        if (examId != null) {
+            metadata.put("examId", examId);
+            Long exerciseId = getLong(properties, SearchableEntitySchema.Properties.ENTITY_ID);
+            Long exerciseGroupId = exerciseId != null ? exerciseGroupIdByExerciseId.get(exerciseId) : null;
+            putIfNotNull(metadata, "exerciseGroupId", exerciseGroupId);
+        }
 
         if (ExerciseType.PROGRAMMING.getValue().equals(exerciseType)) {
             putIfNotNull(metadata, "programmingLanguage", getString(properties, SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE));

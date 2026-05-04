@@ -213,7 +213,14 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             return;
         }
         if (result.type === 'exercise' && result.id) {
-            this.router.navigate(['/courses', courseId, 'exercises', result.id]);
+            const examId = result.metadata?.['examId'];
+            const exerciseGroupId = result.metadata?.['exerciseGroupId'];
+            if (examId && exerciseGroupId) {
+                const typeSegment = (result.badge?.toLowerCase().replace(/ /g, '-') ?? 'text') + '-exercises';
+                this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
+            } else {
+                this.router.navigate(['/courses', courseId, 'exercises', result.id]);
+            }
         } else if (result.type === 'lecture' && result.id) {
             this.router.navigate(['/courses', courseId, 'lectures', result.id]);
         } else if (result.type === 'lecture_unit' && result.id) {

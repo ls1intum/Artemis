@@ -823,4 +823,14 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.id = :exerciseId
             """)
     Optional<ExerciseDeletionSummaryDTO> findDeletionSummaryByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Returns pairs of (exerciseId, exerciseGroupId) for exam exercises matching the given IDs.
+     * Used by global search to build the course-management routing URL for exam exercise results.
+     *
+     * @param ids the exercise IDs to look up
+     * @return a list of Object[] pairs where [0] is exerciseId (Long) and [1] is exerciseGroupId (Long)
+     */
+    @Query("SELECT e.id, e.exerciseGroup.id FROM Exercise e WHERE e.id IN :ids AND e.exerciseGroup IS NOT NULL")
+    List<Object[]> findExerciseAndGroupIdsByExerciseIds(@Param("ids") Collection<Long> ids);
 }
