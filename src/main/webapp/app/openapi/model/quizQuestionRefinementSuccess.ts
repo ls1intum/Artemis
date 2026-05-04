@@ -13,15 +13,18 @@ import { GeneratedQuizQuestion } from './generatedQuizQuestion';
 /**
  * Successful refinement result containing the refined question and an explanation of the changes
  */
-export interface QuizQuestionRefinementSuccessDTO { 
-    type: QuizQuestionRefinementSuccessDTO.TypeEnum;
+export interface QuizQuestionRefinementSuccess { 
+    /**
+     * The refined quiz question
+     */
     question: GeneratedQuizQuestion;
     /**
      * Brief explanation of what was changed during refinement
      */
     reasoning: string;
+    type?: QuizQuestionRefinementSuccess.TypeEnum;
 }
-export namespace QuizQuestionRefinementSuccessDTO {
+export namespace QuizQuestionRefinementSuccess {
     export const TypeEnum = {
         Success: 'success'
     } as const;
