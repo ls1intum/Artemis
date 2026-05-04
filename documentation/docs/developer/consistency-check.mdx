@@ -125,7 +125,7 @@ The benchmark scripts merge both repositories before materializing variants, so 
 | Version | Exercises | Variants | Languages |
 |---|---|---|---|
 | V1 | 3 (ITP2425) | 91 | Java |
-| V2 | 16 (ERA2021, ISE22, ITP2425, MTG26, IOS26, QCSL25) | 325 | Assembler, Java, Python, SQL, Swift |
+| V2 | 16 (ERA2021, ISE22, ITP2425, MTG26, IOS26, QCSL25) | 325 | Assembler, C, Java, Python, SQL, Swift |
 
 V2 is the current evaluation standard. Use V1 for quick sanity checks or backwards-compatible comparisons.
 
@@ -210,9 +210,14 @@ gh auth login
 ```
 
 6. run benchmark script
-```shell
-python3 run_pecv_bench.py
-```
+   - On **macOS/Linux**:
+     ```shell
+     python3 run_pecv_bench.py
+     ```
+   - On **Windows**:
+     ```shell
+     python run_pecv_bench.py
+     ```
 
 The script executes the following steps in sequence:
 
@@ -231,9 +236,12 @@ The script executes the following steps in sequence:
 The `approach_id` is derived automatically from the current git branch and commit:
 
 ```
-artemis-<branch>-<short-commit>
-# e.g. artemis-feature-hyperion-verify-checker-a1b2c3d4
+artemis-<branch-slashes-to-dashes-hyphens-to-underscores>-<short-commit>
+# e.g. branch feature/hyperion/verify-checker → artemis-feature-hyperion-verify_checker-a1b2c3d
 ```
+
+The script replaces `/` with `-` and `-` with `_` in the branch name before composing the ID.
+Use the printed `approach_id` from the logs as the authoritative value — do not reconstruct it manually.
 
 <Callout variant={CalloutVariant.warning}>
 Each new approach **must** run on its own git branch. The approach ID is derived from the branch name — two implementations on the same branch produce the same ID and overwrite earlier results.
