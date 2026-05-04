@@ -13,7 +13,8 @@ import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { User } from 'app/core/user/user.model';
-import { convertFeedbacksFromServer } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, convertFeedbacksFromServer } from 'app/assessment/shared/entities/feedback.model';
+import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 
 export type EntityResponseType = HttpResponse<ComplaintDTO>;
 export type EntityResponseTypeArray = HttpResponse<ComplaintDTO[]>;
@@ -343,5 +344,37 @@ export class ComplaintService implements IComplaintService {
             }
         }
         return complaint;
+    }
+
+    /**
+     * Returns feedbacks without circular references.
+     */
+    public getFeedbacksForUpdateAfterComplaint(assessments: Feedback[]): Feedback[] {
+        return assessments.map((feedback) => {
+            const sanitizedFeedback = { ...feedback } as Feedback;
+
+            // Break circular structure:
+            // feedback.result -> result.submission -> submission.results -> result
+            sanitizedFeedback.result = undefined;
+
+            return sanitizedFeedback;
+        });
+    }
+
+    /**
+     * Returns a complaint response payload without circular references.
+     */
+    public getComplaintResponseForUpdateAfterComplaint(complaintResponse: ComplaintResponse): ComplaintResponse {
+        const sanitizedComplaintResponse = { ...complaintResponse } as ComplaintResponse;
+
+        if (complaintResponse.complaint) {
+            sanitizedComplaintResponse.complaint = {
+                id: complaintResponse.complaint.id,
+                accepted: complaintResponse.complaint.accepted,
+                complaintType: complaintResponse.complaint.complaintType,
+            } as Complaint;
+        }
+
+        return sanitizedComplaintResponse;
     }
 }

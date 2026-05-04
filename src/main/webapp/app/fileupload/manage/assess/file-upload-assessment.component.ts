@@ -37,7 +37,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FileService } from 'app/shared/service/file.service';
-import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 
 @Component({
     providers: [FileUploadAssessmentService],
@@ -535,8 +534,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const feedbacks = this.getFeedbacksForUpdateAfterComplaint();
-        const complaintResponse = this.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
+        const feedbacks = this.complaintService.getFeedbacksForUpdateAfterComplaint(this.assessments);
+        const complaintResponse = this.complaintService.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
 
         this.isLoading = true;
         this.fileUploadAssessmentService
@@ -571,37 +570,5 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     private onError(error: string) {
         this.alertService.error(error);
-    }
-
-    /**
-     * Returns feedbacks without circular references.
-     */
-    private getFeedbacksForUpdateAfterComplaint(): Feedback[] {
-        return this.assessments.map((feedback) => {
-            const sanitizedFeedback = { ...feedback } as Feedback;
-
-            // Break circular structure:
-            // feedback.result -> result.submission -> submission.results -> result
-            sanitizedFeedback.result = undefined;
-
-            return sanitizedFeedback;
-        });
-    }
-
-    /**
-     * Returns a complaint response payload without circular references.
-     */
-    private getComplaintResponseForUpdateAfterComplaint(complaintResponse: ComplaintResponse): ComplaintResponse {
-        const sanitizedComplaintResponse = { ...complaintResponse } as ComplaintResponse;
-
-        if (complaintResponse.complaint) {
-            sanitizedComplaintResponse.complaint = {
-                id: complaintResponse.complaint.id,
-                accepted: complaintResponse.complaint.accepted,
-                complaintType: complaintResponse.complaint.complaintType,
-            } as Complaint;
-        }
-
-        return sanitizedComplaintResponse;
     }
 }
