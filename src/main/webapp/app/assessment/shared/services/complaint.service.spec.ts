@@ -17,6 +17,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
 import { provideHttpClient } from '@angular/common/http';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { Feedback } from '../entities/feedback.model';
 
 describe('ComplaintService', () => {
     setupTestBed({ zoneless: true });
@@ -459,4 +460,62 @@ describe('ComplaintService', () => {
     function clone(object: object): object {
         return Object.assign({}, object);
     }
+
+    it('findAllWithoutStudentInformationForCourseId', () => {
+        const courseId = 69;
+        const complaintType = ComplaintType.COMPLAINT;
+
+        complaintService.findAllWithoutStudentInformationForCourseId(courseId, complaintType).subscribe((received) => {
+            expect(received.body).toHaveLength(2);
+            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
+            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
+        });
+
+        const res = httpMock.expectOne({ method: 'GET' });
+        expect(res.request.url).toBe(`api/assessment/complaints?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
+
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
+    });
+
+    it('should remove result references from feedbacks for update after complaint', () => {
+        const result = new Result();
+        result.id = 1;
+
+        const feedback = new Feedback();
+        feedback.id = 10;
+        feedback.result = result;
+
+        const sanitizedFeedbacks = complaintService.getFeedbacksForUpdateAfterComplaint([feedback]);
+
+        expect(sanitizedFeedbacks).toHaveLength(1);
+        expect(sanitizedFeedbacks[0]).not.toBe(feedback);
+        expect(sanitizedFeedbacks[0].id).toBe(feedback.id);
+        expect(sanitizedFeedbacks[0].result).toBeUndefined();
+        expect(feedback.result).toBe(result);
+    });
+
+    it('should sanitize complaint response for update after complaint', () => {
+        const complaint = new Complaint();
+        complaint.id = 42;
+        complaint.accepted = false;
+        complaint.complaintType = ComplaintType.COMPLAINT;
+        complaint.result = new Result();
+
+        const complaintResponse = new ComplaintResponse();
+        complaintResponse.id = 11;
+        complaintResponse.responseText = 'response';
+        complaintResponse.complaint = complaint;
+
+        const sanitizedComplaintResponse = complaintService.getComplaintResponseForUpdateAfterComplaint(complaintResponse);
+
+        expect(sanitizedComplaintResponse).not.toBe(complaintResponse);
+        expect(sanitizedComplaintResponse.id).toBe(11);
+        expect(sanitizedComplaintResponse.responseText).toBe('response');
+        expect(sanitizedComplaintResponse.complaint).toEqual({
+            id: 42,
+            accepted: false,
+            complaintType: ComplaintType.COMPLAINT,
+        });
+        expect(sanitizedComplaintResponse.complaint!.result).toBeUndefined();
+    });
 });
