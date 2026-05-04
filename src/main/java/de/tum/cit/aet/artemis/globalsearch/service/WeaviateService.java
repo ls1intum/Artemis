@@ -31,6 +31,7 @@ import io.weaviate.client6.v1.api.collections.CollectionConfig;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.ReferenceProperty;
+import io.weaviate.client6.v1.api.collections.Tokenization;
 import io.weaviate.client6.v1.api.collections.VectorConfig;
 import io.weaviate.client6.v1.api.collections.vectorizers.Text2VecOpenAiVectorizer;
 
@@ -117,6 +118,12 @@ public class WeaviateService {
         catch (Exception e) {
             log.error("Weaviate migration failed during startup, but the server will continue. Search may return incomplete results until entities are re-indexed: {}",
                     e.getMessage());
+        }
+
+        // Second pass: recreate any collections that a migration dropped to apply schema changes
+        // (e.g. V0→V1 drops SearchableEntities so it is rebuilt with trigram tokenization).
+        for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {
+            ensureCollectionExists(schema);
         }
 
         log.info("Weaviate collection initialization complete");
@@ -301,7 +308,15 @@ public class WeaviateService {
             // indexSearchable is only applicable to text properties; Weaviate ignores it for numeric types
             // See https://docs.weaviate.io/weaviate/config-refs/indexing/inverted-index
             case INT -> Property.integer(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
-            case TEXT -> Property.text(definition.name(), property -> property.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable()));
+            case TEXT -> Property.text(definition.name(), property -> {
+                var builder = property.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable());
+                // Trigram tokenization indexes every 3-char sliding window of text values, enabling
+                // BM25 to match partial words and typos (e.g. "strateg" → "strategy").
+                if (definition.indexSearchable()) {
+                    builder.tokenization(Tokenization.TRIGRAM);
+                }
+                return builder;
+            });
             case NUMBER -> Property.number(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
             case BOOLEAN -> Property.bool(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
             case DATE -> Property.date(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
