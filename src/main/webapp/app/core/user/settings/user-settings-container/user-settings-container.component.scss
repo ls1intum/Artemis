@@ -20,6 +20,10 @@
         font-size: medium;
         text-align: left;
     }
+
+    .list-group-item:not(.active):hover {
+        background-color: var(--bs-primary-bg-subtle);
+    }
 }
 
 .section {
