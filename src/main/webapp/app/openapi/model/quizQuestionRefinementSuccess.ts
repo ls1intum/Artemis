@@ -12,7 +12,7 @@
 /**
  * Successful refinement result containing the refined question and an explanation of the changes
  */
-export interface QuizQuestionRefinementSuccess { 
+export interface QuizQuestionRefinementSuccess {
     /**
      * Brief explanation of what was changed during refinement
      */

@@ -12,7 +12,7 @@
 /**
  * Response containing generated quiz questions
  */
-export interface QuizQuestionGenerationResponse { 
+export interface QuizQuestionGenerationResponse {
     /**
      * Generated quiz questions
      */

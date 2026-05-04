@@ -12,7 +12,7 @@
 /**
  * Request to refine an existing quiz question using a user prompt
  */
-export interface QuizQuestionRefinementRequest { 
+export interface QuizQuestionRefinementRequest {
     /**
      * User instructions describing how the question should be changed
      */
