@@ -202,7 +202,7 @@ export class ExerciseHeaderActionsComponent {
     readonly userLLMSelection = computed(() => this.accountService.userIdentity()?.selectedLLMUsage);
     readonly hasUserAcceptedLLM = computed(() => {
         const selection = this.userLLMSelection();
-        return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
+        return selection === LLMSelectionDecision.CLOUD_AI;
     });
     readonly showFeedbackPopover = computed(() => !this.examMode() && (this.exercise().allowFeedbackRequests ?? false) && this.hasUserAcceptedLLM());
 
