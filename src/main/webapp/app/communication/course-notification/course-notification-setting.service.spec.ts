@@ -10,6 +10,10 @@ import { CourseNotificationSettingSpecification } from 'app/communication/shared
 import { CourseNotificationChannel } from 'app/communication/shared/entities/course-notification/course-notification-channel';
 import { CourseNotificationChannelSetting } from 'app/communication/shared/entities/course-notification/course-notification-channel-setting';
 import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
+import { User } from 'app/core/user/user.model';
 
 describe('CourseNotificationSettingService', () => {
     setupTestBed({ zoneless: true });
@@ -20,7 +24,7 @@ describe('CourseNotificationSettingService', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         TestBed.configureTestingModule({
-            providers: [CourseNotificationSettingService, provideHttpClient(), provideHttpClientTesting()],
+            providers: [CourseNotificationSettingService, provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         });
 
         service = TestBed.inject(CourseNotificationSettingService);
@@ -376,6 +380,70 @@ describe('CourseNotificationSettingService', () => {
             const result = service['transformNotificationSettingSpecificationToRequestBody']([]);
 
             expect(result).toEqual({});
+        });
+    });
+
+    describe('authentication state changes', () => {
+        let authState: BehaviorSubject<User | undefined>;
+        let scoped: CourseNotificationSettingService;
+        let scopedHttpMock: HttpTestingController;
+
+        beforeEach(() => {
+            authState = new BehaviorSubject<User | undefined>({ id: 99 } as User);
+            const customAccountService = new MockAccountService();
+            customAccountService.userIdentity.set({ id: 99 } as User);
+            customAccountService.getAuthenticationState = () => authState.asObservable().pipe(distinctUntilChanged());
+
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                providers: [CourseNotificationSettingService, provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useValue: customAccountService }],
+            });
+            scoped = TestBed.inject(CourseNotificationSettingService);
+            scopedHttpMock = TestBed.inject(HttpTestingController);
+        });
+
+        afterEach(() => {
+            scopedHttpMock.verify();
+        });
+
+        it('should clear cached setting subjects on logout', async () => {
+            const courseId = 7;
+            const settingInfo: CourseNotificationSettingInfo = { selectedPreset: 1, notificationTypeChannels: {} };
+            scoped.getSettingInfo(courseId).subscribe();
+            scopedHttpMock.expectOne(`/api/communication/notification/${courseId}/settings`).flush(settingInfo);
+            const before = await firstValueFrom(scoped.getSettingInfo(courseId));
+            expect(before).toEqual(settingInfo);
+
+            authState.next(undefined);
+
+            // Subsequent getSettingInfo creates a fresh subject and triggers a new HTTP request
+            const after$ = scoped.getSettingInfo(courseId);
+            scopedHttpMock.expectOne(`/api/communication/notification/${courseId}/settings`).flush(settingInfo);
+            const after = await firstValueFrom(after$);
+            expect(after).toEqual(settingInfo);
+        });
+
+        it('should ignore in-flight HTTP responses after logout', async () => {
+            const courseId = 7;
+            scoped.getSettingInfo(courseId).subscribe();
+            const inFlight = scopedHttpMock.expectOne(`/api/communication/notification/${courseId}/settings`);
+
+            authState.next(undefined);
+
+            inFlight.flush({ selectedPreset: 99, notificationTypeChannels: {} } as CourseNotificationSettingInfo);
+
+            // Internal subject map should have been cleared, so getSettingInfo creates a fresh subject.
+            expect(Object.keys(scoped['settingInfoSubjects'])).toHaveLength(0);
+        });
+
+        it('should not clear settings when the same user re-emits', () => {
+            const courseId = 7;
+            scoped.getSettingInfo(courseId).subscribe();
+            scopedHttpMock.expectOne(`/api/communication/notification/${courseId}/settings`).flush({ selectedPreset: 1, notificationTypeChannels: {} });
+
+            authState.next({ id: 99 } as User);
+
+            expect(scoped['settingInfoSubjects'][courseId]).toBeDefined();
         });
     });
 });

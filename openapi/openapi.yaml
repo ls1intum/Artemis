@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 9.0.0
+  version: 9.1.2
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -426,26 +426,6 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ConsistencyCheckResponse'}
-  /api/hyperion/courses/{courseId}/quiz-exercises/generate-questions:
-    post:
-      tags: [hyperion-quiz-question-generation]
-      operationId: generateQuizQuestions
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/QuizQuestionGenerationRequest'}
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/QuizQuestionGenerationResponse'}
   /api/hyperion/courses/{courseId}/quiz-exercises/refine-question:
     post:
       tags: [hyperion-quiz-question-generation]
@@ -466,6 +446,46 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionRefinementResponse'}
+  /api/hyperion/courses/{courseId}/quiz-exercises/refine-all-questions:
+    post:
+      tags: [hyperion-quiz-question-generation]
+      operationId: refineAllQuizQuestions
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/QuizQuestionBulkRefinementRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionBulkRefinementResponse'}
+  /api/hyperion/courses/{courseId}/quiz-exercises/generate-questions:
+    post:
+      tags: [hyperion-quiz-question-generation]
+      operationId: generateQuizQuestions
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/QuizQuestionGenerationRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionGenerationResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/rewrite:
     post:
       tags: [hyperion-problem-statement]
@@ -851,13 +871,27 @@ components:
       properties:
         login: {type: string, maxLength: 50, minLength: 0}
         registrationNumber: {type: string, maxLength: 10, minLength: 0}
+    QuizQuestionRefinementSuccess:
+      description: Successful refinement result containing the refined question and
+        an explanation of the changes
+      required: [question, reasoning]
+      type: object
+      properties:
+        question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: The
+            refined quiz question}
+        reasoning: {type: string, description: Brief explanation of what was changed
+            during refinement, minLength: 1}
+        type:
+          type: string
+          enum: [success]
+          example: success
     ChecklistAnalysisRequest:
       type: object
       description: Request to analyze a problem statement for quality, competencies,
         and difficulty
       properties:
         problemStatementMarkdown: {type: string, description: Problem statement in
-            Markdown format, maxLength: 50000, minLength: 0}
+            Markdown format, maxLength: 50000, minLength: 1}
         declaredDifficulty: {type: string, description: Declared difficulty of the
             exercise, maxLength: 20, minLength: 0, pattern: EASY|MEDIUM|HARD}
         language: {type: string, description: 'Programming language, e.g. JAVA, PYTHON',
@@ -874,7 +908,7 @@ components:
           description: Type of action to apply
           enum: [FIX_QUALITY_ISSUE, FIX_ALL_QUALITY_ISSUES, ADAPT_DIFFICULTY]
         problemStatementMarkdown: {type: string, description: Current problem statement
-            markdown, maxLength: 50000, minLength: 0}
+            markdown, maxLength: 50000, minLength: 1}
         context:
           type: object
           additionalProperties: {type: string}
@@ -888,16 +922,18 @@ components:
           type: string
           description: Question type
           enum: [single-choice, multiple-choice, true-false]
-        title: {type: string, description: Question title, minLength: 1}
-        questionText: {type: string, description: Question text, minLength: 1}
+        title: {type: string, description: Question title, maxLength: 500, minLength: 1}
+        questionText: {type: string, description: Question text, maxLength: 10000,
+          minLength: 1}
         options:
           type: array
           description: Answer options
           items: {$ref: '#/components/schemas/GeneratedQuizAnswerOption'}
           minItems: 1
-        hint: {type: string, description: Optional hint for the overall question}
+        hint: {type: string, description: Optional hint for the overall question,
+          maxLength: 2000, minLength: 0}
         explanation: {type: string, description: Optional explanation for the overall
-            question}
+            question, maxLength: 2000, minLength: 0}
       required: [options, questionText, title, type]
     ChecklistAnalysisResponse:
       type: object
@@ -942,7 +978,7 @@ components:
         instructions
       properties:
         problemStatementText: {type: string, description: 'Original problem statement
-            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 0}
+            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 1}
         startLine: {type: integer, format: int32, description: Start line number (1-indexed),
           maximum: 10000, minimum: 1}
         endLine: {type: integer, format: int32, description: 'End line number (1-indexed,
@@ -954,7 +990,7 @@ components:
             end line (1-indexed, exclusive — points after the last selected character,
             optional for character-level targeting)', maximum: 10000, minimum: 1}
         instruction: {type: string, description: Instruction describing what should
-            change, maxLength: 500, minLength: 0}
+            change, maxLength: 500, minLength: 1}
       required: [endLine, instruction, problemStatementText, startLine]
     TutorialGroupExportData:
       type: object
@@ -997,6 +1033,15 @@ components:
         repositoryType:
           type: string
           enum: [exercise, solution, tests, auxiliary, user]
+    QuizQuestionRefinementRequest:
+      type: object
+      description: Request to refine an existing quiz question using a user prompt
+      properties:
+        question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: The
+            existing quiz question to refine}
+        refinementPrompt: {type: string, description: User instructions describing
+            how the question should be changed, maxLength: 2000, minLength: 1}
+      required: [question, refinementPrompt]
     ConsistencyIssue:
       type: object
       description: Individual consistency issue details
@@ -1049,23 +1094,6 @@ components:
           type: array
           items: {type: string}
       required: [name]
-    QuizQuestionRefinementRequest:
-      type: object
-      description: Request to refine an existing quiz question using a user prompt
-      properties:
-        question: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
-        refinementPrompt: {type: string, description: User instructions describing
-            how the question should be changed, maxLength: 2000, minLength: 1}
-      required: [question, refinementPrompt]
-    QuizQuestionRefinementResponse:
-      type: object
-      description: Response containing the refined quiz question and a summary of
-        the changes made
-      properties:
-        question: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
-        reasoning: {type: string, description: Brief explanation of what was changed
-            during refinement, minLength: 1}
-      required: [reasoning, question]
     ProblemStatementRewriteResponse:
       type: object
       description: Response containing rewritten problem statement
@@ -1182,6 +1210,9 @@ components:
             for problem statement', example: src/main/java/Main.java}
         startLine: {type: integer, format: int32, description: Start line number (1-based)}
         endLine: {type: integer, format: int32, description: End line number (1-based)}
+        suggestedInlineFix:
+          type: [string, 'null']
+          description: Optional inline replacement code for this location
       required: [endLine, filePath, startLine, type]
     RewriteFaqResponse:
       type: object
@@ -1203,7 +1234,7 @@ components:
         startTime: {type: string, description: Starting time, example: !!timestamp '2025-07-27T07:17:05.500Z'}
         endTime: {type: string, description: Ending time, example: !!timestamp '2025-07-27T07:17:05.500Z'}
         durationS: {type: number, format: double, description: Duration of consistency
-            check, example: '27.765'}
+            check, example: 27.765}
     RewriteFaqRequest:
       type: object
       description: Request to rewrite a FAQ
@@ -1236,11 +1267,11 @@ components:
       description: Response containing consistency check costs
       properties:
         promptEur: {type: number, format: double, description: Prompt costs in EUR,
-          example: '0.011224'}
+          example: 0.011224}
         completionEur: {type: number, format: double, description: Completion costs
-            in EUR, example: '0.016513'}
+            in EUR, example: 0.016513}
         totalEur: {type: number, format: double, description: Total costs in EUR,
-          example: '0.027738'}
+          example: 0.027738}
     TutorialGroupConfiguration:
       type: object
       properties:
@@ -1266,7 +1297,7 @@ components:
       description: Request to generate quiz questions
       properties:
         topic: {type: string, description: Main topic for the generated quiz, maxLength: 500,
-          minLength: 0}
+          minLength: 1}
         optionalPrompt: {type: string, description: Optional additional instructions,
           maxLength: 2000, minLength: 0}
         language:
@@ -1293,6 +1324,16 @@ components:
           type: string
           enum: [exercise, solution, tests, auxiliary, user]
         checkOnly: {type: boolean}
+    QuizQuestionRefinementResponse:
+      description: Discriminated response for a single quiz question refinement, either
+        a success with the refined question or a failure with an error message
+      discriminator: {propertyName: type}
+      oneOf:
+      - {$ref: '#/components/schemas/QuizQuestionRefinementSuccess'}
+      - {$ref: '#/components/schemas/QuizQuestionRefinementFailure'}
+      properties:
+        type: {type: string}
+      required: [type]
     InferredCompetency:
       type: object
       properties:
@@ -1312,6 +1353,30 @@ components:
           type: array
           items: {type: string}
         matchedCourseCompetencyId: {type: integer, format: int64}
+    QuizQuestionBulkRefinementRequest:
+      type: object
+      description: Request to refine multiple quiz questions at once using a single
+        user prompt
+      properties:
+        questions:
+          type: array
+          description: The quiz questions to refine
+          items: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
+          maxItems: 50
+          minItems: 1
+        refinementPrompt: {type: string, description: User instructions describing
+            how all questions should be changed, maxLength: 2000, minLength: 1}
+      required: [questions, refinementPrompt]
+    QuizQuestionBulkRefinementResponse:
+      type: object
+      description: Response containing one refinement result per input question, in
+        the same order
+      properties:
+        refinements:
+          type: array
+          description: Refinement results, one per input question in the same order
+          items: {$ref: '#/components/schemas/QuizQuestionRefinementResponse'}
+      required: [refinements]
     ProblemStatementRefinementResponse:
       type: object
       description: Response containing refined problem statement
@@ -1333,16 +1398,17 @@ components:
       description: Request to generate a problem statement
       properties:
         userPrompt: {type: string, description: User prompt describing the problem
-            statement requirements, maxLength: 1000, minLength: 0}
+            statement requirements, maxLength: 1000, minLength: 1}
       required: [userPrompt]
     GeneratedQuizAnswerOption:
       type: object
       description: One generated answer option
       properties:
-        text: {type: string, description: Answer option text, minLength: 1}
+        text: {type: string, description: Answer option text, maxLength: 2000, minLength: 1}
         correct: {type: boolean, description: Whether this option is correct}
-        hint: {type: string, description: Optional hint}
-        explanation: {type: string, description: Optional explanation}
+        hint: {type: string, description: Optional hint, maxLength: 2000, minLength: 0}
+        explanation: {type: string, description: Optional explanation, maxLength: 2000,
+          minLength: 0}
       required: [text]
     TutorialGroupFreePeriod:
       type: object
@@ -1433,6 +1499,17 @@ components:
         attendanceCount: {type: integer, format: int32}
       required: [dateChanged, end, id, isCancelled, isCancelledByFreePeriod, location,
         locationChanged, start, timeChanged]
+    QuizQuestionRefinementFailure:
+      description: Failed refinement result containing an error message
+      required: [error]
+      type: object
+      properties:
+        error: {type: string, description: Error message describing why the refinement
+            failed, minLength: 1}
+        type:
+          type: string
+          enum: [failure]
+          example: failure
     ConversationUser:
       type: object
       properties:
