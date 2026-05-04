@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
@@ -95,7 +96,7 @@ class HyperionConsistencyCheckServiceTest {
         var observationRegistry = ObservationRegistry.create();
         var reviewCommentContextRenderer = new HyperionReviewCommentContextRendererService(commentThreadRepository, JsonObjectMapper.get());
         this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
-                reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository);
+                reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository, JsonObjectMapper.get());
     }
 
     @Test
@@ -163,7 +164,7 @@ class HyperionConsistencyCheckServiceTest {
 
         var callCount = new AtomicInteger(0);
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> {
-            String json = callCount.incrementAndGet() <= 2 ? checkerJson : verifierJson;
+            String json = callCount.incrementAndGet() <= 1 ? checkerJson : verifierJson;
             return new ChatResponse(List.of(new Generation(new AssistantMessage(json))));
         });
 
@@ -200,11 +201,11 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(resp.timing()).isNotNull();
         assertThat(resp.timing().durationS()).isGreaterThanOrEqualTo(0);
 
-        // Single unified check call with 100 prompt and 50 completion tokens
+        // Two calls (unified check + verification), each with 100 prompt and 50 completion tokens
         assertThat(resp.tokens()).isNotNull();
-        assertThat(resp.tokens().prompt()).isEqualTo(100L);
-        assertThat(resp.tokens().completion()).isEqualTo(50L);
-        assertThat(resp.tokens().total()).isEqualTo(150L);
+        assertThat(resp.tokens().prompt()).isEqualTo(200L);
+        assertThat(resp.tokens().completion()).isEqualTo(100L);
+        assertThat(resp.tokens().total()).isEqualTo(300L);
 
         assertThat(resp.costs()).isNotNull();
         // Costs should be calculated based on configured rates (EUR)
@@ -264,6 +265,103 @@ class HyperionConsistencyCheckServiceTest {
 
         assertThat(resp).isNotNull();
         assertThat(resp.issues()).isEmpty();
+    }
+
+    @Test
+    void checkConsistency_verificationFiltersIssues() throws Exception {
+        final var exercise = getProgrammingExercise();
+
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+                .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
+
+        // Unified checker returns 2 issues
+        String checkerJson = """
+                {
+                  "issues": [
+                    {
+                      "severity": "HIGH",
+                      "category": "METHOD_PARAMETER_MISMATCH",
+                      "description": "Real issue - parameters differ",
+                      "suggestedFix": "Align parameters",
+                      "relatedLocations": [{"type": "TEMPLATE_REPOSITORY", "filePath": "src/main/java/App.java", "startLine": 1, "endLine": 1}]
+                    },
+                    {
+                      "severity": "LOW",
+                      "category": "METHOD_PARAMETER_MISMATCH",
+                      "description": "False positive - pedagogical stub",
+                      "suggestedFix": "N/A",
+                      "relatedLocations": [{"type": "TEMPLATE_REPOSITORY", "filePath": "src/main/java/App.java", "startLine": 2, "endLine": 2}]
+                    }
+                  ]
+                }
+                """;
+
+        // Verifier filters down to 1 issue
+        String verifierJson = """
+                {
+                  "issues": [
+                    {
+                      "severity": "HIGH",
+                      "category": "METHOD_PARAMETER_MISMATCH",
+                      "description": "Real issue - parameters differ",
+                      "suggestedFix": "Align parameters",
+                      "relatedLocations": [{"type": "TEMPLATE_REPOSITORY", "filePath": "src/main/java/App.java", "startLine": 1, "endLine": 1}]
+                    }
+                  ]
+                }
+                """;
+
+        var callCount = new AtomicInteger(0);
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> {
+            String json = callCount.incrementAndGet() <= 1 ? checkerJson : verifierJson;
+            return new ChatResponse(List.of(new Generation(new AssistantMessage(json))));
+        });
+
+        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
+
+        assertThat(resp).isNotNull();
+        assertThat(resp.issues()).hasSize(1);
+        assertThat(resp.issues().getFirst().description()).isEqualTo("Real issue - parameters differ");
+        assertThat(resp.issues().getFirst().severity()).isEqualTo(Severity.HIGH);
+    }
+
+    @Test
+    void checkConsistency_verificationFailureFallsBackToPreVerificationResults() throws Exception {
+        final var exercise = getProgrammingExercise();
+
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+                .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
+
+        String checkerJson = """
+                {
+                  "issues": [
+                    {
+                      "severity": "MEDIUM",
+                      "category": "METHOD_PARAMETER_MISMATCH",
+                      "description": "Parameters differ in template vs solution",
+                      "suggestedFix": "Align parameters",
+                      "relatedLocations": [{"type": "TEMPLATE_REPOSITORY", "filePath": "src/main/java/App.java", "startLine": 1, "endLine": 1}]
+                    }
+                  ]
+                }
+                """;
+
+        // Unified check succeeds, verification throws
+        var callCount = new AtomicInteger(0);
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> {
+            if (callCount.incrementAndGet() > 1) {
+                throw new RuntimeException("LLM service unavailable");
+            }
+            return new ChatResponse(List.of(new Generation(new AssistantMessage(checkerJson))));
+        });
+
+        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
+
+        assertThat(resp).isNotNull();
+        assertThat(resp.issues()).hasSize(1);
+        assertThat(resp.issues().getFirst().description()).isEqualTo("Parameters differ in template vs solution");
     }
 
     @Test

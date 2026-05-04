@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -16,6 +17,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
@@ -46,6 +49,7 @@ import io.micrometer.observation.annotation.Observed;
  * <li>Refetch exercise with template & solution participations.</li>
  * <li>Render textual snapshot (problem statement + repositories) via {@link HyperionProgrammingExerciseContextRendererService} and append existing review-thread context.</li>
  * <li>Execute a single unified consistency prompt via the Spring AI {@link ChatClient}.</li>
+ * <li>Pass results to a verification prompt that removes false positives, deduplicates, and improves surviving issues.</li>
  * <li>Parse structured JSON into schema classes, normalize, and expose as DTOs.</li>
  * </ol>
  */
@@ -81,6 +85,8 @@ public class HyperionConsistencyCheckService {
 
     private final ObservationRegistry observationRegistry;
 
+    private final ObjectMapper objectMapper;
+
     /**
      * Creates the consistency-check orchestration service with all required persistence, prompt, and observability dependencies.
      *
@@ -92,10 +98,11 @@ public class HyperionConsistencyCheckService {
      * @param observationRegistry           Micrometer observation registry
      * @param llmTokenUsageService          service for persisting token usage
      * @param userRepository                repository for resolving current user id
+     * @param objectMapper                  Spring-managed Jackson ObjectMapper
      */
     public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, @Nullable ChatClient chatClient, HyperionPromptTemplateService templates,
             HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, HyperionReviewCommentContextRendererService reviewCommentContextRenderer,
-            ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
+            ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, ObjectMapper objectMapper) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.chatClient = chatClient;
         this.templates = templates;
@@ -104,6 +111,7 @@ public class HyperionConsistencyCheckService {
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
         this.observationRegistry = observationRegistry;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -135,12 +143,14 @@ public class HyperionConsistencyCheckService {
     }
 
     /**
-     * Execute a single unified consistency check that detects both structural and semantic inconsistencies.
+     * Execute a two-phase consistency check pipeline: a unified check detects both structural and semantic inconsistencies,
+     * followed by an independent verification pass that removes false positives, deduplicates overlapping issues,
+     * and improves surviving issues. Any individual failure degrades gracefully; the aggregated response is always non-null.
      *
      * @param exerciseId        id of the programming exercise to check consistency for
-     * @param skipThreadContext if {@code true}, passes empty thread context to the AI prompt (i.e., no prior findings exist).
+     * @param skipThreadContext if {@code true}, passes empty thread context to the AI prompts (i.e., no prior findings exist).
      *                              Intended for evaluation scripts that assess consistency check quality without prior thread state.
-     * @return consistency issues, timing, token usage, and costs.
+     * @return aggregated consistency issues, timing, token usage, and costs.
      */
     @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
     public ConsistencyCheckResponseDTO checkConsistency(long exerciseId, boolean skipThreadContext) {
@@ -164,8 +174,23 @@ public class HyperionConsistencyCheckService {
         List<LLMRequest> usageCollector = new CopyOnWriteArrayList<>();
 
         Observation parentObs = observationRegistry.getCurrentObservation();
-        List<ConsistencyIssue> issues = runConsistencyCheck(input, parentObs, usageCollector);
-        List<ConsistencyIssueDTO> issueDTOs = issues.stream().map(this::mapConsistencyIssueToDto).toList();
+        List<ConsistencyIssue> rawIssues = runConsistencyCheck(input, parentObs, usageCollector);
+
+        // Verification pass: filters false positives, deduplicates, improves surviving issues; fallback to raw if verifier fails
+        List<ConsistencyIssueDTO> issueDTOs;
+        try {
+            final String issuesJson = objectMapper.writeValueAsString(Map.of("issues", rawIssues.stream().map(this::mapConsistencyIssueToDto).toList()));
+            var verificationInput = new HashMap<>(input);
+            verificationInput.put("detected_issues_json", issuesJson);
+            List<ConsistencyIssue> verifiedIssues = runVerificationCheck(verificationInput, parentObs, usageCollector);
+            issueDTOs = verifiedIssues != null ? verifiedIssues.stream().map(this::mapConsistencyIssueToDto).toList()
+                    : rawIssues.stream().map(this::mapConsistencyIssueToDto).toList();
+            log.info("Verification step: {} raw issues -> {} verified issues", rawIssues.size(), issueDTOs.size());
+        }
+        catch (Exception e) {
+            log.error("Verification step failed — falling back to pre-verification results", e);
+            issueDTOs = rawIssues.stream().map(this::mapConsistencyIssueToDto).toList();
+        }
 
         List<LLMRequest> validRequests = usageCollector.stream().filter(Objects::nonNull).toList();
         if (!validRequests.isEmpty()) {
@@ -226,6 +251,42 @@ public class HyperionConsistencyCheckService {
             child.error(e);
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
             return new ArrayList<>();
+        }
+        finally {
+            child.stop();
+        }
+    }
+
+    /**
+     * Run the verification prompt to filter false positives, deduplicate overlapping issues,
+     * and improve surviving issues (line numbers, descriptions, category corrections).
+     * <p>
+     * Returns {@code null} on any failure so the caller can fall back to pre-verification results.
+     *
+     * @param input          prompt variables (rendered_context, existing_review_threads, detected_issues_json)
+     * @param parentObs      parent observation for tracing
+     * @param usageCollector list to collect LLM request data
+     * @return verified immutable list of issues, or {@code null} if the call failed
+     */
+    private List<ConsistencyIssue> runVerificationCheck(Map<String, String> input, Observation parentObs, List<LLMRequest> usageCollector) {
+        var child = Observation.createNotStarted("hyperion.consistency.verification", observationRegistry).contextualName("verification check")
+                .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE))
+                .highCardinalityKeyValue(io.micrometer.common.KeyValue.of(LF_SPAN_NAME_KEY, "verification check")).parentObservation(parentObs).start();
+
+        final var resourcePath = "/prompts/hyperion/consistency_verification.st";
+        final String renderedPrompt = templates.render(resourcePath, input);
+        try (Observation.Scope scope = child.openScope()) {
+            var verificationResponse = chatClient.prompt().system("You are a senior educational quality assurance engineer. Return only JSON matching the schema.")
+                    .user(renderedPrompt).call().responseEntity(StructuredOutputSchema.UnifiedConsistencyIssues.class);
+
+            usageCollector.add(buildRequestFromResponse(verificationResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
+            var entity = verificationResponse.entity();
+            return (entity == null || entity.issues == null) ? List.of() : List.copyOf(entity.issues);
+        }
+        catch (RuntimeException e) {
+            child.error(e);
+            log.warn("Verification call failed — caller will fall back to pre-verification results", e);
+            return null;
         }
         finally {
             child.stop();

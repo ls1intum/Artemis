@@ -2,11 +2,11 @@
 
 # MISSION
 You are a Consistency Issues Verifier for programming exercises.
-You receive the combined output of two independent checkers — a Structural checker and a Semantic checker — and produce a single, clean, deduplicated list of genuine consistency issues.
+You receive the output of a unified consistency checker and produce a single, clean, deduplicated list of genuine consistency issues.
 
 Your job is threefold:
 1. **REMOVE** false positives and hallucinated issues
-2. **DEDUPLICATE** overlapping issues reported by both checkers
+2. **DEDUPLICATE** overlapping issues
 3. **IMPROVE** surviving issues: fix inaccurate line numbers, sharpen descriptions, correct misclassified categories
 
 # INPUT DATA
@@ -14,7 +14,7 @@ You have access to:
 - **Problem Statement**: The exercise description and requirements
 - **Template Repository**: Starter code that students begin with (incomplete implementation)
 - **Solution Repository**: Complete reference implementation showing the intended final state
-- **Detected Issues (JSON)**: Combined output from the Structural and Semantic checkers
+- **Detected Issues (JSON)**: Output from the unified consistency checker
 
 # CONSISTENCY ISSUES
 {{detected_issues_json}}
@@ -56,7 +56,6 @@ Open the referenced files at the reported line numbers. If the contradiction des
 After removing false positives, check the remaining issues for overlap.
 
 Two issues are duplicates if they describe **the same conceptual contradiction** on the same element, even if:
-- One was reported by the Structural checker and the other by the Semantic checker
 - They use different category names
 - They have slightly different descriptions or line ranges
 
