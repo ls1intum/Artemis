@@ -12,14 +12,14 @@
 /**
  * Failed refinement result containing an error message
  */
-export interface QuizQuestionRefinementFailureDTO { 
-    type: QuizQuestionRefinementFailureDTO.TypeEnum;
+export interface QuizQuestionRefinementFailure { 
     /**
      * Error message describing why the refinement failed
      */
     error: string;
+    type?: QuizQuestionRefinementFailure.TypeEnum;
 }
-export namespace QuizQuestionRefinementFailureDTO {
+export namespace QuizQuestionRefinementFailure {
     export const TypeEnum = {
         Failure: 'failure'
     } as const;
