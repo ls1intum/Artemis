@@ -6,7 +6,7 @@ on:
 
 # Limit the number of concurrent runs to one per PR
 concurrency:
-  group: test-mysql-${{ github.head_ref || github.run_id }}
+  group: test-mysql-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 # Keep in sync with test.yml

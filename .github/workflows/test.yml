@@ -52,7 +52,7 @@ on:
 # If a run is already in progress, cancel it
 # If the run is not for a PR, then this limit does not apply
 concurrency:
-  group: test-${{ github.head_ref || github.run_id }}
+  group: test-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 # Keep in sync with codeql-analysis.yml and build.yml
