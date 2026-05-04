@@ -4,14 +4,15 @@ import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 # Weaviate Setup
 
 This guide explains how to set up a local Weaviate instance for development with Artemis.
-Weaviate is a vector database that is used by the EduTelligence suite (Iris/Pyris) for storing and retrieving embeddings.
+Weaviate is a vector database used by Artemis in two independent ways:
 
-In the future Artemis will also directly communicate with Weaviate to offer a global keyword and semantic search across all entities (lectures, exercises, chats, ...).
+- **Global search (Artemis-native)** — Artemis connects to Weaviate directly to offer keyword and semantic search across entities (lectures, exercises, chats, ...). This is gated by the `artemis.weaviate.enabled` flag and works without Pyris.
+- **Iris / Pyris (EduTelligence)** — When running Iris, Pyris uses Weaviate to store and retrieve embeddings. Pyris connects with its own configuration; both consumers can share a single Weaviate instance as long as their `collection-prefix` values differ (Artemis defaults to `Artemis_`).
 
 <Callout variant={CalloutVariant.info}>
 
-  Setting up Weaviate is only required when running Pyris locally for Iris functionality or developing the global search feature.
-If you only need basic Artemis features without AI assistance, you can skip this setup.
+  Setting up Weaviate is only required if you enable the global search in Artemis or if you run Pyris locally for Iris functionality.
+If you only need basic Artemis features without AI assistance and without global search, you can skip this setup.
 
 </Callout>
 
@@ -493,7 +494,7 @@ WEAVIATE_GRPC_PORT=50052
 WEAVIATE_SERVER_VERSION=1.34.14
 ```
 
-Remember to update the Pyris configuration accordingly.
+If you also run Pyris against the same Weaviate instance, remember to update the Pyris configuration accordingly.
 
 ### Container Not Starting
 
