@@ -36,6 +36,7 @@ import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbMo
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CodeGenerationRequest } from 'app/openapi/model/codeGenerationRequest';
+import { CodeGenerationJobStart } from 'app/openapi/model/codeGenerationJobStart';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -547,13 +548,18 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param repositoryType currently selected repository in the editor
      * @returns the matching supported generation repository, or `undefined` for unsupported tabs
      */
-    private mapRepositoryTypeToCodeGenerationRequest(repositoryType: RepositoryType): SupportedCodeGenerationRepositoryType | undefined {
+    private mapRepositoryTypeToCodeGenerationRequest(
+        repositoryType: RepositoryType | CodeGenerationJobStart.RepositoryTypeEnum,
+    ): SupportedCodeGenerationRepositoryType | undefined {
         switch (repositoryType) {
             case RepositoryType.TEMPLATE:
+            case CodeGenerationJobStart.RepositoryTypeEnum.Exercise:
                 return RepositoryType.TEMPLATE;
             case RepositoryType.SOLUTION:
+            case CodeGenerationJobStart.RepositoryTypeEnum.Solution:
                 return RepositoryType.SOLUTION;
             case RepositoryType.TESTS:
+            case CodeGenerationJobStart.RepositoryTypeEnum.Tests:
                 return RepositoryType.TESTS;
             default:
                 return undefined;
