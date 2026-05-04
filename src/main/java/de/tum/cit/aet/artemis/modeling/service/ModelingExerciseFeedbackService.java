@@ -89,12 +89,19 @@ public class ModelingExerciseFeedbackService {
         if (submissionOptional.isEmpty()) {
             return;
         }
-        ModelingSubmission modelingSubmission = (ModelingSubmission) submissionOptional.get();
+        if (!(submissionOptional.get() instanceof ModelingSubmission modelingSubmission)) {
+            log.warn("Skipping Athena feedback for participation {} on modeling exercise {}: latest submission {} is not a ModelingSubmission", participation.getId(),
+                    modelingExercise.getId(), submissionOptional.get().getId());
+            return;
+        }
         if (modelingSubmission.isEmpty()) {
             return;
         }
-        Result latestResult = modelingSubmission.getLatestResult();
-        if (latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA) {
+        try {
+            athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA))
+                    .checkLatestSubmissionHasNoAthenaResultOrThrow(modelingSubmission);
+        }
+        catch (BadRequestAlertException ignored) {
             return;
         }
         CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(modelingSubmission, participation, modelingExercise));

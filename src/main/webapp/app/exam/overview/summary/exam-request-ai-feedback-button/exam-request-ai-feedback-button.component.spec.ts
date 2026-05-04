@@ -232,6 +232,24 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             expect(component.athenaFeedbackLimit()).toBe(10);
         });
 
+        it('should treat used = 0 as a real value (not undefined) and keep the button enabled', () => {
+            enableAthena();
+            acceptLLMUsage();
+            vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
+
+            setStudentExam({ ...studentExamForTestExam, submitted: true });
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            expect(component.athenaFeedbackUsed()).toBe(0);
+            expect(component.athenaFeedbackUsed()).not.toBeUndefined();
+            expect(component.athenaFeedbackLimit()).toBe(10);
+
+            const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
+            expect(button).not.toBeNull();
+            expect(button.nativeElement.disabled).toBe(false);
+        });
+
         it('should skip fetching usage for a real (non-test) exam', () => {
             enableAthena();
             const usageSpy = vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage');

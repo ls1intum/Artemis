@@ -306,15 +306,15 @@ public class AthenaFeedbackSuggestionsService {
 
     /**
      * Ensures that the submission does not already have an Athena-generated result.
-     * Throws an exception if Athena result already exists.
+     * Scans every result on the submission, not just the latest, to also catch the case where a later non-Athena
+     * result was added on top of an existing Athena result.
      *
      * @param submission the student's submission to validate
      * @throws BadRequestAlertException if an Athena result is already present for the submission
      */
     public void checkLatestSubmissionHasNoAthenaResultOrThrow(Submission submission) {
-        Result latestResult = submission.getLatestResult();
-
-        if (latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA) {
+        boolean hasAthenaResult = submission.getResults().stream().filter(Objects::nonNull).anyMatch(Result::isAthenaBased);
+        if (hasAthenaResult) {
             log.debug("Submission ID: {} already has an Athena result. Skipping feedback generation.", submission.getId());
             throw new BadRequestAlertException("Submission already has an Athena result", "submission", "submissionAlreadyHasAthenaResult", true);
         }

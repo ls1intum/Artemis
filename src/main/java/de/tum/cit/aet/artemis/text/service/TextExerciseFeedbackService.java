@@ -101,8 +101,11 @@ public class TextExerciseFeedbackService {
         if (textSubmission.isEmpty()) {
             return;
         }
-        Result latestResult = textSubmission.getLatestResult();
-        if (latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA) {
+        try {
+            athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA))
+                    .checkLatestSubmissionHasNoAthenaResultOrThrow(textSubmission);
+        }
+        catch (BadRequestAlertException ignored) {
             return;
         }
         CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(textSubmission, participation, textExercise));
