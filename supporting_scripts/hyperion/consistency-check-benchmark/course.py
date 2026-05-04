@@ -215,7 +215,12 @@ def get_exercise_ids_request(session: requests.Session, course_id: int) -> Dict[
     try:
         response = session.get(url)
 
+        response.raise_for_status()
         exercises_data = response.json()
+
+        if not isinstance(exercises_data, list):
+            logging.error(f"Step 11 failed: Unexpected response format: {exercises_data}")
+            sys.exit(1)
 
         # dictionary: Key = Title, Value = ID
         exercises_map = {}

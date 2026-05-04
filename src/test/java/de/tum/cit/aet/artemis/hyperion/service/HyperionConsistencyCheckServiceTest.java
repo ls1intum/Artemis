@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
@@ -96,7 +95,7 @@ class HyperionConsistencyCheckServiceTest {
         var observationRegistry = ObservationRegistry.create();
         var reviewCommentContextRenderer = new HyperionReviewCommentContextRendererService(commentThreadRepository, JsonObjectMapper.get());
         this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
-                reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository, JsonObjectMapper.get());
+                reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository);
     }
 
     @Test
@@ -201,11 +200,11 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(resp.timing()).isNotNull();
         assertThat(resp.timing().durationS()).isGreaterThanOrEqualTo(0);
 
-        // Three calls (structural + semantic + verification), each with 100 prompt and 50 completion tokens
+        // Single unified check call with 100 prompt and 50 completion tokens
         assertThat(resp.tokens()).isNotNull();
-        assertThat(resp.tokens().prompt()).isEqualTo(300L);
-        assertThat(resp.tokens().completion()).isEqualTo(150L);
-        assertThat(resp.tokens().total()).isEqualTo(450L);
+        assertThat(resp.tokens().prompt()).isEqualTo(100L);
+        assertThat(resp.tokens().completion()).isEqualTo(50L);
+        assertThat(resp.tokens().total()).isEqualTo(150L);
 
         assertThat(resp.costs()).isNotNull();
         // Costs should be calculated based on configured rates (EUR)
@@ -213,107 +212,58 @@ class HyperionConsistencyCheckServiceTest {
     }
 
     @Test
-    void checkConsistency_verificationFiltersIssuesFromCheckers() throws Exception {
+    void checkConsistency_singleCallReturnsAllIssues() throws Exception {
         final var exercise = getProgrammingExercise();
 
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
         when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
                 .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
 
-        // Structural/semantic checkers return 2 issues
-        String checkerJson = """
+        String json = """
                 {
                   "issues": [
                     {
                       "severity": "HIGH",
                       "category": "METHOD_PARAMETER_MISMATCH",
-                      "description": "Real issue - parameters differ",
+                      "description": "Parameters differ between template and solution",
                       "suggestedFix": "Align parameters",
                       "relatedLocations": [{"type": "TEMPLATE_REPOSITORY", "filePath": "src/main/java/App.java", "startLine": 1, "endLine": 1}]
                     },
                     {
-                      "severity": "LOW",
-                      "category": "METHOD_PARAMETER_MISMATCH",
-                      "description": "False positive - pedagogical stub",
-                      "suggestedFix": "N/A",
-                      "relatedLocations": [{"type": "TEMPLATE_REPOSITORY", "filePath": "src/main/java/App.java", "startLine": 2, "endLine": 2}]
+                      "severity": "MEDIUM",
+                      "category": "IDENTIFIER_NAMING_INCONSISTENCY",
+                      "description": "Method named differently in problem vs template",
+                      "suggestedFix": "Use consistent name",
+                      "relatedLocations": [{"type": "PROBLEM_STATEMENT", "filePath": "problem_statement.md", "startLine": 2, "endLine": 2}]
                     }
                   ]
                 }
                 """;
 
-        // Verifier filters down to 1 issue
-        String verifierJson = """
-                {
-                  "issues": [
-                    {
-                      "severity": "HIGH",
-                      "category": "METHOD_PARAMETER_MISMATCH",
-                      "description": "Real issue - parameters differ",
-                      "suggestedFix": "Align parameters",
-                      "relatedLocations": [{"type": "TEMPLATE_REPOSITORY", "filePath": "src/main/java/App.java", "startLine": 1, "endLine": 1}]
-                    }
-                  ]
-                }
-                """;
-
-        // First two calls (structural + semantic) return checkerJson, third call (verification) returns verifierJson
-        var callCount = new AtomicInteger(0);
-        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> {
-            int call = callCount.incrementAndGet();
-            String json = call <= 2 ? checkerJson : verifierJson;
-            return new ChatResponse(List.of(new Generation(new AssistantMessage(json))));
-        });
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(json)))));
 
         ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
 
         assertThat(resp).isNotNull();
-        // Verifier filtered the false positive, so only 1 issue remains
-        assertThat(resp.issues()).hasSize(1);
-        assertThat(resp.issues().getFirst().description()).isEqualTo("Real issue - parameters differ");
+        assertThat(resp.issues()).hasSize(2);
         assertThat(resp.issues().getFirst().severity()).isEqualTo(Severity.HIGH);
+        assertThat(resp.issues().get(1).category()).isEqualTo(ConsistencyIssueCategory.IDENTIFIER_NAMING_INCONSISTENCY);
     }
 
     @Test
-    void checkConsistency_verificationFailureFallsBackToPreVerificationResults() throws Exception {
+    void checkConsistency_llmFailureReturnsEmptyIssues() throws Exception {
         final var exercise = getProgrammingExercise();
 
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
         when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
                 .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
 
-        String checkerJson = """
-                {
-                  "issues": [
-                    {
-                      "severity": "MEDIUM",
-                      "category": "METHOD_PARAMETER_MISMATCH",
-                      "description": "Parameters differ in template vs solution",
-                      "suggestedFix": "Align parameters",
-                      "relatedLocations": [{"type": "TEMPLATE_REPOSITORY", "filePath": "src/main/java/App.java", "startLine": 1, "endLine": 1}]
-                    }
-                  ]
-                }
-                """;
-
-        // First two calls succeed, third call (verification) throws
-        var callCount = new AtomicInteger(0);
-        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> {
-            int call = callCount.incrementAndGet();
-            if (call > 2) {
-                throw new RuntimeException("LLM service unavailable");
-            }
-            return new ChatResponse(List.of(new Generation(new AssistantMessage(checkerJson))));
-        });
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("LLM service unavailable"));
 
         ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
 
         assertThat(resp).isNotNull();
-        // Verification failed, so fallback to pre-verification combined results
-        // Structural parses METHOD_PARAMETER_MISMATCH; semantic fails (wrong enum) -> empty list
-        // Combined = 1 issue from structural
-        assertThat(resp.issues()).isNotEmpty();
-        assertThat(resp.issues().getFirst().description()).isEqualTo("Parameters differ in template vs solution");
+        assertThat(resp.issues()).isEmpty();
     }
 
     @Test
