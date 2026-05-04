@@ -104,6 +104,7 @@ public class IrisChatSessionResource {
      */
     @PostMapping("{courseId}/sessions/current")
     @EnforceAtLeastStudentInCourse
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId, @RequestParam IrisChatMode mode,
             @RequestParam long entityId) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -122,6 +123,7 @@ public class IrisChatSessionResource {
      */
     @PostMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisChatSessionResponseDTO> createSession(@PathVariable Long courseId, @RequestParam IrisChatMode mode, @RequestParam long entityId)
             throws URISyntaxException {
         var user = userRepository.getUserWithGroupsAndAuthorities();
