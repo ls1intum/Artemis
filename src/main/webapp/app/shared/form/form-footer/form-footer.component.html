@@ -28,7 +28,7 @@
         <ng-template #tooltipTranslate>
             @for (reason of invalidReasons(); track reason) {
                 <div>
-                    <p jhiTranslate="{{ reason.translateKey }}"></p>
+                    <p [jhiTranslate]="reason.translateKey" [translateValues]="reason.translateValues"></p>
                 </div>
             }
         </ng-template>
