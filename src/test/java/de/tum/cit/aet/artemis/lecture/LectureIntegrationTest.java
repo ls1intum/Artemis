@@ -295,6 +295,21 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateLecture_nullCourseInBody_shouldReturnBadRequest() throws Exception {
+        Lecture originalLecture = lectureRepository.findByIdElseThrow(lecture1.getId());
+
+        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Null Course Update", "Updated with null course",
+                ZonedDateTime.now().plusMonths(3), ZonedDateTime.now().plusMonths(4), true, "null-course-channel", null);
+
+        request.putWithResponseBody("/api/lecture/lectures", lectureDto, LectureResource.SimpleLectureDTO.class, HttpStatus.BAD_REQUEST);
+
+        Lecture unchangedLecture = lectureRepository.findByIdElseThrow(originalLecture.getId());
+        assertThat(unchangedLecture.getDescription()).isEqualTo(originalLecture.getDescription());
+        assertThat(unchangedLecture.getTitle()).isEqualTo(originalLecture.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_NoId_shouldReturnBadRequest() throws Exception {
         Lecture originalLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow();
         originalLecture.setId(null);
