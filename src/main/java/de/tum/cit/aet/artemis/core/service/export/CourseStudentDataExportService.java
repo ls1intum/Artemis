@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -1144,8 +1145,10 @@ public class CourseStudentDataExportService {
                 .orElse(null);
     }
 
-    private String formatFeedbacks(List<Feedback> feedbacks) {
-        return feedbacks.stream().map(f -> {
+    private String formatFeedbacks(Collection<Feedback> feedbacks) {
+        // Sort by id (insertion order under IDENTITY) so the exported CSV is deterministic regardless of
+        // the underlying Set iteration order.
+        return feedbacks.stream().sorted(Comparator.comparing(Feedback::getId, Comparator.nullsLast(Comparator.naturalOrder()))).map(f -> {
             String text = f.getDetailText() != null ? f.getDetailText() : (f.getText() != null ? f.getText() : "");
             String credits = f.getCredits() != null ? " (" + f.getCredits() + " pts)" : "";
             return text + credits;
