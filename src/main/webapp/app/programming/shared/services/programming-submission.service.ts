@@ -18,6 +18,7 @@ import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { deepClone } from 'app/shared/util/deep-clone.util';
+import { AccountService } from 'app/core/auth/account.service';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -72,6 +73,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private participationService = inject(ProgrammingExerciseParticipationService);
     private profileService = inject(ProfileService);
+    private readonly accountService = inject(AccountService);
 
     public SUBMISSION_RESOURCE_URL = 'api/programming/programming-submissions/';
     public PROGRAMMING_EXERCISE_RESOURCE_URL = 'api/programming/programming-exercises/';
@@ -112,16 +114,64 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private startedProcessingCache: Map<string, BuildTimingInfo> = new Map<string, BuildTimingInfo>();
     isLocalCIEnabled = true;
 
+    private currentUserId?: number;
+    private authenticationStateSubscription: Subscription;
+
     constructor() {
         this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.currentUserId = this.accountService.userIdentity()?.id;
+        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
+            if (this.currentUserId !== user?.id) {
+                this.currentUserId = user?.id;
+                this.resetState();
+            }
+        });
     }
 
     ngOnDestroy(): void {
+        this.tearDownAllSubscriptions();
+        this.authenticationStateSubscription?.unsubscribe();
+    }
+
+    /**
+     * Tears down every websocket subscription and timer this service holds. Used both on
+     * service destruction and on logout / user change to prevent the next user from inheriting
+     * the previous user's live submission/build streams.
+     */
+    private tearDownAllSubscriptions(): void {
         Object.values(this.resultSubscriptions).forEach((sub) => sub.unsubscribe());
         Object.values(this.resultTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         Object.values(this.queueEstimateTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         this.submissionTopicSubscriptions.forEach((subscription) => subscription.unsubscribe());
         this.submissionProcessingTopicSubscriptions.forEach((subscription) => subscription.unsubscribe());
+    }
+
+    /**
+     * Clears all cached submission state on logout / user change so the next user starts from
+     * a clean slate. Existing per-participation subjects are completed so any lingering
+     * subscribers unwind cleanly instead of being silently disconnected.
+     */
+    private resetState(): void {
+        this.tearDownAllSubscriptions();
+        this.resultSubscriptions = {};
+        this.resultTimerSubscriptions = {};
+        this.queueEstimateTimerSubscriptions = {};
+        this.submissionTopicSubscriptions.clear();
+        this.submissionProcessingTopicSubscriptions.clear();
+        this.submissionTopicsSubscribed.clear();
+        this.submissionProcessingTopicsSubscribed.clear();
+        this.participationIdToExerciseId.clear();
+        this.resultTimerSubjects.forEach((subject) => subject.complete());
+        this.resultTimerSubjects.clear();
+        Object.values(this.submissionSubjects).forEach((subject) => subject.complete());
+        this.submissionSubjects = {};
+        this.exerciseBuildStateSubjects.forEach((subject) => subject.complete());
+        this.exerciseBuildStateSubjects.clear();
+        this.exerciseBuildStateValue = {};
+        this.startedProcessingCache.clear();
+        this.currentExpectedResultETA = this.DEFAULT_EXPECTED_RESULT_ETA;
+        this.currentExpectedQueueEstimate = this.DEFAULT_EXPECTED_QUEUE_ESTIMATE;
+        this.resultEtaSubject.next(this.DEFAULT_EXPECTED_RESULT_ETA);
     }
 
     get exerciseBuildState() {

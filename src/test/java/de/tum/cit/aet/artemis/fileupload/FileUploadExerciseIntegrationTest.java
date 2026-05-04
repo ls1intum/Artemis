@@ -595,7 +595,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> instruction.getId().equals(usedInstruction.getId())).orElseThrow().getCredits())
                 .isEqualTo(3);
         assertThat(updatedResults.getFirst().getScore()).isEqualTo(60);
-        assertThat(updatedResults.getFirst().getFeedbacksSorted().getFirst().getCredits()).isEqualTo(3);
+        assertThat(updatedResults.getFirst().getFeedbacks().iterator().next().getCredits()).isEqualTo(3);
     }
 
     @Test

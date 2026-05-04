@@ -1,6 +1,9 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, effect, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewEncapsulation, effect, input, output, signal, viewChild } from '@angular/core';
 import { YouTubePlayer } from '@angular/youtube-player';
 import interact from 'interactjs';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 
@@ -12,14 +15,17 @@ const YT_STATE_PLAYING = 1;
 const YT_STATE_PAUSED = 2;
 const YT_STATE_ENDED = 0;
 const YT_STATE_BUFFERING = 3;
+const MIN_TRANSCRIPT_HEIGHT = 500;
 
 @Component({
     selector: 'jhi-youtube-player',
     standalone: true,
-    imports: [YouTubePlayer, TranscriptViewerComponent],
+    imports: [YouTubePlayer, TranscriptViewerComponent, FaIconComponent, ArtemisTranslatePipe],
     templateUrl: './youtube-player.component.html',
     styleUrls: ['./youtube-player.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    encapsulation: ViewEncapsulation.None,
+    host: { class: 'youtube-player-host' },
 })
 export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     videoId = input.required<string>();
@@ -31,10 +37,13 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     protected readonly playerVars = { origin: typeof window !== 'undefined' ? window.location.origin : undefined };
     protected readonly currentSegmentIndex = signal<number>(-1);
 
+    /** FontAwesome icon for the resizer grip */
+    protected readonly faGripLinesVertical = faGripLinesVertical;
+
     // view refs for the interact.js resizer (mirror VideoPlayerComponent)
     videoWrapper = viewChild<ElementRef<HTMLDivElement>>('videoWrapper');
     videoColumn = viewChild<ElementRef<HTMLDivElement>>('videoColumn');
-    resizerHandle = viewChild<ElementRef<HTMLDivElement>>('resizerHandle');
+    resizerHandle = viewChild<ElementRef<HTMLButtonElement>>('resizerHandle');
 
     private youtubePlayer: { getCurrentTime: () => number; seekTo: (s: number, allowSeekAhead: boolean) => void } | null = null;
     private pollHandle: ReturnType<typeof setInterval> | null = null;
@@ -61,7 +70,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
                 this.playerFailed.emit();
             }
         }, READINESS_TIMEOUT_MS);
-        this.initResizer();
+        this.initializeResizer();
     }
 
     ngOnDestroy(): void {
@@ -73,7 +82,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         this.resizeObserver?.disconnect();
     }
 
-    private initResizer(): void {
+    private initializeResizer(): void {
         const wrapperEl = this.videoWrapper()?.nativeElement;
         const videoColumnEl = this.videoColumn()?.nativeElement;
         const resizerEl = this.resizerHandle()?.nativeElement;
@@ -83,28 +92,71 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         this.interactInstance = interact(resizerEl).draggable({
             listeners: {
                 move: (event) => {
-                    // Constrain to horizontal axis — only use event.dx, ignore dy
                     const wrapperRect = wrapperEl.getBoundingClientRect();
-                    const currentWidth = videoColumnEl.getBoundingClientRect().width;
-                    const newWidth = currentWidth + event.dx;
-                    const minWidth = 200;
-                    const maxWidth = wrapperRect.width - 200;
-                    const clamped = Math.max(minWidth, Math.min(newWidth, maxWidth));
-                    videoColumnEl.style.flex = `0 0 ${clamped}px`;
+                    const minWidth = 300;
+                    const minTranscriptWidth = 250;
+                    const wrapperWidth = wrapperRect.width;
+
+                    // Skip resize if wrapper is too narrow
+                    if (wrapperWidth <= minWidth + minTranscriptWidth) {
+                        return;
+                    }
+
+                    const maxWidth = wrapperWidth - minTranscriptWidth;
+                    const newWidth = event.clientX - wrapperRect.left;
+                    const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+
+                    // Use percentage-based flex-basis for natural scaling
+                    const flexBasisPercent = Math.min((clampedWidth / wrapperWidth) * 100, 100);
+                    videoColumnEl.style.flex = `0 0 ${flexBasisPercent}%`;
+                    videoColumnEl.style.width = '';
                 },
             },
             cursorChecker: () => 'col-resize',
         });
         this.resizeHandler = () => {
-            videoColumnEl.style.flex = '';
+            this.syncTranscriptHeight();
         };
         window.addEventListener('resize', this.resizeHandler);
         this.resizeObserver = new ResizeObserver(() => {
-            if (wrapperEl.getBoundingClientRect().width < 992) {
-                videoColumnEl.style.flex = '';
-            }
+            this.syncTranscriptHeight();
         });
-        this.resizeObserver.observe(wrapperEl);
+        this.resizeObserver.observe(videoColumnEl);
+        this.syncTranscriptHeight();
+    }
+
+    /**
+     * Syncs the transcript column's max-height to match the video column's height.
+     * Ensures the transcript is at least MIN_TRANSCRIPT_HEIGHT pixels tall.
+     */
+    private syncTranscriptHeight(): void {
+        const videoColumnEl = this.videoColumn()?.nativeElement;
+        const wrapperEl = this.videoWrapper()?.nativeElement;
+
+        if (!videoColumnEl || !wrapperEl) {
+            return;
+        }
+
+        const transcriptColumnEl = wrapperEl.querySelector('.transcript-column') as HTMLElement | null;
+        if (!transcriptColumnEl) {
+            return;
+        }
+
+        const videoHeight = videoColumnEl.offsetHeight;
+        const targetHeight = Math.max(videoHeight, MIN_TRANSCRIPT_HEIGHT);
+        transcriptColumnEl.style.maxHeight = `${targetHeight}px`;
+    }
+
+    /**
+     * Resets the video/transcript split ratio to default layout.
+     * Can be triggered by double-clicking the resizer handle.
+     */
+    resetSplitRatio(): void {
+        const videoColumnEl = this.videoColumn()?.nativeElement;
+        if (videoColumnEl) {
+            videoColumnEl.style.flex = '';
+            videoColumnEl.style.width = '';
+        }
     }
 
     onPlayerReady(event: any): void {

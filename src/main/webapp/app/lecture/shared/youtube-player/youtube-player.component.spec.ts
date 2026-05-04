@@ -49,6 +49,11 @@ describe('YouTubePlayerComponent', () => {
         ]);
     });
 
+    async function render(): Promise<void> {
+        fixture.detectChanges();
+        await fixture.whenStable();
+    }
+
     it('starts polling on PLAYING state', () => {
         vi.useFakeTimers();
         const spy = vi.spyOn<any, any>(component, 'updateCurrentSegment');
@@ -108,6 +113,15 @@ describe('YouTubePlayerComponent', () => {
         vi.useRealTimers();
     });
 
+    it('uses the ready event target as player instance when none is preset', () => {
+        const eventPlayer = { getCurrentTime: () => 15, seekTo: vi.fn() };
+
+        component.onPlayerReady({ target: eventPlayer } as any);
+
+        expect((component as any).youtubePlayer).toBe(eventPlayer);
+        expect(component['currentSegmentIndex']()).toBe(1);
+    });
+
     it('applies initialTimestamp on ready and updates segment immediately', () => {
         fixture.componentRef.setInput('initialTimestamp', 25);
         const seekSpy = vi.fn();
@@ -145,6 +159,35 @@ describe('YouTubePlayerComponent', () => {
     it('guards segment update before ready', () => {
         (component as any).youtubePlayer = null;
         expect(() => component.seekTo(5)).not.toThrow();
+    });
+
+    it.each([0, 3])('stops polling on state %s and updates the segment once more', (state) => {
+        vi.useFakeTimers();
+        const updateSpy = vi.spyOn<any, any>(component, 'updateCurrentSegment');
+        (component as any).youtubePlayer = { getCurrentTime: () => 25, seekTo: vi.fn() };
+
+        component.onStateChange({ data: 1 } as any);
+        vi.advanceTimersByTime(250);
+        updateSpy.mockClear();
+
+        component.onStateChange({ data: state } as any);
+        vi.advanceTimersByTime(1_000);
+
+        expect(updateSpy).toHaveBeenCalledTimes(1);
+        expect(updateSpy).toHaveBeenCalledWith(25);
+    });
+
+    it('resetSplitRatio clears custom sizing on the video column', async () => {
+        await render();
+
+        const videoColumnEl = component.videoColumn()!.nativeElement;
+        videoColumnEl.style.flex = '0 0 65%';
+        videoColumnEl.style.width = '650px';
+
+        component.resetSplitRatio();
+
+        expect(videoColumnEl.style.flex).toBe('');
+        expect(videoColumnEl.style.width).toBe('');
     });
 
     it('clears timeout on destroy', () => {
