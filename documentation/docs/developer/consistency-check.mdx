@@ -7,7 +7,7 @@ Hyperion's consistency check detects cross-artifact inconsistencies in programmi
 A programming exercise consists of four interconnected artifacts: the problem statement, the template repository, the solution repository, and the test repository.
 When instructors modify one artifact without updating the others, students may encounter exercises they cannot solve — for example, the problem statement describes a method `calculateAverage` while the template declares `computeMean`.
 
-The consistency check uses an LLM to analyze all artifacts together and surface such discrepancies before the exercise is published.
+The consistency check uses an LLM to analyze all artifacts together and dentify any inconsistencies before the exercise is published.
 
 For the formal definition of consistency issue types and the underlying ontology, see:
 Dietrich et al., *"Automated Consistency Checking of Multi-Artifact Programming Exercises"*, Koli Calling 2025.
@@ -111,7 +111,7 @@ The evaluation infrastructure connects Artemis to two external repositories:
 - **[PECV-bench-dataset](https://github.com/ls1intum/PECV-bench-dataset)** — private repository containing confidential exercise artifacts (solution repositories, test suites) that cannot be published. Its directory structure mirrors the public `data/` subtree in PECV-bench so both are merged transparently before variant materialization.
 
 <Callout variant={CalloutVariant.info}>
-Access to PECV-bench-dataset requires explicit authorization. Contact the Hyperion maintainers to request access before running V2 evaluations.
+Access to PECV-bench-dataset requires explicit authorization. Contact the Hyperion maintainers to request access before running evaluations.
 </Callout>
 
 ### Confidential Exercise Storage
@@ -166,9 +166,52 @@ consistency_check_exercises = {"V2": {"ITP2425": ["H01E01-Lectures", ...]}}
 
 ### Running the Workflow
 
-```bash
+1. Navigate to *`consistency-check-benchmark`* folder
+```shell
 cd supporting_scripts/hyperion/consistency-check-benchmark
-python run_pecv_bench.py
+```
+
+2. Create a virtual environment (make sure to use python 3.13):
+    ```shell
+    python3.13 -m venv venv
+    ```
+
+3. Activate the virtual environment:
+   - On **macOS/Linux**:
+     ```shell
+     source venv/bin/activate
+     ```
+   - On **Windows**:
+     ```shell
+     venv\Scripts\activate
+     ```
+
+4. Install the Required Packages
+```shell
+pip install -r requirements.txt
+```
+- On **Windows**:
+   ```shell
+      python -m pip install --upgrade pip
+      python -m pip install -r requirements.txt
+   ```
+
+   make patch.exe available (Git for Windows)
+
+   ```shell
+      setx PATH "$env:PATH;C:\Program Files\Git\usr\bin"
+   ```
+
+   restart PowerShell after this line, then continue
+
+5. authenticate with GitHub CLI
+```shell
+gh auth login
+```
+
+6. run benchmark script
+```shell
+python3 run_pecv_bench.py
 ```
 
 The script executes the following steps in sequence:
@@ -209,8 +252,6 @@ Note the printed `approach_id` and set it manually in `report.py`, `code_snapsho
 ---
 
 ## Known Limitations
-
-**SQL and Assembler precision is low.** The checker prompts assume object-oriented constructs (classes, methods, attributes). SQL query files and Assembler register-level operations do not map onto this ontology, leading to high false-positive and false-negative rates for both languages.
 
 **LLM non-determinism.** Results vary between runs. For reliable metric comparisons, run each approach at least three times and average the results.
 
