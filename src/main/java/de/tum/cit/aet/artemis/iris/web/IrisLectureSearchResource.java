@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
@@ -34,9 +35,12 @@ public class IrisLectureSearchResource {
 
     private final PyrisJobService pyrisJobService;
 
-    public IrisLectureSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService) {
+    private final UserRepository userRepository;
+
+    public IrisLectureSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, UserRepository userRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -62,12 +66,13 @@ public class IrisLectureSearchResource {
     @PostMapping("search-answer")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> ask(@RequestBody @Valid PyrisSearchAskRequestDTO requestDTO, Principal principal) {
+        var user = userRepository.findOneByLogin(principal.getName()).orElseThrow();
         var jobToken = pyrisJobService.addGlobalSearchAnswerJob(principal.getName());
         // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
         // Pyris may have received the request and already started the pipeline. Removing the token
         // would break WebSocket routing for any callbacks that arrive later.
         // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
-        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), jobToken);
+        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), jobToken, user.getSelectedLLMUsage());
         return ResponseEntity.accepted().build();
     }
 }
