@@ -327,7 +327,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         }
 
         if (newShortName && newShortName.length > 3) {
-            const sanitizedShortName = removeSpecialCharacters(newShortName ?? '');
+            const sanitizedShortName = removeSpecialCharacters(newShortName ?? '').slice(0, PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH);
             // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
             const uniqueShortName = this.ensureShortNameIsUnique(sanitizedShortName);
             this.programmingExercise().shortName = uniqueShortName;
@@ -359,7 +359,10 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                 this.alertService.error('artemisApp.error.shortNameGenerationFailed');
                 break;
             }
-            newShortName = `${shortName}${counter}`;
+            // Truncate the base so that base + counter suffix still fits within the max length.
+            const suffix = `${counter}`;
+            const truncatedBase = shortName.slice(0, PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH - suffix.length);
+            newShortName = `${truncatedBase}${suffix}`;
             counter++;
         }
         return newShortName;
