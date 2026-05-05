@@ -42,7 +42,7 @@ public class AttachmentVideoUnit extends LectureUnit {
     private List<Slide> slides = new ArrayList<>();
 
     /**
-     * Maps slide index (0-based position in slides list) to visible page number in the PDF.
+     * Maps the slide/PDF page number provided by PyRIS to the visible page number printed on that page.
      * Value -1 indicates no page number is visible on that slide.
      * Generated during Pyris ingestion to enable accurate video-slide synchronization.
      */

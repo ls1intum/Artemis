@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -11,6 +12,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorService;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
@@ -47,6 +51,11 @@ import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 public class PyrisStatusUpdateService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisStatusUpdateService.class);
+
+    private static final com.fasterxml.jackson.databind.ObjectMapper objectMapper = JsonObjectMapper.get();
+
+    private static final TypeReference<LinkedHashMap<String, Integer>> STRING_INTEGER_MAP_TYPE = new TypeReference<>() {
+    };
 
     private final PyrisJobService pyrisJobService;
 
@@ -180,11 +189,13 @@ public class PyrisStatusUpdateService {
             String rawCode = statusUpdate.errorCode();
             String errorCode = success ? null : (rawCode != null && !rawCode.isBlank() ? rawCode : null);
 
-            // Extract and convert slide page number map (JSON keys are strings, convert to integers)
-            final Map<Integer, Integer> slidePageNumberMap = convertSlidePageNumberMap(statusUpdate.slidePageNumberMap(), job.lectureUnitId(), success);
+            Map<String, Integer> rawSlidePageNumberMap = extractSlidePageNumberMapFromResult(statusUpdate.result(), job.lectureUnitId());
 
-            log.info("[Ingestion] Terminal callback for unitId={}, success={}, errorCode={}, hasSlidePageNumberMap={}", job.lectureUnitId(), success, errorCode,
-                    slidePageNumberMap != null);
+            log.info("[Ingestion] Raw slide page number map from PyRIS for unitId={}: {}", job.lectureUnitId(), rawSlidePageNumberMap);
+
+            final Map<Integer, Integer> slidePageNumberMap = convertSlidePageNumberMap(rawSlidePageNumberMap, job.lectureUnitId(), success);
+
+            log.info("[Ingestion] Terminal callback for unitId={}, success={}, errorCode={}, slidePageNumberMap={}", job.lectureUnitId(), success, errorCode, slidePageNumberMap);
             processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success, errorCode, slidePageNumberMap));
             pyrisJobService.removeJob(job);
         }
@@ -243,8 +254,39 @@ public class PyrisStatusUpdateService {
     }
 
     /**
+     * Extract slide page number map from the result JSON string.
+     * PyRIS sends the stable {@code final_result} JSON in the existing {@code result} field.
+     *
+     * @param resultJson    the result JSON string
+     * @param lectureUnitId the lecture unit ID for logging
+     * @return the extracted map with String keys, or {@code null} if the payload does not contain the map
+     */
+    private Map<String, Integer> extractSlidePageNumberMapFromResult(String resultJson, Long lectureUnitId) {
+        if (resultJson == null || resultJson.isBlank()) {
+            return null;
+        }
+
+        try {
+            var jsonNode = objectMapper.readTree(resultJson);
+
+            var mapNode = jsonNode.get("slidePageNumberMap");
+            if (mapNode == null || !mapNode.isObject()) {
+                return null;
+            }
+
+            Map<String, Integer> map = objectMapper.convertValue(mapNode, STRING_INTEGER_MAP_TYPE);
+            log.info("[Ingestion] Extracted slide page number map from result JSON for unitId={}: {}", lectureUnitId, map);
+            return map;
+        }
+        catch (Exception e) {
+            log.warn("[Ingestion] Failed to extract slide page number map from result JSON for unitId={}", lectureUnitId, e);
+            return null;
+        }
+    }
+
+    /**
      * Convert slide page number map from String keys (JSON format) to Integer keys.
-     * Returns null if the input is null, empty, or conversion fails.
+     * Returns {@code null} if the input is unavailable or conversion fails.
      *
      * @param stringKeyMap  the map with String keys from JSON
      * @param lectureUnitId the lecture unit ID for logging
@@ -252,12 +294,12 @@ public class PyrisStatusUpdateService {
      * @return the converted map with Integer keys, or null
      */
     private Map<Integer, Integer> convertSlidePageNumberMap(Map<String, Integer> stringKeyMap, Long lectureUnitId, boolean success) {
-        if (!success || stringKeyMap == null || stringKeyMap.isEmpty()) {
+        if (!success || stringKeyMap == null) {
             return null;
         }
 
         try {
-            return stringKeyMap.entrySet().stream().collect(Collectors.toMap(e -> Integer.parseInt(e.getKey()), Map.Entry::getValue));
+            return stringKeyMap.entrySet().stream().collect(Collectors.toMap(e -> Integer.parseInt(e.getKey()), Map.Entry::getValue, (left, right) -> right, LinkedHashMap::new));
         }
         catch (NumberFormatException e) {
             log.warn("[Ingestion] Invalid slide page number map for unitId={}: keys must be integers", lectureUnitId, e);

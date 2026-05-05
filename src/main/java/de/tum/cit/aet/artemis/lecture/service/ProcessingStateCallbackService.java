@@ -227,7 +227,8 @@ public class ProcessingStateCallbackService {
      * @param jobToken           the job token from the callback
      * @param success            whether processing succeeded
      * @param errorCode          machine-readable error code (e.g. {@code YOUTUBE_PRIVATE}); {@code null} on success or unknown failure
-     * @param slidePageNumberMap optional mapping from slide index (0-based) to visible page number; {@code null} if not applicable or unavailable
+     * @param slidePageNumberMap optional mapping from the PyRIS slide/PDF page number to the visible page number;
+     *                               {@code null} if not applicable or unavailable
      */
     public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode, @Nullable Map<Integer, Integer> slidePageNumberMap) {
         Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
@@ -257,7 +258,12 @@ public class ProcessingStateCallbackService {
             processingStateRepository.save(state);
 
             // Save slide page number mapping if available
-            saveSlidePageNumberMap(lectureUnitId, slidePageNumberMap);
+            try {
+                saveSlidePageNumberMap(lectureUnitId, slidePageNumberMap);
+            }
+            catch (Exception e) {
+                log.error("Failed to save slide page number map for unit {}", lectureUnitId, e);
+            }
 
             // Notify UI via WebSocket
             TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
@@ -639,7 +645,8 @@ public class ProcessingStateCallbackService {
      * "computed but no page numbers found" from "not yet computed".
      *
      * @param lectureUnitId      the ID of the lecture unit
-     * @param slidePageNumberMap the mapping from slide index to page number; may be {@code null} or empty
+     * @param slidePageNumberMap the mapping from the PyRIS slide/PDF page number to the visible page number;
+     *                               may be {@code null} or empty
      */
     private void saveSlidePageNumberMap(Long lectureUnitId, @Nullable Map<Integer, Integer> slidePageNumberMap) {
         if (slidePageNumberMap == null) {
@@ -647,17 +654,22 @@ public class ProcessingStateCallbackService {
             return;
         }
 
+        log.info("Attempting to save slide page number map for unit {}: {}", lectureUnitId, slidePageNumberMap);
+
         LectureUnit unit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
+        log.info("Found lecture unit with id={}, type={}", lectureUnitId, unit.getClass().getSimpleName());
+
         if (!(unit instanceof AttachmentVideoUnit attachmentVideoUnit)) {
             log.debug("Skipping slide page number map for unit {} (not an AttachmentVideoUnit)", lectureUnitId);
             return;
         }
 
         long validEntries = slidePageNumberMap.values().stream().filter(v -> v != -1).count();
-        log.info("Saving slide page number map for unit {}: {} entries ({} with visible page numbers)", lectureUnitId, slidePageNumberMap.size(), validEntries);
+        log.info("Saving slide page number map for unit {}: {} total entries, {} with visible page numbers", lectureUnitId, slidePageNumberMap.size(), validEntries);
 
         attachmentVideoUnit.setSlidePageNumberMap(slidePageNumberMap);
         lectureUnitRepository.save(attachmentVideoUnit);
+        log.info("Successfully saved slide page number map for unit {}", lectureUnitId);
     }
 
     /**

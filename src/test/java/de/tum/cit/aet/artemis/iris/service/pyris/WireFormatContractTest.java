@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
  * <ul>
  * <li>Outbound webhook uses camelCase {@code videoSourceType}.</li>
  * <li>Inbound status update reads snake_case {@code error_code}.</li>
+ * <li>Inbound ingestion status continues to carry the stable {@code final_result} JSON in the existing {@code result} field.</li>
  * <li>Inbound status update silently ignores camelCase {@code errorCode} (unknown field), matching Spring Boot's default mapper config.</li>
  * </ul>
  */
@@ -36,6 +37,13 @@ class WireFormatContractTest {
         String json = "{\"result\":\"error\",\"stages\":[],\"jobId\":7,\"error_code\":\"YOUTUBE_PRIVATE\"}";
         var dto = mapper.readValue(json, PyrisLectureIngestionStatusUpdateDTO.class);
         assertThat(dto.errorCode()).isEqualTo("YOUTUBE_PRIVATE");
+    }
+
+    @Test
+    void inboundStatusUpdateKeepsFinalResultJsonInResultField() throws Exception {
+        String json = "{\"result\":\"{\\\"slidePageNumberMap\\\":{\\\"1\\\":1,\\\"2\\\":2,\\\"3\\\":-1}}\",\"stages\":[],\"jobId\":7}";
+        var dto = mapper.readValue(json, PyrisLectureIngestionStatusUpdateDTO.class);
+        assertThat(dto.result()).isEqualTo("{\"slidePageNumberMap\":{\"1\":1,\"2\":2,\"3\":-1}}");
     }
 
     @Test
