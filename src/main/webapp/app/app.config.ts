@@ -85,10 +85,18 @@ export const appConfig: ApplicationConfig = {
             const hasSaml2FlowCookie = /(?:^|;\s*)SAML2flow=/.test(document.cookie);
             const completeSaml2 = hasSaml2FlowCookie
                 ? lastValueFrom(authServerProvider.loginSAML2(true))
-                      .catch(() => undefined)
+                      // The .catch is load-bearing: Promise.all below short-circuits on the first
+                      // rejection, so any error here would abort APP_INITIALIZER and prevent the SPA
+                      // from booting. We log so the failure is observable but recover by rendering
+                      // the landing page (or sign-in if the user navigates there manually).
+                      .catch((error) => {
+                          // eslint-disable-next-line no-undef
+                          console.warn('SAML2 second-step exchange failed during app initialization', error);
+                          return undefined;
+                      })
                       .finally(() => {
-                          // Path=/ matches the implicit default browsers assign when the cookie is set from
-                          // /sign-in, so the deletion reliably removes it regardless of the current document path.
+                          // Path=/ must match the path the cookie was set with in Saml2LoginComponent so the
+                          // deletion reliably removes it regardless of the document path the SPA boots from.
                           document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax;';
                       })
                 : Promise.resolve();
