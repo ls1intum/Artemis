@@ -366,7 +366,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testInstructorReceivesIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=WeaviateSearchable%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var endedExamResult = results.stream().filter(r -> "WeaviateSearchable Ended Exam Exercise".equals(r.title())).findFirst();
 
             assertThat(endedExamResult).isPresent();
@@ -376,7 +376,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
         void testTutorReceivesIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=WeaviateSearchable%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var endedExamResult = results.stream().filter(r -> "WeaviateSearchable Ended Exam Exercise".equals(r.title())).findFirst();
 
             assertThat(endedExamResult).isPresent();
@@ -390,7 +390,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentDoesNotReceiveIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=WeaviateSearchable%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var endedExamResult = results.stream().filter(r -> "WeaviateSearchable Ended Exam Exercise".equals(r.title())).findFirst();
 
             assertThat(endedExamResult).isPresent();
@@ -404,7 +404,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testIsAtLeastTutorFlagAbsentOnRegularExercise() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable Released&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=WeaviateSearchable%20Released&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var regularResult = results.stream().filter(r -> "WeaviateSearchable Released Exercise".equals(r.title())).findFirst();
 
             assertThat(regularResult).isPresent();
