@@ -81,11 +81,15 @@ export const appConfig: ApplicationConfig = {
             // exchange (turn the SAML2 HttpSession into an Artemis JWT cookie) before resolving the
             // user identity. This way the regular route guards see an authenticated user and route
             // them to /courses, instead of the public landing page rendered for unauthenticated visitors.
-            const completeSaml2 = document.cookie.includes('SAML2flow=')
+            // Match the cookie name exactly so a name that merely ends with 'SAML2flow' cannot trigger this branch.
+            const hasSaml2FlowCookie = /(?:^|;\s*)SAML2flow=/.test(document.cookie);
+            const completeSaml2 = hasSaml2FlowCookie
                 ? lastValueFrom(authServerProvider.loginSAML2(true))
                       .catch(() => undefined)
                       .finally(() => {
-                          document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax;';
+                          // Path=/ matches the implicit default browsers assign when the cookie is set from
+                          // /sign-in, so the deletion reliably removes it regardless of the current document path.
+                          document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax;';
                       })
                 : Promise.resolve();
             // Load profile info and resolve user identity in parallel to minimize startup time.
