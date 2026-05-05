@@ -47,12 +47,13 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
  * verifying role-based access control for exercise search endpoints.
  * <p>
  * Tests verify:
- * - Students cannot see exam exercises before the exam has started
- * - Students can see exam exercises once the exam has started
+ * - Students cannot see exam exercises before the exam has started or while it is ongoing
+ * - Students can see exam exercises only after the exam has ended (hand-in date passed)
  * - Students cannot see unreleased exercises
  * - Tutors cannot see exam exercises before the exam has ended
  * - Tutors can see exam exercises after the exam has ended
  * - Editors and instructors can see all exercises at any time
+ * - The {@code isAtLeastTutor} metadata flag is set for staff (TA/editor/instructor) on ended exam exercises
  */
 @EnabledIf("isWeaviateEnabled")
 class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -187,11 +188,12 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testStudentCanSeeStartedExamExercises() throws Exception {
+        void testStudentCanSeeEndedExamExercisesButNotOngoingOnes() throws Exception {
             var results = request.getList("/api/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchable Ongoing Exam Exercise", "WeaviateSearchable Ended Exam Exercise");
+            assertThat(titles).contains("WeaviateSearchable Ended Exam Exercise");
+            assertThat(titles).doesNotContain("WeaviateSearchable Ongoing Exam Exercise");
         }
 
         @Test
@@ -263,7 +265,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             var titles = getResultTitles(results);
 
             assertThat(titles).contains("WeaviateSearchable Released Exercise");
-            assertThat(titles).doesNotContain("WeaviateSearchable Unreleased Exercise", "WeaviateSearchable NotStarted Exam Exercise");
+            assertThat(titles).doesNotContain("WeaviateSearchable Unreleased Exercise", "WeaviateSearchable NotStarted Exam Exercise", "WeaviateSearchable Ongoing Exam Exercise");
         }
 
         @Test
@@ -292,11 +294,12 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testStudentCanSeeStartedExamExercises() throws Exception {
+        void testStudentCanSeeEndedExamExercisesButNotOngoingOnes() throws Exception {
             var results = request.getList("/api/search?q=WeaviateSearchable&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchable Ongoing Exam Exercise", "WeaviateSearchable Ended Exam Exercise");
+            assertThat(titles).contains("WeaviateSearchable Ended Exam Exercise");
+            assertThat(titles).doesNotContain("WeaviateSearchable Ongoing Exam Exercise");
         }
 
         @Test
@@ -350,6 +353,62 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             var titles = getResultTitles(results);
 
             assertThat(titles).contains("WeaviateSearchable Released Exercise", "WeaviateSearchable Test Lecture");
+        }
+    }
+
+    @Nested
+    class ExamExerciseMetadataFlagTests {
+
+        /**
+         * Staff users (TA, editor, instructor) should see {@code isAtLeastTutor: true} in the metadata
+         * of ended exam exercises so the client can route them to the course-management view.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testInstructorReceivesIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
+            var results = request.getList("/api/search?q=WeaviateSearchable Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var endedExamResult = results.stream().filter(r -> "WeaviateSearchable Ended Exam Exercise".equals(r.title())).findFirst();
+
+            assertThat(endedExamResult).isPresent();
+            assertThat(endedExamResult.get().metadata()).containsEntry("isAtLeastTutor", true);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void testTutorReceivesIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
+            var results = request.getList("/api/search?q=WeaviateSearchable Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var endedExamResult = results.stream().filter(r -> "WeaviateSearchable Ended Exam Exercise".equals(r.title())).findFirst();
+
+            assertThat(endedExamResult).isPresent();
+            assertThat(endedExamResult.get().metadata()).containsEntry("isAtLeastTutor", true);
+        }
+
+        /**
+         * Students should NOT receive the {@code isAtLeastTutor} flag; the client falls back to
+         * the student exercise route for their ended-exam exercise results.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testStudentDoesNotReceiveIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
+            var results = request.getList("/api/search?q=WeaviateSearchable Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var endedExamResult = results.stream().filter(r -> "WeaviateSearchable Ended Exam Exercise".equals(r.title())).findFirst();
+
+            assertThat(endedExamResult).isPresent();
+            assertThat(endedExamResult.get().metadata()).doesNotContainKey("isAtLeastTutor");
+        }
+
+        /**
+         * The {@code isAtLeastTutor} flag must NOT appear on regular (non-exam) exercises
+         * regardless of role, since those never need the course-management routing branch.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testIsAtLeastTutorFlagAbsentOnRegularExercise() throws Exception {
+            var results = request.getList("/api/search?q=WeaviateSearchable Released&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var regularResult = results.stream().filter(r -> "WeaviateSearchable Released Exercise".equals(r.title())).findFirst();
+
+            assertThat(regularResult).isPresent();
+            assertThat(regularResult.get().metadata()).doesNotContainKey("isAtLeastTutor");
         }
     }
 
