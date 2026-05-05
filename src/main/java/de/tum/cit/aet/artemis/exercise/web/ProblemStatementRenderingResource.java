@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequestDTO;
-import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
 import de.tum.cit.aet.artemis.exercise.service.ProblemStatementRenderingService;
@@ -81,9 +80,9 @@ public class ProblemStatementRenderingResource {
         String lang = renderRequest.locale() != null ? renderRequest.locale() : "en";
         Locale locale = Locale.forLanguageTag(lang);
 
-        RenderedProblemStatementDTO result = renderingService.render(renderRequest.markdown(), testResults, resultSummary, locale, renderRequest.darkMode(),
+        ProblemStatementRenderingService.RenderResult result = renderingService.render(renderRequest.markdown(), testResults, resultSummary, locale, renderRequest.darkMode(),
                 renderRequest.shouldIncludeJs(), renderRequest.shouldIncludeCss(), renderRequest.resolvedImageMode());
 
-        return ResponseEntity.ok().eTag("\"" + result.contentHash() + "\"").body(result);
+        return ResponseEntity.ok().eTag("\"" + result.dto().contentHash() + "\"").body(result.dto());
     }
 }

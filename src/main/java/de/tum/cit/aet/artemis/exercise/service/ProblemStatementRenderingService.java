@@ -79,6 +79,12 @@ public class ProblemStatementRenderingService {
 
     private static final Logger log = LoggerFactory.getLogger(ProblemStatementRenderingService.class);
 
+    public record RenderResult(RenderedProblemStatementDTO dto, List<AttachedImage> attachedImages) {
+    }
+
+    public record AttachedImage(String contentId, String contentType, String filename, byte[] data) {
+    }
+
     private static final String RENDERER_VERSION = "1.0.0";
 
     private static final String KATEX_BASE_PATH = "/webjars/katex/dist";
@@ -171,11 +177,11 @@ public class ProblemStatementRenderingService {
      * @param imageMode     how to handle embedded images (inline data URIs, absolute URLs, or separated with CID references)
      * @return the rendered problem statement DTO
      */
-    public RenderedProblemStatementDTO render(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, @Nullable ResultSummaryInputDTO resultSummary, Locale locale,
+    public RenderResult render(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, @Nullable ResultSummaryInputDTO resultSummary, Locale locale,
             boolean darkMode, boolean includeJs, boolean includeCss, ImageMode imageMode) {
 
         if (markdown == null || markdown.isBlank()) {
-            return new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, null, null);
+            return new RenderResult(new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, null, null), List.of());
         }
 
         // 1. Mask code blocks so downstream passes skip over them.
@@ -256,7 +262,7 @@ public class ProblemStatementRenderingService {
                 + "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body" + bodyClass + ">" + html
                 + (interactiveScript != null ? "<script>" + interactiveScript + "</script>" : "") + "</body></html>";
 
-        return new RenderedProblemStatementDTO(document, contentHash, RENDERER_VERSION, interactiveScript, images);
+        return new RenderResult(new RenderedProblemStatementDTO(document, contentHash, RENDERER_VERSION, interactiveScript, images), List.of());
     }
 
     private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean darkMode) {
