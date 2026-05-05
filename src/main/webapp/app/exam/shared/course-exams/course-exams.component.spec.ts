@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
@@ -28,6 +30,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('CourseExamsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseExamsComponent;
     let componentFixture: ComponentFixture<CourseExamsComponent>;
     let courseStorageService: CourseStorageService;
@@ -106,8 +110,17 @@ describe('CourseExamsComponent', () => {
         router.navigate.mockImplementation(() => Promise.resolve(true));
 
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([]), MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
-            declarations: [CourseExamsComponent, SidebarComponent, MockComponent(SearchFilterComponent), MockPipe(ArtemisTranslatePipe), MockPipe(SearchFilterPipe)],
+            imports: [
+                RouterModule.forRoot([]),
+                MockModule(FormsModule),
+                MockModule(ReactiveFormsModule),
+                MockDirective(TranslateDirective),
+                CourseExamsComponent,
+                SidebarComponent,
+                MockComponent(SearchFilterComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(SearchFilterPipe),
+            ],
             providers: [
                 { provide: Router, useValue: router },
                 {
@@ -138,23 +151,30 @@ describe('CourseExamsComponent', () => {
                 examParticipationService = TestBed.inject(ExamParticipationService);
                 courseOverviewService = TestBed.inject(CourseOverviewService);
                 (examParticipationService as any).examIsStarted$ = of(false);
-                jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+                examParticipationService.shouldUpdateTestExamsObservable = new BehaviorSubject<boolean>(false).asObservable();
+                examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
+                vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({
                     exams: [visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam],
                 });
-                jest.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(
+                vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(
                     of([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted]) as Observable<StudentExam[]>,
                 );
+                vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValue(of([]));
             });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('exam should be visible', () => {
         componentFixture.detectChanges();
-        expect(component.isVisible(visibleRealExam1)).toBeTrue();
+        expect(component.isVisible(visibleRealExam1)).toBe(true);
     });
 
     it('exam should not be visible', () => {
         componentFixture.detectChanges();
-        expect(component.isVisible(notVisibleRealExam)).toBeFalse();
+        expect(component.isVisible(notVisibleRealExam)).toBe(false);
     });
 
     it('should correctly return StudentExams by id in reverse order', () => {
@@ -186,21 +206,24 @@ describe('CourseExamsComponent', () => {
         expect(component.expandAttemptsMap).toEqual(expectedMap);
     });
 
-    it('should correctly update new exams', fakeAsync(() => {
+    it('should correctly update new exams', async () => {
         const newExam = {
             id: 42,
             visibleDate: dayjs().subtract(1, 'minutes'),
         } as Exam;
-        component.course = new Course();
-        component.course!.exams = [visibleRealExam1, visibleRealExam2];
+        const course = new Course();
+        course.exams = [visibleRealExam1, visibleRealExam2];
+        component.course.set(course);
 
-        jest.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValue(of([visibleRealExam1, visibleRealExam2, newExam]));
+        vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValue(of([visibleRealExam1, visibleRealExam2, newExam]));
         examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
         examParticipationService.shouldUpdateTestExamsObservable = new BehaviorSubject<boolean>(false).asObservable();
         component.ngOnInit();
-        tick();
-        expect(component.studentExamsForRealExams.has(newExam.id!)).toBeTrue();
-    }));
+        // Allow promise from lastValueFrom in updateExams() to resolve
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(component.studentExamsForRealExams.has(newExam.id!)).toBe(true);
+    });
 
     it('should correctly return visible real exams ordered according to startedDate', () => {
         component.ngOnInit();
@@ -217,11 +240,11 @@ describe('CourseExamsComponent', () => {
     it('should display/hide sidebar if exam is started/over', () => {
         (examParticipationService as any).examIsStarted$ = of(true);
         componentFixture.detectChanges();
-        expect(componentFixture.nativeElement.querySelector('#exam-sidebar-test').hidden).toBeTrue();
+        expect(componentFixture.nativeElement.querySelector('#exam-sidebar-test').hidden).toBe(true);
 
-        component.isExamStarted = false;
+        component.isExamStarted.set(false);
         componentFixture.changeDetectorRef.detectChanges();
-        expect(componentFixture.nativeElement.querySelector('#exam-sidebar-test').hidden).toBeFalse();
+        expect(componentFixture.nativeElement.querySelector('#exam-sidebar-test').hidden).toBe(false);
     });
 
     it('should group all exams as test when all exams are test exams', () => {
@@ -231,7 +254,7 @@ describe('CourseExamsComponent', () => {
             { id: 3, title: 'Test Exam 3', testExam: true } as Exam,
         ];
 
-        jest.spyOn(courseOverviewService, 'mapExamToSidebarCardElement');
+        vi.spyOn(courseOverviewService, 'mapExamToSidebarCardElement');
         const groupedExams = component.groupExamsByRealOrTest([], testExams);
 
         expect(groupedExams['real'].entityData).toHaveLength(0);
@@ -255,7 +278,7 @@ describe('CourseExamsComponent', () => {
             { id: 3, title: 'Real Exam 3', testExam: false } as Exam,
         ];
 
-        jest.spyOn(courseOverviewService, 'mapExamToSidebarCardElement');
+        vi.spyOn(courseOverviewService, 'mapExamToSidebarCardElement');
         const groupedExams = component.groupExamsByRealOrTest(realExams, testExams);
 
         expect(groupedExams['real'].entityData).toHaveLength(3);
@@ -284,20 +307,20 @@ describe('CourseExamsComponent', () => {
     });
 
     it('should toggle sidebar', () => {
-        component.isCollapsed = false;
+        component.isCollapsed.set(false);
         component.toggleSidebar();
-        expect(component.isCollapsed).toBeTrue();
+        expect(component.isCollapsed()).toBe(true);
 
         component.toggleSidebar();
-        expect(component.isCollapsed).toBeFalse();
+        expect(component.isCollapsed()).toBe(false);
     });
 
     it('should not update sidebarData if there is no exam', () => {
         const course = new Course();
         course.exams = undefined;
-        component.course = course;
+        component.course.set(course);
 
-        const updateSidebarDataStub = jest.spyOn(component, 'updateSidebarData');
+        const updateSidebarDataStub = vi.spyOn(component, 'updateSidebarData');
         component.prepareSidebarData();
         expect(updateSidebarDataStub).not.toHaveBeenCalledOnce();
     });
