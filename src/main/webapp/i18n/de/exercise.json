@@ -321,6 +321,7 @@
                     "undefined": "Du musst einen Kurznamen angeben.",
                     "pattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine speziellen Zeichen enthalten!",
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein!",
+                    "maxlength": "Der Kurzname darf höchstens 36 Zeichen lang sein!",
                     "disallowedValue": "Der Kurzname wird bereits für eine andere Aufgabe genutzt!"
                 },
                 "packageName": {

@@ -163,4 +163,34 @@ class CourseTest {
             assertThatCode(() -> course.validateUnenrollmentEndDate()).doesNotThrowAnyException();
         }
     }
+
+    private static Stream<Arguments> validateShortNameProvider() {
+        Course pattern = new Course();
+        pattern.setShortName("1invalid");
+
+        Course tooShort = new Course();
+        tooShort.setShortName("ab");
+
+        Course atMaxLength = new Course();
+        atMaxLength.setShortName("a".repeat(24));
+
+        Course tooLong = new Course();
+        tooLong.setShortName("a".repeat(25));
+
+        Course valid = new Course();
+        valid.setShortName("validShortName");
+
+        return Stream.of(Arguments.of(pattern, true), Arguments.of(tooShort, true), Arguments.of(atMaxLength, false), Arguments.of(tooLong, true), Arguments.of(valid, false));
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("validateShortNameProvider")
+    void testValidateShortName(Course course, boolean expectException) {
+        if (expectException) {
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> course.validateShortName());
+        }
+        else {
+            assertThatCode(() -> course.validateShortName()).doesNotThrowAnyException();
+        }
+    }
 }

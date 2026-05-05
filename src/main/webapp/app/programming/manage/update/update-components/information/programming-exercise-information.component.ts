@@ -19,6 +19,7 @@ import {
 import { FormsModule, NgModel } from '@angular/forms';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH } from 'app/shared/constants/input.constants';
 import { ProgrammingExercise, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/programming/shared/build-details/programming-exercise-repository-and-build-plan-details/programming-exercise-repository-and-build-plan-details.component';
@@ -82,6 +83,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly faPlus = faPlus;
+    protected readonly PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH = PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH;
 
     @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
     isImport = input.required<boolean>();

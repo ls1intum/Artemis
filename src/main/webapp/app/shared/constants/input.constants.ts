@@ -15,6 +15,17 @@ export const MAX_SUBMISSION_TEXT_LENGTH = 30 * 1000;
 export const MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
 /** Short names must start with a letter and cannot contain special characters **/
 export const SHORT_NAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9]{2,}$/;
+/**
+ * Maximum length for course short names. Bounds the length of the student repository slug
+ * `{courseShortName + exerciseShortName}-{login}.git` so it fits in NAME_MAX (255 bytes) and
+ * the participation.repository_url column. Keep in sync with COURSE_SHORT_NAME_MAX_LENGTH in Constants.java.
+ */
+export const COURSE_SHORT_NAME_MAX_LENGTH = 24;
+/**
+ * Maximum length for programming exercise short names.
+ * Keep in sync with PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH in Constants.java.
+ */
+export const PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH = 36;
 /** Programming exercise titles must only contain alphanumeric characters, or whitespaces, or '_' or '-' **/
 export const EXERCISE_TITLE_NAME_PATTERN = '^[a-zA-Z0-9-_ ]+';
 export const EXERCISE_TITLE_NAME_REGEX = new RegExp(EXERCISE_TITLE_NAME_PATTERN);

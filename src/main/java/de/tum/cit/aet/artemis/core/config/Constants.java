@@ -77,6 +77,14 @@ public final class Constants {
 
     public static final Pattern SHORT_NAME_PATTERN = Pattern.compile(SHORT_NAME_REGEX);
 
+    // Maximum length for course and programming exercise short names. The combined value appears twice in
+    // student repository URLs ({base}/git/{COURSE+EXERCISE}/{course+exercise}-{login}.git) and the slug must fit
+    // in NAME_MAX (255 bytes) and the participation.repository_url column (varchar(255)).
+    // NOTE: keep these values in sync with input.constants.ts.
+    public static final int COURSE_SHORT_NAME_MAX_LENGTH = 24;
+
+    public static final int PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH = 36;
+
     public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
