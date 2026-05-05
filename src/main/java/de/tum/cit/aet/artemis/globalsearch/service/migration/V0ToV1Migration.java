@@ -19,12 +19,15 @@ import io.weaviate.client6.v1.api.collections.WeaviateObject;
 
 /**
  * Migrates from schema v0 (single {@code Exercises} collection) to v1 (unified
- * {@code SearchableEntities} collection).
+ * {@code SearchableEntities} collection with trigram tokenization).
  * <p>
  * Reads all exercise objects from the legacy {@code Exercises} collection, transforms
  * their properties to the v1 schema (renaming {@code exercise_id → entity_id},
  * {@code problem_statement → description}, adding {@code type = "exercise"}), upserts
- * them into {@code SearchableEntities}, and deletes the old collection.
+ * them into the {@code SearchableEntities} collection that
+ * {@link de.tum.cit.aet.artemis.globalsearch.service.WeaviateService#initializeCollections()}
+ * already created with the correct trigram tokenization, and finally deletes the old
+ * collection.
  * <p>
  * If the legacy collection does not exist, the migration is a no-op.
  */
@@ -82,8 +85,7 @@ public class V0ToV1Migration implements WeaviateMigration {
         String newName = collectionPrefix + SearchableEntitySchema.COLLECTION_NAME;
 
         if (!client.collections.exists(oldName)) {
-            log.info("V0→V1: Legacy '{}' collection not found, skipping data migration", oldName);
-            dropForSchemaRecreation(client, newName);
+            log.info("V0→V1: Legacy '{}' collection not found, nothing to migrate", oldName);
             return;
         }
 
@@ -172,21 +174,6 @@ public class V0ToV1Migration implements WeaviateMigration {
         // Clean up the legacy collection
         client.collections.delete(oldName);
         log.info("V0→V1: Deleted legacy collection '{}'", oldName);
-
-        dropForSchemaRecreation(client, newName);
-    }
-
-    /**
-     * Drops the {@code SearchableEntities} collection so that
-     * {@link de.tum.cit.aet.artemis.globalsearch.service.WeaviateService#initializeCollections()}
-     * recreates it with the updated schema (trigram tokenization for typo/prefix-tolerant BM25 search).
-     * Running this migration on an existing system therefore clears and rebuilds the search index.
-     */
-    private void dropForSchemaRecreation(WeaviateClient client, String collectionName) throws IOException {
-        if (client.collections.exists(collectionName)) {
-            log.info("V0→V1: Dropping '{}' to force recreation with updated schema (trigram tokenization)", collectionName);
-            client.collections.delete(collectionName);
-        }
     }
 
     /**
