@@ -82,7 +82,7 @@ public class ProblemStatementRenderingResource {
         Locale locale = Locale.forLanguageTag(lang);
 
         RenderedProblemStatementDTO result = renderingService.render(renderRequest.markdown(), testResults, resultSummary, locale, renderRequest.darkMode(),
-                renderRequest.shouldIncludeJs(), renderRequest.shouldIncludeCss());
+                renderRequest.shouldIncludeJs(), renderRequest.shouldIncludeCss(), renderRequest.resolvedImageMode());
 
         return ResponseEntity.ok().eTag("\"" + result.contentHash() + "\"").body(result);
     }

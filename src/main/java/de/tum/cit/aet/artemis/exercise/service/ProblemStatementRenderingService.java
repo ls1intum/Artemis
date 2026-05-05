@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -45,6 +46,8 @@ import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownRelati
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.exercise.dto.ImageMode;
+import de.tum.cit.aet.artemis.exercise.dto.RenderedImageDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
@@ -168,7 +171,7 @@ public class ProblemStatementRenderingService {
      * @return the rendered problem statement DTO
      */
     public RenderedProblemStatementDTO render(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, @Nullable ResultSummaryInputDTO resultSummary, Locale locale,
-            boolean darkMode, boolean includeJs, boolean includeCss) {
+            boolean darkMode, boolean includeJs, boolean includeCss, ImageMode imageMode) {
 
         if (markdown == null || markdown.isBlank()) {
             return new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, null, null);
@@ -235,7 +238,7 @@ public class ProblemStatementRenderingService {
         }
 
         String interactiveScript = includeJs ? buildLocalizedScript(locale) : null;
-        String contentHash = computeHash(html + (interactiveScript != null ? interactiveScript : ""));
+        String contentHash = computeContentHash(html, interactiveScript, imageMode, null);
 
         String bodyClass = " class=\"artemis-ssr-body" + (darkMode ? " artemis-ssr-body--dark" : "") + "\"";
         String document = "<!DOCTYPE html><html lang=\"" + HtmlEscaper.escapeAttribute(locale.toLanguageTag()) + "\"><head><meta charset=\"UTF-8\">"
@@ -557,6 +560,20 @@ public class ProblemStatementRenderingService {
         safelist.addAttributes("p", "class");
         safelist.addAttributes("i", "class");
         return safelist;
+    }
+
+    private String computeContentHash(String html, @Nullable String interactiveScript, ImageMode imageMode, @Nullable Map<String, RenderedImageDTO> images) {
+        var hashPayload = new LinkedHashMap<String, Object>();
+        hashPayload.put("html", html);
+        hashPayload.put("interactiveScript", interactiveScript);
+        hashPayload.put("imageMode", imageMode.name());
+        hashPayload.put("images", images == null ? null : new TreeMap<>(images));
+        try {
+            return computeHash(objectMapper.writeValueAsString(hashPayload));
+        }
+        catch (JsonProcessingException e) {
+            return computeHash(html + (interactiveScript != null ? interactiveScript : ""));
+        }
     }
 
     private static String computeHash(String input) {
