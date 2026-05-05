@@ -56,77 +56,62 @@
             </div>
         </div>
     } @else {
-        <div class="question-options card-header question-card-header-reevaluation">
-            <div class="row">
-                <div class="col-3 col-lg-1 mt-1">
-                    <button
-                        class="btn question-collapse"
-                        (click)="toggleCollapse()"
-                        [attr.aria-expanded]="!isQuestionCollapsed"
-                        [attr.aria-controls]="'collapseQuestion' + questionIndex()"
-                    >
-                        <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
-                    </button>
-                </div>
-                <div class="col-9 col-lg-8 text-start mt-3">
-                    <div class="input-group row">
-                        <div class="col-10 col-lg-11">
-                            <input
-                                pInputText
-                                [(ngModel)]="question().title"
-                                placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
-                                attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
-                                style="width: 100%"
-                            />
-                        </div>
-                        <div class="col-2 col-lg-1">
-                            <span class="input-group-btn">
-                                <button
-                                    class="btn btn-outline-secondary"
-                                    type="button"
-                                    (click)="resetQuestionTitle()"
-                                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionTitle' | artemisTranslate"
-                                >
-                                    <fa-icon [icon]="faUndo" />
-                                </button>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-3 col-lg-1 mt-lg-3">
-                    <div class="question-type">
-                        <span class="question-type-badge question-type-badge--mc">MC</span>
-                    </div>
-                </div>
-                <div class="col-9 col-lg-2 text-end mt-lg-3">
-                    <button
-                        id="move-up-button"
-                        class="btn btn-outline-secondary"
-                        type="button"
-                        (click)="moveUp()"
-                        [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveUp' | artemisTranslate"
-                    >
-                        <fa-icon [icon]="faChevronUp" />
-                    </button>
-                    <button
-                        id="move-down-button"
-                        class="btn btn-outline-secondary"
-                        type="button"
-                        (click)="moveDown()"
-                        [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveDown' | artemisTranslate"
-                    >
-                        <fa-icon [icon]="faChevronDown" />
-                    </button>
-                    <button
-                        id="reset-button"
-                        class="btn btn-outline-secondary"
-                        type="button"
-                        (click)="resetQuestion()"
-                        [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestion' | artemisTranslate"
-                    >
-                        <fa-icon [icon]="faUndo" />
-                    </button>
-                </div>
+        <div class="question-card-header-reevaluation">
+            <button
+                class="btn question-collapse"
+                (click)="toggleCollapse()"
+                [attr.aria-expanded]="!isQuestionCollapsed"
+                [attr.aria-controls]="'collapseQuestion' + questionIndex()"
+            >
+                <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
+            </button>
+            <div class="question-reevaluation-title">
+                <input
+                    pInputText
+                    [(ngModel)]="question().title"
+                    placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
+                    attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
+                />
+                <button
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    (click)="resetQuestionTitle()"
+                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionTitle' | artemisTranslate"
+                >
+                    <fa-icon [icon]="faUndo" />
+                </button>
+            </div>
+            <div class="question-type">
+                <h3 class="mb-0"><span class="badge bg-info align-text-top" style="width: 60px">MC</span></h3>
+            </div>
+            <div class="question-reevaluation-actions">
+                <button
+                    id="move-up-button"
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    (click)="moveUp()"
+                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveUp' | artemisTranslate"
+                >
+                    <fa-icon [icon]="faChevronUp" />
+                </button>
+                <button
+                    id="move-down-button"
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    (click)="moveDown()"
+                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveDown' | artemisTranslate"
+                >
+                    <fa-icon [icon]="faChevronDown" />
+                </button>
+                <button
+                    id="reset-button"
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    (click)="resetQuestion()"
+                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestion' | artemisTranslate"
+                >
+                    <fa-icon [icon]="faUndo" />
+                </button>
             </div>
         </div>
     }
