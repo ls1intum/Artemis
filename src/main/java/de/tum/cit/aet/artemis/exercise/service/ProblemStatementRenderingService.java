@@ -171,7 +171,7 @@ public class ProblemStatementRenderingService {
             boolean darkMode, boolean includeJs, boolean includeCss) {
 
         if (markdown == null || markdown.isBlank()) {
-            return new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, null);
+            return new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, null, null);
         }
 
         // 1. Mask code blocks so downstream passes skip over them.
@@ -242,7 +242,7 @@ public class ProblemStatementRenderingService {
                 + "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body" + bodyClass + ">" + html
                 + (interactiveScript != null ? "<script>" + interactiveScript + "</script>" : "") + "</body></html>";
 
-        return new RenderedProblemStatementDTO(document, contentHash, RENDERER_VERSION, interactiveScript);
+        return new RenderedProblemStatementDTO(document, contentHash, RENDERER_VERSION, interactiveScript, null);
     }
 
     private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean darkMode) {

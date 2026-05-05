@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProblemStatementRenderRequestDTO(@NotNull @Size(max = 100_000) @Pattern(regexp = "^[^\u0000]*$", message = "markdown must not contain null bytes") String markdown,
         @Nullable @Size(max = 100) List<@NotNull @Valid TestFeedbackInputDTO> testResults, @Nullable @Valid ResultSummaryInputDTO resultSummary,
-        @Nullable @Size(max = 10) String locale, boolean darkMode, @Nullable Boolean includeJs, @Nullable Boolean includeCss) {
+        @Nullable @Size(max = 10) String locale, boolean darkMode, @Nullable Boolean includeJs, @Nullable Boolean includeCss, @Nullable ImageMode imageMode) {
 
     /** Whether to include the interactive feedback modal JS in the response. Defaults to true if not specified. */
     public boolean shouldIncludeJs() {
@@ -24,5 +24,10 @@ public record ProblemStatementRenderRequestDTO(@NotNull @Size(max = 100_000) @Pa
     /** Whether to include embedded CSS in the response. Defaults to true if not specified. */
     public boolean shouldIncludeCss() {
         return includeCss == null || includeCss;
+    }
+
+    /** Returns the image mode, defaulting to {@link ImageMode#INLINE} if not specified. */
+    public ImageMode resolvedImageMode() {
+        return imageMode == null ? ImageMode.INLINE : imageMode;
     }
 }
