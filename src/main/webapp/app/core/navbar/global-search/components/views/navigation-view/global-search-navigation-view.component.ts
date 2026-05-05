@@ -219,6 +219,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             if (examId && exerciseGroupId && isAtLeastTutor) {
                 const typeSegment = (result.badge?.toLowerCase().replace(/ /g, '-') ?? 'text') + '-exercises';
                 this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
+            } else if (examId) {
+                this.router.navigate(['/courses', courseId, 'exams', examId]);
             } else {
                 this.router.navigate(['/courses', courseId, 'exercises', result.id]);
             }
