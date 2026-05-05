@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.exercise.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -20,7 +22,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -57,15 +58,18 @@ public class ProblemStatementRenderingResource {
      * POST problem-statement/render : Stateless rendering of a problem statement.
      * The client sends markdown + test data, the server returns self-contained HTML with interactive JS.
      * Zero database access.
+     * <p>
+     * When imageMode is ATTACHED, the response is {@code multipart/related} with the JSON root part first,
+     * followed by one part per resolved image. Otherwise the response is plain {@code application/json}.
      *
      * @param renderRequest the render request containing markdown, test results, and configuration
-     * @return the rendered problem statement DTO
+     * @return the rendered problem statement DTO (JSON) or a multipart/related body (ATTACHED mode)
      */
     @PostMapping(value = "problem-statement/render", produces = { MediaType.APPLICATION_JSON_VALUE, "multipart/related" })
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     @LimitRequestsPerMinute(type = RateLimitType.PROBLEM_STATEMENT_RENDERING)
-    public ResponseEntity<?> renderProblemStatement(@Valid @RequestBody ProblemStatementRenderRequestDTO renderRequest) throws JsonProcessingException {
+    public ResponseEntity<?> renderProblemStatement(@Valid @RequestBody ProblemStatementRenderRequestDTO renderRequest) throws JsonProcessingException, IOException {
 
         log.debug("REST request to render problem statement (stateless)");
 
@@ -96,10 +100,12 @@ public class ProblemStatementRenderingResource {
             String boundary = "artemis-psr-" + result.dto().contentHash().substring(0, 16);
             byte[] jsonPart = objectMapper.writeValueAsBytes(result.dto());
 
-            StreamingResponseBody body = outputStream -> MultipartRelatedResponseWriter.write(outputStream, boundary, jsonPart, result.attachedImages());
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            MultipartRelatedResponseWriter.write(baos, boundary, jsonPart, result.attachedImages());
+            byte[] multipartBody = baos.toByteArray();
 
             return ResponseEntity.ok().eTag("\"" + result.dto().contentHash() + "\"")
-                    .contentType(MediaType.parseMediaType("multipart/related; boundary=" + boundary + "; type=\"application/json\"; start=\"<root@artemis>\"")).body(body);
+                    .contentType(MediaType.parseMediaType("multipart/related; boundary=" + boundary + "; type=\"application/json\"; start=\"<root@artemis>\"")).body(multipartBody);
         }
 
         return ResponseEntity.ok().eTag("\"" + result.dto().contentHash() + "\"").body(result.dto());

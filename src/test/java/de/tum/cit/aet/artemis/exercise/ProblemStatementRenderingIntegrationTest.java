@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -518,12 +520,16 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnEmptyImagesMapInAttachedModeWithNoImages() throws Exception {
+    void shouldReturnMultipartForAttachedModeWithNoImages() throws Exception {
         var body = new ProblemStatementRenderRequestDTO("# No images here", null, null, "en", false, false, null, ImageMode.ATTACHED);
 
-        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+        MvcResult result = request.performMvcRequest(post(new URI(POST_URL)).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk()).andReturn();
 
-        assertThat(result.images()).isNotNull().isEmpty();
+        assertThat(result.getResponse().getContentType()).startsWith("multipart/related");
+        RenderedProblemStatementDTO dto = extractJsonRootPartFromMultipart(result);
+        assertThat(dto.html()).contains("<h1>No images here</h1>");
+        assertThat(result.getResponse().getHeader("ETag")).isNotBlank();
     }
 
     @Test
@@ -535,7 +541,12 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO inlineResult = request.postWithResponseBody(POST_URL, inlineBody, RenderedProblemStatementDTO.class, HttpStatus.OK);
         RenderedProblemStatementDTO urlResult = request.postWithResponseBody(POST_URL, urlBody, RenderedProblemStatementDTO.class, HttpStatus.OK);
-        RenderedProblemStatementDTO attachedResult = request.postWithResponseBody(POST_URL, attachedBody, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // ATTACHED mode returns multipart/related — extract the JSON root part to get the contentHash
+        MvcResult attachedMvcResult = request
+                .performMvcRequest(post(new URI(POST_URL)).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(attachedBody)))
+                .andExpect(status().isOk()).andReturn();
+        RenderedProblemStatementDTO attachedResult = extractJsonRootPartFromMultipart(attachedMvcResult);
 
         assertThat(inlineResult.contentHash()).isNotEqualTo(urlResult.contentHash());
         assertThat(inlineResult.contentHash()).isNotEqualTo(attachedResult.contentHash());
@@ -544,12 +555,42 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldLeaveOriginalUrlForUnresolvableImageInAttachedMode() throws Exception {
+    void shouldReturnMultipartWithOriginalUrlForUnresolvableImage() throws Exception {
         var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/nonexistent.png)", null, null, "en", false, false, null, ImageMode.ATTACHED);
 
-        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+        MvcResult result = request.performMvcRequest(post(new URI(POST_URL)).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk()).andReturn();
 
-        assertThat(result.html()).contains("/api/core/files/markdown/nonexistent.png");
-        assertThat(result.images()).isNotNull().isEmpty();
+        assertThat(result.getResponse().getContentType()).startsWith("multipart/related");
+        RenderedProblemStatementDTO dto = extractJsonRootPartFromMultipart(result);
+        assertThat(dto.html()).contains("/api/core/files/markdown/nonexistent.png");
+        // No image parts — only the JSON root part exists in the multipart body
+        String responseBody = result.getResponse().getContentAsString(StandardCharsets.UTF_8);
+        assertThat(responseBody).contains("Content-ID: <root@artemis>");
+    }
+
+    // --- Test helpers ---
+
+    /**
+     * Extracts and deserializes the JSON root part of a multipart/related response produced by the
+     * ATTACHED image mode. The root part always has {@code Content-ID: <root@artemis>} and contains
+     * the {@link RenderedProblemStatementDTO} serialized as JSON.
+     *
+     * @param mvcResult the completed MVC result whose response carries the multipart body
+     * @return the deserialized {@link RenderedProblemStatementDTO} from the root part
+     * @throws Exception if parsing or deserialization fails
+     */
+    private RenderedProblemStatementDTO extractJsonRootPartFromMultipart(MvcResult mvcResult) throws Exception {
+        String body = mvcResult.getResponse().getContentAsString(StandardCharsets.UTF_8);
+        // Each part body follows a blank line after the part headers and ends before the next boundary.
+        // We locate the root part by finding the Content-ID header, then skip two CRLFs to reach the body.
+        int rootPartIdx = body.indexOf("Content-ID: <root@artemis>");
+        assertThat(rootPartIdx).as("multipart body must contain root part header").isGreaterThan(0);
+        // The blank line separating headers from body is "\r\n\r\n"
+        int bodyStart = body.indexOf("\r\n\r\n", rootPartIdx) + 4;
+        // The part body ends at the next "\r\n--" boundary delimiter
+        int bodyEnd = body.indexOf("\r\n--", bodyStart);
+        String jsonPart = body.substring(bodyStart, bodyEnd);
+        return objectMapper.readValue(jsonPart, RenderedProblemStatementDTO.class);
     }
 }
