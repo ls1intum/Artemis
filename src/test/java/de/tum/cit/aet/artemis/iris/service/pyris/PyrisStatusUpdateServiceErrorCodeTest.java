@@ -51,12 +51,12 @@ class PyrisStatusUpdateServiceErrorCodeTest {
         // Build a terminal stage list with an ERROR stage carrying errorCode "YOUTUBE_PRIVATE"
         // name, weight, state, message, internal, chatMessage
         var errorStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.ERROR, "video is private", false, null);
-        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO(null, List.of(errorStage), 7L, "YOUTUBE_PRIVATE");
+        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO(null, List.of(errorStage), 7L, "YOUTUBE_PRIVATE", null);
 
         service.handleStatusUpdate(job, statusUpdate);
 
         // The callback API must receive the errorCode "YOUTUBE_PRIVATE" (not null)
-        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(false), eq("YOUTUBE_PRIVATE"));
+        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(false), eq("YOUTUBE_PRIVATE"), eq(null));
     }
 
     @Test
@@ -64,10 +64,10 @@ class PyrisStatusUpdateServiceErrorCodeTest {
         var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
 
         var doneStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.DONE, "success", false, null);
-        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO(null, List.of(doneStage), 7L, null);
+        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO(null, List.of(doneStage), 7L, null, null);
 
         service.handleStatusUpdate(job, statusUpdate);
 
-        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null));
+        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(null));
     }
 }

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIE
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 /**
  * Service that handles callbacks, capacity-aware dispatch, and state transitions for the lecture content processing pipeline.
@@ -77,14 +79,17 @@ public class ProcessingStateCallbackService {
 
     private final LectureTranscriptionRepository transcriptionRepository;
 
+    private final LectureUnitRepository lectureUnitRepository;
+
     private final Optional<IrisLectureApi> irisLectureApi;
 
     private final WebsocketMessagingService websocketMessagingService;
 
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService) {
+            LectureUnitRepository lectureUnitRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
+        this.lectureUnitRepository = lectureUnitRepository;
         this.irisLectureApi = irisLectureApi;
         this.websocketMessagingService = websocketMessagingService;
     }
@@ -218,12 +223,13 @@ public class ProcessingStateCallbackService {
      * Validates the job token to reject stale callbacks from old jobs.
      * After completion, dispatches the next pending job to fill the freed slot.
      *
-     * @param lectureUnitId the ID of the lecture unit
-     * @param jobToken      the job token from the callback
-     * @param success       whether processing succeeded
-     * @param errorCode     machine-readable error code (e.g. {@code YOUTUBE_PRIVATE}); {@code null} on success or unknown failure
+     * @param lectureUnitId      the ID of the lecture unit
+     * @param jobToken           the job token from the callback
+     * @param success            whether processing succeeded
+     * @param errorCode          machine-readable error code (e.g. {@code YOUTUBE_PRIVATE}); {@code null} on success or unknown failure
+     * @param slidePageNumberMap optional mapping from slide index (0-based) to visible page number; {@code null} if not applicable or unavailable
      */
-    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode) {
+    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode, @Nullable Map<Integer, Integer> slidePageNumberMap) {
         Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
 
         if (stateOpt.isEmpty()) {
@@ -249,6 +255,9 @@ public class ProcessingStateCallbackService {
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
             processingStateRepository.save(state);
+
+            // Save slide page number mapping if available
+            saveSlidePageNumberMap(lectureUnitId, slidePageNumberMap);
 
             // Notify UI via WebSocket
             TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
@@ -618,6 +627,37 @@ public class ProcessingStateCallbackService {
         }
 
         return activeStates.size();
+    }
+
+    // -------------------- Slide Page Number Mapping --------------------
+
+    /**
+     * Save slide page number mapping to the lecture unit if available.
+     * <p>
+     * The mapping is only saved for {@link AttachmentVideoUnit} instances.
+     * Empty or null maps are tolerated and stored as empty map to distinguish
+     * "computed but no page numbers found" from "not yet computed".
+     *
+     * @param lectureUnitId      the ID of the lecture unit
+     * @param slidePageNumberMap the mapping from slide index to page number; may be {@code null} or empty
+     */
+    private void saveSlidePageNumberMap(Long lectureUnitId, @Nullable Map<Integer, Integer> slidePageNumberMap) {
+        if (slidePageNumberMap == null) {
+            log.debug("No slide page number map provided for unit {}", lectureUnitId);
+            return;
+        }
+
+        LectureUnit unit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
+        if (!(unit instanceof AttachmentVideoUnit attachmentVideoUnit)) {
+            log.debug("Skipping slide page number map for unit {} (not an AttachmentVideoUnit)", lectureUnitId);
+            return;
+        }
+
+        long validEntries = slidePageNumberMap.values().stream().filter(v -> v != -1).count();
+        log.info("Saving slide page number map for unit {}: {} entries ({} with visible page numbers)", lectureUnitId, slidePageNumberMap.size(), validEntries);
+
+        attachmentVideoUnit.setSlidePageNumberMap(slidePageNumberMap);
+        lectureUnitRepository.save(attachmentVideoUnit);
     }
 
     /**

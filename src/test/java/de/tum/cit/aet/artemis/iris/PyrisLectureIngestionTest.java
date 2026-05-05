@@ -134,7 +134,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit);
             PyrisStageDTO doneStage = new PyrisStageDTO("done", 1, PyrisStageState.DONE, "Stage completed successfully.", false, null);
             PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(doneStage),
-                    lecture1.getLectureUnits().getFirst().getId(), null);
+                    lecture1.getLectureUnits().getFirst().getId(), null, null);
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
             request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
         }
@@ -149,7 +149,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             String jobToken = pyrisWebhookService.deleteLectureFromPyrisDB(List.of(unit));
             PyrisStageDTO doneStage = new PyrisStageDTO("done", 1, PyrisStageState.DONE, "Stage completed successfully.", false, null);
             PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(doneStage),
-                    lecture1.getLectureUnits().getFirst().getId(), null);
+                    lecture1.getLectureUnits().getFirst().getId(), null, null);
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
             request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
             assertThat(pyrisJobService.getJob(jobToken)).isNull();
@@ -165,7 +165,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             PyrisStageDTO doneStage = new PyrisStageDTO("done", 1, PyrisStageState.DONE, "Stage completed successfully.", false, null);
             PyrisStageDTO inProgressStage = new PyrisStageDTO("inProgressStage", 1, PyrisStageState.IN_PROGRESS, "Stage completed successfully.", false, null);
             PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(doneStage, inProgressStage),
-                    lecture1.getLectureUnits().getFirst().getId(), null);
+                    lecture1.getLectureUnits().getFirst().getId(), null, null);
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
             request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
             assertThat(pyrisJobService.getJob(jobToken)).isNotNull();
@@ -181,7 +181,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             PyrisStageDTO doneStage = new PyrisStageDTO("done", 1, PyrisStageState.DONE, "Stage completed successfully.", false, null);
             PyrisStageDTO inProgressStage = new PyrisStageDTO("inProgressStage", 1, PyrisStageState.IN_PROGRESS, "Stage completed successfully.", false, null);
             PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(doneStage, inProgressStage),
-                    lecture1.getLectureUnits().getFirst().getId(), null);
+                    lecture1.getLectureUnits().getFirst().getId(), null, null);
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
             request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
             assertThat(pyrisJobService.getJob(jobToken)).isNotNull();
@@ -196,7 +196,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             String jobToken = pyrisWebhookService.deleteLectureFromPyrisDB(List.of(unit));
             PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.", false, null);
             PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(errorStage),
-                    lecture1.getLectureUnits().getFirst().getId(), null);
+                    lecture1.getLectureUnits().getFirst().getId(), null, null);
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
             request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
             assertThat(pyrisJobService.getJob(jobToken)).isNull();
@@ -211,7 +211,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit);
             PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.", false, null);
             PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(errorStage),
-                    lecture1.getLectureUnits().getFirst().getId(), null);
+                    lecture1.getLectureUnits().getFirst().getId(), null, null);
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
             request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
             assertThat(pyrisJobService.getJob(jobToken)).isNull();
@@ -226,7 +226,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         String chatJobToken = pyrisJobService.addCourseChatJob(123L, 123L, 123L);
         PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.", false, null);
         PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(errorStage), lecture1.getLectureUnits().getFirst().getId(),
-                null);
+                null, null);
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + chatJobToken))));
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + newJobToken + "/status", statusUpdate,
                 HttpStatus.CONFLICT, headers);
@@ -243,7 +243,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         String chatJobToken = pyrisJobService.addCourseChatJob(123L, 123L, 123L);
         PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.", false, null);
         PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(errorStage), lecture1.getLectureUnits().getFirst().getId(),
-                null);
+                null, null);
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + chatJobToken))));
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + newJobToken + "/status", statusUpdate,
                 HttpStatus.CONFLICT, headers);
@@ -317,7 +317,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         assertThat(jobToken).isNotNull();
 
         PyrisStageDTO doneStage = new PyrisStageDTO("done", 1, PyrisStageState.DONE, "Stage completed successfully.", false, null);
-        PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(doneStage), unitWithTranscription.getId(), null);
+        PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(doneStage), unitWithTranscription.getId(), null, null);
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
 
@@ -344,10 +344,37 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         assertThat(jobToken).isNotNull();
 
         PyrisStageDTO inProgressStage = new PyrisStageDTO("inProgressStage", 1, PyrisStageState.IN_PROGRESS, "Stage läuft noch.", false, null);
-        PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(inProgressStage), unitWithTranscription.getId(), null);
+        PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(inProgressStage), unitWithTranscription.getId(), null,
+                null);
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
 
         assertThat(pyrisJobService.getJob(jobToken)).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void ingestionCompleteSavesSlidePageNumberMap() throws Exception {
+        activateIrisFor(lecture1.getCourse());
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        unit.setLecture(lecture1);
+        unit.setVideoSource("https://example.com/video.mp4");
+        lecture1.addLectureUnit(unit);
+        lecture1 = lectureRepository.save(lecture1);
+        unit = attachmentVideoUnitTestRepository.save(unit);
+
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
+        String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit);
+        assertThat(jobToken).isNotNull();
+
+        PyrisStageDTO doneStage = new PyrisStageDTO("doneStage", 1, PyrisStageState.DONE, "Completed successfully.", false, null);
+        Map<String, Integer> slidePageNumberMap = Map.of("0", 1, "1", 2, "2", -1, "3", 4);
+        PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(doneStage), unit.getId(), null, slidePageNumberMap);
+
+        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
+        request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
+
+        AttachmentVideoUnit updatedUnit = attachmentVideoUnitTestRepository.findByIdElseThrow(unit.getId());
+        assertThat(updatedUnit.getSlidePageNumberMap()).isNotNull().hasSize(4).containsEntry(0, 1).containsEntry(1, 2).containsEntry(2, -1).containsEntry(3, 4);
     }
 }

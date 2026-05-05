@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -177,8 +179,13 @@ public class PyrisStatusUpdateService {
             boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
             String rawCode = statusUpdate.errorCode();
             String errorCode = success ? null : (rawCode != null && !rawCode.isBlank() ? rawCode : null);
-            log.info("[Ingestion] Terminal callback for unitId={}, success={}, errorCode={}", job.lectureUnitId(), success, errorCode);
-            processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success, errorCode));
+
+            // Extract and convert slide page number map (JSON keys are strings, convert to integers)
+            final Map<Integer, Integer> slidePageNumberMap = convertSlidePageNumberMap(statusUpdate.slidePageNumberMap(), job.lectureUnitId(), success);
+
+            log.info("[Ingestion] Terminal callback for unitId={}, success={}, errorCode={}, hasSlidePageNumberMap={}", job.lectureUnitId(), success, errorCode,
+                    slidePageNumberMap != null);
+            processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success, errorCode, slidePageNumberMap));
             pyrisJobService.removeJob(job);
         }
         else {
@@ -233,6 +240,29 @@ public class PyrisStatusUpdateService {
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
+    }
+
+    /**
+     * Convert slide page number map from String keys (JSON format) to Integer keys.
+     * Returns null if the input is null, empty, or conversion fails.
+     *
+     * @param stringKeyMap  the map with String keys from JSON
+     * @param lectureUnitId the lecture unit ID for logging
+     * @param success       whether the ingestion was successful
+     * @return the converted map with Integer keys, or null
+     */
+    private Map<Integer, Integer> convertSlidePageNumberMap(Map<String, Integer> stringKeyMap, Long lectureUnitId, boolean success) {
+        if (!success || stringKeyMap == null || stringKeyMap.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return stringKeyMap.entrySet().stream().collect(Collectors.toMap(e -> Integer.parseInt(e.getKey()), Map.Entry::getValue));
+        }
+        catch (NumberFormatException e) {
+            log.warn("[Ingestion] Invalid slide page number map for unitId={}: keys must be integers", lectureUnitId, e);
+            return null;
+        }
     }
 
 }

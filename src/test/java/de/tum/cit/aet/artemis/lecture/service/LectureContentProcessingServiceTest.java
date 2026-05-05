@@ -79,7 +79,9 @@ class LectureContentProcessingServiceTest {
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
 
         websocketMessagingService = mock(WebsocketMessagingService.class);
-        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.of(irisLectureApi), websocketMessagingService);
+        var lectureUnitRepository = mock(de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository.class);
+        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, lectureUnitRepository, Optional.of(irisLectureApi),
+                websocketMessagingService);
 
         service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService);
 
@@ -144,8 +146,9 @@ class LectureContentProcessingServiceTest {
             // Given: No Iris API
             FeatureToggleService fts = mock(FeatureToggleService.class);
             when(fts.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
-            ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.empty(),
-                    mock(WebsocketMessagingService.class));
+            var lectureUnitRepository = mock(de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository.class);
+            ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, lectureUnitRepository,
+                    Optional.empty(), mock(WebsocketMessagingService.class));
             service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback);
 
             service.triggerProcessing(testUnit);
@@ -377,7 +380,7 @@ class LectureContentProcessingServiceTest {
             // Mock dispatch after completion
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
             assertThat(testState.getIngestionJobToken()).isNull();
@@ -393,7 +396,7 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
         }
@@ -407,7 +410,7 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null, null);
 
             // Should mark as FAILED with backoff scheduled for re-dispatch
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
@@ -425,7 +428,7 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null, null);
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
         }
@@ -436,7 +439,7 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken("new-job-token");
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
 
-            callbackService.handleIngestionComplete(testUnit.getId(), "old-job-token", true, null);
+            callbackService.handleIngestionComplete(testUnit.getId(), "old-job-token", true, null, null);
 
             verify(processingStateRepository, never()).save(any());
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
@@ -448,7 +451,7 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
 
             verify(processingStateRepository, never()).save(any());
         }
@@ -462,7 +465,7 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, "YOUTUBE_PRIVATE");
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, "YOUTUBE_PRIVATE", null);
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
             assertThat(testState.getRetryCount()).isEqualTo(1);
@@ -480,7 +483,7 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, "YOUTUBE_DOWNLOAD_FAILED");
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, "YOUTUBE_DOWNLOAD_FAILED", null);
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
             assertThat(testState.getRetryCount()).isEqualTo(1);
@@ -632,7 +635,7 @@ class LectureContentProcessingServiceTest {
 
             ZonedDateTime beforeCall = ZonedDateTime.now();
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null, null);
 
             // Then: Should mark as FAILED with backoff scheduled (2^2 = 4 minutes)
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
@@ -664,7 +667,7 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             // When: Ingestion fails
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null, null);
 
             // Then: WebSocket notification must include the transcription status (not null)
             ArgumentCaptor<LectureUnitCombinedStatusDTO> dtoCaptor = ArgumentCaptor.forClass(LectureUnitCombinedStatusDTO.class);
