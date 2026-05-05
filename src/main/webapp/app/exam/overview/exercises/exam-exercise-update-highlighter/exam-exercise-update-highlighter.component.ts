@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -24,8 +24,8 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
     updatedProblemStatementWithHighlightedDifferencesHTML: SafeHtml;
     outdatedProblemStatement: string;
     updatedProblemStatement: string;
-    showHighlightedDifferences = true;
-    isHidden = true;
+    readonly showHighlightedDifferences = signal(true);
+    readonly isHidden = signal(true);
     exercise = input.required<Exercise>();
 
     problemStatementUpdateEvent = output<SafeHtml>();
@@ -51,12 +51,12 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
         // prevents the jhi-resizeable-container from collapsing the right panel on a button click
         event.stopPropagation();
         let problemStatementToEmit: SafeHtml;
-        if (this.showHighlightedDifferences) {
+        if (this.showHighlightedDifferences()) {
             problemStatementToEmit = this.updatedProblemStatementHTML;
         } else {
             problemStatementToEmit = this.updatedProblemStatementWithHighlightedDifferencesHTML;
         }
-        this.showHighlightedDifferences = !this.showHighlightedDifferences;
+        this.showHighlightedDifferences.update((value) => !value);
         this.problemStatementUpdateEvent.emit(problemStatementToEmit);
     }
 
@@ -71,13 +71,13 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
             this.outdatedProblemStatement = this.exercise().problemStatement!;
             this.updatedProblemStatement = updatedProblemStatement;
             this.exercise().problemStatement = updatedProblemStatement;
-            this.showHighlightedDifferences = true;
+            this.showHighlightedDifferences.set(true);
             // Highlighting of the changes in the problem statement of a programming exercise id handled
             // in ProgrammingExerciseInstructionComponent
             if (this.exercise().type !== ExerciseType.PROGRAMMING) {
                 this.highlightProblemStatementDifferences();
             }
-            this.isHidden = false;
+            this.isHidden.set(false);
             this.problemStatementUpdateEvent.emit(this.updatedProblemStatementWithHighlightedDifferencesHTML);
         }
     }

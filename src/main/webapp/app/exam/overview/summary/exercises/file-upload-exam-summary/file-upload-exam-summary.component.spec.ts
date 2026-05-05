@@ -14,15 +14,19 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('FileUploadExamSummaryComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<FileUploadExamSummaryComponent>;
     let component: FileUploadExamSummaryComponent;
 
     const fileUploadSubmission = { id: 1 } as FileUploadSubmission;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: AccountService, useClass: MockAccountService },
@@ -31,13 +35,14 @@ describe('FileUploadExamSummaryComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(FileUploadExamSummaryComponent);
-                component = fixture.componentInstance;
-                component.submission = fileUploadSubmission;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(FileUploadExamSummaryComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('submission', fileUploadSubmission);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -48,8 +53,8 @@ describe('FileUploadExamSummaryComponent', () => {
     it('should render submission when exercise and submisssion is set', () => {
         const exercise = { id: 1234, studentParticipations: [{ id: 1 }] } as FileUploadExercise;
         const submission = { submitted: true, filePath: 'filePath.pdf' } as FileUploadSubmission;
-        component.submission = submission;
-        component.exercise = exercise;
+        fixture.componentRef.setInput('submission', submission);
+        fixture.componentRef.setInput('exercise', exercise);
 
         fixture.detectChanges();
 
