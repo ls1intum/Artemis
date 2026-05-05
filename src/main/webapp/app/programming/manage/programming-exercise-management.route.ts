@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
+import { Authority, IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 
 import { ProgrammingExerciseResolve } from 'app/programming/manage/services/programming-exercise-resolve.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
@@ -9,6 +9,8 @@ import {
     CodeEditorTutorAssessmentContainerComponent,
     canLeaveCodeEditorTutorAssessmentContainer,
 } from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
+import { IrisAssessmentReviewComponent } from 'app/iris/overview/understanding-assessment/assessment-review/iris-assessment-review.component';
+import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 
 export const routes: Routes = [
     {
@@ -156,5 +158,14 @@ export const routes: Routes = [
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [canLeaveCodeEditorTutorAssessmentContainer],
+    },
+    {
+        path: 'programming-exercises/:exerciseId/iris-assessment/:participationId',
+        component: IrisAssessmentReviewComponent,
+        data: {
+            authorities: IS_AT_LEAST_INSTRUCTOR,
+            pageTitle: 'artemisApp.iris.assessmentReview.title',
+        },
+        canActivate: [UserRouteAccessService, IrisGuard],
     },
 ];

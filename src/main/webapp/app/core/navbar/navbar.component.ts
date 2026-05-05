@@ -361,6 +361,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
         exam_timeline: 'artemisApp.examTimeline.breadcrumb',
         iris_settings: 'artemisApp.iris.settings.title',
+        iris_assessment: 'artemisApp.iris.assessmentReviewOverview.title',
         generate: 'entity.action.generate',
         build_queue: 'global.menu.admin.sidebar.buildQueue',
         build_overview: 'artemisApp.buildQueue.title',

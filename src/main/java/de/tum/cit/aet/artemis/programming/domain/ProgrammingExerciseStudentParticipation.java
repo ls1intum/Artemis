@@ -12,6 +12,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OrderColumn;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -60,6 +61,7 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     @ElementCollection
     @CollectionTable(name = "participation_iris_reasoning", joinColumns = @JoinColumn(name = "participation_id"))
+    @OrderColumn(name = "position")
     @Column(name = "reason")
     private List<String> irisReasoning = new ArrayList<>();
 

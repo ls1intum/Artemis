@@ -218,4 +218,29 @@ public class ParticipationRetrievalResource {
         return ResponseEntity.ok().headers(headers).body(page.getContent());
     }
 
+    /**
+     * GET /exercises/:exerciseId/participations/non-zero-highest-score : get all the participations for an exercise if latest score > 0 was achieved
+     *
+     * @param exerciseId The participationId of the exercise
+     * @return A list of all participations for the exercise
+     */
+    @GetMapping("exercises/{exerciseId}/participations/non-zero-latest-score")
+    @EnforceAtLeastTutor
+    public ResponseEntity<Set<StudentParticipation>> getAllParticipationsNonZeroLatestScoreForExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to get all Participations with non-zero highest score for Exercise {}", exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        Set<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentByExerciseId(exercise.getId()).stream()
+                .filter(p -> p.findLatestResult() != null && p.findLatestResult().getScore() > 0).collect(Collectors.toSet());
+
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
+        participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
+        participations = participations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
+            // remove unnecessary data to reduce response size
+            participation.setExercise(null);
+        }).collect(Collectors.toSet());
+
+        return ResponseEntity.ok(participations);
+    }
+
 }

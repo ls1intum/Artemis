@@ -297,6 +297,29 @@ export const courseManagementRoutes: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
+                        path: 'iris-assessment',
+                        loadComponent: () =>
+                            import('app/iris/overview/understanding-assessment/assessment-review-overview/iris-assessment-review-overview.component').then(
+                                (m) => m.IrisAssessmentReviewOverviewComponent,
+                            ),
+                        data: {
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            pageTitle: 'artemisApp.iris.assessmentReviewOverview.title',
+                        },
+                        canActivate: [UserRouteAccessService, IrisGuard],
+                    },
+                    {
+                        path: 'iris-settings',
+                        loadComponent: () =>
+                            import('app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component').then((m) => m.IrisCourseSettingsUpdateComponent),
+                        data: {
+                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            pageTitle: 'artemisApp.iris.settings.title.course',
+                        },
+                        canActivate: [UserRouteAccessService, IrisGuard],
+                        canDeactivate: [PendingChangesGuard],
+                    },
+                    {
                         path: '',
                         loadChildren: () => import('app/assessment/manage/list-of-complaints/list-of-complaints.route').then((m) => m.listOfComplaintsRoute),
                         // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.

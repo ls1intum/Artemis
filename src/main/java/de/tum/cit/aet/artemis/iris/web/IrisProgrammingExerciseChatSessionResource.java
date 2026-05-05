@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
@@ -80,7 +81,8 @@ public class IrisProgrammingExerciseChatSessionResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, exercise);
+        exerciseChatOrPromptingModeEnabledOrElseThrow(programmingExercise);
+
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         var session = irisExerciseChatSessionService.getCurrentSessionOrCreateIfNotExists(programmingExercise, user, false);
@@ -121,7 +123,8 @@ public class IrisProgrammingExerciseChatSessionResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, programmingExercise);
+        exerciseChatOrPromptingModeEnabledOrElseThrow(programmingExercise);
+
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         var session = irisExerciseChatSessionService.createSession(programmingExercise, user, false);
@@ -155,5 +158,16 @@ public class IrisProgrammingExerciseChatSessionResource {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
         return exercise;
+    }
+
+    private void exerciseChatOrPromptingModeEnabledOrElseThrow(ProgrammingExercise exercise) {
+        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, exercise)
+                && !irisSettingsService.isEnabledFor(IrisSubSettingsType.PROMPT_USER, exercise)) {
+            throw new AccessForbiddenAlertException(
+                    "Neither the Iris " + IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT.name() + " nor " + IrisSubSettingsType.PROMPT_USER
+                            + " feature is enabled for this exercise.",
+                    "Iris",
+                    "iris." + IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT.name().toLowerCase() + "And" + IrisSubSettingsType.PROMPT_USER.name().toLowerCase() + "Disabled");
+        }
     }
 }

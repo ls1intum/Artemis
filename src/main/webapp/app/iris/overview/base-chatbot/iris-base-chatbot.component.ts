@@ -365,6 +365,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly contextProvider = input<(() => IrisMessageContextDTO[]) | undefined>(undefined);
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
+    readonly showClearSessionButton = input<boolean>(true);
+    readonly showOnlyPromptingModeMessage = input<boolean>(false);
 
     // ViewChilds
     readonly messagesElement = viewChild<ElementRef>('messagesElement');
@@ -755,28 +757,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         effect(() => {
             if (!this.newMessageTextContent()) {
                 untracked(() => this.isChipTextApplied.set(false));
-            }
-        });
-        this.latestEventSubscription = this.chatService.currentLatestEvent().subscribe((event) => {
-            switch (event) {
-                case EventType.USER_INITIATES_PROMPTING:
-                    this.inPromptingMode = true;
-                    break;
-
-                case EventType.FIRST_QUESTION:
-                    this.startTimer();
-                    this.startDefocusDetection();
-                    break;
-
-                case EventType.PROMPTING_FINISHED:
-                    this.inPromptingMode = false;
-
-                    this.stopTimer();
-                    this.stopDefocusDetection();
-                    break;
-
-                default:
-                    break;
             }
         });
 
@@ -1568,11 +1548,5 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
     }
 
-    private startTimer() {}
-
-    private stopTimer() {}
-
-    private startDefocusDetection() {}
-
-    private stopDefocusDetection() {}
+    protected readonly ChatServiceMode = ChatServiceMode;
 }

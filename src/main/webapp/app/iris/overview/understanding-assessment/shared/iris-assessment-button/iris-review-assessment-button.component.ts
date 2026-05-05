@@ -4,24 +4,27 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { faBrain } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockRouterLinkDirective } from '../../../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { Course } from 'app/course/shared/entities/course.model';
 import { IrisVerdictReview } from 'app/iris/shared/entities/iris-verdict.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-iris-review-assessment-button',
     templateUrl: './iris-review-assessment-button.component.html',
-    imports: [ExerciseActionButtonComponent, FeatureToggleDirective, ArtemisTranslatePipe, MockRouterLinkDirective, CommonModule],
+    imports: [ExerciseActionButtonComponent, FeatureToggleDirective, ArtemisTranslatePipe, RouterLink, CommonModule],
 })
 export class IrisReviewAssessmentButtonComponent implements OnInit {
     @Input()
     course: Course;
     @Input()
+    exercise: ProgrammingExercise;
+    @Input()
     participation: ProgrammingExerciseStudentParticipation;
     @Input()
-    smallButtons: boolean;
+    smallButton: boolean;
     @Input()
     hideLabelMobile = false;
 

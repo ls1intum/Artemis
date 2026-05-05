@@ -401,6 +401,16 @@ jhi-iris-mcq-question {
     justify-content: center;
 }
 
+.client-chat-info {
+    background-color: var(--artemis-alert-info-background);
+    color: var(--bs-body-color);
+    padding: 5px;
+    border-top: 1px solid var(--artemis-alert-info-border);
+    display: flex;
+    align-content: center;
+    justify-content: center;
+}
+
 pre {
     background: transparent;
     white-space: pre-wrap;

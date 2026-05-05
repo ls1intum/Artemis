@@ -1,0 +1,103 @@
+<h2 class="mb-5">
+    <span>{{ course.title }} - {{ exercise.title }} - {{ participation.student?.name }} ({{ participation.student?.login }})</span>
+</h2>
+<jhi-data-table
+    [isLoading]="isLoading"
+    showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
+    [allEntities]="rows"
+    entityType="qaexchange"
+    [searchEntityFilterEnabled]="false"
+    [showSearchField]="false"
+    [searchEnabled]="false"
+    [showPageSizeDropdown]="false"
+>
+    <ng-template let-settings="settings">
+        <ngx-datatable
+            class="bootstrap separated-columns"
+            [limit]="settings.limit"
+            [sortType]="settings.sortType"
+            [columnMode]="'flex'"
+            [headerHeight]="settings.headerHeight"
+            [footerHeight]="0"
+            [rowHeight]="'auto'"
+            [rows]="settings.rows"
+            [rowClass]="settings.rowClass"
+        >
+            <ngx-datatable-column prop="" [sortable]="false" [flexGrow]="2">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper">
+                        <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.iris.assessmentReview.qaExchange.question"></span>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <div class="wrapped-content">
+                        {{ value.question }}
+                    </div>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="" [sortable]="false" [flexGrow]="2">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper">
+                        <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.iris.assessmentReview.qaExchange.answer"></span>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <div class="wrapped-content">
+                        {{ value.answer }}
+                    </div>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="" [sortable]="false" [flexGrow]="1.5">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper">
+                        <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.iris.assessmentReview.qaExchange.reasoning"></span>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <div class="wrapped-content">
+                        {{ value.reasoning }}
+                    </div>
+                </ng-template>
+            </ngx-datatable-column>
+        </ngx-datatable>
+    </ng-template>
+</jhi-data-table>
+@if (participation && participation.irisVerdict !== null) {
+    <span class="iris-verdict">
+        {{ 'artemisApp.iris.assessmentReview.verdict.assessedAs' | artemisTranslate }}
+        {{ 'artemisApp.iris.assessmentReview.verdict.' + translateIrisVerdict(participation.irisVerdict!) | artemisTranslate }}
+        ({{ 'artemisApp.iris.assessmentReview.verdict.explain.' + translateIrisVerdict(participation.irisVerdict!) | artemisTranslate }}).
+    </span>
+}
+<div class="d-flex align-items-center gap-2 ms-auto mt-3">
+    <button
+        jhi-exercise-action-button
+        class="btn-success"
+        [buttonIcon]="faCheck"
+        [overwriteDisabled]="participation.irisVerdictReview === IrisVerdictReview.ACCEPTED"
+        [buttonLabel]="'artemisApp.iris.assessmentReview.accept' | artemisTranslate"
+        [smallButton]="true"
+        [hideLabelMobile]="false"
+        (click)="acceptAnswers()"
+        placement="right auto"
+        container="body"
+    ></button>
+    <button
+        jhi-exercise-action-button
+        class="btn-danger"
+        [buttonIcon]="faX"
+        [overwriteDisabled]="participation.irisVerdictReview === IrisVerdictReview.REJECTED"
+        [buttonLabel]="'artemisApp.iris.assessmentReview.reject' | artemisTranslate"
+        [smallButton]="true"
+        [hideLabelMobile]="false"
+        (click)="rejectAnswers()"
+        placement="right auto"
+        container="body"
+    ></button>
+    @if (participation && (participation.irisVerdictReview === IrisVerdictReview.ACCEPTED || participation.irisVerdictReview === IrisVerdictReview.REJECTED)) {
+        <span>
+            {{ 'artemisApp.iris.assessmentReview.review.reviewedAs' | artemisTranslate }}
+            {{ 'artemisApp.iris.assessmentReview.review.' + translateReview(participation.irisVerdictReview!) | artemisTranslate }}.
+        </span>
+    }
+</div>

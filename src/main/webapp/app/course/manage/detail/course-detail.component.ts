@@ -41,7 +41,7 @@ import { OnboardingExploreComponent } from 'app/course/manage/onboarding/pages/o
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
-import { AssessmentAttentionCenterComponent } from 'app/iris/overview/assessment-attention-center/assessment-attention-center.component';
+import { IrisAssessmentAttentionCenterComponent } from 'app/iris/overview/understanding-assessment/assessment-attention-center/iris-assessment-attention-center.component';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -67,7 +67,7 @@ export enum DoughnutChartType {
         OnboardingExploreComponent,
         FaIconComponent,
         TranslateDirective,
-        AssessmentAttentionCenterComponent,
+        IrisAssessmentAttentionCenterComponent,
     ],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {

@@ -11,10 +11,10 @@ import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-start-prompting-button',
-    templateUrl: './understanding-assessment-button.component.html',
+    templateUrl: './start-prompting-button.component.html',
     imports: [ExerciseActionButtonComponent, FeatureToggleDirective, ArtemisTranslatePipe],
 })
-export class IrisUnderstandingAssessmentButtonComponent implements OnInit, OnDestroy {
+export class IrisStartPromptingButtonComponent implements OnInit, OnDestroy {
     private irisChatService = inject(IrisChatService);
 
     readonly FeatureToggle = FeatureToggle;

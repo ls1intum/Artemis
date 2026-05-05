@@ -411,12 +411,12 @@ public class ProgrammingExerciseParticipationService {
 
         switch (verdictString) {
             case "unsuspicious":
-                updateVerifiedScoreAccept(participation);
+                updateVerifiedScoreUnsuspicious(participation);
                 participation.setIrisVerdictReview(IrisVerdictReview.REVIEWABLE);
                 break;
             case "suspicious":
                 participation.setIrisVerdictReview(IrisVerdictReview.NEEDS_REVIEW);
-
+                updateVerifiedScoreSuspicious(participation);
                 break;
             default:
                 throw new Error("unknown verdict: " + verdict);
@@ -441,8 +441,7 @@ public class ProgrammingExerciseParticipationService {
         participation.setIrisReasoning(reasonings);
     }
 
-    private void updateVerifiedScoreAccept(ProgrammingExerciseStudentParticipation participation) {
-
+    private void updateVerifiedScoreUnsuspicious(ProgrammingExerciseStudentParticipation participation) {
         Double recentScore = participation.findLatestResult().getScore();
         if (participation.getIrisVerifiedScore() == null || recentScore > participation.getIrisVerifiedScore()) {
             participation.setIrisVerifiedScoreOld(participation.getIrisVerifiedScore());
@@ -450,8 +449,103 @@ public class ProgrammingExerciseParticipationService {
         }
     }
 
+    private void updateVerifiedScoreSuspicious(ProgrammingExerciseStudentParticipation participation) {
+        Double recentScore = participation.findLatestResult().getScore();
+        if (participation.getIrisVerifiedScore() == null || recentScore > participation.getIrisVerifiedScore()) {
+            participation.setIrisVerifiedScoreOld(recentScore);
+        }
+    }
+
     public boolean assessmentAttentionNeededInCourse(Course course) {
         return programmingExerciseRepository.findAllWithStudentParticipationsByCourseId(course.getId()).stream().flatMap(exercise -> exercise.getStudentParticipations().stream())
                 .map(ProgrammingExerciseStudentParticipation.class::cast).anyMatch(p -> p.getIrisVerdictReview() == IrisVerdictReview.NEEDS_REVIEW);
     }
+
+    @Transactional
+    public void resetVerdictAndReasoning(User user, Exercise exercise) {
+        ProgrammingExerciseStudentParticipation participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin()).orElseThrow();
+
+        participation.setIrisVerdict(null);
+        participation.setIrisReasoning(new ArrayList<>());
+        studentParticipationRepository.save(participation);
+    }
+
+    /**
+     * Accepts the answers in the given {@link ProgrammingExerciseStudentParticipation}.
+     *
+     * <p>
+     * This means, if answers were assessed as suspicious (by Iris) or rejected (by instructor) before, contents of irisVerifiedScore
+     * and irisOldVerifiedScore are swapped to have the correct score as verified.
+     * </p>
+     *
+     * @param participation the participation to update
+     * @return the updated participation
+     * @throws Error if the verdict saved in participation is invalid
+     */
+    public ProgrammingExerciseStudentParticipation acceptAnswers(ProgrammingExerciseStudentParticipation participation) {
+        var verdictReview = participation.getIrisVerdictReview();
+
+        // If answers were already accepted, nothing must be done
+        if (verdictReview == IrisVerdictReview.ACCEPTED) {
+            return participation;
+        }
+
+        var verdict = participation.getIrisVerdict();
+
+        if (verdict == null) {
+            throw new Error("verdict is null");
+        }
+        else if (verdictReview == IrisVerdictReview.REJECTED || verdict.equals("suspicious")) {
+            swapVerifiedScoreWithOld(participation);
+        }
+        else if (!verdict.equals("unsuspicious")) {
+            throw new Error("unknown verdict: " + verdict);
+        }
+
+        participation.setIrisVerdictReview(IrisVerdictReview.ACCEPTED);
+        return studentParticipationRepository.save(participation);
+    }
+
+    /**
+     * Rejects the answers in the given {@link ProgrammingExerciseStudentParticipation}.
+     *
+     * <p>
+     * This means, if answers were assessed as unsuspicious (by Iris) or accepted (by instructor) before, contents of irisVerifiedScore
+     * and irisOldVerifiedScore are swapped to have the correct score as verified.
+     * </p>
+     *
+     * @param participation the participation to update
+     * @return the updated participation
+     * @throws Error if the verdict saved in participation is invalid
+     */
+    public ProgrammingExerciseStudentParticipation rejectAnswers(ProgrammingExerciseStudentParticipation participation) {
+        var verdictReview = participation.getIrisVerdictReview();
+
+        // If answers were already rejected, nothing must be done
+        if (verdictReview == IrisVerdictReview.REJECTED) {
+            return participation;
+        }
+
+        var verdict = participation.getIrisVerdict();
+
+        if (verdict == null) {
+            throw new Error("verdict is null");
+        }
+        else if (verdictReview == IrisVerdictReview.ACCEPTED || verdict.equals("unsuspicious")) {
+            swapVerifiedScoreWithOld(participation);
+        }
+        else if (!verdict.equals("suspicious")) {
+            throw new Error("unknown verdict: " + verdict);
+        }
+
+        participation.setIrisVerdictReview(IrisVerdictReview.REJECTED);
+        return studentParticipationRepository.save(participation);
+    }
+
+    private void swapVerifiedScoreWithOld(ProgrammingExerciseStudentParticipation participation) {
+        var newVerifiedScore = participation.getIrisVerifiedScoreOld();
+        participation.setIrisVerifiedScoreOld(participation.getIrisVerifiedScore());
+        participation.setIrisVerifiedScore(newVerifiedScore);
+    }
+
 }

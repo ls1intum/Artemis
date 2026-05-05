@@ -1,0 +1,24 @@
+:host ::ng-deep .bootstrap.separated-columns .datatable-header-cell:not(:last-child),
+:host ::ng-deep .bootstrap.separated-columns .datatable-body-cell:not(:last-child) {
+    border-right: 10px solid #303130;
+}
+
+::ng-deep .ngx-datatable .datatable-body-cell {
+    overflow: visible;
+}
+
+.wrapped-content {
+    max-width: 410px;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+    margin-right: auto;
+}
+
+.iris-verdict {
+    display: inline-block;
+    margin-top: 30px;
+    font-size: 20px;
+    font-weight: 600;
+}

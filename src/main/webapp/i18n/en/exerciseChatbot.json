@@ -65,6 +65,8 @@
                 "goodResponse": "Good response",
                 "badResponse": "Bad response"
             }
+            },
+            "onlyPromptingEnabled": "Exercise Chat is disabled. I only assess your understanding."
         }
     }
 }

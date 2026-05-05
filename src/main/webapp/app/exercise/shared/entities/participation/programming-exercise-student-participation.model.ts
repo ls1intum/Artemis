@@ -10,8 +10,8 @@ export class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     public irisVerdict?: IrisVerdict;
     public irisVerdictReview?: IrisVerdictReview;
     public irisReasoning?: string[];
-    public irisVerifiedSCore?: number;
-    public irisVerifiedSCoreOld?: number;
+    public irisVerifiedScore?: number;
+    public irisVerifiedScoreOld?: number;
 
     // helper attribute
     public buildPlanUrl?: string;

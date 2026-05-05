@@ -209,6 +209,13 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
         return getValueElseThrow(findWithTeamStudentsById(participationId), participationId);
     }
 
+    default ProgrammingExerciseStudentParticipation findWithIrisReasoningByIdElseThrow(long participationId) {
+        return getValueElseThrow(findWithIrisReasoningById(participationId), participationId);
+    }
+
+    @EntityGraph(type = LOAD, attributePaths = { "irisReasoning" })
+    Optional<ProgrammingExerciseStudentParticipation> findWithIrisReasoningById(long participationId);
+
     /**
      * Remove the build plan id from all participations of the given exercise.
      * This is used when the build plan is changed for an exercise, and we want to remove the old build plan id from all participations.

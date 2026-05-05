@@ -206,7 +206,7 @@
                                 <fa-icon [icon]="faCircleInfo" />
                             </button>
                         }
-                        @if (!isChatHistoryAvailable() && messages().length >= 1 && !this.inPromptingMode) {
+                        @if (!isChatHistoryAvailable() && messages().length >= 1 && this.showClearSessionButton) {
                             <button id="clear-chat-button" (click)="openNewSession()" class="header-control">
                                 <fa-icon [icon]="faPenToSquare" />
                             </button>
@@ -406,6 +406,9 @@
                         }
                     </div>
                 </div>
+            }
+            @if (this.showOnlyPromptingModeMessage) {
+                <div class="client-chat-info" jhiTranslate="artemisApp.exerciseChatbot.onlyPromptingEnabled"></div>
             }
             @if (error()) {
                 <div class="client-chat-error">

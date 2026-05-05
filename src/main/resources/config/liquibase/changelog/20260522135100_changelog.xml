@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20260522-add-position-to-iris-reasoning" author="PeterNiedermoser">
+
+        <addColumn tableName="participation_iris_reasoning">
+            <column name="position" type="int"/>
+        </addColumn>
+
+        <addNotNullConstraint
+                tableName="participation_iris_reasoning"
+                columnName="position"
+                columnDataType="int"/>
+
+        <addUniqueConstraint
+                tableName="participation_iris_reasoning"
+                columnNames="participation_id, position"
+                constraintName="uk_participation_iris_reasoning_position"/>
+
+    </changeSet>
+</databaseChangeLog>

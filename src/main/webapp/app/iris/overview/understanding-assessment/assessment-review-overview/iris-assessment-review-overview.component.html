@@ -1,0 +1,94 @@
+<div class="d-flex flex-wrap">
+    <div class="d-flex flex-fill align-items-center mr-auto">
+        <div class="me-2" aria-label="Filter Dropdown" ngbDropdown [autoClose]="false">
+            <button class="btn btn-primary" ngbDropdownToggle id="filter-dropdown-button">
+                <fa-icon [icon]="faFilter" />
+                <span class="d-s-none d-md-inline"
+                    >{{
+                        'artemisApp.exercise.scoresFilter'
+                            | artemisTranslate: { filter: ('artemisApp.iris.assessmentReviewOverview.show' + reviewCriteria.filterProp | artemisTranslate) }
+                    }}
+                    ({{ participationsPerFilter.get(reviewCriteria.filterProp) ?? 0 }})
+                </span>
+            </button>
+            <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                @for (filter of FilterProp | keyvalue; track filter) {
+                    <li>
+                        <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
+                            <input type="radio" [ngModel]="reviewCriteria.filterProp" (click)="updateParticipationFilter(filter.value)" [value]="filter.value" />
+                            <span class="ms-1">
+                                {{ 'artemisApp.iris.assessmentReviewOverview.show' + filter.value | artemisTranslate }}
+                                ({{ participationsPerFilter.get(filter.value) ?? 0 }})
+                            </span>
+                        </label>
+                    </li>
+                }
+            </ul>
+        </div>
+        @if (allSearchedAndFilteredParticipations.length && participationsPerFilter.get(reviewCriteria.filterProp) !== allSearchedAndFilteredParticipations.length) {
+            <span
+                jhiTranslate="artemisApp.exercise.showingOfResults"
+                [translateValues]="{
+                    filtered: participationsPerFilter.get(reviewCriteria.filterProp),
+                    total: allSearchedAndFilteredParticipations.length,
+                    percent: ((participationsPerFilter.get(reviewCriteria.filterProp) ?? 0) * 100) / allSearchedAndFilteredParticipations.length | number: '1.0-1',
+                }"
+            ></span>
+        }
+    </div>
+    <div class="p-2">
+        <div class="button-toolbar">
+            <button class="btn btn-primary btn-sm" (click)="refresh()">
+                <fa-icon [icon]="faSync" />
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh"></span>
+            </button>
+        </div>
+    </div>
+</div>
+<jhi-data-table
+    [isLoading]="isLoading"
+    entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
+    showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
+    searchPlaceholderTranslation="artemisApp.exercise.searchForStudents"
+    searchNoResultsTranslation="artemisApp.course.courseGroup.searchNoResults"
+    [allEntities]="relevantExercises"
+    entityType="ExerciseViewModel"
+    [searchEntityFilterEnabled]="false"
+    [showPageSizeDropdown]="true"
+    [isSearching]="isSearching"
+    [searchNoResults]="searchNoResults"
+    [isTransitioning]="isTransitioning"
+    [searchTextFromEntity]="searchTextFromParticipation"
+    [searchResultFormatter]="searchResultFormatter"
+    [onSearchWrapper]="searchAllParticipations"
+>
+    <ng-template let-settings="settings">
+        <ngx-datatable
+            class="bootstrap"
+            [limit]="settings.limit"
+            [sortType]="settings.sortType"
+            [columnMode]="'force'"
+            [headerHeight]="0"
+            [footerHeight]="0"
+            [rowHeight]="'auto'"
+            [rows]="settings.rows"
+            [rowClass]="settings.rowClass"
+            [scrollbarH]="settings.scrollbarH"
+        >
+            <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100">
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    @if (value.searchedAndFilteredParticipations?.length) {
+                        <jhi-iris-assessment-review-exercise
+                            style="width: 100%; display: block"
+                            [exercise]="value.exercise"
+                            [participations]="value.searchedAndFilteredParticipations"
+                            [course]="course"
+                            [isLoading]="isLoading"
+                            (refresh)="refresh()"
+                        />
+                    }
+                </ng-template>
+            </ngx-datatable-column>
+        </ngx-datatable>
+    </ng-template>
+</jhi-data-table>

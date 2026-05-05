@@ -410,6 +410,40 @@
                     "deleteFailed": "Fehler beim Löschen der Erinnerung.",
                     "detailsLoadFailed": "Fehler beim Laden der Erinnerungsdetails."
                 }
+            },
+            "assessmentReviewOverview": {
+                "title": "Iris Bewertungen",
+                "showMissingAssessment": "Fehlende Bewertung",
+                "showNeedsReview": "Review benötigt",
+                "showRejected": "Abgelehnt",
+                "showReviewable": "Review möglich",
+                "showAccepted": "Akzeptiert",
+                "showAll": "Alle",
+                "verifiedScore": "Bestätigte Punkte"
+            },
+            "assessmentReview": {
+                "title": "Iris Bewertungsergebnisse",
+                "qaExchange": {
+                    "question": "Frage",
+                    "answer": "Antwort",
+                    "reasoning": "Einschätzung"
+                },
+                "accept": "Akzeptieren (Punkte bestätigen)",
+                "reject": "Ablehnen (dieses Build-Ergebnis nicht zählen)",
+                "verdict": {
+                    "assessedAs": "Iris bewertet diese Befragung als",
+                    "suspicious": "auffällig",
+                    "unsuspicious": "zufriedenstellend",
+                    "explain": {
+                        "suspicious": "Punkte werden standardmäßig nicht gezählt",
+                        "unsuspicious": "Antworten werden standardmäßig akzeptiert"
+                    }
+                },
+                "review": {
+                    "reviewedAs": "Befragung wurde",
+                    "accepted": "akzeptiert",
+                    "rejected": "abgelehnt"
+                }
             }
         },
         "pyrisSearchAskRequest": {

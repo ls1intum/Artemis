@@ -58,7 +58,7 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { EventType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
-import { IrisUnderstandingAssessmentButtonComponent } from 'app/iris/overview/understanding-assessment-button/understanding-assessment-button.component';
+import { IrisStartPromptingButtonComponent } from 'app/iris/overview/understanding-assessment/start-prompting-button/start-prompting-button.component';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -96,7 +96,7 @@ interface InstructorActionItem {
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         CompetencyContributionComponent,
-        IrisUnderstandingAssessmentButtonComponent,
+        IrisStartPromptingButtonComponent,
     ],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {

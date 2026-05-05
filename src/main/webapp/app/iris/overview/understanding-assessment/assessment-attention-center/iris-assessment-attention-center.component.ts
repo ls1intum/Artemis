@@ -10,15 +10,15 @@ import { IrisAssessmentAttentionDTO } from 'app/iris/shared/entities/iris-assess
 import { HttpResponse } from '@angular/common/http';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { MockRouterLinkDirective } from '../../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
+import { RouterModule } from '@angular/router';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
 @Component({
-    selector: 'jhi-assessment-attention-center',
-    imports: [HelpIconComponent, FaIconComponent, CardWrapperComponent, FeatureToggleDirective, MockRouterLinkDirective, CommonModule, ButtonComponent],
-    templateUrl: './assessment-attention-center.component.html',
+    selector: 'jhi-iris-assessment-attention-center',
+    imports: [HelpIconComponent, FaIconComponent, CardWrapperComponent, FeatureToggleDirective, RouterModule, CommonModule, ButtonComponent],
+    templateUrl: './iris-assessment-attention-center.component.html',
 })
-export class AssessmentAttentionCenterComponent implements OnInit {
+export class IrisAssessmentAttentionCenterComponent implements OnInit {
     protected readonly faBrain = faBrain;
 
     @Input()

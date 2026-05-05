@@ -410,6 +410,40 @@
                     "deleteFailed": "Failed to delete memory.",
                     "detailsLoadFailed": "Failed to load memory details."
                 }
+            },
+            "assessmentReviewOverview": {
+                "title": "Iris Assessments",
+                "showMissingAssessment": "Missing assessment",
+                "showNeedsReview": "Needs review",
+                "showRejected": "Rejected",
+                "showReviewable": "Reviewable",
+                "showAccepted": "Accepted",
+                "showAll": "All",
+                "verifiedScore": "Verified Score"
+            },
+            "assessmentReview": {
+                "title": "Iris Assessment Results",
+                "qaExchange": {
+                    "question": "Question",
+                    "answer": "Answer",
+                    "reasoning": "Reasoning"
+                },
+                "accept": "Accept (verify points)",
+                "reject": "Reject (do not count this build result)",
+                "verdict": {
+                    "assessedAs": "Iris assessed this conversation as",
+                    "suspicious": "suspicious",
+                    "unsuspicious": "satisfactory",
+                    "explain": {
+                        "suspicious": "defaults to not counting points",
+                        "unsuspicious": "defaults to accepting answers"
+                    }
+                },
+                "review": {
+                    "reviewedAs": "Conversation was",
+                    "accepted": "accepted",
+                    "rejected": "rejected"
+                }
             }
         },
         "pyrisSearchAskRequest": {

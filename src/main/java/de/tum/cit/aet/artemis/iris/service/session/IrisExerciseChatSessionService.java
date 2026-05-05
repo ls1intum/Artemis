@@ -31,11 +31,13 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedProgrammingExerciseChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedPromptUserSubSettingsDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisQAExchangeDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -339,6 +341,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         boolean newUnverifiedScore = latestSubmission.getLatestResult() != null
                 && (studentParticipation.getIrisVerifiedScore() == null || latestSubmission.getLatestResult().getScore() > studentParticipation.getIrisVerifiedScore());
 
+        log.info("verified score is: {}\nscore is: {}\n", studentParticipation.getIrisVerifiedScore(), latestSubmission.getLatestResult().getScore());
+
         if (newUnverifiedScore) {
             log.info("User {} has achieved a new high score which now must be verified", studentParticipation.getParticipant().getName());
             var user = studentParticipation.getStudent().orElseThrow();
@@ -475,6 +479,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
         session.setInPromptingModePipeline(true);
         irisExerciseChatSessionRepository.save(session);
+        participationService.resetVerdictAndReasoning(user, exercise);
 
         try {
             // Run async to allow the session to be returned immediately
@@ -558,5 +563,24 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             default:
                 break;
         }
+    }
+
+    public List<IrisQAExchangeDTO> getQAExchangeDTOList(ProgrammingExerciseStudentParticipation participation, Exercise exercise, User user) {
+        var session = irisExerciseChatSessionRepository.findLatestFinishedPromptingModeSessionByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
+        var reasoning = participation.getIrisReasoning();
+        if (reasoning == null || reasoning.isEmpty()) {
+            throw new ConflictException("Iris reasoning is missing for assessment", "Iris", "irisReasoningMissing");
+        }
+
+        var promptingMessages = session.getMessages().stream().filter(m -> Boolean.TRUE.equals(m.getInPromptingMode())).skip(1) // drop the first question (which is the quiz
+                                                                                                                                // explanation and not needed for review)
+                .toList();
+        var irisMessages = promptingMessages.stream().filter(m -> m.getSender().equals(IrisMessageSender.LLM)).toList();
+        var userMessages = promptingMessages.stream().filter(m -> m.getSender().equals(IrisMessageSender.USER)).toList();
+
+        return IntStream
+                .range(0, Math.min(Math.min(irisMessages.size(), userMessages.size()), reasoning.size())).mapToObj(i -> new IrisQAExchangeDTO(i,
+                        irisMessages.get(i).getContent().getFirst().getContentAsString(), userMessages.get(i).getContent().getFirst().getContentAsString(), reasoning.get(i)))
+                .toList();
     }
 }

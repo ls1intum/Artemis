@@ -191,9 +191,13 @@
                 @if (
                     exercise.type === PROGRAMMING &&
                     !exercise.exerciseGroup &&
-                    (irisSettings?.irisProgrammingExerciseChatSettings?.enabled || (irisSettings?.irisPromptUserSettings?.enabled && latestEvent === EventType.BUILD_WITH_POINTS))
+                    (irisSettings?.irisProgrammingExerciseChatSettings?.enabled || irisSettings?.irisPromptUserSettings?.enabled)
                 ) {
-                    <jhi-exercise-chatbot-button [mode]="ChatServiceMode.PROGRAMMING_EXERCISE" />
+                    <jhi-exercise-chatbot-button
+                        [mode]="ChatServiceMode.PROGRAMMING_EXERCISE"
+                        [exerciseChatEnabled]="irisSettings?.irisProgrammingExerciseChatSettings?.enabled ?? false"
+                        [promptingEnabled]="irisSettings?.irisPromptUserSettings?.enabled ?? false"
+                    />
                 }
                 @if (plagiarismCaseInfo?.verdict === PlagiarismVerdict.NO_PLAGIARISM) {
                     <a class="btn btn-info btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo?.id]">

@@ -133,6 +133,15 @@ export class ParticipationService {
             );
     }
 
+    findAllParticipationsNonZeroLatestScoreByExercise(exerciseId: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<StudentParticipation[]>(`api/exercise/exercises/${exerciseId}/participations/non-zero-latest-score`, {
+                observe: 'response',
+            })
+            .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
+    }
+
+    delete(participationId: number, req?: any): Observable<HttpResponse<any>> {
     searchParticipationScores(exerciseId: number, search: ParticipationScoreSearch): Observable<PageableResult<ParticipationScoreDTO>> {
         const params: Record<string, string | number> = {
             page: search.page,
