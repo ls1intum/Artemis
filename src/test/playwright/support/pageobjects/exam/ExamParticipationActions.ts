@@ -84,7 +84,8 @@ export class ExamParticipationActions {
     }
 
     async checkExamTimeChangeDialog(previousWorkingTime: string, newWorkingTime: string, announcementTime: Dayjs, authorUsername: string, message: string) {
-        const timeChangeDialog = this.page.locator('.modal-content');
+        // Match either the legacy NgbModal (.modal-content) or the migrated PrimeNG dialog (.p-dialog-content).
+        const timeChangeDialog = this.page.locator('.p-dialog-content, .modal-content').first();
         await expect(timeChangeDialog.getByTestId('old-time').getByText(previousWorkingTime)).toBeVisible();
         await expect(timeChangeDialog.getByTestId('new-time').getByText(newWorkingTime)).toBeVisible();
         const timeFormat = 'MMM D, YYYY HH:mm';

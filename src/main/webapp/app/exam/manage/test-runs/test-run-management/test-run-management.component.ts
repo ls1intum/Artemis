@@ -6,7 +6,9 @@ import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
-import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal/create-test-run-modal.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -45,7 +47,8 @@ export class TestRunManagementComponent implements OnInit {
     private examManagementService = inject(ExamManagementService);
     private accountService = inject(AccountService);
     private sortService = inject(SortService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
 
     course = signal<Course | undefined>(undefined);
     exam = signal<Exam | undefined>(undefined);
@@ -101,22 +104,33 @@ export class TestRunManagementComponent implements OnInit {
      * Open modal to configure a new test run
      */
     openCreateTestRunModal() {
-        const modalRef: NgbModalRef = this.modalService.open(CreateTestRunModalComponent as Component, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exam = this.exam();
-        modalRef.result
-            .then((testRunConfiguration: StudentExam) => {
-                this.examManagementService.createTestRun(this.course()!.id!, this.exam()!.id!, testRunConfiguration).subscribe({
-                    next: (response: HttpResponse<StudentExam>) => {
-                        if (response.body != undefined) {
-                            this.testRuns.update((current) => [...current, response.body!]);
-                        }
-                    },
-                    error: (error: HttpErrorResponse) => {
-                        onError(this.alertService, error);
-                    },
-                });
-            })
-            .catch(() => {});
+        const dialogRef = this.dialogService.open(CreateTestRunModalComponent, {
+            header: this.translateService.instant('artemisApp.examManagement.testRun.setup'),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: {
+                exam: this.exam(),
+            },
+        });
+
+        dialogRef?.onClose.subscribe((testRunConfiguration: StudentExam | undefined) => {
+            if (!testRunConfiguration) {
+                return;
+            }
+            this.examManagementService.createTestRun(this.course()!.id!, this.exam()!.id!, testRunConfiguration).subscribe({
+                next: (response: HttpResponse<StudentExam>) => {
+                    if (response.body != undefined) {
+                        this.testRuns.update((current) => [...current, response.body!]);
+                    }
+                },
+                error: (error: HttpErrorResponse) => {
+                    onError(this.alertService, error);
+                },
+            });
+        });
     }
 
     /**
