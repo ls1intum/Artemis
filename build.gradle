@@ -205,7 +205,7 @@ dependencies {
     // io.weaviate:client6 (and httpclient5:5.5.2 from httpclient5-cache via the Spring BOM / Shibboleth) is resolved
     // down to 5.5.1 by this explicit pin.
     // We cannot upgrade to 5.6.1 (the patched release) because it breaks Hazelcast cluster formation; the bump was
-    // reverted in commit 732b1c9b32 (PR #12652).
+    // reverted in PR #12652.
     implementation "org.apache.httpcomponents.client5:httpclient5:5.5.1"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.3.6"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
