@@ -40,7 +40,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "9.1.2"
+version = "9.1.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -199,10 +199,8 @@ dependencies {
     // Required by Sharing Platform
     implementation "org.codeability:SharingPluginPlatformAPI:1.2.1"
     // Required by Spring cloud
-    implementation "org.apache.httpcomponents.client5:httpclient5:5.6.1"
-    // Pin the cache module to 5.6.1 so its transitive httpclient5 declaration is also patched (CVE-2026-40542 / GHSA-v468-qcjx-r72w);
-    // otherwise Spring Boot's BOM and Shibboleth pull in httpclient5-cache:5.5.2, which declares httpclient5:5.5.2 transitively.
-    implementation "org.apache.httpcomponents.client5:httpclient5-cache:5.6.1"
+    // Cannot org.apache.httpcomponents to later version due to compatibility issues
+    implementation "org.apache.httpcomponents.client5:httpclient5:5.5.1"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.3.6"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 

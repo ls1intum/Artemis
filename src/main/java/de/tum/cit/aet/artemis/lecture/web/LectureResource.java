@@ -231,11 +231,16 @@ public class LectureResource {
         if (updatedLectureDto.id() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
         }
-        Course course = courseRepository.findByIdElseThrow(updatedLectureDto.course.id());
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-
         // This explicitly does NOT change any relationships such as attachments or lecture units
         Lecture originalLecture = lectureRepository.findByIdElseThrow(updatedLectureDto.id());
+        Course course = originalLecture.getCourse();
+        if (course == null) {
+            throw new BadRequestAlertException("Lecture is not part of a course", ENTITY_NAME, "courseMissing");
+        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        if (updatedLectureDto.course == null || !course.getId().equals(updatedLectureDto.course.id())) {
+            throw new BadRequestAlertException("Lecture does not belong to the specified course", ENTITY_NAME, "courseMismatch");
+        }
         updateLectureAttributesFromDTO(originalLecture, updatedLectureDto);
 
         channelService.updateLectureChannel(originalLecture, updatedLectureDto.channelName());
