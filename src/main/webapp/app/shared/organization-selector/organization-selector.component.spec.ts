@@ -10,6 +10,8 @@ import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { provideHttpClient } from '@angular/common/http';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { AlertService } from 'app/shared/service/alert.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('OrganizationSelectorComponent', () => {
     let component: OrganizationSelectorComponent;
@@ -40,6 +42,7 @@ describe('OrganizationSelectorComponent', () => {
                     },
                 },
                 provideHttpClient(),
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .overrideTemplate(OrganizationSelectorComponent, '')

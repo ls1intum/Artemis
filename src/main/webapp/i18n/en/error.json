@@ -298,6 +298,8 @@
             "tutorialFreePeriodInvalidOrder": "Tutorial group free period start date must be before tutorial group free period end date.",
             "tutorialFreePeriodOutOfBounds": "Tutorial group free periods must lie within the tutorial period."
         },
-        "fileReadError": "An error occurred while reading the files of the referenced commit. Please try again."
+        "fileReadError": "An error occurred while reading the files of the referenced commit. Please try again.",
+        "buildConfigMissing": "The programming exercise build configuration is missing.",
+        "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."
     }
 }
