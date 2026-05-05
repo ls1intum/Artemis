@@ -168,6 +168,7 @@ public class ProblemStatementRenderingService {
      * @param darkMode      if {@code true}, PlantUML renders in dark theme and the container carries a dark marker class
      * @param includeJs     if {@code true}, the interactive feedback modal JS is included
      * @param includeCss    if {@code true}, embedded CSS and KaTeX CSS are included
+     * @param imageMode     how to handle embedded images (inline data URIs, absolute URLs, or separated with CID references)
      * @return the rendered problem statement DTO
      */
     public RenderedProblemStatementDTO render(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, @Nullable ResultSummaryInputDTO resultSummary, Locale locale,
@@ -541,7 +542,94 @@ public class ProblemStatementRenderingService {
     }
 
     private SeparatedImagesResult separateMarkdownImages(String html) {
-        return new SeparatedImagesResult(html, Map.of());
+        var doc = Jsoup.parseBodyFragment(html);
+        var imgElements = doc.select("img[src]");
+        if (imgElements.isEmpty()) {
+            return new SeparatedImagesResult(html, Map.of());
+        }
+
+        Path basePath = FilePathConverter.getMarkdownFilePath();
+        Path baseReal;
+        try {
+            baseReal = basePath.toRealPath();
+        }
+        catch (IOException e) {
+            return new SeparatedImagesResult(html, Map.of());
+        }
+
+        var images = new LinkedHashMap<String, RenderedImageDTO>();
+        var pathToId = new HashMap<Path, String>();
+        int imageIndex = 0;
+        long emittedBytes = 0;
+        String absolutePrefix = serverUrl + MARKDOWN_FILE_API_PATH;
+
+        for (var img : imgElements) {
+            String src = img.attr("src");
+            String filename;
+            if (src.startsWith(absolutePrefix)) {
+                filename = src.substring(absolutePrefix.length());
+            }
+            else if (src.startsWith(MARKDOWN_FILE_API_PATH)) {
+                filename = src.substring(MARKDOWN_FILE_API_PATH.length());
+            }
+            else {
+                continue;
+            }
+
+            try {
+                filename = URLDecoder.decode(filename.split("[?#]")[0], StandardCharsets.UTF_8);
+            }
+            catch (IllegalArgumentException e) {
+                continue;
+            }
+
+            if (!FileUtil.sanitizeFilename(filename).equals(filename) || filename.contains("..")) {
+                continue;
+            }
+
+            String ext = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+            String mime = INLINE_IMAGE_MIME_TYPES.get(ext);
+            if (mime == null) {
+                continue;
+            }
+
+            Path resolved = basePath.resolve(filename);
+            try {
+                Path fileReal = resolved.toRealPath();
+                if (!fileReal.startsWith(baseReal)) {
+                    continue;
+                }
+
+                String existingId = pathToId.get(fileReal);
+                if (existingId != null) {
+                    img.attr("src", "cid:" + existingId);
+                    continue;
+                }
+
+                if (images.size() >= MAX_INLINE_IMAGES) {
+                    continue;
+                }
+
+                byte[] bytes = fileService.getFileForPath(fileReal);
+                if (bytes == null || bytes.length > MAX_INLINE_FILE_SIZE || emittedBytes + bytes.length > MAX_INLINE_TOTAL_SIZE) {
+                    continue;
+                }
+
+                String contentId = "img-" + imageIndex;
+                String base64 = Base64.getEncoder().encodeToString(bytes);
+                images.put(contentId, new RenderedImageDTO(mime, base64, filename));
+                pathToId.put(fileReal, contentId);
+                img.attr("src", "cid:" + contentId);
+                emittedBytes += bytes.length;
+                imageIndex++;
+            }
+            catch (IOException e) {
+                log.warn("Could not separate markdown image {}: {}", filename, e.getMessage());
+            }
+        }
+
+        doc.outputSettings().prettyPrint(false);
+        return new SeparatedImagesResult(doc.body().html(), images);
     }
 
     /**
