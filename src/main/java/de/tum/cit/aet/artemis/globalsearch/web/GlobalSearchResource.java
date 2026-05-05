@@ -123,22 +123,20 @@ public class GlobalSearchResource {
 
         List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), effectiveLimit);
 
-        Map<Long, Course> coursesById = resolveCoursesById(rawResults);
-        Map<Long, String> courseNameById = new HashMap<>();
-        coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
-
+        Map<Long, Course> coursesById;
         Set<Long> staffCourseIds;
-        if (authCheckService.isAdmin(user)) {
-            staffCourseIds = coursesById.keySet();
+        if (filterResult.accessibleCoursesById() != null) {
+            // Non-admin (or admin with courseId): reuse courses already fetched during filter building
+            coursesById = filterResult.accessibleCoursesById();
+            staffCourseIds = filterResult.staffCourseIds();
         }
         else {
-            staffCourseIds = new HashSet<>();
-            for (Course course : coursesById.values()) {
-                if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-                    staffCourseIds.add(course.getId());
-                }
-            }
+            // Admin global search: result courses unknown until after query, fetch now
+            coursesById = resolveCoursesById(rawResults);
+            staffCourseIds = coursesById.keySet();
         }
+        Map<Long, String> courseNameById = new HashMap<>();
+        coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
 
         Map<Long, Long> exerciseGroupIdByExerciseId = resolveExerciseGroupIds(rawResults);
         List<GlobalSearchResultDTO> resultDTOs = new ArrayList<>();
@@ -177,7 +175,8 @@ public class GlobalSearchResource {
 
     /**
      * Resolves one {@link Course} per distinct {@code course_id} appearing in the Weaviate results.
-     * Used both for injecting course titles into the response DTO and for computing per-course staff membership.
+     * Only used as fallback for admin-global searches where accessible courses are not pre-fetched
+     * during filter building (the result courses are unknown until after the Weaviate query).
      */
     private Map<Long, Course> resolveCoursesById(List<Map<String, Object>> rawResults) {
         Set<Long> courseIds = new HashSet<>();
@@ -230,8 +229,13 @@ public class GlobalSearchResource {
     /**
      * Compound filter build result. {@code filter} may be {@code null} (admin access: no filter),
      * and {@code hasAccess} may be {@code false} (user has no accessible courses → short-circuit empty).
+     * <p>
+     * {@code accessibleCoursesById} and {@code staffCourseIds} are populated for non-admin paths
+     * (and admin-with-courseId) so the caller can resolve course names and staff membership without
+     * a redundant database round-trip. Both are {@code null} for admin-global (no courseId filter)
+     * searches, where the result courses are unknown until after the Weaviate query.
      */
-    private record FilterBuildResult(Filter filter, boolean hasAccess) {
+    private record FilterBuildResult(Filter filter, boolean hasAccess, Map<Long, Course> accessibleCoursesById, Set<Long> staffCourseIds) {
     }
 
     /**
@@ -245,9 +249,9 @@ public class GlobalSearchResource {
     private FilterBuildResult buildSearchableItemFilter(User user, Long courseId, Set<String> requestedTypes) {
         if (authCheckService.isAdmin(user) && courseId == null) {
             if (!VALID_TYPES.equals(requestedTypes)) {
-                return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true);
+                return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true, null, null);
             }
-            return new FilterBuildResult(null, true);
+            return new FilterBuildResult(null, true, null, null);
         }
 
         List<Course> accessibleCourses;
@@ -259,11 +263,17 @@ public class GlobalSearchResource {
         else {
             accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), false);
             if (accessibleCourses.isEmpty()) {
-                return new FilterBuildResult(null, false);
+                return new FilterBuildResult(null, false, null, null);
             }
         }
 
         CourseRoleSets roleSets = groupCoursesByRole(user, accessibleCourses);
+
+        Map<Long, Course> accessibleCoursesById = new HashMap<>();
+        for (Course course : accessibleCourses) {
+            accessibleCoursesById.put(course.getId(), course);
+        }
+        Set<Long> staffCourseIds = new HashSet<>(roleSets.staffCourseIds());
 
         List<Filter> disjuncts = new ArrayList<>();
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
@@ -304,12 +314,12 @@ public class GlobalSearchResource {
         }
 
         if (disjuncts.isEmpty()) {
-            return new FilterBuildResult(null, false);
+            return new FilterBuildResult(null, false, null, null);
         }
         if (disjuncts.size() == 1) {
-            return new FilterBuildResult(disjuncts.getFirst(), true);
+            return new FilterBuildResult(disjuncts.getFirst(), true, accessibleCoursesById, staffCourseIds);
         }
-        return new FilterBuildResult(Filter.or(disjuncts.toArray(new Filter[0])), true);
+        return new FilterBuildResult(Filter.or(disjuncts.toArray(new Filter[0])), true, accessibleCoursesById, staffCourseIds);
     }
 
     /**
@@ -375,12 +385,12 @@ public class GlobalSearchResource {
             return Filter.or(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false), Filter
                     .and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true), Filter.property(SearchableEntitySchema.Properties.EXAM_END_DATE).lte(now)));
         }
-        // Students: released regular exercises OR exam exercises after exam start
+        // Students: released regular exercises OR exam exercises after exam end (hand-in)
         Filter releasedRegularExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false),
                 Filter.or(Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).lte(now), Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).isNull()));
-        Filter startedExamExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true),
-                Filter.property(SearchableEntitySchema.Properties.EXAM_START_DATE).lte(now));
-        return Filter.or(releasedRegularExercises, startedExamExercises);
+        Filter completedExamExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true),
+                Filter.property(SearchableEntitySchema.Properties.EXAM_END_DATE).lte(now));
+        return Filter.or(releasedRegularExercises, completedExamExercises);
     }
 
     // -- Lecture disjunct --
