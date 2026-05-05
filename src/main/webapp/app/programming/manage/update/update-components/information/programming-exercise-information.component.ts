@@ -327,7 +327,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         }
 
         if (newShortName && newShortName.length > 3) {
-            const sanitizedShortName = removeSpecialCharacters(newShortName ?? '').slice(0, PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH);
+            const sanitizedShortName = removeSpecialCharacters(newShortName).slice(0, PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH);
             // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
             const uniqueShortName = this.ensureShortNameIsUnique(sanitizedShortName);
             this.programmingExercise().shortName = uniqueShortName;
