@@ -5,13 +5,14 @@ import Hls from 'hls.js';
 import interact from 'interactjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 
 @Component({
     selector: 'jhi-video-player',
     standalone: true,
-    imports: [CommonModule, TranscriptViewerComponent, FaIconComponent],
+    imports: [CommonModule, TranscriptViewerComponent, FaIconComponent, ArtemisTranslatePipe],
     templateUrl: './video-player.component.html',
     styleUrls: ['./video-player.component.scss'],
 })
@@ -26,7 +27,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     videoColumn = viewChild<ElementRef<HTMLDivElement>>('videoColumn');
 
     /** Reference to the resizer handle */
-    resizerHandle = viewChild<ElementRef<HTMLDivElement>>('resizerHandle');
+    resizerHandle = viewChild<ElementRef<HTMLButtonElement>>('resizerHandle');
 
     /** The URL of the video to play (required input) */
     videoUrl = input<string | undefined>();
@@ -167,26 +168,37 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                 move: (event) => {
                     const wrapperRect = wrapperEl.getBoundingClientRect();
                     const minWidth = 300;
-                    const maxWidth = wrapperRect.width - 250; // Leave space for transcript
+                    const minTranscriptWidth = 250;
+                    const wrapperWidth = wrapperRect.width;
+
+                    // Skip resize if wrapper is too narrow to accommodate both columns
+                    if (wrapperWidth <= minWidth + minTranscriptWidth) {
+                        return;
+                    }
+
+                    const maxWidth = wrapperWidth - minTranscriptWidth; // Leave space for transcript
 
                     // Calculate new width based on drag position
                     const newWidth = event.clientX - wrapperRect.left;
                     const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
 
-                    // Set video column width and disable flex
-                    videoColumnEl.style.flex = 'none';
-                    videoColumnEl.style.width = `${clampedWidth}px`;
+                    // Calculate percentage for flex-basis (allows natural scaling on resize)
+                    const flexBasisPercent = Math.min((clampedWidth / wrapperWidth) * 100, 100);
+
+                    // Use percentage-based flex-basis so layout naturally follows container resizes
+                    videoColumnEl.style.flex = `0 0 ${flexBasisPercent}%`;
+                    videoColumnEl.style.width = '';
                     // ResizeObserver will automatically sync transcript height
                 },
             },
             cursorChecker: () => 'col-resize',
         });
 
-        // Reset to default flex layout on window resize to prevent overflow
+        // On window resize, sync transcript height (percentage-based flex scales automatically)
         this.resizeHandler = () => {
-            videoColumnEl.style.flex = '';
-            videoColumnEl.style.width = '';
-            // ResizeObserver will automatically sync transcript height
+            if (wrapperEl && videoColumnEl) {
+                this.syncTranscriptHeight();
+            }
         };
         window.addEventListener('resize', this.resizeHandler);
 
@@ -195,6 +207,18 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             this.syncTranscriptHeight();
         });
         this.resizeObserver.observe(videoColumnEl);
+    }
+
+    /**
+     * Resets the video/transcript split ratio to default layout.
+     * Can be triggered by double-clicking the resizer handle.
+     */
+    resetSplitRatio(): void {
+        const videoColumnEl = this.videoColumn()?.nativeElement;
+        if (videoColumnEl) {
+            videoColumnEl.style.flex = '';
+            videoColumnEl.style.width = '';
+        }
     }
 
     /**

@@ -3,6 +3,8 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizAiGenerationService } from './quiz-ai-generation.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
@@ -14,7 +16,7 @@ describe('QuizAiGenerationService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }],
         });
         service = TestBed.inject(QuizAiGenerationService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -50,7 +52,7 @@ describe('QuizAiGenerationService', () => {
 
     function flushRefineResponse(req: ReturnType<HttpTestingController['expectOne']>, type: 'single-choice' | 'multiple-choice', optionCount: number): void {
         const options = Array.from({ length: optionCount }, (_, i) => ({ text: `Option ${i}`, correct: i === 0 }));
-        req.flush({ question: { type, title: 'A Question', questionText: 'Some question text?', options }, reasoning: 'Some explanation.' });
+        req.flush({ type: 'success', question: { type, title: 'A Question', questionText: 'Some question text?', options }, reasoning: 'Some explanation.' });
     }
 
     describe('refineMultipleChoiceQuestion', () => {
@@ -95,6 +97,7 @@ describe('QuizAiGenerationService', () => {
 
             const req = expectRefineRequest(1);
             req.flush({
+                type: 'success',
                 question: {
                     type: 'multiple-choice',
                     title: 'Refined Title',
@@ -130,6 +133,188 @@ describe('QuizAiGenerationService', () => {
             const req = expectRefineRequest(1);
             expect(req.request.body.question.title).toBe('Untitled Question');
             flushRefineResponse(req, 'single-choice', 2);
+        });
+
+        it('should throw an error when the response type is not success', () => {
+            const question = buildMultipleChoiceQuestion(false);
+            let error: Error | undefined;
+
+            service.refineMultipleChoiceQuestion(1, question, 'improve').subscribe({
+                error: (e) => (error = e),
+            });
+
+            const req = expectRefineRequest(1);
+            req.flush({ type: 'failure', error: 'LLM error' });
+
+            expect(error).toBeDefined();
+            expect(error!.message).toBe('artemisApp.quizExercise.aiGeneration.refinement.errors.failed');
+        });
+    });
+
+    describe('refineAllMultipleChoiceQuestions', () => {
+        function expectBulkRefineRequest(courseId: number): ReturnType<HttpTestingController['expectOne']> {
+            return httpMock.expectOne((r) => r.method === 'POST' && r.url.includes(`courses/${courseId}/quiz-exercises/refine-all-questions`));
+        }
+
+        function flushBulkRefineResponse(req: ReturnType<HttpTestingController['expectOne']>, count: number): void {
+            const refinements = Array.from({ length: count }, (_, i) => ({
+                type: 'success',
+                question: { type: 'single-choice', title: `Refined Q${i}`, questionText: `Refined text ${i}?`, options: [{ text: 'A', correct: true }] },
+                reasoning: `Reasoning ${i}`,
+            }));
+            req.flush({ refinements });
+        }
+
+        it('should send all questions and the shared refinement prompt in a single request', () => {
+            const q1 = buildMultipleChoiceQuestion(true);
+            const q2 = buildMultipleChoiceQuestion(false);
+            service.refineAllMultipleChoiceQuestions(1, [q1, q2], 'Make harder').subscribe();
+
+            const req = expectBulkRefineRequest(1);
+            expect(req.request.body.refinementPrompt).toBe('Make harder');
+            expect(req.request.body.questions).toHaveLength(2);
+            expect(req.request.body.questions[0].type).toBe('single-choice');
+            expect(req.request.body.questions[1].type).toBe('multiple-choice');
+            flushBulkRefineResponse(req, 2);
+        });
+
+        it('should map question fields correctly for each question in the bulk request', () => {
+            const q = buildMultipleChoiceQuestion(false);
+            service.refineAllMultipleChoiceQuestions(42, [q], 'improve').subscribe();
+
+            const req = expectBulkRefineRequest(42);
+            const sent = req.request.body.questions[0];
+            expect(sent.title).toBe('HTTP Methods');
+            expect(sent.questionText).toBe('What is a REST method?');
+            expect(sent.hint).toBe('Think about REST');
+            expect(sent.options).toHaveLength(2);
+            expect(sent.options[0].correct).toBe(true);
+            expect(sent.options[1].correct).toBe(false);
+            flushBulkRefineResponse(req, 1);
+        });
+
+        it('should fall back to "Untitled Question" for questions with missing titles', () => {
+            const q = buildMultipleChoiceQuestion(true);
+            q.title = undefined;
+            service.refineAllMultipleChoiceQuestions(1, [q], 'improve').subscribe();
+
+            const req = expectBulkRefineRequest(1);
+            expect(req.request.body.questions[0].title).toBe('Untitled Question');
+            flushBulkRefineResponse(req, 1);
+        });
+
+        it('should return refined questions and reasonings in the same order as the input', () => {
+            const q1 = buildMultipleChoiceQuestion(true);
+            q1.title = 'Q1';
+            const q2 = buildMultipleChoiceQuestion(false);
+            q2.title = 'Q2';
+            let results: Map<MultipleChoiceQuestion, string> | undefined;
+
+            service.refineAllMultipleChoiceQuestions(1, [q1, q2], 'improve').subscribe((r) => (results = r));
+
+            const req = expectBulkRefineRequest(1);
+            req.flush({
+                refinements: [
+                    {
+                        type: 'success',
+                        question: { type: 'single-choice', title: 'Refined Q1', questionText: 'Refined text 1?', options: [{ text: 'A', correct: true }] },
+                        reasoning: 'Reasoning 1',
+                    },
+                    {
+                        type: 'success',
+                        question: {
+                            type: 'multiple-choice',
+                            title: 'Refined Q2',
+                            questionText: 'Refined text 2?',
+                            options: [
+                                { text: 'B', correct: false },
+                                { text: 'C', correct: true },
+                            ],
+                        },
+                        reasoning: 'Reasoning 2',
+                    },
+                ],
+            });
+
+            expect(results!.size).toBe(2);
+            expect(q1.title).toBe('Refined Q1');
+            expect(results!.get(q1)).toBe('Reasoning 1');
+            expect(q2.title).toBe('Refined Q2');
+            expect(results!.get(q2)).toBe('Reasoning 2');
+        });
+
+        it('should omit failed refinements and only return successful ones', () => {
+            const q1 = buildMultipleChoiceQuestion(true);
+            q1.title = 'Q1';
+            const q2 = buildMultipleChoiceQuestion(false);
+            q2.title = 'Q2';
+            const q3 = buildMultipleChoiceQuestion(true);
+            q3.title = 'Q3';
+            let results: Map<MultipleChoiceQuestion, string> | undefined;
+
+            service.refineAllMultipleChoiceQuestions(1, [q1, q2, q3], 'improve').subscribe((r) => (results = r));
+
+            const req = expectBulkRefineRequest(1);
+            req.flush({
+                refinements: [
+                    {
+                        type: 'success',
+                        question: { type: 'single-choice', title: 'Refined Q1', questionText: 'Refined text 1?', options: [{ text: 'A', correct: true }] },
+                        reasoning: 'Reasoning 1',
+                    },
+                    { type: 'failure', error: 'LLM Error' },
+                    {
+                        type: 'success',
+                        question: { type: 'single-choice', title: 'Refined Q3', questionText: 'Refined text 3?', options: [{ text: 'A', correct: true }] },
+                        reasoning: 'Reasoning 3',
+                    },
+                ],
+            });
+
+            expect(results!.size).toBe(2);
+            expect(results!.has(q1)).toBe(true);
+            expect(results!.has(q2)).toBe(false);
+            expect(results!.has(q3)).toBe(true);
+            expect(results!.get(q1)).toBe('Reasoning 1');
+            expect(results!.get(q3)).toBe('Reasoning 3');
+            expect(q2.title).toBe('Q2');
+        });
+
+        it('should apply refined answer options back to the original question objects', () => {
+            const q = buildMultipleChoiceQuestion(false);
+            let result: Map<MultipleChoiceQuestion, string> | undefined;
+
+            service.refineAllMultipleChoiceQuestions(1, [q], 'improve').subscribe((r) => (result = r));
+
+            const req = expectBulkRefineRequest(1);
+            req.flush({
+                refinements: [
+                    {
+                        type: 'success',
+                        question: {
+                            type: 'multiple-choice',
+                            title: 'New Title',
+                            questionText: 'New text?',
+                            hint: 'New hint',
+                            options: [
+                                { text: 'Opt A', correct: true, hint: 'h', explanation: 'e' },
+                                { text: 'Opt B', correct: false },
+                            ],
+                        },
+                        reasoning: 'Some reasoning.',
+                    },
+                ],
+            });
+
+            expect(result!.get(q)).toBe('Some reasoning.');
+            expect(q.title).toBe('New Title');
+            expect(q.text).toBe('New text?');
+            expect(q.hint).toBe('New hint');
+            expect(q.answerOptions).toHaveLength(2);
+            expect(q.answerOptions![0].isCorrect).toBe(true);
+            expect(q.answerOptions![0].hint).toBe('h');
+            expect(q.answerOptions![1].isCorrect).toBe(false);
+            expect(q.hasCorrectOption).toBe(true);
         });
     });
 });
