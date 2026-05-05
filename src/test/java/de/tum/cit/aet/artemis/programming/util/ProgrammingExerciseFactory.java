@@ -214,7 +214,7 @@ public class ProgrammingExerciseFactory {
                 {
                     "phases": [
                         {
-                            "name": "import exercise",
+                            "name": "import_exercise",
                             "script": "echo hello",
                             "forceRun": false,
                             "resultPaths": ["somepath"]

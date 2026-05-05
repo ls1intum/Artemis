@@ -33,7 +33,7 @@ public record BuildPlanPhasesDTO(List<@Valid BuildPhaseDTO> phases, String docke
      * @param buildPlanConfiguration the JSON string to check
      * @return true if valid else false
      */
-    public static boolean isInPhasesFormat(String buildPlanConfiguration) {
+    public static boolean isInPhasesFormatOrNull(String buildPlanConfiguration) {
         if (buildPlanConfiguration == null) {
             return true;
         }

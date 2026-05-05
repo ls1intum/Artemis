@@ -49,8 +49,8 @@ public class BuildPhasesTemplateResource {
     }
 
     /**
-     * GET /api/programming/phases/templates/:language/:projectType : Get the build phases template file with the given filename<br/>
-     * GET /api/programming/phases/templates/:language : Get the build phases template file with the given filename
+     * GET /api/programming/phases/templates/:language/:projectType : Get the build phases template for the given programming language and project type<br/>
+     * GET /api/programming/phases/templates/:language : Get the build phases template for the given programming language
      * <p>
      * The build plan phases contain the default build plan configuration for new programming exercises.
      *

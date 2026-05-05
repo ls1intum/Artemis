@@ -245,6 +245,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
             return Optional.of(phases);
         }
         catch (JsonProcessingException e) {
+            log.warn("Could not parse build plan phases for programming exercise {}", getId(), e);
             return Optional.empty();
         }
     }

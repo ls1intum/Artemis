@@ -19,11 +19,7 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * In legacy LOCALCI exercises the buildPlanConfiguration was used only for the docker image and the result paths.
- * A single phase can be constructed from the legacy buildScript.
- * <p>
- * dockerImage + result paths from buildPlanConfiguration + buildScript
- * --> buildPlanConfiguration in new format
+ * The purpose of this service is to directly extract the data for a trigger of unedited legacy exercises.
  */
 @Lazy
 @Service

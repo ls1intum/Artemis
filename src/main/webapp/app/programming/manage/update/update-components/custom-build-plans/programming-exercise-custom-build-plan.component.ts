@@ -47,14 +47,10 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
         const buildConfig = this.programmingExercise.buildConfig;
         const configJson = buildConfig?.buildPlanConfiguration;
         if (configJson) {
-            try {
-                const parsed = parseBuildPlanPhases(configJson);
-                if (parsed?.phases?.length) {
-                    this.buildPlanPhases = parsed as BuildPlanPhases;
-                    return;
-                }
-            } catch {
-                // handled by legacy fallback below
+            const parsed = parseBuildPlanPhases(configJson);
+            if (parsed?.phases?.length) {
+                this.buildPlanPhases = parsed as BuildPlanPhases;
+                return;
             }
         }
 

@@ -299,7 +299,7 @@ public class ProgrammingExerciseValidationService {
 
         List<BuildPhaseDTO> phases = programmingExercise.getBuildConfig().getBuildPlanPhases().map(BuildPlanPhasesDTO::phases).orElse(null);
         if (phases == null) {
-            return;
+            return; // default will be used when saving
         }
 
         if (phases.isEmpty()) {

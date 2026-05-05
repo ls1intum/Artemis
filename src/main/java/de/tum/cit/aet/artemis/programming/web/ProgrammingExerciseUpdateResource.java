@@ -419,7 +419,7 @@ public class ProgrammingExerciseUpdateResource {
             buildConfig.setSequentialTestRuns(dto.sequentialTestRuns());
         }
         // Note: branch is preserved from original (immutable during update)
-        if (dto.buildPlanConfiguration() != null && BuildPlanPhasesDTO.isInPhasesFormat(dto.buildPlanConfiguration())) {
+        if (dto.buildPlanConfiguration() != null && BuildPlanPhasesDTO.isInPhasesFormatOrNull(dto.buildPlanConfiguration())) {
             buildConfig.setBuildPlanConfiguration(dto.buildPlanConfiguration());
             buildConfig.setBuildScript(null);
         }

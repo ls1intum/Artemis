@@ -155,7 +155,7 @@ public class ProgrammingExerciseImportBasicService {
             // exercise and want to reuse it from the existing exercise
             newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
         }
-        if (!BuildPlanPhasesDTO.isInPhasesFormat(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())
+        if (!BuildPlanPhasesDTO.isInPhasesFormatOrNull(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())
                 && newProgrammingExercise.getBuildConfig().getBuildScript() == null) {
             newProgrammingExercise.getBuildConfig().setBuildScript(originalProgrammingExercise.getBuildConfig().getBuildScript());
         }

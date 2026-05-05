@@ -144,7 +144,7 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
         ? {
               sequentialTestRuns: exercise.buildConfig.sequentialTestRuns,
               buildPlanConfiguration: exercise.buildConfig.buildPlanConfiguration,
-              buildScript: undefined,
+              buildScript: undefined, // legacy buildScript is now read-only via the editor and only nulled on conversion
               checkoutSolutionRepository: exercise.buildConfig.checkoutSolutionRepository ?? false,
               testCheckoutPath: exercise.buildConfig.testCheckoutPath,
               assignmentCheckoutPath: exercise.buildConfig.assignmentCheckoutPath,

@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 import { BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 
+/**
+ * The purpose of this service is to transform the legacy build plan into the new format so it can still be edited
+ * with the new editor.
+ */
 @Injectable({ providedIn: 'root' })
 export class LegacyBuildPlanConverterService {
     private static readonly LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY = '/var/tmp';
@@ -94,9 +98,10 @@ export class LegacyBuildPlanConverterService {
     }
 
     private wrapLegacyBuildScript(script: string, resultPaths: string[]): BuildPhase[] {
-        const wrappedScript = `cd ${LegacyBuildPlanConverterService.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY}/testing-dir
+        const wrappedScript = `# feel free to remove the code surrounding your script and split your script into multiple phases
+cd ${LegacyBuildPlanConverterService.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY}/testing-dir
 local tmp_file=$(mktemp)
-cat << '  __LEGACY_INNER_SCRIPT_END__' > "\${tmp_file}"
+cat << '  __LEGACY_INNER_SCRIPT_END__' > "\${tmp_file}"  # two leading spaces are intentional as the final script will indented be for a phase
 ${script}
 __LEGACY_INNER_SCRIPT_END__
 chmod +x "\${tmp_file}"
