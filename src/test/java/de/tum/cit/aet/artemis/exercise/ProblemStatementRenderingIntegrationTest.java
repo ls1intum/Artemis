@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.exercise.dto.ImageMode;
 import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequestDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
@@ -490,5 +491,65 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         assertThat(result1.rendererVersion()).isEqualTo("1.0.0");
         assertThat(result2.rendererVersion()).isEqualTo(result1.rendererVersion());
+    }
+
+    // --- Image modes ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldLeaveAbsoluteUrlsInUrlMode() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/test.png)", null, null, "en", false, false, null, ImageMode.URL);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("/api/core/files/markdown/test.png");
+        assertThat(result.images()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldDefaultToInlineMode() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("# Hello", null, null, "en", false, false, null, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.images()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnEmptyImagesMapInAttachedModeWithNoImages() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("# No images here", null, null, "en", false, false, null, ImageMode.ATTACHED);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.images()).isNotNull().isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldProduceDifferentHashesForDifferentModes() throws Exception {
+        var inlineBody = new ProblemStatementRenderRequestDTO("# Hello", null, null, "en", false, false, null, ImageMode.INLINE);
+        var urlBody = new ProblemStatementRenderRequestDTO("# Hello", null, null, "en", false, false, null, ImageMode.URL);
+        var attachedBody = new ProblemStatementRenderRequestDTO("# Hello", null, null, "en", false, false, null, ImageMode.ATTACHED);
+
+        RenderedProblemStatementDTO inlineResult = request.postWithResponseBody(POST_URL, inlineBody, RenderedProblemStatementDTO.class, HttpStatus.OK);
+        RenderedProblemStatementDTO urlResult = request.postWithResponseBody(POST_URL, urlBody, RenderedProblemStatementDTO.class, HttpStatus.OK);
+        RenderedProblemStatementDTO attachedResult = request.postWithResponseBody(POST_URL, attachedBody, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(inlineResult.contentHash()).isNotEqualTo(urlResult.contentHash());
+        assertThat(inlineResult.contentHash()).isNotEqualTo(attachedResult.contentHash());
+        assertThat(urlResult.contentHash()).isNotEqualTo(attachedResult.contentHash());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldLeaveOriginalUrlForUnresolvableImageInAttachedMode() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/nonexistent.png)", null, null, "en", false, false, null, ImageMode.ATTACHED);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("/api/core/files/markdown/nonexistent.png");
+        assertThat(result.images()).isNotNull().isEmpty();
     }
 }
