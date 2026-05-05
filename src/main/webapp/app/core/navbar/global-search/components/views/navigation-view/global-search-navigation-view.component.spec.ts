@@ -213,6 +213,25 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'exercises', '1']);
             });
 
+            it('should navigate to course-management for exam exercise when user is at least tutor', () => {
+                component['navigateToResult']({
+                    type: 'exercise',
+                    id: '42',
+                    badge: 'Programming',
+                    metadata: { courseId: 10, examId: 5, exerciseGroupId: 3, isAtLeastTutor: true },
+                } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', 5, 'exercise-groups', 3, 'programming-exercises', '42']);
+            });
+
+            it('should navigate to student exercise route for exam exercise when user is a student', () => {
+                component['navigateToResult']({
+                    type: 'exercise',
+                    id: '42',
+                    metadata: { courseId: 10, examId: 5, exerciseGroupId: 3 },
+                } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'exercises', '42']);
+            });
+
             it('should navigate to lecture', () => {
                 component['navigateToResult']({ type: 'lecture', id: '2', metadata: { courseId: 10 } } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'lectures', '2']);

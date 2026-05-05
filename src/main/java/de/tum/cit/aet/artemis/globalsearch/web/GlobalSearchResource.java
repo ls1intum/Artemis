@@ -123,11 +123,27 @@ public class GlobalSearchResource {
 
         List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), effectiveLimit);
 
-        Map<Long, String> courseNameById = resolveCourseNames(rawResults);
+        Map<Long, Course> coursesById = resolveCoursesById(rawResults);
+        Map<Long, String> courseNameById = new HashMap<>();
+        coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
+
+        Set<Long> staffCourseIds;
+        if (authCheckService.isAdmin(user)) {
+            staffCourseIds = coursesById.keySet();
+        }
+        else {
+            staffCourseIds = new HashSet<>();
+            for (Course course : coursesById.values()) {
+                if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+                    staffCourseIds.add(course.getId());
+                }
+            }
+        }
+
         Map<Long, Long> exerciseGroupIdByExerciseId = resolveExerciseGroupIds(rawResults);
         List<GlobalSearchResultDTO> resultDTOs = new ArrayList<>();
         for (Map<String, Object> properties : rawResults) {
-            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById, exerciseGroupIdByExerciseId);
+            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds);
             if (dto != null) {
                 resultDTOs.add(dto);
             }
@@ -160,10 +176,10 @@ public class GlobalSearchResource {
     }
 
     /**
-     * Resolves one row per distinct {@code course_id} appearing in the Weaviate results so course
-     * titles can be injected into the response DTO without denormalizing course names into Weaviate.
+     * Resolves one {@link Course} per distinct {@code course_id} appearing in the Weaviate results.
+     * Used both for injecting course titles into the response DTO and for computing per-course staff membership.
      */
-    private Map<Long, String> resolveCourseNames(List<Map<String, Object>> rawResults) {
+    private Map<Long, Course> resolveCoursesById(List<Map<String, Object>> rawResults) {
         Set<Long> courseIds = new HashSet<>();
         for (Map<String, Object> properties : rawResults) {
             Object raw = properties.get(SearchableEntitySchema.Properties.COURSE_ID);
@@ -174,9 +190,9 @@ public class GlobalSearchResource {
         if (courseIds.isEmpty()) {
             return Map.of();
         }
-        Map<Long, String> courseNames = new HashMap<>();
-        courseRepository.findAllById(courseIds).forEach(course -> courseNames.put(course.getId(), course.getTitle()));
-        return courseNames;
+        Map<Long, Course> result = new HashMap<>();
+        courseRepository.findAllById(courseIds).forEach(course -> result.put(course.getId(), course));
+        return result;
     }
 
     /**

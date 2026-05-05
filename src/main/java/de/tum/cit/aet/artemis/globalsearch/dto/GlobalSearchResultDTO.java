@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.globalsearch.dto;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -34,14 +35,14 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
      *                           one {@code courseRepository.findAllById(...)} lookup per search request
      * @return the unified search result DTO, or {@code null} if the type discriminator is missing or unknown
      */
-    public static GlobalSearchResultDTO fromSearchableItemProperties(Map<String, Object> properties, Map<Long, String> courseNameById,
-            Map<Long, Long> exerciseGroupIdByExerciseId) {
+    public static GlobalSearchResultDTO fromSearchableItemProperties(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, Long> exerciseGroupIdByExerciseId,
+            Set<Long> staffCourseIds) {
         String type = getString(properties, SearchableEntitySchema.Properties.TYPE);
         if (type == null) {
             return null;
         }
         return switch (type) {
-            case SearchableEntitySchema.TypeValues.EXERCISE -> fromExerciseRow(properties, courseNameById, exerciseGroupIdByExerciseId);
+            case SearchableEntitySchema.TypeValues.EXERCISE -> fromExerciseRow(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds);
             case SearchableEntitySchema.TypeValues.LECTURE -> fromLectureRow(properties, courseNameById);
             case SearchableEntitySchema.TypeValues.LECTURE_UNIT -> fromLectureUnitRow(properties, courseNameById);
             case SearchableEntitySchema.TypeValues.EXAM -> fromExamRow(properties, courseNameById);
@@ -51,7 +52,8 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         };
     }
 
-    private static GlobalSearchResultDTO fromExerciseRow(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, Long> exerciseGroupIdByExerciseId) {
+    private static GlobalSearchResultDTO fromExerciseRow(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, Long> exerciseGroupIdByExerciseId,
+            Set<Long> staffCourseIds) {
         String exerciseType = getString(properties, SearchableEntitySchema.Properties.EXERCISE_TYPE);
         String badge = formatExerciseTypeBadge(exerciseType);
         String title = getString(properties, SearchableEntitySchema.Properties.TITLE);
@@ -70,6 +72,10 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
             Long exerciseId = getLong(properties, SearchableEntitySchema.Properties.ENTITY_ID);
             Long exerciseGroupId = exerciseId != null ? exerciseGroupIdByExerciseId.get(exerciseId) : null;
             putIfNotNull(metadata, "exerciseGroupId", exerciseGroupId);
+            Long courseId = getLong(properties, SearchableEntitySchema.Properties.COURSE_ID);
+            if (courseId != null && staffCourseIds.contains(courseId)) {
+                metadata.put("isAtLeastTutor", true);
+            }
         }
 
         if (ExerciseType.PROGRAMMING.getValue().equals(exerciseType)) {
