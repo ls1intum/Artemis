@@ -18,7 +18,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -47,7 +46,6 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.dto.ImageMode;
-import de.tum.cit.aet.artemis.exercise.dto.RenderedImageDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
@@ -212,15 +210,15 @@ public class ProblemStatementRenderingService {
         String html = renderWithCommonMark(processed);
 
         // 7b. Process images based on requested mode.
-        Map<String, RenderedImageDTO> images = null;
+        List<AttachedImage> attachedImages = List.of();
         switch (imageMode) {
             case INLINE -> html = inlineMarkdownImages(html);
             case URL -> {
                 /* no-op: absolute URLs from MarkdownRelativeToAbsolutePathAttributeProvider stay as-is */ }
             case ATTACHED -> {
-                var result = separateMarkdownImages(html);
-                html = result.html();
-                images = result.images();
+                var separated = separateMarkdownImages(html);
+                html = separated.html();
+                attachedImages = separated.images();
             }
         }
 
@@ -255,14 +253,14 @@ public class ProblemStatementRenderingService {
         }
 
         String interactiveScript = includeJs ? buildLocalizedScript(locale) : null;
-        String contentHash = computeContentHash(html, interactiveScript, imageMode, images);
+        String contentHash = computeContentHash(html, interactiveScript, imageMode, attachedImages);
 
         String bodyClass = " class=\"artemis-ssr-body" + (darkMode ? " artemis-ssr-body--dark" : "") + "\"";
         String document = "<!DOCTYPE html><html lang=\"" + HtmlEscaper.escapeAttribute(locale.toLanguageTag()) + "\"><head><meta charset=\"UTF-8\">"
                 + "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body" + bodyClass + ">" + html
                 + (interactiveScript != null ? "<script>" + interactiveScript + "</script>" : "") + "</body></html>";
 
-        return new RenderResult(new RenderedProblemStatementDTO(document, contentHash, RENDERER_VERSION, interactiveScript, images), List.of());
+        return new RenderResult(new RenderedProblemStatementDTO(document, contentHash, RENDERER_VERSION, interactiveScript, null), attachedImages);
     }
 
     private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean darkMode) {
@@ -561,14 +559,14 @@ public class ProblemStatementRenderingService {
         return doc.body().html();
     }
 
-    private record SeparatedImagesResult(String html, Map<String, RenderedImageDTO> images) {
+    private record SeparatedImagesResult(String html, List<AttachedImage> images) {
     }
 
     private SeparatedImagesResult separateMarkdownImages(String html) {
         var doc = Jsoup.parseBodyFragment(html);
         var imgElements = doc.select("img[src]");
         if (imgElements.isEmpty()) {
-            return new SeparatedImagesResult(html, Map.of());
+            return new SeparatedImagesResult(html, List.of());
         }
 
         Path basePath = FilePathConverter.getMarkdownFilePath();
@@ -577,10 +575,10 @@ public class ProblemStatementRenderingService {
             baseReal = basePath.toRealPath();
         }
         catch (IOException e) {
-            return new SeparatedImagesResult(html, Map.of());
+            return new SeparatedImagesResult(html, List.of());
         }
 
-        var images = new LinkedHashMap<String, RenderedImageDTO>();
+        var images = new ArrayList<AttachedImage>();
         var pathToId = new HashMap<Path, String>();
         int imageIndex = 0;
         long emittedBytes = 0;
@@ -613,9 +611,8 @@ public class ProblemStatementRenderingService {
                     continue;
                 }
 
-                String contentId = "img-" + imageIndex;
-                String base64 = Base64.getEncoder().encodeToString(bytes);
-                images.put(contentId, new RenderedImageDTO(resolved.mime(), base64, resolved.filename()));
+                String contentId = "img-" + imageIndex + "@artemis";
+                images.add(new AttachedImage(contentId, resolved.mime(), resolved.filename(), bytes));
                 pathToId.put(resolved.realPath(), contentId);
                 img.attr("src", "cid:" + contentId);
                 emittedBytes += bytes.length;
@@ -665,9 +662,11 @@ public class ProblemStatementRenderingService {
         return safelist;
     }
 
-    private String computeContentHash(String html, @Nullable String interactiveScript, ImageMode imageMode, @Nullable Map<String, RenderedImageDTO> images) {
+    private String computeContentHash(String html, @Nullable String interactiveScript, ImageMode imageMode, List<AttachedImage> attachedImages) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(RENDERER_VERSION.getBytes(StandardCharsets.UTF_8));
+            digest.update((byte) 0);
             digest.update(html.getBytes(StandardCharsets.UTF_8));
             digest.update((byte) 0);
             if (interactiveScript != null) {
@@ -676,18 +675,15 @@ public class ProblemStatementRenderingService {
             digest.update((byte) 0);
             digest.update(imageMode.name().getBytes(StandardCharsets.UTF_8));
             digest.update((byte) 0);
-            if (images != null) {
-                for (var entry : new TreeMap<>(images).entrySet()) {
-                    digest.update(entry.getKey().getBytes(StandardCharsets.UTF_8));
-                    digest.update((byte) 0);
-                    RenderedImageDTO img = entry.getValue();
-                    digest.update(img.contentType().getBytes(StandardCharsets.UTF_8));
-                    digest.update((byte) 0);
-                    digest.update(img.base64().getBytes(StandardCharsets.UTF_8));
-                    digest.update((byte) 0);
-                    digest.update(img.filename().getBytes(StandardCharsets.UTF_8));
-                    digest.update((byte) 0);
-                }
+            for (AttachedImage img : attachedImages) {
+                digest.update(img.contentId().getBytes(StandardCharsets.UTF_8));
+                digest.update((byte) 0);
+                digest.update(img.contentType().getBytes(StandardCharsets.UTF_8));
+                digest.update((byte) 0);
+                digest.update(img.data());
+                digest.update((byte) 0);
+                digest.update(img.filename().getBytes(StandardCharsets.UTF_8));
+                digest.update((byte) 0);
             }
             return HexFormat.of().formatHex(digest.digest());
         }
