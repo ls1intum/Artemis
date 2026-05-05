@@ -12,8 +12,11 @@ import { SubmissionType } from 'app/exercise/shared/entities/submission/submissi
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { NgClass } from '@angular/common';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/overview/summary/exercises/header/exam-result-summary-exercise-card-header.component';
 import { ResultSummaryExerciseInfo } from 'app/exam/overview/summary/exam-result-summary.component';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 let fixture: ComponentFixture<ExamResultSummaryExerciseCardHeaderComponent>;
 let component: ExamResultSummaryExerciseCardHeaderComponent;
@@ -42,22 +45,27 @@ const programmingExercise = {
 } as ProgrammingExercise;
 
 describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            declarations: [ExamResultSummaryExerciseCardHeaderComponent, MockComponent(FaIconComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
+    setupTestBed({ zoneless: true });
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExamResultSummaryExerciseCardHeaderComponent],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExamResultSummaryExerciseCardHeaderComponent);
-                component = fixture.componentInstance;
-                component.index = 3;
-                component.exercise = programmingExercise;
-                component.exerciseInfo = { isCollapsed: false } as ResultSummaryExerciseInfo;
-            });
+            .overrideComponent(ExamResultSummaryExerciseCardHeaderComponent, {
+                set: {
+                    imports: [MockComponent(FaIconComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), NgClass],
+                },
+            })
+            .compileComponents();
+        fixture = TestBed.createComponent(ExamResultSummaryExerciseCardHeaderComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('index', 3);
+        fixture.componentRef.setInput('exercise', programmingExercise);
+        fixture.componentRef.setInput('exerciseInfo', { isCollapsed: false } as ResultSummaryExerciseInfo);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it.each([
@@ -70,7 +78,7 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
         [{ studentParticipations: [{ submissions: undefined }] }, false],
         [{ studentParticipations: [{ submissions: [{ type: SubmissionType.MANUAL }] }] }, false],
     ])('should handle missing/empty fields correctly for %o when displaying submission badge', (exercise, shouldBeNonNull) => {
-        component.exercise = exercise as Exercise;
+        fixture.componentRef.setInput('exercise', exercise as Exercise);
 
         fixture.detectChanges();
         const span = fixture.debugElement.query(By.css('.badge.bg-danger'));
@@ -85,7 +93,7 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
         fixture.detectChanges();
 
         const exerciseTitleElement: HTMLElement = fixture.nativeElement.querySelector('#exercise-group-title-' + programmingExercise.id);
-        expect(exerciseTitleElement.textContent).toContain('#' + (component.index + 1));
+        expect(exerciseTitleElement.textContent).toContain('#' + (component.index() + 1));
         expect(exerciseTitleElement.textContent).toContain(programmingExercise.exerciseGroup?.title);
     });
 });

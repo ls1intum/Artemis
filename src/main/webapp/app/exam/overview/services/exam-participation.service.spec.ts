@@ -20,7 +20,11 @@ import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/manage/exam-sco
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
 
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('ExamParticipationService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ExamParticipationService;
     let httpMock: HttpTestingController;
     let exam: Exam;
@@ -48,7 +52,7 @@ describe('ExamParticipationService', () => {
         service
             .loadStudentExamWithExercisesForConduction(1, 1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -59,7 +63,7 @@ describe('ExamParticipationService', () => {
         service
             .loadStudentExamWithExercisesForConduction(1, 1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -70,7 +74,7 @@ describe('ExamParticipationService', () => {
         service
             .loadStudentExamWithExercisesForSummary(1, 1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
@@ -90,7 +94,7 @@ describe('ExamParticipationService', () => {
         service
             .loadStudentExamGradeInfoForSummary(1, 1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExamWithGrade }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
@@ -116,7 +120,7 @@ describe('ExamParticipationService', () => {
         service
             .getOwnStudentExam(1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -143,7 +147,7 @@ describe('ExamParticipationService', () => {
         service
             .getOwnStudentExam(1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -170,7 +174,7 @@ describe('ExamParticipationService', () => {
         service
             .loadStudentExamWithExercisesForConduction(1, 1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -193,13 +197,17 @@ describe('ExamParticipationService', () => {
             exercises: [exercise],
             exam: examToSend,
         });
+        let received: void | null = undefined;
         service
             .submitStudentExam(2, 2, returnedFromService)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
+            .subscribe((resp) => {
+                received = resp;
+            });
 
         const req = httpMock.expectOne({ method: 'POST' });
-        req.flush(returnedFromService);
+        req.flush(null);
+        expect(received).toBeNull();
     });
 
     it('should update a QuizSubmission', async () => {
@@ -208,7 +216,7 @@ describe('ExamParticipationService', () => {
         service
             .updateQuizSubmission(1, expected)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+            .subscribe((resp) => expect(resp).toMatchObject(expected));
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
@@ -220,7 +228,7 @@ describe('ExamParticipationService', () => {
         service
             .loadTestRunWithExercisesForConduction(1, 1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+            .subscribe((resp) => expect(resp).toMatchObject(expected));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -228,7 +236,7 @@ describe('ExamParticipationService', () => {
 
     it('save examSessionToken to sessionStorage', async () => {
         service.saveExamSessionTokenToSessionStorage('token1');
-        jest.spyOn(sessionStorage, 'setItem').mockImplementation(() => {
+        vi.spyOn(sessionStorage, 'setItem').mockImplementation(() => {
             expect(sessionStorage['ExamSessionToken']).toBe('token1');
         });
     });
@@ -244,36 +252,40 @@ describe('ExamParticipationService', () => {
     });
 
     it('should load a List of StudentExams for a user and course', async () => {
-        const returnedFromService = Object.assign({}, [studentExam]);
+        const returnedFromService = [studentExam];
         service
             .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: [studentExam] }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
 
     it('should submit a StudentExam successfully', async () => {
         const studentExamCopy = Object.assign({}, studentExam);
+        let received: void | null = undefined;
         service
             .submitStudentExam(1, 1, studentExamCopy)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toBeUndefined());
+            .subscribe((resp) => {
+                received = resp;
+            });
 
         const req = httpMock.expectOne({ method: 'POST' });
         expect(req.request.url).toBe('api/exam/courses/1/exams/1/student-exams/submit');
         req.flush(null);
+        expect(received).toBeNull();
     });
     it('should fetch sidebar data successfully', async () => {
         const returnedFromService = [studentExam];
-        service.getRealExamSidebarData(1).subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
+        service.getRealExamSidebarData(1).subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
 
     it('should throw error if submission is not in time', async () => {
-        const errorHeaders = new HttpHeaders({ 'x-null-error': 'submissionNotInTime' });
+        const errorHeaders = new HttpHeaders({ 'x-null-error': 'error.submissionNotInTime' });
         const errorResponse = new HttpErrorResponse({
             status: 403,
             headers: errorHeaders,
