@@ -180,7 +180,14 @@ class CourseTest {
         Course valid = new Course();
         valid.setShortName("validShortName");
 
-        return Stream.of(Arguments.of(pattern, true), Arguments.of(tooShort, true), Arguments.of(atMaxLength, false), Arguments.of(tooLong, true), Arguments.of(valid, false));
+        // The max-length check is gated on a missing id so the update path does not break legacy courses whose
+        // shortName predates the limit. A persisted course (id != null) with a 25-char shortName must still validate.
+        Course legacyTooLong = new Course();
+        legacyTooLong.setId(42L);
+        legacyTooLong.setShortName("a".repeat(25));
+
+        return Stream.of(Arguments.of(pattern, true), Arguments.of(tooShort, true), Arguments.of(atMaxLength, false), Arguments.of(tooLong, true), Arguments.of(valid, false),
+                Arguments.of(legacyTooLong, false));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
