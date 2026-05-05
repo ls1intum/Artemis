@@ -1,76 +1,76 @@
 <div class="d-flex pb-3 border-bottom">
     <div class="d-flex flex-column justify-content-center">
-        @if (isTestExam) {
-            <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentTestExam" [translateValues]="{ examTitle: studentExam.exam!.title! }">
-                Student test exam ({{ studentExam.exam!.title! }})
+        @if (isTestExam()) {
+            <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentTestExam" [translateValues]="{ examTitle: studentExam()!.exam!.title! }">
+                Student test exam ({{ studentExam()!.exam!.title! }})
             </h4>
-        } @else if (isTestRun) {
-            <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.testRun" [translateValues]="{ examTitle: studentExam.exam!.title! }">
-                Test Run ({{ studentExam.exam!.title! }})
+        } @else if (isTestRun()) {
+            <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.testRun" [translateValues]="{ examTitle: studentExam()!.exam!.title! }">
+                Test Run ({{ studentExam()!.exam!.title! }})
             </h4>
         } @else {
-            <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ examTitle: studentExam.exam!.title! }">
-                Student exam ({{ studentExam.exam!.title! }})
+            <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ examTitle: studentExam()!.exam!.title! }">
+                Student exam ({{ studentExam()!.exam!.title! }})
             </h4>
         }
     </div>
 </div>
 <br />
-@if (student && studentExam) {
+@if (student() && studentExam()) {
     <div>
         <div class="mb-3">
             <h5><span jhiTranslate="artemisApp.studentExamDetail.student"></span></h5>
             <ol class="list-without-numeration ms-4">
                 <li>
                     <strong jhiTranslate="artemisApp.studentExamDetail.name"></strong>
-                    {{ student.name }}
+                    {{ student()!.name }}
                 </li>
                 <li>
                     <strong jhiTranslate="artemisApp.studentExamDetail.login"></strong>
-                    {{ student.login }}
+                    {{ student()!.login }}
                 </li>
                 <li>
                     <strong jhiTranslate="artemisApp.studentExamDetail.email"></strong>
-                    {{ student.email }}
+                    {{ student()!.email }}
                 </li>
                 <li>
                     <strong jhiTranslate="artemisApp.studentExamDetail.matriculationNumber"></strong>
-                    {{ student.visibleRegistrationNumber }}
+                    {{ student()!.visibleRegistrationNumber }}
                 </li>
             </ol>
         </div>
-        @if (!isTestExam) {
+        @if (!isTestExam()) {
             <div class="mb-3">
                 <h5 jhiTranslate="artemisApp.studentExams.workingTime"></h5>
                 <form #form="ngForm" (ngSubmit)="saveWorkingTime()" class="ms-4">
                     <jhi-working-time-control
                         name="workingTime"
                         [relative]="true"
-                        [disabled]="isWorkingTimeFormDisabled"
+                        [disabled]="isWorkingTimeFormDisabled()"
                         [(ngModel)]="workingTimeSeconds"
-                        [exam]="studentExam.exam"
+                        [exam]="studentExam()!.exam"
                         durationLabelText="artemisApp.studentExams.setWorkingTime"
                         relativeLabelText="artemisApp.studentExams.setWorkingTimeRelative"
                     />
-                    @if (workingTimeSeconds !== studentExam.workingTime) {
+                    @if (workingTimeSeconds() !== studentExam()!.workingTime) {
                         <p>
-                            {{ 'artemisApp.studentExamDetail.endOfIndividualWorkingTime' | artemisTranslate }} {{ individualEndDate | artemisDate: 'long-date' }}
+                            {{ 'artemisApp.studentExamDetail.endOfIndividualWorkingTime' | artemisTranslate }} {{ individualEndDate() | artemisDate: 'long-date' }}
                             -
-                            {{ individualEndDate | artemisDate: 'time' : true }}
+                            {{ individualEndDate() | artemisDate: 'time' : true }}
                         </p>
                     }
-                    <button id="save" type="submit" class="btn btn-primary mt-2" [disabled]="!form.valid || isWorkingTimeFormDisabled">
+                    <button id="save" type="submit" class="btn btn-primary mt-2" [disabled]="!form.valid || isWorkingTimeFormDisabled()">
                         <fa-icon [icon]="faSave" />
                         <span jhiTranslate="entity.action.save"></span>
                     </button>
                 </form>
             </div>
         }
-        @if (isTestExam) {
+        @if (isTestExam()) {
             <div class="mb-3">
                 <h5 jhiTranslate="artemisApp.studentExams.workingTime"></h5>
                 <span jhiTranslate="artemisApp.studentExams.usedWorkingTime"></span>:
-                <jhi-test-exam-working-time [studentExam]="studentExam" />
+                <jhi-test-exam-working-time [studentExam]="studentExam()!" />
             </div>
         }
         <div class="mb-3">
@@ -79,49 +79,43 @@
                 <ol class="list-without-numeration">
                     <li>
                         <strong>{{ 'artemisApp.studentExams.started' | artemisTranslate }}:</strong>
-                        {{ (studentExam.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
+                        {{ (studentExam()!.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
                     </li>
                     <li>
                         <strong>{{ 'artemisApp.studentExams.submitted' | artemisTranslate }}:</strong>
-                        {{ (studentExam.submitted ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
+                        {{ (studentExam()!.submitted ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
                     </li>
                     <li>
                         <strong>{{ 'artemisApp.studentExams.submissionDate' | artemisTranslate }}:</strong>
-                        {{ studentExam.submissionDate | artemisDate: 'long' : true }}
+                        {{ studentExam()!.submissionDate | artemisDate: 'long' : true }}
                     </li>
-                    @if (gradingScaleExists) {
+                    @if (gradingScaleExists()) {
                         <li>
-                            <strong>{{ gradeExplanation | artemisTranslate }}:</strong>
-                            {{ grade }}
+                            <strong>{{ gradeExplanation() | artemisTranslate }}:</strong>
+                            {{ grade() }}
                         </li>
                     }
-                    @if (gradeAfterBonus !== undefined) {
+                    @if (gradeAfterBonus() !== undefined) {
                         <li>
                             <strong>{{ 'artemisApp.studentExams.gradeAfterBonus' | artemisTranslate }}:</strong>
-                            {{ gradeAfterBonus }}
+                            {{ gradeAfterBonus() }}
                         </li>
                     }
-                    @if (gradingScaleExists && !isBonus) {
+                    @if (gradingScaleExists() && !isBonus()) {
                         <li>
                             <strong>{{ 'artemisApp.studentExams.passed' | artemisTranslate }}:</strong>
-                            {{ (passed ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
+                            {{ (passed() ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
                         </li>
                     }
                 </ol>
                 <div
-                    [ngbTooltip]="!isExamOver ? ('artemisApp.studentExamDetail.disabledChangeSubmissionStateButtonExplanation' | artemisTranslate) : ''"
+                    [ngbTooltip]="!isExamOver() ? ('artemisApp.studentExamDetail.disabledChangeSubmissionStateButtonExplanation' | artemisTranslate) : ''"
                     placement="right"
                     class="d-inline"
                 >
-                    @if (course?.isAtLeastInstructor) {
-                        <button
-                            class="btn btn-danger"
-                            type="button"
-                            (click)="openConfirmationModal(toggleSubmitPopUp)"
-                            [disabled]="!isExamOver || isSaving"
-                            id="adjust-submitted-state-button"
-                        >
-                            @if (!studentExam.submitted) {
+                    @if (course()?.isAtLeastInstructor) {
+                        <button class="btn btn-danger" type="button" (click)="openConfirmationModal()" [disabled]="!isExamOver() || isSaving()" id="adjust-submitted-state-button">
+                            @if (!studentExam()!.submitted) {
                                 <span jhiTranslate="entity.action.toggleToSubmitted"></span>
                             } @else {
                                 <span jhiTranslate="entity.action.toggleToUnsubmitted"></span>
@@ -131,47 +125,53 @@
                 </div>
             </div>
         </div>
-        <ng-template #toggleSubmitPopUp let-modal>
-            <div class="modal-header">
-                <h4 class="modal-title">
-                    @if (studentExam.submitted) {
+        <p-dialog
+            [(visible)]="confirmToggleVisible"
+            [modal]="true"
+            [closable]="true"
+            [closeOnEscape]="true"
+            [dismissableMask]="false"
+            [draggable]="false"
+            [appendTo]="'body'"
+            [style]="{ width: '35dvw' }"
+            (onHide)="cancelToggleSubmission()"
+        >
+            <ng-template #header>
+                <h4 class="modal-title mb-0">
+                    @if (studentExam()!.submitted) {
                         <span jhiTranslate="artemisApp.studentExams.confirmDialog.titleToUnsubmitted"></span>
                     } @else {
-                        @if (!studentExam.submitted) {
-                            <span jhiTranslate="artemisApp.studentExams.confirmDialog.titleToSubmitted"></span>
-                        }
+                        <span jhiTranslate="artemisApp.studentExams.confirmDialog.titleToSubmitted"></span>
                     }
                 </h4>
-                <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
-            </div>
-            <div class="modal-body">
-                <p jhiTranslate="artemisApp.studentExams.confirmDialog.question"></p>
-                @if (!studentExam.submitted) {
-                    <p jhiTranslate="artemisApp.studentExams.confirmDialog.submitText"></p>
-                } @else {
-                    <p jhiTranslate="artemisApp.studentExams.confirmDialog.unSubmitText"></p>
-                    <p jhiTranslate="artemisApp.studentExams.confirmDialog.warningRemove"></p>
-                }
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-danger" (click)="modal.close('confirm')">
-                    @if (!studentExam.submitted) {
+            </ng-template>
+            <p jhiTranslate="artemisApp.studentExams.confirmDialog.question"></p>
+            @if (!studentExam()!.submitted) {
+                <p jhiTranslate="artemisApp.studentExams.confirmDialog.submitText"></p>
+            } @else {
+                <p jhiTranslate="artemisApp.studentExams.confirmDialog.unSubmitText"></p>
+                <p jhiTranslate="artemisApp.studentExams.confirmDialog.warningRemove"></p>
+            }
+            <ng-template #footer>
+                <button type="button" class="btn btn-outline-secondary" (click)="cancelToggleSubmission()" jhiTranslate="global.form.cancel"></button>
+                <button type="button" class="btn btn-danger" (click)="confirmToggleSubmission()">
+                    @if (!studentExam()!.submitted) {
                         <span jhiTranslate="artemisApp.studentExams.confirmDialog.submit"></span>
                     } @else {
                         <span jhiTranslate="artemisApp.studentExams.confirmDialog.unsubmit"></span>
                     }
                 </button>
-            </div>
-        </ng-template>
+            </ng-template>
+        </p-dialog>
         <div class="mb-3">
             <h5><span jhiTranslate="artemisApp.studentExams.summary"></span></h5>
             <div class="d-flex flex-row">
-                @if (course?.isAtLeastInstructor) {
+                @if (course()?.isAtLeastInstructor) {
                     <a class="btn btn-primary summery ms-4" [routerLink]="'./summary'">
                         <span jhiTranslate="artemisApp.exam.summary"></span>
                     </a>
-                    <div ngbTooltip="{{ 'artemisApp.examTimeline.disabledTooltip' | artemisTranslate }}" [disableTooltip]="studentExam?.submitted!">
-                        <button class="btn btn-primary mb-auto ms-5" [routerLink]="'./exam-timeline'" [disabled]="!studentExam.submitted">
+                    <div ngbTooltip="{{ 'artemisApp.examTimeline.disabledTooltip' | artemisTranslate }}" [disableTooltip]="studentExam()?.submitted!">
+                        <button class="btn btn-primary mb-auto ms-5" [routerLink]="'./exam-timeline'" [disabled]="!studentExam()!.submitted">
                             <span jhiTranslate="artemisApp.examTimeline.breadcrumb"></span>
                         </button>
                     </div>
@@ -180,7 +180,7 @@
         </div>
         <div class="mb-3 mt-3">
             <h5><span jhiTranslate="artemisApp.studentExams.examSessions"></span></h5>
-            @if (studentExam.examSessions && studentExam.examSessions.length > 0) {
+            @if (studentExam()!.examSessions && studentExam()!.examSessions!.length > 0) {
                 <div class="exam-session-table-wrapper">
                     <table class="table table-striped">
                         <thead>
@@ -209,7 +209,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @for (session of studentExam.examSessions; track session) {
+                            @for (session of studentExam()!.examSessions; track session) {
                                 <tr>
                                     <td>{{ session.id }}</td>
                                     <td>{{ session.sessionToken }}</td>
@@ -262,16 +262,16 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (exercise of studentExam.exercises; track exercise) {
+                    @for (exercise of studentExam()!.exercises; track exercise) {
                         <tr
                             jhi-student-exam-detail-table-row
-                            [course]="course"
-                            [examId]="examId"
+                            [course]="course()!"
+                            [examId]="examId()!"
                             [exercise]="exercise"
-                            [busy]="isSaving"
-                            [isTestRun]="isTestRun"
-                            [studentExam]="studentExam"
-                            [achievedPointsPerExercise]="achievedPointsPerExercise"
+                            [busy]="isSaving()"
+                            [isTestRun]="isTestRun()"
+                            [studentExam]="studentExam()!"
+                            [achievedPointsPerExercise]="achievedPointsPerExercise()!"
                         ></tr>
                     }
                     <tr>
@@ -281,13 +281,13 @@
                             <span class="text-decoration-underline" jhiTranslate="artemisApp.examScores.overallPointsColumn"></span>
                         </td>
                         <td class="align-middle">
-                            <u> {{ achievedTotalPoints }} </u>
+                            <u> {{ achievedTotalPoints() }} </u>
                         </td>
                         <td class="align-middle">
-                            <u> {{ maxTotalPoints }} </u>
+                            <u> {{ maxTotalPoints() }} </u>
                         </td>
                         <td class="align-middle">
-                            <u> {{ bonusTotalPoints }} </u>
+                            <u> {{ bonusTotalPoints() }} </u>
                         </td>
                         <td></td>
                         <td></td>
