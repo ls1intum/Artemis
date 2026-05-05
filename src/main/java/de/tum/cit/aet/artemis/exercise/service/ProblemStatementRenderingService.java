@@ -214,7 +214,7 @@ public class ProblemStatementRenderingService {
             case ATTACHED -> {
                 var result = separateMarkdownImages(html);
                 html = result.html();
-                images = result.images().isEmpty() ? Map.of() : result.images();
+                images = result.images();
             }
         }
 
@@ -440,6 +440,51 @@ public class ProblemStatementRenderingService {
         return Jsoup.clean(html, HTML_SAFELIST);
     }
 
+    private record ResolvedMarkdownImage(String filename, String mime, Path realPath) {
+    }
+
+    private @Nullable ResolvedMarkdownImage resolveMarkdownImageSrc(String src, String absolutePrefix, Path basePath, Path baseReal) {
+        String filename;
+        if (src.startsWith(absolutePrefix)) {
+            filename = src.substring(absolutePrefix.length());
+        }
+        else if (src.startsWith(MARKDOWN_FILE_API_PATH)) {
+            filename = src.substring(MARKDOWN_FILE_API_PATH.length());
+        }
+        else {
+            return null;
+        }
+
+        try {
+            filename = URLDecoder.decode(filename.split("[?#]")[0], StandardCharsets.UTF_8);
+        }
+        catch (IllegalArgumentException e) {
+            return null;
+        }
+
+        if (!FileUtil.sanitizeFilename(filename).equals(filename) || filename.contains("..")) {
+            return null;
+        }
+
+        String ext = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+        String mime = INLINE_IMAGE_MIME_TYPES.get(ext);
+        if (mime == null) {
+            return null;
+        }
+
+        Path resolved = basePath.resolve(filename);
+        try {
+            Path fileReal = resolved.toRealPath();
+            if (!fileReal.startsWith(baseReal)) {
+                return null;
+            }
+            return new ResolvedMarkdownImage(filename, mime, fileReal);
+        }
+        catch (IOException e) {
+            return null;
+        }
+    }
+
     private record InlineImage(String dataUri, long rawBytes) {
     }
 
@@ -466,29 +511,12 @@ public class ProblemStatementRenderingService {
 
         for (var img : images) {
             String src = img.attr("src");
-            String filename;
-            if (src.startsWith(absolutePrefix)) {
-                filename = src.substring(absolutePrefix.length());
-            }
-            else if (src.startsWith(MARKDOWN_FILE_API_PATH)) {
-                filename = src.substring(MARKDOWN_FILE_API_PATH.length());
-            }
-            else {
+            ResolvedMarkdownImage resolved = resolveMarkdownImageSrc(src, absolutePrefix, basePath, baseReal);
+            if (resolved == null) {
                 continue;
             }
 
-            try {
-                filename = URLDecoder.decode(filename.split("[?#]")[0], StandardCharsets.UTF_8);
-            }
-            catch (IllegalArgumentException e) {
-                continue;
-            }
-
-            if (!FileUtil.sanitizeFilename(filename).equals(filename) || filename.contains("..")) {
-                continue;
-            }
-
-            InlineImage cached = cache.get(filename);
+            InlineImage cached = cache.get(resolved.filename());
             if (cached != null) {
                 if (inlinedCount >= MAX_INLINE_IMAGES || emittedBytes + cached.rawBytes() > MAX_INLINE_TOTAL_SIZE) {
                     continue;
@@ -503,34 +531,23 @@ public class ProblemStatementRenderingService {
                 continue;
             }
 
-            String ext = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
-            String mime = INLINE_IMAGE_MIME_TYPES.get(ext);
-            if (mime == null) {
-                continue;
-            }
-
-            Path resolved = basePath.resolve(filename);
             try {
-                Path fileReal = resolved.toRealPath();
-                if (!fileReal.startsWith(baseReal)) {
-                    continue;
-                }
-                long size = Files.size(fileReal);
+                long size = Files.size(resolved.realPath());
                 if (size > MAX_INLINE_FILE_SIZE || emittedBytes + size > MAX_INLINE_TOTAL_SIZE) {
                     continue;
                 }
-                byte[] bytes = fileService.getFileForPath(fileReal);
+                byte[] bytes = fileService.getFileForPath(resolved.realPath());
                 if (bytes == null) {
                     continue;
                 }
-                String dataUri = "data:" + mime + ";base64," + Base64.getEncoder().encodeToString(bytes);
+                String dataUri = "data:" + resolved.mime() + ";base64," + Base64.getEncoder().encodeToString(bytes);
                 img.attr("src", dataUri);
-                cache.put(filename, new InlineImage(dataUri, size));
+                cache.put(resolved.filename(), new InlineImage(dataUri, size));
                 emittedBytes += size;
                 inlinedCount++;
             }
             catch (IOException e) {
-                log.warn("Could not inline markdown image {}: {}", filename, e.getMessage());
+                log.warn("Could not inline markdown image {}: {}", resolved.filename(), e.getMessage());
             }
         }
 
@@ -565,42 +582,13 @@ public class ProblemStatementRenderingService {
 
         for (var img : imgElements) {
             String src = img.attr("src");
-            String filename;
-            if (src.startsWith(absolutePrefix)) {
-                filename = src.substring(absolutePrefix.length());
-            }
-            else if (src.startsWith(MARKDOWN_FILE_API_PATH)) {
-                filename = src.substring(MARKDOWN_FILE_API_PATH.length());
-            }
-            else {
+            ResolvedMarkdownImage resolved = resolveMarkdownImageSrc(src, absolutePrefix, basePath, baseReal);
+            if (resolved == null) {
                 continue;
             }
 
             try {
-                filename = URLDecoder.decode(filename.split("[?#]")[0], StandardCharsets.UTF_8);
-            }
-            catch (IllegalArgumentException e) {
-                continue;
-            }
-
-            if (!FileUtil.sanitizeFilename(filename).equals(filename) || filename.contains("..")) {
-                continue;
-            }
-
-            String ext = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
-            String mime = INLINE_IMAGE_MIME_TYPES.get(ext);
-            if (mime == null) {
-                continue;
-            }
-
-            Path resolved = basePath.resolve(filename);
-            try {
-                Path fileReal = resolved.toRealPath();
-                if (!fileReal.startsWith(baseReal)) {
-                    continue;
-                }
-
-                String existingId = pathToId.get(fileReal);
+                String existingId = pathToId.get(resolved.realPath());
                 if (existingId != null) {
                     img.attr("src", "cid:" + existingId);
                     continue;
@@ -610,21 +598,25 @@ public class ProblemStatementRenderingService {
                     continue;
                 }
 
-                byte[] bytes = fileService.getFileForPath(fileReal);
+                long size = Files.size(resolved.realPath());
+                if (size > MAX_INLINE_FILE_SIZE || emittedBytes + size > MAX_INLINE_TOTAL_SIZE) {
+                    continue;
+                }
+                byte[] bytes = fileService.getFileForPath(resolved.realPath());
                 if (bytes == null || bytes.length > MAX_INLINE_FILE_SIZE || emittedBytes + bytes.length > MAX_INLINE_TOTAL_SIZE) {
                     continue;
                 }
 
                 String contentId = "img-" + imageIndex;
                 String base64 = Base64.getEncoder().encodeToString(bytes);
-                images.put(contentId, new RenderedImageDTO(mime, base64, filename));
-                pathToId.put(fileReal, contentId);
+                images.put(contentId, new RenderedImageDTO(resolved.mime(), base64, resolved.filename()));
+                pathToId.put(resolved.realPath(), contentId);
                 img.attr("src", "cid:" + contentId);
                 emittedBytes += bytes.length;
                 imageIndex++;
             }
             catch (IOException e) {
-                log.warn("Could not separate markdown image {}: {}", filename, e.getMessage());
+                log.warn("Could not separate markdown image {}: {}", resolved.filename(), e.getMessage());
             }
         }
 
@@ -668,16 +660,33 @@ public class ProblemStatementRenderingService {
     }
 
     private String computeContentHash(String html, @Nullable String interactiveScript, ImageMode imageMode, @Nullable Map<String, RenderedImageDTO> images) {
-        var hashPayload = new LinkedHashMap<String, Object>();
-        hashPayload.put("html", html);
-        hashPayload.put("interactiveScript", interactiveScript);
-        hashPayload.put("imageMode", imageMode.name());
-        hashPayload.put("images", images == null ? null : new TreeMap<>(images));
         try {
-            return computeHash(objectMapper.writeValueAsString(hashPayload));
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(html.getBytes(StandardCharsets.UTF_8));
+            digest.update((byte) 0);
+            if (interactiveScript != null) {
+                digest.update(interactiveScript.getBytes(StandardCharsets.UTF_8));
+            }
+            digest.update((byte) 0);
+            digest.update(imageMode.name().getBytes(StandardCharsets.UTF_8));
+            digest.update((byte) 0);
+            if (images != null) {
+                for (var entry : new TreeMap<>(images).entrySet()) {
+                    digest.update(entry.getKey().getBytes(StandardCharsets.UTF_8));
+                    digest.update((byte) 0);
+                    RenderedImageDTO img = entry.getValue();
+                    digest.update(img.contentType().getBytes(StandardCharsets.UTF_8));
+                    digest.update((byte) 0);
+                    digest.update(img.base64().getBytes(StandardCharsets.UTF_8));
+                    digest.update((byte) 0);
+                    digest.update(img.filename().getBytes(StandardCharsets.UTF_8));
+                    digest.update((byte) 0);
+                }
+            }
+            return HexFormat.of().formatHex(digest.digest());
         }
-        catch (JsonProcessingException e) {
-            return computeHash(html + (interactiveScript != null ? interactiveScript : ""));
+        catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
         }
     }
 
