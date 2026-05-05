@@ -204,8 +204,18 @@ public class ProblemStatementRenderingService {
         // 7. CommonMark → sanitized HTML.
         String html = renderWithCommonMark(processed);
 
-        // 7b. Inline markdown images as base64 data URIs so the output is self-contained.
-        html = inlineMarkdownImages(html);
+        // 7b. Process images based on requested mode.
+        Map<String, RenderedImageDTO> images = null;
+        switch (imageMode) {
+            case INLINE -> html = inlineMarkdownImages(html);
+            case URL -> {
+                /* no-op: absolute URLs from MarkdownRelativeToAbsolutePathAttributeProvider stay as-is */ }
+            case ATTACHED -> {
+                var result = separateMarkdownImages(html);
+                html = result.html();
+                images = result.images().isEmpty() ? Map.of() : result.images();
+            }
+        }
 
         // 8. Inject the earlier PlantUML SVGs (jsoup's HTML safelist would strip them, so we inject afterwards).
         for (int i = 0; i < inlineSvgs.size(); i++) {
@@ -238,14 +248,14 @@ public class ProblemStatementRenderingService {
         }
 
         String interactiveScript = includeJs ? buildLocalizedScript(locale) : null;
-        String contentHash = computeContentHash(html, interactiveScript, imageMode, null);
+        String contentHash = computeContentHash(html, interactiveScript, imageMode, images);
 
         String bodyClass = " class=\"artemis-ssr-body" + (darkMode ? " artemis-ssr-body--dark" : "") + "\"";
         String document = "<!DOCTYPE html><html lang=\"" + HtmlEscaper.escapeAttribute(locale.toLanguageTag()) + "\"><head><meta charset=\"UTF-8\">"
                 + "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body" + bodyClass + ">" + html
                 + (interactiveScript != null ? "<script>" + interactiveScript + "</script>" : "") + "</body></html>";
 
-        return new RenderedProblemStatementDTO(document, contentHash, RENDERER_VERSION, interactiveScript, null);
+        return new RenderedProblemStatementDTO(document, contentHash, RENDERER_VERSION, interactiveScript, images);
     }
 
     private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean darkMode) {
@@ -525,6 +535,13 @@ public class ProblemStatementRenderingService {
 
         doc.outputSettings().prettyPrint(false);
         return doc.body().html();
+    }
+
+    private record SeparatedImagesResult(String html, Map<String, RenderedImageDTO> images) {
+    }
+
+    private SeparatedImagesResult separateMarkdownImages(String html) {
+        return new SeparatedImagesResult(html, Map.of());
     }
 
     /**
