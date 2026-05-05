@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
 import { SortService } from 'app/shared/service/sort.service';
@@ -34,25 +34,25 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     readonly ActionType = ActionType;
     readonly MISSING_IMAGE = '/content/images/missing_image.png';
 
-    courseId: number;
-    exam: Exam;
-    predicate = 'id';
-    ascending = true;
-    isTestExam: boolean;
-    allExamUsersAttendanceCheck: ExamUserAttendanceCheckDTO[] = [];
+    courseId!: number;
+    exam!: Exam;
+    predicate = signal<string>('id');
+    ascending = signal<boolean>(true);
+    isTestExam!: boolean;
+    allExamUsersAttendanceCheck = signal<ExamUserAttendanceCheckDTO[]>([]);
     filteredUsersSize = 0;
-    paramSub: Subscription;
+    paramSub?: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    isLoading = false;
-    isSearching = false;
-    hasExamStarted = false;
-    hasExamEnded = false;
-    searchFailed = false;
-    searchNoResults = false;
-    isTransitioning = false;
+    isLoading = signal(false);
+    isSearching = signal(false);
+    hasExamStarted = signal(false);
+    hasExamEnded = signal(false);
+    searchFailed = signal(false);
+    searchNoResults = signal(false);
+    isTransitioning = signal(false);
     rowClass?: string;
 
     // Icons
@@ -65,19 +65,19 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     faSort = faSort;
 
     ngOnInit() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
             this.exam = exam;
-            this.hasExamStarted = exam.startDate?.isBefore(dayjs()) || false;
-            this.hasExamEnded = exam.endDate?.isBefore(dayjs()) || false;
+            this.hasExamStarted.set(exam.startDate?.isBefore(dayjs()) || false);
+            this.hasExamEnded.set(exam.endDate?.isBefore(dayjs()) || false);
             this.isTestExam = this.exam.testExam!;
         });
-        if (this.hasExamStarted) {
+        if (this.hasExamStarted()) {
             this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!).subscribe({
                 next: (res: HttpResponse<ExamUserAttendanceCheckDTO[]>) => {
-                    this.allExamUsersAttendanceCheck = res.body!;
-                    this.isLoading = false;
+                    this.allExamUsersAttendanceCheck.set(res.body!);
+                    this.isLoading.set(false);
                 },
                 error: (error: HttpErrorResponse) => this.onError(error.message),
             });
@@ -95,12 +95,12 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
      */
     onError(error: string) {
         this.alertService.error(error);
-        this.isTransitioning = false;
-        this.isLoading = false;
+        this.isTransitioning.set(false);
+        this.isLoading.set(false);
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.allExamUsersAttendanceCheck, this.predicate, this.ascending);
+        this.sortService.sortByProperty(this.allExamUsersAttendanceCheck(), this.predicate(), this.ascending());
     }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;

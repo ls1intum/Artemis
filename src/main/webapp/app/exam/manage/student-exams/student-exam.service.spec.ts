@@ -7,7 +7,11 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('Student Exam Service', () => {
+    setupTestBed({ zoneless: true });
+
     let httpClient: any;
     let httpClientPutSpy: any;
     let service: StudentExamService;
@@ -19,7 +23,7 @@ describe('Student Exam Service', () => {
                 {
                     provide: AccountService,
                     useValue: {
-                        setAccessRightsForCourse: jest.fn(),
+                        setAccessRightsForCourse: vi.fn(),
                     },
                 },
                 provideHttpClient(),
@@ -30,11 +34,11 @@ describe('Student Exam Service', () => {
         service = TestBed.inject(StudentExamService);
         accountService = TestBed.inject(AccountService);
         httpClient = TestBed.inject(HttpClient);
-        httpClientPutSpy = jest.spyOn(httpClient, 'put');
+        httpClientPutSpy = vi.spyOn(httpClient, 'put');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should call correct url if toggling submitted state and unsubmit is false', () => {
@@ -70,7 +74,7 @@ describe('Student Exam Service', () => {
         undefined,
     ] as StudentExam[])('should fetch and process an exam correctly on find and updateWorkingTime', (payloadExam) => {
         const findResponse = new HttpResponse<StudentExamWithGradeDTO>({ body: { studentExam: payloadExam } as StudentExamWithGradeDTO });
-        const getSpy = jest.spyOn(httpClient, 'get').mockReturnValue(of(findResponse));
+        const getSpy = vi.spyOn(httpClient, 'get').mockReturnValue(of(findResponse));
 
         let returnedExam;
         service.find(1, 2, 3).subscribe((result) => (returnedExam = result));
@@ -81,7 +85,7 @@ describe('Student Exam Service', () => {
         expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(payloadExam?.exam?.course ? 1 : 0);
 
         const updateResponse = new HttpResponse<StudentExam>({ body: payloadExam });
-        const patchSpy = jest.spyOn(httpClient, 'patch').mockReturnValue(of(updateResponse));
+        const patchSpy = vi.spyOn(httpClient, 'patch').mockReturnValue(of(updateResponse));
         service.updateWorkingTime(1, 2, 3, 10).subscribe((result) => (returnedExam = result));
 
         expect(patchSpy).toHaveBeenCalledOnce();
@@ -116,7 +120,7 @@ describe('Student Exam Service', () => {
             },
         ] as StudentExam[];
         const response = new HttpResponse<StudentExam[]>({ body: payload });
-        const getSpy = jest.spyOn(httpClient, 'get').mockReturnValue(of(response));
+        const getSpy = vi.spyOn(httpClient, 'get').mockReturnValue(of(response));
 
         let returnedExams;
         service.findAllForExam(1, 2).subscribe((result) => (returnedExams = result));

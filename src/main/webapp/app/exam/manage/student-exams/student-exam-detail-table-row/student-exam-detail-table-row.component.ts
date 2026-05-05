@@ -1,4 +1,4 @@
-import { Component, OnChanges, input } from '@angular/core';
+import { Component, effect, input } from '@angular/core';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -19,7 +19,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
     providers: [],
     imports: [FaIconComponent, TranslateDirective, RouterLink, ArtemisTranslatePipe],
 })
-export class StudentExamDetailTableRowComponent implements OnChanges {
+export class StudentExamDetailTableRowComponent {
     exercise = input.required<Exercise>();
     examId = input.required<number>();
     isTestRun = input.required<boolean>();
@@ -42,21 +42,25 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
     // Icons
     faFolderOpen = faFolderOpen;
 
-    ngOnChanges() {
-        if (this.exercise().studentParticipations?.[0]) {
-            this.studentParticipation = this.exercise().studentParticipations![0];
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            if (this.studentParticipation.submissions?.length! > 0) {
-                this.submission = this.studentParticipation.submissions![0];
+    constructor() {
+        effect(() => {
+            const exercise = this.exercise();
+            if (exercise.studentParticipations?.[0]) {
+                this.studentParticipation = exercise.studentParticipations[0];
+                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                if (this.studentParticipation.submissions?.length! > 0) {
+                    this.submission = this.studentParticipation.submissions![0];
+                }
+                const allResults = getAllResultsOfAllSubmissions(this.studentParticipation.submissions);
+                if (allResults.length > 0) {
+                    this.result = allResults[0];
+                }
             }
-            const allResults = getAllResultsOfAllSubmissions(this.studentParticipation.submissions);
-            if (allResults.length > 0) {
-                this.result = allResults[0];
+            const course = this.course();
+            if (course && course.id) {
+                this.courseId = course.id;
             }
-        }
-        if (this.course() && this.course().id) {
-            this.courseId = this.course().id!;
-        }
+        });
     }
 
     /**
