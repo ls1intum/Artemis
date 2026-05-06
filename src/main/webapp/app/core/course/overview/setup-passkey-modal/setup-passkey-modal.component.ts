@@ -47,6 +47,14 @@ export class SetupPasskeyModalComponent implements OnInit {
             });
     }
 
+    /**
+     * <p>
+     * We want users to use passkey authentication over password authentication.
+     * </p>
+     * <p>
+     * If the passkey feature is enabled and no passkeys are set up yet, we display a modal that informs the user about passkeys and forwards to the setup page.
+     * </p>
+     */
     private openIfNeeded(): void {
         const earliestReminderDate = this.localStorageService.retrieveDate(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY);
         const userDisabledReminderForCurrentTimeframe = earliestReminderDate && new Date() < earliestReminderDate;
