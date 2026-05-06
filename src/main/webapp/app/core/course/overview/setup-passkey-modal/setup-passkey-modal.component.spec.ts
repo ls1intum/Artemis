@@ -83,7 +83,7 @@ describe('SetupPasskeyModalComponent', () => {
     describe('auto-open on authentication', () => {
         function enablePasskeyFeature() {
             const service = TestBed.inject(ProfileService);
-            service.getProfileInfo = () => ({ activeModuleFeatures: [MODULE_FEATURE_PASSKEY] }) as unknown as ProfileInfo;
+            vi.spyOn(service, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_PASSKEY] } as unknown as ProfileInfo);
         }
 
         beforeEach(() => {
