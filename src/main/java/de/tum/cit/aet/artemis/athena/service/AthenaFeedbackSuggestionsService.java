@@ -188,7 +188,11 @@ public class AthenaFeedbackSuggestionsService {
             return null;
         }
 
-        return studentParticipation.getStudent().map(User::getSelectedLLMUsage).orElse(null);
+        var selection = studentParticipation.getStudent().map(User::getSelectedLLMUsage).orElse(null);
+        if (selection == null || selection == AiSelectionDecision.NO_AI) {
+            throw new BadRequestAlertException("AI feedback requires an accepted LLM selection", "submission", "llmSelectionRequired", true);
+        }
+        return selection;
     }
 
     /**

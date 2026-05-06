@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -230,6 +231,22 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
         assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
         athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    void testFeedbackSuggestionsTextRejectsNoAiSelectionForNonGradedRequest() {
+        ((StudentParticipation) textSubmission.getParticipation()).getStudent().ifPresent(student -> student.setSelectedLLMUsage(AiSelectionDecision.NO_AI));
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, false));
+    }
+
+    @Test
+    void testFeedbackSuggestionsTextRejectsMissingSelectionForNonGradedRequest() {
+        ((StudentParticipation) textSubmission.getParticipation()).getStudent().ifPresent(student -> student.setSelectedLLMUsage(null));
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, false));
     }
 
     @Test
