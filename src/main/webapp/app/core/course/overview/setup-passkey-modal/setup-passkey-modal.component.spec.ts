@@ -24,8 +24,6 @@ describe('SetupPasskeyModalComponent', () => {
     let component: SetupPasskeyModalComponent;
     let fixture: ComponentFixture<SetupPasskeyModalComponent>;
     let localStorageService: LocalStorageService;
-    let accountService: AccountService;
-    let profileService: ProfileService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -43,8 +41,6 @@ describe('SetupPasskeyModalComponent', () => {
         fixture = TestBed.createComponent(SetupPasskeyModalComponent);
         component = fixture.componentInstance;
         localStorageService = TestBed.inject(LocalStorageService);
-        accountService = TestBed.inject(AccountService);
-        profileService = TestBed.inject(ProfileService);
         localStorageService.clear();
     });
 
