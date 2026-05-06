@@ -218,10 +218,8 @@ public class GlobalSearchResource {
             return Map.of();
         }
         Map<Long, Long> result = new HashMap<>();
-        for (Object[] row : exerciseRepository.findExerciseAndGroupIdsByExerciseIds(examExerciseIds)) {
-            if (row[0] instanceof Number exerciseId && row[1] instanceof Number groupId) {
-                result.put(exerciseId.longValue(), groupId.longValue());
-            }
+        for (var dto : exerciseRepository.findExerciseAndGroupIdsByExerciseIds(examExerciseIds)) {
+            result.put(dto.exerciseId(), dto.exerciseGroupId());
         }
         return result;
     }
