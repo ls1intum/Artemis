@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
@@ -12,6 +14,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ExamLiveEventComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExamLiveEventComponent;
     let fixture: ComponentFixture<ExamLiveEventComponent>;
 
@@ -23,6 +27,10 @@ describe('ExamLiveEventComponent', () => {
 
         fixture = TestBed.createComponent(ExamLiveEventComponent);
         component = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should display the correct event type and author', () => {
@@ -112,7 +120,7 @@ describe('ExamLiveEventComponent', () => {
         fixture.componentRef.setInput('showAcknowledge', true);
         fixture.detectChanges();
 
-        const acknowledgeSpy = jest.spyOn(component.onAcknowledge, 'emit');
+        const acknowledgeSpy = vi.spyOn(component.onAcknowledge, 'emit');
         const button = fixture.debugElement.query(By.css('button'));
         button.nativeElement.click();
 
@@ -128,7 +136,7 @@ describe('ExamLiveEventComponent', () => {
         fixture.componentRef.setInput('showAcknowledge', true);
         fixture.detectChanges();
 
-        const acknowledgeSpy = jest.spyOn(component.onNavigate, 'emit');
+        const acknowledgeSpy = vi.spyOn(component.onNavigate, 'emit');
         const buttons = fixture.debugElement.queryAll(By.css('button'));
         expect(buttons).toHaveLength(2);
         // Navigate to exercise is the second button

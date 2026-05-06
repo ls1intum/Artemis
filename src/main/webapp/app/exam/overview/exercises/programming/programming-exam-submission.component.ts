@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, inject, input, viewChild } from '@angular/core';
+import { Component, OnInit, effect, inject, input, viewChild } from '@angular/core';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -52,7 +52,7 @@ import { CommitState, DomainType, EditorState } from 'app/programming/shared/cod
         ProgrammingExerciseInstructionComponent,
     ],
 })
-export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges, OnInit {
+export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     private domainService = inject(DomainService);
 
     exerciseType = ExerciseType.PROGRAMMING;
@@ -95,16 +95,21 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
+    constructor() {
+        super();
+        effect(() => {
+            // react when the studentParticipation input changes (replaces ngOnChanges)
+            this.studentParticipation();
+            this.setSubmissionCountAndLockIfNeeded();
+        });
+    }
+
     /**
      * On init set up the route param subscription.
      * Will load the participation according to participation Id with the latest result and result details.
      */
     ngOnInit(): void {
         this.updateDomain();
-        this.setSubmissionCountAndLockIfNeeded();
-    }
-
-    ngOnChanges() {
         this.setSubmissionCountAndLockIfNeeded();
     }
 
