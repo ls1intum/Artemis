@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -16,6 +18,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('Programming Exercise Group Cell Component', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ProgrammingExerciseGroupCellComponent>;
     const exercise: ProgrammingExercise = {
         id: 1,
@@ -52,11 +56,15 @@ describe('Programming Exercise Group Cell Component', () => {
                 fixture = TestBed.createComponent(ProgrammingExerciseGroupCellComponent);
                 fixture.componentRef.setInput('exercise', exercise);
                 profileService = TestBed.inject(ProfileService);
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+                vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
                     buildPlanURLTemplate: 'https://example.com/{buildPlanId}/{projectKey}',
                     activeModuleFeatures: [MODULE_FEATURE_THEIA],
                 } as ProfileInfo);
             });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('sets buildPlanURLs correctly', () => {

@@ -25,6 +25,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 const user = { id: 1, name: 'Test User' } as User;
 
@@ -93,11 +95,13 @@ const result = {
 } as Result;
 
 describe('ProgrammingExamSummaryComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ProgrammingExamSummaryComponent;
     let fixture: ComponentFixture<ProgrammingExamSummaryComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -106,23 +110,20 @@ describe('ProgrammingExamSummaryComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExamSummaryComponent);
-                component = fixture.componentInstance;
+        }).compileComponents();
+        fixture = TestBed.createComponent(ProgrammingExamSummaryComponent);
+        component = fixture.componentInstance;
 
-                component.exercise = programmingExercise;
-                programmingSubmission.participation = programmingParticipation;
-                programmingParticipation.submissions = [programmingSubmission];
-                component.participation = programmingParticipation;
-                component.submission = programmingSubmission;
-                component.exam = exam;
-            });
+        fixture.componentRef.setInput('exercise', programmingExercise);
+        programmingSubmission.participation = programmingParticipation;
+        programmingParticipation.submissions = [programmingSubmission];
+        fixture.componentRef.setInput('participation', programmingParticipation);
+        component.submission.set(programmingSubmission);
+        fixture.componentRef.setInput('exam', exam);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize and set commit hash', () => {
@@ -133,7 +134,7 @@ describe('ProgrammingExamSummaryComponent', () => {
     });
 
     it('should show result if present and results are published', () => {
-        component.isAfterResultsArePublished = true;
+        fixture.componentRef.setInput('isAfterResultsArePublished', true);
         programmingSubmission.results = [result];
         fixture.detectChanges();
 
@@ -146,7 +147,7 @@ describe('ProgrammingExamSummaryComponent', () => {
     });
 
     it('should not show results if not yet published', () => {
-        component.isAfterResultsArePublished = false;
+        fixture.componentRef.setInput('isAfterResultsArePublished', false);
         programmingSubmission.results = [result];
         fixture.detectChanges();
 
