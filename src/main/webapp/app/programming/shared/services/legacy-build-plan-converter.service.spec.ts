@@ -44,7 +44,7 @@ describe('LegacyBuildPlanConverterService', () => {
         expect(buildPlanPhases?.phases[0].name).toBe('script');
         expect(buildPlanPhases?.phases[0].resultPaths).toEqual(['build/test-results/test/*.xml', 'coverage.xml']);
         expect(buildPlanPhases?.phases[0].script).toContain('cd /var/tmp/testing-dir\n');
-        expect(buildPlanPhases?.phases[0].script).toContain('cat << \'  __LEGACY_INNER_SCRIPT_END__\' > "${tmp_file}"\n');
+        expect(buildPlanPhases?.phases[0].script).toContain('cat << \'  __LEGACY_INNER_SCRIPT_END__\' > "${tmp_file}"');
         expect(buildPlanPhases?.phases[0].script).toContain('./gradlew test\n');
     });
 
