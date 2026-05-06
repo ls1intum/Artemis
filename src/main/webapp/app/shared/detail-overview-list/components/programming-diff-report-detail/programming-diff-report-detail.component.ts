@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, inject, signal } from '@angular/core';
+import { Component, Input, OnDestroy, inject } from '@angular/core';
 import type { ProgrammingDiffReportDetail } from 'app/shared/detail-overview-list/detail.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
@@ -51,8 +51,6 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
         }
 
         this.modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
-        this.modalRef.componentInstance.repositoryDiffInformation = signal(this.detail.data.repositoryDiffInformation);
-        this.modalRef.componentInstance.templateFileContentByPath = signal(this.detail.data.templateFileContentByPath);
-        this.modalRef.componentInstance.solutionFileContentByPath = signal(this.detail.data.solutionFileContentByPath);
+        this.modalRef.componentInstance.repositoryDiffInformation.set(this.detail.data.repositoryDiffInformation);
     }
 }

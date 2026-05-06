@@ -6,6 +6,8 @@ import { ExamGeneralInformationComponent } from 'app/exam/overview/general-infor
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 let fixture: ComponentFixture<ExamGeneralInformationComponent>;
 let component: ExamGeneralInformationComponent;
@@ -26,6 +28,8 @@ let exam = {
 let studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
 describe('ExamGeneralInformationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     beforeEach(() => {
         exam = { id: 1, title: 'ExamForTesting', startDate, endDate, testExam: false } as Exam;
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
@@ -41,85 +45,76 @@ describe('ExamGeneralInformationComponent', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should initialize', () => {
-        component.exam = exam;
+        fixture.componentRef.setInput('exam', exam);
         fixture.changeDetectorRef.detectChanges();
-        component.ngOnChanges();
         expect(fixture).toBeDefined();
         expect(component.examEndDate).toEqual(exam.endDate);
     });
 
     it('should return undefined if the exam is not set', () => {
         fixture.detectChanges();
-        component.ngOnChanges();
         expect(fixture).toBeDefined();
         expect(component.examEndDate).toBeUndefined();
     });
 
     it('should return the start date plus the working time as the student exam end date', () => {
-        component.exam = exam;
-        component.studentExam = studentExam;
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
-        component.ngOnChanges();
         expect(fixture).toBeDefined();
-        expect(component.examEndDate?.isSame(dayjs(exam.startDate).add(studentExam.workingTime!, 'seconds'))).toBeTrue();
+        expect(component.examEndDate?.isSame(dayjs(exam.startDate).add(studentExam.workingTime!, 'seconds'))).toBe(true);
     });
 
     it('should detect if the end date is on another day', () => {
-        component.exam = exam;
-        exam.endDate = dayjs(exam.startDate).add(2, 'days');
+        const examWithMultiDay = { ...exam, endDate: dayjs(exam.startDate).add(2, 'days') } as Exam;
+        fixture.componentRef.setInput('exam', examWithMultiDay);
         fixture.changeDetectorRef.detectChanges();
-        component.ngOnChanges();
         expect(fixture).toBeDefined();
-        expect(component.isExamOverMultipleDays).toBeTrue();
+        expect(component.isExamOverMultipleDays).toBe(true);
     });
 
     it('should detect if the working time extends to another day', () => {
-        component.exam = exam;
-        component.studentExam = studentExam;
-        studentExam.workingTime = 24 * 60 * 60;
+        const longStudentExam = { ...studentExam, workingTime: 24 * 60 * 60 } as StudentExam;
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('studentExam', longStudentExam);
         fixture.changeDetectorRef.detectChanges();
-        component.ngOnChanges();
         expect(fixture).toBeDefined();
-        expect(component.isExamOverMultipleDays).toBeTrue();
+        expect(component.isExamOverMultipleDays).toBe(true);
     });
 
     it('should return false for exams that only last one day', () => {
-        component.exam = exam;
+        fixture.componentRef.setInput('exam', exam);
         fixture.changeDetectorRef.detectChanges();
-        component.ngOnChanges();
         expect(fixture).toBeDefined();
-        expect(component.isExamOverMultipleDays).toBeFalse();
+        expect(component.isExamOverMultipleDays).toBe(false);
 
-        component.studentExam = studentExam;
+        fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
-        component.ngOnChanges();
         expect(fixture).toBeDefined();
-        expect(component.isExamOverMultipleDays).toBeFalse();
+        expect(component.isExamOverMultipleDays).toBe(false);
     });
 
     it('should detect an TestExam and set the currentDate correctly', () => {
-        exam.testExam = true;
-        component.exam = exam;
-        component.studentExam = studentExam;
+        const testExam = { ...exam, testExam: true } as Exam;
         const minimumNowRange = dayjs();
+        fixture.componentRef.setInput('exam', testExam);
+        fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
-        component.ngOnChanges();
         const maximumNowRange = dayjs();
-        expect(component.isTestExam).toBeTrue();
+        expect(component.isTestExam).toBe(true);
         expect(component.currentDate).toBeDefined();
         // test execution could slow down the check
-        expect(component.currentDate!.isBetween(minimumNowRange, maximumNowRange, 's', '[]')).toBeTrue();
+        expect(component.currentDate!.isBetween(minimumNowRange, maximumNowRange, 's', '[]')).toBe(true);
     });
 
     it('should detect an RealExam and not set the currentDate', () => {
-        component.exam = exam;
+        fixture.componentRef.setInput('exam', exam);
         fixture.changeDetectorRef.detectChanges();
-        component.ngOnChanges();
-        expect(component.isTestExam).toBeFalse();
+        expect(component.isTestExam).toBe(false);
         expect(component.currentDate).toBeUndefined();
     });
 });

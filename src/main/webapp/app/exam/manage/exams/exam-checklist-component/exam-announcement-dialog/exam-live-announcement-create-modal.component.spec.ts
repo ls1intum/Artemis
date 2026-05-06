@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, throwError } from 'rxjs';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-modal.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { By } from '@angular/platform-browser';
@@ -12,17 +12,29 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamLiveAnnouncementCreateModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExamLiveAnnouncementCreateModalComponent;
     let fixture: ComponentFixture<ExamLiveAnnouncementCreateModalComponent>;
-    let mockActiveModal: NgbActiveModal;
+    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
+    let dialogRef: DynamicDialogRef;
     let mockExamManagementService: ExamManagementService;
 
     beforeEach(async () => {
+        dialogRefCloseSpy = vi.fn();
+        dialogRef = {
+            close: dialogRefCloseSpy,
+            onClose: new Subject<any>(),
+        } as unknown as DynamicDialogRef;
+
         await TestBed.configureTestingModule({
             providers: [
-                { provide: NgbActiveModal, useValue: { dismiss: jest.fn() } },
+                { provide: DynamicDialogRef, useValue: dialogRef },
+                { provide: DynamicDialogConfig, useValue: { data: { examId: 1, courseId: 2 } } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -32,15 +44,19 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
 
         fixture = TestBed.createComponent(ExamLiveAnnouncementCreateModalComponent);
         component = fixture.componentInstance;
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
-        mockActiveModal = TestBed.inject(NgbActiveModal);
+        global.ResizeObserver = MockResizeObserver as any;
         mockExamManagementService = TestBed.inject(ExamManagementService);
     });
 
-    it('should initialize component with default properties', () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should initialize component with default properties from dialog config', () => {
+        fixture.detectChanges();
         expect(component.status).toBe('not_submitted');
+        expect(component.examId).toBe(1);
+        expect(component.courseId).toBe(2);
     });
 
     it('should update text content and announcement when textContentChanged() is called', () => {
@@ -49,14 +65,15 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
         expect(component.announcement?.text).toBe('new text');
     });
 
-    it('should dismiss the modal when clear() is called', () => {
+    it('should close the dialog when clear() is called', () => {
         component.clear();
-        expect(mockActiveModal.dismiss).toHaveBeenCalledWith('cancel');
+        expect(dialogRefCloseSpy).toHaveBeenCalledWith('cancel');
     });
 
     it('should handle successful announcement submission', () => {
         const testingSubject = new Subject<ExamWideAnnouncementEvent>();
-        jest.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(testingSubject.asObservable());
+        vi.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(testingSubject.asObservable());
+        fixture.detectChanges();
         component.submitAnnouncement();
         expect(component.status).toBe('submitting');
         fixture.changeDetectorRef.detectChanges();
@@ -76,7 +93,8 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
     });
 
     it('should handle failed announcement submission', () => {
-        jest.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(throwError(() => new Error('Error')));
+        vi.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(throwError(() => new Error('Error')));
+        fixture.detectChanges();
         component.submitAnnouncement();
         expect(component.status).toBe('not_submitted');
         expect(mockExamManagementService.createAnnouncement).toHaveBeenCalled();
