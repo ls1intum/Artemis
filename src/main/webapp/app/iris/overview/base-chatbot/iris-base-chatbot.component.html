@@ -339,7 +339,13 @@
                                 </div>
                             </div>
                         }
-                        @if (activeChatMessage()) {
+                        @if (streamingMessage()) {
+                            <div class="llm-message-wrapper" aria-live="polite">
+                                <div class="bubble-left">
+                                    <jhi-iris-citation-text [text]="streamingMessage()!" [citationInfo]="citationInfo()" />
+                                </div>
+                            </div>
+                        } @else if (activeChatMessage()) {
                             <div class="llm-message-wrapper">
                                 <jhi-iris-thinking-bubble [message]="activeChatMessage()!" />
                             </div>

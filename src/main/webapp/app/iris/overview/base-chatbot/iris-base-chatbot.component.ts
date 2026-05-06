@@ -209,6 +209,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly currentSessionId = toSignal(this.chatService.currentSessionId(), { initialValue: undefined });
     readonly chatSessions = toSignal(this.chatService.availableChatSessions(), { initialValue: [] as IrisSessionDTO[] });
     readonly stages = toSignal(this.chatService.currentStages(), { initialValue: [] as IrisStageDTO[] });
+    readonly streamingMessage = toSignal(this.chatService.currentStreamingMessage(), { initialValue: undefined });
     readonly suggestions = toSignal(this.chatService.currentSuggestions(), { initialValue: [] as string[] });
     readonly error = toSignal(this.chatService.currentError(), { initialValue: undefined });
     readonly numNewMessages = toSignal(this.chatService.currentNumNewMessages(), { initialValue: 0 });
@@ -303,6 +304,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly animatingMessageIds = signal(new Set<number>());
     private previousSessionId: number | undefined;
     private previousMessageCount = 0;
+    private previousStreamingMsg: string | undefined;
     private previousMessageIds = new Set<number>();
     private copyResetTimeoutId: ReturnType<typeof setTimeout> | undefined;
     protected readonly ButtonType = ButtonType;
@@ -559,6 +561,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         effect(() => {
             if (this.activeChatMessage() && this.isScrolledToBottom()) {
                 this.scrollToBottom('smooth');
+            }
+        });
+
+        // Keep user anchored at the bottom while streaming content grows,
+        // and immediately re-anchor when streaming ends so the DOM reflow
+        // (bubble removed → final message inserted) causes no visible jump.
+        effect(() => {
+            const msg = this.streamingMessage();
+            const wasStreaming = this.previousStreamingMsg !== undefined;
+            this.previousStreamingMsg = msg;
+            if ((msg !== undefined || wasStreaming) && this.isScrolledToBottom()) {
+                this.scrollToBottom('instant');
             }
         });
 
