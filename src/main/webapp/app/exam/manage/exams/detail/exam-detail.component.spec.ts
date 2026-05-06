@@ -1,7 +1,7 @@
 import { Location } from '@angular/common';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Data, Router, RouterModule } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -40,6 +40,10 @@ import { ExerciseDetailDirective } from 'app/shared/detail-overview-list/exercis
 import { NoDataComponent } from 'app/shared/components/no-data/no-data-component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 @Component({
     template: '',
@@ -47,6 +51,8 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 class DummyComponent {}
 
 describe('ExamDetailComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ExamDetailComponent>;
     let component: ExamDetailComponent;
     let service: ExamManagementService;
@@ -55,8 +61,8 @@ describe('ExamDetailComponent', () => {
     const exampleHTML = '<h1>Sample Markdown</h1>';
     const exam = new Exam();
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([
                     { path: 'course-management/:courseId/exams/:examId/edit', component: DummyComponent },
@@ -70,28 +76,25 @@ describe('ExamDetailComponent', () => {
                     { path: 'course-management/:courseId/exams/:examId/students', component: DummyComponent },
                     { path: 'course-management/:courseId/exams', component: DummyComponent },
                 ]),
-                ExerciseDetailDirective,
                 MockComponent(NoDataComponent),
                 FaIconComponent,
-            ],
-            declarations: [
                 DetailOverviewListComponent,
                 ExamDetailComponent,
-                DummyComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockDirective(TranslateDirective),
-                MockDirective(HasAnyAuthorityDirective),
                 ExamChecklistComponent,
                 ChecklistCheckComponent,
                 ExamChecklistExerciseGroupTableComponent,
                 ProgressBarComponent,
                 MockComponent(CourseExamArchiveButtonComponent),
+                ExamEditWorkingTimeComponent,
+                MockComponent(ExamLiveAnnouncementCreateButtonComponent),
+                DummyComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockDirective(TranslateDirective),
+                MockDirective(HasAnyAuthorityDirective),
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockDirective(FeatureToggleLinkDirective),
-                ExamEditWorkingTimeComponent,
-                MockComponent(ExamLiveAnnouncementCreateButtonComponent),
                 MockDirective(ExerciseDetailDirective),
             ],
             providers: [
@@ -118,14 +121,13 @@ describe('ExamDetailComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ArtemisDurationFromSecondsPipe),
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: DialogService, useClass: MockDialogService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExamDetailComponent);
-                component = fixture.componentInstance;
-                service = TestBed.inject(ExamManagementService);
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ExamDetailComponent);
+        component = fixture.componentInstance;
+        service = TestBed.inject(ExamManagementService);
 
         router = TestBed.inject(Router);
     });
@@ -145,81 +147,69 @@ describe('ExamDetailComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should load exam from route and display it to user', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(component.examDetailSections).toBeDefined();
-        expect(fixture.debugElement.nativeElement.innerHTML).toInclude(exam.title!);
+        expect(fixture.debugElement.nativeElement.innerHTML).toContain(exam.title!);
     });
 
-    it('should correctly route to edit subpage', fakeAsync(() => {
+    it('should correctly route to edit subpage', async () => {
         const location = TestBed.inject(Location);
         fixture.detectChanges();
         const editButton = fixture.debugElement.query(By.css('#editButton')).nativeElement;
         editButton.click();
-        discardPeriodicTasks();
-        fixture.whenStable().then(() => {
-            expect(location.path()).toBe('/course-management/1/exams/1/edit');
-        });
-    }));
+        await fixture.whenStable();
+        expect(location.path()).toBe('/course-management/1/exams/1/edit');
+    });
 
-    it('should correctly route to dashboard', fakeAsync(() => {
+    it('should correctly route to dashboard', async () => {
         const location = TestBed.inject(Location);
         fixture.detectChanges();
         const dashboardButton = fixture.debugElement.query(By.css('#assessment-dashboard-button')).nativeElement;
         dashboardButton.click();
-        discardPeriodicTasks();
-        fixture.whenStable().then(() => {
-            expect(location.path()).toBe('/course-management/1/exams/1/assessment-dashboard');
-        });
-    }));
+        await fixture.whenStable();
+        expect(location.path()).toBe('/course-management/1/exams/1/assessment-dashboard');
+    });
 
-    it('should correctly route to exercise groups', fakeAsync(() => {
+    it('should correctly route to exercise groups', async () => {
         const location = TestBed.inject(Location);
         fixture.detectChanges();
         const dashboardButton = fixture.debugElement.query(By.css('#exercises-button-groups')).nativeElement;
         dashboardButton.click();
-        discardPeriodicTasks();
-        fixture.whenStable().then(() => {
-            expect(location.path()).toBe('/course-management/1/exams/1/exercise-groups');
-        });
-    }));
+        await fixture.whenStable();
+        expect(location.path()).toBe('/course-management/1/exams/1/exercise-groups');
+    });
 
-    it('should correctly route to scores', fakeAsync(() => {
+    it('should correctly route to scores', async () => {
         const location = TestBed.inject(Location);
         fixture.detectChanges();
         const scoresButton = fixture.debugElement.query(By.css('#scores-button')).nativeElement;
         scoresButton.click();
-        discardPeriodicTasks();
-        fixture.whenStable().then(() => {
-            expect(location.path()).toBe('/course-management/1/exams/1/scores');
-        });
-    }));
+        await fixture.whenStable();
+        expect(location.path()).toBe('/course-management/1/exams/1/scores');
+    });
 
-    it('should correctly route to students', fakeAsync(() => {
+    it('should correctly route to students', async () => {
         const location = TestBed.inject(Location);
         fixture.detectChanges();
         const studentsButton = fixture.debugElement.query(By.css('#students-button')).nativeElement;
         studentsButton.click();
-        discardPeriodicTasks();
-        fixture.whenStable().then(() => {
-            expect(location.path()).toBe('/course-management/1/exams/1/students');
-        });
-    }));
+        await fixture.whenStable();
+        expect(location.path()).toBe('/course-management/1/exams/1/students');
+    });
 
-    it('should correctly route to test runs', fakeAsync(() => {
+    it('should correctly route to test runs', async () => {
         const location = TestBed.inject(Location);
         fixture.detectChanges();
         const studentsButton = fixture.debugElement.query(By.css('#testrun-button')).nativeElement;
         studentsButton.click();
-        discardPeriodicTasks();
-        fixture.whenStable().then(() => {
-            expect(location.path()).toBe('/course-management/1/exams/1/test-runs');
-        });
-    }));
+        await fixture.whenStable();
+        expect(location.path()).toBe('/course-management/1/exams/1/test-runs');
+    });
 
     it('should return general routes correctly', () => {
         const route = component.getExamRoutesByIdentifier('edit');
@@ -232,9 +222,9 @@ describe('ExamDetailComponent', () => {
         // GIVEN
         component.exam = { ...exam, studentExams: [{ id: 1, numberOfExamSessions: 0 }] };
         const responseFakeReset = { body: exam } as HttpResponse<Exam>;
-        jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
-        jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
-        const alertSpy = jest.spyOn(alertService, 'success').mockImplementation();
+        vi.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
+        vi.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
+        const alertSpy = vi.spyOn(alertService, 'success').mockImplementation(() => undefined as any);
 
         // WHEN
         component.resetExam();
@@ -251,9 +241,9 @@ describe('ExamDetailComponent', () => {
         component.exam = exam;
         const responseFakeDelete = new HttpResponse<void>({ status: 200 });
         const responseFakeEmptyExamArray = { body: [exam] } as HttpResponse<Exam[]>;
-        jest.spyOn(service, 'delete').mockReturnValue(of(responseFakeDelete));
-        jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeEmptyExamArray));
-        jest.spyOn(router, 'navigate');
+        vi.spyOn(service, 'delete').mockReturnValue(of(responseFakeDelete));
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeEmptyExamArray));
+        vi.spyOn(router, 'navigate');
 
         // WHEN
         component.deleteExam(exam.id!);
@@ -264,7 +254,7 @@ describe('ExamDetailComponent', () => {
     });
 
     it('should call scrollToTopOfPage on component initialization', () => {
-        const scrollToTopOfPageSpy = jest.spyOn(Utils, 'scrollToTopOfPage');
+        const scrollToTopOfPageSpy = vi.spyOn(Utils, 'scrollToTopOfPage');
         component.ngOnInit();
         expect(scrollToTopOfPageSpy).toHaveBeenCalled();
         scrollToTopOfPageSpy.mockRestore();

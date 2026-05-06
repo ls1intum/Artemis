@@ -3,7 +3,6 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -56,7 +55,6 @@ describe('StudentsRoomDistributionDialogComponent', () => {
                 MockComponent(HelpIconComponent),
             ],
             providers: [
-                MockProvider(NgbActiveModal),
                 provideHttpClientTesting(),
                 MockProvider(SessionStorageService),
                 MockProvider(LocalStorageService),

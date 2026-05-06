@@ -1,5 +1,5 @@
 import { ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/services/exam-management-resolve.service';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -10,7 +10,11 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('Exam Resolve', () => {
+    setupTestBed({ zoneless: true });
+
     let resolve: ExamResolve;
     let examManagementService: ExamManagementService;
 
@@ -23,10 +27,10 @@ describe('Exam Resolve', () => {
         examManagementService = TestBed.inject(ExamManagementService);
     });
 
-    afterEach(() => jest.restoreAllMocks());
+    afterEach(() => vi.restoreAllMocks());
 
-    it('should fetch the exam if courseId and examId are given', fakeAsync(() => {
-        const findSpy = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: { id: 1 } })));
+    it('should fetch the exam if courseId and examId are given', async () => {
+        const findSpy = vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: { id: 1 } })));
         const examObservable = resolve.resolve({
             params: {
                 courseId: 1,
@@ -42,15 +46,15 @@ describe('Exam Resolve', () => {
 
         let receivedExam = undefined;
         examObservable.subscribe((exam) => (receivedExam = exam));
-        tick();
+        await Promise.resolve();
 
         expect(findSpy).toHaveBeenCalledOnce();
         expect(findSpy).toHaveBeenCalledWith(1, 2, true, true);
         expect(receivedExam).toEqual({ id: 1 });
-    }));
+    });
 
-    it('should create a new exam if courseId and/or examId are not given', fakeAsync(() => {
-        const findSpy = jest.spyOn(examManagementService, 'find');
+    it('should create a new exam if courseId and/or examId are not given', async () => {
+        const findSpy = vi.spyOn(examManagementService, 'find');
         const examObservable = resolve.resolve({
             params: {},
             data: {
@@ -63,14 +67,14 @@ describe('Exam Resolve', () => {
 
         let receivedExam = undefined;
         examObservable.subscribe((exam) => (receivedExam = exam));
-        tick();
+        await Promise.resolve();
 
         expect(findSpy).not.toHaveBeenCalled();
         expect(receivedExam).toEqual(new Exam());
-    }));
+    });
 
-    it('should fetch the exam for an import', fakeAsync(() => {
-        const findSpy = jest.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(of(new HttpResponse({ status: 200, body: { id: 1 } })));
+    it('should fetch the exam for an import', async () => {
+        const findSpy = vi.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(of(new HttpResponse({ status: 200, body: { id: 1 } })));
         const examObservable = resolve.resolve({
             params: {
                 examId: 2,
@@ -85,12 +89,12 @@ describe('Exam Resolve', () => {
 
         let receivedExam = undefined;
         examObservable.subscribe((exam) => (receivedExam = exam));
-        tick();
+        await Promise.resolve();
 
         expect(findSpy).toHaveBeenCalledOnce();
         expect(findSpy).toHaveBeenCalledWith(2);
         expect(receivedExam).toEqual({ id: 1 });
-    }));
+    });
 });
 
 describe('Exam Group Resolve', () => {
@@ -106,10 +110,10 @@ describe('Exam Group Resolve', () => {
         exerciseGroupService = TestBed.inject(ExerciseGroupService);
     });
 
-    afterEach(() => jest.restoreAllMocks());
+    afterEach(() => vi.restoreAllMocks());
 
-    it('should fetch the exercise group if courseId, examId and exerciseGroupId are given', fakeAsync(() => {
-        const findSpy = jest.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: { id: 1 } })));
+    it('should fetch the exercise group if courseId, examId and exerciseGroupId are given', async () => {
+        const findSpy = vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: { id: 1 } })));
         const examObservable = resolve.resolve({
             params: {
                 courseId: 1,
@@ -120,26 +124,26 @@ describe('Exam Group Resolve', () => {
 
         let receivedExamGroup = undefined;
         examObservable.subscribe((exam) => (receivedExamGroup = exam));
-        tick();
+        await Promise.resolve();
 
         expect(findSpy).toHaveBeenCalledOnce();
         expect(findSpy).toHaveBeenCalledWith(1, 2, 3);
         expect(receivedExamGroup).toEqual({ id: 1 });
-    }));
+    });
 
-    it('should create a new exam group if courseId, examId and/or examGroupId are not given', fakeAsync(() => {
-        const findSpy = jest.spyOn(exerciseGroupService, 'find');
+    it('should create a new exam group if courseId, examId and/or examGroupId are not given', async () => {
+        const findSpy = vi.spyOn(exerciseGroupService, 'find');
         const examObservable = resolve.resolve({
             params: {},
         } as any as ActivatedRouteSnapshot);
 
         let receivedExamGroup = undefined;
         examObservable.subscribe((exam) => (receivedExamGroup = exam));
-        tick();
+        await Promise.resolve();
 
         expect(findSpy).not.toHaveBeenCalled();
         expect(receivedExamGroup).toEqual({ isMandatory: true });
-    }));
+    });
 });
 
 describe('Student Exam Resolve', () => {
@@ -155,11 +159,11 @@ describe('Student Exam Resolve', () => {
         studentExamService = TestBed.inject(StudentExamService);
     });
 
-    afterEach(() => jest.restoreAllMocks());
+    afterEach(() => vi.restoreAllMocks());
 
-    it('should fetch the student exam if courseId, examId and studentExamId are given', fakeAsync(() => {
+    it('should fetch the student exam if courseId, examId and studentExamId are given', async () => {
         const response = { status: 200, body: { maxPoints: 10, studentExam: { id: 1 } } as StudentExamWithGradeDTO };
-        const findSpy = jest.spyOn(studentExamService, 'find').mockReturnValue(of(new HttpResponse(response)));
+        const findSpy = vi.spyOn(studentExamService, 'find').mockReturnValue(of(new HttpResponse(response)));
         const examObservable = resolve.resolve({
             params: {
                 courseId: 1,
@@ -170,25 +174,25 @@ describe('Student Exam Resolve', () => {
 
         let receivedExamWithGrade: StudentExamWithGradeDTO | undefined = undefined;
         examObservable.subscribe((examWithGrade) => (receivedExamWithGrade = examWithGrade));
-        tick();
+        await Promise.resolve();
 
         expect(findSpy).toHaveBeenCalledOnce();
         expect(findSpy).toHaveBeenCalledWith(1, 2, 3);
         expect(receivedExamWithGrade!.maxPoints).toBe(10);
         expect(receivedExamWithGrade!.studentExam).toEqual({ id: 1 });
-    }));
+    });
 
-    it('should create a new student exam if courseId and/or examId and/or studentExamId are not given', fakeAsync(() => {
-        const findSpy = jest.spyOn(studentExamService, 'find');
+    it('should create a new student exam if courseId and/or examId and/or studentExamId are not given', async () => {
+        const findSpy = vi.spyOn(studentExamService, 'find');
         const examObservable = resolve.resolve({
             params: {},
         } as any as ActivatedRouteSnapshot);
 
         let receivedExam = undefined;
         examObservable.subscribe((exam) => (receivedExam = exam));
-        tick();
+        await Promise.resolve();
 
         expect(findSpy).not.toHaveBeenCalled();
         expect(receivedExam).toEqual(new StudentExamWithGradeDTO());
-    }));
+    });
 });
