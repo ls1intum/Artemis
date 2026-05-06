@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
@@ -82,6 +83,7 @@ class PyrisStatusUpdateServiceErrorCodeTest {
         service.handleStatusUpdate(job, statusUpdate);
 
         verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(Map.of(1, 1, 2, 2, 3, -1)));
+        verify(callbackApi, never()).handleCheckpointData(eq(42L), eq("job-token-abc"), eq("{\"slidePageNumberMap\":{\"1\":1,\"2\":2,\"3\":-1}}"));
     }
 
     @Test

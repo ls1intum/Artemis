@@ -177,12 +177,14 @@ public class PyrisStatusUpdateService {
     public void handleStatusUpdate(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
         log.debug("[Ingestion] Status update for unitId={}, hasResult={}", job.lectureUnitId(), statusUpdate.result() != null && !statusUpdate.result().isBlank());
 
-        // Process checkpoint data on every callback (transcription results, heartbeats, etc.)
-        if (statusUpdate.result() != null && !statusUpdate.result().isBlank()) {
+        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
+
+        // Process checkpoint data only on non-terminal callbacks.
+        // Terminal lecture-ingestion results now carry slidePageNumberMap metadata,
+        // not transcription checkpoint payloads.
+        if (!isDone && statusUpdate.result() != null && !statusUpdate.result().isBlank()) {
             processingStateCallbackApi.ifPresent(api -> api.handleCheckpointData(job.lectureUnitId(), job.jobId(), statusUpdate.result()));
         }
-
-        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
 
         if (isDone) {
             boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
@@ -190,12 +192,9 @@ public class PyrisStatusUpdateService {
             String errorCode = success ? null : (rawCode != null && !rawCode.isBlank() ? rawCode : null);
 
             Map<String, Integer> rawSlidePageNumberMap = extractSlidePageNumberMapFromResult(statusUpdate.result(), job.lectureUnitId());
-
-            log.info("[Ingestion] Raw slide page number map from PyRIS for unitId={}: {}", job.lectureUnitId(), rawSlidePageNumberMap);
-
             final Map<Integer, Integer> slidePageNumberMap = convertSlidePageNumberMap(rawSlidePageNumberMap, job.lectureUnitId(), success);
 
-            log.info("[Ingestion] Terminal callback for unitId={}, success={}, errorCode={}, slidePageNumberMap={}", job.lectureUnitId(), success, errorCode, slidePageNumberMap);
+            log.info("[Ingestion] Terminal callback for unitId={}, success={}, errorCode={}", job.lectureUnitId(), success, errorCode);
             processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success, errorCode, slidePageNumberMap));
             pyrisJobService.removeJob(job);
         }
@@ -274,9 +273,7 @@ public class PyrisStatusUpdateService {
                 return null;
             }
 
-            Map<String, Integer> map = objectMapper.convertValue(mapNode, STRING_INTEGER_MAP_TYPE);
-            log.info("[Ingestion] Extracted slide page number map from result JSON for unitId={}: {}", lectureUnitId, map);
-            return map;
+            return objectMapper.convertValue(mapNode, STRING_INTEGER_MAP_TYPE);
         }
         catch (Exception e) {
             log.warn("[Ingestion] Failed to extract slide page number map from result JSON for unitId={}", lectureUnitId, e);

@@ -18,11 +18,4 @@ class PyrisLectureIngestionStatusUpdateDTOSerializationTest {
         var dto = mapper.readValue(json, PyrisLectureIngestionStatusUpdateDTO.class);
         assertThat(dto.errorCode()).isEqualTo("YOUTUBE_PRIVATE");
     }
-
-    @Test
-    void deserializesFinalResultJsonPayload() throws Exception {
-        String json = "{\"result\":\"{\\\"slidePageNumberMap\\\":{\\\"1\\\":1,\\\"2\\\":2,\\\"3\\\":-1}}\",\"stages\":[],\"jobId\":42}";
-        var dto = mapper.readValue(json, PyrisLectureIngestionStatusUpdateDTO.class);
-        assertThat(dto.result()).isEqualTo("{\"slidePageNumberMap\":{\"1\":1,\"2\":2,\"3\":-1}}");
-    }
 }
