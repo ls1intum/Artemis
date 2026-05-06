@@ -12,7 +12,11 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 let fixture: ComponentFixture<ExamStartInformationComponent>;
 let component: ExamStartInformationComponent;
@@ -33,12 +37,14 @@ let exam = {
 let studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
 describe('ExamStartInformationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     beforeEach(() => {
         exam = { id: 1, title: 'ExamForTesting', examMaxPoints: 10, startDate, endDate, testExam: false } as Exam;
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
         return TestBed.configureTestingModule({
-            declarations: [
+            imports: [
                 ExamStartInformationComponent,
                 MockComponent(StudentExamWorkingTimeComponent),
                 MockComponent(InformationBoxComponent),
@@ -47,7 +53,7 @@ describe('ExamStartInformationComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisDurationFromSecondsPipe),
             ],
-            providers: [provideRouter([])],
+            providers: [provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -57,101 +63,101 @@ describe('ExamStartInformationComponent', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should initialize with the correct start date', () => {
-        component.exam = exam;
-        component.studentExam = studentExam;
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
         expect(component.startDate).toEqual(exam.startDate);
     });
 
     it('should return undefined if the exam is not set', () => {
-        exam.startDate = undefined;
-        component.exam = exam;
-        component.studentExam = studentExam;
+        const examNoStartDate = { ...exam, startDate: undefined } as Exam;
+        fixture.componentRef.setInput('exam', examNoStartDate);
+        fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
         expect(component.startDate).toBeUndefined();
     });
 
     it('should initialize total points of the exam correctly', () => {
-        exam.examMaxPoints = 120;
-        component.exam = exam;
-        component.studentExam = studentExam;
+        const examWithPoints = { ...exam, examMaxPoints: 120 } as Exam;
+        fixture.componentRef.setInput('exam', examWithPoints);
+        fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
         expect(component.totalPoints).toBe(120);
     });
 
     it('should give total working time in minutes', () => {
-        exam.workingTime = 60 * 60 * 2;
-        component.exam = exam;
-        component.studentExam = studentExam;
+        const examWithWorkingTime = { ...exam, workingTime: 60 * 60 * 2 } as Exam;
+        fixture.componentRef.setInput('exam', examWithWorkingTime);
+        fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
         expect(component.totalWorkingTimeInMinutes).toBe(120);
     });
 
     it('should initialize module number of the exam correctly', () => {
-        exam.moduleNumber = 'IN18000';
-        component.exam = exam;
-        component.studentExam = studentExam;
+        const examWithModule = { ...exam, moduleNumber: 'IN18000' } as Exam;
+        fixture.componentRef.setInput('exam', examWithModule);
+        fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
         expect(component.moduleNumber).toBe('IN18000');
     });
 
     it('should initialize course name of the exam correctly', () => {
-        exam.courseName = 'Software Engineering';
-        component.exam = exam;
-        component.studentExam = studentExam;
+        const examWithCourse = { ...exam, courseName: 'Software Engineering' } as Exam;
+        fixture.componentRef.setInput('exam', examWithCourse);
+        fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
         expect(component.courseName).toBe('Software Engineering');
     });
 
     it('should initialize examiner of the exam correctly', () => {
-        exam.examiner = 'Prof. Dr. Stephan Krusche';
-        component.exam = exam;
-        component.studentExam = studentExam;
+        const examWithExaminer = { ...exam, examiner: 'Prof. Dr. Stephan Krusche' } as Exam;
+        fixture.componentRef.setInput('exam', examWithExaminer);
+        fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
         expect(component.examiner).toBe('Prof. Dr. Stephan Krusche');
     });
 
     it('should initialize number of exercises of the exam correctly', () => {
-        exam.numberOfExercisesInExam = 10;
-        component.exam = exam;
-        component.studentExam = studentExam;
+        const examWithExercises = { ...exam, numberOfExercisesInExam: 10 } as Exam;
+        fixture.componentRef.setInput('exam', examWithExercises);
+        fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
         expect(component.numberOfExercisesInExam).toBe(10);
     });
 
     it('should initialize examined student of the exam correctly', () => {
-        component.exam = exam;
-        component.studentExam = studentExam;
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
         expect(component.examinedStudent).toBe('Test User');
     });
 
     it('should initialize start date of the exam correctly', () => {
         const examStartDate = dayjs('2022-02-06 02:00:00');
-        component.exam = exam;
-        component.studentExam = studentExam;
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
         expect(component.startDate).toStrictEqual(examStartDate);
     });
 
     it('should initialize start date of the test exam correctly', () => {
         const examStartDate = dayjs('2022-02-06 02:00:00');
-        exam.testExam = true;
-        component.exam = exam;
-        component.studentExam = studentExam;
+        const testExam = { ...exam, testExam: true } as Exam;
+        fixture.componentRef.setInput('exam', testExam);
+        fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
         expect(component.startDate).toStrictEqual(examStartDate);
     });
 
     it('should initialize end date of the test exam correctly', () => {
         const examEndDate = dayjs('2022-02-06 02:00:00').add(1, 'hours');
-        exam.testExam = true;
-        component.exam = exam;
-        component.studentExam = studentExam;
+        const testExam = { ...exam, testExam: true } as Exam;
+        fixture.componentRef.setInput('exam', testExam);
+        fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
         expect(component.endDate).toStrictEqual(examEndDate);
     });
@@ -173,10 +179,10 @@ describe('ExamStartInformationComponent', () => {
 
         const studentExam1 = { id: 1, exam, user } as StudentExam;
 
-        component.exam = exam1;
-        component.studentExam = studentExam1;
-        const informationBoxStub = jest.spyOn(component, 'buildInformationBox');
-        const informationBoxDataStub = jest.spyOn(component, 'prepareInformationBoxData');
+        const informationBoxStub = vi.spyOn(component, 'buildInformationBox');
+        const informationBoxDataStub = vi.spyOn(component, 'prepareInformationBoxData');
+        fixture.componentRef.setInput('exam', exam1);
+        fixture.componentRef.setInput('studentExam', studentExam1);
         fixture.changeDetectorRef.detectChanges();
         expect(informationBoxStub).toHaveBeenCalledTimes(8);
         expect(informationBoxDataStub).toHaveBeenCalledOnce();
