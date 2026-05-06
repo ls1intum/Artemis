@@ -11,6 +11,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { User } from 'app/core/user/user.model';
 
 describe('SetupPasskeyModalComponent', () => {
     setupTestBed({ zoneless: true });
@@ -18,6 +22,8 @@ describe('SetupPasskeyModalComponent', () => {
     let component: SetupPasskeyModalComponent;
     let fixture: ComponentFixture<SetupPasskeyModalComponent>;
     let localStorageService: LocalStorageService;
+    let accountService: AccountService;
+    let profileService: ProfileService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -26,7 +32,8 @@ describe('SetupPasskeyModalComponent', () => {
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(AccountService),
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
@@ -34,7 +41,9 @@ describe('SetupPasskeyModalComponent', () => {
         fixture = TestBed.createComponent(SetupPasskeyModalComponent);
         component = fixture.componentInstance;
         localStorageService = TestBed.inject(LocalStorageService);
-        fixture.detectChanges();
+        accountService = TestBed.inject(AccountService);
+        profileService = TestBed.inject(ProfileService);
+        localStorageService.clear();
     });
 
     afterEach(() => {
@@ -67,5 +76,60 @@ describe('SetupPasskeyModalComponent', () => {
 
         expect(localStorageServiceSpy).toHaveBeenCalledWith(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, savedDate);
         expect(component.visible()).toBe(false);
+    });
+
+    describe('auto-open on authentication', () => {
+        it('should open the modal when passkey feature is enabled and user should set up passkey', () => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+            // Set identity before ngOnInit so that when getAuthenticationState emits,
+            // userIdentity() returns the correct value for openIfNeeded()
+            accountService.userIdentity.set({ askToSetupPasskey: true } as User);
+
+            component.ngOnInit();
+
+            expect(component.visible()).toBe(true);
+        });
+
+        it('should not open the modal when passkey feature is disabled', () => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+            accountService.userIdentity.set({ askToSetupPasskey: true } as User);
+
+            component.ngOnInit();
+
+            expect(component.visible()).toBe(false);
+        });
+
+        it('should not open the modal when user does not need to set up passkey', () => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+            accountService.userIdentity.set({ askToSetupPasskey: false } as User);
+
+            component.ngOnInit();
+
+            expect(component.visible()).toBe(false);
+        });
+
+        it('should not open the modal when reminder was set for the future', () => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+            const futureDate = new Date();
+            futureDate.setDate(futureDate.getDate() + 1);
+            localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, futureDate);
+            accountService.userIdentity.set({ askToSetupPasskey: true } as User);
+
+            component.ngOnInit();
+
+            expect(component.visible()).toBe(false);
+        });
+
+        it('should open the modal when reminder date is in the past', () => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+            const dateInPast = new Date();
+            dateInPast.setDate(dateInPast.getDate() - 10);
+            localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, dateInPast);
+            accountService.userIdentity.set({ askToSetupPasskey: true } as User);
+
+            component.ngOnInit();
+
+            expect(component.visible()).toBe(true);
+        });
     });
 });
