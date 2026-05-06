@@ -271,12 +271,15 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testGlobalSearchInstructorSeesAll() throws Exception {
-            // Use a high limit because the Weaviate collection is shared across test classes and may contain exercises from other tests
+            // The endpoint caps limit to 25; assert common states from a broad query and verify unreleased visibility with a focused query.
             var results = request.getList("/api/search?q=WeaviateSearchable&limit=100", HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchable Released Exercise", "WeaviateSearchable Unreleased Exercise", "WeaviateSearchable NotStarted Exam Exercise",
-                    "WeaviateSearchable Ongoing Exam Exercise", "WeaviateSearchable Ended Exam Exercise");
+            assertThat(titles).contains("WeaviateSearchable Released Exercise", "WeaviateSearchable NotStarted Exam Exercise", "WeaviateSearchable Ongoing Exam Exercise",
+                    "WeaviateSearchable Ended Exam Exercise");
+
+            var unreleasedResults = request.getList("/api/search?q=WeaviateSearchable%20Unreleased&types=exercise&limit=100", HttpStatus.OK, GlobalSearchResultDTO.class);
+            assertThat(getResultTitles(unreleasedResults)).contains("WeaviateSearchable Unreleased Exercise");
         }
     }
 
