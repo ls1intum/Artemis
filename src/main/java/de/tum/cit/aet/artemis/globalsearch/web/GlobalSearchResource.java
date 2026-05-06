@@ -383,12 +383,12 @@ public class GlobalSearchResource {
             return Filter.or(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false), Filter
                     .and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true), Filter.property(SearchableEntitySchema.Properties.EXAM_END_DATE).lte(now)));
         }
-        // Students: released regular exercises OR exam exercises after exam end (hand-in)
+        // Students: released regular exercises OR exam exercises after exam start
         Filter releasedRegularExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false),
                 Filter.or(Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).lte(now), Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).isNull()));
-        Filter completedExamExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true),
-                Filter.property(SearchableEntitySchema.Properties.EXAM_END_DATE).lte(now));
-        return Filter.or(releasedRegularExercises, completedExamExercises);
+        Filter startedExamExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true),
+                Filter.property(SearchableEntitySchema.Properties.EXAM_START_DATE).lte(now));
+        return Filter.or(releasedRegularExercises, startedExamExercises);
     }
 
     // -- Lecture disjunct --
