@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, input } from '@angular/core';
+import { Component, OnInit, input, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -14,16 +14,18 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 })
 export class SuspiciousSessionsComponent implements OnInit {
     suspiciousSessions = input.required<SuspiciousExamSessions>();
-    suspiciousFingerprint = false;
-    suspiciousIpAddress = false;
+    suspiciousFingerprint = signal(false);
+    suspiciousIpAddress = signal(false);
     ngOnInit(): void {
-        this.suspiciousFingerprint =
+        this.suspiciousFingerprint.set(
             this.isSuspiciousFor(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT) ||
-            this.isSuspiciousFor(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS);
-        this.suspiciousIpAddress =
+                this.isSuspiciousFor(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS),
+        );
+        this.suspiciousIpAddress.set(
             this.isSuspiciousFor(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS) ||
-            this.isSuspiciousFor(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES) ||
-            this.isSuspiciousFor(SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE);
+                this.isSuspiciousFor(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES) ||
+                this.isSuspiciousFor(SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE),
+        );
     }
 
     getStudentExamLink(studentExam: StudentExam) {

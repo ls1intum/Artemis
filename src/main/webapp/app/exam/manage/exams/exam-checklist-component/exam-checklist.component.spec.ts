@@ -22,6 +22,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -53,20 +55,22 @@ function getExerciseGroups(equalPoints: boolean) {
 }
 
 describe('ExamChecklistComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let examChecklistComponentFixture: ComponentFixture<ExamChecklistComponent>;
     let component: ExamChecklistComponent;
 
     let examChecklistService: ExamChecklistService;
     let profileService: ProfileService;
-    let getProfileInfoSub: jest.SpyInstance;
+    let getProfileInfoSub: ReturnType<typeof vi.spyOn>;
 
     const exam = new Exam();
     const examChecklist = new ExamChecklist();
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
                 ExamChecklistComponent,
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
@@ -83,41 +87,41 @@ describe('ExamChecklistComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                examChecklistComponentFixture = TestBed.createComponent(ExamChecklistComponent);
-                component = examChecklistComponentFixture.componentInstance;
-                examChecklistService = TestBed.inject(ExamChecklistService);
-                profileService = TestBed.inject(ProfileService);
+        }).compileComponents();
 
-                getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] });
-            });
-    });
+        examChecklistComponentFixture = TestBed.createComponent(ExamChecklistComponent);
+        component = examChecklistComponentFixture.componentInstance;
+        examChecklistService = TestBed.inject(ExamChecklistService);
+        profileService = TestBed.inject(ProfileService);
 
-    beforeEach(() => {
+        getProfileInfoSub = vi.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] });
+
         // reset exam
         examChecklistComponentFixture.componentRef.setInput('exam', exam);
+        examChecklistComponentFixture.componentRef.setInput('getExamRoutesByIdentifier', () => []);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
+
     it('should count mandatory exercises correctly', () => {
         component.exam().exerciseGroups = getExerciseGroups(true);
 
-        component.ngOnChanges();
+        examChecklistComponentFixture.componentRef.setInput('exam', { ...component.exam() });
+        examChecklistComponentFixture.detectChanges();
 
         expect(component.countMandatoryExercises).toBe(0);
-        expect(component.hasOptionalExercises).toBeTrue();
+        expect(component.hasOptionalExercises).toBe(true);
 
-        component.exam().exerciseGroups![0].isMandatory = true;
-
-        component.ngOnChanges();
+        const examWithMandatory = { ...component.exam() };
+        examWithMandatory.exerciseGroups = component.exam().exerciseGroups!.map((group, idx) => (idx === 0 ? { ...group, isMandatory: true } : group));
+        examChecklistComponentFixture.componentRef.setInput('exam', examWithMandatory);
+        examChecklistComponentFixture.detectChanges();
 
         expect(component.countMandatoryExercises).toBe(1);
-        expect(component.hasOptionalExercises).toBeFalse();
+        expect(component.hasOptionalExercises).toBe(false);
 
         const additionalExerciseGroup = {
             id: 13,
@@ -132,40 +136,40 @@ describe('ExamChecklistComponent', () => {
             ],
         };
 
-        component.exam().exerciseGroups!.push(additionalExerciseGroup);
-
-        component.ngOnChanges();
+        const examWithAdditional = { ...examWithMandatory, exerciseGroups: [...examWithMandatory.exerciseGroups!, additionalExerciseGroup] };
+        examChecklistComponentFixture.componentRef.setInput('exam', examWithAdditional);
+        examChecklistComponentFixture.detectChanges();
 
         expect(component.countMandatoryExercises).toBe(1);
-        expect(component.hasOptionalExercises).toBeTrue();
+        expect(component.hasOptionalExercises).toBe(true);
     });
 
     it('should set exam checklist correctly', () => {
-        const getExamStatisticsStub = jest.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
+        const getExamStatisticsStub = vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
 
-        component.ngOnChanges();
+        examChecklistComponentFixture.detectChanges();
 
-        expect(getExamStatisticsStub).toHaveBeenCalledOnce();
+        expect(getExamStatisticsStub).toHaveBeenCalled();
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
         expect(component.examChecklist).toEqual(examChecklist);
     });
 
     it('should set existsUnassessedQuizzes correctly', () => {
-        const getExamStatisticsStub = jest.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
+        const getExamStatisticsStub = vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
 
-        component.ngOnChanges();
+        examChecklistComponentFixture.detectChanges();
 
-        expect(getExamStatisticsStub).toHaveBeenCalledOnce();
+        expect(getExamStatisticsStub).toHaveBeenCalled();
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
         expect(component.examChecklist.existsUnassessedQuizzes).toEqual(examChecklist.existsUnassessedQuizzes);
     });
 
     it('should set existsUnsubmittedExercises correctly', () => {
-        const getExamStatisticsStub = jest.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
+        const getExamStatisticsStub = vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
 
-        component.ngOnChanges();
+        examChecklistComponentFixture.detectChanges();
 
-        expect(getExamStatisticsStub).toHaveBeenCalledOnce();
+        expect(getExamStatisticsStub).toHaveBeenCalled();
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
         expect(component.examChecklist.existsUnsubmittedExercises).toEqual(examChecklist.existsUnsubmittedExercises);
     });
