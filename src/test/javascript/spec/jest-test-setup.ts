@@ -1,4 +1,5 @@
 import '@angular/compiler';
+import { setupZoneTestEnv } from 'jest-preset-angular/setup-env/zone';
 import 'app/shared/util/map.extension';
 import 'app/shared/util/array.extension';
 import 'app/core/config/dayjs';
@@ -7,6 +8,20 @@ import 'jest-extended';
 import failOnConsole from 'jest-fail-on-console';
 import { TextDecoder, TextEncoder } from 'util';
 import { MockClipboardItem } from './helpers/mocks/service/mock-clipboard-item';
+
+// Angular's TestBed singleton state survives across spec files in the same Jest worker, so
+// `setupZoneTestEnv()` (which calls `getTestBed().initTestEnvironment(...)`) throws "Cannot
+// set base providers because it has already been called" on every file after the first.
+// Calling `getTestBed().resetTestEnvironment()` first breaks fakeAsync because `zone.js/testing`
+// is patched into globals on the first call only and gets stripped by the reset. Swallowing the
+// duplicate-init error keeps both the first init and subsequent files working.
+try {
+    setupZoneTestEnv();
+} catch (error) {
+    if (!(error instanceof Error) || !error.message.includes('already been called')) {
+        throw error;
+    }
+}
 
 /*
  * Monaco-editor 0.55+ uses the CSS Typed Object Model API (CSS.supports(), CSS.escape(), etc.)

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -7,6 +9,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Modeling Exercise Group Cell Component', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ModelingExerciseGroupCellComponent>;
 
     beforeEach(() => {
@@ -15,6 +19,10 @@ describe('Modeling Exercise Group Cell Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ModelingExerciseGroupCellComponent);
             });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should display diagram type', () => {

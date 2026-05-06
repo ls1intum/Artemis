@@ -112,13 +112,13 @@ export class ExamManagementPage {
     }
 
     async typeAnnouncementMessage(message: string) {
-        // Use the modal-content as the container for the Monaco editor
-        const modalContent = this.page.locator('.modal-content');
+        // Match either the legacy NgbModal (.modal-content) or the migrated PrimeNG dialog (.p-dialog-content).
+        const modalContent = this.page.locator('.p-dialog-content, .modal-content').first();
         await setMonacoEditorContentByLocator(this.page, modalContent, message);
     }
 
     async verifyAnnouncementContent(announcementTime: Dayjs, message: string, authorUsername: string) {
-        const announcementDialog = this.page.locator('.modal-content');
+        const announcementDialog = this.page.locator('.p-dialog-content, .modal-content').first();
         const timeFormat = 'MMM D, YYYY HH:mm';
         const announcementTimeFormatted = announcementTime.format(timeFormat);
         const announcementTimeAfterMinute = announcementTime.add(1, 'minute').format(timeFormat);
