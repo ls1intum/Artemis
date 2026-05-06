@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -34,8 +33,6 @@ public class UserScheduleService {
 
     private final UserRepository userRepository;
 
-    private final CacheManager cacheManager;
-
     private final ScheduledExecutorService scheduler;
 
     private final Optional<LearnerProfileApi> learnerProfileApi;
@@ -44,9 +41,8 @@ public class UserScheduleService {
     // The key of the map is the user id.
     private final Map<Long, ScheduledFuture<?>> nonActivatedAccountsFutures = new ConcurrentHashMap<>();
 
-    public UserScheduleService(UserRepository userRepository, CacheManager cacheManager, Optional<LearnerProfileApi> learnerProfileApi) {
+    public UserScheduleService(UserRepository userRepository, Optional<LearnerProfileApi> learnerProfileApi) {
         this.userRepository = userRepository;
-        this.cacheManager = cacheManager;
         this.scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
         this.learnerProfileApi = learnerProfileApi;
     }
@@ -98,26 +94,13 @@ public class UserScheduleService {
     }
 
     /**
-     * Deletes the user from the repository and the cache.
+     * Deletes the user from the repository.
      *
      * @param user user to delete
      */
     private void deleteUser(User user) {
         userRepository.delete(user);
-        clearUserCaches(user);
         userRepository.flush();
         learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
-    }
-
-    /**
-     * Removes the user from Spring's cache.
-     *
-     * @param user the user to remove from the cache
-     */
-    private void clearUserCaches(User user) {
-        var userCache = cacheManager.getCache(User.class.getName());
-        if (userCache != null) {
-            userCache.evict(user.getLogin());
-        }
     }
 }
