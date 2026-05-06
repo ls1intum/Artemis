@@ -1,8 +1,9 @@
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { Subscription, from } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -16,7 +17,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [FaIconComponent, TranslateDirective],
 })
 export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDestroy {
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
     alertService = inject(AlertService);
 
     exam = input.required<Exam>();
@@ -24,9 +26,9 @@ export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDest
     faBullhorn = faBullhorn;
     announcementCreationAllowed = false;
 
-    private modalRef: NgbModalRef | undefined;
+    private dialogRef: DynamicDialogRef | null | undefined;
     private timeoutRef: any;
-    private subscription: Subscription;
+    private subscription: Subscription | undefined;
 
     ngOnInit() {
         this.checkAnnouncementCreationAllowed();
@@ -36,9 +38,7 @@ export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDest
         if (this.timeoutRef) {
             clearTimeout(this.timeoutRef);
         }
-        if (this.subscription) {
-            this.subscription.unsubscribe();
-        }
+        this.subscription?.unsubscribe();
     }
 
     private checkAnnouncementCreationAllowed() {
@@ -58,14 +58,19 @@ export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDest
     openDialog(event: MouseEvent) {
         event.preventDefault();
         this.alertService.closeAll();
-        this.modalRef = this.modalService.open(ExamLiveAnnouncementCreateModalComponent, {
-            size: 'lg',
-            backdrop: 'static',
-            animation: true,
+        this.dialogRef = this.dialogService.open(ExamLiveAnnouncementCreateModalComponent, {
+            header: this.translateService.instant('artemisApp.examManagement.announcementCreate.title'),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: {
+                examId: this.exam().id,
+                courseId: this.exam().course!.id!,
+            },
         });
-        this.modalRef.componentInstance.examId = this.exam().id;
-        this.modalRef.componentInstance.courseId = this.exam().course!.id!;
 
-        from(this.modalRef.result).subscribe(() => (this.modalRef = undefined));
+        this.subscription = this.dialogRef?.onClose.subscribe(() => (this.dialogRef = undefined));
     }
 }

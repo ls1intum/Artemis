@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input } from '@angular/core';
 import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
@@ -35,12 +35,18 @@ export enum ExamConductionState {
     styleUrls: ['./exam-status.component.scss'],
     imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe],
 })
-export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
+export class ExamStatusComponent implements OnInit, OnDestroy {
     private examChecklistService = inject(ExamChecklistService);
     private websocketService = inject(WebsocketService);
 
     public exam = input.required<Exam>();
     public course = input.required<Course>();
+
+    constructor() {
+        effect(() => {
+            this.updateChecklistState();
+        });
+    }
 
     examChecklist: ExamChecklist;
     numberOfGeneratedStudentExams: number;
@@ -86,7 +92,7 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
         this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => (this.numberOfStarted += 1));
     }
 
-    ngOnChanges() {
+    private updateChecklistState() {
         this.examChecklistService.getExamStatistics(this.exam()).subscribe((examStats) => {
             this.examChecklist = examStats;
             this.numberOfGeneratedStudentExams = this.examChecklist.numberOfGeneratedStudentExams ?? 0;
