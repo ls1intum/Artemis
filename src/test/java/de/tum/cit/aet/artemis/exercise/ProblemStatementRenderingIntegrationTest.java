@@ -4,9 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +20,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.dto.ImageMode;
 import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequestDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
@@ -29,12 +34,20 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     private static final String POST_URL = "/api/exercise/problem-statement/render";
 
+    private static final String FIXTURE_IMAGE_NAME = "test-fixture.png";
+
     @Autowired
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+    }
+
+    @AfterEach
+    void cleanUpFixtureImage() throws IOException {
+        Path fixturePath = FilePathConverter.getMarkdownFilePath().resolve(FIXTURE_IMAGE_NAME);
+        Files.deleteIfExists(fixturePath);
     }
 
     // --- Basic rendering ---
@@ -535,5 +548,64 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
         assertThat(result.html()).contains("/api/core/files/markdown/nonexistent.png");
+    }
+
+    // --- Image inlining (INLINE mode) ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldInlineMarkdownImageAsBase64DataUri() throws Exception {
+        byte[] pngBytes = createMinimalPng();
+        Path markdownDir = FilePathConverter.getMarkdownFilePath();
+        Files.createDirectories(markdownDir);
+        Files.write(markdownDir.resolve(FIXTURE_IMAGE_NAME), pngBytes);
+
+        var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/" + FIXTURE_IMAGE_NAME + ")", null, null, "en", false, false, null, ImageMode.INLINE);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data:image/png;base64,");
+        assertThat(result.html()).doesNotContain("/api/core/files/markdown/" + FIXTURE_IMAGE_NAME);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotInlineImageWithPathTraversal() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/..%2Fpasswd.png)", null, null, "en", false, false, null, ImageMode.INLINE);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("data:image/png;base64,");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotInlineNonAllowedExtension() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("![doc](/api/core/files/markdown/readme.txt)", null, null, "en", false, false, null, ImageMode.INLINE);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("data:image/png;base64,");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotInlineNonexistentImage() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/doesnotexist.png)", null, null, "en", false, false, null, ImageMode.INLINE);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("data:image/png;base64,");
+    }
+
+    private static byte[] createMinimalPng() {
+        return new byte[] { (byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG signature
+                0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52, // IHDR chunk
+                0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, // 1x1 pixel
+                0x08, 0x02, 0x00, 0x00, 0x00, (byte) 0x90, 0x77, 0x53, // 8-bit RGB
+                (byte) 0xDE, 0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41, // IDAT chunk
+                0x54, 0x08, (byte) 0xD7, 0x63, (byte) 0xF8, (byte) 0xCF, (byte) 0xC0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01, (byte) 0xE2, 0x21, (byte) 0xBC, 0x33, // CRC
+                0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, // IEND chunk
+                (byte) 0xAE, 0x42, 0x60, (byte) 0x82 };
     }
 }
