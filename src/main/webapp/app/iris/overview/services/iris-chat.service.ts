@@ -5,7 +5,7 @@ import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from '
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { BehaviorSubject, Observable, Subject, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
-import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
+import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
@@ -74,6 +74,7 @@ export class IrisChatService implements OnDestroy {
     citationInfo: BehaviorSubject<IrisCitationMetaDTO[]> = new BehaviorSubject([]);
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
     chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject([]);
+    streamingMessage: BehaviorSubject<string | undefined> = new BehaviorSubject(undefined);
 
     rateLimitInfo?: IrisRateLimitInformation;
 
@@ -171,6 +172,7 @@ export class IrisChatService implements OnDestroy {
         this.newIrisMessage.next(undefined);
         this.error.next(undefined);
         this.chatSessions.next([]);
+        this.streamingMessage.next(undefined);
         this.shouldReopenChatSubject.next(false);
         // Plain fields.
         this.latestStartedSession = undefined;
@@ -542,6 +544,7 @@ export class IrisChatService implements OnDestroy {
         }
         switch (payload.type) {
             case IrisChatWebsocketPayloadType.MESSAGE:
+                this.streamingMessage.next(undefined);
                 if (payload.message?.sender === IrisSender.LLM) {
                     this.numNewMessages.next(this.numNewMessages.getValue() + 1);
                 }
@@ -552,12 +555,15 @@ export class IrisChatService implements OnDestroy {
                     this.stages.next(this.filterStages(payload.stages));
                 }
                 break;
-            case IrisChatWebsocketPayloadType.STATUS:
+            case IrisChatWebsocketPayloadType.STATUS: {
                 this.stages.next(this.filterStages(payload.stages || []));
                 if (payload.suggestions) {
                     this.suggestions.next(payload.suggestions);
                 }
+                const streamingText = payload.stages?.find((s) => s.state === IrisStageStateDTO.IN_PROGRESS && (s.chatMessage?.length ?? 0) > 20)?.chatMessage;
+                this.streamingMessage.next(streamingText);
                 break;
+            }
         }
     }
 
@@ -585,6 +591,7 @@ export class IrisChatService implements OnDestroy {
             this.citationInfo.next([]);
             this.numNewMessages.next(0);
             this.newIrisMessage.next(undefined);
+            this.streamingMessage.next(undefined);
         }
         this.error.next(undefined);
     }
@@ -798,6 +805,10 @@ export class IrisChatService implements OnDestroy {
 
     public currentSuggestions(): Observable<string[]> {
         return this.suggestions.asObservable();
+    }
+
+    public currentStreamingMessage(): Observable<string | undefined> {
+        return this.streamingMessage.asObservable();
     }
 
     public availableChatSessions(): Observable<IrisSessionDTO[]> {
