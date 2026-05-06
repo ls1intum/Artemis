@@ -319,9 +319,7 @@ public class ChannelService {
         conversationParticipantRepository.saveAll(conversationParticipants);
         channelsToCreate.forEach(channel -> {
             conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, channel, Set.of(creator));
-            if (searchableEntityWeaviateService != null) {
-                syncChannelWithWeaviate(channel);
-            }
+            syncChannelWithWeaviate(channel);
         });
     }
 
