@@ -79,7 +79,8 @@
             "results": {
                 "due": "Fällig: {{ date }}",
                 "point": "Punkt",
-                "points": "Punkte"
+                "points": "Punkte",
+                "examExercise": "Klausur"
             },
             "comingSoon": "Demnächst verfügbar",
             "enterToActivate": "Eingabetaste drücken zum Aktivieren",
