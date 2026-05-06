@@ -212,38 +212,83 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             this.overlay.close();
             return;
         }
-        if (result.type === 'exercise' && result.id) {
-            const examId = result.metadata?.['examId'];
-            const exerciseGroupId = result.metadata?.['exerciseGroupId'];
-            const isAtLeastTutor = result.metadata?.['isAtLeastTutor'];
-            if (examId && exerciseGroupId && isAtLeastTutor) {
-                const typeSegment = (result.badge?.toLowerCase().replace(/ /g, '-') ?? 'text') + '-exercises';
-                this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
-            } else if (examId) {
-                this.router.navigate(['/courses', courseId, 'exams', examId]);
-            } else {
-                this.router.navigate(['/courses', courseId, 'exercises', result.id]);
-            }
-        } else if (result.type === 'lecture' && result.id) {
-            this.router.navigate(['/courses', courseId, 'lectures', result.id]);
-        } else if (result.type === 'lecture_unit' && result.id) {
-            const lectureId = result.metadata?.['lectureId'];
-            if (lectureId) {
-                this.router.navigate(['/courses', courseId, 'lectures', lectureId]);
-            }
-        } else if (result.type === 'exam' && result.id) {
-            const isAtLeastTutor = result.metadata?.['isAtLeastTutor'];
-            if (isAtLeastTutor) {
-                this.router.navigate(['/course-management', courseId, 'exams', result.id]);
-            } else {
-                this.router.navigate(['/courses', courseId, 'exams', result.id]);
-            }
-        } else if (result.type === 'faq') {
-            this.router.navigate(['/courses', courseId, 'faq']);
-        } else if (result.type === 'channel' && result.id) {
-            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: result.id } });
+
+        switch (result.type) {
+            case 'exercise':
+                if (result.id) this.navigateToExercise(result, courseId);
+                break;
+            case 'lecture':
+                if (result.id) this.navigateToLecture(courseId, result.id);
+                break;
+            case 'lecture_unit':
+                if (result.id) this.navigateToLectureUnit(result, courseId);
+                break;
+            case 'exam':
+                if (result.id) this.navigateToExam(result, courseId);
+                break;
+            case 'faq':
+                this.router.navigate(['/courses', courseId, 'faq']);
+                break;
+            case 'channel':
+                if (result.id) this.navigateToChannel(courseId, result.id);
+                break;
         }
+
         this.overlay.close();
+    }
+
+    private navigateToExercise(result: GlobalSearchResult, courseId: string) {
+        const examId = result.metadata?.['examId'];
+        const exerciseGroupId = result.metadata?.['exerciseGroupId'];
+        const isAtLeastTutor = result.metadata?.['isAtLeastTutor'];
+
+        const isTutorExamExercise = !!(examId && exerciseGroupId && isAtLeastTutor);
+        const isStudentExamExercise = !!examId && !isTutorExamExercise;
+
+        if (isTutorExamExercise) {
+            this.navigateToExamExerciseDetailsPage(courseId, examId, exerciseGroupId, result);
+        } else if (isStudentExamExercise) {
+            this.navigateToStudentExamView(courseId, examId);
+        } else {
+            this.router.navigate(['/courses', courseId, 'exercises', result.id]);
+        }
+    }
+
+    private navigateToExamExerciseDetailsPage(courseId: string, examId: string, exerciseGroupId: string, result: GlobalSearchResult) {
+        const typeSegment = (result.badge?.toLowerCase().replace(/ /g, '-') ?? 'text') + '-exercises';
+        this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
+    }
+
+    private navigateToStudentExamView(courseId: string, examId: string) {
+        this.router.navigate(['/courses', courseId, 'exams', examId]);
+    }
+
+    private navigateToLecture(courseId: string, lectureId: string) {
+        this.router.navigate(['/courses', courseId, 'lectures', lectureId]);
+    }
+
+    private navigateToLectureUnit(result: GlobalSearchResult, courseId: string) {
+        const lectureId = result.metadata?.['lectureId'];
+        if (lectureId) {
+            this.navigateToLecture(courseId, lectureId);
+        }
+    }
+
+    private navigateToExam(result: GlobalSearchResult, courseId: string) {
+        const isAtLeastTutor = !!result.metadata?.['isAtLeastTutor'];
+        if (isAtLeastTutor) {
+            this.navigateToExamDetailsPage(courseId, result.id!);
+        } else {
+            this.navigateToStudentExamView(courseId, result.id!);
+        }
+    }
+
+    private navigateToExamDetailsPage(courseId: string, examId: string) {
+        this.router.navigate(['/course-management', courseId, 'exams', examId]);
+    }
+
+    private navigateToChannel(courseId: string, channelId: string) {
+        this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId } });
     }
 
     @HostListener('window:keydown', ['$event'])
