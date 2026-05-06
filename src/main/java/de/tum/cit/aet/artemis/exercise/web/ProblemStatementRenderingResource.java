@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.exercise.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -23,16 +21,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
-import de.tum.cit.aet.artemis.exercise.dto.ImageMode;
 import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequestDTO;
+import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
 import de.tum.cit.aet.artemis.exercise.service.ProblemStatementRenderingService;
@@ -47,29 +42,28 @@ public class ProblemStatementRenderingResource {
 
     private final ProblemStatementRenderingService renderingService;
 
-    private final ObjectMapper objectMapper;
-
-    public ProblemStatementRenderingResource(ProblemStatementRenderingService renderingService, ObjectMapper objectMapper) {
+    public ProblemStatementRenderingResource(ProblemStatementRenderingService renderingService) {
         this.renderingService = renderingService;
-        this.objectMapper = objectMapper;
     }
 
     /**
      * POST problem-statement/render : Stateless rendering of a problem statement.
-     * The client sends markdown + test data, the server returns self-contained HTML with interactive JS.
-     * Zero database access.
      * <p>
-     * When imageMode is ATTACHED, the response is {@code multipart/related} with the JSON root part first,
-     * followed by one part per resolved image. Otherwise the response is plain {@code application/json}.
+     * The client sends markdown + optional test data, the server returns a self-contained HTML document.
+     * The {@code imageMode} field controls how embedded images are delivered:
+     * <ul>
+     * <li>{@code URL} (default): images stay as absolute URLs requiring authentication to load. Smallest response.</li>
+     * <li>{@code INLINE}: images are embedded as Base64 data URIs. Self-contained, no auth needed for images.</li>
+     * </ul>
      *
      * @param renderRequest the render request containing markdown, test results, and configuration
-     * @return the rendered problem statement DTO (JSON) or a multipart/related body (ATTACHED mode)
+     * @return the rendered problem statement DTO
      */
-    @PostMapping(value = "problem-statement/render", produces = { MediaType.APPLICATION_JSON_VALUE, "multipart/related" })
+    @PostMapping(value = "problem-statement/render", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     @LimitRequestsPerMinute(type = RateLimitType.PROBLEM_STATEMENT_RENDERING)
-    public ResponseEntity<?> renderProblemStatement(@Valid @RequestBody ProblemStatementRenderRequestDTO renderRequest) throws JsonProcessingException, IOException {
+    public ResponseEntity<?> renderProblemStatement(@Valid @RequestBody ProblemStatementRenderRequestDTO renderRequest) {
 
         log.debug("REST request to render problem statement (stateless)");
 
@@ -92,22 +86,9 @@ public class ProblemStatementRenderingResource {
         String lang = renderRequest.locale() != null ? renderRequest.locale() : "en";
         Locale locale = Locale.forLanguageTag(lang);
 
-        ImageMode imageMode = renderRequest.resolvedImageMode();
-        ProblemStatementRenderingService.RenderResult result = renderingService.render(renderRequest.markdown(), testResults, resultSummary, locale, renderRequest.darkMode(),
-                renderRequest.shouldIncludeJs(), renderRequest.shouldIncludeCss(), imageMode);
+        RenderedProblemStatementDTO result = renderingService.render(renderRequest.markdown(), testResults, resultSummary, locale, renderRequest.darkMode(),
+                renderRequest.shouldIncludeJs(), renderRequest.shouldIncludeCss(), renderRequest.resolvedImageMode());
 
-        if (imageMode == ImageMode.ATTACHED) {
-            String boundary = "artemis-psr-" + result.dto().contentHash().substring(0, 16);
-            byte[] jsonPart = objectMapper.writeValueAsBytes(result.dto());
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            MultipartRelatedResponseWriter.write(baos, boundary, jsonPart, result.attachedImages());
-            byte[] multipartBody = baos.toByteArray();
-
-            return ResponseEntity.ok().eTag("\"" + result.dto().contentHash() + "\"")
-                    .contentType(MediaType.parseMediaType("multipart/related; boundary=" + boundary + "; type=\"application/json\"; start=\"<root@artemis>\"")).body(multipartBody);
-        }
-
-        return ResponseEntity.ok().eTag("\"" + result.dto().contentHash() + "\"").body(result.dto());
+        return ResponseEntity.ok().eTag("\"" + result.contentHash() + "\"").body(result);
     }
 }

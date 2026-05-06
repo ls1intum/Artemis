@@ -77,12 +77,6 @@ public class ProblemStatementRenderingService {
 
     private static final Logger log = LoggerFactory.getLogger(ProblemStatementRenderingService.class);
 
-    public record RenderResult(RenderedProblemStatementDTO dto, List<AttachedImage> attachedImages) {
-    }
-
-    public record AttachedImage(String contentId, String contentType, String filename, byte[] data) {
-    }
-
     private static final String RENDERER_VERSION = "1.0.0";
 
     private static final String KATEX_BASE_PATH = "/webjars/katex/dist";
@@ -175,11 +169,11 @@ public class ProblemStatementRenderingService {
      * @param imageMode     how to handle embedded images (inline data URIs, absolute URLs, or separated with CID references)
      * @return the rendered problem statement DTO
      */
-    public RenderResult render(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, @Nullable ResultSummaryInputDTO resultSummary, Locale locale,
+    public RenderedProblemStatementDTO render(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, @Nullable ResultSummaryInputDTO resultSummary, Locale locale,
             boolean darkMode, boolean includeJs, boolean includeCss, ImageMode imageMode) {
 
         if (markdown == null || markdown.isBlank()) {
-            return new RenderResult(new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, null, null), List.of());
+            return new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, null);
         }
 
         // 1. Mask code blocks so downstream passes skip over them.
@@ -210,16 +204,8 @@ public class ProblemStatementRenderingService {
         String html = renderWithCommonMark(processed);
 
         // 7b. Process images based on requested mode.
-        List<AttachedImage> attachedImages = List.of();
-        switch (imageMode) {
-            case INLINE -> html = inlineMarkdownImages(html);
-            case URL -> {
-                /* no-op: absolute URLs from MarkdownRelativeToAbsolutePathAttributeProvider stay as-is */ }
-            case ATTACHED -> {
-                var separated = separateMarkdownImages(html);
-                html = separated.html();
-                attachedImages = separated.images();
-            }
+        if (imageMode == ImageMode.INLINE) {
+            html = inlineMarkdownImages(html);
         }
 
         // 8. Inject the earlier PlantUML SVGs (jsoup's HTML safelist would strip them, so we inject afterwards).
@@ -253,14 +239,14 @@ public class ProblemStatementRenderingService {
         }
 
         String interactiveScript = includeJs ? buildLocalizedScript(locale) : null;
-        String contentHash = computeContentHash(html, interactiveScript, imageMode, attachedImages);
+        String contentHash = computeContentHash(html, interactiveScript, imageMode);
 
         String bodyClass = " class=\"artemis-ssr-body" + (darkMode ? " artemis-ssr-body--dark" : "") + "\"";
         String document = "<!DOCTYPE html><html lang=\"" + HtmlEscaper.escapeAttribute(locale.toLanguageTag()) + "\"><head><meta charset=\"UTF-8\">"
                 + "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body" + bodyClass + ">" + html
                 + (interactiveScript != null ? "<script>" + interactiveScript + "</script>" : "") + "</body></html>";
 
-        return new RenderResult(new RenderedProblemStatementDTO(document, contentHash, RENDERER_VERSION, interactiveScript, null), attachedImages);
+        return new RenderedProblemStatementDTO(document, contentHash, RENDERER_VERSION, interactiveScript);
     }
 
     private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean darkMode) {
@@ -559,74 +545,6 @@ public class ProblemStatementRenderingService {
         return doc.body().html();
     }
 
-    private record SeparatedImagesResult(String html, List<AttachedImage> images) {
-    }
-
-    private SeparatedImagesResult separateMarkdownImages(String html) {
-        var doc = Jsoup.parseBodyFragment(html);
-        var imgElements = doc.select("img[src]");
-        if (imgElements.isEmpty()) {
-            return new SeparatedImagesResult(html, List.of());
-        }
-
-        Path basePath = FilePathConverter.getMarkdownFilePath();
-        Path baseReal;
-        try {
-            baseReal = basePath.toRealPath();
-        }
-        catch (IOException e) {
-            return new SeparatedImagesResult(html, List.of());
-        }
-
-        var images = new ArrayList<AttachedImage>();
-        var pathToId = new HashMap<Path, String>();
-        int imageIndex = 0;
-        long emittedBytes = 0;
-        String absolutePrefix = serverUrl + MARKDOWN_FILE_API_PATH;
-
-        for (var img : imgElements) {
-            String src = img.attr("src");
-            ResolvedMarkdownImage resolved = resolveMarkdownImageSrc(src, absolutePrefix, basePath, baseReal);
-            if (resolved == null) {
-                continue;
-            }
-
-            try {
-                String existingId = pathToId.get(resolved.realPath());
-                if (existingId != null) {
-                    img.attr("src", "cid:" + existingId);
-                    continue;
-                }
-
-                if (images.size() >= MAX_INLINE_IMAGES) {
-                    continue;
-                }
-
-                long size = Files.size(resolved.realPath());
-                if (size > MAX_INLINE_FILE_SIZE || emittedBytes + size > MAX_INLINE_TOTAL_SIZE) {
-                    continue;
-                }
-                byte[] bytes = fileService.getFileForPath(resolved.realPath());
-                if (bytes == null || bytes.length > MAX_INLINE_FILE_SIZE || emittedBytes + bytes.length > MAX_INLINE_TOTAL_SIZE) {
-                    continue;
-                }
-
-                String contentId = "img-" + imageIndex + "@artemis";
-                images.add(new AttachedImage(contentId, resolved.mime(), resolved.filename(), bytes));
-                pathToId.put(resolved.realPath(), contentId);
-                img.attr("src", "cid:" + contentId);
-                emittedBytes += bytes.length;
-                imageIndex++;
-            }
-            catch (IOException e) {
-                log.warn("Could not separate markdown image {}: {}", resolved.filename(), e.getMessage());
-            }
-        }
-
-        doc.outputSettings().prettyPrint(false);
-        return new SeparatedImagesResult(doc.body().html(), images);
-    }
-
     /**
      * Replaces fenced code blocks and inline code with opaque placeholders so downstream passes
      * (PlantUML, math, tasks, testid stripping) skip their contents.
@@ -662,7 +580,7 @@ public class ProblemStatementRenderingService {
         return safelist;
     }
 
-    private String computeContentHash(String html, @Nullable String interactiveScript, ImageMode imageMode, List<AttachedImage> attachedImages) {
+    private String computeContentHash(String html, @Nullable String interactiveScript, ImageMode imageMode) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             digest.update(RENDERER_VERSION.getBytes(StandardCharsets.UTF_8));
@@ -675,16 +593,6 @@ public class ProblemStatementRenderingService {
             digest.update((byte) 0);
             digest.update(imageMode.name().getBytes(StandardCharsets.UTF_8));
             digest.update((byte) 0);
-            for (AttachedImage img : attachedImages) {
-                digest.update(img.contentId().getBytes(StandardCharsets.UTF_8));
-                digest.update((byte) 0);
-                digest.update(img.contentType().getBytes(StandardCharsets.UTF_8));
-                digest.update((byte) 0);
-                digest.update(img.data());
-                digest.update((byte) 0);
-                digest.update(img.filename().getBytes(StandardCharsets.UTF_8));
-                digest.update((byte) 0);
-            }
             return HexFormat.of().formatHex(digest.digest());
         }
         catch (NoSuchAlgorithmException e) {

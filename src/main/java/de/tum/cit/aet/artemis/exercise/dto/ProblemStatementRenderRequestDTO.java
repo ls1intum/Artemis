@@ -26,8 +26,8 @@ public record ProblemStatementRenderRequestDTO(@NotNull @Size(max = 100_000) @Pa
         return includeCss == null || includeCss;
     }
 
-    /** Returns the image mode, defaulting to {@link ImageMode#INLINE} if not specified. */
+    /** Returns the image mode, defaulting to {@link ImageMode#URL} if not specified. */
     public ImageMode resolvedImageMode() {
-        return imageMode == null ? ImageMode.INLINE : imageMode;
+        return imageMode == null ? ImageMode.URL : imageMode;
     }
 }
