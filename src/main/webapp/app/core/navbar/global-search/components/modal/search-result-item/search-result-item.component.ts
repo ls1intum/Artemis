@@ -1,6 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBook, faCalendarAlt, faLevelDownAlt, faTrophy } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faCalendarAlt, faGraduationCap, faLevelDownAlt, faTrophy } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -19,6 +19,7 @@ const SEARCH_RESULT_DATE_FORMAT = 'MMM D, HH:mm';
 export class SearchResultItemComponent {
     protected readonly faBook = faBook;
     protected readonly faCalendarAlt = faCalendarAlt;
+    protected readonly faGraduationCap = faGraduationCap;
     protected readonly faTrophy = faTrophy;
     protected readonly faLevelDownAlt = faLevelDownAlt;
 
@@ -33,6 +34,8 @@ export class SearchResultItemComponent {
     protected startDate = computed(() => this.result().metadata?.['startDate']);
     protected points = computed(() => this.result().metadata?.['points']);
     protected difficulty = computed(() => this.result().metadata?.['difficulty']);
+
+    protected isExamExercise = computed(() => this.result().type === 'exercise' && !!this.result().metadata?.['examId']);
 
     protected hasAnyMetadata = computed(() => !!(this.courseName() || this.dueDate() || this.startDate() || this.points() || this.difficulty()));
     protected showCourseSeparator = computed(() => !!(this.courseName() && (this.dueDate() || this.startDate() || this.points() || this.difficulty())));

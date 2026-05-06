@@ -12,6 +12,12 @@
                 @if (result().badge) {
                     <span class="badge bg-secondary text-white px-2 py-1 small">{{ result().badge }}</span>
                 }
+                @if (isExamExercise()) {
+                    <span class="badge badge-exam d-inline-flex align-items-center gap-1 px-2 py-1 small">
+                        <fa-icon [icon]="faGraduationCap" size="xs" aria-hidden="true" />
+                        {{ 'global.search.results.examExercise' | artemisTranslate }}
+                    </span>
+                }
             </div>
 
             <!-- Metadata Row -->

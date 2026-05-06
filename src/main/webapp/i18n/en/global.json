@@ -79,7 +79,8 @@
             "results": {
                 "due": "Due: {{ date }}",
                 "point": "point",
-                "points": "points"
+                "points": "points",
+                "examExercise": "Exam"
             },
             "comingSoon": "Coming soon",
             "enterToActivate": "Press Enter to activate",
