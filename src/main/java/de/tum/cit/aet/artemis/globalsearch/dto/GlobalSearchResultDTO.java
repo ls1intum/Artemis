@@ -45,7 +45,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
             case SearchableEntitySchema.TypeValues.EXERCISE -> fromExerciseRow(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds);
             case SearchableEntitySchema.TypeValues.LECTURE -> fromLectureRow(properties, courseNameById);
             case SearchableEntitySchema.TypeValues.LECTURE_UNIT -> fromLectureUnitRow(properties, courseNameById);
-            case SearchableEntitySchema.TypeValues.EXAM -> fromExamRow(properties, courseNameById);
+            case SearchableEntitySchema.TypeValues.EXAM -> fromExamRow(properties, courseNameById, staffCourseIds);
             case SearchableEntitySchema.TypeValues.FAQ -> fromFaqRow(properties, courseNameById);
             case SearchableEntitySchema.TypeValues.CHANNEL -> fromChannelRow(properties, courseNameById);
             default -> null;
@@ -115,7 +115,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
                 getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Lecture Unit", metadata);
     }
 
-    private static GlobalSearchResultDTO fromExamRow(Map<String, Object> properties, Map<Long, String> courseNameById) {
+    private static GlobalSearchResultDTO fromExamRow(Map<String, Object> properties, Map<Long, String> courseNameById, Set<Long> staffCourseIds) {
         Map<String, Object> metadata = new HashMap<>();
         addCourseContext(properties, metadata, courseNameById);
         putIfNotNull(metadata, "visibleDate", getString(properties, SearchableEntitySchema.Properties.VISIBLE_DATE));
@@ -124,6 +124,10 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         Boolean testExam = getBoolean(properties, SearchableEntitySchema.Properties.TEST_EXAM);
         if (testExam != null) {
             metadata.put("testExam", testExam);
+        }
+        Long courseId = getLong(properties, SearchableEntitySchema.Properties.COURSE_ID);
+        if (courseId != null && staffCourseIds.contains(courseId)) {
+            metadata.put("isAtLeastTutor", true);
         }
 
         String badge = Boolean.TRUE.equals(testExam) ? "Test Exam" : "Exam";

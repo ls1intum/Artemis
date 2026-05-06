@@ -232,7 +232,12 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
                 this.router.navigate(['/courses', courseId, 'lectures', lectureId]);
             }
         } else if (result.type === 'exam' && result.id) {
-            this.router.navigate(['/courses', courseId, 'exams', result.id]);
+            const isAtLeastTutor = result.metadata?.['isAtLeastTutor'];
+            if (isAtLeastTutor) {
+                this.router.navigate(['/course-management', courseId, 'exams', result.id]);
+            } else {
+                this.router.navigate(['/courses', courseId, 'exams', result.id]);
+            }
         } else if (result.type === 'faq') {
             this.router.navigate(['/courses', courseId, 'faq']);
         } else if (result.type === 'channel' && result.id) {
