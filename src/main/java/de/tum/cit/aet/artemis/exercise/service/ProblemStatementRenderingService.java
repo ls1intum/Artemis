@@ -45,7 +45,6 @@ import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownRelati
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
-import de.tum.cit.aet.artemis.exercise.dto.ImageMode;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
@@ -166,11 +165,11 @@ public class ProblemStatementRenderingService {
      * @param darkMode      if {@code true}, PlantUML renders in dark theme and the container carries a dark marker class
      * @param includeJs     if {@code true}, the interactive feedback modal JS is included
      * @param includeCss    if {@code true}, embedded CSS and KaTeX CSS are included
-     * @param imageMode     how to handle embedded images (inline data URIs, absolute URLs, or separated with CID references)
+     * @param inlineImages  if {@code true}, images are embedded as Base64 data URIs; otherwise they stay as absolute URLs
      * @return the rendered problem statement DTO
      */
     public RenderedProblemStatementDTO render(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, @Nullable ResultSummaryInputDTO resultSummary, Locale locale,
-            boolean darkMode, boolean includeJs, boolean includeCss, ImageMode imageMode) {
+            boolean darkMode, boolean includeJs, boolean includeCss, boolean inlineImages) {
 
         if (markdown == null || markdown.isBlank()) {
             return new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, null);
@@ -204,7 +203,7 @@ public class ProblemStatementRenderingService {
         String html = renderWithCommonMark(processed);
 
         // 7b. Process images based on requested mode.
-        if (imageMode == ImageMode.INLINE) {
+        if (inlineImages) {
             html = inlineMarkdownImages(html);
         }
 
@@ -239,7 +238,7 @@ public class ProblemStatementRenderingService {
         }
 
         String interactiveScript = includeJs ? buildLocalizedScript(locale) : null;
-        String contentHash = computeContentHash(html, interactiveScript, imageMode);
+        String contentHash = computeContentHash(html, interactiveScript, inlineImages);
 
         String bodyClass = " class=\"artemis-ssr-body" + (darkMode ? " artemis-ssr-body--dark" : "") + "\"";
         String document = "<!DOCTYPE html><html lang=\"" + HtmlEscaper.escapeAttribute(locale.toLanguageTag()) + "\"><head><meta charset=\"UTF-8\">"
@@ -580,7 +579,7 @@ public class ProblemStatementRenderingService {
         return safelist;
     }
 
-    private String computeContentHash(String html, @Nullable String interactiveScript, ImageMode imageMode) {
+    private String computeContentHash(String html, @Nullable String interactiveScript, boolean inlineImages) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             digest.update(RENDERER_VERSION.getBytes(StandardCharsets.UTF_8));
@@ -591,7 +590,7 @@ public class ProblemStatementRenderingService {
                 digest.update(interactiveScript.getBytes(StandardCharsets.UTF_8));
             }
             digest.update((byte) 0);
-            digest.update(imageMode.name().getBytes(StandardCharsets.UTF_8));
+            digest.update((inlineImages ? "INLINE" : "URL").getBytes(StandardCharsets.UTF_8));
             digest.update((byte) 0);
             return HexFormat.of().formatHex(digest.digest());
         }

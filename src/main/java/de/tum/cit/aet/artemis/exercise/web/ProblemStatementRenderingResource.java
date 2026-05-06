@@ -50,11 +50,9 @@ public class ProblemStatementRenderingResource {
      * POST problem-statement/render : Stateless rendering of a problem statement.
      * <p>
      * The client sends markdown + optional test data, the server returns a self-contained HTML document.
-     * The {@code imageMode} field controls how embedded images are delivered:
-     * <ul>
-     * <li>{@code URL} (default): images stay as absolute URLs requiring authentication to load. Smallest response.</li>
-     * <li>{@code INLINE}: images are embedded as Base64 data URIs. Self-contained, no auth needed for images.</li>
-     * </ul>
+     * The {@code inlineImages} field controls how embedded images are delivered:
+     * if {@code true}, images are embedded as Base64 data URIs (self-contained, no auth needed);
+     * if {@code false} or omitted (default), images stay as absolute URLs requiring authentication.
      *
      * @param renderRequest the render request containing markdown, test results, and configuration
      * @return the rendered problem statement DTO
@@ -87,7 +85,7 @@ public class ProblemStatementRenderingResource {
         Locale locale = Locale.forLanguageTag(lang);
 
         RenderedProblemStatementDTO result = renderingService.render(renderRequest.markdown(), testResults, resultSummary, locale, renderRequest.darkMode(),
-                renderRequest.shouldIncludeJs(), renderRequest.shouldIncludeCss(), renderRequest.resolvedImageMode());
+                renderRequest.shouldIncludeJs(), renderRequest.shouldIncludeCss(), renderRequest.shouldInlineImages());
 
         return ResponseEntity.ok().eTag("\"" + result.contentHash() + "\"").body(result);
     }

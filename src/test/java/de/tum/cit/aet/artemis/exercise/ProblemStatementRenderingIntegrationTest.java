@@ -21,7 +21,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
-import de.tum.cit.aet.artemis.exercise.dto.ImageMode;
 import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequestDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
@@ -506,12 +505,12 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result2.rendererVersion()).isEqualTo(result1.rendererVersion());
     }
 
-    // --- Image modes ---
+    // --- Image inlining ---
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldLeaveAbsoluteUrlsInUrlMode() throws Exception {
-        var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/test.png)", null, null, "en", false, false, null, ImageMode.URL);
+    void shouldLeaveAbsoluteUrlsWhenNotInlining() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/test.png)", null, null, "en", false, false, null, false);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
@@ -520,7 +519,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldDefaultToUrlMode() throws Exception {
+    void shouldDefaultToNotInlining() throws Exception {
         var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/test.png)", null, null, "en", false, false, null, null);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
@@ -530,9 +529,9 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldProduceDifferentHashesForDifferentModes() throws Exception {
-        var inlineBody = new ProblemStatementRenderRequestDTO("# Hello", null, null, "en", false, false, null, ImageMode.INLINE);
-        var urlBody = new ProblemStatementRenderRequestDTO("# Hello", null, null, "en", false, false, null, ImageMode.URL);
+    void shouldProduceDifferentHashesForDifferentInliningSetting() throws Exception {
+        var inlineBody = new ProblemStatementRenderRequestDTO("# Hello", null, null, "en", false, false, null, true);
+        var urlBody = new ProblemStatementRenderRequestDTO("# Hello", null, null, "en", false, false, null, false);
 
         RenderedProblemStatementDTO inlineResult = request.postWithResponseBody(POST_URL, inlineBody, RenderedProblemStatementDTO.class, HttpStatus.OK);
         RenderedProblemStatementDTO urlResult = request.postWithResponseBody(POST_URL, urlBody, RenderedProblemStatementDTO.class, HttpStatus.OK);
@@ -542,15 +541,15 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldLeaveOriginalUrlForUnresolvableImageInUrlMode() throws Exception {
-        var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/nonexistent.png)", null, null, "en", false, false, null, ImageMode.URL);
+    void shouldLeaveOriginalUrlForUnresolvableImage() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/nonexistent.png)", null, null, "en", false, false, null, false);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
         assertThat(result.html()).contains("/api/core/files/markdown/nonexistent.png");
     }
 
-    // --- Image inlining (INLINE mode) ---
+    // --- Image inlining (inlineImages=true) ---
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -560,7 +559,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         Files.createDirectories(markdownDir);
         Files.write(markdownDir.resolve(FIXTURE_IMAGE_NAME), pngBytes);
 
-        var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/" + FIXTURE_IMAGE_NAME + ")", null, null, "en", false, false, null, ImageMode.INLINE);
+        var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/" + FIXTURE_IMAGE_NAME + ")", null, null, "en", false, false, null, true);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
@@ -571,7 +570,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotInlineImageWithPathTraversal() throws Exception {
-        var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/..%2Fpasswd.png)", null, null, "en", false, false, null, ImageMode.INLINE);
+        var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/..%2Fpasswd.png)", null, null, "en", false, false, null, true);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
@@ -581,7 +580,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotInlineNonAllowedExtension() throws Exception {
-        var body = new ProblemStatementRenderRequestDTO("![doc](/api/core/files/markdown/readme.txt)", null, null, "en", false, false, null, ImageMode.INLINE);
+        var body = new ProblemStatementRenderRequestDTO("![doc](/api/core/files/markdown/readme.txt)", null, null, "en", false, false, null, true);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
@@ -591,7 +590,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotInlineNonexistentImage() throws Exception {
-        var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/doesnotexist.png)", null, null, "en", false, false, null, ImageMode.INLINE);
+        var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/doesnotexist.png)", null, null, "en", false, false, null, true);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
