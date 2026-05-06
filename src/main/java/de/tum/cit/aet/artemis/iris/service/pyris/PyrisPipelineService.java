@@ -215,6 +215,7 @@ public class PyrisPipelineService {
      * and either posts it directly or discards it based on confidence.
      *
      * @param variant                the variant of the pipeline
+     * @param aiSelection            the current AI selection of the user
      * @param post                   the student's post to respond to
      * @param course                 the course the post belongs to
      * @param student                the student who created the post

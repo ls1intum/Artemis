@@ -31,6 +31,11 @@ export enum ChatServiceMode {
     TUTOR_SUGGESTION = 'TUTOR_SUGGESTION',
 }
 
+interface SessionContext {
+    mode: ChatServiceMode;
+    entityId: number;
+}
+
 /**
  * The IrisSessionService is responsible for managing Iris sessions and retrieving their associated messages.
  */
@@ -92,7 +97,7 @@ export class IrisChatService implements OnDestroy {
      */
     private stateGeneration = 0;
 
-    private sessionContext?: { mode: ChatServiceMode; entityId: number };
+    private sessionContext?: SessionContext;
 
     private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
     public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
