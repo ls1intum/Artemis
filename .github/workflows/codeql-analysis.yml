@@ -28,7 +28,7 @@ on:
     - cron: '0 16 * * 0'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Keep in sync with build.yml and test.yml and analysis-of-endpoint-connections.yml
