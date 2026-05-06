@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ResultSummaryExerciseInfo } from 'app/exam/overview/summary/exam-result-summary.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -11,8 +11,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FaIconComponent, NgClass, ArtemisTranslatePipe],
 })
 export class ExamResultSummaryExerciseCardHeaderComponent {
-    @Input() index: number;
-    @Input() exercise: Exercise;
-    @Input() exerciseInfo?: ResultSummaryExerciseInfo;
-    @Input() resultsPublished: boolean;
+    readonly index = input<number>(undefined!);
+    readonly exercise = input<Exercise>(undefined!);
+    readonly exerciseInfo = input<ResultSummaryExerciseInfo>();
+    readonly resultsPublished = input<boolean>(undefined!);
 }

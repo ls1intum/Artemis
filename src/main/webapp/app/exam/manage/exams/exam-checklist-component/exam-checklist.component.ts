@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input } from '@angular/core';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -43,7 +43,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
         HelpIconComponent,
     ],
 })
-export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
+export class ExamChecklistComponent implements OnInit, OnDestroy {
     private examChecklistService = inject(ExamChecklistService);
     private websocketService = inject(WebsocketService);
     private examManagementService = inject(ExamManagementService);
@@ -53,6 +53,12 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
 
     exam = input.required<Exam>();
     getExamRoutesByIdentifier = input.required<(identifier: string) => (string | number | undefined)[]>();
+
+    constructor() {
+        effect(() => {
+            this.updateChecklistState();
+        });
+    }
     private longestWorkingTimeSub: Subscription | undefined = undefined;
 
     examChecklist: ExamChecklist;
@@ -110,7 +116,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                 .filter((exercise) => !this.isExerciseTypeEnabled(profileInfo.activeModuleFeatures, exercise?.type)) ?? [];
     }
 
-    ngOnChanges() {
+    private updateChecklistState() {
         this.isTestExam = this.exam().testExam!;
         this.pointsExercisesEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam());
         this.totalPoints = this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual, this.exam());

@@ -1,10 +1,12 @@
-import { Component, ElementRef, EventEmitter, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, EventEmitter, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { NgTemplateOutlet } from '@angular/common';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { EMPTY, Subject, forkJoin, of } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialog } from 'primeng/confirmdialog';
+import { DialogService } from 'primeng/dynamicdialog';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -36,7 +38,6 @@ import { InputIcon } from 'primeng/inputicon';
 import { InputText } from 'primeng/inputtext';
 import { Path, onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -103,7 +104,9 @@ interface MenuCommandEvent {
         Popover,
         Tooltip,
         ProgressBar,
+        ConfirmDialog,
     ],
+    providers: [DialogService, ConfirmationService],
 })
 export class ExamStudentsComponent implements OnDestroy {
     protected readonly ActionType = ActionType;
@@ -115,12 +118,15 @@ export class ExamStudentsComponent implements OnDestroy {
     private accountService = inject(AccountService);
     private studentExamService = inject(StudentExamService);
     private deleteDialogService = inject(DeleteDialogService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private confirmationService = inject(ConfirmationService);
     private router = inject(Router);
     private alertService = inject(AlertService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private websocketService = inject(WebsocketService);
     private examChecklistService = inject(ExamChecklistService);
+
+    private destroyRef = inject(DestroyRef);
 
     readonly usersImportDialog = viewChild.required(UsersImportDialogComponent);
     readonly studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
@@ -427,13 +433,23 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     openUploadImagesDialog() {
-        const modalRef: NgbModalRef = this.modalService.open(StudentsUploadImagesDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.courseId = this.courseId; // passing the signal itself here else eslint error
-        modalRef.componentInstance.exam = this.exam; // same here
-        modalRef.result.then(
-            () => this.reloadExamWithRegisteredUsers(),
-            () => {},
-        );
+        const dialogRef = this.dialogService.open(StudentsUploadImagesDialogComponent, {
+            header: this.artemisTranslatePipe.transform('artemisApp.exam.examUsers.dialogTitle'),
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            width: '50rem',
+            data: {
+                courseId: this.courseId(),
+                exam: this.exam(),
+            },
+        });
+        dialogRef?.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
+            if (result === 'finished') {
+                this.reloadExamWithRegisteredUsers();
+            }
+        });
     }
 
     openVerifyAttendance() {
@@ -551,12 +567,17 @@ export class ExamStudentsComponent implements OnDestroy {
      */
     handleGenerateStudentExams(event: Event | undefined) {
         if (this.studentExams().length) {
-            const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
-            modalRef.componentInstance.title = 'artemisApp.studentExams.generateStudentExams';
-            modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.studentExams.studentExamGenerationModalText');
-            modalRef.result.then(() => {
-                this.openIndividualExamsStatusPopover(undefined, true);
-                this.generateStudentExams();
+            this.confirmationService.confirm({
+                header: this.artemisTranslatePipe.transform('artemisApp.studentExams.generateStudentExams'),
+                message: this.artemisTranslatePipe.transform('artemisApp.studentExams.studentExamGenerationModalText'),
+                acceptLabel: this.artemisTranslatePipe.transform('global.form.confirm'),
+                rejectLabel: this.artemisTranslatePipe.transform('global.form.cancel'),
+                acceptButtonStyleClass: 'p-button-danger',
+                rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
+                accept: () => {
+                    this.openIndividualExamsStatusPopover(undefined, true);
+                    this.generateStudentExams();
+                },
             });
         } else {
             this.openIndividualExamsStatusPopover(event);
