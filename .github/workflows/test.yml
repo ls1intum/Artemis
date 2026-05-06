@@ -238,7 +238,7 @@ jobs:
 
   client-tests:
     runs-on: aet-large-ubuntu
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
         - uses: actions/checkout@v6
         # It seems like there is some memory issue with these tests with the project-wide default node option
