@@ -1,4 +1,5 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { Component, DestroyRef, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -20,6 +21,7 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     private athenaService = inject(AthenaService);
     private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
+    private destroyRef = inject(DestroyRef);
 
     @Input() exercise: Exercise;
     @Input() dueDate?: dayjs.Dayjs;
@@ -39,19 +41,22 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
 
     ngOnInit(): void {
         const courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
-        this.athenaService.getAvailableModules(courseId, this.exercise).subscribe((modules) => {
-            this.availableAthenaModules = modules;
-            this.modulesAvailable = modules.length > 0;
-            const first = modules[0];
-            if (first) {
-                if (this.exercise.feedbackSuggestionModule && !this.gradedFeedbackModule) {
-                    this.gradedFeedbackModule = first;
+        this.athenaService
+            .getAvailableModules(courseId, this.exercise)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((modules) => {
+                this.availableAthenaModules = modules;
+                this.modulesAvailable = modules.length > 0;
+                const first = modules[0];
+                if (first) {
+                    if (this.exercise.feedbackSuggestionModule && !this.gradedFeedbackModule) {
+                        this.gradedFeedbackModule = first;
+                    }
+                    if (this.exercise.allowFeedbackRequests && !this.preliminaryFeedbackModule) {
+                        this.preliminaryFeedbackModule = first;
+                    }
                 }
-                if (this.exercise.allowFeedbackRequests && !this.preliminaryFeedbackModule) {
-                    this.preliminaryFeedbackModule = first;
-                }
-            }
-        });
+            });
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
         this.initialAthenaModule = this.exercise.feedbackSuggestionModule;
         this.initialPreliminaryModule = this.exercise.athenaConfig?.preliminaryFeedbackModule;

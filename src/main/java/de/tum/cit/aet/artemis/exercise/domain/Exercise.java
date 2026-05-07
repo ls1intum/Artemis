@@ -33,6 +33,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.ConcreteProxy;
 import org.jspecify.annotations.Nullable;
 
@@ -683,8 +684,13 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.feedbackSuggestionModule = feedbackSuggestionModule;
     }
 
+    @JsonProperty("athenaConfig")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public ExerciseAthenaConfig getAthenaConfig() {
-        return athenaConfig;
+        if (athenaConfig != null && Hibernate.isInitialized(athenaConfig)) {
+            return athenaConfig;
+        }
+        return null;
     }
 
     public void setAthenaConfig(ExerciseAthenaConfig athenaConfig) {

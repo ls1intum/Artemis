@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, ExerciseAthenaConfig, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient } from 'app/shared/util/date.utils';
@@ -32,6 +32,7 @@ export interface UpdateTextExerciseDTO {
     presentationScoreEnabled?: boolean;
     secondCorrectionEnabled?: boolean;
     feedbackSuggestionModule?: string;
+    athenaConfig?: ExerciseAthenaConfig;
     allowComplaintsForAutomaticAssessments?: boolean;
     allowFeedbackRequests?: boolean;
     channelName?: string;
@@ -110,6 +111,7 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
         presentationScoreEnabled: textExercise.presentationScoreEnabled,
         secondCorrectionEnabled: textExercise.secondCorrectionEnabled,
         feedbackSuggestionModule: textExercise.feedbackSuggestionModule,
+        athenaConfig: textExercise.athenaConfig,
         allowComplaintsForAutomaticAssessments: textExercise.allowComplaintsForAutomaticAssessments,
         allowFeedbackRequests: textExercise.allowFeedbackRequests,
         channelName: textExercise.channelName,

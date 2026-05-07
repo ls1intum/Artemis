@@ -309,11 +309,14 @@ public class ProgrammingExerciseUpdateResource {
                 originalCompetencyIds, originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalProblemStatement);
 
         // Update Athena config if provided
-        if (updatedProgrammingExercise.getAthenaConfig() != null) {
-            var athenaConfig = updatedProgrammingExercise.getAthenaConfig();
-            ExerciseAthenaConfig updatedConfig = exerciseAthenaConfigService.createOrUpdateConfig(savedProgrammingExercise, athenaConfig.getPreliminaryFeedbackModule(),
-                    athenaConfig.getGradedFeedbackModule());
+        if (updateDTO.athenaConfig() != null) {
+            ExerciseAthenaConfig updatedConfig = exerciseAthenaConfigService.createOrUpdateConfig(savedProgrammingExercise, updateDTO.athenaConfig().preliminaryFeedbackModule(),
+                    updateDTO.athenaConfig().gradedFeedbackModule());
             savedProgrammingExercise.setAthenaConfig(updatedConfig);
+        }
+        else if (savedProgrammingExercise.getAthenaConfig() != null) {
+            exerciseAthenaConfigService.deleteByExerciseId(savedProgrammingExercise.getId());
+            savedProgrammingExercise.setAthenaConfig(null);
         }
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);

@@ -1,7 +1,7 @@
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient } from 'app/shared/util/date.utils';
-import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, ExerciseAthenaConfig, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
@@ -60,6 +60,7 @@ export interface UpdateProgrammingExerciseDTO {
     presentationScoreEnabled?: boolean;
     secondCorrectionEnabled?: boolean;
     feedbackSuggestionModule?: string;
+    athenaConfig?: ExerciseAthenaConfig;
     gradingInstructions?: string;
 
     // Timeline fields
@@ -182,6 +183,7 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
         presentationScoreEnabled: exercise.presentationScoreEnabled,
         secondCorrectionEnabled: exercise.secondCorrectionEnabled,
         feedbackSuggestionModule: exercise.feedbackSuggestionModule,
+        athenaConfig: exercise.athenaConfig,
         gradingInstructions: exercise.gradingInstructions,
         releaseDate: convertDateFromClient(exercise.releaseDate),
         startDate: convertDateFromClient(exercise.startDate),

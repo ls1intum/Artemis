@@ -6,6 +6,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExerciseAthenaConfig extends DomainObject {
 
+    @JsonIgnore
     @OneToOne
     @JoinColumn(name = "exercise_id", nullable = false, unique = true)
     private Exercise exercise;

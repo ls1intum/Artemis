@@ -1,4 +1,5 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
@@ -45,6 +46,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
     private athenaService = inject(AthenaService);
+    private destroyRef = inject(DestroyRef);
 
     protected readonly assessmentType = AssessmentType;
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -85,13 +87,16 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
         if (this.isAthenaEnabled) {
             const courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
-            this.athenaService.getAvailableModules(courseId, this.exercise).subscribe((modules) => {
-                this.availableAthenaModules = modules;
-                const first = modules[0];
-                if (first && this.exercise.allowFeedbackRequests && !this.preliminaryFeedbackModule) {
-                    this.preliminaryFeedbackModule = first;
-                }
-            });
+            this.athenaService
+                .getAvailableModules(courseId, this.exercise)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe((modules) => {
+                    this.availableAthenaModules = modules;
+                    const first = modules[0];
+                    if (first && this.exercise.allowFeedbackRequests && !this.preliminaryFeedbackModule) {
+                        this.preliminaryFeedbackModule = first;
+                    }
+                });
         }
     }
 

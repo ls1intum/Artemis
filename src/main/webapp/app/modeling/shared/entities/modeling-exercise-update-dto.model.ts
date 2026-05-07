@@ -1,4 +1,4 @@
-import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, ExerciseAthenaConfig, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient } from 'app/shared/util/date.utils';
@@ -38,6 +38,7 @@ export interface UpdateModelingExerciseDTO {
     gradingCriteria?: GradingCriterion[];
     gradingInstructions?: string;
     feedbackSuggestionModule?: string;
+    athenaConfig?: ExerciseAthenaConfig;
     competencyLinks?: CompetencyLinkDTO[];
 }
 
@@ -74,6 +75,7 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         gradingCriteria: modelingExercise.gradingCriteria ?? [],
         gradingInstructions: modelingExercise.gradingInstructions,
         feedbackSuggestionModule: modelingExercise.feedbackSuggestionModule,
+        athenaConfig: modelingExercise.athenaConfig,
         competencyLinks: (modelingExercise.competencyLinks ?? []).map((link) => ({
             competency: { id: link.competency!.id! },
             weight: link.weight ?? 1,
