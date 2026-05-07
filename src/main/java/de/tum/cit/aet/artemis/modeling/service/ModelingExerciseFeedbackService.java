@@ -65,11 +65,7 @@ public class ModelingExerciseFeedbackService {
     }
 
     /**
-     * Triggers non-graded Athena feedback for a modeling exercise submission inside a test exam.
-     * <p>
-     * Unlike {@link #handleNonGradedFeedbackRequest(StudentParticipation, ModelingExercise)}, this method soft-skips
-     * (without throwing) when Athena is not configured, the latest submission is missing or empty, or an Athena
-     * result is already present. The generation itself runs asynchronously so that it does not block the caller.
+     * Asynchronously triggers non-graded Athena feedback for a modeling submission in a test exam.
      *
      * @param participation    the student participation associated with the exercise
      * @param modelingExercise the modeling exercise

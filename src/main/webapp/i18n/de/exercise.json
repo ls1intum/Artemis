@@ -214,6 +214,7 @@
             "feedbackRequestAfterDueDate": "Du kannst nach der Abgabefrist keine weiteren Anfragen einreichen.",
             "feedbackRequestPendingChanges": "Du hast nicht gespeicherte Änderungen. Bitte reiche eine neue Abgabe ein, bevor du erneut einreichst.",
             "maxAthenaResultsReached": "Du hast die maximale Anzahl an KI-Feedbackanfragen erreicht.",
+            "noFeedbackSuggestionModuleConfigured": "Für keine der Aufgaben in dieser Prüfung ist KI-Feedback konfiguriert.",
             "athenaFeedbackSuccessful": "AI-Feedback erfolgreich generiert. Klicke auf das Ergebnis, um Details zu sehen.",
             "athenaFeedbackFailed": "Etwas ist schiefgelaufen... KI-Feedback konnte im Moment nicht generiert werden",
             "submissionAlreadyHasAthenaResult": "Für diese Abgabe liegt bereits ein KI-Ergebnis vor. Bitte reiche eine neue Abgabe ein, bevor du erneut KI-Feedback anfragst.",

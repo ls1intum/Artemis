@@ -317,6 +317,35 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
+    void requestAthenaFeedback_shouldRejectWhenNoExerciseHasFeedbackSuggestionModuleConfigured() {
+        Exam testExam = examUtilService.addTestExam(course);
+        testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+        testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+        testExam = examRepository.save(testExam);
+        TextExercise textExercise = addTextExerciseToExam(testExam);
+        // intentionally do NOT set feedbackSuggestionModule
+
+        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+        studentExam.addExercise(textExercise);
+
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
+        addTextSubmission(participation, "Submission for an exercise without a configured feedback module.");
+
+        studentExam.getStudentParticipations().add(participation);
+        studentExam = studentExamRepository.save(studentExam);
+
+        studentExam.setSubmitted(true);
+        studentExam.setSubmissionDate(ZonedDateTime.now());
+        studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
+
+        detachExerciseParticipationsCollection(studentExam);
+
+        StudentExam finalStudentExam = studentExam;
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+    }
+
+    @Test
     void requestAthenaFeedback_shouldRejectUnsubmittedExam() {
         Exam testExam = examUtilService.addTestExam(course);
         testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));

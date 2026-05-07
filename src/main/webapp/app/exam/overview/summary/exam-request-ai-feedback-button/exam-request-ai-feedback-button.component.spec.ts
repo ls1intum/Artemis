@@ -50,7 +50,13 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
     const textSubmission = { id: 1, submitted: true } as TextSubmission;
     const textParticipation = { id: 1, student: user, submissions: [textSubmission] } as StudentParticipation;
-    const textExercise = { id: 1, type: ExerciseType.TEXT, studentParticipations: [textParticipation], exerciseGroup } as TextExercise;
+    const textExercise = {
+        id: 1,
+        type: ExerciseType.TEXT,
+        studentParticipations: [textParticipation],
+        exerciseGroup,
+        feedbackSuggestionModule: 'module_text_test',
+    } as TextExercise;
 
     const studentExam = { id: 1, exam, user, exercises: [textExercise] } as StudentExam;
     const studentExamForTestExam = { id: 2, exam: testExam, user, exercises: [textExercise] } as StudentExam;
@@ -116,6 +122,24 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             enableAthena();
 
             setStudentExam({ ...studentExam, submitted: true });
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
+            expect(button).toBeNull();
+        });
+
+        it('should hide the button when no exercise has a feedback suggestion module configured', () => {
+            enableAthena();
+
+            const exerciseWithoutModule = {
+                id: 1,
+                type: ExerciseType.TEXT,
+                studentParticipations: [textParticipation],
+                exerciseGroup,
+            } as TextExercise;
+
+            setStudentExam({ ...studentExamForTestExam, submitted: true, exercises: [exerciseWithoutModule] });
             component.ngOnInit();
             fixture.detectChanges();
 
@@ -292,7 +316,13 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 results: [{ assessmentType: AssessmentType.AUTOMATIC_ATHENA, rated: true } as Result],
             } as TextSubmission;
             const athenaTextParticipation = { id: 1, student: user, submissions: [athenaTextSubmission] } as StudentParticipation;
-            const athenaTextExercise = { id: 1, type: ExerciseType.TEXT, studentParticipations: [athenaTextParticipation], exerciseGroup } as TextExercise;
+            const athenaTextExercise = {
+                id: 1,
+                type: ExerciseType.TEXT,
+                studentParticipations: [athenaTextParticipation],
+                exerciseGroup,
+                feedbackSuggestionModule: 'module_text_test',
+            } as TextExercise;
 
             setStudentExam({ ...studentExamForTestExam, submitted: true, exercises: [athenaTextExercise] });
             component.ngOnInit();

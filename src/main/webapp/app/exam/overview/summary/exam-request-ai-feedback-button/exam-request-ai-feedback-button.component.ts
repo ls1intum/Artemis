@@ -52,9 +52,15 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
     readonly athenaFeedbackUsed = signal(0);
     readonly athenaFeedbackLimit = signal(0);
 
+    readonly hasExerciseWithFeedbackSuggestionModule = computed(() => {
+        return (this.studentExam()?.exercises ?? []).some(
+            (exercise) => (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && !!exercise.feedbackSuggestionModule,
+        );
+    });
+
     readonly isVisible = computed(() => {
         const exam = this.studentExam();
-        return !!exam?.exam?.testExam && this.athenaEnabled() && !!exam.submitted && !this.testExamConduction();
+        return !!exam?.exam?.testExam && this.athenaEnabled() && !!exam.submitted && !this.testExamConduction() && this.hasExerciseWithFeedbackSuggestionModule();
     });
 
     get hasAnyAthenaResultForCurrentAttempt(): boolean {

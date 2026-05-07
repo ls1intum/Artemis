@@ -268,7 +268,7 @@
                 </div>
             </div>
         }
-        @if (!isExamMode) {
+        @if (!isExamMode || modelingExercise.exerciseGroup?.exam?.testExam) {
             <jhi-exercise-feedback-suggestion-options [exercise]="modelingExercise" [dueDate]="modelingExercise.dueDate" />
         }
         <jhi-presentation-score-checkbox [exercise]="modelingExercise" />
