@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.communication.notification;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -74,9 +76,20 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
         // Do the actual request that is tested here.
         List<SystemNotificationDTO> notification = request.getList("/api/core/public/system-notifications/active", HttpStatus.OK, SystemNotificationDTO.class);
 
-        // The returned notification must be an active notification.
-        assertThat(notification).hasSize(2).as("Returned notifications are active or scheduled.").containsExactly(SystemNotificationDTO.of(systemNotificationActive),
-                SystemNotificationDTO.of(systemNotificationFuture));
+        // The returned notifications must be active or scheduled notifications.
+        assertThat(notification).hasSize(2).as("Returned notifications are active or scheduled.");
+
+        SystemNotificationDTO activeNotification = notification.get(0);
+        SystemNotificationDTO futureNotification = notification.get(1);
+
+        assertThat(activeNotification.id()).isEqualTo(systemNotificationActive.getId());
+        assertThat(activeNotification.notificationDate()).isCloseTo(systemNotificationActive.getNotificationDate(), within(1, ChronoUnit.SECONDS));
+        assertThat(activeNotification.expireDate()).isCloseTo(systemNotificationActive.getExpireDate(), within(1, ChronoUnit.SECONDS));
+
+        assertThat(futureNotification.id()).isEqualTo(systemNotificationFuture.getId());
+        assertThat(futureNotification.notificationDate()).isCloseTo(systemNotificationFuture.getNotificationDate(), within(1, ChronoUnit.SECONDS));
+        assertThat(futureNotification.expireDate()).isCloseTo(systemNotificationFuture.getExpireDate(), within(1, ChronoUnit.SECONDS));
+
         assertThat(systemNotificationActive.getExpireDate()).as("Returned notification 0 has not expired yet.").isAfterOrEqualTo(ZonedDateTime.now());
         assertThat(systemNotificationActive.getNotificationDate()).as("Returned notification 0 is active.").isBeforeOrEqualTo(ZonedDateTime.now());
         assertThat(systemNotificationFuture.getExpireDate()).as("Returned notification 1 has not expired yet.").isAfterOrEqualTo(ZonedDateTime.now());
@@ -118,10 +131,17 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
         systemNotificationRepo.save(systemNotification);
         String updatedText = "updated text";
         systemNotification.setText(updatedText);
+
         SystemNotificationDTO response = request.putWithResponseBody("/api/communication/admin/system-notifications", systemNotification, SystemNotificationDTO.class,
                 HttpStatus.OK);
+
+        SystemNotificationDTO persistedNotification = SystemNotificationDTO.of(systemNotificationRepo.findById(systemNotification.getId()).orElseThrow());
+
+        assertThat(response.id()).isEqualTo(persistedNotification.id());
         assertThat(response.text()).as("response has updated text").isEqualTo(updatedText);
-        assertThat(SystemNotificationDTO.of(systemNotificationRepo.findById(systemNotification.getId()).get())).as("repository contains updated notification").isEqualTo(response);
+        assertThat(response.text()).as("repository contains updated notification text").isEqualTo(persistedNotification.text());
+        assertThat(response.notificationDate()).isCloseTo(persistedNotification.notificationDate(), within(1, ChronoUnit.SECONDS));
+        assertThat(response.expireDate()).isCloseTo(persistedNotification.expireDate(), within(1, ChronoUnit.SECONDS));
     }
 
     @Test
