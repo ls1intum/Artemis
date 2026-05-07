@@ -14,6 +14,7 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.communication.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -71,10 +72,11 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
 
     private void getActiveSystemNotification() throws Exception {
         // Do the actual request that is tested here.
-        List<SystemNotification> notification = request.getList("/api/core/public/system-notifications/active", HttpStatus.OK, SystemNotification.class);
+        List<SystemNotificationDTO> notification = request.getList("/api/core/public/system-notifications/active", HttpStatus.OK, SystemNotificationDTO.class);
 
         // The returned notification must be an active notification.
-        assertThat(notification).hasSize(2).as("Returned notifications are active or scheduled.").containsExactly(systemNotificationActive, systemNotificationFuture);
+        assertThat(notification).hasSize(2).as("Returned notifications are active or scheduled.").containsExactly(SystemNotificationDTO.of(systemNotificationActive),
+                SystemNotificationDTO.of(systemNotificationFuture));
         assertThat(systemNotificationActive.getExpireDate()).as("Returned notification 0 has not expired yet.").isAfterOrEqualTo(ZonedDateTime.now());
         assertThat(systemNotificationActive.getNotificationDate()).as("Returned notification 0 is active.").isBeforeOrEqualTo(ZonedDateTime.now());
         assertThat(systemNotificationFuture.getExpireDate()).as("Returned notification 1 has not expired yet.").isAfterOrEqualTo(ZonedDateTime.now());
@@ -84,10 +86,10 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = "admin1", roles = "ADMIN")
     void testCreateSystemNotification() throws Exception {
-        SystemNotification response = request.postWithResponseBody("/api/communication/admin/system-notifications", systemNotification, SystemNotification.class);
+        SystemNotificationDTO response = request.postWithResponseBody("/api/communication/admin/system-notifications", systemNotification, SystemNotificationDTO.class);
 
-        assertThat(systemNotificationRepo.findById(response.getId())).as("Saved system notification").isNotNull();
-        assertThat(systemNotificationRepo.existsById(response.getId())).as("Saved notification exists").isTrue();
+        assertThat(systemNotificationRepo.findById(response.id())).as("Saved system notification").isNotNull();
+        assertThat(systemNotificationRepo.existsById(response.id())).as("Saved notification exists").isTrue();
     }
 
     @Test
@@ -116,9 +118,10 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
         systemNotificationRepo.save(systemNotification);
         String updatedText = "updated text";
         systemNotification.setText(updatedText);
-        SystemNotification response = request.putWithResponseBody("/api/communication/admin/system-notifications", systemNotification, SystemNotification.class, HttpStatus.OK);
-        assertThat(response.getText()).as("response has updated text").isEqualTo(updatedText);
-        assertThat(systemNotificationRepo.findById(systemNotification.getId())).get().as("repository contains updated notification").isEqualTo(response);
+        SystemNotificationDTO response = request.putWithResponseBody("/api/communication/admin/system-notifications", systemNotification, SystemNotificationDTO.class,
+                HttpStatus.OK);
+        assertThat(response.text()).as("response has updated text").isEqualTo(updatedText);
+        assertThat(SystemNotificationDTO.of(systemNotificationRepo.findById(systemNotification.getId()).get())).as("repository contains updated notification").isEqualTo(response);
     }
 
     @Test
@@ -139,25 +142,25 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = "admin1", roles = "ADMIN")
     void testGetAllSystemNotifications() throws Exception {
-        List<SystemNotification> response = request.getList("/api/communication/system-notifications", HttpStatus.OK, SystemNotification.class);
+        List<SystemNotificationDTO> response = request.getList("/api/communication/system-notifications", HttpStatus.OK, SystemNotificationDTO.class);
         assertThat(response).as("system notification are present").isNotEmpty();
     }
 
     @Test
     @WithMockUser(username = "admin1", roles = "ADMIN")
     void testGetSystemNotification() throws Exception {
-        SystemNotification response = request.postWithResponseBody("/api/communication/admin/system-notifications", systemNotification, SystemNotification.class);
-        assertThat(systemNotificationRepo.findById(response.getId())).get().as("system notification is not null").isNotNull();
-        request.get("/api/communication/system-notifications/" + response.getId(), HttpStatus.OK, SystemNotification.class);
-        request.get("/api/communication/system-notifications/" + response.getId() + 1, HttpStatus.NOT_FOUND, SystemNotification.class);
+        SystemNotificationDTO response = request.postWithResponseBody("/api/communication/admin/system-notifications", systemNotification, SystemNotificationDTO.class);
+        assertThat(systemNotificationRepo.findById(response.id())).get().as("system notification is not null").isNotNull();
+        request.get("/api/communication/system-notifications/" + response.id(), HttpStatus.OK, SystemNotification.class);
+        request.get("/api/communication/system-notifications/" + response.id() + 1, HttpStatus.NOT_FOUND, SystemNotification.class);
     }
 
     @Test
     @WithMockUser(username = "admin1", roles = "ADMIN")
     void testDeleteSystemNotification() throws Exception {
-        SystemNotification response = request.postWithResponseBody("/api/communication/admin/system-notifications", systemNotification, SystemNotification.class);
-        assertThat(systemNotificationRepo.findById(response.getId())).get().as("system notification is not null").isNotNull();
-        request.delete("/api/communication/admin/system-notifications/" + response.getId(), HttpStatus.OK);
+        SystemNotificationDTO response = request.postWithResponseBody("/api/communication/admin/system-notifications", systemNotification, SystemNotificationDTO.class);
+        assertThat(systemNotificationRepo.findById(response.id())).get().as("system notification is not null").isNotNull();
+        request.delete("/api/communication/admin/system-notifications/" + response.id(), HttpStatus.OK);
     }
 
     @Test

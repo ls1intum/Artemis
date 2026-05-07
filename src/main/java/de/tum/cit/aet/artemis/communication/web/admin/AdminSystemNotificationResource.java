@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.communication.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.communication.dto.SystemNotificationUpdateDTO;
 import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.communication.service.SystemNotificationService;
@@ -64,7 +65,7 @@ public class AdminSystemNotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("system-notifications")
-    public ResponseEntity<SystemNotification> createSystemNotification(@RequestBody SystemNotificationUpdateDTO dto,
+    public ResponseEntity<SystemNotificationDTO> createSystemNotification(@RequestBody SystemNotificationUpdateDTO dto,
             @RequestParam(defaultValue = "false") boolean sendMaintenanceEmail) throws URISyntaxException {
         log.debug("REST request to save SystemNotification : {}", dto);
         if (dto.id() != null) {
@@ -85,7 +86,7 @@ public class AdminSystemNotificationResource {
         }
 
         return ResponseEntity.created(new URI("/api/notifications/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(SystemNotificationDTO.of(result));
     }
 
     /**
@@ -107,7 +108,7 @@ public class AdminSystemNotificationResource {
      *         status 500 (Internal Server Error) if the system notification couldn't be updated
      */
     @PutMapping("system-notifications")
-    public ResponseEntity<SystemNotification> updateSystemNotification(@RequestBody SystemNotificationUpdateDTO updateDTO) {
+    public ResponseEntity<SystemNotificationDTO> updateSystemNotification(@RequestBody SystemNotificationUpdateDTO updateDTO) {
         log.debug("REST request to update SystemNotification : {}", updateDTO);
         if (updateDTO.id() == null) {
             throw new BadRequestAlertException("ID must not be null", ENTITY_NAME, "idNull");
@@ -123,7 +124,8 @@ public class AdminSystemNotificationResource {
         this.systemNotificationService.validateDatesElseThrow(existingNotification);
         SystemNotification result = systemNotificationRepository.save(existingNotification);
         systemNotificationService.distributeActiveAndFutureNotificationsToClients();
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
+                .body(SystemNotificationDTO.of(result));
     }
 
     /**
