@@ -150,7 +150,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             User user = student1();
             long entityId = entityIdFor(mode);
 
-            IrisChatSession result = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(course.getId(), mode, entityId, user);
+            IrisChatSession result = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(mode, entityId, user);
 
             assertThat(result.getId()).isNotNull();
             assertThat(result.getMode()).isEqualTo(mode);
@@ -166,7 +166,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             existing.setCreationDate(ZonedDateTime.now().minusDays(1));
             irisChatSessionRepository.save(existing);
 
-            IrisChatSession result = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(course.getId(), mode, entityIdFor(mode), user);
+            IrisChatSession result = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(mode, entityIdFor(mode), user);
 
             assertThat(result.getId()).isEqualTo(existing.getId());
         }
@@ -178,7 +178,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             yesterday.setCreationDate(ZonedDateTime.now().minusDays(1));
             irisChatSessionRepository.save(yesterday);
 
-            IrisChatSession result = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(course.getId(), IrisChatMode.COURSE_CHAT, course.getId(), user);
+            IrisChatSession result = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.COURSE_CHAT, course.getId(), user);
 
             assertThat(result.getId()).isNotEqualTo(yesterday.getId());
         }
@@ -188,7 +188,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             User user = student1();
             IrisChatSession today = irisChatSessionRepository.save(new IrisChatSession(course, user));
 
-            IrisChatSession result = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(course.getId(), IrisChatMode.COURSE_CHAT, course.getId(), user);
+            IrisChatSession result = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.COURSE_CHAT, course.getId(), user);
 
             assertThat(result.getId()).isEqualTo(today.getId());
         }
@@ -199,7 +199,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             user.setSelectedLLMUsage(null);
 
             assertThatExceptionOfType(AccessForbiddenException.class)
-                    .isThrownBy(() -> irisChatSessionService.getCurrentSessionOrCreateIfNotExists(course.getId(), IrisChatMode.COURSE_CHAT, course.getId(), user));
+                    .isThrownBy(() -> irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.COURSE_CHAT, course.getId(), user));
         }
 
         @Test
@@ -207,15 +207,15 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             disableIrisFor(course);
 
             assertThatExceptionOfType(AccessForbiddenAlertException.class)
-                    .isThrownBy(() -> irisChatSessionService.getCurrentSessionOrCreateIfNotExists(course.getId(), IrisChatMode.COURSE_CHAT, course.getId(), student1()));
+                    .isThrownBy(() -> irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.COURSE_CHAT, course.getId(), student1()));
         }
 
         @Test
         void throwsConflictForExamExerciseInTextMode() {
             TextExercise examExercise = createExamTextExercise();
 
-            assertThatExceptionOfType(ConflictException.class).isThrownBy(
-                    () -> irisChatSessionService.getCurrentSessionOrCreateIfNotExists(course.getId(), IrisChatMode.TEXT_EXERCISE_CHAT, examExercise.getId(), student1()));
+            assertThatExceptionOfType(ConflictException.class)
+                    .isThrownBy(() -> irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.TEXT_EXERCISE_CHAT, examExercise.getId(), student1()));
         }
     }
 
@@ -232,7 +232,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             User user = student1();
             IrisChatSession existing = irisChatSessionRepository.save(newSessionFor(mode, user));
 
-            IrisChatSession result = irisChatSessionService.createSession(course.getId(), mode, entityIdFor(mode), user);
+            IrisChatSession result = irisChatSessionService.createSession(mode, entityIdFor(mode), user);
 
             assertThat(result.getId()).isNotNull().isNotEqualTo(existing.getId());
             assertThat(result.getMode()).isEqualTo(mode);
@@ -243,8 +243,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             User user = student1();
             user.setSelectedLLMUsage(null);
 
-            assertThatExceptionOfType(AccessForbiddenException.class)
-                    .isThrownBy(() -> irisChatSessionService.createSession(course.getId(), IrisChatMode.COURSE_CHAT, course.getId(), user));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> irisChatSessionService.createSession(IrisChatMode.COURSE_CHAT, course.getId(), user));
         }
 
         @Test
@@ -252,7 +251,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             disableIrisFor(course);
 
             assertThatExceptionOfType(AccessForbiddenAlertException.class)
-                    .isThrownBy(() -> irisChatSessionService.createSession(course.getId(), IrisChatMode.COURSE_CHAT, course.getId(), student1()));
+                    .isThrownBy(() -> irisChatSessionService.createSession(IrisChatMode.COURSE_CHAT, course.getId(), student1()));
         }
 
         @Test
@@ -260,12 +259,12 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             TextExercise examExercise = createExamTextExercise();
 
             assertThatExceptionOfType(ConflictException.class)
-                    .isThrownBy(() -> irisChatSessionService.createSession(course.getId(), IrisChatMode.TEXT_EXERCISE_CHAT, examExercise.getId(), student1()));
+                    .isThrownBy(() -> irisChatSessionService.createSession(IrisChatMode.TEXT_EXERCISE_CHAT, examExercise.getId(), student1()));
         }
 
         @Test
         void setsLocalizedTitleOnCreation() {
-            IrisChatSession result = irisChatSessionService.createSession(course.getId(), IrisChatMode.COURSE_CHAT, course.getId(), student1());
+            IrisChatSession result = irisChatSessionService.createSession(IrisChatMode.COURSE_CHAT, course.getId(), student1());
 
             assertThat(result.getTitle()).isNotBlank();
         }

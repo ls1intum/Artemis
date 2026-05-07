@@ -100,7 +100,7 @@ describe('IrisChatService', () => {
         const wsStub = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         service.switchTo(ChatServiceMode.COURSE, id);
 
-        expect(httpStub).toHaveBeenCalledWith(courseId, ChatServiceMode.COURSE, id);
+        expect(httpStub).toHaveBeenCalledWith(ChatServiceMode.COURSE, id);
         expect(wsStub).toHaveBeenCalledWith(id);
     });
 
@@ -110,7 +110,7 @@ describe('IrisChatService', () => {
         const wsStub = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id);
 
-        expect(httpStub).toHaveBeenCalledWith(courseId, ChatServiceMode.PROGRAMMING_EXERCISE, id);
+        expect(httpStub).toHaveBeenCalledWith(ChatServiceMode.PROGRAMMING_EXERCISE, id);
         expect(wsStub).toHaveBeenCalledWith(id);
     });
 

@@ -601,12 +601,8 @@ export class IrisChatService implements OnDestroy {
         if (!this.sessionContext) {
             throw new Error('Session context not set');
         }
-        const courseId = this.getCourseId();
-        if (!courseId) {
-            throw new Error('Course ID not set');
-        }
 
-        return this.irisChatHttpService.getCurrentSessionOrCreateIfNotExists(courseId, this.sessionContext.mode, this.sessionContext.entityId).pipe(
+        return this.irisChatHttpService.getCurrentSessionOrCreateIfNotExists(this.sessionContext.mode, this.sessionContext.entityId).pipe(
             map((response: HttpResponse<IrisSession>) => {
                 if (response.body) {
                     return response.body;
@@ -653,11 +649,7 @@ export class IrisChatService implements OnDestroy {
         if (!this.sessionContext) {
             throw new Error('Session context not set');
         }
-        const courseId = this.getCourseId();
-        if (!courseId) {
-            throw new Error('Course ID not set');
-        }
-        return this.irisChatHttpService.createSession(courseId, this.sessionContext.mode, this.sessionContext.entityId).pipe(
+        return this.irisChatHttpService.createSession(this.sessionContext.mode, this.sessionContext.entityId).pipe(
             map((response: HttpResponse<IrisSession>) => {
                 if (response.body) {
                     return response.body;
