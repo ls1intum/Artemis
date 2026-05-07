@@ -1,5 +1,5 @@
 <div>
-    @if (!displayOnExamCover) {
+    @if (!displayOnExamCover()) {
         <h3 id="general-information-title" jhiTranslate="artemisApp.exam.examSummary.generalInformation"></h3>
     }
     <div class="ml-4 mt-3 mb-4">
@@ -13,113 +13,115 @@
                         </td>
                     </tr>
                 }
-                @if (exam?.moduleNumber) {
+                @if (exam()?.moduleNumber) {
                     <tr>
                         <th>{{ 'artemisApp.examManagement.moduleNumber' | artemisTranslate }}:</th>
-                        <td>{{ exam.moduleNumber }}</td>
+                        <td>{{ exam().moduleNumber }}</td>
                     </tr>
                 }
-                @if (exam?.courseName) {
+                @if (exam()?.courseName) {
                     <tr>
                         <th>{{ 'artemisApp.exam.course' | artemisTranslate }}:</th>
-                        <td>{{ exam.courseName }}</td>
+                        <td>{{ exam().courseName }}</td>
                     </tr>
                 }
-                @if (exam?.examiner) {
+                @if (exam()?.examiner) {
                     <tr>
                         <th>{{ 'artemisApp.examManagement.examiner' | artemisTranslate }}:</th>
-                        <td>{{ exam.examiner }}</td>
+                        <td>{{ exam().examiner }}</td>
                     </tr>
                 }
-                @if (exam?.title) {
+                @if (exam()?.title) {
                     <tr id="exam-title">
                         <th>{{ 'artemisApp.examManagement.examTitle' | artemisTranslate }}:</th>
-                        <td>{{ exam.title }}</td>
+                        <td>{{ exam().title }}</td>
                     </tr>
                 }
-                @if (exam && !isTestExam && exam.startDate) {
+                @if (exam() && !isTestExam && exam().startDate) {
                     @if (isExamOverMultipleDays) {
                         <tr>
                             <th>{{ 'artemisApp.exam.time' | artemisTranslate }}:</th>
                             <td>
-                                {{ exam.startDate | artemisDate: 'long-date' }} {{ exam.startDate | artemisDate: 'time' }} &nbsp;-&nbsp;{{ examEndDate | artemisDate: 'long-date' }}
+                                {{ exam().startDate | artemisDate: 'long-date' }} {{ exam().startDate | artemisDate: 'time' }} &nbsp;-&nbsp;{{
+                                    examEndDate | artemisDate: 'long-date'
+                                }}
                                 {{ examEndDate | artemisDate: 'time' }}
                             </td>
                         </tr>
                     } @else {
                         <tr class="mb-2">
                             <th>{{ 'artemisApp.exam.date' | artemisTranslate }}:</th>
-                            <td>{{ exam.startDate | artemisDate: 'long-date' }}</td>
+                            <td>{{ exam().startDate | artemisDate: 'long-date' }}</td>
                         </tr>
                         <tr class="mb-2">
                             <th>{{ 'artemisApp.exam.workingTime' | artemisTranslate }}:</th>
-                            <td>{{ exam.startDate | artemisDate: 'time' }} - {{ examEndDate | artemisDate: 'time' }}</td>
+                            <td>{{ exam().startDate | artemisDate: 'time' }} - {{ examEndDate | artemisDate: 'time' }}</td>
                         </tr>
                     }
-                    @if (exam.endDate && studentExam?.workingTime) {
+                    @if (exam().endDate && studentExam()?.workingTime) {
                         <tr>
                             <th>{{ 'artemisApp.exam.duration' | artemisTranslate }}:</th>
-                            <td><jhi-student-exam-working-time [studentExam]="studentExam" /></td>
+                            <td><jhi-student-exam-working-time [studentExam]="studentExam()" /></td>
                         </tr>
                     }
                 }
-                @if (displayOnExamCover) {
-                    @if (exam.examMaxPoints) {
+                @if (displayOnExamCover()) {
+                    @if (exam().examMaxPoints) {
                         <tr>
                             <th>{{ 'artemisApp.exam.points' | artemisTranslate }}:</th>
-                            <td>{{ exam.examMaxPoints }}</td>
+                            <td>{{ exam().examMaxPoints }}</td>
                         </tr>
                     }
-                    @if (exam.numberOfExercisesInExam) {
+                    @if (exam().numberOfExercisesInExam) {
                         <tr>
                             <th>{{ 'artemisApp.exam.exercises' | artemisTranslate }}:</th>
-                            <td>{{ exam.numberOfExercisesInExam }}</td>
+                            <td>{{ exam().numberOfExercisesInExam }}</td>
                         </tr>
                     }
                 }
-                @if (exam && studentExam?.ended && (exam.examStudentReviewStart || exam.examStudentReviewEnd)) {
+                @if (exam() && studentExam()?.ended && (exam().examStudentReviewStart || exam().examStudentReviewEnd)) {
                     <tr>
                         <th>{{ 'artemisApp.exam.examStudentReviewTimespan' | artemisTranslate }}:&nbsp;</th>
                         <td class="d-flex align-items-center">
-                            @if (exam.examStudentReviewStart) {
-                                <span> {{ exam.examStudentReviewStart | artemisDate }} </span>
+                            @if (exam().examStudentReviewStart) {
+                                <span> {{ exam().examStudentReviewStart | artemisDate }} </span>
                             }
-                            @if (exam.examStudentReviewStart && exam.examStudentReviewEnd) {
+                            @if (exam().examStudentReviewStart && exam().examStudentReviewEnd) {
                                 <span>&nbsp;-&nbsp;</span>
                             }
-                            @if (exam.examStudentReviewEnd) {
-                                <span>{{ exam.examStudentReviewEnd | artemisDate }}</span>
+                            @if (exam().examStudentReviewEnd) {
+                                <span>{{ exam().examStudentReviewEnd | artemisDate }}</span>
                             }
-                            @if (reviewIsOpen) {
+                            @if (reviewIsOpen()) {
                                 <div class="mx-2 badge bg-success" jhiTranslate="artemisApp.exam.studentReviewEnabled"></div>
                             }
                         </td>
                     </tr>
                 }
-                @if (studentExam?.user?.name) {
+                @if (studentExam()?.user?.name) {
                     <tr>
                         <th>{{ 'artemisApp.exam.examinedStudent' | artemisTranslate }}:</th>
-                        <td>{{ studentExam!.user!.name }}</td>
+                        <td>{{ studentExam()!.user!.name }}</td>
                     </tr>
                 }
                 <!-- For test exams, the currentDate (analogous to the real exam) and the workingTime should be displayed -->
-                @if (exam && isTestExam) {
+                @if (exam() && isTestExam) {
                     <tr>
                         <th>{{ 'artemisApp.exam.date' | artemisTranslate }}:</th>
                         <td>{{ currentDate! | artemisDate: 'long-date' }}</td>
                     </tr>
-                    @if (exam?.workingTime) {
+                    @if (exam()?.workingTime) {
                         <tr>
                             <th>{{ 'artemisApp.exam.workingTime' | artemisTranslate }}:</th>
-                            <td>{{ exam.workingTime! | artemisDurationFromSeconds }}</td>
+                            <td>{{ exam().workingTime! | artemisDurationFromSeconds }}</td>
                             <td></td>
                         </tr>
                     }
-                    @if (studentExam.submitted && studentExam.submissionDate && studentExam.startedDate) {
+                    @if (studentExam().submitted && studentExam().submissionDate && studentExam().startedDate) {
                         <tr>
                             <th>{{ 'artemisApp.exam.overview.testExam.workingTimeCalculated' | artemisTranslate }} :</th>
                             <td>
-                                <jhi-test-exam-working-time [studentExam]="studentExam" />
+                                <jhi-test-exam-working-time [studentExam]="studentExam()" />
                             </td>
                         </tr>
                     }

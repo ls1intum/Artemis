@@ -49,6 +49,7 @@ export class PdfViewerComponent {
     readonly pageRendered = output<{ pdfUrl: string }>();
     readonly loadError = output<{ pdfUrl: string }>();
     readonly downloadRequested = output<void>();
+    readonly isFullscreenChange = output<boolean>();
 
     readonly pdfIframe = viewChild<ElementRef<HTMLIFrameElement>>('pdfIframe');
     readonly fullscreenWindow = viewChild<ElementRef<HTMLDivElement>>('fullscreenWindow');
@@ -144,20 +145,41 @@ export class PdfViewerComponent {
         });
     }
 
+    /**
+     * Switches the embedded PDF viewer into fullscreen mode.
+     */
     openFullscreen(): void {
         if (!this.pdfUrl() || this.isFullscreen()) {
             return;
         }
         this.applyFullscreenLayering();
         this.isFullscreen.set(true);
+        this.isFullscreenChange.emit(true);
     }
 
+    /**
+     * Leaves fullscreen mode and restores layering changes applied for drawer contexts.
+     */
     closeFullscreen(): void {
         if (!this.isFullscreen()) {
             return;
         }
         this.isFullscreen.set(false);
+        this.isFullscreenChange.emit(false);
         this.resetFullscreenLayering();
+    }
+
+    /**
+     * Handles Escape key events coming from the fullscreen overlay.
+     */
+    onFullscreenEscape(event: Event): void {
+        if (!this.isFullscreen()) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        this.closeFullscreen();
     }
 
     @HostListener('window:message', ['$event'])
