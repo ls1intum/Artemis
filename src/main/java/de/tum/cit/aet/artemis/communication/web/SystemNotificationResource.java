@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.communication.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -52,11 +53,12 @@ public class SystemNotificationResource {
      */
     @GetMapping("system-notifications")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<SystemNotification>> getAllSystemNotifications(Pageable pageable) {
+    public ResponseEntity<List<SystemNotificationDTO>> getAllSystemNotifications(Pageable pageable) {
         log.debug("REST request to get all Courses the user has access to");
         final Page<SystemNotification> page = systemNotificationRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+        List<SystemNotificationDTO> systemNotificationDTOs = page.getContent().stream().map(SystemNotificationDTO::of).toList();
+        return new ResponseEntity<>(systemNotificationDTOs, headers, HttpStatus.OK);
     }
 
     /**
@@ -67,9 +69,9 @@ public class SystemNotificationResource {
      */
     @GetMapping("system-notifications/{notificationId}")
     @EnforceAtLeastEditor
-    public ResponseEntity<SystemNotification> getSystemNotification(@PathVariable Long notificationId) {
+    public ResponseEntity<SystemNotificationDTO> getSystemNotification(@PathVariable Long notificationId) {
         log.debug("REST request to get SystemNotification : {}", notificationId);
-        Optional<SystemNotification> systemNotification = systemNotificationRepository.findById(notificationId);
+        Optional<SystemNotificationDTO> systemNotification = systemNotificationRepository.findById(notificationId).map(SystemNotificationDTO::of);
         return ResponseUtil.wrapOrNotFound(systemNotification);
     }
 }
