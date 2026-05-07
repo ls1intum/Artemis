@@ -3,6 +3,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <include file="classpath:config/liquibase/changelog/00000000000000_initial_schema.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20240331151800_cleanup.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20250425000000_create_exercise_athena_config_table.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20260205132454_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20260301010101_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20260304120000_e2e_seed_data.xml" relativeToChangelogFile="false"/>

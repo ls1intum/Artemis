@@ -318,6 +318,10 @@ public class ModelingExerciseResource {
                     updateModelingExerciseDTO.athenaConfig().preliminaryFeedbackModule(), updateModelingExerciseDTO.athenaConfig().gradedFeedbackModule());
             persistedExercise.setAthenaConfig(athenaConfig);
         }
+        else if (persistedExercise.getAthenaConfig() != null) {
+            exerciseAthenaConfigService.deleteByExerciseId(persistedExercise.getId());
+            persistedExercise.setAthenaConfig(null);
+        }
 
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
