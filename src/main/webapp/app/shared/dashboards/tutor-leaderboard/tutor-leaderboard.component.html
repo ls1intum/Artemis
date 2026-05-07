@@ -1,7 +1,7 @@
 <div class="row table-responsive mt-3">
     <table class="table">
         <thead>
-            <tr jhiSort [(predicate)]="sortPredicate" [(ascending)]="reverseOrder" (sortChange)="sortRows()">
+            <tr jhiSort [(predicate)]="sortPredicate" [(ascending)]="reverseOrder">
                 <th>#</th>
                 <th jhiSortBy="name">
                     <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.name"></a>
@@ -19,7 +19,7 @@
                     <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAcceptedComplaints"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
-                @if (!isExamMode) {
+                @if (!isExamMode()) {
                     <th jhiSortBy="numberOfNotAnsweredMoreFeedbackRequests">
                         <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfNotAnsweredMoreFeedbackRequests"></a>
                         <fa-icon [icon]="faSort" />
@@ -29,7 +29,7 @@
                     <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfComplaintResponses"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
-                @if (!isExamMode) {
+                @if (!isExamMode()) {
                     <th jhiSortBy="numberOfAnsweredMoreFeedbackRequests">
                         <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAnsweredMoreFeedbackRequests"></a>
                         <fa-icon [icon]="faSort" />
@@ -46,40 +46,40 @@
             </tr>
         </thead>
         <tbody>
-            @for (tutor of tutorsData; track tutor; let i = $index) {
+            @for (tutor of tutorsData(); track tutor; let i = $index) {
                 <tr>
                     <td>{{ i + 1 }}</td>
                     <td>
                         {{ tutor.name }}
-                        @if (course?.isAtLeastInstructor && tutor.hasIssuesWithPerformance) {
+                        @if (course()?.isAtLeastInstructor && tutor.hasIssuesWithPerformance) {
                             <fa-icon
                                 [icon]="faExclamationTriangle"
                                 class="text-warning"
-                                ngbTooltip="{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.tutor' | artemisTranslate: { tutorName: tutor.name } }}"
+                                [pTooltip]="'artemisApp.assessmentDashboard.tutorPerformanceIssues.tutor' | artemisTranslate: { tutorName: tutor.name }"
                             />
                         }
                     </td>
                     <td>{{ tutor.points }}</td>
                     <td>{{ tutor.numberOfAssessments }}</td>
-                    @if (course && !course.isAtLeastInstructor) {
+                    @if (course() && !course()!.isAtLeastInstructor) {
                         <td>{{ tutor.numberOfAcceptedComplaints }}</td>
-                        @if (!isExamMode) {
+                        @if (!isExamMode()) {
                             <td>{{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}</td>
                         }
                     } @else {
-                        @if (isExerciseDashboard && exercise && exercise.id && course && course.id) {
+                        @if (isExerciseDashboard() && exercise() && exercise()!.id && course() && course()!.id) {
                             <td>
                                 <a
-                                    [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'complaints']"
+                                    [routerLink]="['/course-management', course()!.id, exercise()!.type + '-exercises', exercise()!.id, 'complaints']"
                                     [queryParams]="{ tutorId: tutor.userId }"
                                 >
                                     {{ tutor.numberOfAcceptedComplaints }}
                                 </a>
                             </td>
-                            @if (!isExamMode) {
+                            @if (!isExamMode()) {
                                 <td>
                                     <a
-                                        [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'more-feedback-requests']"
+                                        [routerLink]="['/course-management', course()!.id, exercise()!.type + '-exercises', exercise()!.id, 'more-feedback-requests']"
                                         [queryParams]="{ tutorId: tutor.userId }"
                                     >
                                         {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}
@@ -87,24 +87,24 @@
                                 </td>
                             }
                         }
-                        @if (!isExerciseDashboard && course && course.id) {
-                            @if (isExamMode) {
+                        @if (!isExerciseDashboard() && course() && course()!.id) {
+                            @if (isExamMode()) {
                                 <td>
-                                    <a [routerLink]="['/course-management', course.id, 'exams', exam!.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
+                                    <a [routerLink]="['/course-management', course()!.id, 'exams', exam()!.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
                                         {{ tutor.numberOfAcceptedComplaints }}
                                     </a>
                                 </td>
                             }
-                            @if (!isExamMode) {
+                            @if (!isExamMode()) {
                                 <td>
-                                    <a [routerLink]="['/course-management', course.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
+                                    <a [routerLink]="['/course-management', course()!.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
                                         {{ tutor.numberOfAcceptedComplaints }}
                                     </a>
                                 </td>
                             }
-                            @if (!isExamMode) {
+                            @if (!isExamMode()) {
                                 <td>
-                                    <a [routerLink]="['/course-management', course.id, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor.userId }">
+                                    <a [routerLink]="['/course-management', course()!.id, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor.userId }">
                                         {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}
                                     </a>
                                 </td>
@@ -112,7 +112,7 @@
                         }
                     }
                     <td>{{ tutor.numberOfComplaintResponses }}</td>
-                    @if (!isExamMode) {
+                    @if (!isExamMode()) {
                         <td>{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
                     }
                     <td>

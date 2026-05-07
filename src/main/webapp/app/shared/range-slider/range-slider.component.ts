@@ -1,104 +1,71 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 const DEFAULT_STEP = 1;
+const BASE_LABEL_MARGIN = 0.4;
+
+/**
+ * By trial and error it was found out that the slider thumbs are moving on
+ * 97% of the width compared to the colored bar that is displayed between the two thumbs.
+ *
+ * This issue is resolved with this factor when multiplied to {@link sliderMinPercentage} and {@link sliderMaxPercentage}
+ * to calculate the position of the label, as it is not the exact same position as the thumbs.
+ */
+const SLIDER_THUMB_LABEL_POSITION_ADJUSTMENT_FACTOR = 0.97;
 
 @Component({
     selector: 'jhi-range-slider',
     templateUrl: './range-slider.component.html',
     styleUrls: ['./range-slider.component.scss'],
     imports: [FormsModule, ReactiveFormsModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RangeSliderComponent implements OnInit, OnDestroy {
-    private elRef = inject(ElementRef);
+export class RangeSliderComponent {
+    readonly generalMaxValue = input.required<number>();
+    readonly generalMinValue = input.required<number>();
+    readonly step = input<number>(DEFAULT_STEP);
+    readonly labelSymbol = input<'%' | undefined>(undefined);
 
-    @Input() generalMaxValue: number;
-    @Input() generalMinValue: number;
-    @Input() step: number = DEFAULT_STEP;
+    readonly selectedMinValue = input.required<number>();
+    readonly selectedMaxValue = input.required<number>();
 
-    /** When extending the supported label symbols you might have to adjust the logic for */
-    @Input() labelSymbol?: '%';
-
-    @Input() selectedMinValue: number;
-    @Input() selectedMaxValue: number;
-    @Output() selectedMinValueChange: EventEmitter<number> = new EventEmitter<number>();
-    @Output() selectedMaxValueChange: EventEmitter<number> = new EventEmitter<number>();
-
-    rangeInputElements?: NodeList;
-    eventListeners: { element: HTMLInputElement; listener: (event: Event) => void }[] = [];
-
-    sliderMinPercentage: number;
-    sliderMaxPercentage: number;
-
-    valueRange: number;
-
-    /** Ensures that the label is placed centered underneath the range thumb */
-    LABEL_MARGIN = 0.4;
+    readonly selectedMinValueChange = output<number>();
+    readonly selectedMaxValueChange = output<number>();
 
     /**
-     * By trial and error it was found out that the slider thumbs are moving on
-     * 97% of the width compared to the colored bar that is displayed between the two thumbs.
-     *
-     * This issue is resolved with this factor when multiplied to {@link sliderMinPercentage} and {@link sliderMaxPercentage}
-     * to calculate the position of the label, as it is not the exact same position as the thumbs.
-     *
-     * <i>
-     * To reproduce:
-     * If you inspect the progress bar in the initial state you will see that it is 100% wide and ends at the left end of
-     * the minimum range thumb.
-     * However, if you move the minimum thumb to the right (as far as possible), you will notice that the progress bar
-     * ends at the right end of the range thumb. - This is the problem that we address with this factor.</i>
+     * Local mirrors of the selected values driven by the slider's `ngModel` bindings. These track the
+     * dragging state and only flow back to the parent on the `(change)` event (mouse-up), preserving
+     * the original behaviour where the parent was not notified on every drag tick.
      */
-    SLIDER_THUMB_LABEL_POSITION_ADJUSTMENT_FACTOR = 0.97;
+    protected readonly localMinValue = signal<number>(0);
+    protected readonly localMaxValue = signal<number>(0);
 
-    ngOnInit() {
-        this.rangeInputElements = this.elRef.nativeElement.querySelectorAll('.range-input input');
+    protected readonly SLIDER_THUMB_LABEL_POSITION_ADJUSTMENT_FACTOR = SLIDER_THUMB_LABEL_POSITION_ADJUSTMENT_FACTOR;
 
-        this.rangeInputElements?.forEach((input: HTMLInputElement) => {
-            const listener = (event: InputEvent) => {
-                this.ensureMinValueIsSmallerThanMaxValueViceVersa(event);
-            };
-            input.addEventListener('input', listener);
-            this.eventListeners.push({ element: input, listener });
-        });
-        this.valueRange = this.generalMaxValue - this.generalMinValue;
+    protected readonly valueRange = computed(() => this.generalMaxValue() - this.generalMinValue());
 
-        this.LABEL_MARGIN = this.getLabelMargin();
+    /** Margin to the labels considering the adjustments needed by the added {@link labelSymbol} */
+    protected readonly labelMargin = computed(() => BASE_LABEL_MARGIN - BASE_LABEL_MARGIN * (this.labelSymbol()?.length ?? 0));
 
-        this.updateMinPercentage();
-        this.updateMaxPercentage();
+    protected readonly sliderMinPercentage = computed(() => {
+        const minSelection = this.localMinValue() >= this.localMaxValue() ? this.localMaxValue() - this.step() : this.localMinValue();
+        return ((minSelection - this.generalMinValue()) / this.valueRange()) * 100;
+    });
+
+    protected readonly sliderMaxPercentage = computed(() => {
+        const maxSelection = this.localMaxValue() <= this.localMinValue() ? this.localMinValue() + this.step() : this.localMaxValue();
+        return 100 - ((maxSelection - this.generalMinValue()) / this.valueRange()) * 100;
+    });
+
+    constructor() {
+        // Sync the parent-supplied selected values into the local mirrors whenever the inputs change.
+        effect(() => this.localMinValue.set(this.selectedMinValue()));
+        effect(() => this.localMaxValue.set(this.selectedMaxValue()));
     }
 
-    ngOnDestroy() {
-        this.eventListeners.forEach(({ element, listener }) => {
-            element.removeEventListener('input', listener);
-        });
-    }
-
-    updateMinPercentage() {
-        let newMinSelection = this.selectedMinValue;
-
-        const tryingToSelectInvalidValue = this.selectedMinValue >= this.selectedMaxValue;
-        if (tryingToSelectInvalidValue) {
-            newMinSelection = this.selectedMaxValue - this.step;
-        }
-
-        // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
-        const newMinPercentage = ((newMinSelection - this.generalMinValue) / this.valueRange) * 100;
-        this.sliderMinPercentage = newMinPercentage;
-    }
-
-    updateMaxPercentage() {
-        let newMaxSelection = this.selectedMaxValue;
-
-        const tryingToSelectInvalidValue = this.selectedMaxValue <= this.selectedMinValue;
-        if (tryingToSelectInvalidValue) {
-            newMaxSelection = this.selectedMinValue + this.step;
-        }
-
-        // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
-        const newMaxPercentage = 100 - ((newMaxSelection - this.generalMinValue) / this.valueRange) * 100;
-        this.sliderMaxPercentage = newMaxPercentage;
+    /** Clamps the local mirror values during dragging without emitting an event to the parent. */
+    onSelectedValueDuringDrag(event: Event): void {
+        this.ensureMinValueIsSmallerThanMaxValueViceVersa(event);
     }
 
     onSelectedMinValueChanged(event: Event): void {
@@ -112,29 +79,19 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
     }
 
     private ensureMinValueIsSmallerThanMaxValueViceVersa(event: Event): number {
-        const input = event.target as HTMLInputElement;
-        const minSliderIsUpdated = input.className.includes('range-min');
+        const inputEl = event.target as HTMLInputElement;
+        const minSliderIsUpdated = inputEl.className.includes('range-min');
 
         if (minSliderIsUpdated) {
-            if (this.selectedMinValue >= this.selectedMaxValue) {
-                this.selectedMinValue = this.selectedMaxValue - this.step;
+            if (this.localMinValue() >= this.localMaxValue()) {
+                this.localMinValue.set(this.localMaxValue() - this.step());
             }
-            return this.selectedMinValue;
+            return this.localMinValue();
         }
 
-        if (this.selectedMaxValue <= this.selectedMinValue) {
-            this.selectedMaxValue = this.selectedMinValue + this.step;
+        if (this.localMaxValue() <= this.localMinValue()) {
+            this.localMaxValue.set(this.localMinValue() + this.step());
         }
-        return this.selectedMaxValue;
-    }
-
-    /**
-     * @return margin to labels considering the adjustments needed by the added {@link labelSymbol}
-     */
-    private getLabelMargin() {
-        const BASE_LABEL_MARGIN = 0.4; // should be approximately the width of 1 symbol
-        const shiftToTheLeftDueToAddedSymbols = BASE_LABEL_MARGIN * (this.labelSymbol?.length ?? 0);
-
-        return BASE_LABEL_MARGIN - shiftToTheLeftDueToAddedSymbols;
+        return this.localMaxValue();
     }
 }

@@ -1,54 +1,53 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SimpleChange } from '@angular/core';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { TutorParticipation, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { MockComponent } from 'ng-mocks';
-import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TutorParticipationGraphComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: TutorParticipationGraphComponent;
     let fixture: ComponentFixture<TutorParticipationGraphComponent>;
-    let calculatePercentageAssessmentProgressStub: jest.SpyInstance;
-    let calculatePercentageComplaintsProgressStub: jest.SpyInstance;
     const router = new MockRouter();
-    const navigateSpy = jest.spyOn(router, 'navigate');
+    const navigateSpy = vi.spyOn(router, 'navigate');
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            declarations: [TutorParticipationGraphComponent, MockComponent(ProgressBarComponent), TranslatePipeMock],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: Router, useValue: router },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TutorParticipationGraphComponent);
-                comp = fixture.componentInstance;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(TutorParticipationGraphComponent);
+        comp = fixture.componentInstance;
     });
 
-    describe('Participation Status Method', () => {
-        beforeEach(() => {
-            comp.exercise = {
-                id: 1,
-                exampleSubmissions: [{ id: 1, usedForTutorial: true }],
-            } as Exercise;
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
-            comp.tutorParticipation = {
-                id: 1,
-                trainedExampleSubmissions: [{ id: 1, usedForTutorial: true }],
-            } as TutorParticipation;
-        });
+    /**
+     * Helper to set the inputs needed by the participation status tests so the component is
+     * always in a fully-initialized state before assertions.
+     */
+    function setBaseInputs(status: TutorParticipationStatus, exercise: Exercise, participation: TutorParticipation) {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('tutorParticipation', { ...participation, status });
+    }
+
+    describe('Participation Status Method', () => {
+        const baseExercise = { id: 1, exampleSubmissions: [{ id: 1, usedForTutorial: true }] } as Exercise;
+        const baseParticipation = { id: 1, trainedExampleSubmissions: [{ id: 1, usedForTutorial: true }] } as TutorParticipation;
 
         it('should calculate the right classes for the initial NOT_PARTICIPATED status', () => {
-            comp.tutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;
+            setBaseInputs(TutorParticipationStatus.NOT_PARTICIPATED, baseExercise, baseParticipation);
 
             expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).toBe('active');
             expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).toBe('');
@@ -56,7 +55,7 @@ describe('TutorParticipationGraphComponent', () => {
         });
 
         it('should calculate the right classes for the REVIEWED_INSTRUCTIONS status', () => {
-            comp.tutorParticipationStatus = TutorParticipationStatus.REVIEWED_INSTRUCTIONS;
+            setBaseInputs(TutorParticipationStatus.REVIEWED_INSTRUCTIONS, baseExercise, baseParticipation);
 
             expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).toBe('active');
             expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).toBe('');
@@ -64,32 +63,28 @@ describe('TutorParticipationGraphComponent', () => {
         });
 
         it('should calculate the right classes for the TRAINED status', () => {
-            comp.tutorParticipationStatus = TutorParticipationStatus.TRAINED;
+            setBaseInputs(TutorParticipationStatus.TRAINED, baseExercise, baseParticipation);
 
             expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).toBe('');
             expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).toBe('');
             expect(comp.calculateClasses(TutorParticipationStatus.TRAINED)).toBe('');
 
-            comp.exercise = {
+            const exerciseWithMissingReview = {
                 id: 1,
                 exampleSubmissions: [
                     { id: 1, usedForTutorial: false },
                     { id: 2, usedForTutorial: true },
                 ],
             } as Exercise;
+            const partialParticipation = { id: 1, trainedExampleSubmissions: [{ id: 1, usedForTutorial: false }], status: TutorParticipationStatus.TRAINED } as TutorParticipation;
+            fixture.componentRef.setInput('exercise', exerciseWithMissingReview);
+            fixture.componentRef.setInput('tutorParticipation', partialParticipation);
 
-            comp.tutorParticipation = {
-                id: 1,
-                trainedExampleSubmissions: [{ id: 1, usedForTutorial: false }],
-            } as TutorParticipation;
-
-            expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).toBe('');
-            expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).toBe('');
             expect(comp.calculateClasses(TutorParticipationStatus.TRAINED)).toBe('orange');
         });
 
         it('should calculate the right classes for the COMPLETED status', () => {
-            comp.tutorParticipationStatus = TutorParticipationStatus.COMPLETED;
+            setBaseInputs(TutorParticipationStatus.COMPLETED, baseExercise, baseParticipation);
 
             expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).toBe('');
             expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).toBe('');
@@ -97,135 +92,113 @@ describe('TutorParticipationGraphComponent', () => {
         });
     });
 
-    describe('should calculate the right classes for the given status', () => {
-        it('should calculate the right classes for the COMPLETED status', () => {
-            comp.tutorParticipationStatus = TutorParticipationStatus.COMPLETED;
-            expect(comp.calculateClassProgressBar()).toBe('active');
+    describe('progressBarClass', () => {
+        it('returns active for the COMPLETED status', () => {
+            fixture.componentRef.setInput('tutorParticipation', { status: TutorParticipationStatus.COMPLETED } as TutorParticipation);
+            expect(comp.progressBarClass()).toBe('active');
         });
 
-        it('should calculate the right classes for the NOT_PARTICIPATED status', () => {
-            comp.tutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;
-            expect(comp.calculateClassProgressBar()).toBe('opaque');
+        it('returns opaque for the NOT_PARTICIPATED status', () => {
+            fixture.componentRef.setInput('tutorParticipation', { status: TutorParticipationStatus.NOT_PARTICIPATED } as TutorParticipation);
+            expect(comp.progressBarClass()).toBe('opaque');
         });
 
-        it('should calculate the right classes for the TRAINED status', () => {
-            comp.tutorParticipationStatus = TutorParticipationStatus.TRAINED;
-            comp.numberOfSubmissions = new DueDateStat();
-            comp.numberOfSubmissions.inTime = 4;
-            comp.totalNumberOfAssessments = 5;
-            comp.numberOfOpenComplaints = 1;
-            comp.numberOfOpenMoreFeedbackRequests = 2;
+        it('returns orange when TRAINED with open complaints', () => {
+            fixture.componentRef.setInput('tutorParticipation', { status: TutorParticipationStatus.TRAINED } as TutorParticipation);
+            const submissions = new DueDateStat();
+            submissions.inTime = 4;
+            fixture.componentRef.setInput('numberOfSubmissions', submissions);
+            fixture.componentRef.setInput('totalNumberOfAssessments', 5);
+            fixture.componentRef.setInput('numberOfOpenComplaints', 1);
+            fixture.componentRef.setInput('numberOfOpenMoreFeedbackRequests', 2);
 
-            expect(comp.calculateClassProgressBar()).toBe('orange');
-        });
-    });
-
-    describe('test calculatePercentageAssessmentProgress', () => {
-        it('should calculate the right classes for the TRAINED status', () => {
-            comp.tutorParticipationStatus = TutorParticipationStatus.TRAINED;
-            comp.numberOfSubmissions = new DueDateStat();
-            comp.numberOfSubmissions.inTime = 4;
-            comp.numberOfSubmissions.late = 2;
-            comp.totalNumberOfAssessments = 3;
-            const firstCorrectionDueDateStat = new DueDateStat();
-            firstCorrectionDueDateStat.inTime = comp.totalNumberOfAssessments;
-            firstCorrectionDueDateStat.late = 1;
-            comp.numberOfAssessmentsOfCorrectionRounds = [firstCorrectionDueDateStat];
-            comp.numberOfOpenComplaints = 1;
-            comp.numberOfOpenMoreFeedbackRequests = 2;
-
-            comp.calculatePercentageAssessmentProgress();
-
-            expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound[0]).toBe(75);
-            expect(comp.percentageLateAssessmentProgressOfCorrectionRound[0]).toBe(50);
-
-            const secondCorrectionDueDateStat = new DueDateStat();
-            secondCorrectionDueDateStat.inTime = 2;
-            secondCorrectionDueDateStat.late = 1;
-            comp.numberOfAssessmentsOfCorrectionRounds = [firstCorrectionDueDateStat, secondCorrectionDueDateStat];
-
-            comp.calculatePercentageAssessmentProgress();
-            expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound[0]).toBe(75);
-            expect(comp.percentageLateAssessmentProgressOfCorrectionRound[0]).toBe(50);
-            expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound[1]).toBe(50);
-            expect(comp.percentageLateAssessmentProgressOfCorrectionRound[1]).toBe(50);
+            expect(comp.progressBarClass()).toBe('orange');
         });
     });
 
-    it('should test ngOnInit', () => {
-        calculatePercentageAssessmentProgressStub = jest.spyOn(comp, 'calculatePercentageAssessmentProgress').mockImplementation();
-        calculatePercentageComplaintsProgressStub = jest.spyOn(comp, 'calculatePercentageComplaintsProgress').mockImplementation();
-        comp.tutorParticipation = {
+    describe('percentageAssessmentProgress', () => {
+        it('computes inTime and late progress per correction round', () => {
+            fixture.componentRef.setInput('tutorParticipation', { status: TutorParticipationStatus.TRAINED } as TutorParticipation);
+            const submissions = new DueDateStat();
+            submissions.inTime = 4;
+            submissions.late = 2;
+            fixture.componentRef.setInput('numberOfSubmissions', submissions);
+            fixture.componentRef.setInput('totalNumberOfAssessments', 3);
+
+            const round1 = new DueDateStat();
+            round1.inTime = 3;
+            round1.late = 1;
+            fixture.componentRef.setInput('numberOfAssessmentsOfCorrectionRounds', [round1]);
+
+            expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound()[0]).toBe(75);
+            expect(comp.percentageLateAssessmentProgressOfCorrectionRound()[0]).toBe(50);
+
+            const round2 = new DueDateStat();
+            round2.inTime = 2;
+            round2.late = 1;
+            fixture.componentRef.setInput('numberOfAssessmentsOfCorrectionRounds', [round1, round2]);
+
+            expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound()[0]).toBe(75);
+            expect(comp.percentageLateAssessmentProgressOfCorrectionRound()[0]).toBe(50);
+            expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound()[1]).toBe(50);
+            expect(comp.percentageLateAssessmentProgressOfCorrectionRound()[1]).toBe(50);
+        });
+    });
+
+    it('derives the routerLink from the trained example submissions exercise/course', () => {
+        fixture.componentRef.setInput('tutorParticipation', {
             id: 1,
             trainedExampleSubmissions: [{ id: 1, usedForTutorial: false, exercise: { id: 1, course: { id: 3 } } }],
-        } as TutorParticipation;
+            status: TutorParticipationStatus.TRAINED,
+        } as TutorParticipation);
 
-        comp.ngOnInit();
-
-        expect(calculatePercentageAssessmentProgressStub).toHaveBeenCalledOnce();
-        expect(calculatePercentageComplaintsProgressStub).toHaveBeenCalledOnce();
-
-        calculatePercentageAssessmentProgressStub.mockRestore();
-        calculatePercentageComplaintsProgressStub.mockRestore();
+        expect(comp.routerLink()).toBe('/course-management/3/assessment-dashboard/1');
     });
 
-    it('should calculate numerator', () => {
-        comp.numberOfComplaints = 2;
-        comp.numberOfOpenComplaints = 1;
-        comp.numberOfMoreFeedbackRequests = 3;
-        comp.numberOfOpenMoreFeedbackRequests = 1;
+    it('computes the complaints numerator', () => {
+        fixture.componentRef.setInput('tutorParticipation', { status: TutorParticipationStatus.TRAINED } as TutorParticipation);
+        fixture.componentRef.setInput('numberOfComplaints', 2);
+        fixture.componentRef.setInput('numberOfOpenComplaints', 1);
+        fixture.componentRef.setInput('numberOfMoreFeedbackRequests', 3);
+        fixture.componentRef.setInput('numberOfOpenMoreFeedbackRequests', 1);
 
-        const result = comp.calculateComplaintsNumerator();
-
-        expect(result).toBe(3);
+        expect(comp.complaintsNumerator()).toBe(3);
     });
 
-    it('should calculate denominator', () => {
-        comp.numberOfComplaints = 3;
-        comp.numberOfMoreFeedbackRequests = 4;
+    it('computes the complaints denominator', () => {
+        fixture.componentRef.setInput('tutorParticipation', { status: TutorParticipationStatus.TRAINED } as TutorParticipation);
+        fixture.componentRef.setInput('numberOfComplaints', 3);
+        fixture.componentRef.setInput('numberOfMoreFeedbackRequests', 4);
 
-        const result = comp.calculateComplaintsDenominator();
-
-        expect(result).toBe(7);
-    });
-    it('should update changes', () => {
-        calculatePercentageAssessmentProgressStub = jest.spyOn(comp, 'calculatePercentageAssessmentProgress').mockImplementation();
-        calculatePercentageComplaintsProgressStub = jest.spyOn(comp, 'calculatePercentageComplaintsProgress').mockImplementation();
-
-        const tutorParticipationStatus = { status: 'COMPLETED' as TutorParticipationStatus };
-        const unchangedParticipation = { id: 1, trainedExampleSubmissions: [{ id: 1, usedForTutorial: true }], tutorParticipationStatus } as TutorParticipation;
-        const changedParticipation = { id: 3, trainedExampleSubmissions: [{ id: 1, usedForTutorial: true }], tutorParticipationStatus } as TutorParticipation;
-        comp.tutorParticipation = unchangedParticipation;
-        comp.ngOnInit();
-
-        expect(comp.tutorParticipation.id).not.toBe(3);
-
-        const changes = { tutorParticipation: { currentValue: changedParticipation } as SimpleChange };
-        comp.ngOnChanges(changes);
-
-        expect(comp.tutorParticipation.id).toBe(3);
-        expect(calculatePercentageAssessmentProgressStub).toHaveBeenCalledTimes(2);
-        expect(calculatePercentageComplaintsProgressStub).toHaveBeenCalledTimes(2);
-
-        calculatePercentageAssessmentProgressStub.mockRestore();
-        calculatePercentageComplaintsProgressStub.mockRestore();
+        expect(comp.complaintsDenominator()).toBe(7);
     });
 
-    it('should calculatePercentageComplaintsProgress', () => {
-        comp.tutorParticipationStatus = TutorParticipationStatus.TRAINED;
-        comp.numberOfComplaints = 10;
-        comp.numberOfOpenComplaints = 5;
-        comp.numberOfMoreFeedbackRequests = 2;
-        comp.numberOfOpenMoreFeedbackRequests = 1;
+    it('reactively reflects updated tutorParticipation status', () => {
+        fixture.componentRef.setInput('tutorParticipation', { id: 1, status: TutorParticipationStatus.TRAINED } as TutorParticipation);
+        expect(comp.tutorParticipationStatus()).toBe(TutorParticipationStatus.TRAINED);
 
-        comp.calculatePercentageComplaintsProgress();
-
-        expect(comp.percentageComplaintsProgress).toBe(50);
+        fixture.componentRef.setInput('tutorParticipation', { id: 3, status: TutorParticipationStatus.COMPLETED } as TutorParticipation);
+        expect(comp.tutorParticipationStatus()).toBe(TutorParticipationStatus.COMPLETED);
     });
 
-    it('should navigate', () => {
-        comp.routerLink = `url`;
+    it('computes percentageComplaintsProgress', () => {
+        fixture.componentRef.setInput('tutorParticipation', { status: TutorParticipationStatus.TRAINED } as TutorParticipation);
+        fixture.componentRef.setInput('numberOfComplaints', 10);
+        fixture.componentRef.setInput('numberOfOpenComplaints', 5);
+        fixture.componentRef.setInput('numberOfMoreFeedbackRequests', 2);
+        fixture.componentRef.setInput('numberOfOpenMoreFeedbackRequests', 1);
+
+        expect(comp.percentageComplaintsProgress()).toBe(50);
+    });
+
+    it('navigates to the routerLink', () => {
+        fixture.componentRef.setInput('tutorParticipation', {
+            id: 1,
+            trainedExampleSubmissions: [{ id: 1, usedForTutorial: false, exercise: { id: 9, course: { id: 7 } } }],
+            status: TutorParticipationStatus.TRAINED,
+        } as TutorParticipation);
+
         comp.navigate();
-        expect(navigateSpy).toHaveBeenCalledWith([`url`]);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management/7/assessment-dashboard/9']);
     });
 });

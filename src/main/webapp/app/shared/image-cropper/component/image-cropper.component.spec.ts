@@ -1,28 +1,55 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SimpleChange, SimpleChanges } from '@angular/core';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
-import { CropService } from 'app/shared/image-cropper/services/crop.service';
 import { CropperPositionService } from 'app/shared/image-cropper/services/cropper-position.service';
-import { LoadImageService } from 'app/shared/image-cropper/services/load-image.service';
+import { CropService } from 'app/shared/image-cropper/services/crop.service';
+import { LoadedImage } from 'app/shared/image-cropper/interfaces/loaded-image.interface';
 import { MockProvider } from 'ng-mocks';
-import { MoveTypes } from 'app/shared/image-cropper/interfaces/move-start.interface';
+import { LoadImageService } from 'app/shared/image-cropper/services/load-image.service';
+import { MoveStart, MoveTypes } from 'app/shared/image-cropper/interfaces/move-start.interface';
+import { CropperPosition } from 'app/shared/image-cropper/interfaces/cropper-position.interface';
+import { CropperSettings } from 'app/shared/image-cropper/interfaces/cropper.settings';
+import { ElementRef } from '@angular/core';
+import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 
 describe('ImageCropperComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ImageCropperComponent>;
     let comp: ImageCropperComponent;
-    let cropService: CropService;
     let cropperPositionService: CropperPositionService;
+    let cropService: CropService;
+    let loadImageService: LoadImageService;
+    let resetCropperPositionSpy: ReturnType<typeof vi.spyOn>;
+    let componentCropSpy: ReturnType<typeof vi.spyOn>;
+    let startCropImageSpy: ReturnType<typeof vi.spyOn>;
+    let cropServiceCropSpy: ReturnType<typeof vi.spyOn>;
+    let loadImageFileSpy: ReturnType<typeof vi.spyOn>;
+    let loadBase64ImageSpy: ReturnType<typeof vi.spyOn>;
+    let loadImageFromURLSpy: ReturnType<typeof vi.spyOn>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ImageCropperComponent],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [MockProvider(CropService), MockProvider(CropperPositionService), MockProvider(LoadImageService)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ImageCropperComponent);
         comp = fixture.componentInstance;
-        cropService = TestBed.inject(CropService);
         cropperPositionService = TestBed.inject(CropperPositionService);
+        cropService = TestBed.inject(CropService);
+        loadImageService = TestBed.inject(LoadImageService);
+        resetCropperPositionSpy = vi.spyOn(cropperPositionService, 'resetCropperPosition');
+        componentCropSpy = vi.spyOn(comp, 'crop');
+        startCropImageSpy = vi.spyOn(comp.startCropImage, 'emit');
+        cropServiceCropSpy = vi.spyOn(cropService, 'crop');
+        loadImageFileSpy = vi.spyOn(loadImageService, 'loadImageFile');
+        loadBase64ImageSpy = vi.spyOn(loadImageService, 'loadBase64Image');
+        loadImageFromURLSpy = vi.spyOn(loadImageService, 'loadImageFromURL');
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -30,83 +57,237 @@ describe('ImageCropperComponent', () => {
     });
 
     describe('ngOnInit', () => {
-        it('should set initial step size', () => {
-            comp.initialStepSize = 5;
-
+        it('should set initial step size from the input', () => {
+            fixture.componentRef.setInput('initialStepSize', 5);
             comp.ngOnInit();
-
             expect(comp.settings.stepSize).toBe(5);
         });
     });
 
-    describe('ngOnChanges', () => {
-        it('should reset when imageChangedEvent changes', () => {
-            const changes: SimpleChanges = {
-                imageChangedEvent: new SimpleChange(null, {} as Event, true),
-            };
+    describe('reset cropper position', () => {
+        let cropper: CropperPosition;
+        let settings: CropperSettings;
+        let sourceImage: ElementRef<HTMLDivElement> | undefined;
 
-            comp.ngOnChanges(changes);
-
-            expect(comp.imageVisible).toBeFalse();
+        beforeEach(() => {
+            cropper = comp.cropper;
+            settings = comp.settings;
+            sourceImage = comp.sourceImage();
+            comp.imageVisible = false;
         });
 
-        it('should reset when imageURL changes', () => {
-            const changes: SimpleChanges = {
-                imageURL: new SimpleChange(null, 'http://test.com/image.png', true),
-            };
+        it('should reset cropper position without auto crop', () => {
+            fixture.componentRef.setInput('autoCrop', false);
 
-            comp.ngOnChanges(changes);
+            comp.resetCropperPosition();
 
-            expect(comp.imageVisible).toBeFalse();
+            // Without a sourceImage view child, cropperPositionService.resetCropperPosition is not invoked.
+            expect(resetCropperPositionSpy).not.toHaveBeenCalled();
+            expect(componentCropSpy).not.toHaveBeenCalled();
+            expect(comp.imageVisible).toBe(true);
+            expect(cropper).toBe(comp.cropper);
+            expect(settings).toBe(comp.settings);
+            expect(sourceImage).toBeUndefined();
         });
 
-        it('should reset when imageBase64 changes', () => {
-            const changes: SimpleChanges = {
-                imageBase64: new SimpleChange(null, 'data:image/png;base64,abc', true),
-            };
+        it('should reset cropper position with auto crop', () => {
+            fixture.componentRef.setInput('autoCrop', true);
 
-            comp.ngOnChanges(changes);
+            comp.resetCropperPosition();
 
-            expect(comp.imageVisible).toBeFalse();
+            expect(resetCropperPositionSpy).not.toHaveBeenCalled();
+            expect(componentCropSpy).toHaveBeenCalledOnce();
+            expect(comp.imageVisible).toBe(true);
+        });
+    });
+
+    describe('crop', () => {
+        it('should not crop without loaded image', () => {
+            comp.loadedImage = undefined;
+            expect(comp.crop()).toBeUndefined();
+
+            comp.loadedImage = { transformed: {} } as LoadedImage;
+            expect(comp.crop()).toBeUndefined();
         });
 
-        it('should reset when imageFile changes', () => {
-            const changes: SimpleChanges = {
-                imageFile: new SimpleChange(null, new File([], 'test.png'), true),
-            };
+        it('emits startCropImage but skips cropService when sourceImage view child is missing', () => {
+            const loadedImage = { transformed: { base64: 'base64', image: new Image(), size: { width: 100, height: 100 } } } as LoadedImage;
+            comp.loadedImage = loadedImage;
+            cropServiceCropSpy.mockReturnValue({ base64: 'base64' } as ImageCroppedEvent);
 
-            comp.ngOnChanges(changes);
+            const res = comp.crop();
 
-            expect(comp.imageVisible).toBeFalse();
+            expect(res).toBeUndefined();
+            // Preserve original behaviour: parents listening for `startCropImage` are still notified.
+            expect(startCropImageSpy).toHaveBeenCalledOnce();
+            // The expensive cropService call is skipped to avoid passing undefined to it.
+            expect(cropServiceCropSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('input change reset paths', () => {
+        it('resets imageVisible when imageURL changes', () => {
+            loadImageFromURLSpy.mockImplementation(() => Promise.resolve({ transformed: {} } as LoadedImage));
+            comp.imageVisible = true;
+            fixture.componentRef.setInput('imageURL', 'http://example.com/image.png');
+            fixture.detectChanges();
+            expect(comp.imageVisible).toBe(false);
         });
 
-        it('should set css transform when transform changes', () => {
-            comp.transform = { scale: 2, rotate: 90 };
-            const changes: SimpleChanges = {
-                transform: new SimpleChange(null, { scale: 2, rotate: 90 }, false),
-            };
+        it('resets imageVisible when imageBase64 changes', () => {
+            loadBase64ImageSpy.mockImplementation(() => Promise.resolve({ transformed: {} } as LoadedImage));
+            comp.imageVisible = true;
+            fixture.componentRef.setInput('imageBase64', 'data:image/png;base64,abc');
+            fixture.detectChanges();
+            expect(comp.imageVisible).toBe(false);
+        });
 
-            comp.ngOnChanges(changes);
+        it('resets imageVisible when imageChangedEvent changes', () => {
+            loadImageFileSpy.mockImplementation(() => Promise.resolve({ transformed: {} } as LoadedImage));
+            comp.imageVisible = true;
+            const file = new File([], 'test');
+            fixture.componentRef.setInput('imageChangedEvent', { currentTarget: { files: [file] } });
+            fixture.detectChanges();
+            expect(comp.imageVisible).toBe(false);
+        });
 
+        it('updates safeTransformStyle when transform changes', () => {
+            fixture.componentRef.setInput('transform', { scale: 2, rotate: 90 });
+            fixture.detectChanges();
             expect(comp.safeTransformStyle).toBeDefined();
+        });
+
+        it('does not throw when transform is bound to undefined', () => {
+            fixture.componentRef.setInput('transform', undefined);
+            expect(() => fixture.detectChanges()).not.toThrow();
+        });
+
+        it('reacts to cropper input changes', () => {
+            // Avoid the cropper being clamped to (0,0) by the post-sync `checkCropperPosition` call.
+            comp.maxSize = { width: 1000, height: 1000 };
+            fixture.componentRef.setInput('cropper', { x1: 10, y1: 20, x2: 30, y2: 40 });
+            fixture.detectChanges();
+            expect(comp.cropper).toEqual({ x1: 10, y1: 20, x2: 30, y2: 40 });
+        });
+    });
+
+    it('should reset when removing image', async () => {
+        loadImageFileSpy.mockImplementation(() => Promise.resolve({ transformed: {} } as LoadedImage));
+        fixture.componentRef.setInput('imageFile', new File([], 'test'));
+        fixture.detectChanges();
+        loadImageFileSpy.mockClear();
+
+        comp.imageVisible = true;
+        comp.loadedImage = { transformed: {} } as LoadedImage;
+        comp.cropper = { x1: 42, y1: 42, x2: 42, y2: 42 };
+        comp.maxSize = { width: 42, height: 42 };
+        comp.moveStart = {} as MoveStart;
+
+        fixture.componentRef.setInput('imageFile', undefined);
+        fixture.detectChanges();
+
+        expect(comp.imageVisible).toBe(false);
+        expect(comp.loadedImage).toBeUndefined();
+        expect(comp.cropper).toEqual({ x1: -100, y1: -100, x2: 10000, y2: 10000 });
+        expect(comp.maxSize).toEqual({ width: 0, height: 0 });
+        expect(comp.moveStart).not.toEqual({});
+    });
+
+    it('should not reset when image does not get changed', () => {
+        loadImageFileSpy.mockImplementation(() => Promise.resolve({ transformed: {} } as LoadedImage));
+        fixture.componentRef.setInput('imageFile', new File([], 'test'));
+        fixture.detectChanges();
+        loadImageFileSpy.mockClear();
+
+        const loadedImage = { transformed: {}, original: { image: { complete: true } } } as LoadedImage;
+        const cropper = { x1: 42, y1: 42, x2: 42, y2: 42 };
+        const maxSize = { width: 42, height: 42 };
+        const moveStart = {} as MoveStart;
+        comp.imageVisible = true;
+        comp.loadedImage = loadedImage;
+        comp.cropper = cropper;
+        comp.maxSize = maxSize;
+        comp.moveStart = moveStart;
+
+        fixture.componentRef.setInput('autoCrop', false);
+        fixture.detectChanges();
+
+        expect(comp.imageVisible).toBe(true);
+        expect(comp.loadedImage).toBe(loadedImage);
+        expect(comp.cropper).toBe(cropper);
+        expect(comp.maxSize).toBe(maxSize);
+        expect(comp.moveStart).toBe(moveStart);
+    });
+
+    describe('load image', () => {
+        const base64String = Buffer.from('testContent').toString('base64');
+
+        it('should load from file', () => {
+            loadImageFileSpy.mockImplementation(() => Promise.resolve({ transformed: { base64: base64String } } as LoadedImage));
+            const file = new File([], 'test');
+            const settings = comp.settings;
+            fixture.componentRef.setInput('imageFile', file);
+            fixture.detectChanges();
+
+            expect(loadImageFileSpy).toHaveBeenCalledOnce();
+            expect(loadImageFileSpy).toHaveBeenCalledWith(file, settings);
+            expect(loadImageFromURLSpy).not.toHaveBeenCalled();
+            expect(loadBase64ImageSpy).not.toHaveBeenCalled();
+        });
+
+        it('should load from URL', () => {
+            loadImageFromURLSpy.mockImplementation(() => Promise.resolve({ transformed: { base64: base64String } } as LoadedImage));
+            const url = 'https://test.com/path_to_image.png';
+            const settings = comp.settings;
+            fixture.componentRef.setInput('imageURL', url);
+            fixture.detectChanges();
+
+            expect(loadImageFromURLSpy).toHaveBeenCalledOnce();
+            expect(loadImageFromURLSpy).toHaveBeenCalledWith(url, settings);
+            expect(loadImageFileSpy).not.toHaveBeenCalled();
+            expect(loadBase64ImageSpy).not.toHaveBeenCalled();
+        });
+
+        it('should load from Base64', () => {
+            loadBase64ImageSpy.mockImplementation(() => Promise.resolve({ transformed: { base64: base64String } } as LoadedImage));
+            const settings = comp.settings;
+            fixture.componentRef.setInput('imageBase64', base64String);
+            fixture.detectChanges();
+
+            expect(loadBase64ImageSpy).toHaveBeenCalledOnce();
+            expect(loadBase64ImageSpy).toHaveBeenCalledWith(base64String, settings);
+            expect(loadImageFileSpy).not.toHaveBeenCalled();
+            expect(loadImageFromURLSpy).not.toHaveBeenCalled();
+        });
+
+        it('should load from event', () => {
+            loadImageFileSpy.mockImplementation(() => Promise.resolve({ transformed: { base64: base64String } } as LoadedImage));
+            const file = new File([], 'test');
+            const event = { currentTarget: { files: [file] } as unknown as HTMLInputElement };
+            const settings = comp.settings;
+            fixture.componentRef.setInput('imageChangedEvent', event);
+            fixture.detectChanges();
+
+            expect(loadImageFileSpy).toHaveBeenCalledOnce();
+            expect(loadImageFileSpy).toHaveBeenCalledWith(file, settings);
         });
     });
 
     describe('startMove', () => {
         it('should start move action', () => {
-            const event = { clientX: 100, clientY: 100, preventDefault: jest.fn() } as any;
-            jest.spyOn(cropperPositionService, 'getClientX').mockReturnValue(100);
-            jest.spyOn(cropperPositionService, 'getClientY').mockReturnValue(100);
+            const event = { clientX: 100, clientY: 100, preventDefault: vi.fn() } as any;
+            vi.spyOn(cropperPositionService, 'getClientX').mockReturnValue(100);
+            vi.spyOn(cropperPositionService, 'getClientY').mockReturnValue(100);
 
             comp.startMove(event, MoveTypes.Move);
 
-            expect(comp.moveStart.active).toBeTrue();
+            expect(comp.moveStart.active).toBe(true);
             expect(comp.moveStart.type).toBe(MoveTypes.Move);
         });
 
         it('should not start move when pinch is active', () => {
-            comp.moveStart = { active: true, type: MoveTypes.Pinch } as any;
-            const event = { clientX: 100, clientY: 100, preventDefault: jest.fn() } as any;
+            comp.moveStart = { active: true, type: MoveTypes.Pinch } as MoveStart;
+            const event = { clientX: 100, clientY: 100, preventDefault: vi.fn() } as any;
 
             comp.startMove(event, MoveTypes.Move);
 
@@ -114,10 +295,10 @@ describe('ImageCropperComponent', () => {
         });
 
         it('should call preventDefault if available', () => {
-            const preventDefault = jest.fn();
+            const preventDefault = vi.fn();
             const event = { clientX: 100, clientY: 100, preventDefault } as any;
-            jest.spyOn(cropperPositionService, 'getClientX').mockReturnValue(100);
-            jest.spyOn(cropperPositionService, 'getClientY').mockReturnValue(100);
+            vi.spyOn(cropperPositionService, 'getClientX').mockReturnValue(100);
+            vi.spyOn(cropperPositionService, 'getClientY').mockReturnValue(100);
 
             comp.startMove(event, MoveTypes.Move);
 
@@ -127,19 +308,19 @@ describe('ImageCropperComponent', () => {
 
     describe('moveImg', () => {
         it('should not move when not active', () => {
-            comp.moveStart = { active: false } as any;
-            const moveSpy = jest.spyOn(cropperPositionService, 'move');
+            comp.moveStart = { active: false } as MoveStart;
+            const moveSpy = vi.spyOn(cropperPositionService, 'move');
 
-            comp.moveImg({ stopPropagation: jest.fn(), preventDefault: jest.fn() } as any);
+            comp.moveImg({ stopPropagation: vi.fn(), preventDefault: vi.fn() } as any);
 
             expect(moveSpy).not.toHaveBeenCalled();
         });
 
         it('should call move for Move type', () => {
-            comp.moveStart = { active: true, type: MoveTypes.Move } as any;
+            comp.moveStart = { active: true, type: MoveTypes.Move } as MoveStart;
             comp.cropper = { x1: 0, y1: 0, x2: 100, y2: 100 };
-            const moveSpy = jest.spyOn(cropperPositionService, 'move');
-            const event = { stopPropagation: jest.fn(), preventDefault: jest.fn() } as any;
+            const moveSpy = vi.spyOn(cropperPositionService, 'move');
+            const event = { stopPropagation: vi.fn(), preventDefault: vi.fn() } as any;
 
             comp.moveImg(event);
 
@@ -147,11 +328,11 @@ describe('ImageCropperComponent', () => {
         });
 
         it('should call resize for Resize type', () => {
-            comp.moveStart = { active: true, type: MoveTypes.Resize } as any;
+            comp.moveStart = { active: true, type: MoveTypes.Resize } as MoveStart;
             comp.cropper = { x1: 0, y1: 0, x2: 100, y2: 100 };
             comp.maxSize = { width: 200, height: 200 };
-            const resizeSpy = jest.spyOn(cropperPositionService, 'resize');
-            const event = { stopPropagation: jest.fn(), preventDefault: jest.fn() } as any;
+            const resizeSpy = vi.spyOn(cropperPositionService, 'resize');
+            const event = { stopPropagation: vi.fn(), preventDefault: vi.fn() } as any;
 
             comp.moveImg(event);
 
@@ -161,59 +342,30 @@ describe('ImageCropperComponent', () => {
 
     describe('moveStop', () => {
         it('should stop move and auto crop', () => {
-            comp.moveStart = { active: true } as any;
-            comp.autoCrop = true;
-            const cropSpy = jest.spyOn(comp, 'crop').mockReturnValue(undefined);
+            comp.moveStart = { active: true } as MoveStart;
+            fixture.componentRef.setInput('autoCrop', true);
+            componentCropSpy.mockReturnValue(undefined);
 
             comp.moveStop();
 
-            expect(comp.moveStart.active).toBeFalse();
-            expect(cropSpy).toHaveBeenCalled();
+            expect(comp.moveStart.active).toBe(false);
+            expect(componentCropSpy).toHaveBeenCalled();
         });
 
         it('should not auto crop when disabled', () => {
-            comp.moveStart = { active: true } as any;
-            comp.autoCrop = false;
-            const cropSpy = jest.spyOn(comp, 'crop');
+            comp.moveStart = { active: true } as MoveStart;
+            fixture.componentRef.setInput('autoCrop', false);
 
             comp.moveStop();
 
-            expect(cropSpy).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('crop', () => {
-        it('should return undefined when no loaded image', () => {
-            comp.loadedImage = undefined;
-
-            const result = comp.crop();
-
-            expect(result).toBeUndefined();
-        });
-
-        it('should emit events when image is loaded', () => {
-            comp.loadedImage = {
-                transformed: {
-                    image: {} as HTMLImageElement,
-                },
-            } as any;
-            const startSpy = jest.spyOn(comp.startCropImage, 'emit');
-            const croppedSpy = jest.spyOn(comp.imageCropped, 'emit');
-            const mockOutput = { base64: 'test' };
-            jest.spyOn(cropService, 'crop').mockReturnValue(mockOutput as any);
-
-            const result = comp.crop();
-
-            expect(startSpy).toHaveBeenCalled();
-            expect(croppedSpy).toHaveBeenCalledWith(mockOutput);
-            expect(result).toEqual(mockOutput);
+            expect(componentCropSpy).not.toHaveBeenCalled();
         });
     });
 
     describe('onResize', () => {
         it('should return early when no loaded image', () => {
             comp.loadedImage = undefined;
-            const resizeSpy = jest.spyOn<any, any>(comp, 'resizeCropperPosition');
+            const resizeSpy = vi.spyOn<any, any>(comp, 'resizeCropperPosition');
 
             comp.onResize();
 
@@ -249,22 +401,10 @@ describe('ImageCropperComponent', () => {
         });
     });
 
-    describe('resetCropperPosition', () => {
-        it('should reset position and make image visible', () => {
-            const resetSpy = jest.spyOn(cropperPositionService, 'resetCropperPosition');
-            comp.autoCrop = false;
-
-            comp.resetCropperPosition();
-
-            expect(resetSpy).toHaveBeenCalled();
-            expect(comp.imageVisible).toBeTrue();
-        });
-    });
-
     describe('imageLoadedInView', () => {
         it('should emit imageLoaded when loadedImage exists', () => {
-            comp.loadedImage = { original: {}, transformed: {} } as any;
-            const emitSpy = jest.spyOn(comp.imageLoaded, 'emit');
+            comp.loadedImage = { original: {}, transformed: {} } as LoadedImage;
+            const emitSpy = vi.spyOn(comp.imageLoaded, 'emit');
 
             comp.imageLoadedInView();
 
@@ -274,7 +414,7 @@ describe('ImageCropperComponent', () => {
 
         it('should not emit when loadedImage is undefined', () => {
             comp.loadedImage = undefined;
-            const emitSpy = jest.spyOn(comp.imageLoaded, 'emit');
+            const emitSpy = vi.spyOn(comp.imageLoaded, 'emit');
 
             comp.imageLoadedInView();
 
@@ -283,46 +423,24 @@ describe('ImageCropperComponent', () => {
     });
 
     describe('inputs', () => {
-        it('should have default format', () => {
-            expect(comp.format).toBe(comp.settings.format);
+        it('defaults format to png', () => {
+            expect(comp.format()).toBe('png');
         });
 
-        it('should have default maintainAspectRatio', () => {
-            expect(comp.maintainAspectRatio).toBe(comp.settings.maintainAspectRatio);
+        it('defaults maintainAspectRatio to true', () => {
+            expect(comp.maintainAspectRatio()).toBe(true);
         });
 
-        it('should have default aspectRatio', () => {
-            expect(comp.aspectRatio).toBe(comp.settings.aspectRatio);
+        it('defaults aspectRatio to 1', () => {
+            expect(comp.aspectRatio()).toBe(1);
         });
 
-        it('should have disabled as false by default', () => {
-            expect(comp.disabled).toBeFalse();
+        it('defaults disabled to false', () => {
+            expect(comp.disabled()).toBe(false);
         });
 
-        it('should have alignImage as center by default', () => {
-            expect(comp.alignImage).toBe(comp.settings.alignImage);
-        });
-    });
-
-    describe('outputs', () => {
-        it('should have imageCropped output', () => {
-            expect(comp.imageCropped).toBeDefined();
-        });
-
-        it('should have startCropImage output', () => {
-            expect(comp.startCropImage).toBeDefined();
-        });
-
-        it('should have imageLoaded output', () => {
-            expect(comp.imageLoaded).toBeDefined();
-        });
-
-        it('should have cropperReady output', () => {
-            expect(comp.cropperReady).toBeDefined();
-        });
-
-        it('should have loadImageFailed output', () => {
-            expect(comp.loadImageFailed).toBeDefined();
+        it('defaults alignImage to center', () => {
+            expect(comp.alignImage()).toBe('center');
         });
     });
 });

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
@@ -14,87 +16,77 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TutorLeaderboardComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: TutorLeaderboardComponent;
     let fixture: ComponentFixture<TutorLeaderboardComponent>;
     let sortService: SortService;
-    let sortByPropertySpy: jest.SpyInstance;
+    let sortByPropertySpy: ReturnType<typeof vi.spyOn>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            providers: [
-                MockProvider(AccountService),
-                {
-                    provide: Router,
-                    useClass: MockRouter,
-                },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [MockProvider(AccountService), { provide: Router, useClass: MockRouter }, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(TutorLeaderboardComponent);
         comp = fixture.componentInstance;
         sortService = TestBed.inject(SortService);
-        sortByPropertySpy = jest.spyOn(sortService, 'sortByProperty').mockImplementation(() => []);
+        sortByPropertySpy = vi.spyOn(sortService, 'sortByProperty').mockImplementation(() => []);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    describe('ngOnInit', () => {
-        it('sets variables correctly if course is set', () => {
+    describe('derived state', () => {
+        it('uses the input course directly when no exercise is provided', () => {
             const course = { isAtLeastInstructor: true } as Course;
-            comp.course = course;
-            comp.ngOnInit();
-            expect(comp.isExerciseDashboard).toBeFalse();
-            expect(comp.course).toBe(course);
-            expect(comp.exercise).toBeUndefined();
+            fixture.componentRef.setInput('course', course);
+            expect(comp.course()).toBe(course);
+            expect(comp.exercise()).toBeUndefined();
+            expect(comp.isExerciseDashboard()).toBe(false);
         });
 
-        it('sets variables correctly if exercise.course is set', () => {
+        it('derives the course from exercise.course when present', () => {
             const course = { isAtLeastInstructor: true } as Course;
             const exercise = { course } as Exercise;
-            comp.exercise = exercise;
-            comp.ngOnInit();
-            expect(comp.isExerciseDashboard).toBeTrue();
-            expect(comp.course).toBe(course);
-            expect(comp.exercise).toBe(exercise);
+            fixture.componentRef.setInput('exercise', exercise);
+            expect(comp.course()).toBe(course);
+            expect(comp.exercise()).toBe(exercise);
+            expect(comp.isExerciseDashboard()).toBe(true);
         });
 
-        it('sets variables correctly if exercise.exerciseGroup.exam.course is set', () => {
+        it('derives the course from exercise.exerciseGroup.exam.course when present', () => {
             const course = {} as Course;
-            const exam = { course: course } as Exam;
-            const exerciseGroup = { exam: exam } as ExerciseGroup;
-            const exercise = { exerciseGroup: exerciseGroup } as Exercise;
-            comp.exercise = exercise;
-            comp.ngOnInit();
-            expect(comp.isExerciseDashboard).toBeTrue();
-            expect(comp.course).toBe(course);
-            expect(comp.exercise).toBe(exercise);
+            const exam = { course } as Exam;
+            const exerciseGroup = { exam } as ExerciseGroup;
+            const exercise = { exerciseGroup } as Exercise;
+            fixture.componentRef.setInput('exercise', exercise);
+            expect(comp.course()).toBe(course);
+            expect(comp.exercise()).toBe(exercise);
+            expect(comp.isExerciseDashboard()).toBe(true);
         });
 
-        it('sets isExamMode if exam is set', () => {
-            expect(comp.isExamMode).toBeFalse();
-            comp.ngOnInit();
-            expect(comp.isExamMode).toBeFalse();
+        it('reflects the exam input through isExamMode', () => {
+            expect(comp.isExamMode()).toBe(false);
 
             const exam = {} as Exam;
             const course = { exams: [exam], isAtLeastInstructor: true } as Course;
-            comp.exam = exam;
-            comp.course = course;
-            comp.ngOnInit();
-            expect(comp.isExamMode).toBeTrue();
+            fixture.componentRef.setInput('exam', exam);
+            fixture.componentRef.setInput('course', course);
+            expect(comp.isExamMode()).toBe(true);
         });
 
-        it('should sort rows', () => {
-            comp.ngOnInit();
-            expect(sortByPropertySpy).toHaveBeenCalledOnce();
+        it('sorts the rows when constructed', () => {
+            fixture.detectChanges();
+            expect(sortByPropertySpy).toHaveBeenCalled();
         });
     });
 
     describe('tutorData', () => {
         it('should fill the table with elements', () => {
             const element = new TutorLeaderboardElement();
-            comp.tutorsData = [element];
+            fixture.componentRef.setInput('tutorsData', [element]);
+            fixture.detectChanges();
             const table: HTMLTableElement = fixture.debugElement.nativeElement.querySelector('table');
             expect(table.tBodies).toHaveLength(1);
         });
