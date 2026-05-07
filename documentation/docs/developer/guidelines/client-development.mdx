@@ -69,11 +69,16 @@ Use Angular's signal-based APIs instead. An ESLint rule (`enforce-signal-apis-in
 
 **UI Component Library: PrimeNG**
 
+<Callout variant={CalloutVariant.danger}>
+**`@ng-bootstrap/ng-bootstrap` is deprecated.** Do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, or any other ng-bootstrap component in new code. ng-bootstrap is incompatible with Angular signal inputs (`input()`/`input.required()`) — assigning to a signal input via `modalRef.componentInstance.X = Y` silently fails. We are removing the dependency entirely; existing usages are being migrated to PrimeNG incrementally.
+</Callout>
+
 <Callout variant={CalloutVariant.info}>
 **We are migrating from Bootstrap to PrimeNG.** All new UI elements must be implemented using [PrimeNG](https://primeng.org/) components. Do not introduce new Bootstrap components. Existing Bootstrap usage will be migrated incrementally.
 </Callout>
 
 * Use PrimeNG components (buttons, tables, dialogs, inputs, etc.) for all new UI development.
+* For modals/dialogs, use PrimeNG's `DialogService` (`primeng/dynamicdialog`) — see `src/main/webapp/app/exam/manage/exam-management/exam-management.component.ts` for a reference implementation.
 * Refer to the PrimeNG documentation for available components and usage: https://primeng.org/
 * Bootstrap CSS utility classes (e.g. `d-flex`, `ms-2`) may still be used for layout until the migration is complete, but prefer PrimeNG's built-in layout capabilities where available.
 

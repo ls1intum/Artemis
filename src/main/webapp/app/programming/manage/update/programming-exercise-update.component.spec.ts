@@ -29,7 +29,7 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
-import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/shared/constants/input.constants';
+import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/shared/constants/input.constants';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -58,6 +58,8 @@ jest.mock('y-monaco', () => ({
         destroy: jest.fn(),
     })),
 }));
+
+const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -370,16 +372,41 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             response$.next(new HttpResponse({ body: savedEntity }));
 
-            expect(router.navigate).toHaveBeenCalledWith([
-                'course-management',
-                courseId,
-                'programming-exercises',
-                savedEntity.id,
-                'code-editor',
-                RepositoryType.TEMPLATE,
-                savedEntity.templateParticipation!.id,
-            ]);
+            expect(router.navigate).toHaveBeenCalledWith(
+                ['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, savedEntity.templateParticipation!.id],
+                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
+            );
             expect(comp.isGeneratingWithAi()).toBeFalse();
+        });
+
+        it('should navigate to the exam template editor with auto-start state after AI exercise creation in exam mode', () => {
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.releaseDate = dayjs();
+            const exerciseGroup = new ExerciseGroup();
+            exerciseGroup.id = 3;
+            exerciseGroup.exam = { id: 9, course } as any;
+            entity.exerciseGroup = exerciseGroup;
+
+            const savedEntity = new ProgrammingExercise(undefined, exerciseGroup);
+            savedEntity.id = 7;
+            savedEntity.templateParticipation = { id: 11 } as any;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+
+            const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+
+            comp.saveExerciseWithAi();
+
+            response$.next(new HttpResponse({ body: savedEntity }));
+
+            expect(router.navigate).toHaveBeenCalledWith(
+                ['course-management', courseId, 'exams', 9, 'exercise-groups', 3, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, 11],
+                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
+            );
         });
 
         it('should fall back to regular save when hyperion is disabled', () => {
@@ -1421,6 +1448,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 translateValues: {},
             });
         });
+
+        it('should add validation error when problem statement exceeds max length', () => {
+            comp.programmingExercise.problemStatement = 'a'.repeat(MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH + 1);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.problemStatement.tooLong',
+                translateValues: { max: MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH },
+            });
+        });
+
+        it('should not add validation error when problem statement is within max length', () => {
+            comp.programmingExercise.problemStatement = 'a'.repeat(MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.problemStatement.tooLong',
+                translateValues: { max: MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH },
+            });
+        });
     });
 
     describe('disable features based on selected language and project type', () => {
@@ -1561,6 +1610,17 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.exerciseCategories).toEqual([]);
         expect(comp.programmingExercise.categories).toBe(comp.exerciseCategories);
     }));
+
+    it('should mark the problem section as invalid when problem statement exceeds max length', () => {
+        comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+        comp.programmingExercise.problemStatement = 'a'.repeat(MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH + 1);
+
+        comp.calculateFormStatusSections();
+
+        const problemSection = comp.formStatusSections().find((section) => section.title === 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle');
+
+        expect(problemSection?.valid).toBeFalse();
+    });
 
     it('should validate form sections', () => {
         const calculateFormValidSectionsSpy = jest.spyOn(comp, 'calculateFormStatusSections');

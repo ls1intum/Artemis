@@ -140,6 +140,12 @@ Organized by feature module:
 - Prefer constructor injection for Spring beans
 - Use Java 25 features (records, sealed classes, pattern matching)
 
+### Caching
+- **Do not add `@Cache` (Hibernate L2) annotations on entities or associations.** Hibernate second-level cache is disabled cluster-wide and an ArchUnit rule (`ArchitectureTest.testNoHibernateSecondLevelCacheAnnotation`) fails the build if any reappears. Reason: `@Modifying @Query` repository methods bypass L2 invalidation, and the absence of service-level `@Transactional` leaves no clean place to coordinate eviction within a REST call — both produced cross-node stale-read bugs in the multi-node cluster (issue #12574, fixed in PR #12578; further cleanup in PR #12579).
+- **For DTO / projection caching, use Spring `@Cacheable` with the `HazelcastCacheManager`** (defined in `HazelcastConfiguration.cacheManager`). Always pair `@Cacheable` with explicit eviction — `@CacheEvict` on the writer service, or a Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. See `TitleCacheEvictionService` for the canonical pattern.
+- The bar for adding a new cache: a measured performance gain that justifies the eviction-correctness work. The default answer is: do not cache.
+- Full rationale, history, and patterns: `documentation/docs/developer/guidelines/caching.mdx`.
+
 ### TypeScript/Angular
 - kebab-case for filenames (`course-detail.component.ts`)
 - PascalCase for classes, camelCase for members
@@ -163,6 +169,7 @@ Organized by feature module:
   - All new UI elements must be implemented using PrimeNG components
   - We are migrating from Bootstrap to PrimeNG; do not introduce new Bootstrap components
   - Existing Bootstrap usage will be migrated incrementally
+  - **`@ng-bootstrap/ng-bootstrap` is deprecated** — do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, etc. in new code. Use PrimeNG's `DialogService` (`primeng/dynamicdialog`) for modals, `p-tooltip` for tooltips, etc. ng-bootstrap is incompatible with Angular signal inputs (assigning to `modalRef.componentInstance.X` silently fails when `X` is `input()`/`input.required()`). Existing usages are being migrated.
 
 ### General
 - LF line endings

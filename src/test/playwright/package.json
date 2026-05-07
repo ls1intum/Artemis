@@ -5,8 +5,8 @@
     "license": "MIT",
     "devDependencies": {
         "@playwright/test": "1.59.1",
-        "@typescript-eslint/eslint-plugin": "8.59.0",
-        "@typescript-eslint/parser": "8.59.0",
+        "@typescript-eslint/eslint-plugin": "8.59.1",
+        "@typescript-eslint/parser": "8.59.1",
         "cross-env": "10.1.0",
         "dayjs": "1.11.20",
         "dotenv": "17.4.2",

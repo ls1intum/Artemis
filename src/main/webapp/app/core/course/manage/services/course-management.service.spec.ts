@@ -29,6 +29,8 @@ import { CoursesForDashboardDTO } from 'app/core/course/shared/entities/courses-
 import { provideHttpClient } from '@angular/common/http';
 import { createSampleCourse } from 'test/helpers/sample/course-sample-data';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
+import { BehaviorSubject, distinctUntilChanged } from 'rxjs';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('Course Management Service', () => {
     setupTestBed({ zoneless: true });
@@ -527,5 +529,113 @@ describe('Course Management Service', () => {
             const retrieved = courseManagementService.getSemesterCollapseStateFromStorage(storageId);
             expect(retrieved).toBe(false);
         });
+    });
+});
+
+describe('CourseManagementService - authentication state changes', () => {
+    setupTestBed({ zoneless: true });
+
+    let authState: BehaviorSubject<User | undefined>;
+    let scoped: CourseManagementService;
+    let scopedHttpMock: HttpTestingController;
+
+    beforeEach(() => {
+        authState = new BehaviorSubject<User | undefined>({ id: 99 } as User);
+        const customAccountService = new MockAccountService();
+        customAccountService.userIdentity.set({ id: 99 } as User);
+        customAccountService.getAuthenticationState = () => authState.asObservable().pipe(distinctUntilChanged());
+
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: Router, useClass: MockRouter },
+                LocalStorageService,
+                SessionStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useValue: customAccountService },
+            ],
+        });
+        scoped = TestBed.inject(CourseManagementService);
+        scopedHttpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        scopedHttpMock.verify();
+    });
+
+    it('should clear coursesForNotifications on logout', () => {
+        scoped['coursesForNotifications'].next([{ id: 1 } as Course]);
+
+        authState.next(undefined);
+
+        expect(scoped['coursesForNotifications'].getValue()).toBeUndefined();
+    });
+
+    it('should clear coursesForNotifications when a different user logs in', () => {
+        scoped['coursesForNotifications'].next([{ id: 1 } as Course]);
+
+        authState.next({ id: 42 } as User);
+
+        expect(scoped['coursesForNotifications'].getValue()).toBeUndefined();
+    });
+
+    it('should not clear coursesForNotifications when the same user re-emits', () => {
+        scoped['coursesForNotifications'].next([{ id: 1 } as Course]);
+
+        authState.next({ id: 99 } as User);
+
+        expect(scoped['coursesForNotifications'].getValue()).toEqual([{ id: 1 } as Course]);
+    });
+
+    it('should ignore in-flight findAllForDashboard responses after logout', () => {
+        const subscription = scoped.findAllForDashboard().subscribe();
+        const inFlight = scopedHttpMock.expectOne(`api/core/courses/for-dashboard`);
+
+        authState.next(undefined);
+
+        const dto = new CoursesForDashboardDTO();
+        dto.courses = [];
+        inFlight.flush(dto);
+
+        // The in-flight response must not write back into the cleared subject.
+        expect(scoped['coursesForNotifications'].getValue()).toBeUndefined();
+        subscription.unsubscribe();
+    });
+
+    it('should ignore in-flight findAllForNotifications responses after logout', () => {
+        const subscription = scoped.findAllForNotifications().subscribe();
+        const inFlight = scopedHttpMock.expectOne(`api/core/courses/for-notifications`);
+
+        authState.next(undefined);
+
+        inFlight.flush([{ id: 1 } as Course]);
+
+        expect(scoped['coursesForNotifications'].getValue()).toBeUndefined();
+        subscription.unsubscribe();
+    });
+
+    it('should ignore in-flight getAllCoursesWithQuizExercises responses after logout', () => {
+        const subscription = scoped.getAllCoursesWithQuizExercises().subscribe();
+        const inFlight = scopedHttpMock.expectOne(`api/core/courses/courses-with-quiz`);
+
+        authState.next(undefined);
+
+        inFlight.flush([{ id: 1 } as Course]);
+
+        expect(scoped['coursesForNotifications'].getValue()).toBeUndefined();
+        subscription.unsubscribe();
+    });
+
+    it('should ignore in-flight getWithUserStats responses after logout', () => {
+        const subscription = scoped.getWithUserStats().subscribe();
+        const inFlight = scopedHttpMock.expectOne((req) => req.url === `api/core/courses/with-user-stats`);
+
+        authState.next(undefined);
+
+        inFlight.flush([{ id: 1 } as Course]);
+
+        expect(scoped['coursesForNotifications'].getValue()).toBeUndefined();
+        subscription.unsubscribe();
     });
 });
