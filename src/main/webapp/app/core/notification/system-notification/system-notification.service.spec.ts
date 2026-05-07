@@ -13,24 +13,25 @@ describe('SystemNotificationService', () => {
 
     let service: SystemNotificationService;
     let httpMock: HttpTestingController;
-    let elemDefault: SystemNotification;
+    let elemDefault: SystemNotificationDTO;
     let expectedResult: any;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
-        expectedResult = {} as HttpResponse<SystemNotification>;
+        expectedResult = {} as HttpResponse<SystemNotificationDTO>;
         service = TestBed.inject(SystemNotificationService);
         httpMock = TestBed.inject(HttpTestingController);
 
-        elemDefault = new SystemNotification();
-        elemDefault.id = 1;
-        elemDefault.title = 'Test Notification';
-        elemDefault.text = 'Test notification text';
-        elemDefault.type = SystemNotificationType.WARNING;
-        elemDefault.notificationDate = dayjs().subtract(1, 'hour');
-        elemDefault.expireDate = dayjs().add(1, 'hour');
+        elemDefault = {
+            id: 1,
+            title: 'Test Notification',
+            text: 'Test notification text',
+            type: SystemNotificationType.WARNING,
+            notificationDate: dayjs().subtract(1, 'hour'),
+            expireDate: dayjs().add(1, 'hour'),
+        };
     });
 
     afterEach(() => {
@@ -140,7 +141,7 @@ describe('SystemNotificationService', () => {
                 },
             ];
 
-            let result: SystemNotification[] | undefined;
+            let result: SystemNotificationDTO[] | undefined;
             service
                 .getActiveNotifications()
                 .pipe(take(1))
@@ -154,7 +155,7 @@ describe('SystemNotificationService', () => {
         });
 
         it('should return empty array when body is null', async () => {
-            let result: SystemNotification[] | undefined;
+            let result: SystemNotificationDTO[] | undefined;
             service
                 .getActiveNotifications()
                 .pipe(take(1))

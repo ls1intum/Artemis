@@ -26,7 +26,7 @@ export class AdminSystemNotificationService {
             params = params.set('sendMaintenanceEmail', 'true');
         }
         return this.http
-            .post<SystemNotification>(this.resourceUrl, copy, { observe: 'response', params })
+            .post<SystemNotificationDTO>(this.resourceUrl, copy, { observe: 'response', params })
             .pipe(map((res: EntityResponseType) => this.systemNotificationService.convertSystemNotificationResponseDatesFromServer(res)));
     }
 
@@ -44,7 +44,7 @@ export class AdminSystemNotificationService {
     update(notification: SystemNotification): Observable<EntityResponseType> {
         const copy = this.systemNotificationService.convertSystemNotificationDatesFromClient(notification);
         return this.http
-            .put<SystemNotification>(this.resourceUrl, copy, { observe: 'response' })
+            .put<SystemNotificationDTO>(this.resourceUrl, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.systemNotificationService.convertSystemNotificationResponseDatesFromServer(res)));
     }
 

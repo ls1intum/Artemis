@@ -5,7 +5,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
-import { SystemNotification, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
+import { SystemNotification, SystemNotificationDTO, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
 import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 
@@ -22,7 +22,7 @@ describe('AdminSystemNotificationService', () => {
         TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
-        expectedResult = {} as HttpResponse<SystemNotification>;
+        expectedResult = {} as HttpResponse<SystemNotificationDTO>;
         service = TestBed.inject(AdminSystemNotificationService);
         systemNotificationService = TestBed.inject(SystemNotificationService);
         httpMock = TestBed.inject(HttpTestingController);

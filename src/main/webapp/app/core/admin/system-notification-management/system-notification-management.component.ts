@@ -7,7 +7,7 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
-import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
+import { SystemNotificationDTO } from 'app/core/shared/entities/system-notification.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
@@ -79,7 +79,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     readonly currentAccount = signal<User | undefined>(undefined);
 
     /** List of system notifications */
-    readonly notifications = signal<SystemNotification[]>([]);
+    readonly notifications = signal<SystemNotificationDTO[]>([]);
 
     /** Pagination links parsed from response headers */
     readonly links = signal<Record<string, number>>({});
@@ -181,7 +181,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
                 sort: this.sort(),
             })
             .subscribe({
-                next: (res: HttpResponse<SystemNotification[]>) => this.onSuccess(res.body!, res.headers),
+                next: (res: HttpResponse<SystemNotificationDTO[]>) => this.onSuccess(res.body!, res.headers),
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
@@ -192,7 +192,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * @param item - The notification item
      * @returns The notification ID or -1 if not available
      */
-    trackIdentity(index: number, item: SystemNotification): number {
+    trackIdentity(index: number, item: SystemNotificationDTO): number {
         return item.id ?? -1;
     }
 
@@ -201,7 +201,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * @param systemNotification - The notification to check
      * @returns The notification state
      */
-    getNotificationState(systemNotification: SystemNotification): NotificationState {
+    getNotificationState(systemNotification: SystemNotificationDTO): NotificationState {
         const now = dayjs();
         if (systemNotification.notificationDate!.isAfter(now)) {
             return NotificationState.SCHEDULED;
@@ -258,7 +258,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * @param data - The notification data
      * @param headers - The response headers containing pagination info
      */
-    private onSuccess(data: SystemNotification[], headers: HttpHeaders): void {
+    private onSuccess(data: SystemNotificationDTO[], headers: HttpHeaders): void {
         const linkHeader = headers.get('link');
         if (linkHeader) {
             this.links.set(this.parseLinks.parse(linkHeader));

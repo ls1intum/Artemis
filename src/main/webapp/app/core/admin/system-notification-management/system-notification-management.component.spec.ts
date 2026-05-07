@@ -16,7 +16,7 @@ import '@angular/localize/init';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { SystemNotificationManagementComponent } from 'app/core/admin/system-notification-management/system-notification-management.component';
-import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
+import { SystemNotification, SystemNotificationDTO } from 'app/core/shared/entities/system-notification.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -115,8 +115,8 @@ describe('SystemNotificationManagementComponent', () => {
 
     it('should load notifications on init', async () => {
         const notifications = [
-            { id: 1, title: 'Test 1', notificationDate: dayjs() } as SystemNotification,
-            { id: 2, title: 'Test 2', notificationDate: dayjs() } as SystemNotification,
+            { id: 1, title: 'Test 1', notificationDate: dayjs() } as SystemNotificationDTO,
+            { id: 2, title: 'Test 2', notificationDate: dayjs() } as SystemNotificationDTO,
         ];
         const headers = new HttpHeaders().set('X-Total-Count', '2').set('link', '<url>; rel="next"');
         mockSystemNotificationService.query.mockReturnValue(of(new HttpResponse({ body: notifications, headers })));
@@ -189,33 +189,38 @@ describe('SystemNotificationManagementComponent', () => {
 
     describe('getNotificationState', () => {
         it('should return SCHEDULED for future notifications', () => {
-            const notification = new SystemNotification();
-            notification.notificationDate = dayjs().add(1, 'day');
-            notification.expireDate = dayjs().add(2, 'day');
-
+            const notification = {
+                id: 1,
+                notificationDate: dayjs().add(1, 'day'),
+                expireDate: dayjs().add(2, 'day'),
+            } as SystemNotificationDTO;
             expect(component.getNotificationState(notification)).toBe('SCHEDULED');
         });
 
         it('should return ACTIVE for current notifications', () => {
-            const notification = new SystemNotification();
-            notification.notificationDate = dayjs().subtract(1, 'day');
-            notification.expireDate = dayjs().add(1, 'day');
-
+            const notification = {
+                id: 1,
+                notificationDate: dayjs().subtract(1, 'day'),
+                expireDate: dayjs().add(1, 'day'),
+            } as SystemNotificationDTO;
             expect(component.getNotificationState(notification)).toBe('ACTIVE');
         });
 
         it('should return ACTIVE when expireDate is undefined', () => {
-            const notification = new SystemNotification();
-            notification.notificationDate = dayjs().subtract(1, 'day');
-            notification.expireDate = undefined;
-
+            const notification = {
+                id: 1,
+                notificationDate: dayjs().subtract(1, 'day'),
+                expireDate: undefined,
+            } as SystemNotificationDTO;
             expect(component.getNotificationState(notification)).toBe('ACTIVE');
         });
 
         it('should return EXPIRED for past notifications', () => {
-            const notification = new SystemNotification();
-            notification.notificationDate = dayjs().subtract(2, 'day');
-            notification.expireDate = dayjs().subtract(1, 'day');
+            const notification = {
+                id: 1,
+                notificationDate: dayjs().subtract(2, 'day'),
+                expireDate: dayjs().subtract(1, 'day'),
+            } as SystemNotificationDTO;
 
             expect(component.getNotificationState(notification)).toBe('EXPIRED');
         });
@@ -278,13 +283,13 @@ describe('SystemNotificationManagementComponent', () => {
 
     describe('trackIdentity', () => {
         it('should return notification id', () => {
-            const notification = { id: 5 } as SystemNotification;
+            const notification = { id: 5 } as SystemNotificationDTO;
 
             expect(component.trackIdentity(0, notification)).toBe(5);
         });
 
         it('should return -1 when id is undefined', () => {
-            const notification = {} as SystemNotification;
+            const notification = {} as SystemNotificationDTO;
 
             expect(component.trackIdentity(0, notification)).toBe(-1);
         });

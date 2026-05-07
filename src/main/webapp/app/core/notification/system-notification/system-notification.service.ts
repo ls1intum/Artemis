@@ -36,7 +36,7 @@ export class SystemNotificationService {
     /**
      * Fetch active and future notifications from the server.
      */
-    getActiveNotifications(): Observable<SystemNotification[]> {
+    getActiveNotifications(): Observable<SystemNotificationDTO[]> {
         return this.http
             .get<SystemNotificationDTO[]>(`${this.publicResourceUrl}/active`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertSystemNotificationArrayResponseDatesFromServer(res)))
@@ -75,7 +75,7 @@ export class SystemNotificationService {
      */
     convertSystemNotificationArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.forEach((notification: SystemNotification) => {
+            res.body.forEach((notification: SystemNotificationDTO) => {
                 notification.notificationDate = convertDateFromServer(notification.notificationDate);
                 notification.expireDate = convertDateFromServer(notification.expireDate);
             });
