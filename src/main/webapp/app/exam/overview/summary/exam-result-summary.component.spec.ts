@@ -44,7 +44,6 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
-import { ExamRequestAiFeedbackButtonComponent } from 'app/exam/overview/summary/exam-request-ai-feedback-button/exam-request-ai-feedback-button.component';
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import * as ExamUtils from 'app/exam/overview/exam.utils';
