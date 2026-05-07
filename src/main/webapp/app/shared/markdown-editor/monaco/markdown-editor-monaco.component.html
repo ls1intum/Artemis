@@ -20,8 +20,8 @@
                         @if (mode() === 'diff') {
                             @if (renderSideBySide()) {
                                 <!-- Split-view column headers so users know which side is which -->
-                                <div class="diff-pane-headers">
-                                    <div class="diff-pane-header">
+                                <div #diffHeader class="diff-pane-headers">
+                                    <div class="diff-pane-header" [style.width.px]="diffOriginalPaneWidth">
                                         <p-tag severity="danger" [value]="diffOriginalLabel()" />
                                     </div>
                                     <div class="diff-pane-header diff-pane-header--right">
@@ -30,7 +30,7 @@
                                 </div>
                             } @else {
                                 <!-- Inline/unified diff: single explanatory row -->
-                                <div class="diff-pane-unified-hint">
+                                <div #diffHeader class="diff-pane-unified-hint">
                                     <p-tag severity="danger" [value]="diffOriginalLabel()" />
                                     <span class="diff-pane-unified-hint__text">{{ diffUnifiedHint() }}</span>
                                     <p-tag severity="success" [value]="diffSuggestionLabel()" />
@@ -48,6 +48,7 @@
                             (textChanged)="onTextChanged($event)"
                             (contentHeightChanged)="onContentHeightChanged($event)"
                             (diffChanged)="onDiffChanged($event)"
+                            (diffOriginalPaneLayoutChanged)="onDiffOriginalPaneLayoutChanged($event)"
                             (drop)="onFileDrop($event)"
                             (onBlurEditor)="onBlurEditor.emit()"
                         />
