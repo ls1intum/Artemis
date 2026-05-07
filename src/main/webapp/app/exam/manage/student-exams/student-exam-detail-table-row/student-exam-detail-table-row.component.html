@@ -44,7 +44,7 @@
                     <!-- in case of existing result-->
                     <a
                         [class.disabled]="busy()"
-                        [queryParams]="{ testRun: this.isTestRun }"
+                        [queryParams]="{ testRun: this.isTestRun() }"
                         [routerLink]="getAssessmentLink(exercise(), submission, result.id)"
                         class="btn btn-primary btn-sm mb-1"
                     >
@@ -58,7 +58,7 @@
                     <!-- in case of new result-->
                     <a
                         [class.disabled]="busy()"
-                        [queryParams]="{ testRun: this.isTestRun }"
+                        [queryParams]="{ testRun: this.isTestRun() }"
                         [routerLink]="getAssessmentLink(exercise(), submission)"
                         class="btn btn-primary btn-sm mb-1"
                     >
