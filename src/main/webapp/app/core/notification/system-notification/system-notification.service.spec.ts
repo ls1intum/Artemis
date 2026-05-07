@@ -4,7 +4,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
-import { SystemNotification, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
+import { SystemNotification, SystemNotificationDTO, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
 import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 
@@ -200,9 +200,9 @@ describe('SystemNotificationService', () => {
                 id: 1,
                 notificationDate: '2023-01-15T10:00:00Z',
                 expireDate: '2023-01-15T12:00:00Z',
-            } as any as SystemNotification;
+            } as any as SystemNotificationDTO;
 
-            const response = new HttpResponse<SystemNotification>({ body: notification });
+            const response = new HttpResponse<SystemNotificationDTO>({ body: notification });
             const result = service.convertSystemNotificationResponseDatesFromServer(response);
 
             expect(result.body!.id).toBe(1);
@@ -211,7 +211,7 @@ describe('SystemNotificationService', () => {
         });
 
         it('should handle null body in response', () => {
-            const response = new HttpResponse<SystemNotification>({ body: null });
+            const response = new HttpResponse<SystemNotificationDTO>({ body: null });
             const result = service.convertSystemNotificationResponseDatesFromServer(response);
 
             expect(result.body).toBeNull();
@@ -225,15 +225,15 @@ describe('SystemNotificationService', () => {
                     id: 1,
                     notificationDate: '2023-01-15T10:00:00Z',
                     expireDate: '2023-01-15T12:00:00Z',
-                } as any as SystemNotification,
+                } as any as SystemNotificationDTO,
                 {
                     id: 2,
                     notificationDate: '2023-01-16T10:00:00Z',
                     expireDate: '2023-01-16T12:00:00Z',
-                } as any as SystemNotification,
+                } as any as SystemNotificationDTO,
             ];
 
-            const response = new HttpResponse<SystemNotification[]>({ body: notifications });
+            const response = new HttpResponse<SystemNotificationDTO[]>({ body: notifications });
             const result = service.convertSystemNotificationArrayResponseDatesFromServer(response);
 
             expect(result.body).toHaveLength(2);
@@ -244,14 +244,14 @@ describe('SystemNotificationService', () => {
         });
 
         it('should handle null body in array response', () => {
-            const response = new HttpResponse<SystemNotification[]>({ body: null });
+            const response = new HttpResponse<SystemNotificationDTO[]>({ body: null });
             const result = service.convertSystemNotificationArrayResponseDatesFromServer(response);
 
             expect(result.body).toBeNull();
         });
 
         it('should handle empty array in response', () => {
-            const response = new HttpResponse<SystemNotification[]>({ body: [] });
+            const response = new HttpResponse<SystemNotificationDTO[]>({ body: [] });
             const result = service.convertSystemNotificationArrayResponseDatesFromServer(response);
 
             expect(result.body).toHaveLength(0);

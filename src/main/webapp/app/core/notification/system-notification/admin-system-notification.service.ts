@@ -2,10 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
+import { SystemNotification, SystemNotificationDTO } from 'app/core/shared/entities/system-notification.model';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 
-type EntityResponseType = HttpResponse<SystemNotification>;
+type EntityResponseType = HttpResponse<SystemNotificationDTO>;
 
 @Injectable({ providedIn: 'root' })
 export class AdminSystemNotificationService {

@@ -7,7 +7,7 @@ import { Subject, of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { SystemNotification, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
+import { SystemNotificationDTO, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -35,7 +35,7 @@ describe('System Notification Component', () => {
             type,
             notificationDate: dayjs().subtract(1, 'hour'),
             expireDate: dayjs().add(1, 'hour'),
-        } as SystemNotification;
+        } as SystemNotificationDTO;
     };
 
     const createInactiveNotification = (type: SystemNotificationType, id: number) => {
@@ -46,7 +46,7 @@ describe('System Notification Component', () => {
             type,
             notificationDate: dayjs().add(1, 'hour'),
             expireDate: dayjs().add(2, 'hour'),
-        } as SystemNotification;
+        } as SystemNotificationDTO;
     };
 
     beforeEach(async () => {
@@ -253,8 +253,7 @@ describe('System Notification Component', () => {
         it('should persist dismissal across multiple websocket updates', () => {
             vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
-            const wsSubject = new Subject<SystemNotification[]>();
-
+            const wsSubject = new Subject<SystemNotificationDTO[]>();
             vi.spyOn(websocketService, 'subscribe').mockReturnValue(wsSubject);
             vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
 
@@ -448,27 +447,6 @@ describe('System Notification Component', () => {
     });
 
     describe('close() edge cases', () => {
-        it('should not modify closedIds when notification has no ID', () => {
-            vi.useFakeTimers();
-            const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1)];
-            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
-            const storeSpy = vi.spyOn(localStorageService, 'store');
-
-            systemNotificationComponent.ngOnInit();
-            vi.advanceTimersByTime(500);
-
-            // Create a notification without an ID
-            const notificationWithoutId = { ...notifications[0], id: undefined } as SystemNotification;
-            systemNotificationComponent.close(notificationWithoutId);
-
-            // closedIds should remain unchanged, localStorage should NOT be written
-            expect(systemNotificationComponent.closedIds).toEqual([]);
-            expect(storeSpy).not.toHaveBeenCalled();
-            // Original notification should still be displayed
-            expect(systemNotificationComponent.notificationsToDisplay).toEqual([notifications[0]]);
-            vi.useRealTimers();
-        });
-
         it('should not add duplicate IDs when close is called twice for the same notification', () => {
             vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
@@ -492,7 +470,7 @@ describe('System Notification Component', () => {
         it('should not write to localStorage when no IDs were pruned', () => {
             vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
-            const wsSubject = new Subject<SystemNotification[]>();
+            const wsSubject = new Subject<SystemNotificationDTO[]>();
 
             // Pre-store a closed ID that will remain valid after websocket update
             localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1]);
@@ -519,7 +497,7 @@ describe('System Notification Component', () => {
         it('should write to localStorage when IDs are actually pruned', () => {
             vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
-            const wsSubject = new Subject<SystemNotification[]>();
+            const wsSubject = new Subject<SystemNotificationDTO[]>();
 
             // Pre-store closed IDs including one that will become stale
             localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1, 2]);

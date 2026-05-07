@@ -1,6 +1,6 @@
 import { AfterViewChecked, Component, ElementRef, OnDestroy, OnInit, Renderer2, RendererStyleFlags2, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { SystemNotification, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
+import { SystemNotificationDTO, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { User } from 'app/core/user/user.model';
@@ -34,8 +34,8 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
     readonly INFO = SystemNotificationType.INFO;
     readonly WARNING = SystemNotificationType.WARNING;
 
-    notifications: SystemNotification[] = [];
-    notificationsToDisplay: SystemNotification[] = [];
+    notifications: SystemNotificationDTO[] = [];
+    notificationsToDisplay: SystemNotificationDTO[] = [];
     closedIds: number[] = [];
     websocketStatusSubscription?: Subscription;
     systemNotificationSubscription?: Subscription;
@@ -83,7 +83,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
     }
 
     private loadActiveNotification() {
-        this.systemNotificationService.getActiveNotifications().subscribe((notifications: SystemNotification[]) => {
+        this.systemNotificationService.getActiveNotifications().subscribe((notifications: SystemNotificationDTO[]) => {
             this.notifications = notifications;
             this.selectVisibleNotificationsAndScheduleUpdate();
         });
@@ -95,7 +95,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
      */
     private subscribeSocket() {
         this.systemNotificationSubscription?.unsubscribe();
-        this.systemNotificationSubscription = this.websocketService.subscribe<SystemNotification[]>(WEBSOCKET_CHANNEL).subscribe((notifications: SystemNotification[]) => {
+        this.systemNotificationSubscription = this.websocketService.subscribe<SystemNotificationDTO[]>(WEBSOCKET_CHANNEL).subscribe((notifications: SystemNotificationDTO[]) => {
             notifications.forEach((notification) => {
                 notification.notificationDate = convertDateFromServer(notification.notificationDate);
                 notification.expireDate = convertDateFromServer(notification.expireDate);
@@ -133,7 +133,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
         }
     }
 
-    close(notification: SystemNotification) {
+    close(notification: SystemNotificationDTO) {
         if (notification.id == undefined) {
             return;
         }

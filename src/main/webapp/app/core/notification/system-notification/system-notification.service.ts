@@ -1,13 +1,13 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
+import { SystemNotification, SystemNotificationDTO } from 'app/core/shared/entities/system-notification.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-type EntityResponseType = HttpResponse<SystemNotification>;
-type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
+type EntityResponseType = HttpResponse<SystemNotificationDTO>;
+type EntityArrayResponseType = HttpResponse<SystemNotificationDTO[]>;
 
 @Injectable({ providedIn: 'root' })
 export class SystemNotificationService {
@@ -22,14 +22,14 @@ export class SystemNotificationService {
      */
     find(systemNotificationId: number): Observable<EntityResponseType> {
         return this.http
-            .get<SystemNotification>(`${this.resourceUrl}/${systemNotificationId}`, { observe: 'response' })
+            .get<SystemNotificationDTO>(`${this.resourceUrl}/${systemNotificationId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertSystemNotificationResponseDatesFromServer(res)));
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
-            .get<SystemNotification[]>(this.resourceUrl, { params: options, observe: 'response' })
+            .get<SystemNotificationDTO[]>(this.resourceUrl, { params: options, observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertSystemNotificationArrayResponseDatesFromServer(res)));
     }
 
@@ -38,7 +38,7 @@ export class SystemNotificationService {
      */
     getActiveNotifications(): Observable<SystemNotification[]> {
         return this.http
-            .get<SystemNotification[]>(`${this.publicResourceUrl}/active`, { observe: 'response' })
+            .get<SystemNotificationDTO[]>(`${this.publicResourceUrl}/active`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertSystemNotificationArrayResponseDatesFromServer(res)))
             .pipe(map((res) => res.body || []));
     }
