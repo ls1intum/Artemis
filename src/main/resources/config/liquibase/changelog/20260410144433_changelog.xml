@@ -4,62 +4,106 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!-- Unify IrisCourseChatSession, IrisProgrammingExerciseChatSession, IrisTextExerciseChatSession,
-         and IrisLectureChatSession into a single IrisChatSession entity with a chat_mode discriminator. -->
+         and IrisLectureChatSession into a single IrisChatSession entity.
 
-    <!-- Step 1: Add new columns entity_id and chat_mode -->
-    <changeSet id="20260410144433-1-add-columns" author="senan-aslan">
+         Two orthogonal classification columns:
+           - discriminator (existing): top-level JPA class (CHAT vs. TUTOR_SUGGESTION; extensible).
+           - chat_mode (new): sub-classification within IrisChatSession (NULL for non-chat sessions).
+         New chat sub-modes are added by extending the chat_mode ENUM. New top-level session types
+         are added by introducing new discriminator values without touching chat_mode. -->
+
+    <!-- Step 1: Add new column entity_id -->
+    <changeSet id="20260410144433-1-add-entity-id" author="senan-aslan">
         <preConditions onFail="MARK_RAN">
             <not><columnExists tableName="iris_session" columnName="entity_id"/></not>
         </preConditions>
         <addColumn tableName="iris_session">
             <column name="entity_id" type="BIGINT"/>
-            <column name="chat_mode" type="VARCHAR(50)"/>
         </addColumn>
     </changeSet>
 
-    <!-- Step 2: Migrate data — populate entity_id and chat_mode from existing columns and discriminator -->
+    <!-- Step 1: Add chat_mode (DB-specific: ENUM on MySQL, TEXT on PostgreSQL).
+         Only the four chat sub-modes are valid; TUTOR_SUGGESTION is a top-level session type
+         (discriminator='TUTOR_SUGGESTION') and intentionally not part of this enum. -->
+    <changeSet id="20260410144433-1-add-chat-mode-mysql" author="senan-aslan" dbms="mysql,mariadb">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_session" columnName="chat_mode"/></not>
+        </preConditions>
+        <addColumn tableName="iris_session">
+            <column name="chat_mode" type="ENUM('PROGRAMMING_EXERCISE_CHAT','TEXT_EXERCISE_CHAT','COURSE_CHAT','LECTURE_CHAT')"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260410144433-1-add-chat-mode-postgres" author="senan-aslan" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_session" columnName="chat_mode"/></not>
+        </preConditions>
+        <addColumn tableName="iris_session">
+            <column name="chat_mode" type="text"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Step 2: Migrate data — populate entity_id and chat_mode from existing columns and discriminator.
+         TUTOR_SUGGESTION rows are intentionally left untouched (chat_mode stays NULL). -->
     <changeSet id="20260410144433-2-migrate-data" author="senan-aslan">
-        <!-- COURSE_CHAT: entity_id = course_id, chat_mode = COURSE_CHAT -->
+        <!-- COURSE_CHAT: entity_id = course_id -->
         <update tableName="iris_session">
             <column name="entity_id" valueComputed="course_id"/>
             <column name="chat_mode" value="COURSE_CHAT"/>
             <where>discriminator = 'COURSE_CHAT'</where>
         </update>
 
-        <!-- PROGRAMMING_EXERCISE_CHAT: entity_id = exercise_id, chat_mode = PROGRAMMING_EXERCISE_CHAT -->
+        <!-- PROGRAMMING_EXERCISE_CHAT: entity_id = exercise_id -->
         <update tableName="iris_session">
             <column name="entity_id" valueComputed="exercise_id"/>
             <column name="chat_mode" value="PROGRAMMING_EXERCISE_CHAT"/>
             <where>discriminator = 'PROGRAMMING_EXERCISE_CHAT'</where>
         </update>
 
-        <!-- TEXT_EXERCISE_CHAT: entity_id = exercise_id, chat_mode = TEXT_EXERCISE_CHAT -->
+        <!-- TEXT_EXERCISE_CHAT: entity_id = exercise_id -->
         <update tableName="iris_session">
             <column name="entity_id" valueComputed="exercise_id"/>
             <column name="chat_mode" value="TEXT_EXERCISE_CHAT"/>
             <where>discriminator = 'TEXT_EXERCISE_CHAT'</where>
         </update>
 
-        <!-- LECTURE_CHAT: entity_id = lecture_id, chat_mode = LECTURE_CHAT -->
+        <!-- LECTURE_CHAT: entity_id = lecture_id -->
         <update tableName="iris_session">
             <column name="entity_id" valueComputed="lecture_id"/>
             <column name="chat_mode" value="LECTURE_CHAT"/>
             <where>discriminator = 'LECTURE_CHAT'</where>
         </update>
 
-        <!-- TUTOR_SUGGESTION: no entity_id needed, just set chat_mode -->
-        <update tableName="iris_session">
-            <column name="chat_mode" value="TUTOR_SUGGESTION"/>
-            <where>discriminator = 'TUTOR_SUGGESTION'</where>
-        </update>
+        <rollback>
+            <update tableName="iris_session">
+                <column name="entity_id" value="NULL"/>
+                <column name="chat_mode" value="NULL"/>
+                <where>discriminator IN ('COURSE_CHAT', 'PROGRAMMING_EXERCISE_CHAT', 'TEXT_EXERCISE_CHAT', 'LECTURE_CHAT', 'CHAT')</where>
+            </update>
+        </rollback>
     </changeSet>
 
-    <!-- Step 3: Backfill course_id for exercise-based sessions (was NULL before) -->
+    <!-- Step 3: Backfill course_id for exercise-based and lecture sessions (was NULL before) -->
     <changeSet id="20260410144433-3-backfill-course-id" author="senan-aslan">
-        <!-- Programming/Text exercise sessions: get course_id from exercise table -->
+        <!-- Course-based exercises: get course_id directly from exercise table -->
         <sql>
             UPDATE iris_session s
             SET course_id = (SELECT e.course_id FROM exercise e WHERE e.id = s.exercise_id)
+            WHERE s.discriminator IN ('PROGRAMMING_EXERCISE_CHAT', 'TEXT_EXERCISE_CHAT')
+              AND s.course_id IS NULL
+              AND s.exercise_id IS NOT NULL;
+        </sql>
+
+        <!-- Exam exercises: resolve course_id via exercise_group → exam → course -->
+        <sql>
+            UPDATE iris_session s
+            SET course_id = (
+                SELECT ex.course_id
+                FROM exercise e
+                JOIN exercise_group eg ON eg.id = e.exercise_group_id
+                JOIN exam ex ON ex.id = eg.exam_id
+                WHERE e.id = s.exercise_id
+            )
             WHERE s.discriminator IN ('PROGRAMMING_EXERCISE_CHAT', 'TEXT_EXERCISE_CHAT')
               AND s.course_id IS NULL
               AND s.exercise_id IS NOT NULL;
@@ -73,42 +117,100 @@
               AND s.course_id IS NULL
               AND s.lecture_id IS NOT NULL;
         </sql>
+
+        <rollback>
+            <!-- Backfill is not reversible: we cannot distinguish backfilled course_id values
+                 from values that already existed prior to this migration. -->
+        </rollback>
     </changeSet>
 
-    <!-- Step 4: Unify discriminator values to 'CHAT' -->
+    <!-- Step 4: Unify the four chat-mode discriminator values into 'CHAT'.
+         TUTOR_SUGGESTION remains its own discriminator value. -->
     <changeSet id="20260410144433-4-unify-discriminator" author="senan-aslan">
         <update tableName="iris_session">
             <column name="discriminator" value="CHAT"/>
             <where>discriminator IN ('COURSE_CHAT', 'PROGRAMMING_EXERCISE_CHAT', 'TEXT_EXERCISE_CHAT', 'LECTURE_CHAT')</where>
         </update>
+
+        <rollback>
+            <!-- Reconstruct the original chat-mode discriminator values from chat_mode. -->
+            <sql>
+                UPDATE iris_session
+                SET discriminator = chat_mode
+                WHERE discriminator = 'CHAT' AND chat_mode IS NOT NULL;
+            </sql>
+        </rollback>
     </changeSet>
 
-    <!-- Step 5: Drop old foreign keys -->
+    <!-- Step 5: Drop old foreign keys (entity_id is polymorphic; referential integrity is enforced at the application layer).
+         Rollback recreates the FKs against the (then again renamed-back) exercise_id / lecture_id columns; definitions
+         mirror the original constraints from 00000000000000_initial_schema.xml. -->
     <changeSet id="20260410144433-5-drop-foreign-keys" author="senan-aslan">
         <dropForeignKeyConstraint baseTableName="iris_session" constraintName="FK_IRIS_SESSION_ON_LECTURE"/>
         <dropForeignKeyConstraint baseTableName="iris_session" constraintName="fk_iris_session_exercise_id"/>
+
+        <rollback>
+            <addForeignKeyConstraint baseColumnNames="lecture_id" baseTableName="iris_session"
+                                     constraintName="FK_IRIS_SESSION_ON_LECTURE"
+                                     referencedColumnNames="id" referencedTableName="lecture"
+                                     onDelete="CASCADE" onUpdate="NO ACTION"
+                                     deferrable="false" initiallyDeferred="false" validate="true"/>
+            <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="iris_session"
+                                     constraintName="fk_iris_session_exercise_id"
+                                     referencedColumnNames="id" referencedTableName="exercise"
+                                     onDelete="CASCADE" onUpdate="RESTRICT"
+                                     deferrable="false" initiallyDeferred="false" validate="true"/>
+        </rollback>
     </changeSet>
 
-    <!-- Step 6: Drop old columns and indexes -->
-    <changeSet id="20260410144433-6-drop-old-columns" author="senan-aslan">
+    <!-- Step 6: Drop indexes that cover columns being renamed away or that are redundant.
+         iris_session_discriminator is intentionally kept: it still helps the (rare) TUTOR_SUGGESTION lookups
+         driven by Hibernate's discriminator filter. -->
+    <changeSet id="20260410144433-6-drop-obsolete-indexes" author="senan-aslan">
         <dropIndex tableName="iris_session" indexName="FK_IRIS_SESSION_ON_LECTURE"/>
         <dropIndex tableName="iris_session" indexName="fk_iris_session_exercise_id"/>
+        <!-- redundant with new composite (course_id, user_id, chat_mode) -->
+        <dropIndex tableName="iris_session" indexName="fk_iris_session_course_id"/>
 
-        <dropColumn tableName="iris_session" columnName="exercise_id"/>
-        <dropColumn tableName="iris_session" columnName="lecture_id"/>
+        <rollback>
+            <createIndex indexName="FK_IRIS_SESSION_ON_LECTURE" tableName="iris_session">
+                <column name="lecture_id"/>
+            </createIndex>
+            <createIndex indexName="fk_iris_session_exercise_id" tableName="iris_session">
+                <column name="exercise_id"/>
+            </createIndex>
+            <createIndex indexName="fk_iris_session_course_id" tableName="iris_session">
+                <column name="course_id"/>
+            </createIndex>
+        </rollback>
     </changeSet>
 
-    <!-- Step 7: Add indexes for the new query patterns -->
-    <changeSet id="20260410144433-7-add-indexes" author="senan-aslan">
-        <createIndex indexName="idx_iris_session_course_chatmode_user" tableName="iris_session">
+    <!-- Step 7: Rename obsolete columns instead of dropping them (rename-first delete policy).
+         The actual <dropColumn> happens in a later release once we are confident no rollback is needed. -->
+    <changeSet id="20260410144433-7-rename-exercise-id" author="senan-aslan">
+        <renameColumn tableName="iris_session" oldColumnName="exercise_id" newColumnName="legacy_exercise_id" columnDataType="BIGINT"/>
+    </changeSet>
+
+    <changeSet id="20260410144433-7-rename-lecture-id" author="senan-aslan">
+        <renameColumn tableName="iris_session" oldColumnName="lecture_id" newColumnName="legacy_lecture_id" columnDataType="BIGINT"/>
+    </changeSet>
+
+    <!-- Step 8: Add indexes for the new query patterns.
+         Column order reflects WHERE-clause selectivity: equality filters first (course_id / entity_id, user_id),
+         then chat_mode as a secondary discriminator. The chat-history listing query
+         (IrisChatSessionRepository#findByCourseIdAndUserId) does not filter by chat_mode, so it benefits from the
+         (course_id, user_id) prefix. -->
+    <changeSet id="20260410144433-8-add-indexes" author="senan-aslan">
+        <createIndex indexName="idx_iris_session_course_user_chatmode" tableName="iris_session">
             <column name="course_id"/>
-            <column name="chat_mode"/>
             <column name="user_id"/>
+            <column name="chat_mode"/>
         </createIndex>
 
-        <createIndex indexName="idx_iris_session_entity_user" tableName="iris_session">
+        <createIndex indexName="idx_iris_session_entity_user_chatmode" tableName="iris_session">
             <column name="entity_id"/>
             <column name="user_id"/>
+            <column name="chat_mode"/>
         </createIndex>
     </changeSet>
 

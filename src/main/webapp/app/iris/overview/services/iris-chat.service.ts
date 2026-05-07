@@ -449,14 +449,18 @@ export class IrisChatService implements OnDestroy {
      * As we open a new empty session without messages (e.g. when the dashboard is opened) we want to display this session in the history as well.
      */
     private addLatestEmptySessionToChatSessions(newIrisSession: IrisSession) {
+        // Tutor-suggestion sessions have no chat mode and do not belong in the chat-history list.
+        if (newIrisSession.mode === undefined) {
+            return;
+        }
+
         const currentSessions = this.chatSessions.getValue();
 
-        const chatMode = newIrisSession.mode ?? ChatServiceMode.COURSE;
         const entityId = newIrisSession.entityId ?? this.sessionContext?.entityId;
         const newIrisSessionDTO: IrisSessionDTO = {
             id: newIrisSession.id,
             creationDate: newIrisSession.creationDate,
-            mode: chatMode,
+            mode: newIrisSession.mode,
             entityId: entityId,
             entityName: '',
             title: newIrisSession.title,

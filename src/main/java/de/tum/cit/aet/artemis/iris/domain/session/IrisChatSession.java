@@ -78,7 +78,6 @@ public class IrisChatSession extends IrisSession {
         return true;
     }
 
-    @Override
     public IrisChatMode getMode() {
         return chatMode;
     }
