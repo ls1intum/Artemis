@@ -16,7 +16,7 @@ describe('TutorParticipationGraphComponent', () => {
     let comp: TutorParticipationGraphComponent;
     let fixture: ComponentFixture<TutorParticipationGraphComponent>;
     const router = new MockRouter();
-    const navigateSpy = vi.spyOn(router, 'navigate');
+    let navigateSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -27,6 +27,7 @@ describe('TutorParticipationGraphComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(TutorParticipationGraphComponent);
         comp = fixture.componentInstance;
+        navigateSpy = vi.spyOn(router, 'navigate');
     });
 
     afterEach(() => {
