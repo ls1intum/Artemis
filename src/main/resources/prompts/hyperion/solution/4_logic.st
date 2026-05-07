@@ -13,6 +13,9 @@ Your task is to implement the core logic for each method based on the solution p
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Build Environment Context:**
+{{buildEnvironmentContext}}
+
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
