@@ -12,14 +12,14 @@
             id="exam-navigation-bar"
             class="sticky-top d-block"
             [exercises]="studentExam?.exercises!"
-            [exerciseIndex]="exerciseIndex"
+            [exerciseIndex]="exerciseIndex()"
             [examTimeLineView]="true"
             (onPageChanged)="onPageChange($event)"
         />
         <!-- exercises -->
         @for (exercise of studentExam.exercises; track exercise; let i = $index) {
             @if (exercise && exercise.studentParticipations && exercise.studentParticipations[0]) {
-                @if (pageComponentVisited[i]) {
+                @if (pageComponentVisited()[i]) {
                     <div [hidden]="i !== activePageIndex">
                         @switch (exercise.type) {
                             @case (ExerciseType.QUIZ) {
@@ -59,7 +59,8 @@
                                 <jhi-programming-exam-diff
                                     [exercise]="exercise"
                                     [studentParticipation]="exercise.studentParticipations[0]"
-                                    [(cachedDiffInformation)]="cachedDiffInformation"
+                                    [cachedDiffInformation]="cachedDiffInformation()"
+                                    (cachedDiffInformationChange)="cachedDiffInformation.set($event)"
                                 />
                             }
                         }

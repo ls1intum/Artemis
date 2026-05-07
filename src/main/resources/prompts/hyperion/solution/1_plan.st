@@ -10,6 +10,9 @@ Your task is to create a detailed implementation plan.
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Build Environment Context:**
+{{buildEnvironmentContext}}
+
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
