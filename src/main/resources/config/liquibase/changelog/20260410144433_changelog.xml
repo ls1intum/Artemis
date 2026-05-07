@@ -163,44 +163,17 @@
         </rollback>
     </changeSet>
 
-    <!-- Step 6: Drop indexes that cover columns being renamed away or that are redundant.
-         iris_session_discriminator is intentionally kept: it still helps the (rare) TUTOR_SUGGESTION lookups
-         driven by Hibernate's discriminator filter. -->
-    <changeSet id="20260410144433-6-drop-obsolete-indexes" author="senan-aslan">
-        <dropIndex tableName="iris_session" indexName="FK_IRIS_SESSION_ON_LECTURE"/>
-        <dropIndex tableName="iris_session" indexName="fk_iris_session_exercise_id"/>
-        <!-- redundant with new composite (course_id, user_id, chat_mode) -->
-        <dropIndex tableName="iris_session" indexName="fk_iris_session_course_id"/>
+    <!-- Step 6: Add new composite indexes for the new query patterns.
+         These are created BEFORE dropping the legacy fk_iris_session_course_id index in Step 7: the course-FK
+         (fk_iris_session_course_id) is intentionally kept, and MySQL refuses to drop an index that is the only
+         one covering an active FK column. The new (course_id, user_id, chat_mode) composite has course_id as
+         prefix, so MySQL can repurpose it as the FK's backing index when the old single-column index goes away.
 
-        <rollback>
-            <createIndex indexName="FK_IRIS_SESSION_ON_LECTURE" tableName="iris_session">
-                <column name="lecture_id"/>
-            </createIndex>
-            <createIndex indexName="fk_iris_session_exercise_id" tableName="iris_session">
-                <column name="exercise_id"/>
-            </createIndex>
-            <createIndex indexName="fk_iris_session_course_id" tableName="iris_session">
-                <column name="course_id"/>
-            </createIndex>
-        </rollback>
-    </changeSet>
-
-    <!-- Step 7: Rename obsolete columns instead of dropping them (rename-first delete policy).
-         The actual <dropColumn> happens in a later release once we are confident no rollback is needed. -->
-    <changeSet id="20260410144433-7-rename-exercise-id" author="senan-aslan">
-        <renameColumn tableName="iris_session" oldColumnName="exercise_id" newColumnName="legacy_exercise_id" columnDataType="BIGINT"/>
-    </changeSet>
-
-    <changeSet id="20260410144433-7-rename-lecture-id" author="senan-aslan">
-        <renameColumn tableName="iris_session" oldColumnName="lecture_id" newColumnName="legacy_lecture_id" columnDataType="BIGINT"/>
-    </changeSet>
-
-    <!-- Step 8: Add indexes for the new query patterns.
          Column order reflects WHERE-clause selectivity: equality filters first (course_id / entity_id, user_id),
          then chat_mode as a secondary discriminator. The chat-history listing query
-         (IrisChatSessionRepository#findByCourseIdAndUserId) does not filter by chat_mode, so it benefits from the
-         (course_id, user_id) prefix. -->
-    <changeSet id="20260410144433-8-add-indexes" author="senan-aslan">
+         (IrisChatSessionRepository#findByCourseIdAndUserId) does not filter by chat_mode, so it benefits from
+         the (course_id, user_id) prefix. -->
+    <changeSet id="20260410144433-6-add-composite-indexes" author="senan-aslan">
         <createIndex indexName="idx_iris_session_course_user_chatmode" tableName="iris_session">
             <column name="course_id"/>
             <column name="user_id"/>
@@ -212,6 +185,64 @@
             <column name="user_id"/>
             <column name="chat_mode"/>
         </createIndex>
+    </changeSet>
+
+    <!-- Step 7: Drop obsolete single-column indexes that are now redundant (covered by Step 6 composites)
+         or whose backing FK was removed in Step 5.
+         iris_session_discriminator is intentionally kept: it still helps the (rare) TUTOR_SUGGESTION lookups
+         driven by Hibernate's discriminator filter.
+
+         Each drop is its own changeSet guarded by <indexExists>: on MySQL the FK and its backing index share a
+         name, so dropping the FK in Step 5 may also remove the index — the precondition then marks the
+         changeSet as ran. On PostgreSQL, FK and index have independent identifiers, so the index still exists
+         and the drop runs normally. -->
+    <changeSet id="20260410144433-7-drop-index-lecture" author="senan-aslan">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="iris_session" indexName="FK_IRIS_SESSION_ON_LECTURE"/>
+        </preConditions>
+        <dropIndex tableName="iris_session" indexName="FK_IRIS_SESSION_ON_LECTURE"/>
+
+        <rollback>
+            <createIndex indexName="FK_IRIS_SESSION_ON_LECTURE" tableName="iris_session">
+                <column name="lecture_id"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260410144433-7-drop-index-exercise" author="senan-aslan">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="iris_session" indexName="fk_iris_session_exercise_id"/>
+        </preConditions>
+        <dropIndex tableName="iris_session" indexName="fk_iris_session_exercise_id"/>
+
+        <rollback>
+            <createIndex indexName="fk_iris_session_exercise_id" tableName="iris_session">
+                <column name="exercise_id"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260410144433-7-drop-index-course" author="senan-aslan">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="iris_session" indexName="fk_iris_session_course_id"/>
+        </preConditions>
+        <dropIndex tableName="iris_session" indexName="fk_iris_session_course_id"/>
+
+        <rollback>
+            <createIndex indexName="fk_iris_session_course_id" tableName="iris_session">
+                <column name="course_id"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <!-- Step 8: Rename obsolete columns instead of dropping them (rename-first delete policy).
+         The actual <dropColumn> happens in a later release once we are confident no rollback is needed. -->
+    <changeSet id="20260410144433-8-rename-exercise-id" author="senan-aslan">
+        <renameColumn tableName="iris_session" oldColumnName="exercise_id" newColumnName="legacy_exercise_id" columnDataType="BIGINT"/>
+    </changeSet>
+
+    <changeSet id="20260410144433-8-rename-lecture-id" author="senan-aslan">
+        <renameColumn tableName="iris_session" oldColumnName="lecture_id" newColumnName="legacy_lecture_id" columnDataType="BIGINT"/>
     </changeSet>
 
 </databaseChangeLog>
