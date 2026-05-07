@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
@@ -25,9 +25,23 @@ import { ExamResultSummaryComponent, ResultSummaryExerciseInfo } from 'app/exam/
 import { ModelingExamSummaryComponent } from 'app/exam/overview/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { TextExamSummaryComponent } from 'app/exam/overview/summary/exercises/text-exam-summary/text-exam-summary.component';
 import { ExamResultOverviewComponent } from 'app/exam/overview/summary/result-overview/exam-result-overview.component';
+import { CollapsibleCardComponent } from 'app/exam/overview/summary/collapsible-card/collapsible-card.component';
+import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/overview/summary/exercises/header/exam-result-summary-exercise-card-header.component';
+import { ExamGeneralInformationComponent } from 'app/exam/overview/general-information/exam-general-information.component';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
+import { ExampleSolutionComponent } from 'app/exercise/example-solution/example-solution.component';
+import { QuizExamSummaryComponent } from 'app/exam/overview/summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
+import { FileUploadExamSummaryComponent } from 'app/exam/overview/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
+import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { NgClass } from '@angular/common';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
 import { ExamRequestAiFeedbackButtonComponent } from 'app/exam/overview/summary/exam-request-ai-feedback-button/exam-request-ai-feedback-button.component';
@@ -40,6 +54,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -154,17 +170,9 @@ const gradeInfo: StudentExamWithGradeDTO = {
 };
 
 function sharedSetup(url: string[]) {
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [FaIconComponent],
-            declarations: [
-                ExamResultSummaryComponent,
-                MockComponent(ExamResultOverviewComponent),
-                MockComponent(ProgrammingExamSummaryComponent),
-                MockComponent(ModelingExamSummaryComponent),
-                MockComponent(TextExamSummaryComponent),
-                MockComponent(ExamRequestAiFeedbackButtonComponent),
-            ],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExamResultSummaryComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -195,26 +203,51 @@ function sharedSetup(url: string[]) {
                 SessionStorageService,
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExamResultSummaryComponent);
-                component = fixture.componentInstance;
-                component.studentExam = studentExam;
-                artemisServerDateService = TestBed.inject(ArtemisServerDateService);
-                examParticipationService = TestBed.inject(ExamParticipationService);
-            });
+            .overrideComponent(ExamResultSummaryComponent, {
+                set: {
+                    imports: [
+                        FaIconComponent,
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisTranslatePipe),
+                        NgClass,
+                        RouterLink,
+                        NgbTooltip,
+                        MockComponent(ExamGeneralInformationComponent),
+                        MockComponent(ExamResultOverviewComponent),
+                        MockComponent(CollapsibleCardComponent),
+                        MockComponent(ExamResultSummaryExerciseCardHeaderComponent),
+                        MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
+                        MockComponent(ExampleSolutionComponent),
+                        MockComponent(TextExamSummaryComponent),
+                        MockComponent(ModelingExamSummaryComponent),
+                        MockComponent(QuizExamSummaryComponent),
+                        MockComponent(FileUploadExamSummaryComponent),
+                        MockComponent(ComplaintsStudentViewComponent),
+                        MockComponent(ProgrammingExamSummaryComponent),
+                        MockComponent(TestRunRibbonComponent),
+                    ],
+                },
+            })
+            .compileComponents();
+        fixture = TestBed.createComponent(ExamResultSummaryComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('studentExam', studentExam);
+        artemisServerDateService = TestBed.inject(ArtemisServerDateService);
+        examParticipationService = TestBed.inject(ExamParticipationService);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 }
 
 describe('ExamResultSummaryComponent', () => {
+    setupTestBed({ zoneless: true });
+
     sharedSetup(['', '']);
 
-    it('should expand all exercises and call print when Export PDF is clicked', fakeAsync(() => {
-        const printStub = jest.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
+    it('should expand all exercises and call print when Export PDF is clicked', async () => {
+        const printStub = vi.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
         fixture.detectChanges();
         const exportToPDFButton = fixture.debugElement.query(By.css('#exportToPDFButton'));
 
@@ -227,23 +260,23 @@ describe('ExamResultSummaryComponent', () => {
 
         exportToPDFButton.nativeElement.click();
 
-        expect(component.exerciseInfos[1].isCollapsed).toBeFalse();
-        expect(component.exerciseInfos[2].isCollapsed).toBeFalse();
-        expect(component.exerciseInfos[3].isCollapsed).toBeFalse();
-        expect(component.exerciseInfos[4].isCollapsed).toBeFalse();
+        expect(component.exerciseInfos[1].isCollapsed).toBe(false);
+        expect(component.exerciseInfos[2].isCollapsed).toBe(false);
+        expect(component.exerciseInfos[3].isCollapsed).toBe(false);
+        expect(component.exerciseInfos[4].isCollapsed).toBe(false);
 
-        tick();
+        await fixture.whenStable();
         expect(printStub).toHaveBeenCalledOnce();
         printStub.mockRestore();
-    }));
+    });
 
     it('should retrieve grade info correctly', () => {
-        const serviceSpy = jest.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamGradeInfoForSummary').mockReturnValue(of({ ...gradeInfo }));
+        const serviceSpy = vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamGradeInfoForSummary').mockReturnValue(of({ ...gradeInfo }));
 
         fixture.detectChanges();
 
         const courseId = 1;
-        expect(component.studentExam).toEqual(studentExam);
+        expect(component.studentExam()).toEqual(studentExam);
         expect(serviceSpy).toHaveBeenCalledOnce();
         expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.id, studentExam.user!.id);
         expect(component.studentExamGradeInfoDTO).toEqual({ ...gradeInfo, studentExam });
@@ -293,94 +326,91 @@ describe('ExamResultSummaryComponent', () => {
         expect(submission).toEqual(expectedResult);
     });
 
-    it('should update student exam correctly', () => {
+    it('should update student exam correctly', async () => {
         const plagiarismService = TestBed.inject(PlagiarismCasesService);
-        const plagiarismServiceSpy = jest.spyOn(plagiarismService, 'getPlagiarismCaseInfosForStudent');
+        const plagiarismServiceSpy = vi.spyOn(plagiarismService, 'getPlagiarismCaseInfosForStudent');
+
+        // Run change detection once for the default studentExam (id 1) so the component initialises with valid state
+        fixture.detectChanges();
+        expect(component.studentExam().id).toBe(studentExam.id);
 
         const courseId = 10;
         component.courseId = courseId;
+        plagiarismServiceSpy.mockClear();
 
-        const studentExam2 = { id: 2 } as StudentExam;
-        component.studentExam = studentExam2;
-        expect(component.studentExamGradeInfoDTO).toBeUndefined();
-        expect(component.studentExam.id).toBe(studentExam2.id);
-        expect(plagiarismServiceSpy).not.toHaveBeenCalled();
+        // After init, studentExamGradeInfoDTO should be set with the original studentExam
+        component.studentExamGradeInfoDTO = {} as StudentExamWithGradeDTO;
 
-        component.studentExam = studentExam;
-        fixture.changeDetectorRef.detectChanges();
-
-        expect(component.studentExam).toEqual(studentExam);
-        expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam);
-        expect(component.studentExam.id).toBe(studentExam.id);
+        // Switch to a different studentExam — the effect propagates the new value to studentExamGradeInfoDTO and reloads plagiarism cases with the new courseId
+        const studentExam3 = { id: 3, exam: studentExam.exam, user, exercises } as StudentExam;
+        fixture.componentRef.setInput('studentExam', studentExam3);
+        fixture.detectChanges();
+        await Promise.resolve();
+        expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam3);
+        expect(component.studentExam().id).toBe(studentExam3.id);
         expect(plagiarismServiceSpy).toHaveBeenCalledOnce();
         expect(plagiarismServiceSpy).toHaveBeenCalledWith(courseId, [1, 2, 3, 4]);
-
-        const studentExam3 = { id: 3 } as StudentExam;
-        component.studentExam = studentExam3;
-        expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam3);
-        expect(component.studentExam.id).toBe(studentExam3.id);
-        expect(plagiarismServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should correctly identify a TestExam', () => {
-        component.studentExam = studentExamForTestExam;
+        fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
-        expect(component.isTestExam).toBeTrue();
-        expect(component.testExamConduction).toBeTrue();
+        expect(component.isTestExam).toBe(true);
+        expect(component.testExamConduction).toBe(true);
 
         studentExamForTestExam.submitted = true;
-        component.studentExam = studentExamForTestExam;
+        fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
-        expect(component.isTestExam).toBeTrue();
-        expect(component.testExamConduction).toBeFalse();
+        expect(component.isTestExam).toBe(true);
+        expect(component.testExamConduction).toBe(false);
     });
 
     it('should correctly identify a RealExam', () => {
-        component.studentExam = studentExam;
+        fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
-        expect(component.isTestExam).toBeFalse();
-        expect(component.testExamConduction).toBeFalse();
-        expect(component.isTestRun).toBeFalse();
-        expect(component.testRunConduction).toBeFalse();
+        expect(component.isTestExam).toBe(false);
+        expect(component.testExamConduction).toBe(false);
+        expect(component.isTestRun).toBe(false);
+        expect(component.testRunConduction).toBe(false);
 
         studentExam.submitted = true;
-        component.studentExam = studentExam;
+        fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
-        expect(component.isTestExam).toBeFalse();
-        expect(component.testExamConduction).toBeFalse();
-        expect(component.isTestRun).toBeFalse();
-        expect(component.testRunConduction).toBeFalse();
+        expect(component.isTestExam).toBe(false);
+        expect(component.testExamConduction).toBe(false);
+        expect(component.isTestRun).toBe(false);
+        expect(component.testRunConduction).toBe(false);
     });
 
     it('should correctly determine if the results are published', () => {
-        component.studentExam = studentExam;
+        fixture.componentRef.setInput('studentExam', studentExam);
         component.testRunConduction = true;
-        expect(component.resultsArePublished).toBeFalse();
+        expect(component.resultsArePublished).toBe(false);
 
         component.testExamConduction = true;
         component.testRunConduction = false;
-        expect(component.resultsArePublished).toBeFalse();
+        expect(component.resultsArePublished).toBe(false);
 
         component.isTestRun = true;
         component.testExamConduction = false;
-        expect(component.resultsArePublished).toBeTrue();
+        expect(component.resultsArePublished).toBe(true);
 
         component.isTestExam = true;
         component.isTestRun = false;
-        expect(component.resultsArePublished).toBeTrue();
+        expect(component.resultsArePublished).toBe(true);
 
         component.isTestExam = false;
         // const publishResultsDate is in the past
-        expect(component.resultsArePublished).toBeTrue();
+        expect(component.resultsArePublished).toBe(true);
 
-        component.studentExam.exam!.publishResultsDate = dayjs().add(2, 'hours');
-        expect(component.resultsArePublished).toBeFalse();
+        component.studentExam().exam!.publishResultsDate = dayjs().add(2, 'hours');
+        expect(component.resultsArePublished).toBe(false);
     });
 
     it('should load exam summary when results are published', () => {
-        component.studentExam = studentExam;
-        const loadStudentExamGradeInfoForSummarySpy = jest.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
-        const isExamResultPublishedSpy = jest.spyOn(ExamUtils, 'isExamResultPublished').mockReturnValue(true);
+        fixture.componentRef.setInput('studentExam', studentExam);
+        const loadStudentExamGradeInfoForSummarySpy = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        const isExamResultPublishedSpy = vi.spyOn(ExamUtils, 'isExamResultPublished').mockReturnValue(true);
 
         component.ngOnInit();
 
@@ -390,51 +420,51 @@ describe('ExamResultSummaryComponent', () => {
 
     it('should correctly determine if it is after student review start', () => {
         const now = dayjs();
-        const dateSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
+        const dateSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
 
         component.isTestExam = true;
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBeTrue();
+        expect(component.isAfterStudentReviewStart).toBe(true);
 
         component.isTestExam = false;
         component.isTestRun = true;
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBeTrue();
+        expect(component.isAfterStudentReviewStart).toBe(true);
 
         component.isTestRun = false;
-        component.studentExam.exam!.examStudentReviewStart = examStudentReviewStart;
-        component.studentExam.exam!.examStudentReviewEnd = examStudentReviewEnd;
+        component.studentExam().exam!.examStudentReviewStart = examStudentReviewStart;
+        component.studentExam().exam!.examStudentReviewEnd = examStudentReviewEnd;
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBeTrue();
+        expect(component.isAfterStudentReviewStart).toBe(true);
 
-        component.studentExam.exam!.examStudentReviewStart = dayjs().add(30, 'minutes');
+        component.studentExam().exam!.examStudentReviewStart = dayjs().add(30, 'minutes');
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBeFalse();
+        expect(component.isAfterStudentReviewStart).toBe(false);
 
         expect(dateSpy).toHaveBeenCalled();
     });
 
     it('should correctly determine if it is before student review end', () => {
         const now = dayjs();
-        const dateSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
+        const dateSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
 
         component.isTestExam = true;
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBeTrue();
+        expect(component.isBeforeStudentReviewEnd).toBe(true);
 
         component.isTestExam = false;
         component.isTestRun = true;
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBeTrue();
+        expect(component.isBeforeStudentReviewEnd).toBe(true);
 
         component.isTestRun = false;
-        component.studentExam.exam!.examStudentReviewEnd = examStudentReviewEnd;
+        component.studentExam().exam!.examStudentReviewEnd = examStudentReviewEnd;
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBeTrue();
+        expect(component.isBeforeStudentReviewEnd).toBe(true);
 
-        component.studentExam.exam!.examStudentReviewEnd = dayjs().subtract(30, 'minutes');
+        component.studentExam().exam!.examStudentReviewEnd = dayjs().subtract(30, 'minutes');
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBeFalse();
+        expect(component.isBeforeStudentReviewEnd).toBe(false);
 
         expect(dateSpy).toHaveBeenCalled();
     });
@@ -497,13 +527,13 @@ describe('ExamResultSummaryComponent', () => {
         const EXAM_RESULTS_TITLE_ID = 'exam-results-title';
 
         it('should scroll to exam title when overview is not displayed', () => {
-            const scrollIntoViewSpy = jest.fn();
+            const scrollIntoViewSpy = vi.fn();
 
             // Call detectChanges first to render the DOM before mocking getElementById
             fixture.detectChanges();
 
             // To ensure there is no exam summary overview
-            const getElementByIdMock = jest.spyOn(document, 'getElementById').mockImplementation((id) => {
+            const getElementByIdMock = vi.spyOn(document, 'getElementById').mockImplementation((id) => {
                 if (id === EXAM_SUMMARY_RESULT_OVERVIEW_ID) {
                     return null;
                 }
@@ -524,15 +554,15 @@ describe('ExamResultSummaryComponent', () => {
         });
 
         it('should scroll to overview when it is displayed', () => {
-            const scrollIntoViewSpy = jest.fn();
+            const scrollIntoViewSpy = vi.fn();
 
-            component.studentExam = studentExam;
+            fixture.componentRef.setInput('studentExam', studentExam);
             component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam };
 
             // Call detectChanges first to render the DOM before mocking getElementById
             fixture.detectChanges();
 
-            const getElementByIdMock = jest.spyOn(document, 'getElementById').mockReturnValue({
+            const getElementByIdMock = vi.spyOn(document, 'getElementById').mockReturnValue({
                 scrollIntoView: scrollIntoViewSpy,
             } as unknown as HTMLElement);
 
@@ -550,9 +580,9 @@ describe('ExamResultSummaryComponent', () => {
                 1: { isCollapsed: false, displayExampleSolution: true } as ResultSummaryExerciseInfo,
             };
             exam.exampleSolutionPublicationDate = dayjs().subtract(1, 'hour');
-            const toggleShowSampleSolutionSpy = jest.spyOn(component, 'toggleShowSampleSolution');
+            const toggleShowSampleSolutionSpy = vi.spyOn(component, 'toggleShowSampleSolution');
 
-            fixture.changeDetectorRef.detectChanges();
+            fixture.detectChanges();
 
             const button = fixture.debugElement.nativeElement.querySelector(`#show-sample-solution-button-${textExercise.id}`);
             expect(button).toBeTruthy();
