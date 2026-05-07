@@ -15,3 +15,15 @@ export class SystemNotification {
     public expireDate?: dayjs.Dayjs;
     public type?: SystemNotificationType;
 }
+
+/**
+ * DTO containing the relevant information of a system notification.
+ */
+export interface SystemNotificationDTO {
+    id: number;
+    title?: string;
+    text?: string;
+    notificationDate?: dayjs.Dayjs;
+    expireDate?: dayjs.Dayjs;
+    type?: SystemNotificationType;
+}
