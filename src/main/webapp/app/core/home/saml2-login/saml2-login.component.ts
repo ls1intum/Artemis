@@ -23,7 +23,7 @@ export class Saml2LoginComponent implements OnInit {
         // If SAML2 flow was started, retry login.
         if (document.cookie.indexOf('SAML2flow=') >= 0) {
             // remove cookie
-            document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC; ; SameSite=Lax;';
+            document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax;';
             this.loginSAML2();
         }
     }
@@ -39,8 +39,9 @@ export class Saml2LoginComponent implements OnInit {
             })
             .catch((error: HttpErrorResponse) => {
                 if (error.status === 401) {
-                    // (re)set cookie
-                    document.cookie = 'SAML2flow=true; max-age=120; SameSite=Lax;';
+                    // (re)set cookie. path=/ matches the deletion in ngOnInit and APP_INITIALIZER so the
+                    // cookie can be reliably cleared from the document root after the IdP round-trip.
+                    document.cookie = 'SAML2flow=true; max-age=120; path=/; SameSite=Lax;';
                     // arbitrary by SAML2 HTTP Filter Chain secured URL
                     window.location.replace('/saml2/authenticate');
                 } else if (error.status === 403) {
