@@ -12,7 +12,7 @@
 /**
  * Request to refine multiple quiz questions at once using a single user prompt
  */
-export interface QuizQuestionBulkRefinementRequest {
+export interface QuizQuestionBulkRefinementRequest { 
     /**
      * The quiz questions to refine
      */
