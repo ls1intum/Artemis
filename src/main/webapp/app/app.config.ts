@@ -52,7 +52,7 @@ export const appConfig: ApplicationConfig = {
                 provide: MissingTranslationHandler,
                 useFactory: missingTranslationHandler,
             },
-            fallbackLang: 'en',
+            defaultLanguage: 'en',
         }),
         provideZoneChangeDetection(),
 
