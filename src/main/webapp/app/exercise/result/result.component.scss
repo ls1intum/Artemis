@@ -1,9 +1,12 @@
 span {
-    display: inline-block;
     line-height: 1.25;
 }
 
 .clickable-result span {
     text-decoration: underline;
     cursor: pointer;
+}
+
+.clickable-result span:not(:last-child) {
+    margin-right: 0.25em;
 }
