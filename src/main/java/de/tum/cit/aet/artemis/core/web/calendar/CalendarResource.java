@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.web;
+package de.tum.cit.aet.artemis.core.web.calendar;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -50,6 +50,10 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Lazy
 @Profile(PROFILE_CORE)
@@ -123,7 +127,7 @@ public class CalendarResource {
      * @throws EntityNotFoundException  {@code 404 (Not Found)} if no course exists for the provided courseId
      * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user associated to the token is not at least student in the course or if no user is associated to the token
      */
-    @GetMapping("courses/{courseId}/calendar-events-ics")
+    @GetMapping(value = "courses/{courseId}/calendar-events-ics", produces = "text/calendar")
     public ResponseEntity<String> getCalendarEventSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
             @RequestParam("filterOptions") Set<CalendarSubscriptionFilterOption> filterOptions, @RequestParam("language") Language language) {
         User user = userRepository.findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
@@ -199,6 +203,8 @@ public class CalendarResource {
      * @throws BadRequestException      {@code 400 (Bad Request)} if the monthKeys are empty or formatted incorrectly or if the timeZone is formatted incorrectly.
      */
     @GetMapping("courses/{courseId}/calendar-events")
+    @Operation(summary = "Get calendar events grouped by month", responses = {
+            @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/json", schema = @Schema(type = "object", additionalProperties = Schema.AdditionalPropertiesValue.USE_ADDITIONAL_PROPERTIES_ANNOTATION, additionalPropertiesSchema = CalendarEventDTO[].class))) })
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, List<CalendarEventDTO>>> getCalendarEventsOverlappingMonths(@PathVariable long courseId, @RequestParam List<String> monthKeys,
             @RequestParam String timeZone, @RequestParam Language language) {
