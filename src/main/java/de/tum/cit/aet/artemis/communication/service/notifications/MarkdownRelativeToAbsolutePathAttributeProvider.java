@@ -28,5 +28,11 @@ public class MarkdownRelativeToAbsolutePathAttributeProvider implements Attribut
                 attributes.put("href", baseUrl + href);
             }
         }
+        else if ("img".equals(tagName)) {
+            String src = attributes.get("src");
+            if (src != null && src.startsWith("/")) {
+                attributes.put("src", baseUrl + src);
+            }
+        }
     }
 }
