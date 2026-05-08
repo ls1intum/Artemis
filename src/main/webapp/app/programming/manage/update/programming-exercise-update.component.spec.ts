@@ -59,6 +59,8 @@ jest.mock('y-monaco', () => ({
     })),
 }));
 
+const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
+
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
     const course = { id: courseId } as Course;
@@ -370,16 +372,41 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             response$.next(new HttpResponse({ body: savedEntity }));
 
-            expect(router.navigate).toHaveBeenCalledWith([
-                'course-management',
-                courseId,
-                'programming-exercises',
-                savedEntity.id,
-                'code-editor',
-                RepositoryType.TEMPLATE,
-                savedEntity.templateParticipation!.id,
-            ]);
+            expect(router.navigate).toHaveBeenCalledWith(
+                ['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, savedEntity.templateParticipation!.id],
+                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
+            );
             expect(comp.isGeneratingWithAi()).toBeFalse();
+        });
+
+        it('should navigate to the exam template editor with auto-start state after AI exercise creation in exam mode', () => {
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.releaseDate = dayjs();
+            const exerciseGroup = new ExerciseGroup();
+            exerciseGroup.id = 3;
+            exerciseGroup.exam = { id: 9, course } as any;
+            entity.exerciseGroup = exerciseGroup;
+
+            const savedEntity = new ProgrammingExercise(undefined, exerciseGroup);
+            savedEntity.id = 7;
+            savedEntity.templateParticipation = { id: 11 } as any;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+
+            const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+
+            comp.saveExerciseWithAi();
+
+            response$.next(new HttpResponse({ body: savedEntity }));
+
+            expect(router.navigate).toHaveBeenCalledWith(
+                ['course-management', courseId, 'exams', 9, 'exercise-groups', 3, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, 11],
+                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
+            );
         });
 
         it('should fall back to regular save when hyperion is disabled', () => {
