@@ -75,17 +75,6 @@ public class RestTemplateConfiguration {
         return createShortTimeoutRestTemplate();
     }
 
-    /**
-     * Creates a RestTemplate that can be used to communicate with Aeolus
-     *
-     * @return a RestTemplate with short timeouts
-     */
-    @Bean
-    @Profile("aeolus | localci")
-    public RestTemplate aeolusRestTemplate() {
-        return createRestTemplate();
-    }
-
     @Bean
     @Conditional(IrisEnabled.class)
     public RestTemplate pyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
@@ -130,17 +119,6 @@ public class RestTemplateConfiguration {
     @Conditional(IrisEnabled.class)
     public RestTemplate shortTimeoutPyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createShortTimeoutRestTemplate());
-    }
-
-    /**
-     * Creates a RestTemplate that can be used to communicate with Aeolus
-     *
-     * @return a RestTemplate with short timeouts
-     */
-    @Bean
-    @Profile("aeolus | localci")
-    public RestTemplate shortTimeoutAeolusRestTemplate() {
-        return createShortTimeoutRestTemplate();
     }
 
     @NonNull

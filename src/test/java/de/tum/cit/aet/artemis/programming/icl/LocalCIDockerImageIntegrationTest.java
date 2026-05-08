@@ -167,7 +167,6 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     @AfterEach
     void tearDownRealDockerClient() throws Exception {
         RepositoryExportTestUtil.cleanupTrackedRepositories();
-        aeolusRequestMockProvider.reset();
         distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedBuildResultQueue().clear();
@@ -235,7 +234,8 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         programmingExercise.setProjectType(projectType);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.getBuildConfig().setBuildScript(null);
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(objectMapper.writeValueAsString(aeolusTemplateService.getDefaultWindfileFor(programmingExercise)));
+        programmingExercise.getBuildConfig()
+                .setBuildPlanConfiguration(objectMapper.writeValueAsString(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise)));
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);
     }
