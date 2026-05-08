@@ -332,7 +332,8 @@
                         "JAVA_BLACKBOX": "The package name must be a valid Java identifier. In addition, no dots are allowed in the package name of DejaGnu projects",
                         "GO": "The package name must be a valid Go identifier, e.g. \"exercise\".",
                         "DART": "The package name must be a lowercase Dart identifier, e.g. \"exercise01\"."
-                    }
+                    },
+                    "maxlength": "The package name must not exceed 100 characters."
                 },
                 "points": {
                     "undefined": "You need to specify the points.",

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ALLOWED_CHECKOUT_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PACKAGE_NAME_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.HashSet;
@@ -173,6 +174,9 @@ public class ProgrammingExerciseValidationService {
         // Check if package name is set
         if (programmingExercise.getPackageName() == null) {
             throw new BadRequestAlertException("The package name is invalid", "Exercise", "packagenameInvalid");
+        }
+        if (programmingExercise.getPackageName().length() > MAX_PACKAGE_NAME_LENGTH) {
+            throw new BadRequestAlertException("The package name is too long", "Exercise", "packagenameTooLong");
         }
 
         // Check if package name matches regex

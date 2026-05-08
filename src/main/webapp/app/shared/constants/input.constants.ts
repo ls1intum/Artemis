@@ -61,3 +61,5 @@ export const PACKAGE_NAME_PATTERN_FOR_DART =
  * Keep in sync with MAX_PROBLEM_STATEMENT_LENGTH in ProgrammingExerciseCreationUpdateService.
  */
 export const MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH = 100 * 1000;
+/** Maximum package name character length. Keep in sync with MAX_PACKAGE_NAME_LENGTH in Constants.java **/
+export const MAX_PACKAGE_NAME_LENGTH = 100;

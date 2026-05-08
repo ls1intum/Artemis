@@ -94,6 +94,7 @@
                     required
                     type="text"
                     [pattern]="programmingExerciseCreationConfig.packageNamePattern"
+                    [maxlength]="MAX_PACKAGE_NAME_LENGTH"
                     class="form-control"
                     name="packageName"
                     id="field_packageName"
@@ -102,7 +103,7 @@
                     #packageName="ngModel"
                     [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
                 />
-                @for (e of packageName.errors! | keyvalue | removekeys: ['required']; track e) {
+                @for (e of packageName.errors! | keyvalue | removekeys: ['required', 'maxlength']; track e) {
                     @if (packageName.invalid && (packageName.dirty || packageName.touched)) {
                         <div class="alert alert-danger">
                             @if (programmingExercise.projectType === ProjectType.MAVEN_BLACKBOX) {
@@ -114,6 +115,11 @@
                         </div>
                     }
                 }
+                @if (packageName.errors?.['maxlength'] && (packageName.dirty || packageName.touched)) {
+                    <div class="alert alert-danger">
+                        <div jhiTranslate="artemisApp.exercise.form.packageName.maxlength"></div>
+                    </div>
+                }
             </div>
         }
         @if (programmingExercise.programmingLanguage === ProgrammingLanguage.SWIFT && programmingExercise.projectType === ProjectType.XCODE) {
@@ -123,6 +129,7 @@
                     required
                     type="text"
                     [pattern]="APP_NAME_PATTERN_FOR_SWIFT"
+                    [maxlength]="MAX_PACKAGE_NAME_LENGTH"
                     class="form-control"
                     name="packageName"
                     id="field_appName"
@@ -131,12 +138,17 @@
                     #packageName="ngModel"
                     [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
                 />
-                @for (e of packageName.errors! | keyvalue | removekeys: ['required']; track e) {
+                @for (e of packageName.errors! | keyvalue | removekeys: ['required', 'maxlength']; track e) {
                     @if (packageName.invalid && (packageName.dirty || packageName.touched)) {
                         <div class="alert alert-danger">
                             <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
                         </div>
                     }
+                }
+                @if (packageName.errors?.['maxlength'] && (packageName.dirty || packageName.touched)) {
+                    <div class="alert alert-danger">
+                        <div jhiTranslate="artemisApp.exercise.form.packageName.maxlength"></div>
+                    </div>
                 }
             </div>
         }
