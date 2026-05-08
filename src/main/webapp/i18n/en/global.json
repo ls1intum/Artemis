@@ -69,7 +69,11 @@
                 "faqsTitle": "FAQs",
                 "faqsDescription": "Search frequently asked questions",
                 "examsTitle": "Exams",
-                "examsDescription": "Search exams across your courses"
+                "examsDescription": "Search exams across your courses",
+                "coursesTitle": "Courses",
+                "coursesDescription": "Search courses you are enrolled in",
+                "messagesTitle": "Messages",
+                "messagesDescription": "Search messages in public channels"
             },
             "types": {
                 "filter": "#Filter",

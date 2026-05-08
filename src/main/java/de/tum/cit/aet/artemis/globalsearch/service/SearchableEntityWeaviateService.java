@@ -19,11 +19,13 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateDateUtil;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
@@ -342,6 +344,79 @@ public class SearchableEntityWeaviateService {
         }
         catch (Exception e) {
             log.error("Failed to upsert channel {} in Weaviate: {}", dto.channelId(), e.getMessage(), e);
+        }
+    }
+
+    // ----- Course sync -----
+
+    /**
+     * Asynchronously upserts a course into the unified collection.
+     *
+     * @param dto the extracted course data
+     */
+    @Async
+    public void upsertCourseAsync(CourseSearchableEntityDTO dto) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
+        if (dto == null || dto.courseId() == null) {
+            log.warn("Cannot upsert course without an ID");
+            return;
+        }
+        try {
+            upsertRow(SearchableEntitySchema.TypeValues.COURSE, dto.courseId(), dto.toPropertyMap());
+            log.debug("Successfully upserted course {} '{}' in Weaviate", dto.courseId(), dto.title());
+        }
+        catch (Exception e) {
+            log.error("Failed to upsert course {} in Weaviate: {}", dto.courseId(), e.getMessage(), e);
+        }
+    }
+
+    // ----- Post sync -----
+
+    /**
+     * Asynchronously upserts a post (message) into the unified collection.
+     *
+     * @param dto the extracted post data
+     */
+    @Async
+    public void upsertPostAsync(PostSearchableEntityDTO dto) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
+        if (dto == null || dto.postId() == null) {
+            log.warn("Cannot upsert post without an ID");
+            return;
+        }
+        try {
+            upsertRow(SearchableEntitySchema.TypeValues.POST, dto.postId(), dto.toPropertyMap());
+            log.debug("Successfully upserted post {} in Weaviate", dto.postId());
+        }
+        catch (Exception e) {
+            log.error("Failed to upsert post {} in Weaviate: {}", dto.postId(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Asynchronously deletes every post row belonging to the given channel. Invoked when
+     * a channel is deleted or archived so posts don't remain searchable.
+     *
+     * @param channelId the channel id
+     */
+    @Async
+    public void deleteAllPostsForChannelAsync(long channelId) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
+        try {
+            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            var filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
+                    Filter.property(SearchableEntitySchema.Properties.CHANNEL_ID).eq(channelId));
+            var result = collection.data.deleteMany(filter);
+            log.debug("Deleted {} post rows for channel {}", result.successful(), channelId);
+        }
+        catch (Exception e) {
+            log.error("Failed to delete post rows for channel {}: {}", channelId, e.getMessage(), e);
         }
     }
 

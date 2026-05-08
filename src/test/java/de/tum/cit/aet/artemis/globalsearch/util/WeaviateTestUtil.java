@@ -579,4 +579,100 @@ public final class WeaviateTestUtil {
             assertThat(properties).as("Channel %d should not exist in Weaviate", channelId).isNull();
         });
     }
+
+    // -- Course utilities --
+
+    /**
+     * Queries Weaviate for the course with the given ID and returns its properties,
+     * or {@code null} if no course was found.
+     */
+    public static Map<String, Object> queryCourseProperties(WeaviateService weaviateService, long courseId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return null;
+        }
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        var response = collection.query
+                .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.COURSE),
+                        Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(courseId))).limit(1));
+        if (response.objects().isEmpty()) {
+            return null;
+        }
+        return response.objects().getFirst().properties();
+    }
+
+    /**
+     * Asserts that the course exists in Weaviate and its core properties match.
+     */
+    public static void assertCourseExistsInWeaviate(WeaviateService weaviateService, Course course) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryCourseProperties(weaviateService, course.getId());
+            assertThat(properties).as("Course %d should exist in Weaviate", course.getId()).isNotNull();
+
+            assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(course.getTitle());
+            assertThat(((Number) properties.get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(course.getId());
+            assertThat(((Number) properties.get(SearchableEntitySchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
+        });
+    }
+
+    /**
+     * Asserts that no course with the given ID exists in Weaviate.
+     */
+    public static void assertCourseNotInWeaviate(WeaviateService weaviateService, long courseId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryCourseProperties(weaviateService, courseId);
+            assertThat(properties).as("Course %d should not exist in Weaviate", courseId).isNull();
+        });
+    }
+
+    // -- Post utilities --
+
+    /**
+     * Queries Weaviate for the post with the given ID and returns its properties,
+     * or {@code null} if no post was found.
+     */
+    public static Map<String, Object> queryPostProperties(WeaviateService weaviateService, long postId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return null;
+        }
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        var response = collection.query
+                .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
+                        Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(postId))).limit(1));
+        if (response.objects().isEmpty()) {
+            return null;
+        }
+        return response.objects().getFirst().properties();
+    }
+
+    /**
+     * Asserts that the post exists in Weaviate.
+     */
+    public static void assertPostExistsInWeaviate(WeaviateService weaviateService, long postId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryPostProperties(weaviateService, postId);
+            assertThat(properties).as("Post %d should exist in Weaviate", postId).isNotNull();
+        });
+    }
+
+    /**
+     * Asserts that no post with the given ID exists in Weaviate.
+     */
+    public static void assertPostNotInWeaviate(WeaviateService weaviateService, long postId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryPostProperties(weaviateService, postId);
+            assertThat(properties).as("Post %d should not exist in Weaviate", postId).isNull();
+        });
+    }
 }

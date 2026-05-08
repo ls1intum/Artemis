@@ -5,11 +5,13 @@ import {
     faBook,
     faCalendarCheck,
     faCheckDouble,
+    faComment,
     faComments,
     faCube,
     faFileLines,
     faFileUpload,
     faFont,
+    faGraduationCap,
     faHashtag,
     faKeyboard,
     faProjectDiagram,
@@ -115,6 +117,15 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     // Searchable entities for initial view
     protected searchableEntities: SearchableEntity[] = [
         {
+            id: 'courses',
+            title: 'global.search.entities.coursesTitle',
+            description: 'global.search.entities.coursesDescription',
+            icon: faGraduationCap,
+            type: 'filter',
+            enabled: true,
+            filterTag: 'course',
+        },
+        {
             id: 'exercises',
             title: 'global.search.entities.exercisesTitle',
             description: 'global.search.entities.exercisesDescription',
@@ -140,6 +151,15 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             type: 'filter',
             enabled: true,
             filterTag: 'channel',
+        },
+        {
+            id: 'messages',
+            title: 'global.search.entities.messagesTitle',
+            description: 'global.search.entities.messagesDescription',
+            icon: faComment,
+            type: 'filter',
+            enabled: true,
+            filterTag: 'post',
         },
         {
             id: 'faqs',
@@ -197,11 +217,17 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         if (type === 'channel') {
             return faHashtag;
         }
+        if (type === 'post') {
+            return faComment;
+        }
         if (type === 'faq') {
             return faQuestionCircle;
         }
         if (type === 'exam') {
             return this.faCalendarCheck;
+        }
+        if (type === 'course') {
+            return faGraduationCap;
         }
         return this.faQuestion;
     }
@@ -214,6 +240,9 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         }
 
         switch (result.type) {
+            case 'course':
+                this.router.navigate(['/courses', courseId]);
+                break;
             case 'exercise':
                 if (result.id) this.navigateToExercise(result, courseId);
                 break;
@@ -231,6 +260,9 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
                 break;
             case 'channel':
                 if (result.id) this.navigateToChannel(courseId, result.id);
+                break;
+            case 'post':
+                this.navigateToPost(result, courseId);
                 break;
         }
 
@@ -289,6 +321,13 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     private navigateToChannel(courseId: string, channelId: string) {
         this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId } });
+    }
+
+    private navigateToPost(result: GlobalSearchResult, courseId: string) {
+        const channelId = result.metadata?.['channelId'];
+        if (channelId) {
+            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, messageId: result.id } });
+        }
     }
 
     @HostListener('window:keydown', ['$event'])

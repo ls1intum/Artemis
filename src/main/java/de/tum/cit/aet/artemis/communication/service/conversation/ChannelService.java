@@ -77,6 +77,8 @@ public class ChannelService {
             }
             else {
                 searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
+                // Posts from non-indexable channels (archived / no longer public) must also be removed
+                searchableEntityWeaviateService.deleteAllPostsForChannelAsync(channel.getId());
             }
         }
     }
@@ -218,6 +220,7 @@ public class ChannelService {
         if (channel != null) {
             if (searchableEntityWeaviateService != null) {
                 searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
+                searchableEntityWeaviateService.deleteAllPostsForChannelAsync(channel.getId());
             }
             conversationService.deleteConversation(channel.getId());
         }

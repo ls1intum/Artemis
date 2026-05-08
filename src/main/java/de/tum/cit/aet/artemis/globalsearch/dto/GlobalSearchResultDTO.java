@@ -48,6 +48,8 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
             case SearchableEntitySchema.TypeValues.EXAM -> fromExamRow(properties, courseNameById, staffCourseIds);
             case SearchableEntitySchema.TypeValues.FAQ -> fromFaqRow(properties, courseNameById);
             case SearchableEntitySchema.TypeValues.CHANNEL -> fromChannelRow(properties, courseNameById);
+            case SearchableEntitySchema.TypeValues.COURSE -> fromCourseRow(properties);
+            case SearchableEntitySchema.TypeValues.POST -> fromPostRow(properties, courseNameById);
             default -> null;
         };
     }
@@ -158,6 +160,30 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
 
         return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.CHANNEL, getString(properties, SearchableEntitySchema.Properties.TITLE),
                 getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Channel", metadata);
+    }
+
+    private static GlobalSearchResultDTO fromCourseRow(Map<String, Object> properties) {
+        Map<String, Object> metadata = new HashMap<>();
+        // For courses, courseId equals entityId — no course context needed since the result IS a course
+        Long courseId = getLong(properties, SearchableEntitySchema.Properties.ENTITY_ID);
+        if (courseId != null) {
+            metadata.put("courseId", courseId);
+        }
+
+        return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.COURSE, getString(properties, SearchableEntitySchema.Properties.TITLE),
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Course", metadata);
+    }
+
+    private static GlobalSearchResultDTO fromPostRow(Map<String, Object> properties, Map<Long, String> courseNameById) {
+        Map<String, Object> metadata = new HashMap<>();
+        addCourseContext(properties, metadata, courseNameById);
+        Long channelId = getLong(properties, SearchableEntitySchema.Properties.CHANNEL_ID);
+        if (channelId != null) {
+            metadata.put("channelId", channelId);
+        }
+
+        return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.POST, getString(properties, SearchableEntitySchema.Properties.TITLE),
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Message", metadata);
     }
 
     private static void addCourseContext(Map<String, Object> properties, Map<String, Object> metadata, Map<Long, String> courseNameById) {

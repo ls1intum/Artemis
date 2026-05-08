@@ -54,6 +54,8 @@ import de.tum.cit.aet.artemis.core.service.course.CourseResetService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 
 /**
@@ -112,9 +114,12 @@ public class AdminCourseResource {
 
     private final CourseOperationProgressService progressService;
 
+    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+
     public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
             FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseAccessService courseAccessService,
-            CourseLoadService courseLoadService, CourseResetService courseResetService, CourseOperationProgressService progressService) {
+            CourseLoadService courseLoadService, CourseResetService courseResetService, CourseOperationProgressService progressService,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
@@ -127,6 +132,7 @@ public class AdminCourseResource {
         this.courseLoadService = courseLoadService;
         this.courseResetService = courseResetService;
         this.progressService = progressService;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService.orElse(null);
     }
 
     /**
@@ -214,6 +220,10 @@ public class AdminCourseResource {
         }
 
         channelService.createDefaultChannels(createdCourse);
+
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(createdCourse));
+        }
 
         return ResponseEntity.created(new URI("/api/core/courses/" + createdCourse.getId())).body(createdCourse);
     }

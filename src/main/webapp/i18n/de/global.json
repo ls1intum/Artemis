@@ -69,7 +69,11 @@
                 "faqsTitle": "FAQs",
                 "faqsDescription": "Häufig gestellte Fragen durchsuchen",
                 "examsTitle": "Klausuren",
-                "examsDescription": "Klausuren in Ihren Kursen durchsuchen"
+                "examsDescription": "Klausuren in Ihren Kursen durchsuchen",
+                "coursesTitle": "Kurse",
+                "coursesDescription": "Eingeschriebene Kurse durchsuchen",
+                "messagesTitle": "Nachrichten",
+                "messagesDescription": "Nachrichten in öffentlichen Kanälen durchsuchen"
             },
             "types": {
                 "filter": "#Filter",
