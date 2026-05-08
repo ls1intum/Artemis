@@ -120,8 +120,6 @@ describe('ModelingAssessmentComponent', () => {
     };
 
     beforeEach(() => {
-        vi.useFakeTimers();
-
         TestBed.configureTestingModule({
             imports: [MockModule(FormsModule), ModelingAssessmentComponent, ScoreDisplayComponent, ModelingExplanationEditorComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
@@ -140,7 +138,6 @@ describe('ModelingAssessmentComponent', () => {
 
     afterEach(() => {
         fixture.destroy();
-        vi.useRealTimers();
         vi.restoreAllMocks();
     });
 
@@ -349,7 +346,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('umlModel', initialModel);
         fixture.detectChanges();
         await comp.ngAfterViewInit();
-        await vi.advanceTimersByTimeAsync(0);
+        await new Promise((r) => setTimeout(r, 0));
         expect(comp.apollonEditor).not.toBeNull();
 
         // Verify initial model was set
@@ -361,7 +358,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('umlModel', newModel);
         fixture.detectChanges();
         await fixture.whenStable();
-        await vi.advanceTimersByTimeAsync(0);
+        await new Promise((r) => setTimeout(r, 0));
 
         // Verify the component's input was updated
         expect(comp.umlModel()).toBe(newModel);
@@ -420,7 +417,7 @@ describe('ModelingAssessmentComponent', () => {
 
         fixture.detectChanges();
         await comp.ngAfterViewInit();
-        await vi.advanceTimersByTimeAsync(0);
+        await new Promise((r) => setTimeout(r, 0));
 
         expect(comp.apollonEditor).toBeDefined();
 
@@ -442,7 +439,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
 
         await fixture.whenStable();
-        await vi.advanceTimersByTimeAsync(0);
+        await new Promise((r) => setTimeout(r, 0));
 
         expect(comp.apollonEditor).not.toBeNull();
 
