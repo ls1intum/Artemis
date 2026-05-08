@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -557,7 +558,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         byte[] pngBytes = createMinimalPng();
         Path markdownDir = FilePathConverter.getMarkdownFilePath();
         Files.createDirectories(markdownDir);
-        Files.write(markdownDir.resolve(FIXTURE_IMAGE_NAME), pngBytes);
+        FileUtils.writeByteArrayToFile(markdownDir.resolve(FIXTURE_IMAGE_NAME).toFile(), pngBytes);
 
         var body = new ProblemStatementRenderRequestDTO("![img](/api/core/files/markdown/" + FIXTURE_IMAGE_NAME + ")", null, null, "en", false, false, null, true);
 
