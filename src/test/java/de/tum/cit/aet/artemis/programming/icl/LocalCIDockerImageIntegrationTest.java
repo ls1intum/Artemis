@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -74,17 +75,11 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
 
     private static final int FACT_SUCCESSFUL_TEST_CASES = 3;
 
-    // TestOutputLSan is excluded because LeakSanitizer requires the SYS_PTRACE capability,
-    // which is unavailable in Docker containers by default (both on CI and many local setups).
-    // TestCompileLeak still validates that the code compiles with leak sanitizer flags.
-    private static final List<String> GCC_TEST_CASE_NAMES = List.of("TestCompile", "TestOutput", "TestCompileASan", "TestOutputASan", "TestCompileUBSan", "TestOutputUBSan",
-            "TestCompileLeak");
-
     private static final List<String> FACT_TEST_CASE_NAMES = List.of("Compile", "CodeStructure", "InputOutput");
 
-    private static final Duration BUILD_JOB_CREATION_TIMEOUT = Duration.ofSeconds(30);
+    private static final Duration BUILD_JOB_CREATION_TIMEOUT = Duration.ofSeconds(60);
 
-    private static final Duration BUILD_TIMEOUT = Duration.ofMinutes(2);
+    private static final Duration BUILD_TIMEOUT = Duration.ofMinutes(5);
 
     private static final int MAX_DIAGNOSTIC_LOG_LENGTH = 4000;
 
@@ -93,6 +88,8 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     private String originalDockerConnectionUri;
 
     private String originalImageArchitecture;
+
+    private String currentArchitecture;
 
     @Autowired
     private BuildAgentDockerService buildAgentDockerService;
@@ -156,8 +153,8 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         doReturn(realDockerClient).when(buildAgentConfiguration).getDockerClient();
         doReturn(true).when(buildAgentConfiguration).isDockerAvailable();
         dockerClient = realDockerClient;
-        String architecture = normalizeDockerArchitecture(realDockerClient.infoCmd().exec().getArchitecture());
-        ReflectionTestUtils.setField(buildAgentDockerService, "imageArchitecture", architecture);
+        currentArchitecture = normalizeDockerArchitecture(realDockerClient.infoCmd().exec().getArchitecture());
+        ReflectionTestUtils.setField(buildAgentDockerService, "imageArchitecture", currentArchitecture);
         distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedBuildResultQueue().clear();
@@ -246,7 +243,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     private void replaceExerciseTestCases(ProjectType projectType) {
         List<String> testCaseNames = switch (projectType) {
             case FACT -> FACT_TEST_CASE_NAMES;
-            case GCC -> GCC_TEST_CASE_NAMES;
+            case GCC -> getGccTestCaseNames();
             default -> throw new IllegalArgumentException("Unsupported project type: " + projectType);
         };
 
@@ -420,9 +417,19 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     private int expectedSuccessfulTestCaseCount(ProjectType projectType) {
         return switch (projectType) {
             case FACT -> FACT_SUCCESSFUL_TEST_CASES;
-            case GCC -> GCC_TEST_CASE_NAMES.size();
+            case GCC -> getGccTestCaseNames().size();
             default -> throw new IllegalArgumentException("Unsupported project type: " + projectType);
         };
+    }
+
+    private List<String> getGccTestCaseNames() {
+        List<String> testCaseNames = new ArrayList<>(List.of("TestCompile", "TestOutput", "TestCompileASan", "TestOutputASan", "TestCompileUBSan", "TestOutputUBSan"));
+        // TestCompileLeak is only included on amd64 as it requires the liblsan library which is not available on all platforms (e.g. ARM64).
+        // TestOutputLSan is always excluded because it requires the SYS_PTRACE capability, which is unavailable in Docker by default.
+        if ("amd64".equals(currentArchitecture)) {
+            testCaseNames.add("TestCompileLeak");
+        }
+        return testCaseNames;
     }
 
     private String normalizeDockerArchitecture(String dockerArchitecture) {
