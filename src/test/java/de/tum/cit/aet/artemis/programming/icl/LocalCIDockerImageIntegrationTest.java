@@ -77,9 +77,9 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
 
     private static final List<String> FACT_TEST_CASE_NAMES = List.of("Compile", "CodeStructure", "InputOutput");
 
-    private static final Duration BUILD_JOB_CREATION_TIMEOUT = Duration.ofSeconds(60);
+    private static final Duration BUILD_JOB_CREATION_TIMEOUT = Duration.ofSeconds(30);
 
-    private static final Duration BUILD_TIMEOUT = Duration.ofMinutes(5);
+    private static final Duration BUILD_TIMEOUT = Duration.ofMinutes(3);
 
     private static final int MAX_DIAGNOSTIC_LOG_LENGTH = 4000;
 
