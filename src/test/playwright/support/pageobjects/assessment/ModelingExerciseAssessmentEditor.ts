@@ -44,11 +44,21 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
 
     async submit() {
         await this.closeAssessmentPanel();
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/modeling/modeling-submissions/*/result/*/assessment*`);
-        await super.submitWithoutInterception();
-        const response = await responsePromise;
-        expect(response.status()).toBe(200);
-        return response;
+        // Retry on multi-node 5xx flakes (Hazelcast Result.feedbacks ordered-list invalidation lag).
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const responsePromise = this.page.waitForResponse(`${BASE_API}/modeling/modeling-submissions/*/result/*/assessment*`);
+            await super.submitWithoutInterception();
+            const response = await responsePromise;
+            if (response.status() < 400) {
+                return response;
+            }
+            if (attempt === 2) {
+                expect(response.status()).toBe(200);
+                return response;
+            }
+            await this.page.waitForTimeout(1500);
+        }
+        throw new Error('ModelingExerciseAssessmentEditor.submit exhausted retries');
     }
 
     private getNextAssessmentField() {

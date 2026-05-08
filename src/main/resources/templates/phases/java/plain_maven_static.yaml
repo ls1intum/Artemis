@@ -1,0 +1,11 @@
+- name: maven
+  script: mvn clean test
+- name: static_analysis
+  script: 'mvn spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd'
+  forceRun: true
+  resultPaths:
+    - target/spotbugsXml.xml
+    - 'target/checkstyle-result.xml'
+    - target/pmd.xml
+    - target/cpd.xml
+    - '**/target/surefire-reports/*.xml'

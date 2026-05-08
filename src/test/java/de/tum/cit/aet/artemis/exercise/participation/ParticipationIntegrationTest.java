@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,12 +29,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
@@ -47,8 +46,10 @@ import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -64,6 +65,10 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -181,6 +186,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Autowired
     private LearnerProfileUtilService learnerProfileUtilService;
 
+    @Autowired
+    private PageableSearchUtilService pageableSearchUtilService;
+
+    @Captor
     private ArgumentCaptor<Result> resultCaptor;
 
     private Course course;
@@ -1125,145 +1134,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getAllParticipationsForExercise() throws Exception {
-        participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-        participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
-        StudentParticipation testParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
-        testParticipation.setPracticeMode(true);
-        participationRepo.save(testParticipation);
-        var participations = request.getList("/api/exercise/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
-        assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
-                .allMatch(participation -> participation.getStudent().isPresent()).as("No submissions should exist for participations")
-                .allMatch(participation -> participation.getSubmissionCount() == null || participation.getSubmissionCount() == 0);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getAllParticipationsForExercise_withLatestSubmissionResult() throws Exception {
-        List<User> students = IntStream.range(1, 5).mapToObj(i -> userUtilService.getUserByLogin(TEST_PREFIX + "student" + i)).toList();
-        participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-
-        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
-        Result result1 = participationUtilService.createSubmissionAndResult(participation, 42, true);
-        Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
-        result2.setAssessmentType(AssessmentType.MANUAL);
-        resultRepository.save(result2);
-        Result result3 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
-
-        Submission onlySubmission = textExerciseUtilService.createSubmissionForTextExercise(textExercise, students.get(2), "asdf");
-
-        StudentParticipation testParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student4");
-        testParticipation.setPracticeMode(true);
-        participationRepo.save(testParticipation);
-
-        final var params = new LinkedMultiValueMap<String, String>();
-        params.add("withLatestResults", "true");
-        var participations = request.getList("/api/exercise/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
-        assertThat(participations).as("Exactly 4 participations are returned").hasSize(4).as("Only participation that has student are returned")
-                .allMatch(p -> p.getStudent().isPresent());
-        StudentParticipation receivedOnlyParticipation = participations.stream().filter(p -> p.getParticipant().equals(students.getFirst())).findFirst().orElseThrow();
-        StudentParticipation receivedParticipationWithResult = participations.stream().filter(p -> p.getParticipant().equals(students.get(1))).findFirst().orElseThrow();
-        StudentParticipation receivedParticipationWithOnlySubmission = participations.stream().filter(p -> p.getParticipant().equals(students.get(2))).findFirst().orElseThrow();
-        StudentParticipation receivedTestParticipation = participations.stream().filter(p -> p.getParticipant().equals(students.get(3))).findFirst().orElseThrow();
-        assertThat(receivedOnlyParticipation.getSubmissions()).isEmpty();
-        assertThat(receivedOnlyParticipation.getSubmissionCount()).isZero();
-
-        assertThat(participationUtilService.getResultsForParticipation(receivedParticipationWithResult)).containsExactlyInAnyOrder(result3);
-        assertThat(receivedParticipationWithResult.getSubmissions()).containsExactly(result1.getSubmission());
-        assertThat(receivedParticipationWithResult.getSubmissionCount()).isEqualTo(1);
-
-        assertThat(receivedParticipationWithOnlySubmission.getSubmissions().iterator().next().getResults()).isEmpty();
-        assertThat(receivedParticipationWithOnlySubmission.getSubmissions()).containsExactlyInAnyOrder(onlySubmission);
-        assertThat(receivedParticipationWithOnlySubmission.getSubmissionCount()).isEqualTo(1);
-
-        assertThat(receivedTestParticipation.getSubmissions()).isEmpty();
-        assertThat(receivedTestParticipation.getSubmissionCount()).isZero();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getAllParticipationsForExercise_withLatestResults_forQuizExercise() throws Exception {
-        var quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), QuizMode.INDIVIDUAL, course);
-        course.addExercises(quizExercise);
-        courseRepository.save(course);
-        exerciseRepository.save(quizExercise);
-
-        final var login = TEST_PREFIX + "student1";
-        var participation = participationUtilService.createAndSaveParticipationForExercise(quizExercise, login);
-        var result1 = participationUtilService.createSubmissionAndResult(participation, 42, true);
-        var notGradedResult = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
-        notGradedResult.setRated(false);
-        resultRepository.save(notGradedResult);
-
-        final var params = new LinkedMultiValueMap<String, String>();
-        params.add("withLatestResults", "true");
-        var participations = request.getList("/api/exercise/exercises/" + quizExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
-
-        var receivedParticipation = participations.stream().filter(p -> p.getParticipantIdentifier().equals(login)).findFirst().orElseThrow();
-
-        assertThat(participationUtilService.getResultsForParticipation(receivedParticipation)).containsOnly(notGradedResult);
-        assertThat(receivedParticipation.getSubmissions()).containsOnly(result1.getSubmission());
-        assertThat(receivedParticipation.getSubmissionCount()).isEqualTo(1);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getAllParticipationsForExercise_withLatestResult_multipleAssessments() throws Exception {
-        var participation1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-        var participation2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
-        var participation3 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
-        var submission1 = participationUtilService.addSubmission(participation1, new TextSubmission());
-        var submission2 = participationUtilService.addSubmission(participation2, new TextSubmission());
-        var submission3 = participationUtilService.addSubmission(participation3, new TextSubmission());
-        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission1);
-        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, submission1);
-        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, submission2);
-        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, submission2);
-        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, submission3);
-        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission3);
-        final var params = new LinkedMultiValueMap<String, String>();
-        params.add("withLatestResults", "true");
-        var participations = request.getList("/api/exercise/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
-        assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
-                .allMatch(p -> p.getStudent().isPresent()).as("Each participation should have 1 submission").allMatch(p -> p.getSubmissionCount() == 1);
-        var recievedParticipation1 = participations.stream().filter(participation -> participation.getParticipant().equals(participation1.getParticipant())).findAny();
-        var recievedParticipation2 = participations.stream().filter(participation -> participation.getParticipant().equals(participation2.getParticipant())).findAny();
-        var recievedParticipation3 = participations.stream().filter(participation -> participation.getParticipant().equals(participation3.getParticipant())).findAny();
-        assertThat(recievedParticipation1).hasValueSatisfying(participation -> assertThat(participationUtilService.getResultsForParticipation(participation)).hasSize(1));
-        assertThat(recievedParticipation2).hasValueSatisfying(participation -> assertThat(participationUtilService.getResultsForParticipation(participation)).hasSize(1));
-        assertThat(recievedParticipation3).hasValueSatisfying(participation -> assertThat(participationUtilService.getResultsForParticipation(participation)).hasSize(1));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
-    void getAllParticipationsForExercise_NotTutorInCourse() throws Exception {
-        request.getList("/api/exercise/exercises/" + textExercise.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getAllParticipationsForExamExercise_asTutor_forbidden() throws Exception {
-        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
-        TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
-        examTextExercise = exerciseRepository.save(examTextExercise);
-        request.getList("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getAllParticipationsForExamExercise_asInstructor_success() throws Exception {
-        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
-        TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
-        examTextExercise = exerciseRepository.save(examTextExercise);
-        participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student1");
-        var participations = request.getList("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
-        assertThat(participations).hasSize(1);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateParticipation() throws Exception {
         var participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
@@ -2065,6 +1935,335 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var participationFromServer = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(quizEx, TEST_PREFIX + "student1");
             assertThat(participationUtilService.getResultsForParticipation(participation)).as("No result was added to the participation").hasSize(0);
             assertThat(participationFromServer.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
+        }
+    }
+
+    // --------------------------------------------------
+    // Paginated participation endpoint tests
+    // --------------------------------------------------
+
+    @Nested
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    class PaginatedParticipationEndpoints {
+
+        private String scoresUrl;
+
+        private String managementUrl;
+
+        @BeforeEach
+        void setupParticipations() {
+            scoresUrl = "/api/exercise/exercises/" + textExercise.getId() + "/participations/scores";
+            managementUrl = "/api/exercise/exercises/" + textExercise.getId() + "/participations/page";
+        }
+
+        private ParticipationScoreSearchDTO buildScoreSearch(String searchTerm, String filterProp, String sortedColumn, SortingOrder order) {
+            return new ParticipationScoreSearchDTO(0, 50, order, sortedColumn, searchTerm, filterProp, null, null);
+        }
+
+        private ParticipationSearchDTO buildParticipationSearch(String searchTerm, String filterProp, String sortedColumn, SortingOrder order) {
+            return new ParticipationSearchDTO(0, 50, order, sortedColumn, searchTerm, filterProp);
+        }
+
+        // ---- Scores endpoint tests ----
+
+        @Test
+        void getParticipationScores_noFilter() throws Exception {
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+
+            var search = buildScoreSearch("", "All", "id", SortingOrder.ASCENDING);
+            var results = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(2);
+        }
+
+        @Test
+        void getParticipationScores_searchByStudentLogin() throws Exception {
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+
+            var search = buildScoreSearch("student1", "All", "id", SortingOrder.ASCENDING);
+            var results = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().participantIdentifier()).contains("student1");
+        }
+
+        @Test
+        void getParticipationScores_filterSuccessful() throws Exception {
+            var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            var r1 = participationUtilService.createSubmissionAndResult(p1, 100, true);
+            r1.setSuccessful(true);
+            r1.setAssessmentType(AssessmentType.AUTOMATIC);
+            resultRepository.save(r1);
+
+            var p2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            var r2 = participationUtilService.createSubmissionAndResult(p2, 30, true);
+            r2.setSuccessful(false);
+            r2.setAssessmentType(AssessmentType.AUTOMATIC);
+            resultRepository.save(r2);
+
+            var search = buildScoreSearch("", "Successful", "id", SortingOrder.ASCENDING);
+            var results = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().participantIdentifier()).contains("student1");
+        }
+
+        @Test
+        void getParticipationScores_filterUnsuccessful() throws Exception {
+            var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            var r1 = participationUtilService.createSubmissionAndResult(p1, 100, true);
+            r1.setSuccessful(true);
+            r1.setAssessmentType(AssessmentType.AUTOMATIC);
+            resultRepository.save(r1);
+
+            var p2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            var r2 = participationUtilService.createSubmissionAndResult(p2, 30, true);
+            r2.setSuccessful(false);
+            r2.setAssessmentType(AssessmentType.AUTOMATIC);
+            resultRepository.save(r2);
+
+            var search = buildScoreSearch("", "Unsuccessful", "id", SortingOrder.ASCENDING);
+            var results = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().participantIdentifier()).contains("student2");
+        }
+
+        @Test
+        void getParticipationScores_filterManualAssessment() throws Exception {
+            var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            var r1 = participationUtilService.createSubmissionAndResult(p1, 80, true);
+            r1.setAssessmentType(AssessmentType.MANUAL);
+            resultRepository.save(r1);
+
+            var p2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            var r2 = participationUtilService.createSubmissionAndResult(p2, 50, true);
+            r2.setAssessmentType(AssessmentType.AUTOMATIC);
+            resultRepository.save(r2);
+
+            var search = buildScoreSearch("", "Manual", "id", SortingOrder.ASCENDING);
+            var results = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().participantIdentifier()).contains("student1");
+        }
+
+        @Test
+        void getParticipationScores_filterAutomatic() throws Exception {
+            var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            var r1 = participationUtilService.createSubmissionAndResult(p1, 80, true);
+            r1.setAssessmentType(AssessmentType.MANUAL);
+            resultRepository.save(r1);
+
+            var p2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            var r2 = participationUtilService.createSubmissionAndResult(p2, 50, true);
+            r2.setAssessmentType(AssessmentType.AUTOMATIC);
+            resultRepository.save(r2);
+
+            var search = buildScoreSearch("", "Automatic", "id", SortingOrder.ASCENDING);
+            var results = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().participantIdentifier()).contains("student2");
+        }
+
+        @Test
+        void getParticipationScores_filterLocked() throws Exception {
+            var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            var r1 = participationUtilService.createSubmissionAndResult(p1, 80, true);
+            r1.setCompletionDate(null);
+            r1.setAssessmentType(AssessmentType.AUTOMATIC);
+            resultRepository.save(r1);
+
+            var p2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            var r2 = participationUtilService.createSubmissionAndResult(p2, 50, true);
+            r2.setAssessmentType(AssessmentType.AUTOMATIC);
+            resultRepository.save(r2);
+
+            var search = buildScoreSearch("", "Locked", "id", SortingOrder.ASCENDING);
+            var results = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().participantIdentifier()).contains("student1");
+        }
+
+        @Test
+        void getParticipationScores_scoreRangeFilter() throws Exception {
+            var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            var r1 = participationUtilService.createSubmissionAndResult(p1, 80, true);
+            r1.setAssessmentType(AssessmentType.AUTOMATIC);
+            resultRepository.save(r1);
+
+            var p2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            var r2 = participationUtilService.createSubmissionAndResult(p2, 30, true);
+            r2.setAssessmentType(AssessmentType.AUTOMATIC);
+            resultRepository.save(r2);
+
+            var search = new ParticipationScoreSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", 50, 100);
+            var results = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().participantIdentifier()).contains("student1");
+        }
+
+        @Test
+        void getParticipationScores_sortByParticipantNameAsc() throws Exception {
+            var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            var p2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+
+            var search = buildScoreSearch("", "All", "participantIdentifier", SortingOrder.ASCENDING);
+            var results = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(2);
+            assertThat(results.get(0).participationId()).isEqualTo(p1.getId());
+            assertThat(results.get(1).participationId()).isEqualTo(p2.getId());
+        }
+
+        @Test
+        void getParticipationScores_sortByParticipantNameDesc() throws Exception {
+            var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            var p2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+
+            var search = buildScoreSearch("", "All", "participantIdentifier", SortingOrder.DESCENDING);
+            var results = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(2);
+            assertThat(results.get(0).participationId()).isEqualTo(p2.getId());
+            assertThat(results.get(1).participationId()).isEqualTo(p1.getId());
+        }
+
+        @Test
+        void getParticipationScores_sortByScore() throws Exception {
+            var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            var r1 = participationUtilService.createSubmissionAndResult(p1, 30, true);
+            r1.setAssessmentType(AssessmentType.AUTOMATIC);
+            resultRepository.save(r1);
+
+            var p2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            var r2 = participationUtilService.createSubmissionAndResult(p2, 90, true);
+            r2.setAssessmentType(AssessmentType.AUTOMATIC);
+            resultRepository.save(r2);
+
+            var search = buildScoreSearch("", "All", "score", SortingOrder.DESCENDING);
+            var results = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(2);
+            assertThat(results.get(0).participationId()).isEqualTo(p2.getId());
+            assertThat(results.get(1).participationId()).isEqualTo(p1.getId());
+        }
+
+        @Test
+        void getParticipationScores_pagination() throws Exception {
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
+
+            var page0 = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class,
+                    pageableSearchUtilService.searchMapping(new ParticipationScoreSearchDTO(0, 2, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+            assertThat(page0).hasSize(2);
+
+            var page1 = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class,
+                    pageableSearchUtilService.searchMapping(new ParticipationScoreSearchDTO(1, 2, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+            assertThat(page1).hasSize(1);
+        }
+
+        // ---- Management endpoint tests ----
+
+        @Test
+        void getParticipationsPage_noFilter() throws Exception {
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+
+            var search = buildParticipationSearch("", "All", "id", SortingOrder.ASCENDING);
+            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(2);
+        }
+
+        @Test
+        void getParticipationsPage_searchByStudentLogin() throws Exception {
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+
+            var search = buildParticipationSearch("student2", "All", "id", SortingOrder.ASCENDING);
+            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().participantIdentifier()).contains("student2");
+        }
+
+        @Test
+        void getParticipationsPage_filterNoSubmissions() throws Exception {
+            var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            participationUtilService.createSubmissionAndResult(p1, 50, true);
+
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+
+            var search = buildParticipationSearch("", "NoSubmissions", "id", SortingOrder.ASCENDING);
+            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().participantIdentifier()).contains("student2");
+        }
+
+        @Test
+        void getParticipationsPage_filterNoPracticeMode() throws Exception {
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+
+            var practiceParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            practiceParticipation.setTestRun(true);
+            participationRepo.save(practiceParticipation);
+
+            var search = buildParticipationSearch("", "NoPracticeMode", "id", SortingOrder.ASCENDING);
+            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().participantIdentifier()).contains("student1");
+        }
+
+        @Test
+        void getParticipationsPage_sortByInitializationDateDesc() throws Exception {
+            var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            p1.setInitializationDate(ZonedDateTime.now().minusDays(2));
+            participationRepo.save(p1);
+
+            var p2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            p2.setInitializationDate(ZonedDateTime.now().minusDays(1));
+            participationRepo.save(p2);
+
+            var search = buildParticipationSearch("", "All", "initializationDate", SortingOrder.DESCENDING);
+            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(2);
+            assertThat(results.get(0).participationId()).isEqualTo(p2.getId());
+            assertThat(results.get(1).participationId()).isEqualTo(p1.getId());
+        }
+
+        @Test
+        void getParticipationsPage_sortByParticipantIdentifierAsc() throws Exception {
+            var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            var p2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+
+            var search = buildParticipationSearch("", "All", "participantIdentifier", SortingOrder.ASCENDING);
+            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).hasSize(2);
+            assertThat(results.get(0).participationId()).isEqualTo(p1.getId());
+            assertThat(results.get(1).participationId()).isEqualTo(p2.getId());
+        }
+
+        @Test
+        void getParticipationsPage_pagination() throws Exception {
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
+
+            var page0 = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class,
+                    pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 2, SortingOrder.ASCENDING, "id", "", "All")));
+            assertThat(page0).hasSize(2);
+
+            var page1 = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class,
+                    pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(1, 2, SortingOrder.ASCENDING, "id", "", "All")));
+            assertThat(page1).hasSize(1);
+        }
+
+        @Test
+        void getParticipationsPage_emptyResult() throws Exception {
+            var search = buildParticipationSearch("nonexistentstudent", "All", "id", SortingOrder.ASCENDING);
+            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).isEmpty();
+        }
+
+        @Test
+        void getParticipationScores_emptyResult() throws Exception {
+            var search = buildScoreSearch("nonexistentstudent", "All", "id", SortingOrder.ASCENDING);
+            var results = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).isEmpty();
         }
     }
 }

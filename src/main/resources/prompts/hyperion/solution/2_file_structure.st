@@ -10,6 +10,9 @@ Based on the following solution plan and programming language, determine the nec
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Build Environment Context:**
+{{buildEnvironmentContext}}
+
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 

@@ -18,13 +18,17 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ModelingExamSummaryComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ModelingExamSummaryComponent>;
     let component: ModelingExamSummaryComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
@@ -34,17 +38,19 @@ describe('ModelingExamSummaryComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ModelingExamSummaryComponent);
-                component = fixture.componentInstance;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(ModelingExamSummaryComponent);
+        component = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
         expect(ModelingExamSummaryComponent).not.toBeNull();
+        expect(component).not.toBeNull();
     });
 
     it('should show no submission when there is no uml model', () => {
@@ -71,8 +77,8 @@ describe('ModelingExamSummaryComponent', () => {
         const course = new Course();
         const exercise = { course: course, exerciseGroup: undefined, diagramType: UMLDiagramType.ClassDiagram, studentParticipations: [{ id: 1 }] } as ModelingExercise;
         course.isAtLeastInstructor = true;
-        component.exercise = exercise;
-        component.submission = mockSubmission;
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('submission', mockSubmission);
 
         fixture.detectChanges();
 
