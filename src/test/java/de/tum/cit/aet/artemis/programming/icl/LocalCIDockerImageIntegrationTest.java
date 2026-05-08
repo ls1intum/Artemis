@@ -74,11 +74,10 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
 
     private static final int FACT_SUCCESSFUL_TEST_CASES = 3;
 
-    // TestOutputLSan is excluded because LeakSanitizer requires the SYS_PTRACE capability,
+    // TestCompileLeak and TestOutputLSan are excluded because LeakSanitizer is not supported
+    // on all architectures (e.g., ARM64) and requires the SYS_PTRACE capability at runtime,
     // which is unavailable in Docker containers by default (both on CI and many local setups).
-    // TestCompileLeak still validates that the code compiles with leak sanitizer flags.
-    private static final List<String> GCC_TEST_CASE_NAMES = List.of("TestCompile", "TestOutput", "TestCompileASan", "TestOutputASan", "TestCompileUBSan", "TestOutputUBSan",
-            "TestCompileLeak");
+    private static final List<String> GCC_TEST_CASE_NAMES = List.of("TestCompile", "TestOutput", "TestCompileASan", "TestOutputASan", "TestCompileUBSan", "TestOutputUBSan");
 
     private static final List<String> FACT_TEST_CASE_NAMES = List.of("Compile", "CodeStructure", "InputOutput");
 
