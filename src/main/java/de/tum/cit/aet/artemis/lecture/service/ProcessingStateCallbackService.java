@@ -7,19 +7,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -40,7 +36,6 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 /**
  * Service that handles callbacks, capacity-aware dispatch, and state transitions for the lecture content processing pipeline.
@@ -84,26 +79,19 @@ public class ProcessingStateCallbackService {
 
     private final LectureTranscriptionRepository transcriptionRepository;
 
-    private final LectureUnitRepository lectureUnitRepository;
-
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
     private final Optional<IrisLectureApi> irisLectureApi;
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final Executor taskExecutor;
-
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            LectureUnitRepository lectureUnitRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository, Optional<IrisLectureApi> irisLectureApi,
-            WebsocketMessagingService websocketMessagingService, @Qualifier("taskExecutor") Executor taskExecutor) {
+            AttachmentVideoUnitRepository attachmentVideoUnitRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
-        this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.irisLectureApi = irisLectureApi;
         this.websocketMessagingService = websocketMessagingService;
-        this.taskExecutor = taskExecutor;
     }
 
     // -------------------- Capacity-Aware Dispatch --------------------
@@ -242,7 +230,6 @@ public class ProcessingStateCallbackService {
      * @param slidePageNumberMap optional mapping from the PyRIS slide/PDF page number to the visible page number;
      *                               {@code null} if not applicable or unavailable
      */
-    @Transactional
     public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode, @Nullable Map<Integer, Integer> slidePageNumberMap) {
         Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
 
@@ -266,46 +253,18 @@ public class ProcessingStateCallbackService {
 
         if (success) {
             log.info("Processing completed successfully for unit {}", lectureUnitId);
-            TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId)
-                    .map(transcription -> finalizeTranscriptionOnSuccessfulCompletion(state, transcription)).orElse(null);
-
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
             processingStateRepository.save(state);
+            saveSlidePageNumberMap(state, slidePageNumberMap);
 
-            saveSlidePageNumberMap(lectureUnitId, slidePageNumberMap);
-
+            TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
             notifyProcessingStateChange(state, txStatus);
         }
         else {
             log.warn("Processing failed for unit {} (errorCode={})", lectureUnitId, errorCode);
             // handleProcessingFailure saves the state and sends WebSocket notification internally
             handleProcessingFailure(state, errorCode);
-        }
-
-        // Fill the freed slot after this completion transaction has committed so
-        // the current Pyris callback can return immediately and does not block on
-        // re-dispatching the next job.
-        scheduleDispatchPendingJobs();
-    }
-
-    private void scheduleDispatchPendingJobs() {
-        if (TransactionSynchronizationManager.isSynchronizationActive() && TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-
-                @Override
-                public void afterCommit() {
-                    taskExecutor.execute(() -> {
-                        try {
-                            dispatchPendingJobs();
-                        }
-                        catch (RuntimeException e) {
-                            log.error("Failed to dispatch pending jobs after ingestion completion", e);
-                        }
-                    });
-                }
-            });
-            return;
         }
 
         dispatchPendingJobs();
@@ -457,20 +416,6 @@ public class ProcessingStateCallbackService {
             state.setLastUpdated(ZonedDateTime.now());
             processingStateRepository.save(state);
         }
-    }
-
-    /**
-     * A terminal success callback can arrive before Artemis receives an enriched transcript checkpoint.
-     * In that case, PyRIS has already finished the transcription stage, so a pending transcription must
-     * no longer be shown as "still indexing" in the UI.
-     */
-    private TranscriptionStatus finalizeTranscriptionOnSuccessfulCompletion(LectureUnitProcessingState state, LectureTranscription transcription) {
-        if (state.getPhase() == ProcessingPhase.TRANSCRIBING && transcription.getTranscriptionStatus() == TranscriptionStatus.PENDING) {
-            transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
-            transcriptionRepository.save(transcription);
-            return TranscriptionStatus.COMPLETED;
-        }
-        return transcription.getTranscriptionStatus();
     }
 
     // -------------------- Failure Handling --------------------
@@ -683,23 +628,10 @@ public class ProcessingStateCallbackService {
 
     // -------------------- Slide Page Number Mapping --------------------
 
-    /**
-     * Save slide page number mapping to the lecture unit if available.
-     * <p>
-     * The mapping is only saved for {@link AttachmentVideoUnit} instances.
-     * Empty maps are saved as-is; {@code null} means that Pyris did not provide a mapping.
-     *
-     * @param lectureUnitId      the ID of the lecture unit
-     * @param slidePageNumberMap the mapping from the PyRIS slide/PDF page number to the visible page number;
-     *                               may be {@code null} or empty
-     */
-    private void saveSlidePageNumberMap(Long lectureUnitId, @Nullable Map<Integer, Integer> slidePageNumberMap) {
-        if (slidePageNumberMap == null) {
-            log.debug("No slide page number map provided for unit {}", lectureUnitId);
+    private void saveSlidePageNumberMap(LectureUnitProcessingState state, @Nullable Map<Integer, Integer> slidePageNumberMap) {
+        if (slidePageNumberMap == null || !(state.getLectureUnit() instanceof AttachmentVideoUnit attachmentVideoUnit)) {
             return;
         }
-
-        AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findByIdElseThrow(lectureUnitId);
         attachmentVideoUnit.setSlidePageNumberMap(slidePageNumberMap);
         attachmentVideoUnitRepository.save(attachmentVideoUnit);
     }

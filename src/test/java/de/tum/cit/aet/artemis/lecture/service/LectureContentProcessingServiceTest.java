@@ -15,8 +15,8 @@ import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +61,8 @@ class LectureContentProcessingServiceTest {
 
     private LectureTranscriptionRepository transcriptionRepository;
 
+    private AttachmentVideoUnitRepository attachmentVideoUnitRepository;
+
     private IrisLectureApi irisLectureApi;
 
     private WebsocketMessagingService websocketMessagingService;
@@ -71,23 +73,19 @@ class LectureContentProcessingServiceTest {
 
     private LectureUnitProcessingState testState;
 
-    private Executor directExecutor;
-
     @BeforeEach
     void setUp() {
         processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
         transcriptionRepository = mock(LectureTranscriptionRepository.class);
+        attachmentVideoUnitRepository = mock(AttachmentVideoUnitRepository.class);
         irisLectureApi = mock(IrisLectureApi.class);
         FeatureToggleService featureToggleService = mock(FeatureToggleService.class);
 
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
 
         websocketMessagingService = mock(WebsocketMessagingService.class);
-        var lectureUnitRepository = mock(de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository.class);
-        var attachmentVideoUnitRepository = mock(AttachmentVideoUnitRepository.class);
-        directExecutor = Runnable::run;
-        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, lectureUnitRepository, attachmentVideoUnitRepository,
-                Optional.of(irisLectureApi), websocketMessagingService, directExecutor);
+        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentVideoUnitRepository, Optional.of(irisLectureApi),
+                websocketMessagingService);
 
         service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService);
 
@@ -152,10 +150,8 @@ class LectureContentProcessingServiceTest {
             // Given: No Iris API
             FeatureToggleService fts = mock(FeatureToggleService.class);
             when(fts.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
-            var lectureUnitRepository = mock(de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository.class);
-            var attachmentVideoUnitRepository = mock(AttachmentVideoUnitRepository.class);
-            ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, lectureUnitRepository,
-                    attachmentVideoUnitRepository, Optional.empty(), mock(WebsocketMessagingService.class), directExecutor);
+            ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentVideoUnitRepository,
+                    Optional.empty(), mock(WebsocketMessagingService.class));
             service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback);
 
             service.triggerProcessing(testUnit);
@@ -409,25 +405,19 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldMarkPendingTranscriptionAsCompletedWhenTerminalSuccessArrivesDuringTranscribing() {
-            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+        void shouldSaveSlidePageNumberMapOnSuccess() {
+            testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
-
-            LectureTranscription pendingTranscription = new LectureTranscription();
-            pendingTranscription.setLectureUnit(testUnit);
-            pendingTranscription.setTranscriptionStatus(TranscriptionStatus.PENDING);
-
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
-            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(pendingTranscription));
-            when(transcriptionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(attachmentVideoUnitRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, Map.of(1, 1, 2, -1));
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            assertThat(pendingTranscription.getTranscriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
-            verify(transcriptionRepository).save(pendingTranscription);
+            assertThat(testUnit.getSlidePageNumberMap()).containsExactlyInAnyOrderEntriesOf(Map.of(1, 1, 2, -1));
+            verify(attachmentVideoUnitRepository).save(testUnit);
         }
 
         @Test

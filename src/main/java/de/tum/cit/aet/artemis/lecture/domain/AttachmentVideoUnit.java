@@ -41,11 +41,6 @@ public class AttachmentVideoUnit extends LectureUnit {
     @OrderBy("slideNumber ASC")
     private List<Slide> slides = new ArrayList<>();
 
-    /**
-     * Maps the slide/PDF page number provided by PyRIS to the visible page number printed on that page.
-     * Value -1 indicates no page number is visible on that slide.
-     * Generated during Pyris ingestion to enable accurate video-slide synchronization.
-     */
     @Convert(converter = SlidePageNumberMapConverter.class)
     @Column(name = "slide_page_number_map", columnDefinition = "json")
     @JdbcTypeCode(SqlTypes.JSON)
