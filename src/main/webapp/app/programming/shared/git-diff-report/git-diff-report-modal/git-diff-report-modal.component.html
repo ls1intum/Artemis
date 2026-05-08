@@ -9,7 +9,7 @@
     <div class="modal-body">
         @if (repositoryDiffInformation()) {
             <div class="row mb-2">
-                <jhi-git-diff-report [repositoryDiffInformation]="repositoryDiffInformation()" [diffForTemplateAndSolution]="diffForTemplateAndSolution()" />
+                <jhi-git-diff-report [repositoryDiffInformation]="repositoryDiffInformation()!" [diffForTemplateAndSolution]="diffForTemplateAndSolution()" />
             </div>
         } @else {
             <div class="text-center">

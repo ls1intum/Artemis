@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -25,10 +25,10 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     private alertService = inject(AlertService);
 
     readonly alertType = 'info';
-    courseId: number;
-    exam: Exam;
-    exerciseGroup: ExerciseGroup;
-    isSaving = false;
+    courseId!: number;
+    exam!: Exam;
+    exerciseGroup!: ExerciseGroup;
+    isSaving = signal(false);
     // Icons
     faBan = faBan;
     faSave = faSave;
@@ -49,7 +49,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
      * Update the exercise group if an id is set.
      */
     save() {
-        this.isSaving = true;
+        this.isSaving.set(true);
         if (this.exerciseGroup.id !== undefined) {
             this.subscribeToSaveResponse(this.exerciseGroupService.update(this.courseId, this.exam.id!, this.exerciseGroup));
         } else {
@@ -70,12 +70,12 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     }
 
     private onSaveSuccess() {
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.previousState();
     }
 
     private onSaveError(error: HttpErrorResponse) {
         onError(this.alertService, error);
-        this.isSaving = false;
+        this.isSaving.set(false);
     }
 }

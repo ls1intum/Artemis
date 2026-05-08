@@ -24,6 +24,8 @@ import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.inter
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
+import { lastValueFrom } from 'rxjs';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -71,12 +73,36 @@ export const appConfig: ApplicationConfig = {
         provideAppInitializer(() => {
             const profileService = inject(ProfileService);
             const accountService = inject(AccountService);
+            const authServerProvider = inject(AuthServerProvider);
             inject(TraceService);
             // Ensure the service is initialized before any routing happens
             inject(ArtemisNavigationUtilService);
+            // If the IdP just redirected the user back to Artemis, complete the SAML2 second-step
+            // exchange (turn the SAML2 HttpSession into an Artemis JWT cookie) before resolving the
+            // user identity. This way the regular route guards see an authenticated user and route
+            // them to /courses, instead of the public landing page rendered for unauthenticated visitors.
+            // Match the cookie name exactly so a name that merely ends with 'SAML2flow' cannot trigger this branch.
+            const hasSaml2FlowCookie = /(?:^|;\s*)SAML2flow=/.test(document.cookie);
+            const completeSaml2 = hasSaml2FlowCookie
+                ? lastValueFrom(authServerProvider.loginSAML2(true))
+                      // The .catch is load-bearing: Promise.all below short-circuits on the first
+                      // rejection, so any error here would abort APP_INITIALIZER and prevent the SPA
+                      // from booting. We log so the failure is observable but recover by rendering
+                      // the landing page (or sign-in if the user navigates there manually).
+                      .catch((error) => {
+                          // eslint-disable-next-line no-undef
+                          console.warn('SAML2 second-step exchange failed during app initialization', error);
+                          return undefined;
+                      })
+                      .finally(() => {
+                          // Path=/ must match the path the cookie was set with in Saml2LoginComponent so the
+                          // deletion reliably removes it regardless of the document path the SPA boots from.
+                          document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax;';
+                      })
+                : Promise.resolve();
             // Load profile info and resolve user identity in parallel to minimize startup time.
             // Profile info is required for all components; identity resolution avoids a sequential HTTP call in route guards.
-            return Promise.all([profileService.loadProfileInfo(), accountService.identity().catch(() => undefined)]).then(() => undefined);
+            return Promise.all([profileService.loadProfileInfo(), completeSaml2.then(() => accountService.identity().catch(() => undefined))]).then(() => undefined);
         }),
         /**
          * @description Interceptor declarations:
