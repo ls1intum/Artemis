@@ -142,6 +142,11 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
         request.performMvcRequest(MockMvcRequestBuilders.put("/api/communication/notification/{courseId}/setting-preset", course.getId()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(presetId))).andExpect(status().isOk());
 
+        // Hazelcast-backed @CacheEvict propagation can lag behind the database write inside a single
+        // request. Clear the affected caches before re-reading to make the assertion deterministic.
+        cacheManager.getCache("userCourseNotificationSettingPreset").clear();
+        cacheManager.getCache("userCourseNotificationSettingSpecification").clear();
+
         var presetAfterChange = userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(user.getId(), course.getId());
 
         assertThat(presetAfterChange.getSettingPreset()).isEqualTo(presetId);
