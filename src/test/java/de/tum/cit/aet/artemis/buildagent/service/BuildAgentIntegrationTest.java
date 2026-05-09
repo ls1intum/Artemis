@@ -256,17 +256,29 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
     @Test
     void testBuildAgentJobCancelled() throws InterruptedException {
-        // The container start mock blocks until cancellation has been published. Using a latch
-        // makes the ordering deterministic: the test only publishes the cancel after the build
-        // has actually entered the container start, so the result-processing thread cannot race
-        // ahead and mark the job as SUCCESSFUL before the cancellation arrives.
+        // Two latches drive deterministic ordering:
+        // - containerStartedLatch lets the test know the build has entered container start, so
+        // it can publish the cancellation only after the job is mid-execution.
+        // - testCompletedLatch keeps the mock blocked for the rest of the test so the build does
+        // not race ahead to SUCCESSFUL while the cancellation propagates. The test releases it
+        // in a finally block so the worker thread always exits cleanly.
         CountDownLatch containerStartedLatch = new CountDownLatch(1);
+        CountDownLatch testCompletedLatch = new CountDownLatch(1);
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
         when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
         doAnswer(invocation -> {
             containerStartedLatch.countDown();
-            // Sleep long enough for the cancellation message to be processed before the mock returns.
-            Thread.sleep(5000);
+            try {
+                // The cancellation logic interrupts the executor thread, which propagates here. A
+                // long safety timeout prevents this thread from blocking forever if cancellation
+                // never lands.
+                if (!testCompletedLatch.await(30, TimeUnit.SECONDS)) {
+                    // Timed out — return so the worker can finish and the test can fail cleanly.
+                }
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
             return null;
         }).when(startContainerCmd).exec();
 
@@ -284,11 +296,17 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         canceledBuildJobsTopic.publish(queueItem.id());
 
-        await().atMost(30, TimeUnit.SECONDS).until(() -> {
-            var resultQueueItem = resultQueue.poll();
-            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
-                    && resultQueueItem.buildJobQueueItem().status() == BuildStatus.CANCELLED;
-        });
+        try {
+            await().atMost(30, TimeUnit.SECONDS).until(() -> {
+                var resultQueueItem = resultQueue.poll();
+                return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
+                        && resultQueueItem.buildJobQueueItem().status() == BuildStatus.CANCELLED;
+            });
+        }
+        finally {
+            // Always release the worker thread so it does not linger past the end of the test.
+            testCompletedLatch.countDown();
+        }
     }
 
     @Test
