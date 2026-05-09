@@ -1,11 +1,11 @@
 import { Injectable, signal } from '@angular/core';
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 
 @Injectable()
 export class MockCalendarService {
     eventMap;
 
-    constructor(eventMap: Map<string, CalendarEvent[]>) {
+    constructor(eventMap: Map<string, IdentifiableCalendarEvent[]>) {
         this.eventMap = signal(eventMap);
     }
 }

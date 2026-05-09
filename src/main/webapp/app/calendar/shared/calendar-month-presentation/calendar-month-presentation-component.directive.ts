@@ -1,7 +1,7 @@
 import { Directive, computed, inject, input } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/calendar/shared/util/calendar-util';
 
@@ -13,7 +13,7 @@ export type CalendarMonthPresentationDay = {
     id: string;
 };
 export type CalendarMonthPresentationWeek = { days: CalendarMonthPresentationDay[]; id: string };
-export type CalendarMonthPresentationEventAndMetadata = { event: CalendarEvent; icon: IconProp; color: string };
+export type CalendarMonthPresentationEventAndMetadata = { event: IdentifiableCalendarEvent; icon: IconProp; color: string };
 
 @Directive()
 export class CalendarMonthPresentationComponent {
@@ -36,8 +36,8 @@ export class CalendarMonthPresentationComponent {
                 const eventsAndMetadata = calendarEvents.map((event) => {
                     return {
                         event: event,
-                        icon: utils.getIconForEvent(event),
-                        color: utils.getColorFor(event),
+                        icon: utils.getIconForEventType(event.type),
+                        color: utils.getColorForEventType(event.type),
                     };
                 });
                 const firstTwoEventsAndMetadata = eventsAndMetadata.slice(0, 2);

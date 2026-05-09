@@ -1,21 +1,11 @@
 import { Dayjs } from 'dayjs/esm';
+import { CalendarEvent } from 'app/openapi/model/calendarEvent';
 
-export enum CalendarEventType {
-    Lecture = 'LECTURE',
-    Tutorial = 'TUTORIAL',
-    Exam = 'EXAM',
-    QuizExercise = 'QUIZ_EXERCISE',
-    TextExercise = 'TEXT_EXERCISE',
-    ModelingExercise = 'MODELING_EXERCISE',
-    ProgrammingExercise = 'PROGRAMMING_EXERCISE',
-    FileUploadExercise = 'FILE_UPLOAD_EXERCISE',
-}
-
-export class CalendarEvent {
+export class IdentifiableCalendarEvent {
     public id: string;
 
     constructor(
-        public type: CalendarEventType,
+        public type: CalendarEvent.TypeEnum,
         public title: string,
         public startDate: Dayjs,
         public endDate?: Dayjs,
@@ -25,26 +15,20 @@ export class CalendarEvent {
         this.id = window.crypto.randomUUID().toString();
     }
 
-    isOfType(type: CalendarEventType) {
+    isOfType(type: CalendarEvent.TypeEnum) {
         return this.type === type;
     }
 
     isOfExerciseType(): boolean {
-        return [
-            CalendarEventType.ProgrammingExercise,
-            CalendarEventType.QuizExercise,
-            CalendarEventType.TextExercise,
-            CalendarEventType.FileUploadExercise,
-            CalendarEventType.ModelingExercise,
-        ].includes(this.type);
+        switch (this.type) {
+            case CalendarEvent.TypeEnum.ProgrammingExercise:
+            case CalendarEvent.TypeEnum.QuizExercise:
+            case CalendarEvent.TypeEnum.TextExercise:
+            case CalendarEvent.TypeEnum.FileUploadExercise:
+            case CalendarEvent.TypeEnum.ModelingExercise:
+                return true;
+            default:
+                return false;
+        }
     }
-}
-
-export interface CalendarEventDTO {
-    type: string;
-    title: string;
-    startDate: string;
-    endDate?: string;
-    location?: string;
-    facilitator?: string;
 }

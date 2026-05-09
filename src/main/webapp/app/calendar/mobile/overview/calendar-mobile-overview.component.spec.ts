@@ -15,7 +15,7 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 import * as calendarUtils from 'app/shared/util/global.utils';
@@ -36,7 +36,7 @@ describe('CalendarMobileOverviewComponent', () => {
 
     beforeEach(async () => {
         const calendarServiceMock = {
-            eventMap: signal(new Map<string, CalendarEvent[]>()),
+            eventMap: signal(new Map<string, IdentifiableCalendarEvent[]>()),
             loadEventsForCurrentMonth: vi.fn().mockReturnValue(of([])),
             subscriptionToken: signal('testToken'),
             includedEventFilterOptions: signal([

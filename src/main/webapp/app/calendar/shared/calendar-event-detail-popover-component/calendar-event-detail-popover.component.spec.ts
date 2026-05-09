@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CalendarEvent, CalendarEventType } from 'app/calendar/shared/entities/calendar-event.model';
+import { CalendarEventType, IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { CalendarEventDetailPopoverComponent } from './calendar-event-detail-popover.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -36,7 +36,7 @@ describe('CalendarEventDetailPopoverComponent', () => {
     });
 
     it('should render time-row if endDate is provided', async () => {
-        const event = new CalendarEvent(CalendarEventType.Lecture, 'Lecture 1', dayjs('2025-07-05T10:00:00'), dayjs('2025-07-05T12:00:00'), 'Room 42', 'Dr. Smith');
+        const event = new IdentifiableCalendarEvent(CalendarEventType.Lecture, 'Lecture 1', dayjs('2025-07-05T10:00:00'), dayjs('2025-07-05T12:00:00'), 'Room 42', 'Dr. Smith');
 
         component.open(fakeMouseEvent, event);
         fixture.detectChanges();
@@ -46,7 +46,7 @@ describe('CalendarEventDetailPopoverComponent', () => {
     });
 
     it('should render only time-row if endDate is missing', async () => {
-        const event = new CalendarEvent(CalendarEventType.Lecture, 'Start: Lecture 1', dayjs('2025-07-05T10:00:00'), undefined, 'Room 42', 'Dr. Smith');
+        const event = new IdentifiableCalendarEvent(CalendarEventType.Lecture, 'Start: Lecture 1', dayjs('2025-07-05T10:00:00'), undefined, 'Room 42', 'Dr. Smith');
 
         component.open(fakeMouseEvent, event);
         fixture.detectChanges();
@@ -56,7 +56,7 @@ describe('CalendarEventDetailPopoverComponent', () => {
     });
 
     it('should render location-row if location is present', async () => {
-        const event = new CalendarEvent(CalendarEventType.Lecture, 'Lecture 2', dayjs(), dayjs(), 'Main Hall', 'Dr. Jane');
+        const event = new IdentifiableCalendarEvent(CalendarEventType.Lecture, 'Lecture 2', dayjs(), dayjs(), 'Main Hall', 'Dr. Jane');
 
         component.open(fakeMouseEvent, event);
         fixture.detectChanges();
@@ -66,7 +66,7 @@ describe('CalendarEventDetailPopoverComponent', () => {
     });
 
     it('should not render location-row if location is missing', async () => {
-        const event = new CalendarEvent(CalendarEventType.Lecture, 'Lecture 2', dayjs(), dayjs(), undefined, 'Dr. Jane');
+        const event = new IdentifiableCalendarEvent(CalendarEventType.Lecture, 'Lecture 2', dayjs(), dayjs(), undefined, 'Dr. Jane');
 
         component.open(fakeMouseEvent, event);
         fixture.detectChanges();
@@ -76,7 +76,7 @@ describe('CalendarEventDetailPopoverComponent', () => {
     });
 
     it('should render facilitator-row if facilitator is present', async () => {
-        const event = new CalendarEvent(CalendarEventType.Tutorial, 'Tutorial 1', dayjs(), dayjs(), 'Lab 1', 'John Doe');
+        const event = new IdentifiableCalendarEvent(CalendarEventType.Tutorial, 'Tutorial 1', dayjs(), dayjs(), 'Lab 1', 'John Doe');
 
         component.open(fakeMouseEvent, event);
         fixture.detectChanges();
@@ -86,7 +86,7 @@ describe('CalendarEventDetailPopoverComponent', () => {
     });
 
     it('should not render facilitator-row if facilitator is missing', async () => {
-        const event = new CalendarEvent(CalendarEventType.Tutorial, 'Tutorial 2', dayjs(), dayjs(), 'Lab 2', undefined);
+        const event = new IdentifiableCalendarEvent(CalendarEventType.Tutorial, 'Tutorial 2', dayjs(), dayjs(), 'Lab 2', undefined);
 
         component.open(fakeMouseEvent, event);
         fixture.detectChanges();

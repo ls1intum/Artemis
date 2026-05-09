@@ -9,7 +9,7 @@ import { MockService } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { CalendarEvent, CalendarEventType } from 'app/calendar/shared/entities/calendar-event.model';
+import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -361,7 +361,7 @@ describe('CalendarService - authentication state changes', () => {
 });
 
 function expectCalendarEventToMatch(
-    event: CalendarEvent,
+    event: IdentifiableCalendarEvent,
     expected: {
         type: CalendarEventType;
         title: string;
@@ -373,7 +373,7 @@ function expectCalendarEventToMatch(
 ): void {
     const { type, title, startDate, endDate, location, facilitator } = expected;
 
-    expect(event).toBeInstanceOf(CalendarEvent);
+    expect(event).toBeInstanceOf(IdentifiableCalendarEvent);
     expect(event.type).toBe(type);
     expect(event.title).toBe(title);
     expect(event.startDate.toISOString()).toBe(dayjs(startDate).toISOString());

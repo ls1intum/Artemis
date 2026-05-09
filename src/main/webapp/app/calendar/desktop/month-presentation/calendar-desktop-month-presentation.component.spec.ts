@@ -9,7 +9,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { CalendarEvent, CalendarEventType } from 'app/calendar/shared/entities/calendar-event.model';
+import { CalendarEventType, IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { CalendarDesktopMonthPresentationComponent } from './calendar-desktop-month-presentation.component';
 import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover-component/calendar-event-detail-popover.component';
@@ -23,16 +23,16 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
 
     let fixture: ComponentFixture<CalendarDesktopMonthPresentationComponent>;
     let component: CalendarDesktopMonthPresentationComponent;
-    let mockMap: Map<string, CalendarEvent[]>;
+    let mockMap: Map<string, IdentifiableCalendarEvent[]>;
 
     const referenceDate = dayjs('2025-05-15 10:30');
     const events = [
-        new CalendarEvent(CalendarEventType.Exam, 'Exam', referenceDate, referenceDate.add(1, 'hour'), undefined, 'Marlon Nienaber'),
-        new CalendarEvent(CalendarEventType.Lecture, 'Object Design', referenceDate.subtract(4, 'hour'), referenceDate.subtract(2, 'hour'), undefined, undefined),
-        new CalendarEvent(CalendarEventType.Lecture, 'Object Design 2', referenceDate.subtract(2), referenceDate, undefined, undefined),
-        new CalendarEvent(CalendarEventType.Lecture, 'Object Design 3', referenceDate, referenceDate.add(2, 'hour'), undefined, undefined),
-        new CalendarEvent(CalendarEventType.Tutorial, 'Tutorial 1', referenceDate.add(1, 'day'), referenceDate.add(1, 'day').add(1, 'hour'), 'Zoom', 'Marlon Nienaber'),
-        new CalendarEvent(
+        new IdentifiableCalendarEvent(CalendarEventType.Exam, 'Exam', referenceDate, referenceDate.add(1, 'hour'), undefined, 'Marlon Nienaber'),
+        new IdentifiableCalendarEvent(CalendarEventType.Lecture, 'Object Design', referenceDate.subtract(4, 'hour'), referenceDate.subtract(2, 'hour'), undefined, undefined),
+        new IdentifiableCalendarEvent(CalendarEventType.Lecture, 'Object Design 2', referenceDate.subtract(2), referenceDate, undefined, undefined),
+        new IdentifiableCalendarEvent(CalendarEventType.Lecture, 'Object Design 3', referenceDate, referenceDate.add(2, 'hour'), undefined, undefined),
+        new IdentifiableCalendarEvent(CalendarEventType.Tutorial, 'Tutorial 1', referenceDate.add(1, 'day'), referenceDate.add(1, 'day').add(1, 'hour'), 'Zoom', 'Marlon Nienaber'),
+        new IdentifiableCalendarEvent(
             CalendarEventType.Tutorial,
             'Tutorial 2',
             referenceDate.add(1, 'day').add(2, 'hour'),
@@ -40,7 +40,7 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
             'Zoom',
             'Marlon Nienaber',
         ),
-        new CalendarEvent(
+        new IdentifiableCalendarEvent(
             CalendarEventType.Tutorial,
             'Tutorial 3',
             referenceDate.add(1, 'day').add(3, 'hour'),
@@ -48,7 +48,7 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
             'Zoom',
             'Marlon Nienaber',
         ),
-        new CalendarEvent(CalendarEventType.TextExercise, 'Start: Your aspirations as a programmer', referenceDate.add(2, 'day'), undefined, undefined, undefined),
+        new IdentifiableCalendarEvent(CalendarEventType.TextExercise, 'Start: Your aspirations as a programmer', referenceDate.add(2, 'day'), undefined, undefined, undefined),
     ];
 
     afterEach(() => {

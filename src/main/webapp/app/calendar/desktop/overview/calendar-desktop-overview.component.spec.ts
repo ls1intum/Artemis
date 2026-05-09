@@ -10,7 +10,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { CalendarDesktopWeekPresentationComponent } from 'app/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
 import { CalendarDesktopMonthPresentationComponent } from 'app/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
 import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
@@ -27,7 +27,7 @@ describe('CalendarDesktopOverviewComponent', () => {
     let fixture: ComponentFixture<CalendarDesktopOverviewComponent>;
 
     const calendarServiceMock = {
-        eventMap: signal(new Map<string, CalendarEvent[]>()),
+        eventMap: signal(new Map<string, IdentifiableCalendarEvent[]>()),
         loadEventsForCurrentMonth: vi.fn().mockReturnValue(of([])),
         subscriptionToken: signal('testToken'),
         loadSubscriptionToken: vi.fn().mockReturnValue(of([])),

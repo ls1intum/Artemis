@@ -1,7 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { NgStyle } from '@angular/common';
 import * as utils from 'app/calendar/shared/util/calendar-util';
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { Dayjs } from 'dayjs/esm';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover-component/calendar-event-detail-popover.component';
@@ -14,7 +14,7 @@ interface PositionInfo {
 }
 
 interface CalendarEventAndMetadata {
-    event: CalendarEvent;
+    event: IdentifiableCalendarEvent;
     position: PositionInfo;
     color: string;
 }
@@ -57,7 +57,7 @@ export class CalendarEventsPerDaySectionComponent {
     zeroToTwentyFour: number[] = Array.from({ length: 24 }, (_, i) => i);
     timeLabels = this.getTimeLabelsForGrid();
 
-    private computeDateToEventAndPositionMap(eventMap: Map<string, CalendarEvent[]>, dates: Dayjs[]): Map<string, CalendarEventAndMetadata[]> {
+    private computeDateToEventAndPositionMap(eventMap: Map<string, IdentifiableCalendarEvent[]>, dates: Dayjs[]): Map<string, CalendarEventAndMetadata[]> {
         const dateKeysToBeIncluded = new Set(dates.map((date) => date.format('YYYY-MM-DD')));
         return new Map(
             Array.from(eventMap)
@@ -75,12 +75,12 @@ export class CalendarEventsPerDaySectionComponent {
      * @param calendarEvents - The list of calendar events to position.
      * @returns A list of calendar events with associated positions.
      */
-    private addPositionsToCalendarEvents(calendarEvents: CalendarEvent[]): CalendarEventAndMetadata[] {
+    private addPositionsToCalendarEvents(calendarEvents: IdentifiableCalendarEvent[]): CalendarEventAndMetadata[] {
         if (calendarEvents.length === 0) {
             return [];
         }
         const eventsWithPositions: CalendarEventAndMetadata[] = [];
-        let currentGroup: CalendarEvent[] = [];
+        let currentGroup: IdentifiableCalendarEvent[] = [];
         for (const event of calendarEvents) {
             if (currentGroup.length === 0 || currentGroup.some((otherEvent) => this.doEventsOverlap(otherEvent, event))) {
                 currentGroup.push(event);
@@ -94,7 +94,7 @@ export class CalendarEventsPerDaySectionComponent {
         return eventsWithPositions;
     }
 
-    private addPositionsToEventGroup(group: CalendarEvent[]): CalendarEventAndMetadata[] {
+    private addPositionsToEventGroup(group: IdentifiableCalendarEvent[]): CalendarEventAndMetadata[] {
         const widthAndLeftOffsetFunction = this.getWidthAndLeftOffsetFunction(group.length);
         return group.map((event, index) => {
             const top = this.getTop(event);
@@ -102,7 +102,7 @@ export class CalendarEventsPerDaySectionComponent {
             const left = widthAndLeftOffsetFunction.leftOffset(index);
 
             const position: PositionInfo = { top, height, left, width: widthAndLeftOffsetFunction.eventWidth };
-            return { event: event, position: position, color: utils.getColorFor(event) };
+            return { event: event, position: position, color: utils.getColorForEventType(event.type) };
         });
     }
 
@@ -119,12 +119,12 @@ export class CalendarEventsPerDaySectionComponent {
         };
     }
 
-    private getTop(event: CalendarEvent): number {
+    private getTop(event: IdentifiableCalendarEvent): number {
         const minutes = event.startDate.diff(event.startDate.startOf('day'), 'minute');
         return minutes * CalendarEventsPerDaySectionComponent.PIXELS_PER_MINUTE;
     }
 
-    private getHeight(event: CalendarEvent): number {
+    private getHeight(event: IdentifiableCalendarEvent): number {
         if (event.endDate) {
             return Math.max(
                 event.endDate.diff(event.startDate, 'minute') * CalendarEventsPerDaySectionComponent.PIXELS_PER_MINUTE,
@@ -135,7 +135,7 @@ export class CalendarEventsPerDaySectionComponent {
         }
     }
 
-    private doEventsOverlap(firstEvent: CalendarEvent, secondEvent: CalendarEvent): boolean {
+    private doEventsOverlap(firstEvent: IdentifiableCalendarEvent, secondEvent: IdentifiableCalendarEvent): boolean {
         const firstStartDate = firstEvent.startDate;
         const firstEndDate = this.getDisplayedEndOf(firstEvent);
         const secondStartDate = secondEvent.startDate;
@@ -147,7 +147,7 @@ export class CalendarEventsPerDaySectionComponent {
         return firstStartFallsInSecondRange || firstEndFallsInSecondRange || firstEventEngulfsSecondEvent;
     }
 
-    private getDisplayedEndOf(event: CalendarEvent): Dayjs {
+    private getDisplayedEndOf(event: IdentifiableCalendarEvent): Dayjs {
         const endWithDefaultLength = event.startDate.add(CalendarEventsPerDaySectionComponent.DEFAULT_EVENT_LENGTH_IN_MINUTES, 'minute');
         return event.endDate && event.endDate.isAfter(endWithDefaultLength) ? event.endDate : endWithDefaultLength;
     }
