@@ -1,11 +1,15 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -100,6 +104,12 @@ public class HyperionProgrammingExerciseContextRendererService {
             "coverage");
 
     private static final Set<String> EXCLUDED_FILES = Set.of(".DS_Store", "Thumbs.db", ".gitkeep");
+
+    private static final Set<String> BUILD_ENVIRONMENT_FILES = Set.of("pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts", "gradle.properties",
+            "requirements.txt", "pyproject.toml", "setup.py", "Pipfile", "Pipfile.lock", "CMakeLists.txt", "Makefile", "Package.swift", "Cargo.toml", "Gemfile", "package.json",
+            ".java-version", ".tool-versions");
+
+    private static final int MAX_BUILD_ENVIRONMENT_FILE_CONTENT_LENGTH = 4000;
 
     private final RepositoryService repositoryService;
 
@@ -268,6 +278,39 @@ public class HyperionProgrammingExerciseContextRendererService {
     }
 
     /**
+     * Renders a deterministic snapshot of build-environment files that influence compilation and testing.
+     *
+     * @param repository the repository whose build files should be rendered
+     * @return formatted build-file context, or a fallback message when no relevant files exist
+     */
+    public String getBuildEnvironmentContext(Repository repository) {
+        if (repository == null || repository.getLocalPath() == null) {
+            return "No build environment files found.";
+        }
+
+        Path repositoryPath = repository.getLocalPath();
+        if (!Files.isDirectory(repositoryPath)) {
+            return "No build environment files found.";
+        }
+
+        try (var walk = Files.walk(repositoryPath)) {
+            Map<String, String> buildFiles = walk.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))
+                    .filter(path -> isRelevantBuildEnvironmentFile(repositoryPath, path))
+                    .sorted(Comparator.comparing(path -> repositoryPath.relativize(path).toString(), String.CASE_INSENSITIVE_ORDER)).collect(TreeMap::new,
+                            (files, path) -> files.put(repositoryPath.relativize(path).toString().replace('\\', '/'), readBuildEnvironmentFile(path)), TreeMap::putAll);
+
+            if (buildFiles.isEmpty()) {
+                return "No build environment files found.";
+            }
+            return renderRepository(buildFiles, "Build Environment Files");
+        }
+        catch (IOException | UncheckedIOException e) {
+            log.warn("Failed to render build environment context for repository {}: {}", repositoryPath, e.getMessage());
+            return "Build environment files could not be determined.";
+        }
+    }
+
+    /**
      * Recursively generates the tree structure representation.
      *
      * @param directory the current directory to process
@@ -311,6 +354,50 @@ public class HyperionProgrammingExerciseContextRendererService {
                 String newPrefix = prefix + (isLastFile ? "    " : "│   ");
                 generateTreeStructure(file, structure, newPrefix, false);
             }
+        }
+    }
+
+    private boolean isRelevantBuildEnvironmentFile(Path repositoryRoot, Path path) {
+        if (Files.isSymbolicLink(path) || !Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) {
+            return false;
+        }
+
+        Path relativePath = repositoryRoot.relativize(path);
+        if (relativePath.getNameCount() == 0) {
+            return false;
+        }
+
+        for (int i = 0; i < relativePath.getNameCount() - 1; i++) {
+            String segment = relativePath.getName(i).toString();
+            if (segment.startsWith(".") || EXCLUDED_DIRECTORIES.contains(segment)) {
+                return false;
+            }
+        }
+
+        return BUILD_ENVIRONMENT_FILES.contains(relativePath.getFileName().toString());
+    }
+
+    private String readBuildEnvironmentFile(Path path) {
+        int maxCharsToRead = MAX_BUILD_ENVIRONMENT_FILE_CONTENT_LENGTH + 1;
+        try (BufferedReader reader = Files.newBufferedReader(path)) {
+            char[] buffer = new char[maxCharsToRead];
+            int offset = 0;
+            while (offset < buffer.length) {
+                int read = reader.read(buffer, offset, buffer.length - offset);
+                if (read == -1) {
+                    break;
+                }
+                offset += read;
+            }
+            String content = new String(buffer, 0, offset);
+            if (content.length() <= MAX_BUILD_ENVIRONMENT_FILE_CONTENT_LENGTH) {
+                return content;
+            }
+            return content.substring(0, MAX_BUILD_ENVIRONMENT_FILE_CONTENT_LENGTH) + "\n... [truncated]";
+        }
+        catch (IOException e) {
+            log.warn("Failed to read build environment file {}: {}", path, e.getMessage());
+            return "[Failed to read file]";
         }
     }
 

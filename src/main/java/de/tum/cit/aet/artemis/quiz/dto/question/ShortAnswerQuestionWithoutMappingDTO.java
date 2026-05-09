@@ -18,8 +18,10 @@ public record ShortAnswerQuestionWithoutMappingDTO(List<ShortAnswerSpotDTO> spot
      * @return the DTO
      */
     public static ShortAnswerQuestionWithoutMappingDTO of(ShortAnswerQuestion question) {
-        var spots = question.getSpots().stream().map(ShortAnswerSpotDTO::of).toList();
-        var solutions = question.getSolutions().stream().map(ShortAnswerSolutionDTO::of).toList();
+        // Spots and solutions can be null on a question that has been filtered for students (filterForStudentsDuringQuiz
+        // sets solutions to null to hide them); treat that as an empty list for the response shape.
+        var spots = question.getSpots() == null ? List.<ShortAnswerSpotDTO>of() : question.getSpots().stream().map(ShortAnswerSpotDTO::of).toList();
+        var solutions = question.getSolutions() == null ? List.<ShortAnswerSolutionDTO>of() : question.getSolutions().stream().map(ShortAnswerSolutionDTO::of).toList();
         // Use null for empty lists to match JSON round-trip behavior with @JsonInclude(NON_EMPTY)
         return new ShortAnswerQuestionWithoutMappingDTO(spots.isEmpty() ? null : spots, solutions.isEmpty() ? null : solutions, question.getSimilarityValue(),
                 question.getMatchLetterCase());
