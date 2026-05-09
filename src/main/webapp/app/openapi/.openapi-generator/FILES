@@ -1,5 +1,6 @@
 .gitignore
 api.base.service.ts
+api/calendarApi.service.ts
 api/hyperionCodeGenerationApi.service.ts
 api/hyperionFaqApi.service.ts
 api/hyperionProblemStatementApi.service.ts
@@ -12,8 +13,7 @@ configuration.ts
 encoder.ts
 model/artifactLocation.ts
 model/bloomRadar.ts
-model/buildPhase.ts
-model/buildPlanPhases.ts
+model/calendarEvent.ts
 model/channel.ts
 model/checklistActionRequest.ts
 model/checklistActionResponse.ts

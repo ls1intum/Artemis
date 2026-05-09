@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 9.1.2
+  version: 9.1.3
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -1161,19 +1161,6 @@ components:
         completion: {type: integer, format: int64, description: Completion token length,
           example: 3753}
         total: {type: integer, format: int64, description: Total token length, example: 13957}
-    BuildPhase:
-      type: object
-      properties:
-        name: {type: string, minLength: 1, pattern: '^[A-Za-z_][A-Za-z0-9_]*$'}
-        script: {type: string}
-        condition:
-          type: string
-          enum: [ALWAYS, AFTER_DUE_DATE]
-        forceRun: {type: boolean}
-        resultPaths:
-          type: array
-          items: {type: string}
-      required: [name]
     ProblemStatementRewriteResponse:
       type: object
       description: Response containing rewritten problem statement
@@ -1214,19 +1201,6 @@ components:
           enum: [general, exercise, lecture, exam, feedbackDiscussion]
         subTypeReferenceId: {type: integer, format: int64}
         subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
-    CalendarEvent:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: [LECTURE, TUTORIAL, EXAM, QUIZ_EXERCISE, TEXT_EXERCISE, MODELING_EXERCISE,
-            PROGRAMMING_EXERCISE, FILE_UPLOAD_EXERCISE]
-        title: {type: string}
-        startDate: {type: string, format: date-time}
-        endDate: {type: string, format: date-time}
-        location: {type: string}
-        facilitator: {type: string}
-      required: [startDate, title, type]
     Student:
       type: object
       properties:
@@ -1334,13 +1308,6 @@ components:
       properties:
         faqText: {type: string, minLength: 1}
       required: [faqText]
-    BuildPlanPhases:
-      type: object
-      properties:
-        phases:
-          type: array
-          items: {$ref: '#/components/schemas/BuildPhase'}
-        dockerImage: {type: string}
     DifficultyAssessment:
       type: object
       properties:
@@ -1417,6 +1384,7 @@ components:
           type: string
           enum: [exercise, solution, tests, auxiliary, user]
         checkOnly: {type: boolean}
+        initialAutoGeneration: {type: boolean}
     QuizQuestionRefinementResponse:
       description: Discriminated response for a single quiz question refinement, either
         a success with the refined question or a failure with an error message
@@ -1511,6 +1479,19 @@ components:
         end: {type: string}
         reason: {type: string}
       required: [end, start]
+    CalendarEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [LECTURE, TUTORIAL, EXAM, QUIZ_EXERCISE, TEXT_EXERCISE, MODELING_EXERCISE,
+            PROGRAMMING_EXERCISE, FILE_UPLOAD_EXERCISE]
+        title: {type: string}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        location: {type: string}
+        facilitator: {type: string}
+      required: [startDate, title, type]
     QualityIssue:
       type: object
       description: A quality issue found in the problem statement
