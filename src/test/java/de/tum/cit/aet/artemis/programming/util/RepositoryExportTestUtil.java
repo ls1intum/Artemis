@@ -394,7 +394,40 @@ public final class RepositoryExportTestUtil {
         // Wait for the bare repository to be fully ready for cloning operations
         waitForBareRepositoryReady(repo);
 
+        // Wait until the specific commit we just pushed is resolvable in the bare repo. The HEAD
+        // check above is not sufficient: on slow CI runners, HEAD can be advanced before the new
+        // commit object is fully written, and downstream endpoints that resolve by commit hash
+        // would otherwise return an empty result.
+        waitForBareRepositoryToContainCommit(repo, commit.getId().getName());
+
         return commit;
+    }
+
+    /**
+     * Waits until the given commit hash is resolvable in the bare repository. Used in concert with
+     * {@link #waitForBareRepositoryReady(LocalRepository)} when callers need a specific commit (not
+     * just HEAD) to be visible — for example, controllers that look up files by commit hash.
+     *
+     * @param repo       the local repository whose bare repo should be verified
+     * @param commitHash the commit hash that must be resolvable
+     */
+    public static void waitForBareRepositoryToContainCommit(LocalRepository repo, String commitHash) {
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+            try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
+                var resolved = git.getRepository().resolve(commitHash);
+                if (resolved == null) {
+                    return false;
+                }
+                try (RevWalk revWalk = new RevWalk(git.getRepository())) {
+                    revWalk.parseCommit(resolved);
+                }
+                return true;
+            }
+            catch (Exception e) {
+                log.debug("Bare repository does not yet contain commit {}: {}", commitHash, e.getMessage());
+                return false;
+            }
+        });
     }
 
     /**
