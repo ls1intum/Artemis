@@ -104,18 +104,24 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 (feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED,
             );
         }
+
+        // Initialize editor with current state to avoid multiple re-renders
         this.initializeApollonEditor();
-        const highlightedElements = this.highlightedElements();
-        if (highlightedElements) {
-            await this.updateHighlightedElements(highlightedElements);
+
+        if (this.apollonEditor) {
+            const highlightedElements = this.highlightedElements();
+            const elementCounts = this.elementCounts();
+
+            // Perform initial updates in one batch if possible, or sequentially with care
+            if (highlightedElements) {
+                await this.updateHighlightedElements(highlightedElements);
+            }
+            if (elementCounts) {
+                await this.updateElementCounts(elementCounts);
+            }
+            await this.updateApollonAssessments(this.referencedFeedbacks);
         }
-        const elementCounts = this.elementCounts();
-        if (elementCounts) {
-            await this.updateElementCounts(elementCounts);
-        }
-        // Ensure assessments are added after editor initialization
-        await this.updateApollonAssessments(this.referencedFeedbacks);
-        await this.applyStateConfiguration();
+
         this.setupInteract();
     }
 
@@ -128,7 +134,11 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             if (this.assessmentSelectionSubscription !== undefined) {
                 this.apollonEditor.unsubscribe(this.assessmentSelectionSubscription);
             }
-            this.apollonEditor.destroy();
+            try {
+                this.apollonEditor.destroy();
+            } catch (err) {
+                // Ignore errors during destruction
+            }
         }
     }
 
@@ -137,8 +147,14 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * @private
      */
     private async runHighlightUpdate() {
+        if (!this.apollonEditor) {
+            return;
+        }
         await this.updateApollonAssessments(this.referencedFeedbacks);
-        await this.applyStateConfiguration();
+        const highlightedElements = this.highlightedElements();
+        if (highlightedElements) {
+            await this.updateHighlightedElements(highlightedElements);
+        }
     }
 
     /**
@@ -146,6 +162,20 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * events of Apollon and passes them on to parent components.
      */
     private initializeApollonEditor() {
+        if (this.apollonEditor) {
+            if (this.modelChangeSubscription !== undefined) {
+                this.apollonEditor.unsubscribe(this.modelChangeSubscription);
+            }
+            if (this.assessmentSelectionSubscription !== undefined) {
+                this.apollonEditor.unsubscribe(this.assessmentSelectionSubscription);
+            }
+            try {
+                this.apollonEditor.destroy();
+            } catch (err) {
+                // Ignore errors during destruction
+            }
+        }
+
         this.handleFeedback();
 
         this.apollonEditor = new ApollonEditor(this.editorContainer()!.nativeElement, {
@@ -305,10 +335,11 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      */
     private async updateApollonAssessments(feedbacks: Feedback[]) {
         const umlModel = this.umlModel();
-        if (!feedbacks || !umlModel) {
+        if (!feedbacks || !umlModel || !this.apollonEditor) {
             return;
         }
 
+        let modelNeedsFullUpdate = false;
         feedbacks.forEach((feedback) => {
             const newAssessment: Assessment = {
                 modelElementId: feedback.referenceId!,
@@ -324,23 +355,18 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 umlModel.assessments = {} as any;
             }
             umlModel.assessments[feedback.referenceId!] = newAssessment;
-            if (this.apollonEditor) {
-                try {
-                    this.apollonEditor.addOrUpdateAssessment(newAssessment);
-                } catch (error) {
-                    captureException(error);
-                    // Fall back to reassigning the model so assessments are still reflected in degraded environments (e.g., tests).
-                    this.apollonEditor.model = umlModel;
-                }
+            try {
+                this.apollonEditor!.addOrUpdateAssessment(newAssessment);
+            } catch (error) {
+                modelNeedsFullUpdate = true;
             }
         });
 
         // Refresh Apollon rendering to display assessment status icons (check/cross) immediately.
         // Reassigning the model forces internal store sync and visual refresh without waiting for user interaction.
-        if (this.apollonEditor) {
-            const currentModel = this.apollonEditor.model;
-            this.apollonEditor.model = { ...currentModel };
-        }
+        // We only do this ONCE at the end of the batch update.
+        const currentModel = this.apollonEditor.model;
+        this.apollonEditor.model = modelNeedsFullUpdate ? umlModel : { ...currentModel };
     }
 
     private calculateLabel(feedback: any) {
