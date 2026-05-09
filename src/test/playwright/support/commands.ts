@@ -127,26 +127,22 @@ export class Commands {
         minResults?: number,
     ) => {
         let exerciseParticipation: StudentParticipation | undefined;
+        let participationId: number | undefined;
         const startTime = Date.now();
 
-        const getParticipation = async (): Promise<StudentParticipation | undefined> => {
-            try {
-                return await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId);
-            } catch {
-                return undefined;
-            }
-        };
-
-        // Wait for participation to be available
+        // Wait for a participation to become available and capture its ID once.
         while (Date.now() - startTime < timeout) {
-            exerciseParticipation = await getParticipation();
-            if (exerciseParticipation) {
+            try {
+                exerciseParticipation = await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId);
+                participationId = exerciseParticipation.id;
                 break;
+            } catch {
+                // no participation yet — keep polling
             }
             await new Promise((resolve) => setTimeout(resolve, interval));
         }
 
-        if (!exerciseParticipation) {
+        if (!exerciseParticipation || participationId === undefined) {
             throw new Error(`Timed out waiting for participation for exercise ${exerciseId}`);
         }
 
@@ -159,12 +155,15 @@ export class Commands {
         // Otherwise, wait for the result count to increase by at least 1.
         const targetCount = minResults ?? numberOfBuildResults + 1;
 
+        // Poll with a single API call per iteration now that we have the participation ID.
         while (Date.now() - startTime < timeout) {
-            exerciseParticipation = await getParticipation();
-            const currentBuildResultsCount = countResults(exerciseParticipation);
-
-            if (currentBuildResultsCount >= targetCount) {
-                return exerciseParticipation;
+            try {
+                exerciseParticipation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
+                if (countResults(exerciseParticipation) >= targetCount) {
+                    return exerciseParticipation;
+                }
+            } catch {
+                // ignore transient errors
             }
 
             await new Promise((resolve) => setTimeout(resolve, interval));

@@ -32,6 +32,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     @Input() exercise: ProgrammingExercise;
     @Input() participation: Participation;
     @Input() btnSize = ButtonSize.SMALL;
+    @Input() title = '';
 
     participationBuildCanBeTriggered: boolean;
     // This only works correctly when the provided participation includes its latest result.
