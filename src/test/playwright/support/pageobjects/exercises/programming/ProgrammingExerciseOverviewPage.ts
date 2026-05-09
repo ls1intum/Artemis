@@ -41,7 +41,7 @@ export class ProgrammingExerciseOverviewPage {
         // Try up to 6 full navigations over ~90s (each with 15s wait for score to appear)
         for (let attempt = 0; attempt < 6; attempt++) {
             await this.page.goto(url);
-            await this.page.waitForLoadState('networkidle');
+            await this.page.waitForLoadState('domcontentloaded');
             try {
                 await expect(resultScore).toContainText(textPattern, { timeout: 15000 });
                 return; // Success
@@ -52,7 +52,7 @@ export class ProgrammingExerciseOverviewPage {
 
         // Final attempt with longer timeout
         await this.page.goto(url);
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
         await expect(resultScore).toContainText(textPattern, { timeout: 30000 });
     }
 
@@ -84,7 +84,12 @@ export class ProgrammingExerciseOverviewPage {
         await codeButtonLocator.click();
         await this.page.locator('.popover-body').waitFor({ state: 'visible' });
         await this.page.locator('.https-or-ssh-button').click();
-        await this.page.locator(gitCloneMethodSelector[cloneMethod]).click();
+        // The clone-method dropdown re-renders after .https-or-ssh-button is clicked. Wait for the
+        // chosen option to be both attached and visible before clicking, otherwise Playwright
+        // occasionally hits the previous render and gets "element was detached from the DOM".
+        const cloneMethodOption = this.page.locator(gitCloneMethodSelector[cloneMethod]);
+        await cloneMethodOption.waitFor({ state: 'visible' });
+        await cloneMethodOption.click();
     }
 
     async getCloneUrl() {
