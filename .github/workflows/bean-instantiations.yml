@@ -9,6 +9,10 @@ on:
     paths:
       - src/main/java/**
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   bean-instantiation-check:
     runs-on: ubuntu-latest
