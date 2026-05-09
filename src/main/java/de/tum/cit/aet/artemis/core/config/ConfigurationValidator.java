@@ -81,6 +81,8 @@ public class ConfigurationValidator {
 
     private final String weaviateGpuApiKey;
 
+    private final String serverUrl;
+
     public ConfigurationValidator(Environment environment,
             @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
             @Value("${artemis.user-management.internal-admin.username:#{null}}") String internalAdminUsername,
@@ -89,7 +91,8 @@ public class ConfigurationValidator {
             @Value("${artemis.weaviate.http-port:" + WeaviateConfigurationProperties.DEFAULT_HTTP_PORT + "}") int weaviatePort,
             @Value("${artemis.weaviate.grpc-port:" + WeaviateConfigurationProperties.DEFAULT_GRPC_PORT + "}") int weaviateGrpcPort,
             @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme, @Value("${artemis.weaviate.vectorizer-module:#{null}}") String weaviateVectorizerModule,
-            @Value("${artemis.weaviate.open-ai-base-url:#{null}}") String weaviateOpenAiBaseUrl, @Value("${artemis.weaviate.gpu-api-key:#{null}}") String weaviateGpuApiKey) {
+            @Value("${artemis.weaviate.open-ai-base-url:#{null}}") String weaviateOpenAiBaseUrl, @Value("${artemis.weaviate.gpu-api-key:#{null}}") String weaviateGpuApiKey,
+            @Value("${server.url:}") String serverUrl) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
@@ -105,6 +108,7 @@ public class ConfigurationValidator {
         this.weaviateVectorizerModule = weaviateVectorizerModule;
         this.weaviateOpenAiBaseUrl = weaviateOpenAiBaseUrl;
         this.weaviateGpuApiKey = weaviateGpuApiKey;
+        this.serverUrl = serverUrl;
     }
 
     /**
@@ -113,9 +117,36 @@ public class ConfigurationValidator {
      */
     @PostConstruct
     public void validateConfigurations() {
+        validateServerUrl();
         validatePasskeyConfiguration();
         validateAdminConfiguration();
         validateWeaviateConfiguration();
+    }
+
+    /**
+     * Best-effort validation for present-but-invalid server.url values.
+     * Ensures the URL is a valid absolute HTTP/HTTPS URL with a host component.
+     * Note: if server.url is completely missing, other beans that inject it without a default will fail first.
+     */
+    private void validateServerUrl() {
+        if (serverUrl == null || serverUrl.isBlank()) {
+            log.warn("server.url is not configured. Other components may fail to start.");
+            return;
+        }
+        try {
+            URI uri = URI.create(serverUrl);
+            String scheme = uri.getScheme();
+            if (uri.isOpaque() || !uri.isAbsolute() || (!HTTP_SCHEME.equals(scheme) && !HTTPS_SCHEME.equals(scheme)) || uri.getHost() == null) {
+                String errorMessage = "server.url '%s' is not a valid absolute HTTP/HTTPS URL with a host. It is used in rendered links and asset URLs.".formatted(serverUrl);
+                log.error(errorMessage);
+                throw new IllegalStateException(errorMessage);
+            }
+        }
+        catch (IllegalArgumentException e) {
+            String errorMessage = "server.url '%s' is not a valid URL: %s".formatted(serverUrl, e.getMessage());
+            log.error(errorMessage);
+            throw new IllegalStateException(errorMessage, e);
+        }
     }
 
     /**
