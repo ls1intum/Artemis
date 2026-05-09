@@ -660,21 +660,26 @@ export class ExerciseAPIRequests {
     }
 
     /**
-     * Gets the participation data for an programming exercise with the specified exercise ID.
+     * Gets the participation data for a programming exercise with the specified exercise ID.
+     * Uses the paginated endpoint to fetch the first participation's ID, then fetches full
+     * participation data (with latest result) via the per-participation endpoint.
      *
      * @param exerciseId - The ID of the exercise for which to retrieve the participation data.
-     * @returns A Promise<StudentParticipation> representing the student participation.
+     * @returns A Promise<StudentParticipation> representing the student participation with latest result.
      * @throws Error if no participations are found for the exercise.
      */
     async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
-        // Use the endpoint that returns all participations for the exercise with latest results
-        // NOTE: This endpoint requires at least tutor permissions
-        const response = await this.page.request.get(`api/exercise/exercises/${exerciseId}/participations?withLatestResults=true`);
-        const participations = (await response.json()) as StudentParticipation[];
+        const pageResponse = await this.page.request.get(
+            `api/exercise/exercises/${exerciseId}/participations/page?page=0&pageSize=1&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
+        );
+        if (!pageResponse.ok()) {
+            throw new Error(`Failed to get participations page for exercise ${exerciseId}: ${pageResponse.status()}`);
+        }
+        const participations = (await pageResponse.json()) as Array<{ participationId: number }>;
         if (!Array.isArray(participations) || participations.length === 0) {
             throw new Error(`No participations found for exercise ${exerciseId}`);
         }
-        return participations[0];
+        return this.getParticipationWithLatestResult(participations[0].participationId);
     }
 
     /**

@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, DestroyRef, OnDestroy, OnInit, Renderer2, inject, signal } from '@angular/core';
+import { AfterViewChecked, Component, DestroyRef, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/core/user/user.model';
@@ -18,15 +18,13 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 @Component({
     selector: 'jhi-home',
     templateUrl: './home.component.html',
     styleUrls: ['home.scss'],
-    imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent, ButtonComponent, SetupPasskeyModalComponent],
+    imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent, ButtonComponent],
 })
 export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     protected readonly faCircleNotch = faCircleNotch;
@@ -46,7 +44,6 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     private readonly alertService = inject(AlertService);
     private readonly translateService = inject(TranslateService);
     private readonly webauthnService = inject(WebauthnService);
-    private readonly localStorageService = inject(LocalStorageService);
     private readonly destroyRef = inject(DestroyRef);
 
     protected usernameTouched = false;
@@ -58,7 +55,6 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
     authenticationError = false;
     account: User;
-    showPasskeyModal = signal(false);
     password: string;
     rememberMe = true;
     // in case this is activated (see application-artemis.yml), users have to actively click into it
@@ -83,32 +79,6 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     isSubmittingLogin = false;
 
     profileInfo: ProfileInfo;
-
-    /**
-     * <p>
-     * We want users to use passkey authentication over password authentication.
-     * </p>
-     * <p>
-     * If the passkey feature is enabled and no passkeys are set up yet, we display a modal that informs the user about passkeys and forwards to the setup page.
-     * </p>
-     */
-    openSetupPasskeyModal(): void {
-        if (!this.isPasskeyEnabled) {
-            return;
-        }
-
-        const earliestReminderDate = this.localStorageService.retrieveDate(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY);
-        const userDisabledReminderForCurrentTimeframe = earliestReminderDate && new Date() < earliestReminderDate;
-        if (userDisabledReminderForCurrentTimeframe) {
-            return;
-        }
-
-        if (!this.accountService.userIdentity()?.askToSetupPasskey) {
-            return;
-        }
-
-        this.showPasskeyModal.set(true);
-    }
 
     ngOnInit() {
         this.initializeWithProfileInfo();
@@ -272,7 +242,6 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             })
             .then(() => {
                 this.handleLoginSuccess();
-                this.openSetupPasskeyModal();
             })
             .catch(() => {
                 this.authenticationError = true;
