@@ -40,7 +40,7 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases.phases(), participation);
 
         assertThat(activePhases).hasSize(2);
         assertThat(activePhases).containsExactly(compile, test);
@@ -55,7 +55,7 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases.phases(), participation);
 
         assertThat(activePhases).hasSize(1);
         assertThat(activePhases).containsExactly(compile);
@@ -70,7 +70,7 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(true);
 
-        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases.phases(), participation);
 
         assertThat(activePhases).hasSize(2);
         assertThat(activePhases).containsExactly(compile, test);
@@ -83,7 +83,7 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases.phases(), participation);
 
         assertThat(activePhases).isEmpty();
         assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).isEmpty();
@@ -97,7 +97,7 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases.phases(), participation);
 
         assertThat(activePhases).isEmpty();
         assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).isEmpty();
@@ -111,7 +111,7 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(true);
 
-        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases.phases(), participation);
 
         assertThat(activePhases).hasSize(2);
         assertThat(activePhases).containsExactly(test1, test2);
@@ -126,7 +126,7 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases.phases(), participation);
 
         assertThat(activePhases).hasSize(2);
         assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).containsExactlyInAnyOrder("compile-results/*.xml", "test-results/*.xml", "integration/*.xml");
@@ -139,7 +139,7 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases.phases(), participation);
 
         assertThat(activePhases).hasSize(1);
         assertThat(activePhases).containsExactly(compile);
@@ -153,7 +153,7 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases.phases(), participation);
 
         assertThat(activePhases).hasSize(1);
         assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).isEmpty();
@@ -169,7 +169,7 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases.phases(), participation);
 
         // Before due date: only compile runs, no result paths
         assertThat(activePhases).hasSize(1);
@@ -187,7 +187,7 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(true);
 
-        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases.phases(), participation);
 
         // After due date: all phases run, result paths present
         assertThat(activePhases).hasSize(3);
@@ -204,7 +204,7 @@ class BuildPhaseEvaluationServiceTest {
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(compile, test), "ubuntu:latest");
 
         // ExerciseDateService should not even be consulted for template participations
-        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, templateParticipation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases.phases(), templateParticipation);
 
         assertThat(activePhases).hasSize(2);
         assertThat(activePhases).containsExactly(compile, test);
@@ -221,7 +221,7 @@ class BuildPhaseEvaluationServiceTest {
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(compile, test, sca), "ubuntu:latest");
 
         // ExerciseDateService should not even be consulted for solution participations
-        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, solutionParticipation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases.phases(), solutionParticipation);
 
         assertThat(activePhases).hasSize(3);
         assertThat(activePhases).containsExactly(compile, test, sca);
@@ -236,7 +236,7 @@ class BuildPhaseEvaluationServiceTest {
         BuildPhaseDTO test2 = new BuildPhaseDTO("test2", "mvn test -pl module2", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("module2/*.xml"));
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(test1, test2), "ubuntu:latest");
 
-        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, templateParticipation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases.phases(), templateParticipation);
 
         assertThat(activePhases).hasSize(2);
         assertThat(activePhases).containsExactly(test1, test2);

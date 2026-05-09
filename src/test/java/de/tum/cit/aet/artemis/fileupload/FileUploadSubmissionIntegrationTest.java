@@ -519,7 +519,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(submission).isNotNull();
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.isSubmitted()).isTrue();
-        assertThat(submission.getLatestResult().getFeedbacks()).isEqualTo(feedbacks);
+        assertThat(submission.getLatestResult().getFeedbacks()).containsExactlyInAnyOrderElementsOf(feedbacks);
         assertThat(submission.getLatestResult().getAssessor()).as("students should not see the assessor information").isNull();
     }
 

@@ -1,20 +1,27 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal/create-test-run-modal.component';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { By } from '@angular/platform-browser';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject } from 'rxjs';
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Create Test Run Modal Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CreateTestRunModalComponent;
     let fixture: ComponentFixture<CreateTestRunModalComponent>;
+    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
+    let dialogRef: DynamicDialogRef;
 
     const course = { id: 1 } as Course;
     const exercise = { id: 1, title: 'exampleExercise', type: ExerciseType.TEXT } as Exercise;
@@ -23,8 +30,18 @@ describe('Create Test Run Modal Component', () => {
     const exerciseGroup2 = { id: 2 } as ExerciseGroup;
 
     beforeEach(() => {
+        dialogRefCloseSpy = vi.fn();
+        dialogRef = {
+            close: dialogRefCloseSpy,
+            onClose: new Subject<any>(),
+        } as unknown as DynamicDialogRef;
+
         TestBed.configureTestingModule({
-            providers: [MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: DynamicDialogRef, useValue: dialogRef },
+                { provide: DynamicDialogConfig, useValue: { data: { exam } } },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CreateTestRunModalComponent);
@@ -32,24 +49,21 @@ describe('Create Test Run Modal Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('onInit', () => {
-        it('should initialise the working time form', fakeAsync(() => {
-            comp.exam = exam;
+        it('should initialise the working time form', async () => {
             // WHEN
             comp.ngOnInit();
             // THEN
             expect(!!comp.workingTimeForm).not.toBeNull();
-        }));
+            expect(comp.exam()).toEqual(exam);
+        });
     });
 
     describe('creating test run workflow', () => {
         it('should create a new test run and close the modal', () => {
-            const activeModal = TestBed.inject(NgbActiveModal);
-            const closeStub = jest.spyOn(activeModal, 'close');
-            comp.exam = exam;
             fixture.detectChanges();
             comp.workingTimeForm.controls['minutes'].setValue(30);
             comp.workingTimeForm.controls['seconds'].setValue(0);
@@ -58,12 +72,12 @@ describe('Create Test Run Modal Component', () => {
             exerciseRow.click();
             fixture.detectChanges();
             expect(comp.testRunConfiguration[1]).toEqual(exercise);
-            expect(comp.exam.exerciseGroups!).toHaveLength(1);
-            expect(comp.testRunConfigured).toBeTrue();
+            expect(comp.exam()!.exerciseGroups!).toHaveLength(1);
+            expect(comp.testRunConfigured).toBe(true);
             const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton')).nativeElement;
             createTestRunButton.click();
-            expect(closeStub).toHaveBeenCalledOnce();
-            const testRun = closeStub.mock.calls[0][0] as StudentExam;
+            expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
+            const testRun = dialogRefCloseSpy.mock.calls[0][0] as StudentExam;
             expect(testRun).not.toBeNull();
             expect(testRun.exam).toEqual(exam);
             expect(testRun.exercises).toContain(exercise);
@@ -73,29 +87,29 @@ describe('Create Test Run Modal Component', () => {
 
     describe('Ignore Exercise groups', () => {
         it('should ignore exercise groups with no exercises', () => {
-            comp.exam = exam;
-            comp.exam.exerciseGroups = [exerciseGroup1, exerciseGroup2];
+            // Re-set exam with two exercise groups, one without exercises
+            exam.exerciseGroups = [exerciseGroup1, exerciseGroup2];
             fixture.detectChanges();
-            expect(comp.exam.exerciseGroups!).toHaveLength(1);
+            expect(comp.exam()!.exerciseGroups!).toHaveLength(1);
         });
     });
 
     describe('Exercise Selection', () => {
-        it('should highlight the exercise when pressed', fakeAsync(() => {
-            comp.exam = exam;
+        it('should highlight the exercise when pressed', async () => {
+            fixture.detectChanges();
             // WHEN
             // @ts-ignore
-            comp.onSelectExercise(exercise, exam.exerciseGroups[0]!);
+            comp.onSelectExercise(exercise, comp.exam()!.exerciseGroups[0]!);
             // THEN
             expect(Object.values(comp.testRunConfiguration).length).toBeGreaterThan(0);
-        }));
-        it('should allow submit when an exercise has been selected for every exercise group', fakeAsync(() => {
-            comp.exam = exam;
+        });
+        it('should allow submit when an exercise has been selected for every exercise group', async () => {
+            fixture.detectChanges();
             // WHEN
             // @ts-ignore
-            comp.onSelectExercise(exercise, exam.exerciseGroups[0]!);
+            comp.onSelectExercise(exercise, comp.exam()!.exerciseGroups[0]!);
             // THEN
             expect(comp.testRunConfigured).not.toBeNull();
-        }));
+        });
     });
 });

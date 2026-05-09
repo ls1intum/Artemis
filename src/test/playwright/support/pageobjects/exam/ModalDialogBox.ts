@@ -9,7 +9,10 @@ export class ModalDialogBox {
     }
 
     getModalDialogContent() {
-        return this.page.locator('.modal-content');
+        // The exam live-events overlay was migrated from NgbModal (.modal-content) to
+        // PrimeNG DynamicDialog (.p-dialog-content). Match either so this page object
+        // works for any modal-style dialog used by the exam tests.
+        return this.page.locator('.p-dialog-content, .modal-content').first();
     }
 
     async checkDialogTime(dialogTime: Dayjs) {

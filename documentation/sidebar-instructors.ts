@@ -13,6 +13,7 @@ const sidebars: SidebarsConfig = {
             items: [
                 'course-management/course-requests',
                 'course-management/course-configuration',
+                'course-management/user-management',
                 'course-management/import-from-course',
                 'course-management/exports',
             ],

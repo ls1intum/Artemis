@@ -1,0 +1,378 @@
+/* Base problem-statement styling (light theme defaults). Variables are overridden in dark-mode.css. */
+
+/* Standalone SSR body layout. Identical in light and dark so padding/margin
+ * do not flip between modes. Consumers can override --artemis-ssr-body-padding
+ * to customize the gutter. Dark-mode.css adds a body background on top. */
+body.artemis-ssr-body {
+    margin: 0;
+    padding: var(--artemis-ssr-body-padding, 16px);
+}
+
+.artemis-problem-statement {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+    color: var(--body-color, #212529);
+}
+
+.artemis-problem-statement h1,
+.artemis-problem-statement h2,
+.artemis-problem-statement h3,
+.artemis-problem-statement h4 {
+    font-weight: 400;
+}
+
+.artemis-problem-statement ol,
+.artemis-problem-statement ul {
+    margin-bottom: 0.75em;
+}
+
+.artemis-problem-statement hr {
+    border: none;
+    border-top: 1px solid var(--border-color, #dee2e6);
+    margin: 16px 0;
+}
+
+.artemis-problem-statement svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.artemis-problem-statement a {
+    color: var(--link-color, #3e8acc);
+}
+
+.artemis-problem-statement pre {
+    background: var(--artemis-pre-background, #f5f5f5);
+    color: var(--artemis-pre-color, #333);
+    border: 1px solid var(--artemis-pre-border, #ccc);
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 13px;
+    line-height: 1.43;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+.artemis-problem-statement :not(pre) > code {
+    font-size: 87.5%;
+    color: #d63384;
+    padding: 2px 4px;
+    background: var(--artemis-pre-background, #f5f5f5);
+    border-radius: 4px;
+}
+
+.artemis-problem-statement blockquote {
+    color: var(--markdown-preview-blockquote, #6a737d);
+    border-left: 4px solid var(--markdown-preview-blockquote-border, #dfe2e5);
+    padding: 0 1em;
+    margin: 0 0 16px;
+}
+
+.artemis-problem-statement img {
+    max-width: 100%;
+}
+
+.artemis-problem-statement table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.artemis-problem-statement table th,
+.artemis-problem-statement table td {
+    border: 1px solid var(--border-color, #dee2e6);
+    padding: 8px;
+}
+
+/* Task inline markers */
+
+.artemis-task {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.artemis-task-stats {
+    font-weight: 400;
+    font-size: 0.9em;
+    margin-left: 4px;
+    text-decoration: underline;
+}
+
+.artemis-task-success .artemis-task-stats {
+    color: var(--success, #28a745);
+}
+
+.artemis-task-fail .artemis-task-stats {
+    color: var(--danger, #dc3545);
+}
+
+.artemis-task-not-executed .artemis-task-stats {
+    color: var(--secondary, #6c757d);
+}
+
+i.fa.artemis-icon-success,
+i.fa.artemis-icon-fail {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+i.fa.artemis-icon-success {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7.5' fill='%2328a745'/%3E%3Cpath d='M5 8l2 2 4-4' stroke='%23fff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+}
+
+i.fa.artemis-icon-fail {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7.5' fill='%23dc3545'/%3E%3Cpath d='M5.5 5.5l5 5M10.5 5.5l-5 5' stroke='%23fff' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
+}
+
+.markdown-alert {
+    border-left: 4px solid var(--info, #17a2b8);
+    padding: 8px 16px;
+    margin: 16px 0;
+    border-radius: 0 4px 4px 0;
+}
+
+.markdown-alert-title {
+    font-weight: 600;
+}
+
+/* ------------------------------------------------------------------
+ * Interactive feedback modal (opened from .artemis-task clicks).
+ * Variables live here (light defaults); dark-mode.css overrides them on
+ * .artemis-modal--dark so the modal stays themable even when appended to
+ * document.body (outside the problem-statement container).
+ * ------------------------------------------------------------------ */
+
+.artemis-modal {
+    --artemis-modal-bg: #fff;
+    --artemis-modal-color: #212529;
+    --artemis-modal-border: #dee2e6;
+    --artemis-modal-secondary: #6c757d;
+    --artemis-modal-success-bg: #d4edda;
+    --artemis-modal-success-color: #155724;
+    --artemis-modal-success-border: #c3e6cb;
+    --artemis-modal-success-item-bg: #f0faf2;
+    --artemis-modal-danger-bg: #f8d7da;
+    --artemis-modal-danger-color: #721c24;
+    --artemis-modal-danger-border: #f5c6cb;
+    --artemis-modal-danger-item-bg: #fef2f2;
+    --artemis-modal-subtle-bg: #f8f9fa;
+    --artemis-modal-subtle-border: #e9ecef;
+    --artemis-modal-bar-track: #e9ecef;
+
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10001;
+    background: var(--artemis-modal-bg);
+    color: var(--artemis-modal-color);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 560px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.artemis-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+}
+
+.artemis-modal__header {
+    background: #353d47;
+    color: #fff;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.artemis-modal__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.artemis-modal__close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 0 0 12px;
+    line-height: 1;
+}
+
+.artemis-modal__body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.artemis-modal__score {
+    margin-bottom: 16px;
+}
+
+.artemis-modal__score-title {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.artemis-modal__score-meta {
+    margin: 0;
+    font-size: 13px;
+    color: var(--artemis-modal-secondary);
+}
+
+.artemis-modal__divider {
+    border: none;
+    border-top: 1px solid var(--artemis-modal-border);
+    margin: 0 0 16px;
+}
+
+.artemis-modal__footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--artemis-modal-border);
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+.artemis-modal__button {
+    padding: 6px 20px;
+    border: 1px solid var(--artemis-modal-secondary);
+    border-radius: 4px;
+    background: var(--artemis-modal-bg);
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--artemis-modal-color);
+}
+
+.artemis-score-bar {
+    height: 8px;
+    background: var(--artemis-modal-bar-track);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.artemis-score-bar__fill {
+    height: 100%;
+    border-radius: 4px;
+}
+
+.artemis-score-bar__fill--pass {
+    background: var(--success, #28a745);
+}
+
+.artemis-score-bar__fill--fail {
+    background: var(--danger, #dc3545);
+}
+
+.artemis-feedback-group {
+    margin-bottom: 12px;
+}
+
+.artemis-feedback-group__header {
+    padding: 10px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    border: none;
+    font: inherit;
+    text-align: left;
+    width: 100%;
+}
+
+.artemis-feedback-group--passed .artemis-feedback-group__header {
+    background: var(--artemis-modal-success-bg);
+    color: var(--artemis-modal-success-color);
+}
+
+.artemis-feedback-group--failed .artemis-feedback-group__header {
+    background: var(--artemis-modal-danger-bg);
+    color: var(--artemis-modal-danger-color);
+}
+
+.artemis-feedback-group__arrow {
+    font-size: 11px;
+    margin-right: 6px;
+}
+
+.artemis-feedback-group__body {
+    padding: 0 8px;
+}
+
+.artemis-feedback-item {
+    padding: 10px 12px;
+    margin: 6px 0;
+    border-radius: 4px;
+    border: 1px solid transparent;
+}
+
+.artemis-feedback-item--passed {
+    background: var(--artemis-modal-success-item-bg);
+    border-color: var(--artemis-modal-success-border);
+}
+
+.artemis-feedback-item--failed {
+    background: var(--artemis-modal-danger-item-bg);
+    border-color: var(--artemis-modal-danger-border);
+}
+
+.artemis-feedback-item__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.artemis-feedback-item__name {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.artemis-feedback-item__name-text {
+    font-size: 14px;
+    color: var(--artemis-modal-color);
+}
+
+.artemis-feedback-item__credits {
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.artemis-feedback-item__message {
+    font-size: 12px;
+    color: var(--artemis-modal-color);
+    background: var(--artemis-modal-subtle-bg);
+    border: 1px solid var(--artemis-modal-subtle-border);
+    border-radius: 4px;
+    padding: 8px;
+    margin: 6px 0 0;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.artemis-modal :focus-visible,
+.artemis-modal-backdrop :focus-visible {
+    outline: 2px solid var(--link-color, #3e8acc);
+    outline-offset: 2px;
+}

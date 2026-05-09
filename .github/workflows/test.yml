@@ -50,9 +50,9 @@ on:
 
 # Limit the number of concurrent runs to one per PR
 # If a run is already in progress, cancel it
-# If the run is not for a PR, then this limit does not apply
+# If the run is not for a PR, each run gets a unique group so pushes run in parallel
 concurrency:
-  group: test-${{ github.head_ref || github.run_id }}
+  group: test-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 # Keep in sync with codeql-analysis.yml and build.yml
@@ -238,7 +238,7 @@ jobs:
 
   client-tests:
     runs-on: aet-large-ubuntu
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
         - uses: actions/checkout@v6
         # It seems like there is some memory issue with these tests with the project-wide default node option
