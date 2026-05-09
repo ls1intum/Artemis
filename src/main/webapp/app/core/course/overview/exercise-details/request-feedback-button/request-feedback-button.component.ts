@@ -66,6 +66,10 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     private athenaResultUpdateListener?: Subscription;
     private acceptSubscription?: Subscription;
 
+    private isAcceptedLLMSelection(selection?: LLMSelectionDecision): boolean {
+        return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
+    }
+
     ngOnInit() {
         this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
         this.isExamExercise = isExamExercise(this.exercise());
@@ -107,7 +111,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     setUserAcceptedLLMUsage(): void {
         const selection = this.accountService.userIdentity()?.selectedLLMUsage;
-        this.hasUserAcceptedLLMUsage = selection === LLMSelectionDecision.CLOUD_AI;
+        this.hasUserAcceptedLLMUsage = this.isAcceptedLLMSelection(selection);
     }
 
     async showLLMSelectionModal(): Promise<void> {
@@ -133,7 +137,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         this.acceptSubscription?.unsubscribe();
 
         this.acceptSubscription = this.userService.updateLLMSelectionDecision(decision).subscribe(() => {
-            const hasAccepted = decision === LLMSelectionDecision.CLOUD_AI;
+            const hasAccepted = this.isAcceptedLLMSelection(decision);
 
             this.hasUserAcceptedLLMUsage = hasAccepted;
             this.accountService.setUserLLMSelectionDecision(decision);

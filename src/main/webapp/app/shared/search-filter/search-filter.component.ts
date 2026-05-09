@@ -1,29 +1,28 @@
-import { Component, EventEmitter, Output } from '@angular/core';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faMagnifyingGlass, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { Component, input, output, signal } from '@angular/core';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-search-filter',
     templateUrl: './search-filter.component.html',
-    imports: [FaIconComponent, FormsModule, ReactiveFormsModule, ArtemisTranslatePipe],
+    styleUrls: ['./search-filter.component.scss'],
+    imports: [IconFieldModule, InputIconModule, InputTextModule, ArtemisTranslatePipe],
 })
 export class SearchFilterComponent {
-    faMagnifyingGlass = faMagnifyingGlass;
-    faTimes = faTimes;
+    readonly placeholderKey = input<string>('artemisApp.course.exercise.search.searchPlaceholder');
+    readonly newSearchEvent = output<string>();
 
-    @Output() newSearchEvent = new EventEmitter<string>();
+    readonly searchValue = signal('');
 
-    filterForm: FormGroup = new FormGroup({
-        searchFilter: new FormControl<string>(''),
-    });
-
-    setSearchValue(searchValue: string) {
-        this.newSearchEvent.emit(searchValue);
+    setSearchValue(value: string) {
+        this.searchValue.set(value);
+        this.newSearchEvent.emit(value);
     }
+
     resetSearchValue() {
-        this.filterForm.get('searchFilter')?.reset();
+        this.searchValue.set('');
         this.newSearchEvent.emit('');
     }
 }

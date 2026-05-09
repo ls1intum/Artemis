@@ -258,7 +258,7 @@
         "test": "npm run prebuild && ng test --coverage --log-heap-usage -w=4",
         "testw8": "npm run prebuild && ng test --coverage --log-heap-usage -w=8",
         "test:one": "npm run prebuild && ng test",
-        "jest:ci": "ng test --coverage --log-heap-usage -w=4 --ci --reporters=default --reporters=jest-junit",
+        "jest:ci": "cross-env NODE_OPTIONS='--max-old-space-size=8192 --max-semi-space-size=128' ng test --coverage --log-heap-usage -w=4 --ci --reporters=default --reporters=jest-junit",
         "setupCourse": "node supporting_scripts/course-scripts/setup-course/setup-course.mjs",
         "vitest": "vitest",
         "vitest:run": "vitest run",
