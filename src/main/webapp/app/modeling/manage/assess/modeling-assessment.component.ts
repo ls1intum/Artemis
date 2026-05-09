@@ -198,6 +198,14 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             this.assessmentSelectionSubscription = this.apollonEditor.subscribeToAssessmentSelection((selections) => this.selectedElementIdsChanged.emit(selections));
         }
     }
+
+    private async applyStateConfiguration() {
+        const highlightedElements = this.highlightedElements();
+        if (highlightedElements) {
+            await this.updateHighlightedElements(highlightedElements);
+        }
+    }
+
     /**
      * Gets the assessments from Apollon and creates/updates the corresponding Feedback entries in the
      * element feedback mapping.
