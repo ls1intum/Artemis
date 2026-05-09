@@ -36,7 +36,7 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
             await login(tutor, '/course-management');
             await courseManagement.openSubmissionsForExerciseAndCourse(course.id!, modelingExercise.id!);
             await toggleSidebar();
-            await courseManagement.checkIfStudentSubmissionExists(studentOne.username);
+            await courseManagement.checkIfStudentSubmissionExists(studentOne.displayName!);
             await login(tutor, `/course-management/${course.id}/assessment-dashboard/${modelingExercise.id!}`);
             await exerciseAssessment.clickHaveReadInstructionsButton();
             await exerciseAssessment.clickStartNewAssessment();
