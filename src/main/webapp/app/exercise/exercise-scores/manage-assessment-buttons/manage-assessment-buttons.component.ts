@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
-import { faBan, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -41,7 +41,7 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     examMode = false;
 
     readonly faBan = faBan;
-    readonly faFolderOpen = faFolderOpen;
+    readonly faClipboardList = faClipboardList;
     readonly AssessmentType = AssessmentType;
 
     constructor() {
