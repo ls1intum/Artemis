@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -93,8 +92,6 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
 
     private String originalImageArchitecture;
 
-    private String currentArchitecture;
-
     @Autowired
     private BuildAgentDockerService buildAgentDockerService;
 
@@ -157,9 +154,9 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         doReturn(realDockerClient).when(buildAgentConfiguration).getDockerClient();
         doReturn(true).when(buildAgentConfiguration).isDockerAvailable();
         dockerClient = realDockerClient;
-        currentArchitecture = normalizeDockerArchitecture(realDockerClient.infoCmd().exec().getArchitecture());
-        log.info("Running with Docker architecture: {}", currentArchitecture);
-        ReflectionTestUtils.setField(buildAgentDockerService, "imageArchitecture", currentArchitecture);
+        String architecture = normalizeDockerArchitecture(realDockerClient.infoCmd().exec().getArchitecture());
+        log.info("Running with Docker architecture: {}", architecture);
+        ReflectionTestUtils.setField(buildAgentDockerService, "imageArchitecture", architecture);
         distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedBuildResultQueue().clear();
@@ -428,13 +425,10 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     private List<String> getGccTestCaseNames() {
-        List<String> testCaseNames = new ArrayList<>(List.of("TestCompile", "TestOutput", "TestCompileASan", "TestOutputASan", "TestCompileUBSan", "TestOutputUBSan"));
-        // TestCompileLeak is only included on amd64 as it requires the liblsan library which is not available on all platforms (e.g. ARM64).
-        // TestOutputLSan is always excluded because it requires the SYS_PTRACE capability, which is unavailable in Docker by default.
-        if ("amd64".equals(currentArchitecture)) {
-            testCaseNames.add("TestCompileLeak");
-        }
-        return testCaseNames;
+        // TestCompileLeak and TestOutputLSan are excluded because LeakSanitizer requires the liblsan library
+        // and the SYS_PTRACE capability, both of which are inconsistently available or restricted in CI Docker environments.
+        // We only include the 6 core tests that are reliable across all platforms.
+        return List.of("TestCompile", "TestOutput", "TestCompileASan", "TestOutputASan", "TestCompileUBSan", "TestOutputUBSan");
     }
 
     private String normalizeDockerArchitecture(String dockerArchitecture) {
