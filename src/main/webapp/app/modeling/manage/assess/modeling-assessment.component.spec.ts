@@ -1,67 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-// Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
-const { MockApollonEditor } = vi.hoisted(() => {
-    const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
-
-    class MockApollonEditorClass {
-        _model: any;
-        _subscriptions = new Map<number, (model: any) => void>();
-        _subscriptionCounter = 0;
-        _destroyed = false;
-
-        subscribeToModelChange = vi.fn((callback: (model: any) => void) => {
-            const id = ++this._subscriptionCounter;
-            this._subscriptions.set(id, callback);
-            return id;
-        });
-
-        subscribeToAssessmentSelection = vi.fn((_callback: (selections: string[]) => void) => {
-            return ++this._subscriptionCounter;
-        });
-
-        unsubscribe = vi.fn((id: number) => {
-            this._subscriptions.delete(id);
-        });
-
-        addOrUpdateAssessment = vi.fn();
-
-        destroy = vi.fn(() => {
-            this._destroyed = true;
-            this._subscriptions.clear();
-        });
-
-        nextRender = Promise.resolve();
-
-        constructor(_container: HTMLElement, options?: { model?: any }) {
-            const model = options?.model ? deepClone(options.model) : {};
-            // Ensure model has nodes/edges arrays (v4 format) even if input is v2/v3 format
-            if (!model.nodes) model.nodes = [];
-            if (!model.edges) model.edges = [];
-            this._model = model;
-        }
-
-        get model() {
-            return this._model;
-        }
-
-        set model(value: any) {
-            this._model = value;
-        }
-    }
-
-    return { MockApollonEditor: MockApollonEditorClass };
-});
-
-// Mock the entire ApollonEditor class to prevent React initialization
-vi.mock('@tumaet/apollon', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('@tumaet/apollon')>();
-    return {
-        ...actual,
-        ApollonEditor: MockApollonEditor,
-    };
-});
-
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
@@ -200,7 +137,13 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     afterEach(() => {
-        fixture.destroy();
+        // Properly clean up the Apollon editor (React-based) before test environment teardown.
+        // Prevents "Should not already be working" React scheduler errors firing from setImmediate
+        // after the test ends. Mirrors the pattern in modeling-editor.component.spec.ts.
+        if (comp) {
+            comp.ngOnDestroy();
+        }
+        fixture?.destroy();
         vi.restoreAllMocks();
     });
 
