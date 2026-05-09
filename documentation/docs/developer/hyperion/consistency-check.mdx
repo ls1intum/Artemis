@@ -1,5 +1,8 @@
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import consistencyCheckPipeline from '../assets/consistency-check-pipeline.png';
+import benchmarkingWorkflow from '../assets/consistency-check-benchmarking-workflow.png';
 
 # Hyperion: Consistency Check
 
@@ -10,18 +13,22 @@ For instructor-facing usage documentation see [Consistency Check](../../instruct
 
 ## Pipeline Architecture
 
+<Image src={consistencyCheckPipeline} alt="Consistency Check Pipeline — Activity Diagram" size={ImageSize.large} caption="Consistency Check Pipeline — Activity Diagram"></Image>
+
 Three-phase pipeline in `HyperionConsistencyCheckService`:
 
 **Phase 1 — Language-Aware Context Filtering**
-`HyperionProgrammingLanguageContextFilterService` strips build artifacts, IDE configs, binaries, and files over 100 KB before anything is sent to the model. Language-specific exclusions on top.
+A `ProgrammingExercise` enters the `ConsistencyCheckService`. The `Context Renderer Service` invokes `HyperionProgrammingLanguageContextFilterService` (Context Filter) to strip build artifacts, IDE configs, binaries, and files over 100 KB. Language-specific exclusions applied on top. Filtered, line-numbered artifact text is the output.
 
 **Phase 2 — Structural and Semantic Analysis (concurrent)**
-Two prompts run in parallel via Reactor with Spring AI's `ChatClient`:
+Two prompts run in parallel via Reactor with Spring AI's `ChatClient` (fork/join bars in the diagram):
 - **Structural checker** (`consistency_structural.st`) — return-type, parameter, constructor, attribute-type, visibility mismatches
 - **Semantic checker** (`consistency_semantic.st`) — identifier naming inconsistencies
 
+Both outputs merge into a combined `Consistency Issues` list.
+
 **Phase 3 — Verification Pass (serial)**
-`consistency_verification.st` receives combined Phase 2 output. Removes false positives, deduplicates, corrects line ranges and descriptions, self-verifies. Fails gracefully — falls back to pre-verification list on error.
+`consistency_verification.st` receives the combined list. Removes false positives, deduplicates, corrects line ranges and descriptions, self-verifies. Returns `Verified Consistency Issues`. Fails gracefully — falls back to pre-verification list on error.
 
 ---
 
@@ -90,12 +97,16 @@ V2 is single-run per variant — LLM non-determinism is not averaged out. V1 use
 
 ## Benchmarking Workflow
 
+<Image src={benchmarkingWorkflow} alt="Benchmarking Workflow — Activity Diagram" size={ImageSize.large} caption="Benchmarking Workflow — Activity Diagram"></Image>
+
 ### Overview
 
-Evaluation connects Artemis to two external repositories:
+The workflow runs end-to-end via `run_pecv_bench.py` and connects Artemis to two external repositories:
 
 - **[PECV-bench](https://github.com/ls1intum/PECV-bench)** — public: evaluation framework, public exercise dataset, ground-truth annotations, accumulated approach results.
 - **[PECV-bench-dataset](https://github.com/ls1intum/PECV-bench-dataset)** — private: confidential solution repos and test suites. Directory structure mirrors `data/` in PECV-bench; both are merged before variant materialization.
+
+The diagram shows the three swim lanes: **Developer** triggers the run; **Artemis** handles course management, exercise import, and consistency check execution; **PECV-bench** materializes variants, prepares exercise ZIPs, saves results, and generates the report. The `create_course` flag in `config.ini` controls whether the workflow creates a new benchmark course or reuses an existing one (diamond in the diagram).
 
 <Callout variant={CalloutVariant.info}>
 Access to PECV-bench-dataset requires authorization. Contact the Hyperion maintainers before running V2 evaluations.
