@@ -24,7 +24,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import { lastValueFrom } from 'rxjs';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
-import { TraceService } from '@sentry/angular';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
@@ -73,7 +72,6 @@ export const appConfig: ApplicationConfig = {
             const profileService = inject(ProfileService);
             const accountService = inject(AccountService);
             const authServerProvider = inject(AuthServerProvider);
-            inject(TraceService);
             // Ensure the service is initialized before any routing happens
             inject(ArtemisNavigationUtilService);
             // If the IdP just redirected the user back to Artemis, complete the SAML2 second-step
