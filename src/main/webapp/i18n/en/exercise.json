@@ -322,6 +322,7 @@
                     "undefined": "You need to specify a short name.",
                     "pattern": "The short name must begin with a letter and must not contain any special characters!",
                     "minlength": "The short name must be at least 3 characters long!",
+                    "maxlength": "The short name must not exceed 36 characters!",
                     "disallowedValue": "The short name is already used for another exercise!"
                 },
                 "packageName": {

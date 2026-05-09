@@ -195,9 +195,11 @@ public class CourseRequestService {
             throw new BadRequestAlertException("The course title is too long", CourseRequest.ENTITY_NAME, "courseRequestTitleTooLong");
         }
 
+        Course validationCourse = new Course();
+        validationCourse.setShortName(updateDTO.shortName());
+        validationCourse.validateShortName();
         // Validate date range if both dates are provided
         if (updateDTO.startDate() != null && updateDTO.endDate() != null) {
-            Course validationCourse = new Course();
             validationCourse.setStartDate(updateDTO.startDate());
             validationCourse.setEndDate(updateDTO.endDate());
             validationCourse.validateStartAndEndDate();
