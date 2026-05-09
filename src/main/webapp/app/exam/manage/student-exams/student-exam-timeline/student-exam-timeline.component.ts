@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, viewChild, viewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -53,12 +53,12 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
 
     // stores if a page component has already been visited (true) or not (false)
     // this is an array because the exam-timeline uses a page component for each exercise
-    pageComponentVisited: boolean[];
-    selectedTimestamp = 0;
+    pageComponentVisited = signal<boolean[]>([]);
+    selectedTimestamp = signal<number>(0);
     timestampIndex = 0;
 
     studentExam: StudentExam;
-    exerciseIndex: number;
+    exerciseIndex = signal<number>(0);
     activeExamPage = new ExamPage();
     submissionTimeStamps: dayjs.Dayjs[] = [];
     submissionVersions: SubmissionVersion[] = [];
@@ -68,7 +68,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     currentExercise: Exercise | undefined;
     currentSubmission: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission | undefined;
     changesSubscription: Subscription;
-    cachedDiffInformation: Map<string, RepositoryDiffInformation> = new Map<string, RepositoryDiffInformation>();
+    cachedDiffInformation = signal<Map<string, RepositoryDiffInformation>>(new Map<string, RepositoryDiffInformation>());
 
     currentPageComponents = viewChildren(ExamSubmissionComponent);
     examNavigationBarComponent = viewChild.required<ExamNavigationBarComponent>('examNavigationBar');
@@ -79,8 +79,8 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         this.activatedRouteSubscription = this.activatedRoute.data.subscribe(({ studentExam: studentExamWithGrade }) => {
             this.studentExam = studentExamWithGrade.studentExam;
         });
-        this.exerciseIndex = 0;
-        this.pageComponentVisited = new Array(this.studentExam.exercises!.length).fill(false);
+        this.exerciseIndex.set(0);
+        this.pageComponentVisited.set(new Array(this.studentExam.exercises!.length).fill(false));
         this.retrieveSubmissionDataAndTimeStamps().subscribe((results) => {
             const allSubmissions = results.flat();
             allSubmissions.forEach((result) => {
@@ -100,11 +100,11 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
                 }
             });
             this.sortTimeStamps();
-            this.selectedTimestamp = this.submissionTimeStamps[0]?.toDate().getTime() ?? 0;
+            this.selectedTimestamp.set(this.submissionTimeStamps[0]?.toDate().getTime() ?? 0);
             const firstSubmission = this.findFirstSubmission();
             this.currentSubmission = firstSubmission;
-            this.exerciseIndex = this.findExerciseIndex(firstSubmission!);
-            this.examNavigationBarComponent().changePage(false, this.exerciseIndex, false, firstSubmission);
+            this.exerciseIndex.set(this.findExerciseIndex(firstSubmission!));
+            this.examNavigationBarComponent().changePage(false, this.exerciseIndex(), false, firstSubmission);
         });
     }
 
@@ -172,10 +172,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     }
 
     displayCurrentTimestamp(): string {
-        if (!this.selectedTimestamp) {
-            return '';
-        }
-        return dayjs(this.selectedTimestamp).format('HH:mm:ss');
+        return dayjs(this.selectedTimestamp()).format('HH:mm:ss');
     }
 
     /**
@@ -258,13 +255,13 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         if (exerciseChange.submission) {
             if (this.isSubmissionVersion(exerciseChange.submission)) {
                 const submissionVersion = exerciseChange.submission as SubmissionVersion;
-                this.selectedTimestamp = submissionVersion.createdDate.toDate().getTime();
+                this.selectedTimestamp.set(submissionVersion.createdDate.toDate().getTime());
             } else if (this.isFileUploadSubmission(exerciseChange.submission)) {
                 const fileUploadSubmission = exerciseChange.submission as FileUploadSubmission;
-                this.selectedTimestamp = fileUploadSubmission.submissionDate!.toDate().getTime();
+                this.selectedTimestamp.set(fileUploadSubmission.submissionDate!.toDate().getTime());
             } else {
                 const programmingSubmission = exerciseChange.submission as ProgrammingSubmission;
-                this.selectedTimestamp = programmingSubmission.submissionDate!.toDate().getTime();
+                this.selectedTimestamp.set(programmingSubmission.submissionDate!.toDate().getTime());
             }
             this.currentSubmission = exerciseChange.submission;
             this.initializeExercise(exerciseChange.exercise!, exerciseChange.submission);
@@ -292,7 +289,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     initializeExercise(exercise: Exercise, submission: Submission | SubmissionVersion | undefined) {
         this.activeExamPage.exercise = exercise;
         // set current exercise index
-        this.exerciseIndex = this.studentExam.exercises!.findIndex((exercise1) => exercise1.id === exercise.id);
+        this.exerciseIndex.set(this.studentExam.exercises!.findIndex((exercise1) => exercise1.id === exercise.id));
         this.currentExercise = exercise;
         this.currentSubmission = submission;
         this.activateActiveComponent();
@@ -311,7 +308,9 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     }
 
     private activateActiveComponent() {
-        this.pageComponentVisited[this.activePageIndex] = true;
+        const visited = [...this.pageComponentVisited()];
+        visited[this.activePageIndex] = true;
+        this.pageComponentVisited.set(visited);
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onActivate();
@@ -331,8 +330,8 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
      * This method is called when the user clicks on the slider
      */
     onSliderInputChange() {
-        this.selectedTimestamp = this.submissionTimeStamps[this.timestampIndex].toDate().getTime();
-        const submission = this.findCorrespondingSubmissionForTimestamp(this.selectedTimestamp);
+        this.selectedTimestamp.set(this.submissionTimeStamps[this.timestampIndex].toDate().getTime());
+        const submission = this.findCorrespondingSubmissionForTimestamp(this.selectedTimestamp());
         if (this.isSubmissionVersion(submission)) {
             const submissionVersion = submission as SubmissionVersion;
             this.currentExercise = submissionVersion.submission.participation?.exercise;
@@ -344,7 +343,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
             this.currentExercise = programmingSubmission.participation?.exercise;
         }
         const exerciseIndex = this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === this.currentExercise?.id);
-        this.exerciseIndex = exerciseIndex;
+        this.exerciseIndex.set(exerciseIndex);
         this.currentSubmission = submission;
         this.examNavigationBarComponent().changePage(false, exerciseIndex, false, submission);
     }
@@ -378,7 +377,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
      * @param exercise The exercise for which the submission should be found.
      */
     private findSubmissionForExerciseClosestToCurrentTimeStampForExercise(exercise: Exercise) {
-        const comparisonObject = dayjs(this.selectedTimestamp);
+        const comparisonObject = dayjs(this.selectedTimestamp());
         let smallestDiff = Infinity;
         let timestampWithSmallestDiff = 0;
         if (exercise.type === ExerciseType.PROGRAMMING) {
@@ -408,7 +407,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
      * @param submissions the submissions array in which the submission should be found
      */
     private findClosestTimestampForExerciseInSubmissionArray(exercise: Exercise, submissions: Submission[]): number {
-        const comparisonObject = dayjs(this.selectedTimestamp);
+        const comparisonObject = dayjs(this.selectedTimestamp());
         let smallestDiff = Infinity;
         let timestampWithSmallestDiff = 0;
         const numberOfSubmissionsForExercise = submissions.filter(

@@ -23,7 +23,10 @@ const routes: Routes = [
             (): boolean | UrlTree => {
                 const accountService = inject(AccountService);
                 const router = inject(Router);
-                // Identity is already resolved by the APP_INITIALIZER, so check synchronously
+                // Identity is already resolved by the APP_INITIALIZER, so check synchronously.
+                // Note: when returning from a SAML2 IdP, the initializer also completes the
+                // second-step JWT exchange before this guard runs, so userIdentity() is already
+                // populated and no SAML-specific branch is needed here.
                 if (accountService.userIdentity()) {
                     return router.parseUrl('/courses');
                 }

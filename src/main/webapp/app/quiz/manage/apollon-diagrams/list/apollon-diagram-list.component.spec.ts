@@ -17,6 +17,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -50,7 +51,7 @@ describe('ApollonDiagramList Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(CourseManagementService),
-                MockProvider(AccountService),
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .overrideTemplate(ApollonDiagramListComponent, '')
