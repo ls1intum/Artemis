@@ -249,6 +249,27 @@ if [ "$(uname -m)" = "arm64" ]; then
 fi
 
 # =============================================================================
+# Step 3b: Create the shared data directory tree the application would normally
+# write to /opt/artemis/data inside the Docker image. The `docker` Spring profile
+# (active on all 3 nodes) hardcodes /opt/artemis/data/* paths in
+# application-docker.yml — these must be overridden to a host-writable path or
+# course-icon uploads, file-upload exercises, LocalVC pushes etc. all 500.
+#
+# Mirror the docker-named-volume model where ALL nodes share the same data tree
+# (LocalVC bare repos pushed by node-2 must be readable by node-1 etc.).
+# =============================================================================
+ARTEMIS_DATA_DIR="$(pwd)/$LOCAL_DIR/data"
+mkdir -p \
+    "$ARTEMIS_DATA_DIR/course-archives" \
+    "$ARTEMIS_DATA_DIR/repos" \
+    "$ARTEMIS_DATA_DIR/repos-download" \
+    "$ARTEMIS_DATA_DIR/uploads" \
+    "$ARTEMIS_DATA_DIR/exports" \
+    "$ARTEMIS_DATA_DIR/legal" \
+    "$ARTEMIS_DATA_DIR/build-logs" \
+    "$ARTEMIS_DATA_DIR/local-vcs-repos"
+
+# =============================================================================
 # Step 4: Launch 3 Artemis JVMs
 # =============================================================================
 launch_node() {
@@ -274,10 +295,18 @@ launch_node() {
         export ARTEMIS_CONTINUOUSINTEGRATION_DOCKERCONNECTIONURI="unix://$DOCKER_SOCK"
         eval "$ARM_OVERRIDES"
 
-        # Each JVM gets its own working dir for transient on-disk state (Liquibase locks, local
-        # repos). Using a per-node dir avoids cross-process contention.
-        mkdir -p "$LOCAL_DIR/node${n}/local-repos"
-        export ARTEMIS_REPO_BASEPATH="$LOCAL_DIR/node${n}/local-repos"
+        # Override the /opt/artemis/data/* paths from application-docker.yml so the JVM writes to
+        # the host-side shared data tree we just created. Without this, any endpoint that touches
+        # the filesystem (course icon upload, file-upload exercise, LocalVC project create, ...)
+        # fails with java.nio.file.AccessDeniedException: /opt/artemis.
+        export ARTEMIS_COURSEARCHIVESPATH="$ARTEMIS_DATA_DIR/course-archives"
+        export ARTEMIS_REPOCLONEPATH="$ARTEMIS_DATA_DIR/repos"
+        export ARTEMIS_REPODOWNLOADCLONEPATH="$ARTEMIS_DATA_DIR/repos-download"
+        export ARTEMIS_FILEUPLOADPATH="$ARTEMIS_DATA_DIR/uploads"
+        export ARTEMIS_SUBMISSIONEXPORTPATH="$ARTEMIS_DATA_DIR/exports"
+        export ARTEMIS_LEGALPATH="$ARTEMIS_DATA_DIR/legal"
+        export ARTEMIS_BUILDLOGSPATH="$ARTEMIS_DATA_DIR/build-logs"
+        export ARTEMIS_VERSIONCONTROL_LOCALVCSREPOPATH="$ARTEMIS_DATA_DIR/local-vcs-repos"
 
         if [ "$DEBUG" = true ]; then
             exec java -Xmx2g -XX:+UseG1GC -Dfile.encoding=UTF-8 \
@@ -411,7 +440,11 @@ fi
 echo ""
 echo -e "${BLUE}Step 6: Running Playwright tests...${NC}"
 
-export BASE_URL="https://localhost"
+# IPv4 explicit. macOS resolves `localhost` to `::1` first, but Docker publishes 443 only on
+# IPv4 (no `::` binding). Under parallel test load this manifested as ECONNREFUSED on ::1:443
+# and ECONNRESET cascades — the slow runner does not hit this because Playwright lives inside
+# a container on the docker bridge and reaches nginx via `https://artemis-nginx`.
+export BASE_URL="https://127.0.0.1"
 export NODE_TLS_REJECT_UNAUTHORIZED=0  # nginx self-signed cert
 export ADMIN_USERNAME="artemis_admin"
 export ADMIN_PASSWORD="artemis_admin"
