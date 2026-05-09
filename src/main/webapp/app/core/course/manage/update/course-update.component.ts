@@ -15,7 +15,7 @@ import { ImageComponent } from 'app/shared/image/image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { COURSE_SHORT_NAME_MAX_LENGTH, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -96,6 +96,7 @@ export class CourseUpdateComponent implements OnInit {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+    protected readonly COURSE_SHORT_NAME_MAX_LENGTH = COURSE_SHORT_NAME_MAX_LENGTH;
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
@@ -207,7 +208,7 @@ export class CourseUpdateComponent implements OnInit {
                 shortName: new FormControl(
                     { value: this.course.shortName, disabled: !!this.course.id },
                     {
-                        validators: [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)],
+                        validators: [Validators.required, Validators.minLength(3), Validators.maxLength(COURSE_SHORT_NAME_MAX_LENGTH), regexValidator(SHORT_NAME_PATTERN)],
                         updateOn: 'blur',
                     },
                 ),

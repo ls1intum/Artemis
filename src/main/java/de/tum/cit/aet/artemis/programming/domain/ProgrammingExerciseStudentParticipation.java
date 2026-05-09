@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.NonNull;
 
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExerciseStudentParticipation extends StudentParticipation implements ProgrammingExerciseParticipation {
 
+    @Size(max = 255)
     @Column(name = "repository_url")
     private String repositoryUri;
 
