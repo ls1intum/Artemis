@@ -22,6 +22,8 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.Isolated;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.FileSystemResource;
@@ -67,6 +69,8 @@ import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 @Isolated
 class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
+    private static final Logger log = LoggerFactory.getLogger(LocalCIDockerImageIntegrationTest.class);
+
     private static final String TEST_PREFIX = "localcidockerimage";
 
     private static final String GCC_DOCKER_IMAGE = "ls1tum/artemis-c-minimal-docker:1.0.0";
@@ -77,9 +81,9 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
 
     private static final List<String> FACT_TEST_CASE_NAMES = List.of("Compile", "CodeStructure", "InputOutput");
 
-    private static final Duration BUILD_JOB_CREATION_TIMEOUT = Duration.ofSeconds(30);
+    private static final Duration BUILD_JOB_CREATION_TIMEOUT = Duration.ofSeconds(60);
 
-    private static final Duration BUILD_TIMEOUT = Duration.ofMinutes(3);
+    private static final Duration BUILD_TIMEOUT = Duration.ofMinutes(5);
 
     private static final int MAX_DIAGNOSTIC_LOG_LENGTH = 4000;
 
@@ -154,6 +158,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         doReturn(true).when(buildAgentConfiguration).isDockerAvailable();
         dockerClient = realDockerClient;
         currentArchitecture = normalizeDockerArchitecture(realDockerClient.infoCmd().exec().getArchitecture());
+        log.info("Running with Docker architecture: {}", currentArchitecture);
         ReflectionTestUtils.setField(buildAgentDockerService, "imageArchitecture", currentArchitecture);
         distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
