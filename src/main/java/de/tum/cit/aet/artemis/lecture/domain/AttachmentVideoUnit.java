@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.lecture.domain;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -41,10 +40,10 @@ public class AttachmentVideoUnit extends LectureUnit {
     @OrderBy("slideNumber ASC")
     private List<Slide> slides = new ArrayList<>();
 
-    @Convert(converter = SlidePageNumberMapConverter.class)
-    @Column(name = "slide_page_number_map", columnDefinition = "json")
+    @Convert(converter = SlidePageNumberListConverter.class)
+    @Column(name = "slide_page_numbers", columnDefinition = "json")
     @JdbcTypeCode(SqlTypes.JSON)
-    private Map<Integer, Integer> slidePageNumberMap;
+    private List<Integer> slidePageNumbers;
 
     public String getDescription() {
         return description;
@@ -78,12 +77,12 @@ public class AttachmentVideoUnit extends LectureUnit {
         this.slides = slides;
     }
 
-    public Map<Integer, Integer> getSlidePageNumberMap() {
-        return slidePageNumberMap;
+    public List<Integer> getSlidePageNumbers() {
+        return slidePageNumbers;
     }
 
-    public void setSlidePageNumberMap(Map<Integer, Integer> slidePageNumberMap) {
-        this.slidePageNumberMap = slidePageNumberMap;
+    public void setSlidePageNumbers(List<Integer> slidePageNumbers) {
+        this.slidePageNumbers = slidePageNumbers;
     }
 
     // IMPORTANT NOTICE: The following string has to be consistent with the one defined in LectureUnit.java

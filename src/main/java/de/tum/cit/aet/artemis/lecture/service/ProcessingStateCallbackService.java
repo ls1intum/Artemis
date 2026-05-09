@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIE
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
@@ -223,14 +222,14 @@ public class ProcessingStateCallbackService {
      * Validates the job token to reject stale callbacks from old jobs.
      * After completion, dispatches the next pending job to fill the freed slot.
      *
-     * @param lectureUnitId      the ID of the lecture unit
-     * @param jobToken           the job token from the callback
-     * @param success            whether processing succeeded
-     * @param errorCode          machine-readable error code (e.g. {@code YOUTUBE_PRIVATE}); {@code null} on success or unknown failure
-     * @param slidePageNumberMap optional mapping from the PyRIS slide/PDF page number to the visible page number;
-     *                               {@code null} if not applicable or unavailable
+     * @param lectureUnitId    the ID of the lecture unit
+     * @param jobToken         the job token from the callback
+     * @param success          whether processing succeeded
+     * @param errorCode        machine-readable error code (e.g. {@code YOUTUBE_PRIVATE}); {@code null} on success or unknown failure
+     * @param slidePageNumbers list of page numbers indexed by slide number (0-based: index 0 = slide 1);
+     *                             {@code null} if not applicable or unavailable
      */
-    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode, @Nullable Map<Integer, Integer> slidePageNumberMap) {
+    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode, @Nullable List<Integer> slidePageNumbers) {
         Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
 
         if (stateOpt.isEmpty()) {
@@ -256,7 +255,7 @@ public class ProcessingStateCallbackService {
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
             processingStateRepository.save(state);
-            saveSlidePageNumberMap(state, slidePageNumberMap);
+            saveSlidePageNumbers(state, slidePageNumbers);
 
             TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
             notifyProcessingStateChange(state, txStatus);
@@ -628,11 +627,25 @@ public class ProcessingStateCallbackService {
 
     // -------------------- Slide Page Number Mapping --------------------
 
-    private void saveSlidePageNumberMap(LectureUnitProcessingState state, @Nullable Map<Integer, Integer> slidePageNumberMap) {
-        if (slidePageNumberMap == null || !(state.getLectureUnit() instanceof AttachmentVideoUnit attachmentVideoUnit)) {
+    /**
+     * Saves the slide page numbers received from PyRIS to the lecture unit.
+     * <p>
+     * The list maps slide numbers to their corresponding page numbers in the PDF:
+     * Index 0 = page number for slide 1, Index 1 = page number for slide 2, etc.
+     * A value of -1 indicates the slide has no corresponding page number.
+     * <p>
+     * This enables accurate navigation between video timestamps and PDF pages
+     * when the PDF has non-standard numbering (cover pages, Roman numerals, etc.).
+     *
+     * @param state            the processing state containing the lecture unit
+     * @param slidePageNumbers list of page numbers indexed by slide number (0-based);
+     *                             null if not applicable or unavailable
+     */
+    private void saveSlidePageNumbers(LectureUnitProcessingState state, @Nullable List<Integer> slidePageNumbers) {
+        if (slidePageNumbers == null || !(state.getLectureUnit() instanceof AttachmentVideoUnit attachmentVideoUnit)) {
             return;
         }
-        attachmentVideoUnit.setSlidePageNumberMap(slidePageNumberMap);
+        attachmentVideoUnit.setSlidePageNumbers(slidePageNumbers);
         attachmentVideoUnitRepository.save(attachmentVideoUnit);
     }
 

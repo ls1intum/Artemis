@@ -15,7 +15,6 @@ import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -405,7 +404,7 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldSaveSlidePageNumberMapOnSuccess() {
+        void shouldSaveSlidePageNumbersOnSuccess() {
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
@@ -413,10 +412,10 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
             when(attachmentVideoUnitRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, Map.of(1, 1, 2, -1));
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            assertThat(testUnit.getSlidePageNumberMap()).containsExactlyInAnyOrderEntriesOf(Map.of(1, 1, 2, -1));
+            assertThat(testUnit.getSlidePageNumbers()).containsExactly(1, 2, -1);
             verify(attachmentVideoUnitRepository).save(testUnit);
         }
 

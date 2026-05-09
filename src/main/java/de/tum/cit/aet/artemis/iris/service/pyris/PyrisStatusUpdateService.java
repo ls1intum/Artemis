@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -53,7 +51,7 @@ public class PyrisStatusUpdateService {
 
     private static final com.fasterxml.jackson.databind.ObjectMapper objectMapper = JsonObjectMapper.get();
 
-    private static final TypeReference<LinkedHashMap<Integer, Integer>> INTEGER_MAP_TYPE = new TypeReference<>() {
+    private static final TypeReference<List<Integer>> INTEGER_LIST_TYPE = new TypeReference<>() {
     };
 
     private final PyrisJobService pyrisJobService;
@@ -165,10 +163,12 @@ public class PyrisStatusUpdateService {
     /**
      * Handles the status update of a lecture ingestion job.
      * <p>
-     * On EVERY callback (not just terminal): passes the {@code result} field to the checkpoint handler.
+     * On non-terminal callbacks: passes the {@code result} field to the checkpoint handler if present.
      * This allows Artemis to save transcription data mid-pipeline and transition TRANSCRIBING → INGESTING.
      * <p>
-     * On terminal callback: notifies the processing service that the job completed or failed.
+     * On terminal callback: extracts slide page numbers from {@code result} and notifies the processing service
+     * that the job completed or failed. The {@code result} field is NOT treated as checkpoint data on terminal
+     * callbacks to avoid duplicate processing.
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
@@ -178,6 +178,8 @@ public class PyrisStatusUpdateService {
 
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
 
+        // Only treat result as checkpoint data on non-terminal callbacks
+        // On terminal callbacks, result contains slide page numbers extracted below
         if (!isDone && statusUpdate.result() != null && !statusUpdate.result().isBlank()) {
             processingStateCallbackApi.ifPresent(api -> api.handleCheckpointData(job.lectureUnitId(), job.jobId(), statusUpdate.result()));
         }
@@ -186,10 +188,10 @@ public class PyrisStatusUpdateService {
             boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
             String rawCode = statusUpdate.errorCode();
             String errorCode = success ? null : (rawCode != null && !rawCode.isBlank() ? rawCode : null);
-            Map<Integer, Integer> slidePageNumberMap = success ? extractSlidePageNumberMap(statusUpdate.result()) : null;
+            List<Integer> slidePageNumbers = success ? extractSlidePageNumbers(statusUpdate.result()) : null;
 
             log.info("[Ingestion] Terminal callback for unitId={}, success={}, errorCode={}", job.lectureUnitId(), success, errorCode);
-            processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success, errorCode, slidePageNumberMap));
+            processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success, errorCode, slidePageNumbers));
             pyrisJobService.removeJob(job);
         }
         else {
@@ -246,20 +248,27 @@ public class PyrisStatusUpdateService {
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
     }
 
-    private Map<Integer, Integer> extractSlidePageNumberMap(String resultJson) {
+    /**
+     * Extracts the slide page numbers list from the PyRIS result JSON.
+     *
+     * @param resultJson the result JSON from PyRIS containing a "slidePageNumbers" array
+     * @return the list of page numbers, or null if not present or malformed
+     */
+    private List<Integer> extractSlidePageNumbers(String resultJson) {
         if (resultJson == null || resultJson.isBlank()) {
             return null;
         }
 
         try {
             var jsonNode = objectMapper.readTree(resultJson);
-            var mapNode = jsonNode.get("slidePageNumberMap");
-            if (mapNode == null || !mapNode.isObject()) {
+            var listNode = jsonNode.get("slidePageNumbers");
+            if (listNode == null || !listNode.isArray()) {
                 return null;
             }
-            return objectMapper.convertValue(mapNode, INTEGER_MAP_TYPE);
+            return objectMapper.convertValue(listNode, INTEGER_LIST_TYPE);
         }
-        catch (Exception ignored) {
+        catch (Exception e) {
+            log.debug("Failed to extract slidePageNumbers from result JSON", e);
             return null;
         }
     }

@@ -3,10 +3,10 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20260505-01-add-slide-page-number-map-column" author="pyris-integration">
-        <comment>Add slide_page_number_map column to lecture_unit for PDF page number tracking</comment>
+    <changeSet id="20260505-01-add-slide-page-numbers-column" author="pyris-integration">
+        <comment>Add slide_page_numbers column to lecture_unit for PDF page number tracking</comment>
         <addColumn tableName="lecture_unit">
-            <column name="slide_page_number_map" type="json">
+            <column name="slide_page_numbers" type="json">
                 <constraints nullable="true"/>
             </column>
         </addColumn>

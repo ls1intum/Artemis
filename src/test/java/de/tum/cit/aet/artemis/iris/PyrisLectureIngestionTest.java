@@ -360,7 +360,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void ingestionCompleteSavesSlidePageNumberMapFromFinalResult() throws Exception {
+    void ingestionCompleteSavesSlidePageNumbersFromFinalResult() throws Exception {
         activateIrisFor(lecture1.getCourse());
         AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
         unit.setLecture(lecture1);
@@ -389,13 +389,13 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         Map<String, Object> statusUpdate = new LinkedHashMap<>();
         statusUpdate.put("stages", List.of(doneStage));
         statusUpdate.put("tokens", List.of());
-        statusUpdate.put("result", "{\"slidePageNumberMap\":{\"1\":1,\"2\":2,\"3\":-1}}");
+        statusUpdate.put("result", "{\"slidePageNumbers\":[1,2,-1]}");
         statusUpdate.put("id", 12345);
 
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
 
         AttachmentVideoUnit updatedUnit = attachmentVideoUnitTestRepository.findByIdElseThrow(unit.getId());
-        assertThat(updatedUnit.getSlidePageNumberMap()).isNotNull().hasSize(3).containsEntry(1, 1).containsEntry(2, 2).containsEntry(3, -1);
+        assertThat(updatedUnit.getSlidePageNumbers()).isNotNull().hasSize(3).containsExactly(1, 2, -1);
     }
 }
