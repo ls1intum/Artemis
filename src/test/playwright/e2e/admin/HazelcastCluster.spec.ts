@@ -4,17 +4,21 @@ import { Commands } from '../../support/commands';
 import { expect } from '@playwright/test';
 
 /**
- * Smoke test for the multi-node Hazelcast cluster. Verifies that all expected nodes have joined the
- * cluster and at least one build agent is registered. Recent multi-node bugs (issue #12574, fixed in
- * #12578/#12579) were not surfaced by any existing test because no test asserts on cluster
- * membership directly. This test fails fast in the multi-node E2E pipeline if cluster formation
- * regresses.
+ * Smoke test for the multi-node Hazelcast cluster. Verifies that all expected member nodes have
+ * joined the cluster and at least one build agent is registered. Recent multi-node bugs
+ * (issue #12574, fixed in #12578/#12579) were not surfaced by any existing test because no test
+ * asserts on cluster membership directly. This test fails fast in the multi-node E2E pipeline if
+ * cluster formation regresses.
+ *
+ * Note: the multi-node compose stack is asymmetric — only nodes with the `core` Spring profile are
+ * Hazelcast cluster members (i.e. surfaced by `cluster.getMembers()`). Buildagent-only nodes
+ * connect as Hazelcast clients and are visible via /api/core/admin/build-agents instead.
  *
  * Tagged @multi-node so the single-node fast pipeline skips it; only the multi-node runner
  * (run-e2e-tests-local-multinode.sh / its CI counterpart) executes this file.
  */
 
-const EXPECTED_NODE_COUNT = parseInt(process.env.EXPECTED_CLUSTER_NODE_COUNT ?? '3', 10);
+const EXPECTED_NODE_COUNT = parseInt(process.env.EXPECTED_CLUSTER_NODE_COUNT ?? '2', 10);
 const EXPECTED_MIN_BUILD_AGENTS = parseInt(process.env.EXPECTED_MIN_BUILD_AGENTS ?? '1', 10);
 const CLUSTER_FORMATION_TIMEOUT_MS = 60_000;
 
