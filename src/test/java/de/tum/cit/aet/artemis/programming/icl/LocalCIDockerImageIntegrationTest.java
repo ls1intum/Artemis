@@ -260,18 +260,22 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         assertThat(result.getCompletionDate()).isNotNull();
         // Attach per-feedback PASS/FAIL detail to the assertion description so a CI failure
         // names the offending test case directly instead of just printing the numeric mismatch.
-        String feedbackDiagnostics = formatTestCaseFeedback(result);
+        String feedbackDiagnostics = loadAndFormatTestCaseFeedback(result.getId());
         assertThat(result.getScore()).as("Score for project type %s; feedback:%n%s", projectType, feedbackDiagnostics).isEqualTo(100.0);
         assertThat(result.getTestCaseCount()).as("Test case count for project type %s; feedback:%n%s", projectType, feedbackDiagnostics).isEqualTo(expectedSuccessfulTestCaseCount);
         assertThat(result.getPassedTestCaseCount()).as("Passed test case count for project type %s; feedback:%n%s", projectType, feedbackDiagnostics)
                 .isEqualTo(expectedSuccessfulTestCaseCount);
     }
 
-    private String formatTestCaseFeedback(Result result) {
-        if (result.getFeedbacks() == null || result.getFeedbacks().isEmpty()) {
+    private String loadAndFormatTestCaseFeedback(long resultId) {
+        // Re-fetch the result with feedbacks + test cases eagerly loaded; the persistedSubmission
+        // returned from the repository above is detached, so result.getFeedbacks() would otherwise
+        // hit a LazyInitializationException.
+        var resultWithFeedbacks = resultRepository.findResultWithFeedbacksAndTestCasesById(resultId);
+        if (resultWithFeedbacks.isEmpty() || resultWithFeedbacks.get().getFeedbacks().isEmpty()) {
             return "(no feedback recorded)";
         }
-        return result.getFeedbacks().stream().map(feedback -> {
+        return resultWithFeedbacks.get().getFeedbacks().stream().map(feedback -> {
             String name = feedback.getTestCase() != null ? feedback.getTestCase().getTestName() : feedback.getText();
             String status = Boolean.TRUE.equals(feedback.isPositive()) ? "PASS" : "FAIL";
             String detail = feedback.getDetailText();
