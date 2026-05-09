@@ -9,16 +9,16 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
-import { CalendarDesktopWeekPresentationComponent } from 'app/core/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
-import { CalendarDesktopMonthPresentationComponent } from 'app/core/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
-import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
-import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { CalendarDesktopWeekPresentationComponent } from 'app/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
+import { CalendarDesktopMonthPresentationComponent } from 'app/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
+import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
+import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarDesktopOverviewComponent } from './calendar-desktop-overview.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
+import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 
 describe('CalendarDesktopOverviewComponent', () => {
     setupTestBed({ zoneless: true });

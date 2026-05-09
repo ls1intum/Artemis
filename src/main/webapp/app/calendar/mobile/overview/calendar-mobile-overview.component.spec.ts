@@ -3,9 +3,9 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { CalendarMobileOverviewComponent } from './calendar-mobile-overview.component';
-import { CalendarMobileMonthPresentationComponent } from 'app/core/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
-import { CalendarMobileDayPresentationComponent } from 'app/core/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarMobileMonthPresentationComponent } from 'app/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
+import { CalendarMobileDayPresentationComponent } from 'app/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -15,9 +15,9 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
-import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
-import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
+import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
+import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 import * as calendarUtils from 'app/shared/util/global.utils';
 
 describe('CalendarMobileOverviewComponent', () => {

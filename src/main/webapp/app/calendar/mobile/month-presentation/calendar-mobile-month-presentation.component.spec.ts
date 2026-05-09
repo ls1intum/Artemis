@@ -5,10 +5,10 @@ import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CalendarMobileMonthPresentationComponent } from './calendar-mobile-month-presentation.component';
-import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
+import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { CalendarEvent, CalendarEventType } from 'app/calendar/shared/entities/calendar-event.model';
 import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
 
 describe('CalendarMobileMonthPresentationComponent', () => {
