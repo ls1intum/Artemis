@@ -1,4 +1,4 @@
-import { Component, OnInit, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Organization } from 'app/core/shared/entities/organization.model';
@@ -13,7 +13,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { TableLazyLoadEvent } from 'primeng/table';
-import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -57,10 +57,10 @@ export class OrganizationManagementDetailComponent implements OnInit {
     protected readonly faUserSlash = faUserSlash;
 
     /** Template ref for custom user-id cell rendering */
-    readonly userIdTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<User> }>>('userIdTemplate');
+    readonly userIdTemplate = viewChild<CellTemplateRef<User>>('userIdTemplate');
 
     /** Template ref for custom course-id cell rendering */
-    readonly courseIdTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<Course> }>>('courseIdTemplate');
+    readonly courseIdTemplate = viewChild<CellTemplateRef<Course>>('courseIdTemplate');
 
     readonly userColumns = computed<ColumnDef<User>[]>(() => [
         { field: 'id', headerKey: 'global.field.id', sort: true, width: '80px', templateRef: this.userIdTemplate() },

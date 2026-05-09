@@ -80,6 +80,14 @@ export default defineConfig({
             'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.spec.ts', // include build phases editor tests
             'src/main/webapp/app/programming/manage/version-history/**/*.spec.ts', // include programming version history tests
             'src/main/webapp/app/communication/**/*.spec.ts', // include all communication module tests
+            'src/main/webapp/app/exercise/participation/**/*.spec.ts', // include participation tests
+            'src/main/webapp/app/exercise/participation-submission/**/*.spec.ts', // include participation-submission tests
+            'src/main/webapp/app/exercise/exercise-scores/**/*.spec.ts', // include exercise-scores tests
+            'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.spec.ts', // include filter-dropdown component tests
+            'src/main/webapp/app/shared/search-filter/**/*.spec.ts', // include search-filter component tests
+            'src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // include build phases template service tests
+            'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
+            'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -139,6 +147,14 @@ export default defineConfig({
                 'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.ts', // include build phases editor for code coverage
                 'src/main/webapp/app/programming/manage/version-history/**/*.ts', // include programming version history for code coverage
                 'src/main/webapp/app/communication/**/*.ts', // include all communication module for code coverage
+                'src/main/webapp/app/exercise/participation/**/*.ts', // include participation for code coverage
+                'src/main/webapp/app/exercise/participation-submission/**/*.ts', // include participation-submission for code coverage
+                'src/main/webapp/app/exercise/exercise-scores/**/*.ts', // include exercise-scores for code coverage
+                'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.ts', // include filter-dropdown component for code coverage
+                'src/main/webapp/app/shared/search-filter/**/*.ts', // include search-filter component for code coverage
+                'src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // include build phases template service for code coverage
+                'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
+                'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code
@@ -151,9 +167,6 @@ export default defineConfig({
                 'src/main/webapp/app/core/config/prod.config.ts', // exclude dayjs configuration file (not really testable)
             ],
             thresholds: {
-                // Lowered when the 3 shared folders (range-slider, dashboards, image-cropper)
-                // moved from Jest to Vitest. The ngx-image-cropper port has ~480 lines and the
-                // existing component spec exercises only the central paths.
                 lines: 90.1,
                 statements: 89.9,
                 branches: 74.25,
