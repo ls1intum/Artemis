@@ -1,0 +1,10 @@
+- name: install_dependencies
+  script: 'npm ci --prefer-offline --no-audit'
+- name: static_code_analysis
+  script: 'npm run lint:ci || [ $? -eq 1 ]'
+  resultPaths:
+    - eslint.sarif
+- name: test
+  script: 'npm run test:ci'
+  resultPaths:
+    - junit.xml
