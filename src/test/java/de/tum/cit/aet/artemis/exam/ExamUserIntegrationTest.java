@@ -35,6 +35,7 @@ import org.springframework.util.ResourceUtils;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -468,15 +469,6 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetExamStudentsPaged_returnsTotalMissingExamsHeader() throws Exception {
-        var paginationExam = createPaginationTestExam();
-        // 1 of 4 students (student4) has no StudentExam
-        var result = request.performMvcRequest(MockMvcRequestBuilders.get(pagedUrl(paginationExam)).params(pageParams(""))).andExpect(status().isOk()).andReturn();
-        assertThat(result.getResponse().getHeader("X-Total-Missing-Exams")).isEqualTo("1");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamStudentsPaged_filterAttendanceChecked_returnsFullyCheckedStudents() throws Exception {
         var paginationExam = createPaginationTestExam();
         var params = pageParams("AttendanceChecked");
@@ -537,6 +529,77 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         var allLogins = new ArrayList<>(page0.stream().map(ExamStudentDTO::login).toList());
         allLogins.addAll(page1.stream().map(ExamStudentDTO::login).toList());
         assertThat(allLogins).doesNotHaveDuplicates().hasSize(4);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSearchUsersForExamRegistration_byLogin_returnsMatchingUsers() throws Exception {
+        List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
+                searchParams(TEST_PREFIX + "student", 0, 10));
+        assertThat(result).hasSize(4);
+        assertThat(result).allMatch(u -> u.login().startsWith(TEST_PREFIX + "student"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSearchUsersForExamRegistration_marksAlreadyRegisteredUser() throws Exception {
+        // student2 is the only one registered for exam1 in @BeforeEach
+        List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
+                searchParams(TEST_PREFIX + "student2", 0, 10));
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student2");
+        assertThat(result.getFirst().isRegistered()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSearchUsersForExamRegistration_nonRegisteredUsersNotFlagged() throws Exception {
+        // student1 is not registered for exam1
+        List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
+                searchParams(TEST_PREFIX + "student1", 0, 10));
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(result.getFirst().isRegistered()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSearchUsersForExamRegistration_paginationRespectsPageSize() throws Exception {
+        List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
+                searchParams(TEST_PREFIX + "student", 0, 2));
+        assertThat(result).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSearchUsersForExamRegistration_noResultsForUnknownTerm() throws Exception {
+        List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
+                searchParams("zzz_no_match_zzz", 0, 10));
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testSearchUsersForExamRegistration_forbiddenForTutor() throws Exception {
+        request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.FORBIDDEN, UserForRegistrationDTO.class, searchParams(TEST_PREFIX + "student", 0, 10));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSearchUsersForExamRegistration_forbiddenForStudent() throws Exception {
+        request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.FORBIDDEN, UserForRegistrationDTO.class, searchParams(TEST_PREFIX + "student", 0, 10));
+    }
+
+    private String searchUrl(long courseId, long examId) {
+        return "/api/exam/courses/" + courseId + "/exams/" + examId + "/students/search";
+    }
+
+    private MultiValueMap<String, String> searchParams(String searchTerm, int page, int size) {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", searchTerm);
+        params.add("page", String.valueOf(page));
+        params.add("size", String.valueOf(size));
+        return params;
     }
 
     private String pagedUrl(Exam exam) {

@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
+import { UserForRegistration } from 'app/shared/user-registration-modal/user-for-registration.model';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
@@ -802,6 +803,89 @@ describe('Exam Management Service Tests', () => {
             tick();
 
             expect(capturedTotal).toBe(0);
+        }));
+    });
+
+    describe('searchUsersForExamRegistration', () => {
+        const examId = 1;
+
+        it('should send GET request with correct URL and params', fakeAsync(() => {
+            // GIVEN
+            const mockUsers: UserForRegistration[] = [{ id: 1, login: 'alice', name: 'Alice', isRegistered: false }];
+
+            // WHEN
+            service.searchUsersForExamRegistration(course.id!, examId, 'alice', 0, 10).subscribe((result) => {
+                expect(result.content).toHaveLength(1);
+                expect(result.content[0].login).toBe('alice');
+                expect(result.totalElements).toBe(1);
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/students/search`);
+            expect(req.request.params.get('searchTerm')).toBe('alice');
+            expect(req.request.params.get('page')).toBe('0');
+            expect(req.request.params.get('size')).toBe('10');
+
+            // CLEANUP
+            req.flush(mockUsers, { headers: { 'X-Total-Count': '1' } });
+            tick();
+        }));
+
+        it('should read totalElements from X-Total-Count header', fakeAsync(() => {
+            // GIVEN
+            let capturedTotal: number | undefined;
+
+            // WHEN
+            service.searchUsersForExamRegistration(course.id!, examId, 'alice', 0, 10).subscribe((result) => {
+                capturedTotal = result.totalElements;
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/students/search`);
+
+            // CLEANUP
+            req.flush([], { headers: { 'X-Total-Count': '99' } });
+            tick();
+
+            expect(capturedTotal).toBe(99);
+        }));
+
+        it('should default totalElements to 0 when X-Total-Count header is absent', fakeAsync(() => {
+            // GIVEN
+            let capturedTotal: number | undefined;
+
+            // WHEN
+            service.searchUsersForExamRegistration(course.id!, examId, 'alice', 0, 10).subscribe((result) => {
+                capturedTotal = result.totalElements;
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/students/search`);
+
+            // CLEANUP
+            req.flush([]);
+            tick();
+
+            expect(capturedTotal).toBe(0);
+        }));
+
+        it('should return empty content array when response body is null', fakeAsync(() => {
+            // GIVEN
+            let capturedContent: UserForRegistration[] | undefined;
+
+            // WHEN
+            service.searchUsersForExamRegistration(course.id!, examId, 'alice', 0, 10).subscribe((result) => {
+                capturedContent = result.content;
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/students/search`);
+
+            // CLEANUP
+            req.flush(null, { headers: { 'X-Total-Count': '0' } });
+            tick();
+
+            expect(capturedContent).toEqual([]);
         }));
     });
 });

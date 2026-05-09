@@ -160,6 +160,9 @@ public final class ExamUserSpecs {
 
     /**
      * Filter by exam id.
+     *
+     * @param examId the id of the exam to filter for
+     * @return specification that restricts results to the given exam
      */
     @NonNull
     public static Specification<ExamUser> forExam(long examId) {
@@ -170,6 +173,9 @@ public final class ExamUserSpecs {
      * Case-insensitive search across {@code user.login} and the concatenated full name ({@code firstName + ' ' + lastName}).
      * Comma-separated terms are split and ORed: a match on any token is sufficient.
      * Returns a no-op predicate when the search term is blank or contains only blank tokens.
+     *
+     * @param searchTerm the text to search for; may be {@code null} or blank
+     * @return specification that matches exam users whose login or full name contains the search term
      */
     @NonNull
     public static Specification<ExamUser> searchByUserFields(@Nullable String searchTerm) {

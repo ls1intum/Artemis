@@ -103,7 +103,7 @@ describe('ExamStudentsComponent', () => {
         component = fixture.componentInstance;
         examManagementService = TestBed.inject(ExamManagementService);
 
-        vi.spyOn(examManagementService, 'getExerciseStartStatus').mockReturnValue(of(new HttpResponse({ body: null })));
+        vi.spyOn(examManagementService, 'getExerciseStartStatus').mockReturnValue(of(new HttpResponse({ body: null as any })));
         vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [mockDto], totalElements: 1 }));
         vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithCourse })));
 
@@ -133,6 +133,7 @@ describe('ExamStudentsComponent', () => {
     describe('computed properties', () => {
         it('hasRegisteredUsers should be true when totalExamStudents > 0', () => {
             fixture.detectChanges();
+            component.totalExamStudents.set(2);
             expect(component.hasRegisteredUsers()).toBe(true);
         });
 
@@ -144,12 +145,14 @@ describe('ExamStudentsComponent', () => {
 
         it('isMissingIndividualExams should be false when studentExamCount equals totalExamStudents', () => {
             fixture.detectChanges();
-            // After init: totalExamStudents=2, studentExamCount=2
+            component.totalExamStudents.set(2);
+            component.studentExamCount.set(2);
             expect(component.isMissingIndividualExams()).toBe(false);
         });
 
         it('isMissingIndividualExams should be true when studentExamCount < totalExamStudents', () => {
             fixture.detectChanges();
+            component.totalExamStudents.set(2);
             component.studentExamCount.set(1);
             expect(component.isMissingIndividualExams()).toBe(true);
         });
@@ -168,6 +171,7 @@ describe('ExamStudentsComponent', () => {
 
         it('examPreparationsComplete should be false when individual exams are missing', () => {
             fixture.detectChanges();
+            component.totalExamStudents.set(2);
             component.studentExamCount.set(1);
             expect(component.examPreparationsComplete()).toBe(false);
         });

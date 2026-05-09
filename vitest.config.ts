@@ -52,6 +52,7 @@ export default defineConfig({
             'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.spec.ts', // include filter dropdown tests
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
             'src/main/webapp/app/shared/table-view/**/*.spec.ts', // include shared table view
+            'src/main/webapp/app/shared/user-registration-modal/**/*.spec.ts', // include user-registration-modal
             'src/main/webapp/app/shared/feature-toggle/**/*.spec.ts', // include feature-toggle service tests
             'src/main/webapp/app/shared/sort/**/*.directive.spec.ts', // include sort directives
             'src/main/webapp/app/shared/user-import/util/**/*.spec.ts', // include user import util tests
@@ -100,6 +101,7 @@ export default defineConfig({
                 'src/main/webapp/app/shared/feature-toggle/**/*.ts', // include feature-toggle service for code coverage
                 'src/main/webapp/app/shared/user-import/util/**/*.ts', // include user import utils for code coverage
                 'src/main/webapp/app/shared/table-view/**/*.ts', // include shared table view for code coverage
+                'src/main/webapp/app/shared/user-registration-modal/**/*.ts', // include user-registration-modal for code coverage
                 'src/main/webapp/app/shared/sort/**/*.directive.ts', // include sort directives for code coverage
                 'src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // include problem statement service for code coverage
                 'src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // include problem statement utils for code coverage

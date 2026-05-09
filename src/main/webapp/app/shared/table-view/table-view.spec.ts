@@ -161,30 +161,30 @@ describe('TableViewComponent', () => {
 
     it('should compute item range begin correctly', () => {
         // Default state: first=0, totalRows=3
-        expect(component.itemRangeBegin()).toBe(1);
+        expect((component as any).itemRangeBegin()).toBe(1);
 
         // When total rows is 0, should be 0
         fixture.componentRef.setInput('totalRows', 0);
-        expect(component.itemRangeBegin()).toBe(0);
+        expect((component as any).itemRangeBegin()).toBe(0);
 
         // When total rows > 0
         fixture.componentRef.setInput('totalRows', 10);
-        expect(component.itemRangeBegin()).toBe(1);
+        expect((component as any).itemRangeBegin()).toBe(1);
     });
 
     it('should compute item range end correctly', () => {
         // Default state: first=0, pageSize=50, totalRows=3
-        expect(component.itemRangeEnd()).toBe(3);
+        expect((component as any).itemRangeEnd()).toBe(3);
 
         // Change page size via pageChange
         component.pageChange({ first: 0, rows: 2 });
-        expect(component.itemRangeEnd()).toBe(2);
+        expect((component as any).itemRangeEnd()).toBe(2);
     });
 
     it('should compute item range begin from vals length when totalRows is undefined', () => {
         fixture.componentRef.setInput('totalRows', undefined);
-        expect(component.itemRangeBegin()).toBe(1);
-        expect(component.itemRangeEnd()).toBe(mockData.length);
+        expect((component as any).itemRangeBegin()).toBe(1);
+        expect((component as any).itemRangeEnd()).toBe(mockData.length);
     });
 
     it('should build renderer params correctly', () => {
@@ -453,17 +453,17 @@ describe('TableViewComponent', () => {
 
     it('should maintain correct item range with updated total rows', () => {
         // Initial state
-        expect(component.itemRangeBegin()).toBe(1);
-        expect(component.itemRangeEnd()).toBe(3);
+        expect((component as any).itemRangeBegin()).toBe(1);
+        expect((component as any).itemRangeEnd()).toBe(3);
 
         // Update total rows
         fixture.componentRef.setInput('totalRows', 10);
-        expect(component.itemRangeBegin()).toBe(1);
-        expect(component.itemRangeEnd()).toBe(10);
+        expect((component as any).itemRangeBegin()).toBe(1);
+        expect((component as any).itemRangeEnd()).toBe(10);
 
         // Change page size via pageChange
         component.pageChange({ first: 0, rows: 5 });
-        expect(component.itemRangeEnd()).toBe(5);
+        expect((component as any).itemRangeEnd()).toBe(5);
     });
 
     it('should handle empty data', () => {
@@ -472,8 +472,8 @@ describe('TableViewComponent', () => {
 
         expect(component.vals()).toEqual([]);
         expect(component.totalRows()).toBe(0);
-        expect(component.itemRangeBegin()).toBe(0);
-        expect(component.itemRangeEnd()).toBe(0);
+        expect((component as any).itemRangeBegin()).toBe(0);
+        expect((component as any).itemRangeEnd()).toBe(0);
     });
 
     it('should build params for each column in data row', () => {
