@@ -112,6 +112,11 @@ services:
         condition: service_healthy
     environment:
       PLAYWRIGHT_DB_TYPE: 'Postgres'
+      # Opt this stack into the @multi-node Playwright project. run-tests.sh checks for this
+      # variable; the test reads the value to assert the expected cluster size. Keep in sync with
+      # the number of artemis-app-node-* services defined above.
+      EXPECTED_CLUSTER_NODE_COUNT: '3'
+      EXPECTED_MIN_BUILD_AGENTS: '1'
     networks:
       - artemis
 
