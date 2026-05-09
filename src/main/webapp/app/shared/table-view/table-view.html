@@ -14,26 +14,31 @@
         (onPage)="pageChange($event)"
         [loading]="loading()"
         [selectionMode]="resolvedOptions().selectionMode"
-        [(selection)]="selectedRow"
+        [(selection)]="tableSelection"
+        [rowSelectable]="rowSelectable"
         [dataKey]="resolvedOptions().dataKey"
-        (onRowSelect)="onRowSelect.emit($event.data)"
+        (onRowSelect)="handleRowSelectChange()"
+        (onRowUnselect)="handleRowSelectChange()"
+        (onHeaderCheckboxToggle)="handleRowSelectChange()"
         [lazy]="resolvedOptions().lazy"
         (onLazyLoad)="handleLazyLoad($event)"
         [scrollable]="resolvedOptions().scrollable"
         [scrollHeight]="resolvedOptions().scrollHeight"
     >
-        <ng-template #caption>
-            <div class="d-flex align-items-center gap-2" [style.flex-direction]="resolvedOptions().tableActionsAlignment === 'right' ? 'row' : 'row-reverse'">
-                @if (resolvedOptions().showSearch) {
-                    <div class="flex-grow-1">
-                        <jhi-search-filter [placeholderKey]="resolvedOptions().searchPlaceholder" (newSearchEvent)="onGlobalSearch($event)" />
-                    </div>
-                }
-                @if (tableActions()) {
-                    <ng-container [ngTemplateOutlet]="tableActions()!" />
-                }
-            </div>
-        </ng-template>
+        @if (showCaption()) {
+            <ng-template #caption>
+                <div class="d-flex align-items-center gap-2">
+                    @if (resolvedOptions().showSearch) {
+                        <div class="flex-grow-1">
+                            <jhi-search-filter [placeholderKey]="resolvedOptions().searchPlaceholder" (newSearchEvent)="onGlobalSearch($event)" />
+                        </div>
+                    }
+                    @if (tableActions()) {
+                        <ng-container [ngTemplateOutlet]="tableActions()!" />
+                    }
+                </div>
+            </ng-template>
+        }
         <ng-template #header let-columns>
             <!-- Nested here so p-sortIcon can inject Table from within p-table's context -->
             <ng-template #colHeaderContent let-col="col">
@@ -54,6 +59,11 @@
                 </div>
             </ng-template>
             <tr>
+                @if (resolvedOptions().selectionMode === 'multiple') {
+                    <th style="width: 3rem">
+                        <p-tableHeaderCheckbox [disabled]="!hasSelectableRows()" />
+                    </th>
+                }
                 @for (col of columns; track col) {
                     @if (col?.frozen) {
                         <th
@@ -93,7 +103,12 @@
                 }
             </ng-template>
             @let rowParams = renderedRows().get(rowData);
-            <tr [pSelectableRow]="rowData">
+            <tr [class.jhi-row-disabled]="isRowDisabled()?.(rowData)" [pTooltip]="isRowDisabled()?.(rowData) ? disabledRowTooltip() : undefined" tooltipPosition="top">
+                @if (resolvedOptions().selectionMode === 'multiple') {
+                    <td style="width: 3rem">
+                        <p-tableCheckbox [value]="rowData" [disabled]="isRowDisabled()?.(rowData)" />
+                    </td>
+                }
                 @for (col of columns; track col; let colIndex = $index) {
                     @if (col?.frozen) {
                         <td pFrozenColumn [alignFrozen]="col?.alignFrozen ?? 'left'">
@@ -121,7 +136,7 @@
 
         <ng-template #emptymessage>
             <tr>
-                <td [colSpan]="cols().length + (rowActions() ? 1 : 0)" class="text-secondary text-center">
+                <td [colSpan]="emptyMessageColSpan()" class="text-secondary text-center">
                     <span [jhiTranslate]="resolvedOptions().emptyMessageTranslation"></span>
                 </td>
             </tr>

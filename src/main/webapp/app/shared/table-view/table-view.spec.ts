@@ -232,6 +232,106 @@ describe('TableViewComponent', () => {
         expect(onLazyLoadSpy).toHaveBeenCalledOnce();
     });
 
+    describe('reset', () => {
+        it('should be a no-op in non-lazy mode', () => {
+            fixture.componentRef.setInput('options', { lazy: false });
+            const mockTable = { first: 5, filters: {}, sortField: undefined, sortOrder: undefined };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.reset();
+
+            expect(onLazyLoadSpy).not.toHaveBeenCalled();
+        });
+
+        it('should reset pagination state and emit a lazy load event at page 0 with cleared filters', () => {
+            const mockTable = { first: 50, filters: { global: { value: 'test', matchMode: 'contains' } }, sortField: 'name', sortOrder: 1 };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            component.pageChange({ first: 50, rows: 10 });
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.reset();
+
+            expect(component['currentFirst']()).toBe(0);
+            expect(component['currentPageSizeOverride']()).toBeUndefined();
+            expect(mockTable.first).toBe(0);
+            expect(mockTable.filters).toEqual({});
+            expect(onLazyLoadSpy).toHaveBeenCalledOnce();
+            const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
+            expect(event.first).toBe(0);
+            expect(event.globalFilter).toBeNull();
+            expect(event.filters).toEqual({});
+        });
+
+        it('should cancel any pending search debounce and fire exactly once', () => {
+            vi.useFakeTimers();
+            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined, filterGlobal: vi.fn() };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.onGlobalSearch('pending search');
+            component.reset();
+
+            expect(onLazyLoadSpy).toHaveBeenCalledOnce();
+
+            vi.advanceTimersByTime(500);
+            expect(onLazyLoadSpy).toHaveBeenCalledOnce(); // no second fire from the cancelled debounce
+        });
+    });
+
+    describe('reload', () => {
+        it('should be a no-op in non-lazy mode', () => {
+            fixture.componentRef.setInput('options', { lazy: false });
+            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.reload();
+
+            expect(onLazyLoadSpy).not.toHaveBeenCalled();
+        });
+
+        it('should reset to page 0 and emit a lazy load event preserving sort and active filter', () => {
+            const mockTable = {
+                first: 50,
+                filters: { global: { value: 'my search', matchMode: 'contains' } },
+                sortField: 'name',
+                sortOrder: -1,
+            };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            component.pageChange({ first: 50, rows: 10 });
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.reload();
+
+            expect(component['currentFirst']()).toBe(0);
+            expect(mockTable.first).toBe(0);
+            expect(onLazyLoadSpy).toHaveBeenCalledOnce();
+            const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
+            expect(event.first).toBe(0);
+            expect(event.sortField).toBe('name');
+            expect(event.sortOrder).toBe(-1);
+            expect(event.globalFilter).toBe('my search');
+        });
+
+        it('should use null for globalFilter when no search is active', () => {
+            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.reload();
+
+            const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
+            expect(event.globalFilter).toBeNull();
+        });
+    });
+
     it('should handle page change event', () => {
         const pageEvent: TablePageEvent = {
             first: 20,
@@ -280,11 +380,11 @@ describe('TableViewComponent', () => {
         expect(onRowSelectSpy).toHaveBeenCalledOnce();
     });
 
-    it('should handle selectedRow property', () => {
-        expect(component.selectedRow).toBeUndefined();
+    it('should handle tableSelection property', () => {
+        expect(component.tableSelection).toBeUndefined();
 
-        component.selectedRow = mockData[1];
-        expect(component.selectedRow).toEqual(mockData[1]);
+        component.tableSelection = mockData[1];
+        expect(component.tableSelection).toEqual(mockData[1]);
     });
 
     it('should debounce global search - single search', () => {

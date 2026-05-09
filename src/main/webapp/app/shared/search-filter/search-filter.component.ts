@@ -12,6 +12,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 })
 export class SearchFilterComponent {
     readonly placeholderKey = input<string>('artemisApp.course.exercise.search.searchPlaceholder');
+    readonly disabled = input(false);
     readonly newSearchEvent = output<string>();
 
     readonly searchValue = signal('');

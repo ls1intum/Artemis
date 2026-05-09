@@ -9,6 +9,7 @@
         [value]="searchValue()"
         (input)="setSearchValue(searchInput.value)"
         [placeholder]="placeholderKey() | artemisTranslate"
+        [disabled]="disabled()"
         aria-label="Filter Search Field"
         aria-describedby="filter-search-field"
     />

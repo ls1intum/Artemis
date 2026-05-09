@@ -6,6 +6,10 @@
     }
 
     .p-datatable {
+        tr.jhi-row-disabled {
+            opacity: 0.6;
+            cursor: not-allowed !important;
+        }
         tr th {
             white-space: nowrap !important;
             padding: 8px 16px !important;
