@@ -122,6 +122,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final QuizScheduleService quizScheduleService;
+
     private final QuizStatisticService quizStatisticService;
 
     private final QuizBatchService quizBatchService;
@@ -147,8 +149,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     private final Optional<ExamDateApi> examDateApi;
 
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
-            InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
-            ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
+            InstanceMessageSendService instanceMessageSendService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
+            QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService, Optional<ExamDateApi> examDateApi) {
@@ -157,6 +159,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.quizScheduleService = quizScheduleService;
         this.quizStatisticService = quizStatisticService;
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
@@ -636,7 +639,16 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         quizStatisticService.recalculateStatistics(savedQuizExercise);
     }
 
+    /**
+     * Cancels the scheduled start of a quiz exercise both locally and across the cluster.
+     * <p>
+     * The local scheduler entry is cleared synchronously so the calling node immediately observes
+     * the cancellation; the cluster-wide message is still published so all other nodes catch up.
+     *
+     * @param quizExerciseId the id of the quiz exercise whose scheduled start should be canceled
+     */
     public void cancelScheduledQuiz(Long quizExerciseId) {
+        quizScheduleService.cancelScheduledQuizStart(quizExerciseId);
         instanceMessageSendService.sendQuizExerciseStartCancel(quizExerciseId);
     }
 
