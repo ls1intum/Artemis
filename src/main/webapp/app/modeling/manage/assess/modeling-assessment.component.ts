@@ -137,7 +137,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             try {
                 this.apollonEditor.destroy();
             } catch (err) {
-                captureException(err);
+                // Ignore errors during destruction
             }
         }
     }
@@ -172,7 +172,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             try {
                 this.apollonEditor.destroy();
             } catch (err) {
-                captureException(err);
+                // Ignore errors during destruction
             }
         }
 
