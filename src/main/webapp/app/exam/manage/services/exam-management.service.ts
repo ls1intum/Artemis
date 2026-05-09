@@ -27,6 +27,7 @@ import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exa
 import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
 import { PageableResult } from 'app/shared/table/pageable-table';
 import { ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
+import { UserForRegistration, UserSearchResult } from 'app/shared/user-registration-modal/user-for-registration.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -302,6 +303,31 @@ export class ExamManagementService {
                         startedDate: convertDateFromServer(row.startedDate),
                         submissionDate: convertDateFromServer(row.submissionDate),
                     })),
+                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
+                })),
+            );
+    }
+
+    /**
+     * Search for Artemis users that can be registered for the exam.
+     * Matches login (prefix), full name (contains), email (contains), and registration number (contains).
+     * Each result is flagged with {@code isRegistered} if already registered for the exam.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     * @param searchTerm The text entered by the instructor.
+     * @param page Zero-based page index.
+     * @param size Number of results per page.
+     * @returns A {@link UserSearchResult} with matching users and total count.
+     */
+    searchUsersForExamRegistration(courseId: number, examId: number, searchTerm: string, page: number, size: number): Observable<UserSearchResult> {
+        return this.http
+            .get<UserForRegistration[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/search`, {
+                params: { searchTerm, page, size },
+                observe: 'response',
+            })
+            .pipe(
+                map((res) => ({
+                    content: res.body ?? [],
                     totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
                 })),
             );

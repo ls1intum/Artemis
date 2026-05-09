@@ -621,6 +621,27 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
 
+    /**
+     * Searches for users by login (prefix), full name (contains), email (contains), or registration number (contains).
+     * Used for the generic user-registration modal to find users that can be added to an entity (e.g. exam).
+     *
+     * @param page       Pageable controlling page index and size
+     * @param searchTerm the search string entered by the instructor
+     * @return a page of matching users
+     */
+    @Query("""
+            SELECT user
+            FROM User user
+            WHERE user.deleted = FALSE
+                AND (
+                    user.login LIKE :#{#searchTerm}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#searchTerm}%
+                    OR user.email LIKE %:#{#searchTerm}%
+                    OR user.registrationNumber LIKE %:#{#searchTerm}%
+                )
+            """)
+    Page<User> searchAllByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm);
+
     @Query("""
             SELECT DISTINCT user
             FROM User user

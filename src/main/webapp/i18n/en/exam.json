@@ -644,7 +644,7 @@
                     "verifyAttendance": "Verify attendance"
                 },
                 "addDialog": {
-                    "title": "Add students",
+                    "title": "Add Students",
                     "description": "Search for course students by name, matriculation number, login, or email. Already registered students are marked and cannot be registered again.",
                     "searchPlaceholder": "Search students",
                     "loadingStudents": "Loading students...",

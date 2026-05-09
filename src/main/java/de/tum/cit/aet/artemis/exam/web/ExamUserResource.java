@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -210,6 +211,29 @@ public class ExamUserResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         List<ExportExamUserDTO> exportData = examUserService.exportStudents(examId);
         return ResponseEntity.ok(exportData);
+    }
+
+    /**
+     * GET courses/{courseId}/exams/{examId}/students/search : Search for users that can be registered for the exam.
+     * Searches across login (prefix), full name (contains), email (contains), and registration number (contains).
+     * Already registered users are flagged with {@code isRegistered = true}.
+     *
+     * @param courseId   the id of the course
+     * @param examId     the id of the exam
+     * @param searchTerm the text entered by the instructor
+     * @param page       zero-based page index (default 0)
+     * @param size       number of results per page (default 10)
+     * @return a page of {@link UserForRegistrationDTO} with {@code X-Total-Count} and Link pagination headers
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/students/search")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<UserForRegistrationDTO>> searchUsersForExamRegistration(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam String searchTerm,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        log.debug("REST request to search users for exam {} registration with term: {}", examId, searchTerm);
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        Page<UserForRegistrationDTO> result = examUserService.searchUsersForExamRegistration(examId, searchTerm, page, size);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), result);
+        return new ResponseEntity<>(result.getContent(), headers, HttpStatus.OK);
     }
 
 }

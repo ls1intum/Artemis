@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,6 +26,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,6 +36,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.ImageDTO;
+import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -315,6 +318,29 @@ public class ExamUserService {
         List<ExamStudentDTO> dtos = ids.stream().map(examUserById::get).filter(Objects::nonNull).map(eu -> mapToExamStudentDTO(eu, summaryByUserId)).toList();
 
         return new PageImpl<>(dtos, idPage.getPageable(), idPage.getTotalElements());
+    }
+
+    /**
+     * Searches Artemis users by login prefix, full-name substring, email substring, or registration-number substring,
+     * and marks each result as already registered for the given exam.
+     *
+     * @param examId     the exam to check existing registrations against
+     * @param searchTerm the text entered by the instructor
+     * @param page       zero-based page index
+     * @param size       number of results per page
+     * @return a page of {@link UserForRegistrationDTO} with {@code isRegistered} set appropriately
+     */
+    public Page<UserForRegistrationDTO> searchUsersForExamRegistration(long examId, String searchTerm, int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(pageable, searchTerm.trim().toLowerCase(Locale.ROOT));
+
+        List<Long> userIds = users.getContent().stream().map(User::getId).toList();
+        Set<Long> registeredIds = userIds.isEmpty() ? Set.of() : examUserRepository.findRegisteredUserIdsByExamIdAndUserIds(examId, userIds);
+
+        List<UserForRegistrationDTO> dtos = users.getContent().stream().map(user -> new UserForRegistrationDTO(user.getId(), user.getLogin(), user.getName(), user.getEmail(),
+                user.getRegistrationNumber(), user.getImageUrl(), registeredIds.contains(user.getId()))).toList();
+
+        return new PageImpl<>(dtos, pageable, users.getTotalElements());
     }
 
     private ExamStudentDTO mapToExamStudentDTO(ExamUser eu, Map<Long, ExamStudentDTO.StudentExamSummary> summaryByUserId) {

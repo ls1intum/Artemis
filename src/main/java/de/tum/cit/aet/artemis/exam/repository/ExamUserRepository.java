@@ -94,6 +94,22 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
     Optional<ExamUser> findWithExamWithExamUsersById(long examUserId);
 
     /**
+     * Returns the IDs of users who are already registered as exam users for the given exam, filtered to the provided user IDs.
+     * Used to mark users as already registered in the user-registration modal.
+     *
+     * @param examId  the exam to check registrations against
+     * @param userIds the user IDs to check; must not be empty
+     * @return the subset of {@code userIds} that are registered for the exam
+     */
+    @Query("""
+            SELECT eu.user.id
+            FROM ExamUser eu
+            WHERE eu.exam.id = :examId
+                AND eu.user.id IN :userIds
+            """)
+    Set<Long> findRegisteredUserIdsByExamIdAndUserIds(@Param("examId") long examId, @Param("userIds") List<Long> userIds);
+
+    /**
      * Returns a page of {@link ExamUser} IDs for the given exam, filtered and searched according to {@link ExamStudentSearchDTO}.
      * Sorting is applied via {@code query.orderBy} inside the specification rather than through {@link Pageable#getSort()}
      * because the working-time sort requires a correlated subquery that {@link Sort} cannot express.

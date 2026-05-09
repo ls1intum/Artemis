@@ -2,7 +2,7 @@ import { Component, ElementRef, EventEmitter, OnDestroy, TemplateRef, computed, 
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { User } from 'app/core/user/user.model';
-import { Subject, forkJoin, of } from 'rxjs';
+import { Observable, Subject, forkJoin, of } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -26,7 +26,9 @@ import { ConfirmationService, MenuItem } from 'primeng/api';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ExamStudentsMenuButtonComponent } from 'app/exam/manage/students/exam-students-menu-button/exam-students-menu-button.component';
-import { ExamAddStudentsDialogComponent } from 'app/exam/manage/students/add-students-dialog/exam-add-students-dialog.component';
+import { UserRegistrationModalComponent } from 'app/shared/user-registration-modal/user-registration-modal.component';
+import { UserForRegistration, UserSearchResult } from 'app/shared/user-registration-modal/user-for-registration.model';
+import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { ButtonDirective } from 'primeng/button';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -71,7 +73,7 @@ interface MenuCommandEvent {
         ArtemisTranslatePipe,
         StudentsReseatingDialogComponent,
         ExamStudentsMenuButtonComponent,
-        ExamAddStudentsDialogComponent,
+        UserRegistrationModalComponent,
         ButtonDirective,
         RouterLink,
         ArtemisDatePipe,
@@ -107,7 +109,7 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly studentsUploadImagesDialog = viewChild.required(StudentsUploadImagesDialogComponent);
     readonly studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
     readonly studentsRoomDistributionDialog = viewChild.required(StudentsRoomDistributionDialogComponent);
-    readonly addStudentsDialog = viewChild.required(ExamAddStudentsDialogComponent);
+    readonly addStudentsModal = viewChild.required(UserRegistrationModalComponent);
     readonly individualExamsStatusPopover = viewChild.required<Popover>('individualExamsStatusPopover');
     readonly individualExamsStatusButton = viewChild<ElementRef<HTMLButtonElement>>('individualExamsStatusButton');
     readonly tableViewRef = viewChild(TableViewComponent);
@@ -149,6 +151,31 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly isAdmin = signal(false);
     readonly isTestExam = computed(() => this.exam()?.testExam ?? false);
     readonly isLoading = signal(true);
+
+    readonly searchUsersForExamFn = computed((): ((term: string, page: number, size: number) => Observable<UserSearchResult>) => {
+        const courseId = this.courseId();
+        const examId = this.exam().id;
+        return (term: string, page: number, size: number) => {
+            if (!examId) return of({ content: [], totalElements: 0 });
+            return this.examManagementService.searchUsersForExamRegistration(courseId, examId, term, page, size);
+        };
+    });
+
+    readonly registerUsersForExamFn = computed((): ((users: UserForRegistration[]) => Observable<void>) => {
+        const courseId = this.courseId();
+        const examId = this.exam().id;
+        return (users: UserForRegistration[]) => {
+            if (!examId) return of(void 0);
+            const dtos: ExamUserDTO[] = users.map((u) => ({
+                login: u.login,
+                firstName: '',
+                lastName: '',
+                registrationNumber: u.registrationNumber ?? '',
+                email: u.email ?? '',
+            }));
+            return this.examManagementService.addStudentsToExam(courseId, examId, dtos).pipe(map(() => void 0));
+        };
+    });
 
     readonly activeFilter = signal('All');
     readonly examStudentFilterGroups = computed<FilterGroup[]>(() => {
@@ -415,7 +442,7 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     openAddStudentsDialog() {
-        this.addStudentsDialog()?.openDialog();
+        this.addStudentsModal()?.open();
     }
 
     openExportUsersDialog() {
