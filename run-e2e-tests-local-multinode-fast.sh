@@ -154,11 +154,15 @@ echo ""
 # =============================================================================
 echo -e "${BLUE}Step 0: Checking prerequisites...${NC}"
 MISSING=""
-command -v docker >/dev/null 2>&1 || MISSING="$MISSING docker"
-command -v java >/dev/null 2>&1   || MISSING="$MISSING java"
-command -v node >/dev/null 2>&1   || MISSING="$MISSING node"
-command -v npm >/dev/null 2>&1    || MISSING="$MISSING npm"
-command -v unzip >/dev/null 2>&1  || MISSING="$MISSING unzip"
+command -v docker >/dev/null 2>&1  || MISSING="$MISSING docker"
+command -v java >/dev/null 2>&1    || MISSING="$MISSING java"
+command -v node >/dev/null 2>&1    || MISSING="$MISSING node"
+command -v npm >/dev/null 2>&1     || MISSING="$MISSING npm"
+command -v unzip >/dev/null 2>&1   || MISSING="$MISSING unzip"
+command -v lsof >/dev/null 2>&1    || MISSING="$MISSING lsof"
+command -v pgrep >/dev/null 2>&1   || MISSING="$MISSING pgrep"
+command -v python3 >/dev/null 2>&1 || MISSING="$MISSING python3"
+command -v curl >/dev/null 2>&1    || MISSING="$MISSING curl"
 if [ -n "$MISSING" ]; then
     echo -e "${RED}ERROR: Missing required commands:$MISSING${NC}"
     exit 1
@@ -175,7 +179,6 @@ echo -e "${GREEN}Prerequisites OK${NC}"
 # =============================================================================
 # Step 1: Build the WAR (unless --skip-build)
 # =============================================================================
-WAR_GLOB=(build/libs/Artemis-*.war)
 if [ "$SKIP_BUILD" = false ]; then
     echo ""
     echo -e "${BLUE}Step 1: Building WAR (./gradlew -Pprod -Pwar bootWar -x test)...${NC}"
@@ -185,8 +188,10 @@ else
     echo -e "${YELLOW}Step 1: Skipping WAR build (--skip-build)${NC}"
 fi
 
-# Resolve the WAR path after build (glob expanded post-hoc so --skip-build still works).
-WAR_FILES=( "${WAR_GLOB[@]}" )
+# Glob the WAR path AFTER the build step so a freshly produced artifact (or a renamed one after a
+# version bump) is picked up. Doing this before the build would store the literal pattern on a
+# clean checkout and the existence check below would fire even on a successful build.
+WAR_FILES=(build/libs/Artemis-*.war)
 if [ ! -e "${WAR_FILES[0]}" ]; then
     echo -e "${RED}ERROR: No WAR found at build/libs/Artemis-*.war. Drop --skip-build to build it.${NC}"
     exit 1
@@ -243,9 +248,11 @@ else
 fi
 
 ARM_OVERRIDES=""
-if [ "$(uname -m)" = "arm64" ]; then
+HOST_ARCH=$(uname -m)
+# `arm64` on macOS Apple Silicon, `aarch64` on Linux ARM. Both need the arm64 image override.
+if [ "$HOST_ARCH" = "arm64" ] || [ "$HOST_ARCH" = "aarch64" ]; then
     ARM_OVERRIDES="export ARTEMIS_CONTINUOUSINTEGRATION_IMAGEARCHITECTURE=arm64"
-    echo "Detected ARM64 — exercise images will use arm64 variants"
+    echo "Detected ARM64 (uname -m=$HOST_ARCH) — exercise images will use arm64 variants"
 fi
 
 # =============================================================================
