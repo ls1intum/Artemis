@@ -272,6 +272,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('elementCounts', elementCounts);
         fixture.detectChanges();
 
+        await comp.ngAfterViewInit();
         await fixture.whenStable();
 
         expect(comp.apollonEditor).toBeDefined();
@@ -318,6 +319,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('highlightedElements', highlightedElements);
 
         fixture.detectChanges();
+        await comp.ngAfterViewInit();
         await fixture.whenStable();
 
         expect(comp.apollonEditor).not.toBeNull();
@@ -342,7 +344,8 @@ describe('ModelingAssessmentComponent', () => {
         const initialModel = makeMockModel();
         fixture.componentRef.setInput('umlModel', initialModel);
         fixture.detectChanges();
-        await fixture.whenStable();
+        await comp.ngAfterViewInit();
+        await new Promise((r) => setTimeout(r, 0));
         expect(comp.apollonEditor).not.toBeNull();
 
         // Verify initial model was set
@@ -354,6 +357,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('umlModel', newModel);
         fixture.detectChanges();
         await fixture.whenStable();
+        await new Promise((r) => setTimeout(r, 0));
 
         // Verify the component's input was updated
         expect(comp.umlModel()).toBe(newModel);
@@ -375,6 +379,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('highlightedElements', initialHighlights);
 
         fixture.detectChanges();
+        await comp.ngAfterViewInit();
         await fixture.whenStable();
 
         expect(comp.apollonEditor).not.toBeNull();
@@ -410,7 +415,8 @@ describe('ModelingAssessmentComponent', () => {
         vi.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
 
         fixture.detectChanges();
-        await fixture.whenStable();
+        await comp.ngAfterViewInit();
+        await new Promise((r) => setTimeout(r, 0));
 
         expect(comp.apollonEditor).toBeDefined();
 
@@ -432,6 +438,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
 
         await fixture.whenStable();
+        await new Promise((r) => setTimeout(r, 0));
 
         expect(comp.apollonEditor).not.toBeNull();
 
