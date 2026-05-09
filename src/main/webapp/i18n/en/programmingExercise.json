@@ -605,6 +605,7 @@
             "resubmitOnFailedSubmission": "An automatic assessment for this participant's last submission could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
             "resubmit": "Resubmit the last submission. This will execute a build run on the participant's repository without making a commit.",
             "resubmitSingle": "Trigger new build for this participant",
+            "resubmitSingleLabel": "Trigger build",
             "resubmitConfirmManualResultOverride": "The latest result for this participant is manual, which means the submission was assessed by a tutor. If you trigger the build for this submission again, the newly generated automatic result will be shown to the student instead.",
             "resubmitAllConfirmAfterDueDate": "The due date has passed, some of the student submissions may already have been assessed by tutors. Newly generated automatic results would replace these manual assessments as the latest results.",
             "resubmitUnsuccessful": "Resubmitting the last submission failed. Please contact your tutor.",

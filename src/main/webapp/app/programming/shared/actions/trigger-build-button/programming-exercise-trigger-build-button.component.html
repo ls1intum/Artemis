@@ -3,6 +3,8 @@
         [btnSize]="btnSize"
         [btnType]="participationHasLatestSubmissionWithoutResult ? ButtonType.ERROR : ButtonType.PRIMARY"
         [icon]="faRedo"
+        [title]="title"
+        [shouldToggle]="!!title"
         [disabled]="isRetrievingBuildStatus"
         [isLoading]="isBuilding"
         (onClick)="triggerBuild($event)"
