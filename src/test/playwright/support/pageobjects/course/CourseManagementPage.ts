@@ -205,7 +205,7 @@ export class CourseManagementPage {
     }
 
     async checkIfStudentSubmissionExists(studentName: string) {
-        await expect(this.page.locator('.datatable-body-row', { hasText: studentName })).toBeVisible();
+        await expect(this.page.getByRole('row').filter({ hasText: studentName })).toBeVisible();
     }
 
     /*
