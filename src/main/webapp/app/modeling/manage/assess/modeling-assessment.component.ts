@@ -358,7 +358,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             try {
                 this.apollonEditor!.addOrUpdateAssessment(newAssessment);
             } catch (error) {
-                captureException(error);
                 modelNeedsFullUpdate = true;
             }
         });
