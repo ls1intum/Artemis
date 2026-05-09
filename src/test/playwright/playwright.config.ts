@@ -65,12 +65,14 @@ export default defineConfig({
         ignoreHTTPSErrors: true,
     },
 
-    /* Configure projects for fast and slow tests */
+    /* Configure projects for fast, slow, and multi-node tests */
     projects: [
         // Tests with @fast tag or without any tags. These are the lightweight tests with lower timeout.
+        // grepInvert excludes @multi-node so single-node runs do not pick up cluster-only assertions.
         {
             name: 'fast-tests',
             grep: /@fast|^[^@]*$/,
+            grepInvert: /@multi-node/,
             timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 60) * 1000,
             use: { browserName: 'chromium', viewport: { width: 1920, height: 1080 } },
         },
@@ -79,6 +81,18 @@ export default defineConfig({
         {
             name: 'slow-tests',
             grep: /@slow/,
+            grepInvert: /@multi-node/,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
+            use: {
+                browserName: 'chromium',
+                viewport: { width: 1920, height: 1080 },
+            },
+        },
+        // Tests with @multi-node tag. These exercise the clustered Hazelcast / ActiveMQ stack and
+        // are skipped by the single-node fast pipeline. The multi-node runner opts in explicitly.
+        {
+            name: 'multi-node-tests',
+            grep: /@multi-node/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
             use: {
                 browserName: 'chromium',
