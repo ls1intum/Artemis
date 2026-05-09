@@ -47,7 +47,11 @@ const sidebars: SidebarsConfig = {
         'local-database-tests',
         'local-moodle-setup-for-lti',
         'weaviate-setup',
-        'consistency-check',
+        {
+            type: 'category',
+            label: 'Hyperion',
+            items: ['hyperion/consistency-check'],
+        },
     ],
 };
 

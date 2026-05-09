@@ -1,0 +1,88 @@
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# Consistency Check
+
+The consistency check is an AI-assisted feature in Hyperion that detects cross-artifact inconsistencies in programming exercises before they are published to students.
+
+A programming exercise consists of four interconnected artifacts: the problem statement, the template repository, the solution repository, and the test repository.
+When one artifact is changed without updating the others, students may face exercises they cannot solve — for example, the problem statement describes a method named `calculateAverage` while the template declares `computeMean`.
+
+For the formal definition of the underlying issue types and ontology, see:
+[Dietrich et al., *"Automated Consistency Checking of Multi-Artifact Programming Exercises"*](https://dl.acm.org/doi/10.1145/3769994.3770042), Koli Calling 2025.
+
+---
+
+## Triggering a Consistency Check
+
+Instructors with at least **Editor** role can trigger a consistency check from the exercise management view.
+The check runs synchronously and typically completes within 20–50 seconds.
+
+---
+
+## Understanding the Report
+
+Each detected issue includes:
+
+| Field | Description |
+|---|---|
+| **Severity** | `LOW`, `MEDIUM`, or `HIGH` — indicates how likely the issue is to block students |
+| **Category** | The type of inconsistency (see issue types below) |
+| **Description** | Human-readable explanation of what is inconsistent and where |
+| **Suggested fix** | Concrete recommendation for resolving the issue |
+| **Locations** | Affected artifact, file path, and line range for each side of the inconsistency |
+
+### Issue Types
+
+| Category | What it detects |
+|---|---|
+| Method return type mismatch | A method's return type differs between artifacts |
+| Method parameter mismatch | A method's parameter list (names, types, or count) differs between artifacts |
+| Constructor parameter mismatch | A constructor's parameter list differs between artifacts |
+| Attribute type mismatch | A field's declared type differs between artifacts |
+| Visibility mismatch | A member's access modifier (`public`, `private`, …) differs between artifacts |
+| Identifier naming inconsistency | An identifier is spelled differently across artifacts |
+
+### What the Check Does Not Flag
+
+The checker deliberately ignores intentional pedagogical gaps:
+
+- Empty method stubs and `TODO` comments in the template repository
+- Abstract method bodies
+- Issues already covered by existing review threads on the exercise
+
+---
+
+## Reliability
+
+Numbers come from the [PECV-bench](https://github.com/ls1intum/PECV-bench) evaluation framework. All Artemis approaches use `azure-openai-gpt-5-mini`, `reasoning_effort=medium`.
+
+### V1 Dataset (91 variants, Java only, 3 runs per variant)
+
+| Approach | N runs | TP | FP | FN | Precision | Recall | F1 | Avg Time (s) | Avg Cost (€) |
+|---|---|---|---|---|---|---|---|---|---|
+| Artemis: Language Filter (`artemis-HEAD-66c9e6b98d`) | 3 | 267 | 214 | 12 | 0.555 | 0.957 | 0.703 | 19.4 | 0.009 |
+| Artemis: Language Filter (`artemis-develop-e2ee1d1f1c`) | 3 | 260 | 169 | 19 | 0.606 | 0.932 | 0.734 | 19.4 | 0.009 |
+| Artemis: Unified Checker (`artemis-feature-hyperion-unified-consistency-check-32471b9a64`) | 3 | 265 | 34 | 14 | 0.886 | 0.950 | 0.917 | 65.1 | 0.006 |
+| **Artemis: Verification Checker — current** (`artemis-feature-hyperion-consistency_check_independent_verification_loop-12d8f2a6bd`) | 3 | **259** | **31** | **20** | **0.893** | **0.928** | **0.910** | **35.9** | **0.014** |
+| PECV Reference (`openai:gpt-5-mini`) | 3 | 262 | 197 | 17 | 0.571 | 0.939 | 0.710 | 31.6 | — |
+
+### V2 Dataset (325 variants, 6 languages, 1 run per variant)
+
+| Approach | N runs | TP | FP | FN | Precision | Recall | F1 | Avg Time (s) | Avg Cost (€) |
+|---|---|---|---|---|---|---|---|---|---|
+| Artemis: Language Filter (`artemis-HEAD-66c9e6b98d`) | 1 | 260 | 230 | 71 | 0.531 | 0.785 | 0.633 | 27.3 | 0.012 |
+| Artemis: Language Filter (`artemis-develop-e2ee1d1f1c`) | 1 | 256 | 204 | 75 | 0.557 | 0.773 | 0.647 | 21.4 | 0.012 |
+| Artemis: Unified Checker (`artemis-feature-hyperion-unified-consistency-check-32471b9a64`) | 1 | 250 | 76 | 81 | 0.767 | 0.755 | 0.761 | 67.4 | 0.007 |
+| **Artemis: Verification Checker — current** (`artemis-feature-hyperion-consistency_check_independent_verification_loop-12d8f2a6bd`) | 1 | **254** | **56** | **77** | **0.819** | **0.767** | **0.793** | **44.3** | **0.018** |
+| PECV Reference (`openai:gpt-5-mini`) | 1 | 267 | 207 | 64 | 0.563 | 0.807 | 0.663 | 36.7 | — |
+
+<Callout variant={CalloutVariant.info}>
+V1 and V2 results differ for three reasons: V1 covers only Java exercises (3 runs averaged), while V2 adds 5 more languages including SQL and Assembler where the OO-focused prompts perform weaker. V2 results are also single-run per variant, so LLM non-determinism is not averaged out — the same approach may score differently on repeated runs. V1 numbers are more stable.
+</Callout>
+
+**How to interpret this in practice:**
+
+- Expect roughly 1–2 false positives for every 10 issues reported. Review each issue before acting on it.
+- The checker may miss some inconsistencies — a clean report does not guarantee a fully consistent exercise.
+- For best results, run the check after making any significant change to a single artifact and before publishing.
