@@ -2263,6 +2263,9 @@ public class ProgrammingExerciseIntegrationTestService {
             Map.entry("C.java", "efg")
         ), "seed student files");
         // @formatter:on
+        // The endpoint under test resolves the bare repo by commit hash; ensure that specific
+        // hash is visible in the bare repo (not just HEAD) before issuing the request.
+        RepositoryExportTestUtil.waitForBareRepositoryToContainCommit(repo, commit.getId().getName());
 
         // Persist submission with commit hash
         var submission = new ProgrammingSubmission();
