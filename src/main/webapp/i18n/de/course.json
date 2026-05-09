@@ -325,6 +325,7 @@
                 },
                 "shortname": {
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
+                    "maxlength": "Der Kurzname darf höchstens 24 Zeichen lang sein.",
                     "forbidden": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten."
                 },
                 "startDate": {
