@@ -255,11 +255,17 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
-    void testBuildAgentJobCancelled() {
-        // High timeout to ensure that the job is not finished before it is canceled. This will not affect the test runtime since the job is canceled.
+    void testBuildAgentJobCancelled() throws InterruptedException {
+        // The container start mock blocks until cancellation has been published. Using a latch
+        // makes the ordering deterministic: the test only publishes the cancel after the build
+        // has actually entered the container start, so the result-processing thread cannot race
+        // ahead and mark the job as SUCCESSFUL before the cancellation arrives.
+        CountDownLatch containerStartedLatch = new CountDownLatch(1);
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
         when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
         doAnswer(invocation -> {
+            containerStartedLatch.countDown();
+            // Sleep long enough for the cancellation message to be processed before the mock returns.
             Thread.sleep(5000);
             return null;
         }).when(startContainerCmd).exec();
@@ -268,8 +274,10 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        // poll delay will slow down tests, but will remove flaky to make sure that the job was added to the map before sending the cancellation message
-        await().atMost(30, TimeUnit.SECONDS).pollDelay(500, TimeUnit.MILLISECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        // Wait for the build agent to enter the container start. Combined with the buildStartDate
+        // check this guarantees the job is mid-execution when we publish the cancellation.
+        assertThat(containerStartedLatch.await(30, TimeUnit.SECONDS)).as("container start should be reached within 30s").isTrue();
+        await().atMost(30, TimeUnit.SECONDS).pollInterval(50, TimeUnit.MILLISECONDS).until(() -> {
             var processingJob = processingJobs.get(queueItem.id());
             return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null;
         });
