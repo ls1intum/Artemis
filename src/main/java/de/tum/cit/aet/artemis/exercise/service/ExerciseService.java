@@ -49,6 +49,8 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.NonQuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -58,8 +60,6 @@ import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatistic
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;

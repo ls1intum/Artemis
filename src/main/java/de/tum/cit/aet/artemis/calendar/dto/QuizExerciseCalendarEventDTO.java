@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.dto.calendar;
+package de.tum.cit.aet.artemis.calendar.dto;
 
 import java.time.ZonedDateTime;
 

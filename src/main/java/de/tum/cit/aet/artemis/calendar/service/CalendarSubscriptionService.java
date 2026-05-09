@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service;
+package de.tum.cit.aet.artemis.calendar.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -14,11 +14,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.calendar.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import net.fortuna.ical4j.model.Calendar;
