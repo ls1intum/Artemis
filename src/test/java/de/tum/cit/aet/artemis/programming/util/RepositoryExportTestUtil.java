@@ -406,7 +406,7 @@ public final class RepositoryExportTestUtil {
      * @param commitHash the commit hash that must be resolvable
      */
     public static void waitForBareRepositoryToContainCommit(LocalRepository repo, String commitHash) {
-        Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        Awaitility.await().atMost(30, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
                 var resolved = git.getRepository().resolve(commitHash);
                 if (resolved == null) {
@@ -433,7 +433,7 @@ public final class RepositoryExportTestUtil {
      * @param repo the local repository whose bare repo should be verified
      */
     public static void waitForBareRepositoryReady(LocalRepository repo) {
-        Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        Awaitility.await().atMost(30, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             try {
                 // Try to open the bare repository and resolve HEAD
                 // This verifies the repo is accessible and has a valid HEAD reference

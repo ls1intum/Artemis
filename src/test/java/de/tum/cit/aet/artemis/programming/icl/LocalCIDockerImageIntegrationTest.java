@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.AfterEach;
@@ -40,6 +41,7 @@ import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.transport.SSLConfig;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.service.BuildAgentDockerService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -227,9 +229,25 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         assertThat(persistedSubmission.isBuildFailed()).isFalse();
         var result = persistedSubmission.getLatestResult();
         assertThat(result.getCompletionDate()).isNotNull();
-        assertThat(result.getScore()).isEqualTo(100.0);
-        assertThat(result.getTestCaseCount()).isEqualTo(expectedSuccessfulTestCaseCount);
-        assertThat(result.getPassedTestCaseCount()).isEqualTo(expectedSuccessfulTestCaseCount);
+        // Surface per-test-case status if the score check fails — sanitizer-based GCC test cases
+        // can flake intermittently in Docker on CI, and bare numeric assertions hide which case failed.
+        String feedbackDiagnostics = formatTestCaseFeedback(result);
+        assertThat(result.getScore()).as("Score for project type %s; feedback:%n%s", projectType, feedbackDiagnostics).isEqualTo(100.0);
+        assertThat(result.getTestCaseCount()).as("Test case count for project type %s; feedback:%n%s", projectType, feedbackDiagnostics).isEqualTo(expectedSuccessfulTestCaseCount);
+        assertThat(result.getPassedTestCaseCount()).as("Passed test case count for project type %s; feedback:%n%s", projectType, feedbackDiagnostics)
+                .isEqualTo(expectedSuccessfulTestCaseCount);
+    }
+
+    private String formatTestCaseFeedback(Result result) {
+        if (result.getFeedbacks() == null || result.getFeedbacks().isEmpty()) {
+            return "(no feedback recorded)";
+        }
+        return result.getFeedbacks().stream().map(feedback -> {
+            String name = feedback.getTestCase() != null ? feedback.getTestCase().getTestName() : feedback.getText();
+            String status = Boolean.TRUE.equals(feedback.isPositive()) ? "PASS" : "FAIL";
+            String detail = feedback.getDetailText();
+            return "  - " + name + " [" + status + "]" + (detail != null && !detail.isBlank() ? ": " + detail : "");
+        }).sorted().collect(Collectors.joining(System.lineSeparator()));
     }
 
     private void configureProgrammingExercise(ProjectType projectType) throws Exception {
