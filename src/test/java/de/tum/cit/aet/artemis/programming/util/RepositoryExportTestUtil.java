@@ -394,12 +394,6 @@ public final class RepositoryExportTestUtil {
         // Wait for the bare repository to be fully ready for cloning operations
         waitForBareRepositoryReady(repo);
 
-        // Wait until the specific commit we just pushed is resolvable in the bare repo. The HEAD
-        // check above is not sufficient: on slow CI runners, HEAD can be advanced before the new
-        // commit object is fully written, and downstream endpoints that resolve by commit hash
-        // would otherwise return an empty result.
-        waitForBareRepositoryToContainCommit(repo, commit.getId().getName());
-
         return commit;
     }
 
