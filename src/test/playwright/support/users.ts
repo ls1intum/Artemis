@@ -8,6 +8,8 @@ import { CourseManagementPage } from './pageobjects/course/CourseManagementPage'
 export interface UserCredentials {
     username: string;
     password: string;
+    /** Full display name (firstName + ' ' + lastName) as seeded in the e2e database. */
+    displayName?: string;
 }
 
 export const USER_ID = {
@@ -107,9 +109,9 @@ export const users = new PlaywrightUserManagement();
 
 // Fixed user credentials — passwords equal usernames
 export const admin: UserCredentials = { username: 'artemis_admin', password: 'artemis_admin' };
-export const studentOne: UserCredentials = { username: 'artemis_test_user_1', password: 'artemis_test_user_1' };
-export const studentTwo: UserCredentials = { username: 'artemis_test_user_2', password: 'artemis_test_user_2' };
-export const studentThree: UserCredentials = { username: 'artemis_test_user_3', password: 'artemis_test_user_3' };
-export const studentFour: UserCredentials = { username: 'artemis_test_user_4', password: 'artemis_test_user_4' };
-export const tutor: UserCredentials = { username: 'artemis_test_user_6', password: 'artemis_test_user_6' };
-export const instructor: UserCredentials = { username: 'artemis_test_user_16', password: 'artemis_test_user_16' };
+export const studentOne: UserCredentials = { username: 'artemis_test_user_1', password: 'artemis_test_user_1', displayName: 'Student One' };
+export const studentTwo: UserCredentials = { username: 'artemis_test_user_2', password: 'artemis_test_user_2', displayName: 'Student Two' };
+export const studentThree: UserCredentials = { username: 'artemis_test_user_3', password: 'artemis_test_user_3', displayName: 'Student Three' };
+export const studentFour: UserCredentials = { username: 'artemis_test_user_4', password: 'artemis_test_user_4', displayName: 'Student Four' };
+export const tutor: UserCredentials = { username: 'artemis_test_user_6', password: 'artemis_test_user_6', displayName: 'Tutor User' };
+export const instructor: UserCredentials = { username: 'artemis_test_user_16', password: 'artemis_test_user_16', displayName: 'Instructor User' };

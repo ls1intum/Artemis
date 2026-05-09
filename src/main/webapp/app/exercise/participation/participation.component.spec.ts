@@ -1,48 +1,57 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { ParticipationComponent } from 'app/exercise/participation/participation.component';
+import { FilterProp, ParticipationComponent } from 'app/exercise/participation/participation.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { of, throwError } from 'rxjs';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 import dayjs from 'dayjs/esm';
-import { User } from 'app/core/user/user.model';
-import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/shared/services/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockProvider } from 'ng-mocks';
 import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/mock-programming-submission.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
+import { PageableResult } from 'app/shared/table/pageable-table';
 
 describe('ParticipationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ParticipationComponent;
     let componentFixture: ComponentFixture<ParticipationComponent>;
     let participationService: ParticipationService;
     let exerciseService: ExerciseService;
-    let submissionService: ProgrammingSubmissionService;
     let alertService: AlertService;
+
+    const course: Course = { id: 10, presentationScore: 1 };
 
     const exercise: Exercise = {
         numberOfAssessmentsOfCorrectionRounds: [],
         studentAssignedTeamIdComputed: false,
         id: 1,
         secondCorrectionEnabled: true,
+        type: ExerciseType.TEXT,
+        course,
+    };
+
+    const sampleDto: ParticipationManagementDTO = {
+        participationId: 3,
+        submissionCount: 1,
+        testRun: false,
+        participantName: 'Alice',
+        participantIdentifier: 'alice',
     };
 
     const route = { params: of({ exerciseId: '1' } as Params) } as ActivatedRoute;
@@ -70,466 +79,404 @@ describe('ParticipationComponent', () => {
                 component = componentFixture.componentInstance;
                 participationService = TestBed.inject(ParticipationService);
                 exerciseService = TestBed.inject(ExerciseService);
-                submissionService = TestBed.inject(ProgrammingSubmissionService);
                 alertService = TestBed.inject(AlertService);
-                component.exercise = exercise;
+                component.exercise.set(exercise);
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should initialize with exerciseId from route', () => {
-        // @ts-ignore
-        component.exercise = undefined;
-        const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
-        component.ngOnInit();
+    describe('Initialization', () => {
+        it('should initialize with exerciseId from route', () => {
+            const exerciseFindStub = vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
-        expect(exerciseFindStub).toHaveBeenCalledExactlyOnceWith(exercise.id);
-        expect(component.exercise).toEqual(exercise);
-    });
+            component.ngOnInit();
 
-    it('should initialize for non programming exercise', fakeAsync(() => {
-        const theExercise = { ...exercise, type: ExerciseType.FILE_UPLOAD };
-        const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: theExercise })));
-
-        const student: User = { id: 2, login: 'student', name: 'Max', internal: true };
-        const participation: StudentParticipation = { id: 3, student };
-        const participationFindStub = jest.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(new HttpResponse({ body: [participation] })));
-
-        component.ngOnInit();
-        tick();
-
-        expect(component.isLoading).toBeFalse();
-        expect(component.participations).toHaveLength(1);
-        expect(component.participations[0].id).toBe(participation.id);
-        expect(component.basicPresentationEnabled).toBeFalse();
-
-        expect(exerciseFindStub).toHaveBeenCalledOnce();
-        expect(exerciseFindStub).toHaveBeenCalledWith(theExercise.id);
-        expect(participationFindStub).toHaveBeenCalledOnce();
-        expect(participationFindStub).toHaveBeenCalledWith(theExercise.id, false);
-    }));
-
-    it('should initialize for programming exercise', fakeAsync(() => {
-        const theExercise = { ...exercise, type: ExerciseType.PROGRAMMING };
-        const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: theExercise })));
-
-        const student: User = { id: 2, login: 'student', name: 'Max', internal: true };
-        const participation: StudentParticipation = { id: 3, student };
-        const participationFindStub = jest.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(new HttpResponse({ body: [participation] })));
-
-        const submissionState: ProgrammingSubmissionStateObj = {
-            participationId: participation.id!,
-            submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
-        };
-        const submissionGetStateStub = jest.spyOn(submissionService, 'getSubmissionStateOfExercise').mockReturnValue(of(submissionState));
-
-        component.ngOnInit();
-        tick();
-
-        expect(component.isLoading).toBeFalse();
-        expect(component.participations).toHaveLength(1);
-        expect(component.participations[0].id).toBe(participation.id);
-        expect(component.basicPresentationEnabled).toBeFalse();
-        expect(component.exerciseSubmissionState).toEqual(submissionState);
-
-        expect(exerciseFindStub).toHaveBeenCalledOnce();
-        expect(exerciseFindStub).toHaveBeenCalledWith(theExercise.id);
-        expect(participationFindStub).toHaveBeenCalledOnce();
-        expect(participationFindStub).toHaveBeenCalledWith(theExercise.id, false);
-        expect(submissionGetStateStub).toHaveBeenCalledOnce();
-        expect(submissionGetStateStub).toHaveBeenCalledWith(theExercise.id);
-    }));
-
-    it('should format student login or team name from participation', () => {
-        const student: User = { id: 1, login: 'student', name: 'Max', internal: true };
-        const participation: StudentParticipation = { id: 123, student };
-        expect(component.searchResultFormatter(participation)).toBe(`${student.login} (${student.name})`);
-
-        const team: Team = { name: 'Team', shortName: 'T', students: [student] };
-        participation.student = undefined;
-        participation.team = team;
-        expect(component.searchResultFormatter(participation)).toBe(formatTeamAsSearchResult(team));
-
-        // Returns undefined for no student and no team
-        participation.student = undefined;
-        participation.team = undefined;
-        expect(component.searchResultFormatter(participation)).toBe('123');
-    });
-
-    it('should return student login, team short name, or empty from participation', () => {
-        const student: User = { id: 1, login: 'student', name: 'Max', internal: true };
-        const team: Team = { name: 'Team', shortName: 'T', students: [student] };
-        const participation: StudentParticipation = { id: 123, student, team };
-
-        expect(component.searchTextFromParticipation(participation)).toBe(student.login);
-
-        participation.student = undefined;
-        expect(component.searchTextFromParticipation(participation)).toBe(team.shortName);
-
-        participation.team = undefined;
-        expect(component.searchTextFromParticipation(participation)).toHaveLength(0);
-    });
-
-    it('should filter participation by prop', () => {
-        const student: User = { id: 1, login: 'student', name: 'Max', internal: true };
-        const team: Team = { name: 'Team', shortName: 'T', students: [student] };
-        const participation: StudentParticipation = { id: 1, student, team };
-
-        component.participationCriteria.filterProp = component.FilterProp.ALL;
-        expect(component.filterParticipationByProp(participation)).toBeTrue();
-
-        // Returns true only if submission count is 0
-        component.participationCriteria.filterProp = component.FilterProp.NO_SUBMISSIONS;
-        expect(component.filterParticipationByProp(participation)).toBeFalse();
-        participation.submissionCount = 0;
-        expect(component.filterParticipationByProp(participation)).toBeTrue();
-        participation.submissionCount = 1;
-        expect(component.filterParticipationByProp(participation)).toBeFalse();
-
-        component.exerciseSubmissionState = {};
-        component.participationCriteria.filterProp = component.FilterProp.FAILED;
-        expect(component.filterParticipationByProp(participation)).toBeFalse();
-
-        // Test different submission states
-        Object.values(ProgrammingSubmissionState).forEach((programmingSubmissionState) => {
-            const submissionState: ProgrammingSubmissionStateObj = {
-                participationId: participation.id!,
-                submissionState: programmingSubmissionState,
-            };
-            component.exerciseSubmissionState = { 1: submissionState };
-            const expectedBoolean = programmingSubmissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION;
-            expect(component.filterParticipationByProp(participation)).toBe(expectedBoolean);
+            expect(exerciseFindStub).toHaveBeenCalledOnce();
+            expect(exerciseFindStub).toHaveBeenCalledWith(1);
+            expect(component.exercise()).toEqual(exercise);
         });
     });
 
-    it('should add participations with updated due dates to the changed map', () => {
-        expect(component.participationsChangedDueDate).toEqual(new Map());
+    describe('Pagination / lazy loading', () => {
+        it('should load page when a lazy load event fires', () => {
+            const searchStub = vi
+                .spyOn(participationService, 'searchParticipations')
+                .mockReturnValue(of({ content: [sampleDto], totalElements: 1 } as PageableResult<ParticipationManagementDTO>));
 
-        const participation1 = participationWithIndividualDueDate(1, dayjs());
-        component.changedIndividualDueDate(participation1);
-        expect(component.participationsChangedDueDate.get(1)).toEqual(participation1);
+            component.onLazyLoad({ first: 0, rows: 50 });
 
-        // should overwrite the other one, as they have got the same id
-        const participation1Copy = participationWithIndividualDueDate(1, dayjs().add(2, 'days'));
-        component.changedIndividualDueDate(participation1Copy);
+            expect(searchStub).toHaveBeenCalledOnce();
+            expect(component.participations()).toEqual([sampleDto]);
+            expect(component.totalRows()).toBe(1);
+            expect(component.isLoading()).toBe(false);
+        });
 
-        const expectedMap = new Map();
-        expectedMap.set(1, participation1Copy);
-        expect(component.participationsChangedDueDate).toEqual(expectedMap);
+        it('should update active filter and reload on filter change', () => {
+            const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
 
-        const participation2 = participationWithIndividualDueDate(2, undefined);
-        component.changedIndividualDueDate(participation2);
+            component.onLazyLoad({ first: 0, rows: 50 });
+            searchStub.mockClear();
 
-        const expectedMap2 = new Map();
-        expectedMap2.set(1, participation1Copy);
-        expectedMap2.set(2, participation2);
-        expect(component.participationsChangedDueDate).toEqual(expectedMap2);
+            component.updateParticipationFilter(FilterProp.FAILED);
+
+            expect(component.activeFilter()).toBe(FilterProp.FAILED);
+            expect(searchStub).toHaveBeenCalledOnce();
+        });
     });
 
-    it('should add participations to the changed map when removing their due date', () => {
-        const participation1 = participationWithIndividualDueDate(1, dayjs());
-        component.removeIndividualDueDate(participation1);
+    describe('Relevant filters', () => {
+        it('should not include FAILED and NO_PRACTICE filters for non-programming exercises', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.TEXT });
 
-        const expectedMap = new Map();
-        expectedMap.set(1, participationWithIndividualDueDate(1, undefined));
+            expect(component.relevantFilters()).not.toContain(FilterProp.FAILED);
+            expect(component.relevantFilters()).not.toContain(FilterProp.NO_PRACTICE);
+            expect(component.relevantFilters()).toContain(FilterProp.ALL);
+            expect(component.relevantFilters()).toContain(FilterProp.NO_SUBMISSIONS);
+        });
 
-        expect(component.participationsChangedDueDate).toEqual(expectedMap);
+        it('should include FAILED and NO_PRACTICE filters for programming exercises', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
+
+            expect(component.relevantFilters()).toContain(FilterProp.FAILED);
+            expect(component.relevantFilters()).toContain(FilterProp.NO_PRACTICE);
+        });
     });
 
-    it('should send all changed participations to the server when updating their due dates', fakeAsync(() => {
-        const participation1 = participationWithIndividualDueDate(1, dayjs());
-        const participation2 = participationWithIndividualDueDate(2, dayjs());
-        const participation2NoDueDate = participationWithIndividualDueDate(2, undefined);
+    describe('Navigation', () => {
+        it('should return correct participation link for non-exam exercise', () => {
+            expect(component.getParticipationLink(42)).toEqual(['42', 'submissions']);
+        });
 
-        component.exercise = new TextExercise(undefined, undefined);
-        component.exercise.id = 20;
-        component.participations = [participation1, participation2];
+        it('should return correct participation link for exam exercise', () => {
+            component.exercise.set({ ...exercise, exerciseGroup: { id: 5, exam: { id: 2 } } });
 
-        component.changedIndividualDueDate(participation1);
-        component.removeIndividualDueDate(participation2);
+            expect(component.getParticipationLink(42)).toEqual(['42']);
+        });
 
-        const expectedMap = new Map();
-        expectedMap.set(1, participation1);
-        expectedMap.set(2, participationWithIndividualDueDate(2, undefined));
-        expect(component.participationsChangedDueDate).toEqual(expectedMap);
+        it('should compute scoresRoute for non-exam exercise', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.TEXT, id: 1, course: { id: 10 } });
 
-        const updateDueDateStub = jest
-            .spyOn(participationService, 'updateIndividualDueDates')
-            .mockReturnValue(of(new HttpResponse({ body: [participation1, participation2NoDueDate] })));
-        const expectedSent = [participation1, participation2NoDueDate];
+            expect(component.scoresRoute()).toEqual(['/course-management', 10, 'text-exercises', 1, 'scores']);
+        });
 
-        component.saveChangedDueDates();
-        tick();
+        it('should compute scoresRoute for exam exercise', () => {
+            component.exercise.set({
+                ...exercise,
+                type: ExerciseType.TEXT,
+                id: 1,
+                exerciseGroup: { id: 5, exam: { id: 2, course: { id: 10 } } },
+            });
 
-        expect(updateDueDateStub).toHaveBeenCalledOnce();
-        expect(updateDueDateStub).toHaveBeenCalledWith(component.exercise, expectedSent);
-        expect(component.participations).toEqual(expectedSent);
-        expect(component.participationsChangedDueDate).toEqual(new Map());
-        expect(component.isSaving).toBeFalse();
-    }));
-
-    it('should error on save changedDueDate', () => {
-        const errorSpy = jest.spyOn(alertService, 'error');
-        jest.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(throwError(() => new HttpResponse({ body: null })));
-        component.saveChangedDueDates();
-        expect(errorSpy).toHaveBeenCalledOnce();
+            expect(component.scoresRoute()).toEqual(['/course-management', 10, 'exams', 2, 'exercise-groups', 5, 'text-exercises', 1, 'scores']);
+        });
     });
 
-    it('should remove a participation from the change map when it has been deleted', fakeAsync(() => {
-        const participation1 = participationWithIndividualDueDate(1, dayjs());
-        component.changedIndividualDueDate(participation1);
+    describe('Presentation enabled computed signals', () => {
+        it('should compute basicPresentationEnabled correctly', () => {
+            component.exercise.set({
+                ...exercise,
+                isAtLeastTutor: true,
+                presentationScoreEnabled: true,
+                course: { ...course, presentationScore: 1 },
+            });
+            expect(component.basicPresentationEnabled()).toBe(true);
 
-        const expectedMap = new Map();
-        expectedMap.set(1, participation1);
-        expect(component.participationsChangedDueDate).toEqual(expectedMap);
+            component.exercise.set({ ...exercise, presentationScoreEnabled: false, course });
+            expect(component.basicPresentationEnabled()).toBe(false);
+        });
 
-        const deleteStub = jest.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        it('should compute gradedPresentationEnabled correctly', () => {
+            component.exercise.set({
+                ...exercise,
+                isAtLeastTutor: true,
+                presentationScoreEnabled: true,
+                course,
+            });
+            component.gradeStepsDTO.set({ presentationsNumber: 2, gradeSteps: [], gradeType: undefined as any, title: '', plagiarismGrade: '', noParticipationGrade: '' });
 
-        component.deleteParticipation(1);
-        tick();
+            expect(component.gradedPresentationEnabled()).toBe(true);
 
-        expect(deleteStub).toHaveBeenCalledOnce();
-        expect(component.participationsChangedDueDate).toEqual(new Map());
-    }));
-
-    it('should update participation filter', async () => {
-        jest.useFakeTimers();
-        component.updateParticipationFilter(component.FilterProp.NO_SUBMISSIONS);
-        jest.runAllTimers();
-        expect(component.isLoading).toBeFalsy();
-        expect(component.participationCriteria.filterProp).toBe(component.FilterProp.NO_SUBMISSIONS);
+            component.gradeStepsDTO.set({ presentationsNumber: 0, gradeSteps: [], gradeType: undefined as any, title: '', plagiarismGrade: '', noParticipationGrade: '' });
+            expect(component.gradedPresentationEnabled()).toBe(false);
+        });
     });
 
-    const participationWithIndividualDueDate = (participationId: number, dueDate?: dayjs.Dayjs): StudentParticipation => {
-        const participation = new StudentParticipation();
-        participation.id = participationId;
-        participation.individualDueDate = dueDate;
-        return participation;
-    };
+    describe('Individual due date', () => {
+        it('should track individual due date editing lifecycle', () => {
+            expect(component.isEditingDueDate(sampleDto.participationId)).toBe(false);
 
-    describe('Presentation Score', () => {
-        let updateStub: jest.SpyInstance;
+            component.startEditDueDate(sampleDto);
+
+            expect(component.isEditingDueDate(sampleDto.participationId)).toBe(true);
+            expect(component.getPendingDueDate(sampleDto.participationId)).toEqual(sampleDto.individualDueDate);
+
+            const newDate = dayjs().add(1, 'day');
+            component.setPendingDueDate(sampleDto.participationId, newDate);
+            expect(component.getPendingDueDate(sampleDto.participationId)).toEqual(newDate);
+
+            component.cancelEditDueDate(sampleDto);
+
+            expect(component.isEditingDueDate(sampleDto.participationId)).toBe(false);
+            expect(component.getPendingDueDate(sampleDto.participationId)).toBeUndefined();
+        });
+
+        it('should save individual due date and reload', () => {
+            const newDate = dayjs().add(2, 'days');
+            component.startEditDueDate(sampleDto);
+            component.setPendingDueDate(sampleDto.participationId, newDate);
+
+            const updateStub = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
+            const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.onLazyLoad({ first: 0, rows: 50 });
+            searchStub.mockClear();
+
+            component.saveIndividualDueDate(sampleDto);
+
+            expect(updateStub).toHaveBeenCalledOnce();
+            expect(sampleDto.individualDueDate).toEqual(newDate);
+            expect(component.isEditingDueDate(sampleDto.participationId)).toBe(false);
+            expect(component.isSaving()).toBe(false);
+            expect(searchStub).toHaveBeenCalledOnce();
+        });
+
+        it('should show error alert when saving due date fails', () => {
+            component.startEditDueDate(sampleDto);
+            vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            component.saveIndividualDueDate(sampleDto);
+
+            expect(errorSpy).toHaveBeenCalledOnce();
+            expect(component.isSaving()).toBe(false);
+        });
+    });
+
+    describe('Delete participation', () => {
+        it('should delete participation and reload', () => {
+            vi.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.onLazyLoad({ first: 0, rows: 50 });
+            searchStub.mockClear();
+
+            component.deleteParticipation(sampleDto.participationId);
+
+            expect(searchStub).toHaveBeenCalledOnce();
+        });
+
+        it('should clean up pending due date and presentation map on delete', () => {
+            vi.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.onLazyLoad({ first: 0, rows: 50 });
+
+            component.startEditDueDate(sampleDto);
+            component.changeGradedPresentation(sampleDto);
+
+            expect(component.isEditingDueDate(sampleDto.participationId)).toBe(true);
+            expect(component.hasGradedPresentationChanged(sampleDto)).toBe(true);
+
+            component.deleteParticipation(sampleDto.participationId);
+
+            expect(component.isEditingDueDate(sampleDto.participationId)).toBe(false);
+            expect(component.hasGradedPresentationChanged(sampleDto)).toBe(false);
+        });
+    });
+
+    describe('Cleanup programming participation', () => {
+        it('should call cleanupBuildPlan and reload on success', () => {
+            const cleanupStub = vi.spyOn(participationService, 'cleanupBuildPlan').mockReturnValue(of(new HttpResponse({ body: {} as any })));
+            const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.onLazyLoad({ first: 0, rows: 50 });
+            searchStub.mockClear();
+
+            component.cleanupProgrammingExerciseParticipation(sampleDto);
+
+            expect(cleanupStub).toHaveBeenCalledOnce();
+            expect(searchStub).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('Graded presentation tracking', () => {
+        it('should track graded presentation changes', () => {
+            expect(component.hasGradedPresentationChanged(sampleDto)).toBe(false);
+
+            component.changeGradedPresentation(sampleDto);
+
+            expect(component.hasGradedPresentationChanged(sampleDto)).toBe(true);
+        });
+    });
+
+    describe('Basic presentation', () => {
+        const basicExercise: Exercise = {
+            ...exercise,
+            isAtLeastTutor: true,
+            presentationScoreEnabled: true,
+            course: { id: 10, presentationScore: 1 },
+        };
+
+        it('should call update with presentationScore=1 and reload on success', () => {
+            component.exercise.set(basicExercise);
+            const updateStub = vi.spyOn(participationService, 'update').mockReturnValue(of(new HttpResponse({ body: {} as any })));
+            const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.onLazyLoad({ first: 0, rows: 50 });
+            searchStub.mockClear();
+
+            component.addBasicPresentation(sampleDto);
+
+            expect(updateStub).toHaveBeenCalledOnce();
+            const passedParticipation = updateStub.mock.calls[0][1];
+            expect(passedParticipation.presentationScore).toBe(1);
+            expect(searchStub).toHaveBeenCalledOnce();
+        });
+
+        it('should show error alert when addBasicPresentation fails', () => {
+            component.exercise.set(basicExercise);
+            vi.spyOn(participationService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            component.addBasicPresentation(sampleDto);
+
+            expect(errorSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not call update when basicPresentationEnabled is false', () => {
+            component.exercise.set({ ...exercise, presentationScoreEnabled: false });
+            const updateStub = vi.spyOn(participationService, 'update');
+
+            component.addBasicPresentation(sampleDto);
+
+            expect(updateStub).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Graded presentation', () => {
+        const gradedExercise: Exercise = {
+            ...exercise,
+            isAtLeastTutor: true,
+            presentationScoreEnabled: true,
+            course,
+        };
 
         beforeEach(() => {
-            updateStub = jest.spyOn(participationService, 'update').mockReturnValue(of(new HttpResponse({ body: new StudentParticipation() })));
+            component.exercise.set(gradedExercise);
+            component.gradeStepsDTO.set({ presentationsNumber: 2, gradeSteps: [], gradeType: undefined as any, title: '', plagiarismGrade: '', noParticipationGrade: '' });
         });
 
-        afterEach(() => {
-            jest.restoreAllMocks();
+        it('should call update and reload on success', () => {
+            const dto = { ...sampleDto, presentationScore: 75 };
+            const updateStub = vi.spyOn(participationService, 'update').mockReturnValue(of(new HttpResponse({ body: {} as any })));
+            const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.onLazyLoad({ first: 0, rows: 50 });
+            component.changeGradedPresentation(dto);
+            searchStub.mockClear();
+
+            component.addGradedPresentation(dto);
+
+            expect(updateStub).toHaveBeenCalledOnce();
+            expect(component.hasGradedPresentationChanged(dto)).toBe(false);
+            expect(searchStub).toHaveBeenCalledOnce();
         });
 
-        const courseWithBasicPresentations = {
-            id: 1,
-            title: 'Basic Presentations',
-            presentationScore: 2,
-        } as Course;
+        it('should not call update when score > 100', () => {
+            const dto = { ...sampleDto, presentationScore: 101 };
+            const updateStub = vi.spyOn(participationService, 'update');
 
-        const courseWithoutPresentations = {
-            id: 2,
-            title: 'No Presentations',
-            presentationScore: 0,
-        } as Course;
-
-        const courseWithGradedPresentation = {
-            id: 3,
-            title: 'Graded Presentations',
-            presentationScore: 0,
-        } as Course;
-
-        const exercise1 = {
-            id: 1,
-            title: 'Exercise 1',
-            course: courseWithBasicPresentations,
-            presentationScoreEnabled: true,
-            isAtLeastTutor: true,
-        } as Exercise;
-
-        const exercise2 = {
-            id: 2,
-            title: 'Exercise 2',
-            course: courseWithoutPresentations,
-            presentationScoreEnabled: false,
-            isAtLeastTutor: true,
-        } as Exercise;
-
-        const exercise3 = {
-            id: 1,
-            title: 'Exercise 3',
-            course: courseWithGradedPresentation,
-            presentationScoreEnabled: true,
-            isAtLeastTutor: true,
-        } as Exercise;
-
-        const gradingScaleWithGradedPresentation = {
-            presentationsNumber: 2,
-            presentationsWeight: 20,
-        } as GradeStepsDTO;
-
-        const participation = {
-            id: 123,
-            student: { id: 1 },
-            exercise: exercise1,
-        } as StudentParticipation;
-
-        it('should add a presentation score if basic presentations is enabled', fakeAsync(() => {
-            component.exercise = exercise1;
-            component.basicPresentationEnabled = component.checkBasicPresentationConfig();
-
-            component.addBasicPresentation(participation);
-            tick();
-
-            expect(updateStub).toHaveBeenCalledOnce();
-            expect(updateStub).toHaveBeenCalledWith(exercise1, participation);
-        }));
-
-        it('should add a presentation score if graded presentations is enabled', fakeAsync(() => {
-            component.exercise = exercise3;
-            component.gradeStepsDTO = gradingScaleWithGradedPresentation;
-            component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
-
-            participation.presentationScore = 20;
-            component.addGradedPresentation(participation);
-            tick();
-
-            expect(updateStub).toHaveBeenCalledOnce();
-            expect(updateStub).toHaveBeenCalledWith(exercise3, participation);
-        }));
-
-        it('should not add an invalid presentation score if graded presentations is enabled', fakeAsync(() => {
-            component.exercise = exercise3;
-            component.gradeStepsDTO = gradingScaleWithGradedPresentation;
-            component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
-
-            participation.presentationScore = 200;
-            component.addGradedPresentation(participation);
-            tick();
+            component.addGradedPresentation(dto);
 
             expect(updateStub).not.toHaveBeenCalled();
-        }));
-
-        it('should not add a presentation score if presentations is disabled', fakeAsync(() => {
-            component.exercise = exercise2;
-            component.basicPresentationEnabled = component.checkBasicPresentationConfig();
-            component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
-
-            component.addBasicPresentation(participation);
-            tick();
-
-            expect(updateStub).not.toHaveBeenCalled();
-        }));
-
-        it('should remove a presentation score if basic presentations is enabled', fakeAsync(() => {
-            component.exercise = exercise1;
-            component.basicPresentationEnabled = component.checkBasicPresentationConfig();
-
-            component.removePresentation(participation);
-            tick();
-
-            expect(updateStub).toHaveBeenCalledOnce();
-            expect(updateStub).toHaveBeenCalledWith(exercise1, participation);
-        }));
-
-        it('should remove a presentation score if graded presentations is enabled', fakeAsync(() => {
-            component.exercise = exercise3;
-            component.gradeStepsDTO = gradingScaleWithGradedPresentation;
-            component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
-
-            component.removePresentation(participation);
-            tick();
-
-            expect(updateStub).toHaveBeenCalledOnce();
-            expect(updateStub).toHaveBeenCalledWith(exercise3, participation);
-        }));
-
-        it('should do nothing on removal of a presentation score if presentations is disabled', fakeAsync(() => {
-            component.exercise = exercise2;
-            component.basicPresentationEnabled = component.checkBasicPresentationConfig();
-            component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
-
-            component.removePresentation(participation);
-            tick();
-
-            expect(updateStub).not.toHaveBeenCalled();
-        }));
-
-        it('should check if the presentation score actions should be displayed', () => {
-            component.exercise = exercise1;
-            expect(component.checkBasicPresentationConfig()).toBeTrue();
-            expect(component.checkGradedPresentationConfig()).toBeFalse();
-
-            component.exercise = exercise2;
-            expect(component.checkBasicPresentationConfig()).toBeFalse();
-            expect(component.checkGradedPresentationConfig()).toBeFalse();
-
-            component.exercise = exercise3;
-            component.gradeStepsDTO = gradingScaleWithGradedPresentation;
-            expect(component.checkBasicPresentationConfig()).toBeFalse();
-            expect(component.checkGradedPresentationConfig()).toBeTrue();
         });
 
-        it('should not add a presentation score if student gave max number of presentations', fakeAsync(() => {
-            const errorResponse = new HttpErrorResponse({
-                error: { errorKey: 'invalid.presentations.maxNumberOfPresentationsExceeded' },
-                status: 400,
-            });
-            updateStub = jest.spyOn(participationService, 'update').mockReturnValue(throwError(() => errorResponse));
+        it('should not call update when score < 0', () => {
+            const dto = { ...sampleDto, presentationScore: -1 };
+            const updateStub = vi.spyOn(participationService, 'update');
 
-            component.exercise = exercise3;
-            component.gradeStepsDTO = gradingScaleWithGradedPresentation;
-            component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
+            component.addGradedPresentation(dto);
 
-            participation.presentationScore = 40;
-            component.addGradedPresentation(participation);
-            tick();
+            expect(updateStub).not.toHaveBeenCalled();
+        });
 
-            expect(participation.presentationScore).toBeUndefined();
-            expect(updateStub).toHaveBeenCalledOnce();
-            expect(updateStub).toHaveBeenCalledWith(exercise3, participation);
-        }));
+        it('should clear presentationScore when maxPresentationsExceeded error is returned', () => {
+            const dto = { ...sampleDto, presentationScore: 80 };
+            vi.spyOn(participationService, 'update').mockReturnValue(
+                throwError(
+                    () =>
+                        new HttpErrorResponse({
+                            status: 400,
+                            error: { errorKey: 'invalid.presentations.maxNumberOfPresentationsExceeded' },
+                        }),
+                ),
+            );
+
+            component.addGradedPresentation(dto);
+
+            expect(dto.presentationScore).toBeUndefined();
+        });
+
+        it('should show error alert on generic error', () => {
+            const dto = { ...sampleDto, presentationScore: 80 };
+            vi.spyOn(participationService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500, error: { errorKey: 'other' } })));
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            component.addGradedPresentation(dto);
+
+            expect(errorSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not call update when gradedPresentationEnabled is false', () => {
+            component.gradeStepsDTO.set({ presentationsNumber: 0, gradeSteps: [], gradeType: undefined as any, title: '', plagiarismGrade: '', noParticipationGrade: '' });
+            const updateStub = vi.spyOn(participationService, 'update');
+
+            component.addGradedPresentation({ ...sampleDto, presentationScore: 50 });
+
+            expect(updateStub).not.toHaveBeenCalled();
+        });
     });
 
-    describe('getScoresRoute', () => {
-        const course = {
-            id: 1,
-            title: 'Course 1',
-        } as Course;
+    describe('Remove presentation', () => {
+        it('should call update with undefined presentationScore and reload (basic enabled)', () => {
+            component.exercise.set({
+                ...exercise,
+                isAtLeastTutor: true,
+                presentationScoreEnabled: true,
+                course: { id: 10, presentationScore: 1 },
+            });
+            const updateStub = vi.spyOn(participationService, 'update').mockReturnValue(of(new HttpResponse({ body: {} as any })));
+            const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.onLazyLoad({ first: 0, rows: 50 });
+            searchStub.mockClear();
 
-        it('should return the correct route for an exercise without an exam', () => {
-            const exercise = {
-                id: 10,
-                title: 'Exercise 1',
-                type: 'text',
-                course: course,
-            } as Exercise;
+            component.removePresentation(sampleDto);
 
-            const expectedRoute = ['/course-management', '1', 'text-exercises', '10', 'scores'];
-            const result = component.getScoresRoute(exercise).map((part) => part.toString());
-            expect(result).toEqual(expectedRoute);
+            expect(updateStub).toHaveBeenCalledOnce();
+            const passedParticipation = updateStub.mock.calls[0][1];
+            expect(passedParticipation.presentationScore).toBeUndefined();
+            expect(searchStub).toHaveBeenCalledOnce();
         });
 
-        it('should return the correct route for an exercise within an exam', () => {
-            const exam = {
-                id: 100,
-                course: course,
-            } as Exam;
-            const exerciseGroup = {
-                id: 50,
-                exam: exam,
-            } as ExerciseGroup;
-            const exercise = {
-                id: 20,
-                title: 'Exercise 2',
-                type: 'programming',
-                exerciseGroup: exerciseGroup,
-                course: undefined,
-            } as Exercise;
+        it('should show error alert when removePresentation fails', () => {
+            component.exercise.set({
+                ...exercise,
+                isAtLeastTutor: true,
+                presentationScoreEnabled: true,
+                course: { id: 10, presentationScore: 1 },
+            });
+            vi.spyOn(participationService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            const errorSpy = vi.spyOn(alertService, 'error');
 
-            const expectedRoute = ['/course-management', '1', 'exams', '100', 'exercise-groups', '50', 'programming-exercises', '20', 'scores'];
-            const result = component.getScoresRoute(exercise).map((part) => part.toString());
-            expect(result).toEqual(expectedRoute);
+            component.removePresentation(sampleDto);
+
+            expect(errorSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not call update when neither basic nor graded presentation is enabled', () => {
+            component.exercise.set({ ...exercise, presentationScoreEnabled: false });
+            const updateStub = vi.spyOn(participationService, 'update');
+
+            component.removePresentation(sampleDto);
+
+            expect(updateStub).not.toHaveBeenCalled();
         });
     });
 });

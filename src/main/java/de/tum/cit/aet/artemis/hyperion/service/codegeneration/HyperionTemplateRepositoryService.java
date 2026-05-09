@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContex
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 
 /**
@@ -40,16 +39,15 @@ public class HyperionTemplateRepositoryService extends HyperionCodeGenerationSer
     /**
      * Creates a new TemplateRepository with required dependencies.
      *
-     * @param programmingExerciseRepository repository for accessing programming exercise data
-     * @param chatClient                    AI chat client for generating template code
-     * @param templates                     service for rendering prompt templates
-     * @param gitService                    service for Git operations to read solution code
-     * @param contextRenderer               service for rendering programming exercise context
-     * @param llmTokenUsageService          service for persisting LLM token usage telemetry
+     * @param chatClient           AI chat client for generating template code
+     * @param templates            service for rendering prompt templates
+     * @param gitService           service for Git operations to read solution code
+     * @param contextRenderer      service for rendering programming exercise context
+     * @param llmTokenUsageService service for persisting LLM token usage telemetry
      */
-    public HyperionTemplateRepositoryService(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
-            GitService gitService, HyperionProgrammingExerciseContextRendererService contextRenderer, LLMTokenUsageService llmTokenUsageService) {
-        super(programmingExerciseRepository, chatClient, templates, llmTokenUsageService);
+    public HyperionTemplateRepositoryService(ChatClient chatClient, HyperionPromptTemplateService templates, GitService gitService,
+            HyperionProgrammingExerciseContextRendererService contextRenderer, LLMTokenUsageService llmTokenUsageService) {
+        super(chatClient, templates, llmTokenUsageService);
         this.gitService = gitService;
         this.contextRenderer = contextRenderer;
     }
@@ -62,9 +60,9 @@ public class HyperionTemplateRepositoryService extends HyperionCodeGenerationSer
      */
     @Override
     protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
-            String consistencyIssues) throws NetworkingException {
+            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
         String solutionCode = contextRenderer.getExistingSolutionCode(exercise, gitService);
-        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues);
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues);
         templateVariables.put("problemStatement", exercise.getProblemStatement());
         templateVariables.put("solutionCode", solutionCode);
         templateVariables.put("previousBuildLogs", previousBuildLogs != null ? previousBuildLogs : "");
@@ -79,8 +77,8 @@ public class HyperionTemplateRepositoryService extends HyperionCodeGenerationSer
      */
     @Override
     protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String consistencyIssues) throws NetworkingException {
-        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues);
+            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues);
         templateVariables.put("solutionPlan", solutionPlan);
         return callChatClient(user, exercise, courseId, "/prompts/hyperion/template/2_file_structure.st", templateVariables);
     }
@@ -93,9 +91,9 @@ public class HyperionTemplateRepositoryService extends HyperionCodeGenerationSer
      */
     @Override
     protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String consistencyIssues) throws NetworkingException {
-        CodeGenerationResponseDTO fileStructure = defineFileStructure(user, exercise, courseId, solutionPlan, repositoryStructure, consistencyIssues);
-        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues);
+            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+        CodeGenerationResponseDTO fileStructure = defineFileStructure(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues);
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues);
         templateVariables.put("solutionPlan", solutionPlan);
         templateVariables.put("fileStructure", fileStructure.getFiles());
         return callChatClient(user, exercise, courseId, "/prompts/hyperion/template/3_headers.st", templateVariables);
@@ -109,9 +107,9 @@ public class HyperionTemplateRepositoryService extends HyperionCodeGenerationSer
      */
     @Override
     protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String consistencyIssues) throws NetworkingException {
-        CodeGenerationResponseDTO headers = generateClassAndMethodHeaders(user, exercise, courseId, solutionPlan, repositoryStructure, consistencyIssues);
-        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues);
+            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+        CodeGenerationResponseDTO headers = generateClassAndMethodHeaders(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues);
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues);
         templateVariables.put("solutionPlan", solutionPlan);
         templateVariables.put("filesWithHeaders", headers.getFiles());
         return callChatClient(user, exercise, courseId, "/prompts/hyperion/template/4_logic.st", templateVariables);
