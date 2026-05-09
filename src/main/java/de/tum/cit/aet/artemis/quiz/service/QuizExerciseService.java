@@ -122,7 +122,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    private final QuizScheduleService quizScheduleService;
+    private final Optional<QuizScheduleService> quizScheduleService;
 
     private final QuizStatisticService quizStatisticService;
 
@@ -149,7 +149,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     private final Optional<ExamDateApi> examDateApi;
 
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
-            InstanceMessageSendService instanceMessageSendService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
+            InstanceMessageSendService instanceMessageSendService, Optional<QuizScheduleService> quizScheduleService, QuizStatisticService quizStatisticService,
             QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
@@ -642,13 +642,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     /**
      * Cancels the scheduled start of a quiz exercise both locally and across the cluster.
      * <p>
-     * The local scheduler entry is cleared synchronously so the calling node immediately observes
-     * the cancellation; the cluster-wide message is still published so all other nodes catch up.
+     * On nodes that run the scheduling profile the local scheduler entry is cleared synchronously
+     * so the calling node immediately observes the cancellation. The cluster-wide message is
+     * always published so all other nodes catch up regardless of profile.
      *
      * @param quizExerciseId the id of the quiz exercise whose scheduled start should be canceled
      */
     public void cancelScheduledQuiz(Long quizExerciseId) {
-        quizScheduleService.cancelScheduledQuizStart(quizExerciseId);
+        quizScheduleService.ifPresent(service -> service.cancelScheduledQuizStart(quizExerciseId));
         instanceMessageSendService.sendQuizExerciseStartCancel(quizExerciseId);
     }
 
