@@ -265,7 +265,18 @@ public class PyrisStatusUpdateService {
             if (listNode == null || !listNode.isArray()) {
                 return null;
             }
-            return objectMapper.convertValue(listNode, INTEGER_LIST_TYPE);
+            List<Integer> extracted = objectMapper.convertValue(listNode, INTEGER_LIST_TYPE);
+
+            // Defensive filter: remove obviously invalid page numbers
+            // -1 is valid (indicates "no page"), but null, 0, or < -1 are not
+            List<Integer> cleaned = extracted.stream().filter(value -> value != null && value != 0 && value >= -1).toList();
+
+            if (cleaned.isEmpty()) {
+                log.debug("All slidePageNumbers were invalid, returning null");
+                return null;
+            }
+
+            return cleaned;
         }
         catch (Exception e) {
             log.debug("Failed to extract slidePageNumbers from result JSON", e);

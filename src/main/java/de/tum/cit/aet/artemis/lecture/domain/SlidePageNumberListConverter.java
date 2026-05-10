@@ -30,7 +30,7 @@ public class SlidePageNumberListConverter implements AttributeConverter<List<Int
 
     @Override
     public String convertToDatabaseColumn(List<Integer> slidePageNumbers) {
-        if (slidePageNumbers == null || slidePageNumbers.isEmpty()) {
+        if (slidePageNumbers == null) {
             return null;
         }
         try {
