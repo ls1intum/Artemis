@@ -432,7 +432,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         String newEntityName = switch (newMode) {
             case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> {
                 var exercise = exerciseRepository.findByIdElseThrow(newEntityId);
-                validateExerciseMatchesCourseAndMode(exercise, courseId, newMode);
+                validateExerciseMode(exercise, newMode);
                 if (exercise.isExamExercise()) {
                     throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
                 }
@@ -441,7 +441,6 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             }
             case LECTURE_CHAT -> {
                 var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(newEntityId);
-                validateLectureBelongsToCourse(lecture, courseId);
                 authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
                 yield lecture.getTitle();
             }
