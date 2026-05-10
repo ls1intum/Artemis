@@ -94,6 +94,7 @@ class PyrisStatusUpdateServiceErrorCodeTest {
 
         service.handleStatusUpdate(job, statusUpdate);
 
-        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(List.of()));
+        // Empty list is converted to null by extractSlidePageNumbers()
+        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(null));
     }
 }

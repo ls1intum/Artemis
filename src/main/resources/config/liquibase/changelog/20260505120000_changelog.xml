@@ -4,8 +4,8 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <changeSet id="20260505-01-add-slide-page-numbers-column" author="pyris-integration">
-        <comment>Add slide_page_numbers column to lecture_unit for PDF page number tracking</comment>
-        <addColumn tableName="lecture_unit">
+        <comment>Add slide_page_numbers column to attachment for PDF page number tracking</comment>
+        <addColumn tableName="attachment">
             <column name="slide_page_numbers" type="json">
                 <constraints nullable="true"/>
             </column>

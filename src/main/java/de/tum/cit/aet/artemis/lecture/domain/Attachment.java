@@ -2,8 +2,10 @@ package de.tum.cit.aet.artemis.lecture.domain;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -11,6 +13,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -60,6 +65,11 @@ public class Attachment extends DomainObject implements Serializable {
     // Student Version holds the version of the file without the pages hidden by the Instructor
     @Column(name = "student_version")
     private String studentVersion;
+
+    @Convert(converter = SlidePageNumberListConverter.class)
+    @Column(name = "slide_page_numbers", columnDefinition = "json")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<Integer> slidePageNumbers;
 
     public String getName() {
         return name;
@@ -139,6 +149,27 @@ public class Attachment extends DomainObject implements Serializable {
 
     public void setStudentVersion(String studentVersion) {
         this.studentVersion = studentVersion;
+    }
+
+    /**
+     * Gets the slide page numbers mapping for this attachment's PDF.
+     * The list maps slide numbers to their corresponding page numbers in the PDF:
+     * Index 0 = page number for slide 1, Index 1 = page number for slide 2, etc.
+     * A value of -1 indicates the slide has no corresponding page number.
+     *
+     * @return list of page numbers indexed by slide number (0-based), or null if not applicable
+     */
+    public List<Integer> getSlidePageNumbers() {
+        return slidePageNumbers;
+    }
+
+    /**
+     * Sets the slide page numbers mapping for this attachment's PDF.
+     *
+     * @param slidePageNumbers list of page numbers indexed by slide number (0-based), or null
+     */
+    public void setSlidePageNumbers(List<Integer> slidePageNumbers) {
+        this.slidePageNumbers = slidePageNumbers;
     }
 
     public Boolean isVisibleToStudents() {

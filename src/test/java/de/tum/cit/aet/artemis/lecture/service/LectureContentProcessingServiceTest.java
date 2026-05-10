@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
@@ -62,6 +63,8 @@ class LectureContentProcessingServiceTest {
 
     private AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
+    private AttachmentRepository attachmentRepository;
+
     private IrisLectureApi irisLectureApi;
 
     private WebsocketMessagingService websocketMessagingService;
@@ -77,14 +80,15 @@ class LectureContentProcessingServiceTest {
         processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
         transcriptionRepository = mock(LectureTranscriptionRepository.class);
         attachmentVideoUnitRepository = mock(AttachmentVideoUnitRepository.class);
+        attachmentRepository = mock(AttachmentRepository.class);
         irisLectureApi = mock(IrisLectureApi.class);
         FeatureToggleService featureToggleService = mock(FeatureToggleService.class);
 
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
 
         websocketMessagingService = mock(WebsocketMessagingService.class);
-        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentVideoUnitRepository, Optional.of(irisLectureApi),
-                websocketMessagingService);
+        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentVideoUnitRepository, attachmentRepository,
+                Optional.of(irisLectureApi), websocketMessagingService);
 
         service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService);
 
@@ -150,7 +154,7 @@ class LectureContentProcessingServiceTest {
             FeatureToggleService fts = mock(FeatureToggleService.class);
             when(fts.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
             ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentVideoUnitRepository,
-                    Optional.empty(), mock(WebsocketMessagingService.class));
+                    attachmentRepository, Optional.empty(), mock(WebsocketMessagingService.class));
             service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback);
 
             service.triggerProcessing(testUnit);
@@ -405,18 +409,35 @@ class LectureContentProcessingServiceTest {
 
         @Test
         void shouldSaveSlidePageNumbersOnSuccess() {
+            Attachment attachment = new Attachment();
+            testUnit.setAttachment(attachment);
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
-            when(attachmentVideoUnitRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(attachmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            assertThat(testUnit.getSlidePageNumbers()).containsExactly(1, 2, -1);
-            verify(attachmentVideoUnitRepository).save(testUnit);
+            assertThat(testUnit.getAttachment().getSlidePageNumbers()).containsExactly(1, 2, -1);
+            verify(attachmentRepository).save(attachment);
+        }
+
+        @Test
+        void shouldNotSaveSlidePageNumbersWhenAttachmentIsNull() {
+            testUnit.setAttachment(null);
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
+
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
+            verify(attachmentRepository, never()).save(any());
         }
 
         @Test

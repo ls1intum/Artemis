@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
@@ -80,15 +82,19 @@ public class ProcessingStateCallbackService {
 
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
+    private final AttachmentRepository attachmentRepository;
+
     private final Optional<IrisLectureApi> irisLectureApi;
 
     private final WebsocketMessagingService websocketMessagingService;
 
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            AttachmentVideoUnitRepository attachmentVideoUnitRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService) {
+            AttachmentVideoUnitRepository attachmentVideoUnitRepository, AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi,
+            WebsocketMessagingService websocketMessagingService) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
+        this.attachmentRepository = attachmentRepository;
         this.irisLectureApi = irisLectureApi;
         this.websocketMessagingService = websocketMessagingService;
     }
@@ -257,6 +263,7 @@ public class ProcessingStateCallbackService {
             processingStateRepository.save(state);
             saveSlidePageNumbers(state, slidePageNumbers);
 
+            // Notify UI via WebSocket
             TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
             notifyProcessingStateChange(state, txStatus);
         }
@@ -266,6 +273,7 @@ public class ProcessingStateCallbackService {
             handleProcessingFailure(state, errorCode);
         }
 
+        // Fill the freed slot with the next pending job
         dispatchPendingJobs();
     }
 
@@ -628,25 +636,19 @@ public class ProcessingStateCallbackService {
     // -------------------- Slide Page Number Mapping --------------------
 
     /**
-     * Saves the slide page numbers received from PyRIS to the lecture unit.
-     * <p>
-     * The list maps slide numbers to their corresponding page numbers in the PDF:
-     * Index 0 = page number for slide 1, Index 1 = page number for slide 2, etc.
-     * A value of -1 indicates the slide has no corresponding page number.
-     * <p>
-     * This enables accurate navigation between video timestamps and PDF pages
-     * when the PDF has non-standard numbering (cover pages, Roman numerals, etc.).
-     *
-     * @param state            the processing state containing the lecture unit
-     * @param slidePageNumbers list of page numbers indexed by slide number (0-based);
-     *                             null if not applicable or unavailable
+     * Saves the slide page numbers received from PyRIS to the attachment.
+     * The list maps slide numbers to their corresponding page numbers in the PDF.
      */
     private void saveSlidePageNumbers(LectureUnitProcessingState state, @Nullable List<Integer> slidePageNumbers) {
         if (slidePageNumbers == null || !(state.getLectureUnit() instanceof AttachmentVideoUnit attachmentVideoUnit)) {
             return;
         }
-        attachmentVideoUnit.setSlidePageNumbers(slidePageNumbers);
-        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+        Attachment attachment = attachmentVideoUnit.getAttachment();
+        if (attachment == null) {
+            return;
+        }
+        attachment.setSlidePageNumbers(slidePageNumbers);
+        attachmentRepository.save(attachment);
     }
 
     /**

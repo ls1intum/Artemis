@@ -5,16 +5,12 @@ import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
-
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -39,11 +35,6 @@ public class AttachmentVideoUnit extends LectureUnit {
     @JsonIgnoreProperties("attachmentVideoUnit")
     @OrderBy("slideNumber ASC")
     private List<Slide> slides = new ArrayList<>();
-
-    @Convert(converter = SlidePageNumberListConverter.class)
-    @Column(name = "slide_page_numbers", columnDefinition = "json")
-    @JdbcTypeCode(SqlTypes.JSON)
-    private List<Integer> slidePageNumbers;
 
     public String getDescription() {
         return description;
@@ -75,14 +66,6 @@ public class AttachmentVideoUnit extends LectureUnit {
 
     public void setSlides(List<Slide> slides) {
         this.slides = slides;
-    }
-
-    public List<Integer> getSlidePageNumbers() {
-        return slidePageNumbers;
-    }
-
-    public void setSlidePageNumbers(List<Integer> slidePageNumbers) {
-        this.slidePageNumbers = slidePageNumbers;
     }
 
     // IMPORTANT NOTICE: The following string has to be consistent with the one defined in LectureUnit.java

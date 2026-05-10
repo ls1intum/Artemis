@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
@@ -74,6 +75,9 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private LectureUnitProcessingStateRepository lectureUnitProcessingStateRepository;
+
+    @Autowired
+    private AttachmentRepository attachmentRepository;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -363,6 +367,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     void ingestionCompleteSavesSlidePageNumbersFromFinalResult() throws Exception {
         activateIrisFor(lecture1.getCourse());
         AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        Long attachmentId = unit.getAttachment().getId();
         unit.setLecture(lecture1);
         unit.setVideoSource("https://example.com/video.mp4");
         lecture1.addLectureUnit(unit);
@@ -395,7 +400,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
 
-        AttachmentVideoUnit updatedUnit = attachmentVideoUnitTestRepository.findByIdElseThrow(unit.getId());
-        assertThat(updatedUnit.getSlidePageNumbers()).isNotNull().hasSize(3).containsExactly(1, 2, -1);
+        Attachment updatedAttachment = attachmentRepository.findByIdOrElseThrow(attachmentId);
+        assertThat(updatedAttachment.getSlidePageNumbers()).isNotNull().hasSize(3).containsExactly(1, 2, -1);
     }
 }
