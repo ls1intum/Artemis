@@ -150,7 +150,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/buildagent/', // buildagent module uses Vitest
         '<rootDir>/src/main/webapp/app/communication/', // communication module uses Vitest
         '<rootDir>/src/main/webapp/app/core/', // core module uses Vitest
-        '<rootDir>/src/main/webapp/app/calendar/', // core module uses Vitest
+        '<rootDir>/src/main/webapp/app/calendar/', // calendar module uses Vitest
         '<rootDir>/src/main/webapp/app/fileupload/', // fileupload module uses Vitest
         '<rootDir>/src/main/webapp/app/iris/', // iris module uses Vitest
         '<rootDir>/src/main/webapp/app/lecture/', // lecture module uses Vitest
@@ -234,6 +234,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/buildagent/', // buildagent module
         '<rootDir>/src/main/webapp/app/communication/', // communication module
         '<rootDir>/src/main/webapp/app/core/', // core module
+        '<rootDir>/src/main/webapp/app/calendar/', // calendar module
         '<rootDir>/src/main/webapp/app/fileupload/', // fileupload module
         '<rootDir>/src/main/webapp/app/iris/', // iris module
         '<rootDir>/src/main/webapp/app/lecture/', // lecture module
