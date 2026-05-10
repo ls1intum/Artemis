@@ -12,7 +12,7 @@ import { TextEditorService } from 'app/text/overview/service/text-editor.service
 import dayjs from 'dayjs/esm';
 import { Subject, Subscription, merge } from 'rxjs';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map, skip } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
@@ -133,6 +133,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     protected readonly onTextEditorTab = onTextEditorTab;
 
     participationUpdateListener: Subscription;
+    private athenaResultUpdateListener?: Subscription;
+    private readonly processedAthenaResultIds = new Set<number>();
     sortedHistoryResults: Result[];
     hasAthenaResultForLatestSubmission = false;
     showHistory = false;
@@ -198,14 +200,19 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             .subscribe((changedParticipation: StudentParticipation) => {
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const oldResults = this.participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
-                if (
-                    results &&
-                    ((results?.length || 0) > (oldResults.length || 0) || results?.last()?.completionDate === undefined) &&
-                    results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                    results.last()?.successful !== undefined
-                ) {
+                const lastResult = results?.last();
+                const lastResultId = lastResult?.id;
+                const isNewAthenaResult =
+                    !!results &&
+                    ((results?.length || 0) > (oldResults.length || 0) || lastResult?.completionDate === undefined) &&
+                    lastResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
+                    lastResult?.successful !== undefined;
+                if (isNewAthenaResult && (lastResultId === undefined || !this.processedAthenaResultIds.has(lastResultId))) {
+                    if (lastResultId !== undefined) {
+                        this.processedAthenaResultIds.add(lastResultId);
+                    }
                     this.isGeneratingFeedback = false;
-                    if (results.last()?.successful === false) {
+                    if (lastResult?.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
                         this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.textExercise?.title ?? '' });
@@ -242,6 +249,48 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         if (this.submission?.text) {
             this.answer = this.submission.text;
         }
+
+        if (this.participation?.id !== undefined) {
+            this.athenaResultUpdateListener?.unsubscribe();
+            this.athenaResultUpdateListener = this.participationWebsocketService
+                .subscribeForLatestResultOfParticipation(this.participation.id, true)
+                .pipe(
+                    skip(1),
+                    filter((result): result is Result => !!result),
+                    filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA),
+                )
+                .subscribe((result) => this.handleAthenaResultInExamSummary(result));
+        }
+    }
+
+    private handleAthenaResultInExamSummary(result: Result): void {
+        if (!result.completionDate) {
+            return;
+        }
+
+        if (result.id !== undefined) {
+            if (this.processedAthenaResultIds.has(result.id)) {
+                return;
+            }
+            this.processedAthenaResultIds.add(result.id);
+        }
+        this.isGeneratingFeedback = false;
+        if (result.successful === false) {
+            this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
+            return;
+        }
+        if (this.submission) {
+            const existingResults = this.submission.results ?? [];
+            const existingIndex = existingResults.findIndex((existing) => existing.id === result.id);
+            this.submission.results = existingIndex >= 0 ? existingResults.map((r, i) => (i === existingIndex ? result : r)) : [...existingResults, result];
+            setLatestSubmissionResult(this.submission, result);
+        }
+        if (!result.submission) {
+            result.submission = this.submission;
+        }
+        this.result = result;
+        this.hasAthenaResultForLatestSubmission = true;
+        this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.textExercise?.title ?? '' });
     }
 
     /**
@@ -342,6 +391,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
 
         this.participationUpdateListener?.unsubscribe();
+        this.athenaResultUpdateListener?.unsubscribe();
         if (this.participation) {
             this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation.id!, this.textExercise);
         }
