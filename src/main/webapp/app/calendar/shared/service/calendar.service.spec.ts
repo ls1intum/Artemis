@@ -14,17 +14,21 @@ import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-uti
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
+import { CalendarApiService } from 'app/openapi/api/calendarApi.service';
+import { CalendarEvent } from 'app/openapi/model/calendarEvent';
 
 describe('CalendarService', () => {
     setupTestBed({ zoneless: true });
 
     let service: CalendarService;
-    let httpMock: HttpTestingController;
+
+    let calendarApiService: {
+        getCalendarEventsOverlappingMonths: ReturnType<typeof vi.fn>;
+        getCalendarEventSubscriptionToken: ReturnType<typeof vi.fn>;
+    };
 
     const courseId = 42;
     const date = dayjs('2025-10-01');
-    const expectedEventUrl = `/api/core/calendar/courses/${courseId}/calendar-events`;
-    const expectedTokenUrl = '/api/core/calendar/subscription-token';
     const testToken = 'testToken';
 
     const testRequestResponse = {
@@ -71,16 +75,22 @@ describe('CalendarService', () => {
     };
 
     afterEach(() => {
+        vi.clearAllMocks();
         vi.restoreAllMocks();
-        httpMock.verify();
     });
 
     beforeEach(() => {
+        calendarApiService = {
+            getCalendarEventsOverlappingMonths: vi.fn(),
+            getCalendarEventSubscriptionToken: vi.fn(),
+        };
+
+        calendarApiService.getCalendarEventSubscriptionToken.mockReturnValue(of(testToken));
+
         TestBed.configureTestingModule({
             providers: [
                 CalendarService,
-                provideHttpClient(),
-                provideHttpClientTesting(),
+                { provide: CalendarApiService, useValue: calendarApiService },
                 { provide: AlertService, useValue: MockService(AlertService) },
                 { provide: TranslateService, useValue: translateServiceMock },
                 { provide: AccountService, useClass: MockAccountService },
@@ -88,12 +98,10 @@ describe('CalendarService', () => {
         });
 
         service = TestBed.inject(CalendarService);
-        httpMock = TestBed.inject(HttpTestingController);
     });
 
     it('should load events and create unfiltered event map', async () => {
-        const tokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
-        tokenRequest.flush(testToken);
+        expect(calendarApiService.getCalendarEventSubscriptionToken).toHaveBeenCalledOnce();
 
         service.includedEventFilterOptions.set([
             CalendarEventFilterOption.LectureEvents,
@@ -102,11 +110,11 @@ describe('CalendarService', () => {
             CalendarEventFilterOption.ExerciseEvents,
         ]);
 
+        calendarApiService.getCalendarEventsOverlappingMonths.mockReturnValue(of(testRequestResponse));
+
         const promise = firstValueFrom(service.loadEventsForCurrentMonth(courseId, date));
 
-        const eventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
-        expect(eventRequest.request.method).toBe('GET');
-        eventRequest.flush(testRequestResponse);
+        expect(calendarApiService.getCalendarEventsOverlappingMonths).toHaveBeenCalledOnce();
 
         await promise;
 
@@ -117,14 +125,14 @@ describe('CalendarService', () => {
         expect(eventsOnFirst).toHaveLength(2);
 
         expectCalendarEventToMatch(eventsOnFirst![0], {
-            type: CalendarEventType.Lecture,
+            type: CalendarEvent.TypeEnum.Lecture,
             title: 'Object Design',
             startDate: '2025-10-01T08:00:00.000Z',
             endDate: '2025-10-01T10:00:00.000Z',
         });
 
         expectCalendarEventToMatch(eventsOnFirst![1], {
-            type: CalendarEventType.TextExercise,
+            type: CalendarEvent.TypeEnum.TextExercise,
             title: 'Start: Exercise Session',
             startDate: '2025-10-01T10:00:00.000Z',
         });
@@ -132,7 +140,7 @@ describe('CalendarService', () => {
         const eventsOnSecond = result.get('2025-10-02');
         expect(eventsOnSecond).toHaveLength(1);
         expectCalendarEventToMatch(eventsOnSecond![0], {
-            type: CalendarEventType.Exam,
+            type: CalendarEvent.TypeEnum.Exam,
             title: 'Final Exam',
             startDate: '2025-10-02T09:00:00.000Z',
             endDate: '2025-10-02T11:00:00.000Z',
@@ -142,7 +150,7 @@ describe('CalendarService', () => {
         const eventsOnThird = result.get('2025-10-03');
         expect(eventsOnThird).toHaveLength(1);
         expectCalendarEventToMatch(eventsOnThird![0], {
-            type: CalendarEventType.Tutorial,
+            type: CalendarEvent.TypeEnum.Tutorial,
             title: 'Tutorial Session',
             startDate: '2025-10-03T13:00:00.000Z',
             endDate: '2025-10-03T14:00:00.000Z',
@@ -152,19 +160,20 @@ describe('CalendarService', () => {
     });
 
     it('should load events and create filtered event map', async () => {
-        const tokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
-        tokenRequest.flush(testToken);
+        expect(calendarApiService.getCalendarEventSubscriptionToken).toHaveBeenCalledOnce();
 
         service.includedEventFilterOptions.set([CalendarEventFilterOption.LectureEvents, CalendarEventFilterOption.ExamEvents]);
 
+        calendarApiService.getCalendarEventsOverlappingMonths.mockReturnValue(of(testRequestResponse));
+
         const promise = firstValueFrom(service.loadEventsForCurrentMonth(courseId, date));
 
-        const eventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
-        expect(eventRequest.request.method).toBe('GET');
-        expect(eventRequest.request.params.get('monthKeys')).toBe('2025-09,2025-10,2025-11');
-        expect(eventRequest.request.params.get('timeZone')).toBeTruthy();
-
-        eventRequest.flush(testRequestResponse);
+        expect(calendarApiService.getCalendarEventsOverlappingMonths).toHaveBeenCalledWith(
+            expect.anything(),
+            ['2025-09', '2025-10', '2025-11'],
+            expect.anything(),
+            expect.anything(),
+        );
 
         await promise;
 
@@ -174,7 +183,7 @@ describe('CalendarService', () => {
         const eventsOnFirst = result.get('2025-10-01');
         expect(eventsOnFirst).toHaveLength(1);
         expectCalendarEventToMatch(eventsOnFirst![0], {
-            type: CalendarEventType.Lecture,
+            type: CalendarEvent.TypeEnum.Lecture,
             title: 'Object Design',
             startDate: '2025-10-01T08:00:00.000Z',
             endDate: '2025-10-01T10:00:00.000Z',
@@ -183,7 +192,7 @@ describe('CalendarService', () => {
         const eventsOnSecond = result.get('2025-10-02');
         expect(eventsOnSecond).toHaveLength(1);
         expectCalendarEventToMatch(eventsOnSecond![0], {
-            type: CalendarEventType.Exam,
+            type: CalendarEvent.TypeEnum.Exam,
             title: 'Final Exam',
             startDate: '2025-10-02T09:00:00.000Z',
             endDate: '2025-10-02T11:00:00.000Z',
@@ -192,15 +201,10 @@ describe('CalendarService', () => {
     });
 
     it('should return filtered map when toggling options', async () => {
-        const tokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
-        tokenRequest.flush(testToken);
+        expect(calendarApiService.getCalendarEventSubscriptionToken).toHaveBeenCalledOnce();
 
         service.includedEventFilterOptions.set([CalendarEventFilterOption.ExamEvents]);
 
-        const promise = firstValueFrom(service.loadEventsForCurrentMonth(courseId, dayjs('2025-10-01')));
-
-        const eventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
-        expect(eventRequest.request.method).toBe('GET');
         const smallHttpResponse = {
             '2025-10-01': [
                 {
@@ -211,7 +215,11 @@ describe('CalendarService', () => {
                 },
             ],
         };
-        eventRequest.flush(smallHttpResponse);
+        calendarApiService.getCalendarEventsOverlappingMonths.mockReturnValue(of(smallHttpResponse));
+
+        const promise = firstValueFrom(service.loadEventsForCurrentMonth(courseId, dayjs('2025-10-01')));
+
+        expect(calendarApiService.getCalendarEventsOverlappingMonths).toHaveBeenCalledOnce();
 
         await promise;
 
@@ -224,7 +232,7 @@ describe('CalendarService', () => {
         expect(filteredEvents).toHaveLength(1);
 
         expectCalendarEventToMatch(filteredEvents![0], {
-            type: CalendarEventType.Lecture,
+            type: CalendarEvent.TypeEnum.Lecture,
             title: 'Object Design',
             startDate: '2025-10-01T08:00:00.000Z',
             endDate: '2025-10-01T10:00:00.000Z',
@@ -232,31 +240,26 @@ describe('CalendarService', () => {
     });
 
     it('should load subscription token and set token property', async () => {
-        const tokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
-        tokenRequest.flush(testToken);
+        expect(calendarApiService.getCalendarEventSubscriptionToken).toHaveBeenCalledOnce();
         // Allow microtasks to complete
         await Promise.resolve();
         expect(service.subscriptionToken()).toBe(testToken);
     });
 
     it('should refresh', async () => {
-        const initialTokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
-        initialTokenRequest.flush(testToken);
+        expect(calendarApiService.getCalendarEventSubscriptionToken).toHaveBeenCalledOnce();
         await Promise.resolve();
 
         service.includedEventFilterOptions.set([CalendarEventFilterOption.LectureEvents, CalendarEventFilterOption.ExamEvents]);
+        calendarApiService.getCalendarEventsOverlappingMonths.mockReturnValue(of({}));
         const loadPromise = firstValueFrom(service.loadEventsForCurrentMonth(courseId, date));
 
-        const initialEventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
-        expect(initialEventRequest.request.method).toBe('GET');
-        initialEventRequest.flush({});
+        expect(calendarApiService.getCalendarEventsOverlappingMonths).toHaveBeenCalledOnce();
         await loadPromise;
 
         service.reloadEvents();
 
-        const refreshEventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
-        expect(refreshEventRequest.request.method).toBe('GET');
-        refreshEventRequest.flush({});
+        expect(calendarApiService.getCalendarEventsOverlappingMonths).toHaveBeenCalledTimes(2);
     });
 });
 
@@ -363,7 +366,7 @@ describe('CalendarService - authentication state changes', () => {
 function expectCalendarEventToMatch(
     event: IdentifiableCalendarEvent,
     expected: {
-        type: CalendarEventType;
+        type: CalendarEvent.TypeEnum;
         title: string;
         startDate: string;
         endDate?: string;

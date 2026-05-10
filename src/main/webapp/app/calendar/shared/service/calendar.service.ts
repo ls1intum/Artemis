@@ -151,7 +151,9 @@ export class CalendarService implements OnDestroy {
         for (const [dayKey, dtoList] of Object.entries(dtoMap)) {
             result.set(
                 dayKey,
-                dtoList.map((dto) => new IdentifiableCalendarEvent(dto.type, dto.title, dayjs(dto.startDate), dayjs(dto.endDate), dto.location, dto.facilitator)),
+                dtoList.map(
+                    (dto) => new IdentifiableCalendarEvent(dto.type, dto.title, dayjs(dto.startDate), dto.endDate ? dayjs(dto.endDate) : undefined, dto.location, dto.facilitator),
+                ),
             );
         }
         return result;
