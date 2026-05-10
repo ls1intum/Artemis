@@ -181,7 +181,10 @@ public class IrisChatPipelineExecutionService {
             case TEXT_EXERCISE_CHAT -> {
                 var exercise = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class)).findByIdElseThrow(session.getEntityId());
                 textExercise = PyrisTextExerciseDTO.of(exercise);
-                var participation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+                // TODO: Once we can receive client form data through the IrisMessageResource, we should use that instead of fetching the latest submission to get the text
+                // Try practice participation (testRun=true) first, then fall back to graded participation (testRun=false)
+                var participation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), true)
+                        .or(() -> studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), false));
                 var latest = participation.flatMap(p -> p.getSubmissions().stream().max(Comparator.comparingLong(Submission::getId))).orElse(null);
                 textSubmission = latest instanceof TextSubmission ts ? ts.getText() : null;
             }

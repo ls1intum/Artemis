@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -90,44 +92,52 @@ public class IrisChatSessionResource {
     }
 
     // -------------------------------------------------------------------------
-    // Course-scoped endpoints (require courseId path variable)
+    // Mode-scoped endpoints (mode + entityId)
     // -------------------------------------------------------------------------
 
     /**
-     * POST api/iris/chat/{courseId}/sessions/current: Retrieve or create the current Iris chat session.
+     * POST api/iris/chat/sessions/current: Retrieve or create the current Iris chat session.
+     * <p>
+     * Authorization is enforced per mode in {@link IrisChatSessionService}: the entity referenced by {@code entityId}
+     * is loaded based on {@code mode}, and the corresponding role check (exercise / lecture / course) is performed there.
      *
-     * @param courseId the course ID (required for authorization)
      * @param mode     the chat mode (e.g. COURSE_CHAT, PROGRAMMING_EXERCISE_CHAT)
-     * @param entityId the exercise, lecture or course ID
+     * @param entityId exerciseId for exercise modes, lectureId for LECTURE_CHAT, courseId for COURSE_CHAT
      * @return the current or newly created session
      */
-    @PostMapping("{courseId}/sessions/current")
-    @EnforceAtLeastStudentInCourse
-    public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId, @RequestParam IrisChatMode mode,
-            @RequestParam long entityId) {
+    @PostMapping("sessions/current")
+    @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
+    public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@RequestParam IrisChatMode mode, @RequestParam long entityId) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(courseId, mode, entityId, user);
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(mode, entityId, user);
         irisCitationService.enrichSessionWithCitationInfo(session);
         return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages(session));
     }
 
     /**
-     * POST api/iris/chat/{courseId}/sessions: Create a new Iris chat session.
+     * POST api/iris/chat/sessions: Create a new Iris chat session.
+     * <p>
+     * Authorization is enforced per mode in {@link IrisChatSessionService}: the entity referenced by {@code entityId}
+     * is loaded based on {@code mode}, and the corresponding role check (exercise / lecture / course) is performed there.
      *
-     * @param courseId the course ID (required for authorization)
      * @param mode     the chat mode (e.g. COURSE_CHAT, PROGRAMMING_EXERCISE_CHAT)
-     * @param entityId the exercise or lecture ID; courseID for course which does not get used
+     * @param entityId exerciseId for exercise modes, lectureId for LECTURE_CHAT, courseId for COURSE_CHAT
      * @return the newly created session
      */
-    @PostMapping("{courseId}/sessions")
-    @EnforceAtLeastStudentInCourse
-    public ResponseEntity<IrisChatSessionResponseDTO> createSession(@PathVariable Long courseId, @RequestParam IrisChatMode mode, @RequestParam long entityId)
-            throws URISyntaxException {
+    @PostMapping("sessions")
+    @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
+    public ResponseEntity<IrisChatSessionResponseDTO> createSession(@RequestParam IrisChatMode mode, @RequestParam long entityId) throws URISyntaxException {
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        var session = irisChatSessionService.createSession(courseId, mode, entityId, user);
-        var uriString = "/api/iris/chat/" + courseId + "/session/" + session.getId();
+        var session = irisChatSessionService.createSession(mode, entityId, user);
+        var uriString = "/api/iris/chat/" + session.getCourseId() + "/session/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
     }
+
+    // -------------------------------------------------------------------------
+    // Course-scoped endpoints (sidebar overview, single session lookup — courseId in path)
+    // -------------------------------------------------------------------------
 
     /**
      * PATCH api/iris/chat/{courseId}/sessions/{sessionId}/context: Update the chat mode and entity id of
@@ -159,6 +169,7 @@ public class IrisChatSessionResource {
      */
     @GetMapping("{courseId}/session/{sessionId}")
     @EnforceAtLeastStudentInCourse
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisChatSessionResponseDTO> getSessionById(@PathVariable Long courseId, @PathVariable Long sessionId) {
         IrisSession irisSession = irisSessionRepository.findByIdWithMessagesAndContents(sessionId);
 
@@ -191,6 +202,7 @@ public class IrisChatSessionResource {
      */
     @GetMapping("{courseId}/sessions/overview")
     @EnforceAtLeastStudentInCourse
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<List<IrisChatSessionDTO>> getAllSessionsForCourse(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findById(courseId).orElseThrow();

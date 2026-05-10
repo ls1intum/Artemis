@@ -47,11 +47,6 @@ public class IrisTutorSuggestionSession extends IrisSession {
     }
 
     @Override
-    public IrisChatMode getMode() {
-        return IrisChatMode.TUTOR_SUGGESTION;
-    }
-
-    @Override
     public Long getEntityId() {
         return postId;
     }

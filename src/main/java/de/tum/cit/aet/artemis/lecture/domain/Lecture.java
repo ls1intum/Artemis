@@ -19,8 +19,6 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -39,7 +37,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  */
 @Entity
 @Table(name = "lecture")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Lecture extends DomainObject {
 
@@ -82,10 +79,11 @@ public class Lecture extends DomainObject {
      * long as they use the provided methods to add/remove/reorder lecture units.
      *
      */
+    // No @Cache here on purpose: mutated whenever lecture units are added / reordered / removed.
+    // Clustered NONSTRICT_READ_WRITE on an actively mutated collection is the #12574 bug class.
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("lectureUnitOrder ASC") // DB → Java: always ordered by that column
     @JsonIgnoreProperties("lecture")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<LectureUnit> lectureUnits = new LinkedHashSet<>();
 
     @ManyToOne

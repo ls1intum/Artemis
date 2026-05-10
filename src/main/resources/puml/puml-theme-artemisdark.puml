@@ -1,3 +1,6 @@
+'' Use Smetana layout engine (pure Java) to avoid dependency on external Graphviz installation
+!pragma layout smetana
+
 !$THEME = "artemisdark"
 
 !$BGCOLOR = "transparent"

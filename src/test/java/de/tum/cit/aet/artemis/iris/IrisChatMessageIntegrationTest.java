@@ -360,7 +360,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         request.delete(url, HttpStatus.OK);
 
         assertThat(irisChatSessionRepository.findById(session.getId())).isEmpty();
-        assertThat(irisMessageRepository.findAllBySessionId(session.getId())).isEmpty();
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
     }
 
     // =========================================================================
@@ -524,7 +524,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
             irisSessionService.requestMessageFromIris(session, uncommittedFiles);
 
-            assertThat(irisMessageRepository.findAllBySessionId(session.getId()).stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
+            assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
         }
 
         @Test
@@ -537,7 +537,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
             irisSessionService.requestMessageFromIris(session);
 
-            assertThat(irisMessageRepository.findAllBySessionId(session.getId()).stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
+            assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
         }
 
         @Test
@@ -551,7 +551,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             request.delete(url, HttpStatus.OK);
 
             assertThat(irisChatSessionRepository.findById(session.getId())).isEmpty();
-            assertThat(irisMessageRepository.findAllBySessionId(session.getId())).isEmpty();
+            assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
         }
 
         private IrisMessageRequestDTO buildTextRequestDto(IrisChatSession session, Map<String, String> uncommittedFiles) {

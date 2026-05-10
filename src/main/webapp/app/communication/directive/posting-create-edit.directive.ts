@@ -7,7 +7,7 @@ import { PostingEditType } from 'app/communication/metis.util';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 // Note: this number should be the same as in Posting.java
-const MAX_CONTENT_LENGTH = 5000;
+export const MAX_CONTENT_LENGTH = 5000;
 
 @Directive()
 export abstract class PostingCreateEditDirective<T extends Posting> implements OnInit {

@@ -110,18 +110,18 @@ export class IrisChatHttpService {
         return this.httpClient.put<void>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/mcq-response`, response, { observe: 'response' });
     }
 
-    getCurrentSessionOrCreateIfNotExists(courseId: number, mode: ChatServiceMode, entityId: number): Response<IrisSession> {
+    getCurrentSessionOrCreateIfNotExists(mode: ChatServiceMode, entityId: number): Response<IrisSession> {
         if (mode === ChatServiceMode.TUTOR_SUGGESTION) {
             return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/${entityId}/sessions/current`, null, { observe: 'response' });
         }
-        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/${courseId}/sessions/current`, null, { observe: 'response', params: { mode, entityId } });
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions/current`, null, { observe: 'response', params: { mode, entityId } });
     }
 
-    createSession(courseId: number, mode: ChatServiceMode, entityId: number): Response<IrisSession> {
+    createSession(mode: ChatServiceMode, entityId: number): Response<IrisSession> {
         if (mode === ChatServiceMode.TUTOR_SUGGESTION) {
             return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/${entityId}/sessions`, null, { observe: 'response' });
         }
-        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/${courseId}/sessions`, null, { observe: 'response', params: { mode, entityId } });
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions`, null, { observe: 'response', params: { mode, entityId } });
     }
 
     updateSessionContext(courseId: number, sessionId: number, mode: ChatServiceMode, entityId: number): Response<IrisSession> {
