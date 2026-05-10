@@ -71,7 +71,7 @@ export class CalendarSubscriptionPopoverComponent {
         const includeExamEvents = this.includeExamEvents();
         const selectedLanguage = this.selectedLanguage();
         const origin = window.location.origin;
-        const route = `/api/core/calendar/courses/${courseId}/calendar-events-ics`;
+        const route = `/api/calendar/courses/${courseId}/calendar-events-ics`;
 
         const filterOptions: string[] = [];
         if (includeLectureEvents) filterOptions.push('LECTURES');
