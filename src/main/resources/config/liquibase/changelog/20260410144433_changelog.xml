@@ -25,7 +25,7 @@
     <!-- Step 1: Add chat_mode (DB-specific: ENUM on MySQL, TEXT on PostgreSQL).
          Only the four chat sub-modes are valid; TUTOR_SUGGESTION is a top-level session type
          (discriminator='TUTOR_SUGGESTION') and intentionally not part of this enum. -->
-    <changeSet id="20260410144433-1-add-chat-mode-mysql" author="senan-aslan" dbms="mysql,mariadb">
+    <changeSet id="20260410144433-1-add-chat-mode-mysql" author="senan-aslan" dbms="mysql,h2">
         <preConditions onFail="MARK_RAN">
             <not><columnExists tableName="iris_session" columnName="chat_mode"/></not>
         </preConditions>
