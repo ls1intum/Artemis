@@ -86,6 +86,18 @@ class PyrisStatusUpdateServiceErrorCodeTest {
     }
 
     @Test
+    void slidePageNumbersAreForwardedWithoutFilteringOrReindexing() {
+        var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
+
+        var doneStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.DONE, "success", false, null);
+        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("{\"slidePageNumbers\":[1,null,0,-2,-1,10]}", List.of(doneStage), 7L, null);
+
+        service.handleStatusUpdate(job, statusUpdate);
+
+        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(java.util.Arrays.asList(1, null, 0, -2, -1, 10)));
+    }
+
+    @Test
     void emptySlidePageNumbersAreForwardedOnSuccessfulTerminalCallback() {
         var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
 
@@ -94,7 +106,6 @@ class PyrisStatusUpdateServiceErrorCodeTest {
 
         service.handleStatusUpdate(job, statusUpdate);
 
-        // Empty list is converted to null by extractSlidePageNumbers()
         verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(null));
     }
 }

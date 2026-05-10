@@ -252,7 +252,7 @@ public class PyrisStatusUpdateService {
      * Extracts the slide page numbers list from the PyRIS result JSON.
      *
      * @param resultJson the result JSON from PyRIS containing a "slidePageNumbers" array
-     * @return the list of page numbers, or null if not present or malformed
+     * @return the list of page numbers as provided by PyRIS, or null if not present or malformed
      */
     private List<Integer> extractSlidePageNumbers(String resultJson) {
         if (resultJson == null || resultJson.isBlank()) {
@@ -266,17 +266,7 @@ public class PyrisStatusUpdateService {
                 return null;
             }
             List<Integer> extracted = objectMapper.convertValue(listNode, INTEGER_LIST_TYPE);
-
-            // Defensive filter: remove obviously invalid page numbers
-            // -1 is valid (indicates "no page"), but null, 0, or < -1 are not
-            List<Integer> cleaned = extracted.stream().filter(value -> value != null && value != 0 && value >= -1).toList();
-
-            if (cleaned.isEmpty()) {
-                log.debug("All slidePageNumbers were invalid, returning null");
-                return null;
-            }
-
-            return cleaned;
+            return extracted.isEmpty() ? null : extracted;
         }
         catch (Exception e) {
             log.debug("Failed to extract slidePageNumbers from result JSON", e);
