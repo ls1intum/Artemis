@@ -104,6 +104,7 @@ export default defineConfig({
                 'src/main/webapp/app/assessment/**/*.ts', // include assessment for code coverage
                 'src/main/webapp/app/buildagent/**/*.ts', // include buildagent for code coverage
                 'src/main/webapp/app/core/**/*.ts', // include all core for code coverage
+                'src/main/webapp/app/calendar/**/*.ts', // include all calendar for code coverage
                 'src/main/webapp/app/fileupload/**/*.ts', // include fileupload for code coverage
                 'src/main/webapp/app/lecture/**/*.ts', // include lecture for code coverage
                 'src/main/webapp/app/quiz/**/*.ts', // include quiz for code coverage
