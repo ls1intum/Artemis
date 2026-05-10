@@ -348,7 +348,7 @@ describe('ExamParticipationService', () => {
             expect(req.request.body).toBeNull();
             req.flush(null);
 
-            expect(nextCalled).toBeTrue();
+            expect(nextCalled).toBe(true);
         });
 
         it('should GET the Athena feedback usage and return used/limit', () => {
