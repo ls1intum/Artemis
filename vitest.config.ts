@@ -38,6 +38,7 @@ export default defineConfig({
         include: [
             'src/main/webapp/app/fileupload/**/*.spec.ts', // include fileupload tests
             'src/main/webapp/app/core/**/*.spec.ts', // include all core tests
+            'src/main/webapp/app/calendar/**/*.spec.ts', // include all calendar tests
             'src/main/webapp/app/buildagent/**/*.spec.ts', // include build agent tests
             'src/main/webapp/app/text/**/*.spec.ts', // include text module tests
             'src/main/webapp/app/assessment/**/*.spec.ts', // include assessment tests
