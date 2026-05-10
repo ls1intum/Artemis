@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -108,7 +109,7 @@ public class AthenaFeedbackSuggestionsService {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record RequestDTO(@NonNull ExerciseBaseDTO exercise, @NonNull SubmissionBaseDTO submission, @Nullable LearnerProfileDTO learnerProfile, @NonNull boolean isGraded,
-            @Nullable SubmissionBaseDTO latestSubmission, @Nullable List<CourseCompetencyDTO> competencies) {
+            @Nullable AiSelectionDecision selection, @Nullable SubmissionBaseDTO latestSubmission, @Nullable List<CourseCompetencyDTO> competencies) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -170,6 +171,31 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
+     * Extract the student's LLM selection for preliminary Athena feedback requests.
+     *
+     * @param submission the submission to extract the selection from
+     * @param isGraded   whether the Athena request is for graded feedback
+     * @return the student's LLM selection or null if it should not be forwarded
+     */
+    @Nullable
+    private AiSelectionDecision extractSelectedLLMUsage(Submission submission, boolean isGraded) {
+        if (isGraded) {
+            return null;
+        }
+
+        if (!(submission.getParticipation() instanceof StudentParticipation studentParticipation)) {
+            log.debug("Cannot extract LLM selection: submission is not from a student participation");
+            return null;
+        }
+
+        var selection = studentParticipation.getStudent().map(User::getSelectedLLMUsage).orElse(null);
+        if (selection == null || selection == AiSelectionDecision.NO_AI) {
+            throw new BadRequestAlertException("AI feedback requires an accepted LLM selection", "submission", "llmSelectionRequired", true);
+        }
+        return selection;
+    }
+
+    /**
      * Calls the remote Athena service to get feedback suggestions for a given submission.
      *
      * @param exercise   the {@link TextExercise} the suggestions are fetched for
@@ -196,7 +222,7 @@ public class AthenaFeedbackSuggestionsService {
         List<CourseCompetencyDTO> competencies = courseCompetencyApi.map(api -> api.findAllByExerciseId(exercise.getId()).stream().map(CourseCompetencyDTO::of).toList())
                 .orElse(null);
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, latestSubmissionDTO, competencies);
+                LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, extractSelectedLLMUsage(submission, isGraded), latestSubmissionDTO, competencies);
         ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
@@ -221,7 +247,7 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
-                isGraded, null, null);
+                isGraded, extractSelectedLLMUsage(submission, isGraded), null, null);
         ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
@@ -250,7 +276,7 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
-                isGraded, null, null);
+                isGraded, extractSelectedLLMUsage(submission, isGraded), null, null);
         ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);

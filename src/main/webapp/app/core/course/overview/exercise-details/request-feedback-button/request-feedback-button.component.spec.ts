@@ -349,6 +349,14 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(component.hasUserAcceptedLLMUsage).toBe(true);
     });
 
+    it('should set hasUserAcceptedLLMUsage to true when selectedLLMUsage is LOCAL_AI', () => {
+        vi.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: LLMSelectionDecision.LOCAL_AI } as any);
+
+        component.setUserAcceptedLLMUsage();
+
+        expect(component.hasUserAcceptedLLMUsage).toBe(true);
+    });
+
     it('should set hasUserAcceptedLLMUsage to false when user identity is undefined', () => {
         vi.spyOn(accountService, 'userIdentity').mockReturnValue(undefined);
 
@@ -357,8 +365,8 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(component.hasUserAcceptedLLMUsage).toBe(false);
     });
 
-    it('should set hasUserAcceptedLLMUsage to false when selectedLLMUsage is not CLOUD_AI', () => {
-        vi.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: LLMSelectionDecision.LOCAL_AI } as any);
+    it('should set hasUserAcceptedLLMUsage to false when selectedLLMUsage is NO_AI', () => {
+        vi.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as any);
 
         component.setUserAcceptedLLMUsage();
 
@@ -416,12 +424,15 @@ describe('RequestFeedbackButtonComponent', () => {
         vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.LOCAL_AI);
         vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
         vi.spyOn(accountService, 'setUserLLMSelectionDecision');
+        vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
 
         await component.showLLMSelectionModal();
         await vi.advanceTimersByTimeAsync(0);
 
         expect(userService.updateLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
+        expect(component.hasUserAcceptedLLMUsage).toBe(true);
         expect(accountService.setUserLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
+        expect(courseExerciseService.requestFeedback).toHaveBeenCalledWith(exercise.id, participation.id);
     });
 
     it('should handle no_ai choice from modal', async () => {
@@ -435,12 +446,14 @@ describe('RequestFeedbackButtonComponent', () => {
         vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.NO_AI);
         vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
         vi.spyOn(accountService, 'setUserLLMSelectionDecision');
+        vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
 
         await component.showLLMSelectionModal();
         await vi.advanceTimersByTimeAsync(0);
 
         expect(userService.updateLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
         expect(accountService.setUserLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
+        expect(courseExerciseService.requestFeedback).not.toHaveBeenCalled();
     });
 
     it('should not update when modal returns none', async () => {

@@ -45,7 +45,7 @@ class ConfigurationValidatorTest {
         Environment mockEnvironment = mock(Environment.class);
         when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
         return new ConfigurationValidator(mockEnvironment, false, null, null, weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, vectorizerModule,
-                openAiBaseUrl, gpuApiKey);
+                openAiBaseUrl, gpuApiKey, "http://localhost");
     }
 
     @Nested
