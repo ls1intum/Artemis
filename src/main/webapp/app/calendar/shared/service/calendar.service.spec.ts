@@ -1,9 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { BehaviorSubject, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, Subject, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockService } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,6 +14,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/core/user/user.model';
 import { CalendarApiService } from 'app/openapi/api/calendarApi.service';
 import { CalendarEvent } from 'app/openapi/model/calendarEvent';
+import { HttpErrorResponse } from '@angular/common/http';
 
 describe('CalendarService', () => {
     setupTestBed({ zoneless: true });
@@ -268,8 +267,6 @@ describe('CalendarService - authentication state changes', () => {
 
     const courseId = 42;
     const date = dayjs('2025-10-01');
-    const expectedEventUrl = `/api/core/calendar/courses/${courseId}/calendar-events`;
-    const expectedTokenUrl = '/api/core/calendar/subscription-token';
     const testToken = 'testToken';
     const translateServiceMock = {
         currentLang: 'en',
@@ -281,7 +278,11 @@ describe('CalendarService - authentication state changes', () => {
 
     let authState: BehaviorSubject<User | undefined>;
     let scoped: CalendarService;
-    let scopedHttpMock: HttpTestingController;
+
+    let calendarApiService: {
+        getCalendarEventsOverlappingMonths: ReturnType<typeof vi.fn>;
+        getCalendarEventSubscriptionToken: ReturnType<typeof vi.fn>;
+    };
 
     beforeEach(() => {
         authState = new BehaviorSubject<User | undefined>({ id: 99 } as User);
@@ -289,11 +290,17 @@ describe('CalendarService - authentication state changes', () => {
         customAccountService.userIdentity.set({ id: 99 } as User);
         customAccountService.getAuthenticationState = () => authState.asObservable().pipe(distinctUntilChanged());
 
+        calendarApiService = {
+            getCalendarEventsOverlappingMonths: vi.fn(),
+            getCalendarEventSubscriptionToken: vi.fn(),
+        };
+
+        calendarApiService.getCalendarEventSubscriptionToken.mockReturnValue(of(testToken));
+
         TestBed.configureTestingModule({
             providers: [
                 CalendarService,
-                provideHttpClient(),
-                provideHttpClientTesting(),
+                { provide: CalendarApiService, useValue: calendarApiService },
                 { provide: AlertService, useValue: MockService(AlertService) },
                 { provide: TranslateService, useValue: translateServiceMock },
                 { provide: AccountService, useValue: customAccountService },
@@ -301,18 +308,18 @@ describe('CalendarService - authentication state changes', () => {
         });
 
         scoped = TestBed.inject(CalendarService);
-        scopedHttpMock = TestBed.inject(HttpTestingController);
-        scopedHttpMock.expectOne((request) => request.url === expectedTokenUrl).flush(testToken);
+        expect(calendarApiService.getCalendarEventSubscriptionToken).toHaveBeenCalledOnce();
     });
 
     afterEach(() => {
-        scopedHttpMock.verify();
+        vi.clearAllMocks();
         vi.restoreAllMocks();
     });
 
     it('should clear event map and reload subscription token on logout/login', async () => {
+        calendarApiService.getCalendarEventsOverlappingMonths.mockReturnValue(of({}));
         const loadPromise = firstValueFrom(scoped.loadEventsForCurrentMonth(courseId, date));
-        scopedHttpMock.expectOne((request) => request.url === expectedEventUrl).flush({});
+        expect(calendarApiService.getCalendarEventsOverlappingMonths).toHaveBeenCalledOnce();
         await loadPromise;
         expect(scoped.subscriptionToken()).toBe(testToken);
 
@@ -321,8 +328,10 @@ describe('CalendarService - authentication state changes', () => {
         expect(scoped.eventMap().size).toBe(0);
         expect(scoped.subscriptionToken()).toBeUndefined();
 
+        calendarApiService.getCalendarEventSubscriptionToken.mockReturnValue(of('newToken'));
+
         authState.next({ id: 42 } as User);
-        scopedHttpMock.expectOne((request) => request.url === expectedTokenUrl).flush('newToken');
+        expect(calendarApiService.getCalendarEventSubscriptionToken).toHaveBeenCalledTimes(2);
         expect(scoped.subscriptionToken()).toBe('newToken');
     });
 
@@ -332,14 +341,17 @@ describe('CalendarService - authentication state changes', () => {
     });
 
     it('should ignore in-flight HTTP responses after reset', async () => {
+        const response = new Subject<Record<string, never[]>>();
+        calendarApiService.getCalendarEventsOverlappingMonths.mockReturnValue(response);
         const loadObservable = scoped.loadEventsForCurrentMonth(courseId, date);
         const loadPromise = firstValueFrom(loadObservable);
-        const inFlightRequest = scopedHttpMock.expectOne((request) => request.url === expectedEventUrl);
+        expect(calendarApiService.getCalendarEventsOverlappingMonths).toHaveBeenCalledOnce();
 
         authState.next(undefined);
 
         // After reset, the in-flight response must not write back into the now-cleared event map.
-        inFlightRequest.flush({ '2025-10-01': [] });
+        response.next({ '2025-10-01': [] });
+        response.complete();
         await loadPromise;
 
         expect(scoped.eventMap().size).toBe(0);
@@ -349,14 +361,21 @@ describe('CalendarService - authentication state changes', () => {
         const alertService = TestBed.inject(AlertService);
         const alertSpy = vi.spyOn(alertService, 'addErrorAlert');
 
+        const response = new Subject<Record<string, never[]>>();
+        calendarApiService.getCalendarEventsOverlappingMonths.mockReturnValue(response);
         const loadPromise = firstValueFrom(scoped.loadEventsForCurrentMonth(courseId, date)).catch(() => undefined);
-        const inFlightRequest = scopedHttpMock.expectOne((request) => request.url === expectedEventUrl);
+        expect(calendarApiService.getCalendarEventsOverlappingMonths).toHaveBeenCalledOnce();
 
         authState.next(undefined);
 
         // The request fails after the user logged out. The catchError must short-circuit before the
         // alert is shown so we don't pop a toast on the next user's screen.
-        inFlightRequest.flush(null, { status: 500, statusText: 'Server Error' });
+        response.error(
+            new HttpErrorResponse({
+                status: 500,
+                statusText: 'Server Error',
+            }),
+        );
         await loadPromise;
 
         expect(alertSpy).not.toHaveBeenCalled();
