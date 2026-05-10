@@ -48,11 +48,6 @@ public class SlidePageNumberListConverter implements AttributeConverter<List<Int
         }
 
         try {
-            // Handle double-encoded JSON from PyRIS (intentional wire format)
-            if (jsonData.startsWith("\"") && jsonData.endsWith("\"")) {
-                jsonData = objectMapper.readValue(jsonData, String.class);
-            }
-
             return objectMapper.readValue(jsonData, LIST_TYPE);
         }
         catch (IOException e) {
