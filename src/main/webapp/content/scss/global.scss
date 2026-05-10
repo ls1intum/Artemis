@@ -1499,11 +1499,9 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
 // Global search modal sizing
 .global-search-dialog {
     width: 100%;
-    max-width: 700px;
-    height: 60vh;
-    max-height: 600px;
-    /* !important overrides PrimeNG's own margin: 0 rule on .p-dialog when position="top" */
-    margin-top: 15vh !important;
+    max-width: 800px;
+    height: 75vh;
+    max-height: 750px;
     overflow: hidden;
     background: var(--module-bg);
     transition: max-width 250ms ease-out;
