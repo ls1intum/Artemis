@@ -100,7 +100,7 @@ public class CalendarResource {
     }
 
     /**
-     * GET api/core/calendar/subscription-token : retrieves the subscription token associated to the logged-in user or creates one if not already present.
+     * GET api/calendar/subscription-token : retrieves the subscription token associated to the logged-in user or creates one if not already present.
      * The token is a unique, shared secret between the user and the server and is embedded into the URLs of the iCalendar subscriptions to enable
      * authentication and authorization.
      *
@@ -116,7 +116,7 @@ public class CalendarResource {
     }
 
     /**
-     * GET api/core/calendar/course/:courseId/calendar-events-ics : gets all {@link CalendarEventDTO}s associated to the given course
+     * GET api/calendar/course/:courseId/calendar-events-ics : gets all {@link CalendarEventDTO}s associated to the given course
      * that are visible to the user and returns them as an .ics file.
      *
      * @param courseId      the id of the course for which the events should be fetched
@@ -190,7 +190,7 @@ public class CalendarResource {
     }
 
     /**
-     * GET api/core/calendar/course/:courseId/calendar-events : gets all {@link CalendarEventDTO}s associated to the given course falling into the requested month
+     * GET api/calendar/course/:courseId/calendar-events : gets all {@link CalendarEventDTO}s associated to the given course falling into the requested month
      * that are visible to the logged-in user.
      *
      * @param courseId  the id of the course for which the events should be fetched
