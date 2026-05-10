@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.util;
+package de.tum.cit.aet.artemis.calendar.util;
 
 public enum CalendarSubscriptionFilterOption {
     LECTURES, TUTORIALS, EXAMS, EXERCISES

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.util;
+package de.tum.cit.aet.artemis.calendar.util;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import jakarta.ws.rs.BadRequestException;
 
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.util.DateUtil;
 
 public final class CalendarUtil {
 

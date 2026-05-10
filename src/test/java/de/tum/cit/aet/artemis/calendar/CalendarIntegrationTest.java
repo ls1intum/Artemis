@@ -34,10 +34,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.calendar.util.CalendarEventType;
+import de.tum.cit.aet.artemis.calendar.util.CalendarSubscriptionFilterOption;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.util.CalendarSubscriptionFilterOption;
 import de.tum.cit.aet.artemis.core.util.DateUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -431,8 +431,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             void shouldReturnCorrectEventForInvisibleLectureWithStartAndEventEventAsCourseStaffMember() throws Exception {
                 Lecture lecture = lectureUtilService.createLecture(course, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(1).plusHours(2));
                 Long courseId = course.getId();
-                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
-                        + "&language=" + TEST_LANGUAGE_STRING;
+                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
                 Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
                 CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.LECTURE, lecture.getTitle(), lecture.getStartDate(), lecture.getEndDate(), null,
@@ -556,8 +556,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Exam exam = examUtilService.addExam(course, FUTURE_DATE, FUTURE_DATE.plusHours(2), FUTURE_DATE.plusHours(3), FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2),
                         FUTURE_DATE.plusDays(3), "Test-Examiner");
                 Long courseId = course.getId();
-                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
-                        + "&language=" + TEST_LANGUAGE_STRING;
+                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
                 Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
                 CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
@@ -604,8 +604,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             void shouldReturnNoEventForUnreleasedSynchronizedQuizWithStartTimeAsStudent() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, FUTURE_DATE, FUTURE_DATE.plusHours(1), 600);
                 Long courseId = course.getId();
-                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
-                        + "&language=" + TEST_LANGUAGE_STRING;
+                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
                 Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -649,8 +649,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             void shouldReturnCorrectEventForUnreleasedSynchronizedQuizWithStartTimeAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, FUTURE_DATE, FUTURE_DATE.plusHours(1), 600);
                 Long courseId = course.getId();
-                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
-                        + "&language=" + TEST_LANGUAGE_STRING;
+                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
                 Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
                 CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, quizExercise.getTitle(), FUTURE_DATE.plusHours(1),
@@ -747,8 +747,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             void shouldReturnNoEventForUnreleasedIndividualQuizWithDueDateAsStudent() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
                 Long courseId = course.getId();
-                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
-                        + "&language=" + TEST_LANGUAGE_STRING;
+                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
                 Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -828,8 +828,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             void shouldReturnCorrectEventsForUnreleasedIndividualQuizWithDueDateAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
                 Long courseId = course.getId();
-                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
-                        + "&language=" + TEST_LANGUAGE_STRING;
+                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
                 Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
                 CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), FUTURE_DATE,
@@ -914,8 +914,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             void shouldReturnNoEventForUnreleasedBatchedQuizWithDueDateAsStudent() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.BATCHED);
                 Long courseId = course.getId();
-                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
-                        + "&language=" + TEST_LANGUAGE_STRING;
+                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
                 Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -995,8 +995,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             void shouldReturnCorrectEventsForUnreleasedBatchedQuizWithDueDateAsCourseStaffMember() throws Exception {
                 QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.BATCHED);
                 Long courseId = course.getId();
-                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
-                        + "&language=" + TEST_LANGUAGE_STRING;
+                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
                 Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
                 CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), FUTURE_DATE,
@@ -1128,8 +1128,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                         programmingExerciseUtilService.createProgrammingExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
                 };
                 Long courseId = course.getId();
-                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
-                        + "&language=" + TEST_LANGUAGE_STRING;
+                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
                 Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -1246,8 +1246,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     case PROGRAMMING -> CalendarEventType.PROGRAMMING_EXERCISE;
                 };
                 Long courseId = course.getId();
-                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
-                        + "&language=" + TEST_LANGUAGE_STRING;
+                String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
                 Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
                 CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), FUTURE_DATE, null, null, null);
