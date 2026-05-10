@@ -14,9 +14,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -67,8 +64,7 @@ public class Attachment extends DomainObject implements Serializable {
     private String studentVersion;
 
     @Convert(converter = SlidePageNumberListConverter.class)
-    @Column(name = "slide_page_numbers", columnDefinition = "json")
-    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "slide_page_numbers")
     private List<Integer> slidePageNumbers;
 
     public String getName() {
