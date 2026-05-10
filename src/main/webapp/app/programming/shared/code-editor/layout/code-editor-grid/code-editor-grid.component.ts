@@ -28,6 +28,7 @@ export class CodeEditorGridComponent implements AfterViewInit, OnDestroy {
     @Input() isTutorAssessment = false;
     @Input() showEditorNavbar = true;
     @Input() showEditorSidebarRight = true;
+    @Input() showEditorBottomArea = true;
     @Output() onResize = new EventEmitter<ResizeType>();
 
     fileBrowserIsCollapsed = false;
@@ -150,32 +151,34 @@ export class CodeEditorGridComponent implements AfterViewInit, OnDestroy {
                 target.style.width = event.rect.width + 'px';
             });
 
-        this.resizableMinHeightBottom = window.screen.height / 6;
-        this.interactResizableBottom = interact('.editor-bottom')
-            .resizable({
-                // Enable resize from bottom edge; triggered by class rg-bottom
-                edges: { left: false, right: false, bottom: '.rg-bottom-bottom', top: false },
-                // Set min and max height
-                modifiers: [
-                    interact.modifiers!.restrictSize({
-                        min: { width: 0, height: this.resizableMinHeightBottom },
-                        max: { width: window.screen.width, height: this.resizableMaxHeightBottom },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', (event: any) => {
-                event.target.classList.remove('card-resizable');
-                this.onResize.emit(ResizeType.BOTTOM);
-            })
-            .on('resizemove', function (event: any) {
-                const target = event.target;
-                // Update element height
-                target.style.height = event.rect.height + 'px';
-            });
+        if (this.showEditorBottomArea) {
+            this.resizableMinHeightBottom = window.screen.height / 6;
+            this.interactResizableBottom = interact('.editor-bottom')
+                .resizable({
+                    // Enable resize from bottom edge; triggered by class rg-bottom
+                    edges: { left: false, right: false, bottom: '.rg-bottom-bottom', top: false },
+                    // Set min and max height
+                    modifiers: [
+                        interact.modifiers!.restrictSize({
+                            min: { width: 0, height: this.resizableMinHeightBottom },
+                            max: { width: window.screen.width, height: this.resizableMaxHeightBottom },
+                        }),
+                    ],
+                    inertia: true,
+                })
+                .on('resizestart', function (event: any) {
+                    event.target.classList.add('card-resizable');
+                })
+                .on('resizeend', (event: any) => {
+                    event.target.classList.remove('card-resizable');
+                    this.onResize.emit(ResizeType.BOTTOM);
+                })
+                .on('resizemove', function (event: any) {
+                    const target = event.target;
+                    // Update element height
+                    target.style.height = event.rect.height + 'px';
+                });
+        }
     }
 
     private elementRefForCollapsableElement(collapsableElement: CollapsableCodeEditorElement): ElementRef {

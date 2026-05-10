@@ -47,6 +47,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
 
     /** Width in px below which the split collapses into a single tabbed panel */
     readonly collapseBelowPx = input(768);
+    readonly splitOnWide = input(true);
 
     readonly panels = contentChildren(PanelDirective);
     readonly leftPanel = computed(() => this.panels()[0]);

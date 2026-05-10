@@ -89,6 +89,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     isProblemStatementVisible = input<boolean>(true);
     showNavbar = input<boolean>(true);
     showEditorActions = input<boolean>(true);
+    showEditorBottomArea = input<boolean>(true);
     course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
     fileSyncService = input<CodeEditorFileSyncService | undefined>();

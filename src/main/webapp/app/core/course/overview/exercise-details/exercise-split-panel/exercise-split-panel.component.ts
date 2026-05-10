@@ -132,10 +132,15 @@ export class ExerciseSplitPanelComponent {
         return true;
     });
 
+    readonly showEditorAsFeedbackTab = computed(() => {
+        const exercise = this.exercise();
+        return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor === false;
+    });
+
     readonly editorLabelKey = computed(() => {
         switch (this.exercise().type) {
             case ExerciseType.PROGRAMMING:
-                return 'artemisApp.courseOverview.exerciseDetails.codeEditor';
+                return this.showEditorAsFeedbackTab() ? 'artemisApp.feedback.home.title' : 'artemisApp.courseOverview.exerciseDetails.codeEditor';
             case ExerciseType.TEXT:
                 return 'artemisApp.courseOverview.exerciseDetails.textEditor';
             case ExerciseType.MODELING:

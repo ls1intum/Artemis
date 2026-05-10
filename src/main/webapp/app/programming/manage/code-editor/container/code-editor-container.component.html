@@ -1,4 +1,10 @@
-<jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment()" [showEditorNavbar]="showNavbar()" [showEditorSidebarRight]="showEditorInstructions()">
+<jhi-code-editor-grid
+    #grid
+    [isTutorAssessment]="isTutorAssessment()"
+    [showEditorNavbar]="showNavbar()"
+    [showEditorSidebarRight]="showEditorInstructions()"
+    [showEditorBottomArea]="showEditorBottomArea()"
+>
     <div editorNavbar class="d-flex flex-wrap align-items-center">
         <span>
             <h4 class="editor-title"><ng-content select="[editorTitle]" /></h4>

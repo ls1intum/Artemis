@@ -1,5 +1,5 @@
-<jhi-resizable-panels class="flex-fill h-100 overflow-hidden">
-    @if (showEditorPanel()) {
+<jhi-resizable-panels class="flex-fill h-100 overflow-hidden" [splitOnWide]="!showEditorAsFeedbackTab()">
+    @if (showEditorPanel() && !showEditorAsFeedbackTab()) {
         <ng-template jhiPanel [label]="editorLabelKey()" [icon]="getIcon(exercise().type)">
             @if (usesRouterOutlet()) {
                 <router-outlet (activate)="onOutletActivate($event)" (deactivate)="onOutletDeactivate()" />
@@ -87,6 +87,14 @@
     @if (showDiscussion()) {
         <ng-template jhiPanel [label]="'artemisApp.metis.communication.label'" [icon]="faComment">
             <jhi-discussion-section [exercise]="exercise()" [embedded]="true" />
+        </ng-template>
+    }
+
+    @if (showEditorPanel() && showEditorAsFeedbackTab()) {
+        <ng-template jhiPanel [label]="editorLabelKey()" [icon]="getIcon(exercise().type)">
+            @if (usesRouterOutlet()) {
+                <router-outlet (activate)="onOutletActivate($event)" (deactivate)="onOutletDeactivate()" />
+            }
         </ng-template>
     }
 </jhi-resizable-panels>

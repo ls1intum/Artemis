@@ -35,17 +35,21 @@
                 <ng-content select="[editorSidebarRight]" />
             </div>
         </div>
-        <!-- Required for resizing; don't remove empty span -->
-        <fa-icon [icon]="faGripLines" class="rg-main-bottom"><span></span></fa-icon>
-    </div>
-    <!-- Build Output -->
-    <div #buildOutput class="editor-bottom collapsable">
-        <ng-content select="[editorBottomArea]" class="editor-bottom-resizable" />
-        <!-- Required for resizing; don't remove empty span -->
-        @if (!buildOutputIsCollapsed) {
-            <fa-icon [icon]="faGripLines" id="draggableIconForBuildOutput" class="rg-bottom-bottom"><span></span></fa-icon>
+        @if (showEditorBottomArea) {
+            <!-- Required for resizing; don't remove empty span -->
+            <fa-icon [icon]="faGripLines" class="rg-main-bottom"><span></span></fa-icon>
         }
     </div>
+    @if (showEditorBottomArea) {
+        <!-- Build Output -->
+        <div #buildOutput class="editor-bottom collapsable">
+            <ng-content select="[editorBottomArea]" class="editor-bottom-resizable" />
+            <!-- Required for resizing; don't remove empty span -->
+            @if (!buildOutputIsCollapsed) {
+                <fa-icon [icon]="faGripLines" id="draggableIconForBuildOutput" class="rg-bottom-bottom"><span></span></fa-icon>
+            }
+        </div>
+    }
     @if (isTutorAssessment) {
         <div>
             <ng-content select="[editorBottom]" />
