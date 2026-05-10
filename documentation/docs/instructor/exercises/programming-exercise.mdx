@@ -841,6 +841,64 @@ Contact the administrators for more information.
 
 We plan to add more options to the container configuration in the future.
 
+### Customize Online Code Editor Run Configuration (Optional)
+
+The **Template** repository for most languages ships `.vscode/launch.json` and `.vscode/tasks.json`, so students can press **Run** or start a debug session in the online code editor without manual setup.
+
+Defaults shipped with each template:
+
+| Language | Run command | Debug type |
+|---|---|---|
+| C (GCC) | `make && make run` | CodeLLDB (`vadimcn.vscode-lldb`) |
+| Java (Gradle) | `./gradlew run` | Java debugger (`redhat.java` + `vscjava.vscode-java-debug`) |
+| Java (Maven) | `mvn compile exec:java -Dexec.mainClass=…` | Java debugger (same as above) |
+| JavaScript | `node ./src/client.js` | Built into the editor |
+| Rust | `cargo run` | CodeLLDB (`vadimcn.vscode-lldb`) |
+
+**Run** works in any editor image. **Debug** additionally requires the listed extensions to be preinstalled in the online code editor image.
+
+To customize for your own exercise, edit `.vscode/tasks.json` (Run command) and `.vscode/launch.json` (Debug entry point) in the Template repository, commit and push. New student repositories created from this template pick up the updated configuration automatically.
+
+#### Adding a Run Configuration to a Template Without One
+
+The Python template does not ship a default Run configuration because the sample exercise (sorting algorithms) has no orchestrating entry point. To enable Run/Debug for your own Python exercise, add an entry file (e.g. `main.py`) to the Template repository and create the two configuration files alongside your source.
+
+`.vscode/tasks.json`:
+
+```json
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run",
+            "type": "shell",
+            "command": "python3 main.py",
+            "group": { "kind": "build", "isDefault": true },
+            "options": { "cwd": "${workspaceFolder}" }
+        }
+    ]
+}
+```
+
+`.vscode/launch.json`:
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug App",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}
+```
+
+The same pattern applies to any language: put the run command in `tasks.json` and the entry point in `launch.json`, both under `.vscode/` in the Template repository.
+
 ### Configure Static Code Analysis
 
 If static code analysis was activated, the **Test** repository contains configuration files.

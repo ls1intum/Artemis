@@ -10,12 +10,12 @@
             "presentation": { "reveal": "always", "panel": "shared" }
         },
         {
-            "label": "Build",
+            "label": "Build (debug)",
             "type": "shell",
             "command": "make",
-            "group": "build",
             "options": { "cwd": "${workspaceFolder}" },
-            "presentation": { "reveal": "always", "panel": "shared" }
+            "presentation": { "reveal": "silent" },
+            "hide": true
         }
     ]
 }
