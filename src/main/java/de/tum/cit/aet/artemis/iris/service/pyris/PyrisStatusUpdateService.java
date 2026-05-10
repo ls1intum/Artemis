@@ -109,8 +109,9 @@ public class PyrisStatusUpdateService {
      */
     public void handleStatusUpdate(GlobalSearchAnswerJob job, PyrisGlobalSearchAnswerStatusUpdateDTO statusUpdate) {
         var stages = statusUpdate.stages();
-        boolean isTerminal = stages != null && stages.stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
-        boolean isThinking = stages != null && !stages.isEmpty() && stages.getFirst().state() == PyrisStageState.IN_PROGRESS;
+        boolean hasStages = stages != null && !stages.isEmpty();
+        boolean isTerminal = hasStages && stages.stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
+        boolean isThinking = hasStages && stages.getFirst().state() == PyrisStageState.IN_PROGRESS;
 
         if (isThinking) {
             irisWebsocketService.send(job.userLogin(), "lecture-search", new IrisGlobalSearchAnswerWebsocketDTO(true, null, null));
