@@ -21,7 +21,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="verified_by_id" type="bigint"/>
-            <column name="verified_at" type="datetime"/>
+            <column name="verified_at" type="datetime(3)"/>
         </addColumn>
         <addForeignKeyConstraint baseColumnNames="verified_by_id"
                                  baseTableName="answer_post"
