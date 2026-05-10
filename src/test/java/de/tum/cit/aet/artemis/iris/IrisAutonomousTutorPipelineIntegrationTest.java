@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
@@ -90,7 +91,7 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
             pipelineDone.set(true);
         });
 
-        pyrisPipelineService.executeAutonomousTutorPipeline("default", postDTO, course, studentDTO, null, null, null, stages -> {
+        pyrisPipelineService.executeAutonomousTutorPipeline("default", AiSelectionDecision.LOCAL_AI, postDTO, course, studentDTO, null, null, null, stages -> {
         });
 
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);

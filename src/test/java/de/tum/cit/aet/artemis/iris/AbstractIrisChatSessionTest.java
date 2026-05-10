@@ -96,7 +96,6 @@ public abstract class AbstractIrisChatSessionTest extends AbstractIrisIntegratio
             case LECTURE_CHAT -> lecture.getId();
             case TEXT_EXERCISE_CHAT -> textExercise.getId();
             case PROGRAMMING_EXERCISE_CHAT -> programmingExercise.getId();
-            case TUTOR_SUGGESTION -> throw new IllegalArgumentException("TUTOR_SUGGESTION is not a chat-session mode");
         };
     }
 }

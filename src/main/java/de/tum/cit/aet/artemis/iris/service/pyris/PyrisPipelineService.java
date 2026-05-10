@@ -215,6 +215,7 @@ public class PyrisPipelineService {
      * and either posts it directly or discards it based on confidence.
      *
      * @param variant                the variant of the pipeline
+     * @param aiSelection            the current AI selection of the user
      * @param post                   the student's post to respond to
      * @param course                 the course the post belongs to
      * @param student                the student who created the post
@@ -223,12 +224,13 @@ public class PyrisPipelineService {
      * @param lectureDTO             optional lecture if the channel is linked to one
      * @param statusUpdateConsumer   consumer to handle status updates (e.g., for logging or future websocket support)
      */
-    public void executeAutonomousTutorPipeline(String variant, PyrisPostDTO post, Course course, PyrisUserDTO student, PyrisProgrammingExerciseDTO programmingExerciseDTO,
-            PyrisTextExerciseDTO textExerciseDTO, PyrisLectureDTO lectureDTO, Consumer<List<PyrisStageDTO>> statusUpdateConsumer) {
+    public void executeAutonomousTutorPipeline(String variant, AiSelectionDecision aiSelection, PyrisPostDTO post, Course course, PyrisUserDTO student,
+            PyrisProgrammingExerciseDTO programmingExerciseDTO, PyrisTextExerciseDTO textExerciseDTO, PyrisLectureDTO lectureDTO,
+            Consumer<List<PyrisStageDTO>> statusUpdateConsumer) {
         // @formatter:off
         executePipeline(
             "autonomous-tutor",
-            null,
+            aiSelection,
             variant,
             Optional.empty(),
             pyrisJobService.addAutonomousTutorJob(post.id(), course.getId()),

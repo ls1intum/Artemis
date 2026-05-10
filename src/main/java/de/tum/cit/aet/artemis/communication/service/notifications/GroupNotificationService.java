@@ -6,8 +6,11 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.AttachmentChangedNotification;
@@ -31,6 +34,8 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 @Lazy
 @Service
 public class GroupNotificationService {
+
+    private static final Logger log = LoggerFactory.getLogger(GroupNotificationService.class);
 
     private final UserRepository userRepository;
 
@@ -107,23 +112,38 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify student groups about a started quiz exercise. The notification is not sent via websocket.
+     * Notify student groups about a started quiz exercise, asynchronously on the shared {@code taskExecutor}.
      *
-     * @param quizExercise that has been started
+     * <p>
+     * The caller must supply pre-resolved primitives rather than the {@link QuizExercise} entity itself so this
+     * method does not rely on the caller's Hibernate session (which is closed by the time the async task runs) and
+     * does not need to re-fetch the quiz on the async thread. Fan-out to a large student cohort (observed &gt;8 s for
+     * 2000 students on staging1) therefore no longer blocks the REST response.
+     * </p>
+     *
+     * <p>
+     * Exceptions are caught and logged to the structured log rather than propagated, since the caller is already
+     * gone by the time this runs. The WebSocket broadcast, which happens separately from the caller, is unaffected.
+     * </p>
+     *
+     * @param courseId          the id of the course the quiz belongs to
+     * @param courseTitle       the human-readable course title used in the notification body
+     * @param courseIcon        the course icon URL used in the notification body (may be {@code null})
+     * @param studentGroupName  the group name used to resolve the recipients via {@link UserRepository}
+     * @param quizExerciseId    the id of the quiz that was just started
+     * @param notificationTitle the exercise-specific title used in the notification body
      */
-    public void notifyStudentGroupAboutQuizExerciseStart(QuizExercise quizExercise) {
-        if (quizExercise.isExamExercise()) {
-            // Exam quiz exercises are managed through exam participation; do not send start notifications to students.
-            return;
+    @Async
+    public void notifyStudentGroupAboutQuizExerciseStartAsync(long courseId, String courseTitle, String courseIcon, String studentGroupName, long quizExerciseId,
+            String notificationTitle) {
+        try {
+            var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(studentGroupName);
+            var quizExerciseStartedNotification = new QuizExerciseStartedNotification(courseId, courseTitle, courseIcon, quizExerciseId, notificationTitle);
+            courseNotificationService.sendCourseNotification(quizExerciseStartedNotification, recipients.stream().toList());
         }
-
-        var course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.getStudents(course);
-
-        var quizExerciseStartedNotification = new QuizExerciseStartedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), quizExercise.getId(),
-                quizExercise.getExerciseNotificationTitle());
-
-        courseNotificationService.sendCourseNotification(quizExerciseStartedNotification, recipients.stream().toList());
+        catch (Exception e) {
+            log.warn("Failed to send quiz-started notification for quiz {}: {}", quizExerciseId, e.getMessage(), e);
+        }
     }
 
     /**

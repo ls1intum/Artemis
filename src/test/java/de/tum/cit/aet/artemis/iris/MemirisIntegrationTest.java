@@ -82,7 +82,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         userTestRepository.updateMemirisEnabled(user.getId(), true);
 
-        irisSession = irisChatSessionService.createSession(course.getId(), IrisChatMode.COURSE_CHAT, course.getId(), user);
+        irisSession = irisChatSessionService.createSession(IrisChatMode.COURSE_CHAT, course.getId(), user);
 
         pipelineDone = new AtomicBoolean(false);
     }

@@ -2,7 +2,7 @@
     <div class="d-flex flex-column justify-content-center">
         <h4 class="mb-0" jhiTranslate="artemisApp.examManagement.exerciseGroups"></h4>
     </div>
-    @if (course?.isAtLeastEditor) {
+    @if (course()?.isAtLeastEditor) {
         <div class="ms-auto d-flex flex-wrap">
             <a class="btn btn-primary me-1" id="import-group" (click)="openExerciseGroupImportModal()">
                 <fa-icon [icon]="faFileImport" />
@@ -47,8 +47,8 @@
             <div class="d-flex justify-content-end" style="flex: 1">
                 <div class="d-flex flex-column justify-content-center">
                     <div class="btn-group flex-btn-group-container">
-                        @if (course?.isAtLeastEditor) {
-                            <jhi-feature-overlay [enabled]="fileUploadExerciseEnabled">
+                        @if (course()?.isAtLeastEditor) {
+                            <jhi-feature-overlay [enabled]="fileUploadExerciseEnabled()">
                                 <div class="btn-group-vertical me-1 mb-1" style="justify-content: end">
                                     <a [routerLink]="[exerciseGroup.id, 'file-upload-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1" style="max-height: 44%">
                                         <fa-icon [icon]="faPlus" />
@@ -63,7 +63,7 @@
                                 </div>
                             </jhi-feature-overlay>
                         }
-                        @if (course?.isAtLeastEditor) {
+                        @if (course()?.isAtLeastEditor) {
                             <div class="btn-group-vertical me-1 mb-1" style="justify-content: end">
                                 <a [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']" class="add-quiz-exercise btn btn-info btn-sm me-1 mb-1" style="max-height: 44%">
                                     <fa-icon [icon]="faPlus" />
@@ -77,8 +77,8 @@
                                 </a>
                             </div>
                         }
-                        @if (course?.isAtLeastEditor) {
-                            <jhi-feature-overlay [enabled]="textExerciseEnabled">
+                        @if (course()?.isAtLeastEditor) {
+                            <jhi-feature-overlay [enabled]="textExerciseEnabled()">
                                 <div class="btn-group-vertical me-1 mb-1">
                                     <a [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="add-text-exercise btn btn-info btn-sm me-1 mb-1">
                                         <fa-icon [icon]="faPlus" />
@@ -93,8 +93,8 @@
                                 </div>
                             </jhi-feature-overlay>
                         }
-                        @if (course?.isAtLeastEditor) {
-                            <jhi-feature-overlay [enabled]="modelingExerciseEnabled">
+                        @if (course()?.isAtLeastEditor) {
+                            <jhi-feature-overlay [enabled]="modelingExerciseEnabled()">
                                 <div class="btn-group-vertical me-1 mb-1">
                                     <a [routerLink]="[exerciseGroup.id, 'modeling-exercises', 'new']" class="add-modeling-exercise btn btn-info btn-sm me-1 mb-1">
                                         <fa-icon [icon]="faPlus" />
@@ -109,7 +109,7 @@
                                 </div>
                             </jhi-feature-overlay>
                         }
-                        @if (course?.isAtLeastEditor) {
+                        @if (course()?.isAtLeastEditor) {
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a [routerLink]="[exerciseGroup.id, 'programming-exercises', 'new']" class="add-programming-exercise btn btn-info btn-sm me-1 mb-1">
                                     <fa-icon [icon]="faPlus" />
@@ -124,7 +124,7 @@
                             </div>
                         }
                         <div class="btn-group-vertical me-1 mb-1">
-                            @if (course?.isAtLeastEditor) {
+                            @if (course()?.isAtLeastEditor) {
                                 <div class="d-flex flex-column me-1 mb-1">
                                     <a [routerLink]="[exerciseGroup.id, 'edit']" class="edit-group btn btn-warning btn-sm me-1 mb-1">
                                         <fa-icon [icon]="faWrench" />
@@ -132,8 +132,8 @@
                                     </a>
                                     @if (
                                         exerciseGroup.id &&
-                                        course?.isAtLeastInstructor &&
-                                        exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)
+                                        course()?.isAtLeastInstructor &&
+                                        exerciseGroupToExerciseTypesDict().get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)
                                     ) {
                                         <button
                                             jhiDeleteButton
@@ -141,7 +141,7 @@
                                             deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.questionLocalVC"
                                             deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
                                             [additionalChecks]="
-                                                localCIEnabled
+                                                localCIEnabled()
                                                     ? {}
                                                     : {
                                                           deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
@@ -155,7 +155,7 @@
                                             <fa-icon [icon]="faTrash" />
                                         </button>
                                     } @else {
-                                        @if (exerciseGroup.id && course?.isAtLeastInstructor) {
+                                        @if (exerciseGroup.id && course()?.isAtLeastInstructor) {
                                             <button
                                                 jhiDeleteButton
                                                 [entityTitle]="exerciseGroup.title || ''"
@@ -200,11 +200,11 @@
                                 <th>
                                     <span jhiTranslate="artemisApp.exercise.includedCompletely"></span>
                                 </th>
-                                @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING)) {
+                                @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict().get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING)) {
                                     <th>
                                         <span jhiTranslate="artemisApp.exercise.shortName"></span>
                                     </th>
-                                    @if (!localCIEnabled) {
+                                    @if (!localCIEnabled()) {
                                         <th>
                                             <span jhiTranslate="artemisApp.programmingExercise.buildplans"></span>
                                         </th>
@@ -213,26 +213,26 @@
                                         <span jhiTranslate="artemisApp.programmingExercise.participationMode"></span>
                                     </th>
                                 }
-                                @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.QUIZ)) {
+                                @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict().get(exerciseGroup.id)?.includes(exerciseType.QUIZ)) {
                                     <th>
                                         <span jhiTranslate="artemisApp.quizExercise.questions"></span>
                                     </th>
                                 }
-                                @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING)) {
+                                @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict().get(exerciseGroup.id)?.includes(exerciseType.MODELING)) {
                                     <th>
                                         <span jhiTranslate="artemisApp.modelingExercise.diagramType"></span>
                                     </th>
                                 }
-                                @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.FILE_UPLOAD)) {
+                                @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict().get(exerciseGroup.id)?.includes(exerciseType.FILE_UPLOAD)) {
                                     <th>
                                         <span jhiTranslate="artemisApp.fileUploadExercise.filePattern"></span>
                                     </th>
                                 }
                                 @if (
                                     exerciseGroup.id &&
-                                    (exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING) ||
-                                        exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.TEXT) ||
-                                        exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING))
+                                    (exerciseGroupToExerciseTypesDict().get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING) ||
+                                        exerciseGroupToExerciseTypesDict().get(exerciseGroup.id)?.includes(exerciseType.TEXT) ||
+                                        exerciseGroupToExerciseTypesDict().get(exerciseGroup.id)?.includes(exerciseType.MODELING))
                                 ) {
                                     <th>
                                         <span jhiTranslate="artemisApp.assessmentMode"></span>
@@ -245,11 +245,11 @@
                             @for (exercise of exerciseGroup.exercises; track exercise) {
                                 <tr id="{{ 'exercise-' + exercise.id }}">
                                     <td class="align-middle">
-                                        @if (course.isAtLeastEditor) {
+                                        @if (course()?.isAtLeastEditor) {
                                             <a
                                                 [routerLink]="[
                                                     '/course-management',
-                                                    course.id,
+                                                    course()!.id,
                                                     'exams',
                                                     examId,
                                                     'exercise-groups',
@@ -261,7 +261,7 @@
                                                 <span>{{ exercise.id }}</span>
                                             </a>
                                         }
-                                        @if (!course.isAtLeastEditor) {
+                                        @if (!course()?.isAtLeastEditor) {
                                             <span>{{ exercise.id }}</span>
                                         }
                                     </td>
@@ -269,11 +269,11 @@
                                         <fa-icon [icon]="exerciseIcon(exercise)" />
                                     </td>
                                     <td class="align-middle">
-                                        @if (course.isAtLeastEditor) {
+                                        @if (course()?.isAtLeastEditor) {
                                             <a
                                                 [routerLink]="[
                                                     '/course-management',
-                                                    course.id,
+                                                    course()!.id,
                                                     'exams',
                                                     examId,
                                                     'exercise-groups',
@@ -285,7 +285,7 @@
                                                 <span>{{ exercise.title }}</span>
                                             </a>
                                         }
-                                        @if (!course.isAtLeastEditor) {
+                                        @if (!course()?.isAtLeastEditor) {
                                             <span>{{ exercise.title }}</span>
                                         }
                                     </td>
@@ -295,13 +295,13 @@
                                     <td class="align-middle">{{ exercise.bonusPoints }}</td>
                                     <td class="align-middle">{{ exerciseService.isIncludedInScore(exercise) }}</td>
                                     <!-- Programming exercise specific cells -->
-                                    @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)) {
+                                    @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict().get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)) {
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
                                                 <jhi-programming-exercise-group-cell [exercise]="exercise" [displayShortName]="true" />
                                             }
                                         </td>
-                                        @if (!localCIEnabled) {
+                                        @if (!localCIEnabled()) {
                                             <td class="align-middle">
                                                 @if (exercise.type === exerciseType.PROGRAMMING) {
                                                     <jhi-programming-exercise-group-cell [exercise]="exercise" [displayTemplateUrls]="true" />
@@ -314,26 +314,26 @@
                                             }
                                         </td>
                                     }
-                                    @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.QUIZ)) {
+                                    @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict().get(exerciseGroup.id!)?.includes(exerciseType.QUIZ)) {
                                         <td class="align-middle">
                                             <jhi-quiz-exercise-group-cell [exercise]="exercise" />
                                         </td>
                                     }
-                                    @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.MODELING)) {
+                                    @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict().get(exerciseGroup.id!)?.includes(exerciseType.MODELING)) {
                                         <td class="align-middle">
                                             <jhi-modeling-exercise-group-cell [exercise]="exercise" />
                                         </td>
                                     }
-                                    @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.FILE_UPLOAD)) {
+                                    @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict().get(exerciseGroup.id!)?.includes(exerciseType.FILE_UPLOAD)) {
                                         <td class="align-middle">
                                             <jhi-file-upload-exercise-group-cell [exercise]="exercise" />
                                         </td>
                                     }
                                     @if (
                                         exerciseGroup.id &&
-                                        (exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING) ||
-                                            exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.TEXT) ||
-                                            exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.MODELING))
+                                        (exerciseGroupToExerciseTypesDict().get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING) ||
+                                            exerciseGroupToExerciseTypesDict().get(exerciseGroup.id!)?.includes(exerciseType.TEXT) ||
+                                            exerciseGroupToExerciseTypesDict().get(exerciseGroup.id!)?.includes(exerciseType.MODELING))
                                     ) {
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING || exercise.type === exerciseType.MODELING || exercise.type === exerciseType.TEXT) {
@@ -352,11 +352,11 @@
                                         } @else if (exercise.id && exerciseGroup.id) {
                                             <jhi-exam-exercise-row-buttons
                                                 class="d-flex justify-content-end"
-                                                [course]="course"
+                                                [course]="course()!"
                                                 [exam]="exam"
                                                 [exercise]="exercise"
                                                 [exerciseGroupId]="exerciseGroup.id"
-                                                [latestIndividualEndDate]="latestIndividualEndDate"
+                                                [latestIndividualEndDate]="latestIndividualEndDate()"
                                                 (onDeleteExercise)="removeExercise(exercise.id, exerciseGroup.id)"
                                             />
                                         }

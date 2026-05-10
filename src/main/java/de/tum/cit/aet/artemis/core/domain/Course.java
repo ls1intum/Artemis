@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.domain;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
 import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_TEXT_LIMIT;
+import static de.tum.cit.aet.artemis.core.config.Constants.COURSE_SHORT_NAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 
 import java.time.ZonedDateTime;
@@ -26,8 +27,6 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
 import org.hibernate.Hibernate;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -51,7 +50,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
  */
 @Entity
 @Table(name = "course")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Course extends DomainObject {
 
@@ -181,8 +179,9 @@ public class Course extends DomainObject {
     @Column(name = "time_zone")
     private String timeZone;
 
+    // No @Cache: instructors create / archive / edit exercises while every student's course-overview read hits this; NONSTRICT caused the dashboard to "forget"
+    // exercises on other nodes for a short window, same class of bug as #12574.
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Exercise> exercises = new HashSet<>();
 
@@ -210,15 +209,14 @@ public class Course extends DomainObject {
     @OrderBy("title")
     private Set<TutorialGroup> tutorialGroups = new HashSet<>();
 
+    // No @Cache: exams are created / edited / archived by instructors while students see the course overview, same class of bug as #12574.
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Exam> exams = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "course_organization", joinColumns = { @JoinColumn(name = "course_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "organization_id", referencedColumnName = "id") })
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Organization> organizations = new HashSet<>();
 
@@ -837,13 +835,20 @@ public class Course extends DomainObject {
     }
 
     /**
-     * Validates that the short name of the course follows SHORT_NAME_PATTERN
+     * Validates that the short name of the course follows SHORT_NAME_PATTERN and (for new courses) does not exceed
+     * {@link de.tum.cit.aet.artemis.core.config.Constants#COURSE_SHORT_NAME_MAX_LENGTH}.
+     * Course short names are immutable after creation, but the update path re-runs this validator with the persisted
+     * value — so the max-length check is gated on a missing id to avoid breaking edits of legacy courses whose
+     * shortName predates the limit.
      */
     public void validateShortName() {
         // Check if the course shortname matches regex
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(getShortName());
         if (!shortNameMatcher.matches()) {
             throw new BadRequestAlertException("The shortname is invalid", ENTITY_NAME, "shortnameInvalid", true);
+        }
+        if (getId() == null && getShortName().length() > COURSE_SHORT_NAME_MAX_LENGTH) {
+            throw new BadRequestAlertException("The shortname must not exceed " + COURSE_SHORT_NAME_MAX_LENGTH + " characters", ENTITY_NAME, "shortnameTooLong", true);
         }
     }
 

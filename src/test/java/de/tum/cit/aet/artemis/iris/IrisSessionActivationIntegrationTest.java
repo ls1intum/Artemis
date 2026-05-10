@@ -86,12 +86,10 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     private String exerciseChatUrl() {
-        long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
-        return "/api/iris/chat/" + courseId + "/sessions?mode=PROGRAMMING_EXERCISE_CHAT&entityId=" + exercise.getId();
+        return "/api/iris/chat/sessions?mode=PROGRAMMING_EXERCISE_CHAT&entityId=" + exercise.getId();
     }
 
     private String exerciseChatCurrentUrl() {
-        long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
-        return "/api/iris/chat/" + courseId + "/sessions/current?mode=PROGRAMMING_EXERCISE_CHAT&entityId=" + exercise.getId();
+        return "/api/iris/chat/sessions/current?mode=PROGRAMMING_EXERCISE_CHAT&entityId=" + exercise.getId();
     }
 }

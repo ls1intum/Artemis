@@ -1810,13 +1810,14 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('openAboutIrisModal transport selection', () => {
-        it('should open via MatDialog when layout is widget', () => {
+        it('should open via MatDialog when transport is automatic and layout is widget', () => {
             const matDialog = TestBed.inject(MatDialog);
             const matDialogOpenSpy = vi.spyOn(matDialog, 'open').mockReturnValue({ close: vi.fn() } as any);
             const dialogService = TestBed.inject(DialogService);
             const dialogServiceOpenSpy = vi.spyOn(dialogService, 'open');
 
             fixture.componentRef.setInput('layout', 'widget');
+            fixture.componentRef.setInput('aboutIrisDialogTransport', 'automatic');
             fixture.detectChanges();
 
             component.openAboutIrisModal();
@@ -1825,19 +1826,52 @@ describe('IrisBaseChatbotComponent', () => {
             expect(dialogServiceOpenSpy).not.toHaveBeenCalled();
         });
 
-        it('should open via PrimeNG DialogService when layout is client', () => {
+        it('should open via PrimeNG DialogService when transport is automatic and layout is client', () => {
             const matDialog = TestBed.inject(MatDialog);
             const matDialogOpenSpy = vi.spyOn(matDialog, 'open');
             const dialogService = TestBed.inject(DialogService);
             const dialogServiceOpenSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ close: vi.fn() } as any);
 
             fixture.componentRef.setInput('layout', 'client');
+            fixture.componentRef.setInput('aboutIrisDialogTransport', 'automatic');
             fixture.detectChanges();
 
             component.openAboutIrisModal();
 
             expect(dialogServiceOpenSpy).toHaveBeenCalledOnce();
             expect(matDialogOpenSpy).not.toHaveBeenCalled();
+        });
+
+        it('should allow widget layouts to force PrimeNG DialogService', () => {
+            const matDialog = TestBed.inject(MatDialog);
+            const matDialogOpenSpy = vi.spyOn(matDialog, 'open');
+            const dialogService = TestBed.inject(DialogService);
+            const dialogServiceOpenSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ close: vi.fn() } as any);
+
+            fixture.componentRef.setInput('layout', 'widget');
+            fixture.componentRef.setInput('aboutIrisDialogTransport', 'dynamic');
+            fixture.detectChanges();
+
+            component.openAboutIrisModal();
+
+            expect(dialogServiceOpenSpy).toHaveBeenCalledOnce();
+            expect(matDialogOpenSpy).not.toHaveBeenCalled();
+        });
+
+        it('should allow non-widget layouts to force MatDialog', () => {
+            const matDialog = TestBed.inject(MatDialog);
+            const matDialogOpenSpy = vi.spyOn(matDialog, 'open').mockReturnValue({ close: vi.fn() } as any);
+            const dialogService = TestBed.inject(DialogService);
+            const dialogServiceOpenSpy = vi.spyOn(dialogService, 'open');
+
+            fixture.componentRef.setInput('layout', 'client');
+            fixture.componentRef.setInput('aboutIrisDialogTransport', 'material');
+            fixture.detectChanges();
+
+            component.openAboutIrisModal();
+
+            expect(matDialogOpenSpy).toHaveBeenCalledOnce();
+            expect(dialogServiceOpenSpy).not.toHaveBeenCalled();
         });
     });
 

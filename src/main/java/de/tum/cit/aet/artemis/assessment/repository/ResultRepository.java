@@ -771,10 +771,10 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * The points of an assessment model is not summed up only in the case the usageCount limit is exceeded
      * meaning the structured grading instruction was applied on the assessment model more often than allowed
      *
-     * @param assessments the list of feedback items that are used to calculate the points
+     * @param assessments the collection of feedback items that are used to calculate the points
      * @return the total points
      */
-    default double calculateTotalPoints(List<Feedback> assessments) {
+    default double calculateTotalPoints(Collection<Feedback> assessments) {
         double totalPoints = 0.0;
         var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
 
@@ -937,6 +937,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                  SELECT MAX(r2.id)
                  FROM Result r2
                  WHERE r2.submission.id = r.submission.id
+                 AND r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                )
             """)
     Set<Result> findLatestResultsWithAssessmentNoteBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);

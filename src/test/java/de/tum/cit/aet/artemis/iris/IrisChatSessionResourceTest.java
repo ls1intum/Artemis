@@ -322,7 +322,7 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
         Course otherCourse = courseUtilService.createCourseWithCustomStudentGroupName("iris-resource-restricted", "restricted-students");
         activateIrisFor(otherCourse);
 
-        request.postWithResponseBody(currentUrl(otherCourse.getId(), IrisChatMode.COURSE_CHAT, otherCourse.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody(currentUrl(IrisChatMode.COURSE_CHAT, otherCourse.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     // =========================================================================
@@ -334,8 +334,8 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void getCurrent_forbiddenForUnknownCourseId() throws Exception {
-            request.postWithResponseBody(currentUrl(NON_EXISTENT_ID, IrisChatMode.COURSE_CHAT, NON_EXISTENT_ID), null, IrisChatSessionResponseDTO.class, HttpStatus.FORBIDDEN);
+        void getCurrent_notFoundForUnknownCourseId() throws Exception {
+            request.postWithResponseBody(currentUrl(IrisChatMode.COURSE_CHAT, NON_EXISTENT_ID), null, IrisChatSessionResponseDTO.class, HttpStatus.NOT_FOUND);
         }
     }
 
@@ -388,15 +388,11 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
     }
 
     private String currentUrl(IrisChatMode mode, long entityId) {
-        return currentUrl(course.getId(), mode, entityId);
-    }
-
-    private String currentUrl(long courseId, IrisChatMode mode, long entityId) {
-        return "/api/iris/chat/" + courseId + "/sessions/current?mode=" + mode.name() + "&entityId=" + entityId;
+        return "/api/iris/chat/sessions/current?mode=" + mode.name() + "&entityId=" + entityId;
     }
 
     private String createUrl(IrisChatMode mode, long entityId) {
-        return "/api/iris/chat/" + course.getId() + "/sessions?mode=" + mode.name() + "&entityId=" + entityId;
+        return "/api/iris/chat/sessions?mode=" + mode.name() + "&entityId=" + entityId;
     }
 
     private void saveChatSessionWithMessages(IrisChatSession session) {
