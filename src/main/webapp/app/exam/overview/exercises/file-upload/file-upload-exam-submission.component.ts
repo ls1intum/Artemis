@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, inject, input, model, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, input, model, signal, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import dayjs from 'dayjs/esm';
@@ -53,7 +53,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     studentSubmission = model.required<FileUploadSubmission>();
     exercise = input.required<FileUploadExercise>();
-    problemStatementHtml: SafeHtml;
+    readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
 
     submittedFileName: string;
     submittedFileExtension: string;
@@ -74,7 +74,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      */
     ngOnInit() {
         // show submission answers in UI
-        this.problemStatementHtml = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement);
+        this.problemStatementHtml.set(this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement));
         this.updateViewFromSubmission();
     }
 
@@ -83,7 +83,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      * @param newProblemStatementHtml is the updated problem statement html that should be displayed to the user.
      */
     updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
-        this.problemStatementHtml = newProblemStatementHtml;
+        this.problemStatementHtml.set(newProblemStatementHtml);
         this.changeDetectorReference.detectChanges();
     }
 

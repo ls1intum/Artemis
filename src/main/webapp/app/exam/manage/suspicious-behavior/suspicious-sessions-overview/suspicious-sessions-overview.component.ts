@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
 import { cloneDeep } from 'lodash-es';
 import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
@@ -12,8 +12,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [SuspiciousSessionsComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class SuspiciousSessionsOverviewComponent implements OnInit {
-    suspiciousSessions: SuspiciousExamSessions[] = [];
-    ipSubnet?: string;
+    suspiciousSessions = signal<SuspiciousExamSessions[]>([]);
+    ipSubnet = signal<string | undefined>(undefined);
 
     mapEnumToTranslationString(reason: SuspiciousSessionReason) {
         switch (reason) {
@@ -31,7 +31,7 @@ export class SuspiciousSessionsOverviewComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.suspiciousSessions = cloneDeep(history.state.suspiciousSessions);
-        this.ipSubnet = history.state.ipSubnet;
+        this.suspiciousSessions.set(cloneDeep(history.state.suspiciousSessions));
+        this.ipSubnet.set(history.state.ipSubnet);
     }
 }

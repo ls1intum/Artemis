@@ -128,7 +128,6 @@ programming:
   - \b(?<!\S)git(?!\S)\b
   - \b(?<!\S)ide(?!\S)\b
   - submission policy
-  - aeolus
   - penalty
   - auxilary
   - commit

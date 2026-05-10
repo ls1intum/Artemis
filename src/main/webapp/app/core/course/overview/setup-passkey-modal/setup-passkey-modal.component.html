@@ -1,4 +1,13 @@
-<p-dialog [(visible)]="visible" [modal]="true" [closable]="false" [dismissableMask]="false" [draggable]="false" [appendTo]="'body'" [style]="{ width: '50dvw' }">
+<p-dialog
+    [visible]="visible()"
+    (visibleChange)="visible.set($event)"
+    [modal]="true"
+    [closable]="false"
+    [dismissableMask]="false"
+    [draggable]="false"
+    [appendTo]="'body'"
+    [style]="{ width: '50dvw' }"
+>
     <ng-template #header>
         <h4>
             <fa-icon [icon]="faShieldHalved" />

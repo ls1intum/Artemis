@@ -84,4 +84,23 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
                 AND participation.student.login = :studentLogin
             """)
     Optional<QuizSubmission> findByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("studentLogin") String studentLogin);
+
+    /**
+     * Check whether the submission with the given id belongs to the given student. Used by the test-exam quiz
+     * submission endpoint to validate that a client-supplied submission id actually belongs to the requesting
+     * user before letting it drive an UPDATE on the row (test exams skip {@code preventMultipleSubmissions},
+     * so the otherwise-implicit ownership guarantee from that helper does not apply).
+     *
+     * @param submissionId the id of the submission to validate
+     * @param studentId    the id of the student that must own the submission
+     * @return {@code true} if a submission with that id exists and is owned by the given student
+     */
+    @Query("""
+            SELECT COUNT(submission) > 0
+            FROM QuizSubmission submission
+                JOIN TREAT(submission.participation AS StudentParticipation) participation
+            WHERE submission.id = :submissionId
+                AND participation.student.id = :studentId
+            """)
+    boolean existsByIdAndStudentId(@Param("submissionId") Long submissionId, @Param("studentId") Long studentId);
 }
