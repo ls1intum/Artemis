@@ -14,7 +14,10 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -67,15 +70,39 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
 
     private readonly eligibleExerciseIds = computed(() => {
         return (this.studentExam()?.exercises ?? [])
-            .filter((exercise) => (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && !!exercise.feedbackSuggestionModule)
+            .filter(
+                (exercise) =>
+                    (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) &&
+                    !!exercise.feedbackSuggestionModule &&
+                    this.hasNonEmptyLatestSubmission(exercise),
+            )
             .map((exercise) => exercise.id)
             .filter((id): id is number => id !== undefined);
     });
 
+    private hasNonEmptyLatestSubmission(exercise: Exercise): boolean {
+        const submissions = exercise.studentParticipations?.[0]?.submissions ?? [];
+        if (submissions.length === 0) {
+            return false;
+        }
+        const latest = submissions.reduce<Submission>((acc, s) => ((s.id ?? 0) > (acc.id ?? 0) ? s : acc), submissions[0]);
+        if (exercise.type === ExerciseType.TEXT) {
+            return !!(latest as TextSubmission).text?.length;
+        }
+        if (exercise.type === ExerciseType.MODELING) {
+            const modeling = latest as ModelingSubmission;
+            if (modeling.explanationText?.trim().length) {
+                return true;
+            }
+            return !!modeling.model?.trim().length;
+        }
+        return false;
+    }
+
     readonly hasAllAthenaResultsForCurrentAttempt = computed(() => {
         const eligible = this.eligibleExerciseIds();
         if (eligible.length === 0) {
-            return false;
+            return true;
         }
         const received = this.receivedAthenaResultExerciseIds();
         return eligible.every((id) => received.has(id));
@@ -234,7 +261,8 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     private handleAthenaResult(result: Result, exerciseId?: number): void {
-        if (!result.completionDate || !result.successful) {
+        const isFinalResult = result.successful === true || result.successful === false;
+        if (!isFinalResult) {
             return;
         }
         if (exerciseId !== undefined) {
@@ -246,6 +274,9 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
                 next.add(exerciseId);
                 return next;
             });
+        }
+        if (result.successful !== true || !result.completionDate) {
+            return;
         }
         if (this.currentAttemptCounted) {
             return;

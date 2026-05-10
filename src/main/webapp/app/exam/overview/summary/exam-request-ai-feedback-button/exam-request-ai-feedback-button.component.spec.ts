@@ -23,6 +23,7 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -373,6 +374,67 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
             expect(component.athenaFeedbackUsed()).toBe(1);
         });
+
+        it('marks the exercise as resolved when the result is final, even on failure', () => {
+            primeCounter(1);
+
+            (component as any).handleAthenaResult({ successful: false, completionDate: undefined, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result, 42);
+
+            expect(component.receivedAthenaResultExerciseIds().has(42)).toBe(true);
+            // Failure must not consume a usage slot.
+            expect(component.athenaFeedbackUsed()).toBe(1);
+            expect((component as any).currentAttemptCounted).toBe(false);
+        });
+
+        it('ignores in-progress broadcasts (successful=null/undefined)', () => {
+            primeCounter(1);
+
+            (component as any).handleAthenaResult({ successful: undefined, completionDate: undefined, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result, 42);
+
+            expect(component.receivedAthenaResultExerciseIds().has(42)).toBe(false);
+            expect(component.athenaFeedbackUsed()).toBe(1);
+        });
+    });
+
+    describe('eligibleExerciseIds (empty submission filter)', () => {
+        it('excludes text exercises whose latest submission has no text', () => {
+            enableAthena();
+            vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
+
+            setStudentExam({ ...studentExamForTestExam, submitted: true, exercises: [textExercise] });
+            component.ngOnInit();
+            // Simulate a post-click state to exercise the spinner gate.
+            component.feedbackRequested.set(true);
+
+            // textSubmission in the shared fixture has no `text` field set → filtered out → no eligibles
+            // → hasAllAthenaResultsForCurrentAttempt resolves to true (nothing to wait for) so the spinner
+            // doesn't get stuck on a result the server will never emit.
+            expect(component.hasAllAthenaResultsForCurrentAttempt()).toBe(true);
+            expect(component.isGenerating()).toBe(false);
+        });
+
+        it('includes a text exercise once its latest submission has text', () => {
+            enableAthena();
+            vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
+
+            const filledSubmission = { id: 1, submitted: true, text: 'student answer' } as TextSubmission;
+            const filledParticipation = { id: 1, student: user, submissions: [filledSubmission] } as StudentParticipation;
+            const filledExercise = {
+                id: 1,
+                type: ExerciseType.TEXT,
+                studentParticipations: [filledParticipation],
+                exerciseGroup,
+                feedbackSuggestionModule: 'module_text_test',
+            } as TextExercise;
+
+            setStudentExam({ ...studentExamForTestExam, submitted: true, exercises: [filledExercise] });
+            component.ngOnInit();
+            component.feedbackRequested.set(true);
+
+            // One eligible exercise, no result yet → spinner active.
+            expect(component.hasAllAthenaResultsForCurrentAttempt()).toBe(false);
+            expect(component.isGenerating()).toBe(true);
+        });
     });
 
     describe('hasAnyAthenaResultForCurrentAttempt', () => {
@@ -411,10 +473,20 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
     });
 
     describe('isGenerating spinner state', () => {
+        const nonEmptyTextSubmission = { id: 1, submitted: true, text: 'student answer' } as TextSubmission;
+        const nonEmptyTextParticipation = { id: 1, student: user, submissions: [nonEmptyTextSubmission] } as StudentParticipation;
+        const nonEmptyTextExercise = {
+            id: 1,
+            type: ExerciseType.TEXT,
+            studentParticipations: [nonEmptyTextParticipation],
+            exerciseGroup,
+            feedbackSuggestionModule: 'module_text_test',
+        } as TextExercise;
+        const modelingSubmission = { id: 5, submitted: true, model: '{"version":"3.0.0","type":"ClassDiagram","elements":{"a":{}}}' } as ModelingSubmission;
         const modelingExercise = {
             id: 2,
             type: ExerciseType.MODELING,
-            studentParticipations: [{ id: 2, student: user, submissions: [] } as StudentParticipation],
+            studentParticipations: [{ id: 2, student: user, submissions: [modelingSubmission] } as StudentParticipation],
             exerciseGroup,
             feedbackSuggestionModule: 'module_modeling_test',
         } as TextExercise;
@@ -429,10 +501,10 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             const modelingSubject = new BehaviorSubject<Result | undefined>(undefined);
             const websocketService = TestBed.inject(ParticipationWebsocketService);
             vi.spyOn(websocketService, 'subscribeForLatestResultOfParticipation').mockImplementation((participationId: number) => {
-                return participationId === textParticipation.id! ? textSubject : modelingSubject;
+                return participationId === nonEmptyTextParticipation.id! ? textSubject : modelingSubject;
             });
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true, exercises: [textExercise, modelingExercise] });
+            setStudentExam({ ...studentExamForTestExam, submitted: true, exercises: [nonEmptyTextExercise, modelingExercise] });
             component.ngOnInit();
             return [textSubject, modelingSubject];
         }
@@ -481,6 +553,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 id: 10,
                 submitted: true,
                 submissionDate: dayjs(),
+                text: 'student answer',
                 results: [{ assessmentType: AssessmentType.AUTOMATIC_ATHENA, rated: true } as Result],
             } as TextSubmission;
             const seededParticipation = { id: 1, student: user, submissions: [submissionWithAthena] } as StudentParticipation;
