@@ -845,6 +845,41 @@ paths:
           content:
             text/csv:
               schema: {type: string, format: binary}
+  /api/core/calendar/courses/{courseId}/calendar-events-ics:
+    get:
+      tags: [legacy-calendar]
+      operationId: getLegacyCalendarEventSubscriptionFile
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: token
+        in: query
+        required: true
+        schema: {type: string}
+      - name: filterOptions
+        in: query
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum: [LECTURES, TUTORIALS, EXAMS, EXERCISES]
+          uniqueItems: true
+      - name: language
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [ENGLISH, GERMAN]
+      responses:
+        '200':
+          description: OK
+          content:
+            text/calendar:
+              schema: {type: string}
+      deprecated: true
   /api/calendar/subscription-token:
     get:
       tags: [calendar]
@@ -853,7 +888,7 @@ paths:
         '200':
           description: OK
           content:
-            application/json:
+            text/plain:
               schema: {type: string}
   /api/calendar/courses/{courseId}/calendar-events:
     get:

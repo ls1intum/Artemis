@@ -107,7 +107,7 @@ public class CalendarResource {
      * @return {@code 200 (OK)} with the token.
      * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user is not at least a student
      */
-    @GetMapping("subscription-token")
+    @GetMapping(value = "subscription-token", produces = "text/plain")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getCalendarEventSubscriptionToken() {
         String userLogin = userRepository.getCurrentUserLogin();

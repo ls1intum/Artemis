@@ -53,7 +53,7 @@ public class LegacyCalendarResource {
      */
     @Deprecated
     @GetMapping(value = "courses/{courseId}/calendar-events-ics", produces = "text/calendar")
-    public ResponseEntity<String> getCalendarEventSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
+    public ResponseEntity<String> getLegacyCalendarEventSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
             @RequestParam("filterOptions") Set<CalendarSubscriptionFilterOption> filterOptions, @RequestParam("language") Language language) {
         // Forward to new resource for compatibility
         return calendarResource.getCalendarEventSubscriptionFile(courseId, token, filterOptions, language);

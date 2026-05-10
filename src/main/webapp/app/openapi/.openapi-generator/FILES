@@ -5,6 +5,7 @@ api/hyperionCodeGenerationApi.service.ts
 api/hyperionFaqApi.service.ts
 api/hyperionProblemStatementApi.service.ts
 api/hyperionQuizQuestionGenerationApi.service.ts
+api/legacyCalendarApi.service.ts
 api/tutorialGroupApi.service.ts
 api/tutorialGroupFreePeriodApi.service.ts
 api/tutorialGroupSessionApi.service.ts
