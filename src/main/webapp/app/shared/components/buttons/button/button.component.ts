@@ -76,6 +76,7 @@ export class ButtonComponent {
 
     shouldSubmit = input(true);
     shouldToggle = input(false);
+    toggleBreakpoint = input<'md' | 'xl'>('xl');
 
     onClick = output<MouseEvent>();
 }

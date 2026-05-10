@@ -20,7 +20,16 @@ public enum RateLimitType {
      * <p>
      * Default: 30 requests per minute per client.
      */
-    AUTHENTICATION(30);
+    AUTHENTICATION(30),
+
+    /**
+     * Rate limit for the stateless problem-statement rendering endpoint.
+     * The endpoint does PlantUML rendering and HTML sanitization, which are comparatively expensive,
+     * so the rate limit exists to bound abuse from authenticated clients.
+     * <p>
+     * Default: 30 requests per minute per client.
+     */
+    PROBLEM_STATEMENT_RENDERING(30);
 
     private final int defaultRpm;
 
