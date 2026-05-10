@@ -7,7 +7,7 @@
             isRequestingFeedback() || feedbackRequested() || hasAnyAthenaResultForCurrentAttempt || (athenaFeedbackLimit() > 0 && athenaFeedbackUsed() >= athenaFeedbackLimit())
         "
     >
-        @if (isRequestingFeedback()) {
+        @if (isGenerating()) {
             <fa-icon [icon]="faSpinner" animation="spin" />
         } @else {
             <fa-icon [icon]="faRobot" />

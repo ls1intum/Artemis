@@ -410,6 +410,98 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
         });
     });
 
+    describe('isGenerating spinner state', () => {
+        const modelingExercise = {
+            id: 2,
+            type: ExerciseType.MODELING,
+            studentParticipations: [{ id: 2, student: user, submissions: [] } as StudentParticipation],
+            exerciseGroup,
+            feedbackSuggestionModule: 'module_modeling_test',
+        } as TextExercise;
+
+        function configureMultiExercise(): BehaviorSubject<Result | undefined>[] {
+            enableAthena();
+            acceptLLMUsage();
+            vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
+            vi.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(of(undefined));
+
+            const textSubject = new BehaviorSubject<Result | undefined>(undefined);
+            const modelingSubject = new BehaviorSubject<Result | undefined>(undefined);
+            const websocketService = TestBed.inject(ParticipationWebsocketService);
+            vi.spyOn(websocketService, 'subscribeForLatestResultOfParticipation').mockImplementation((participationId: number) => {
+                return participationId === textParticipation.id! ? textSubject : modelingSubject;
+            });
+
+            setStudentExam({ ...studentExamForTestExam, submitted: true, exercises: [textExercise, modelingExercise] });
+            component.ngOnInit();
+            return [textSubject, modelingSubject];
+        }
+
+        it('keeps spinning after the POST resolves while results are still pending', () => {
+            const [textSubject] = configureMultiExercise();
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
+            button.nativeElement.click();
+            fixture.detectChanges();
+
+            // Synchronous mock observable already completed → isRequestingFeedback is false again.
+            expect(component.isRequestingFeedback()).toBe(false);
+            expect(component.feedbackRequested()).toBe(true);
+            // Spinner stays on because no Athena results have arrived yet.
+            expect(component.isGenerating()).toBe(true);
+            expect(component.hasAllAthenaResultsForCurrentAttempt()).toBe(false);
+
+            // Only one of two exercises has produced its Athena result so far.
+            textSubject.next({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+            expect(component.isGenerating()).toBe(true);
+            expect(component.hasAllAthenaResultsForCurrentAttempt()).toBe(false);
+        });
+
+        it('stops spinning once every eligible exercise has an Athena result', () => {
+            const [textSubject, modelingSubject] = configureMultiExercise();
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
+            button.nativeElement.click();
+            fixture.detectChanges();
+
+            textSubject.next({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+            modelingSubject.next({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+
+            expect(component.hasAllAthenaResultsForCurrentAttempt()).toBe(true);
+            expect(component.isGenerating()).toBe(false);
+        });
+
+        it('hydrates the received-set on init from already-present Athena results so no spinner runs', () => {
+            enableAthena();
+            vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 1, limit: 10 }));
+
+            const submissionWithAthena = {
+                id: 10,
+                submitted: true,
+                submissionDate: dayjs(),
+                results: [{ assessmentType: AssessmentType.AUTOMATIC_ATHENA, rated: true } as Result],
+            } as TextSubmission;
+            const seededParticipation = { id: 1, student: user, submissions: [submissionWithAthena] } as StudentParticipation;
+            const seededExercise = {
+                id: 1,
+                type: ExerciseType.TEXT,
+                studentParticipations: [seededParticipation],
+                exerciseGroup,
+                feedbackSuggestionModule: 'module_text_test',
+            } as TextExercise;
+
+            localStorage.setItem(feedbackRequestedKey, 'true');
+            setStudentExam({ ...studentExamForTestExam, submitted: true, exercises: [seededExercise] });
+            component.ngOnInit();
+
+            expect(component.feedbackRequested()).toBe(true);
+            expect(component.hasAllAthenaResultsForCurrentAttempt()).toBe(true);
+            expect(component.isGenerating()).toBe(false);
+        });
+    });
+
     describe('subscribeToAthenaResultsForCurrentAttempt via websocket', () => {
         it('should forward Athena websocket results to handleAthenaResult and increment usage once', () => {
             enableAthena();

@@ -581,7 +581,7 @@ describe('ModelingSubmissionComponent', () => {
 
         // Verify Athena result handling
         expect(comp.assessmentResult).toEqual(athenaResult);
-        expect(alterServiceSuccessSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackSuccessful');
+        expect(alterServiceSuccessSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackSuccessful', { title: comp.modelingExercise?.title ?? '' });
     });
 
     it('should set result when new result comes in from websocket', async () => {

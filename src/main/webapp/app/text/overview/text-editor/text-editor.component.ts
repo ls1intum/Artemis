@@ -208,7 +208,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     if (results.last()?.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
-                        this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
+                        this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.textExercise?.title ?? '' });
                         this.hasAthenaResultForLatestSubmission = true;
                     }
                 }

@@ -524,7 +524,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.prepareAssessmentData();
 
             if (result.successful) {
-                this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
+                this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.modelingExercise?.title ?? '' });
             }
         } else if (result.successful === false) {
             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');

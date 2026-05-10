@@ -52,6 +52,8 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
     readonly athenaFeedbackUsed = signal(0);
     readonly athenaFeedbackLimit = signal(0);
 
+    readonly receivedAthenaResultExerciseIds = signal<ReadonlySet<number>>(new Set());
+
     readonly hasExerciseWithFeedbackSuggestionModule = computed(() => {
         return (this.studentExam()?.exercises ?? []).some(
             (exercise) => (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && !!exercise.feedbackSuggestionModule,
@@ -62,6 +64,26 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
         const exam = this.studentExam();
         return !!exam?.exam?.testExam && this.athenaEnabled() && !!exam.submitted && !this.testExamConduction() && this.hasExerciseWithFeedbackSuggestionModule();
     });
+
+    private readonly eligibleExerciseIds = computed(() => {
+        return (this.studentExam()?.exercises ?? [])
+            .filter((exercise) => (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && !!exercise.feedbackSuggestionModule)
+            .map((exercise) => exercise.id)
+            .filter((id): id is number => id !== undefined);
+    });
+
+    readonly hasAllAthenaResultsForCurrentAttempt = computed(() => {
+        const eligible = this.eligibleExerciseIds();
+        if (eligible.length === 0) {
+            return false;
+        }
+        const received = this.receivedAthenaResultExerciseIds();
+        return eligible.every((id) => received.has(id));
+    });
+
+    // Spins until every eligible exercise has produced an Athena result for the current attempt.
+    // Per-exercise alerts may fire earlier as individual results arrive.
+    readonly isGenerating = computed(() => (this.isRequestingFeedback() || this.feedbackRequested()) && !this.hasAllAthenaResultsForCurrentAttempt());
 
     get hasAnyAthenaResultForCurrentAttempt(): boolean {
         return (this.studentExam()?.exercises ?? []).some((exercise) => {
@@ -177,12 +199,26 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
     private subscribeToAthenaResultsForCurrentAttempt(): void {
         this.athenaResultSubscriptions.forEach((subscription) => subscription.unsubscribe());
         this.athenaResultSubscriptions = [];
+
+        const initialReceived = new Set<number>();
+        for (const exercise of this.studentExam()?.exercises ?? []) {
+            if ((exercise.type !== ExerciseType.TEXT && exercise.type !== ExerciseType.MODELING) || exercise.id === undefined) {
+                continue;
+            }
+            const latestResult = getLatestResultOfStudentParticipation(exercise.studentParticipations?.[0], false);
+            if (latestResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+                initialReceived.add(exercise.id);
+            }
+        }
+        this.receivedAthenaResultExerciseIds.set(initialReceived);
+
         for (const exercise of this.studentExam()?.exercises ?? []) {
             if (exercise.type !== ExerciseType.TEXT && exercise.type !== ExerciseType.MODELING) {
                 continue;
             }
             const participationId = exercise.studentParticipations?.[0]?.id;
-            if (!participationId) {
+            const exerciseId = exercise.id;
+            if (!participationId || exerciseId === undefined) {
                 continue;
             }
             const subscription = this.participationWebsocketService
@@ -192,13 +228,26 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
                     filter((result): result is Result => !!result),
                     filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA),
                 )
-                .subscribe((result) => this.handleAthenaResult(result));
+                .subscribe((result) => this.handleAthenaResult(result, exerciseId));
             this.athenaResultSubscriptions.push(subscription);
         }
     }
 
-    private handleAthenaResult(result: Result): void {
-        if (!result.completionDate || !result.successful || this.currentAttemptCounted) {
+    private handleAthenaResult(result: Result, exerciseId?: number): void {
+        if (!result.completionDate || !result.successful) {
+            return;
+        }
+        if (exerciseId !== undefined) {
+            this.receivedAthenaResultExerciseIds.update((set) => {
+                if (set.has(exerciseId)) {
+                    return set;
+                }
+                const next = new Set(set);
+                next.add(exerciseId);
+                return next;
+            });
+        }
+        if (this.currentAttemptCounted) {
             return;
         }
         this.athenaFeedbackUsed.update((used) => used + 1);
