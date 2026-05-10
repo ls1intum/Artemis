@@ -1,3 +1,8 @@
+<!-- Iris inline answer card -->
+@if (irisEnabled) {
+    <jhi-global-search-iris-answer [searchQuery]="searchQuery()" />
+}
+
 <!-- Action button: Search Lecture Content (visible when iris enabled and no filter active) -->
 @if (irisEnabled && showLectureButton()) {
     <div #selectableItem>
@@ -12,11 +17,6 @@
             <fa-icon slot="icon" [icon]="faFileLines" aria-hidden="true" />
         </jhi-global-search-action-item>
     </div>
-}
-
-<!-- Iris inline answer card -->
-@if (irisEnabled) {
-    <jhi-global-search-iris-answer [searchQuery]="searchQuery()" />
 }
 
 <!-- Error state -->
