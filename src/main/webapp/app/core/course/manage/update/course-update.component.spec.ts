@@ -184,6 +184,28 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('shortName validation', () => {
+        beforeEach(async () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            await Promise.resolve();
+            // The shortName control is disabled when the course has an id; enable it so validators run for these tests.
+            comp.shortName.enable();
+        });
+
+        it('should accept a 24-character short name (boundary)', () => {
+            comp.shortName.setValue('a'.repeat(24));
+            comp.shortName.updateValueAndValidity();
+            expect(comp.shortName.errors?.maxlength).toBeUndefined();
+        });
+
+        it('should reject a 25-character short name', () => {
+            comp.shortName.setValue('a'.repeat(25));
+            comp.shortName.updateValueAndValidity();
+            expect(comp.shortName.errors?.maxlength).toBeDefined();
+        });
+    });
+
     describe('save', () => {
         it('should call update service on save for existing entity', async () => {
             // GIVEN
