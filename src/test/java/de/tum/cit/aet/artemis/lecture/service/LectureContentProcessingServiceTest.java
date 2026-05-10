@@ -36,9 +36,9 @@ import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 
 /**
  * Unit tests for {@link LectureContentProcessingService} and {@link ProcessingStateCallbackService}.
@@ -61,7 +61,7 @@ class LectureContentProcessingServiceTest {
 
     private LectureTranscriptionRepository transcriptionRepository;
 
-    private AttachmentVideoUnitRepository attachmentVideoUnitRepository;
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
     private AttachmentRepository attachmentRepository;
 
@@ -79,7 +79,7 @@ class LectureContentProcessingServiceTest {
     void setUp() {
         processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
         transcriptionRepository = mock(LectureTranscriptionRepository.class);
-        attachmentVideoUnitRepository = mock(AttachmentVideoUnitRepository.class);
+        attachmentVideoUnitRepository = mock(AttachmentVideoUnitTestRepository.class);
         attachmentRepository = mock(AttachmentRepository.class);
         irisLectureApi = mock(IrisLectureApi.class);
         FeatureToggleService featureToggleService = mock(FeatureToggleService.class);
