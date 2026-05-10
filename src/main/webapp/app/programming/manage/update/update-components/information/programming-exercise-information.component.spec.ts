@@ -123,5 +123,28 @@ describe('ProgrammingExerciseInformationComponent', () => {
 
             expect(comp.programmingExercise().shortName).toMatch('TestExercise1');
         });
+
+        it('should truncate auto-generated short names to PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH', () => {
+            fixture.componentRef.setInput('isSimpleMode', true);
+
+            // 50-char title sanitises to 50 chars, must be truncated to 36.
+            comp.programmingExercise().title = 'A'.repeat(50);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.programmingExercise().shortName!).toHaveLength(36);
+            expect(comp.programmingExercise().shortName).toBe('A'.repeat(36));
+        });
+
+        it('should truncate the base when adding a uniqueness suffix would exceed the max length', () => {
+            fixture.componentRef.setInput('isSimpleMode', true);
+            // Pre-load the truncated 36-char base so the generator must add a numeric suffix while keeping length <= 36.
+            comp.alreadyUsedShortNames.set(new Set(['A'.repeat(36)]));
+
+            comp.programmingExercise().title = 'A'.repeat(50);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.programmingExercise().shortName!).toHaveLength(36);
+            expect(comp.programmingExercise().shortName).toBe('A'.repeat(35) + '1');
+        });
     });
 });
