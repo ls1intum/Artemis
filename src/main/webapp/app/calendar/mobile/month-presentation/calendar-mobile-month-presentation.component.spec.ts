@@ -8,8 +8,9 @@ import { CalendarMobileMonthPresentationComponent } from './calendar-mobile-mont
 import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { CalendarEventType, IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
+import { CalendarEvent } from 'app/openapi/model/calendarEvent';
 
 describe('CalendarMobileMonthPresentationComponent', () => {
     setupTestBed({ zoneless: true });
@@ -20,14 +21,14 @@ describe('CalendarMobileMonthPresentationComponent', () => {
 
     const referenceDate = dayjs('2025-05-15 10:30');
     const events: IdentifiableCalendarEvent[] = [
-        new IdentifiableCalendarEvent(CalendarEventType.Exam, 'Exam', referenceDate, referenceDate.add(1, 'hour')),
-        new IdentifiableCalendarEvent(CalendarEventType.Lecture, 'Lecture 1', referenceDate.subtract(4, 'hour'), referenceDate.subtract(2, 'hour')),
-        new IdentifiableCalendarEvent(CalendarEventType.Lecture, 'Lecture 2', referenceDate.subtract(2, 'hour'), referenceDate),
-        new IdentifiableCalendarEvent(CalendarEventType.Lecture, 'Lecture 3', referenceDate, referenceDate.add(2, 'hour')),
-        new IdentifiableCalendarEvent(CalendarEventType.Tutorial, 'Tutorial 1', referenceDate.add(1, 'day'), referenceDate.add(1, 'day').add(1, 'hour')),
-        new IdentifiableCalendarEvent(CalendarEventType.Tutorial, 'Tutorial 2', referenceDate.add(1, 'day').add(2, 'hour'), referenceDate.add(1, 'day').add(3, 'hour')),
-        new IdentifiableCalendarEvent(CalendarEventType.Tutorial, 'Tutorial 3', referenceDate.add(1, 'day').add(3, 'hour'), referenceDate.add(1, 'day').add(4, 'hour')),
-        new IdentifiableCalendarEvent(CalendarEventType.TextExercise, 'Start: Text Exercise', referenceDate.add(2, 'day')),
+        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Exam, 'Exam', referenceDate, referenceDate.add(1, 'hour')),
+        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Lecture, 'Lecture 1', referenceDate.subtract(4, 'hour'), referenceDate.subtract(2, 'hour')),
+        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Lecture, 'Lecture 2', referenceDate.subtract(2, 'hour'), referenceDate),
+        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Lecture, 'Lecture 3', referenceDate, referenceDate.add(2, 'hour')),
+        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Tutorial, 'Tutorial 1', referenceDate.add(1, 'day'), referenceDate.add(1, 'day').add(1, 'hour')),
+        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Tutorial, 'Tutorial 2', referenceDate.add(1, 'day').add(2, 'hour'), referenceDate.add(1, 'day').add(3, 'hour')),
+        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Tutorial, 'Tutorial 3', referenceDate.add(1, 'day').add(3, 'hour'), referenceDate.add(1, 'day').add(4, 'hour')),
+        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.TextExercise, 'Start: Text Exercise', referenceDate.add(2, 'day')),
     ];
 
     afterEach(() => {
