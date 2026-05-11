@@ -181,6 +181,7 @@
                 "exercisesGroup": "Aufgaben",
                 "contextAdded": "Kontext hinzugefügt:",
                 "contextRemoved": "Kontext entfernt:",
+                "contextChanged": "Kontext gewechselt zu:",
                 "addContextTooltip": "Vorlesung oder Aufgabe wählen"
             },
             "citation": {

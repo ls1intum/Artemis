@@ -185,6 +185,7 @@
                 "exercisesGroup": "Exercises",
                 "contextAdded": "Context added:",
                 "contextRemoved": "Context removed:",
+                "contextChanged": "Context changed to:",
                 "addContextTooltip": "Select lecture or exercise"
             },
             "tutorSuggestion": {

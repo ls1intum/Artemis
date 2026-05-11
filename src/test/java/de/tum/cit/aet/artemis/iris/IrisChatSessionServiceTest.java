@@ -297,7 +297,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             var markers = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.CTXSWAP).toList();
             assertThat(markers).hasSize(1);
             var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
-            assertThat(markerContent.getJsonNode().get("mode").asText()).isEqualTo(IrisChatMode.LECTURE_CHAT.name());
+            assertThat(markerContent.getJsonNode().get("transition").asText()).isEqualTo("added");
             assertThat(markerContent.getJsonNode().get("name").asText()).isEqualTo(lecture.getTitle());
         }
 
@@ -311,8 +311,22 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             var markers = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.CTXSWAP).toList();
             assertThat(markers).hasSize(1);
             var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
-            assertThat(markerContent.getJsonNode().get("mode").asText()).isEqualTo(IrisChatMode.COURSE_CHAT.name());
+            assertThat(markerContent.getJsonNode().get("transition").asText()).isEqualTo("removed");
             assertThat(markerContent.getJsonNode().get("name").asText()).isEqualTo(lecture.getTitle());
+        }
+
+        @Test
+        void switchingBetweenLectureAndExerciseLabelsMarkerAsChanged() {
+            User user = student1();
+            IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.LECTURE_CHAT, user));
+
+            irisChatSessionService.applyContextChange(session, IrisChatMode.TEXT_EXERCISE_CHAT, textExercise.getId(), user);
+
+            var markers = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.CTXSWAP).toList();
+            assertThat(markers).hasSize(1);
+            var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
+            assertThat(markerContent.getJsonNode().get("transition").asText()).isEqualTo("changed");
+            assertThat(markerContent.getJsonNode().get("name").asText()).isEqualTo(textExercise.getTitle());
         }
 
         @Test

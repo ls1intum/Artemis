@@ -454,16 +454,32 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             default -> throw new IllegalStateException("IrisChatSessionService.applyContextChange does not handle chat mode " + newMode);
         };
 
-        // For "context removed" markers (switch back to COURSE_CHAT), label the marker with the
-        // lecture/exercise that is being removed, not the course we are switching to.
-        String markerName = newMode == IrisChatMode.COURSE_CHAT ? lookupRemovedContextName(session.getMode(), session.getEntityId()) : newEntityName;
+        // Classify the transition so the client can pick the right icon + label:
+        // - "removed": back to COURSE_CHAT — label with the lecture/exercise being removed (the old one).
+        // - "added": from COURSE_CHAT into a lecture/exercise — label with the new entity.
+        // - "changed": swapping one lecture/exercise for another — label with the new entity.
+        String transition;
+        String markerName;
+        IrisChatMode previousMode = session.getMode();
+        if (newMode == IrisChatMode.COURSE_CHAT) {
+            transition = "removed";
+            markerName = lookupRemovedContextName(previousMode, session.getEntityId());
+        }
+        else if (previousMode == IrisChatMode.COURSE_CHAT) {
+            transition = "added";
+            markerName = newEntityName;
+        }
+        else {
+            transition = "changed";
+            markerName = newEntityName;
+        }
 
         session.setMode(newMode);
         session.setEntityId(newEntityId);
         irisChatSessionRepository.save(session);
 
         var markerAttributes = JsonObjectMapper.get().createObjectNode();
-        markerAttributes.put("mode", newMode.name());
+        markerAttributes.put("transition", transition);
         markerAttributes.put("name", markerName);
         IrisMessage markerMessage = new IrisMessage();
         markerMessage.addContent(new IrisJsonMessageContent(markerAttributes));

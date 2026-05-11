@@ -260,12 +260,20 @@
                                     <div class="context-switch-divider" role="separator">
                                         <span class="divider-line"></span>
                                         <span class="divider-label">
-                                            <fa-icon [icon]="contextSwitch.added ? faPlus : faMinus" />
-                                            <span
-                                                [jhiTranslate]="
-                                                    contextSwitch.added ? 'artemisApp.iris.contextSelection.contextAdded' : 'artemisApp.iris.contextSelection.contextRemoved'
-                                                "
-                                            ></span>
+                                            @switch (contextSwitch.transition) {
+                                                @case ('removed') {
+                                                    <fa-icon [icon]="faMinus" />
+                                                    <span jhiTranslate="artemisApp.iris.contextSelection.contextRemoved"></span>
+                                                }
+                                                @case ('changed') {
+                                                    <fa-icon [icon]="faArrowsRotate" />
+                                                    <span jhiTranslate="artemisApp.iris.contextSelection.contextChanged"></span>
+                                                }
+                                                @default {
+                                                    <fa-icon [icon]="faPlus" />
+                                                    <span jhiTranslate="artemisApp.iris.contextSelection.contextAdded"></span>
+                                                }
+                                            }
                                             <span>{{ contextSwitch.name }}</span>
                                         </span>
                                         <span class="divider-line"></span>

@@ -1,5 +1,6 @@
 import {
     faArrowDown,
+    faArrowsRotate,
     faCheck,
     faChevronDown,
     faCircleInfo,
@@ -188,6 +189,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faChevronDown = faChevronDown;
     protected readonly faPlus = faPlus;
     protected readonly faMinus = faMinus;
+    protected readonly faArrowsRotate = faArrowsRotate;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -208,19 +210,19 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     /**
-     * Reads the new chat mode and entity name from a CTXSWAP marker. The marker carries
-     * `{ mode, name }` as IrisJsonMessageContent; legacy markers (with plain text content) are
-     * rendered as "added" since the only pre-feature-branch context was course-level.
+     * Reads the transition kind and entity name from a CTXSWAP marker. The marker carries
+     * `{ transition, name }` as IrisJsonMessageContent; legacy markers (with plain text content)
+     * are rendered as "added" since they predate the lecture/exercise switching feature.
      */
-    protected getContextSwitchInfo(message: IrisMessage): { added: boolean; name: string } {
+    protected getContextSwitchInfo(message: IrisMessage): { transition: 'added' | 'removed' | 'changed'; name: string } {
         const jsonContent = message.content?.find((c) => isJsonContent(c)) as IrisJsonMessageContent | undefined;
         if (jsonContent) {
-            const mode = jsonContent.attributes?.['mode'] as string | undefined;
+            const transition = jsonContent.attributes?.['transition'] as 'added' | 'removed' | 'changed' | undefined;
             const name = (jsonContent.attributes?.['name'] as string | undefined) ?? '';
-            return { added: mode !== ChatServiceMode.COURSE, name };
+            return { transition: transition ?? 'added', name };
         }
         const textContent = message.content?.find((c) => isTextContent(c)) as IrisTextMessageContent | undefined;
-        return { added: true, name: textContent?.textContent ?? '' };
+        return { transition: 'added', name: textContent?.textContent ?? '' };
     }
 
     // Observable-derived signals (using toSignal for reactive state)
