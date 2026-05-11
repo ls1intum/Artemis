@@ -262,17 +262,17 @@
                                         <span class="divider-label">
                                             @switch (contextSwitch.transition) {
                                                 @case ('removed') {
-                                                    <fa-icon [icon]="faMinus" />
                                                     <span jhiTranslate="artemisApp.iris.contextSelection.contextRemoved"></span>
                                                 }
                                                 @case ('changed') {
-                                                    <fa-icon [icon]="faArrowsRotate" />
                                                     <span jhiTranslate="artemisApp.iris.contextSelection.contextChanged"></span>
                                                 }
                                                 @default {
-                                                    <fa-icon [icon]="faPlus" />
                                                     <span jhiTranslate="artemisApp.iris.contextSelection.contextAdded"></span>
                                                 }
+                                            }
+                                            @if (contextSwitch.entityIcon) {
+                                                <fa-icon [icon]="contextSwitch.entityIcon" />
                                             }
                                             <span>{{ contextSwitch.name }}</span>
                                         </span>

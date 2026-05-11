@@ -1,6 +1,6 @@
 import {
     faArrowDown,
-    faArrowsRotate,
+    faChalkboardUser,
     faCheck,
     faChevronDown,
     faCircleInfo,
@@ -8,16 +8,17 @@ import {
     faCompress,
     faCopy,
     faExpand,
+    faFont,
+    faKeyboard,
     faLink,
     faMagnifyingGlass,
-    faMinus,
     faPaperPlane,
     faPenToSquare,
-    faPlus,
     faThumbsDown,
     faThumbsUp,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService } from 'primeng/api';
@@ -187,9 +188,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faCopy = faCopy;
     protected readonly faCheck = faCheck;
     protected readonly faChevronDown = faChevronDown;
-    protected readonly faPlus = faPlus;
-    protected readonly faMinus = faMinus;
-    protected readonly faArrowsRotate = faArrowsRotate;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -210,19 +208,33 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     /**
-     * Reads the transition kind and entity name from a CTXSWAP marker. The marker carries
-     * `{ transition, name }` as IrisJsonMessageContent; legacy markers (with plain text content)
-     * are rendered as "added" since they predate the lecture/exercise switching feature.
+     * Reads the transition kind, entity icon, and entity name from a CTXSWAP marker. The marker
+     * carries `{ transition, entityMode, name }` as IrisJsonMessageContent; legacy markers (plain
+     * text content) are rendered as "added" since they predate the lecture/exercise switching feature.
      */
-    protected getContextSwitchInfo(message: IrisMessage): { transition: 'added' | 'removed' | 'changed'; name: string } {
+    protected getContextSwitchInfo(message: IrisMessage): { transition: 'added' | 'removed' | 'changed'; entityIcon: IconProp | undefined; name: string } {
         const jsonContent = message.content?.find((c) => isJsonContent(c)) as IrisJsonMessageContent | undefined;
         if (jsonContent) {
             const transition = jsonContent.attributes?.['transition'] as 'added' | 'removed' | 'changed' | undefined;
+            const entityMode = jsonContent.attributes?.['entityMode'] as string | undefined;
             const name = (jsonContent.attributes?.['name'] as string | undefined) ?? '';
-            return { transition: transition ?? 'added', name };
+            return { transition: transition ?? 'added', entityIcon: this.iconForEntityMode(entityMode), name };
         }
         const textContent = message.content?.find((c) => isTextContent(c)) as IrisTextMessageContent | undefined;
-        return { transition: 'added', name: textContent?.textContent ?? '' };
+        return { transition: 'added', entityIcon: undefined, name: textContent?.textContent ?? '' };
+    }
+
+    private iconForEntityMode(entityMode: string | undefined): IconProp | undefined {
+        switch (entityMode) {
+            case ChatServiceMode.LECTURE:
+                return faChalkboardUser;
+            case ChatServiceMode.PROGRAMMING_EXERCISE:
+                return faKeyboard;
+            case ChatServiceMode.TEXT_EXERCISE:
+                return faFont;
+            default:
+                return undefined;
+        }
     }
 
     // Observable-derived signals (using toSignal for reactive state)

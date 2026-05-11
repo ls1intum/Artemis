@@ -454,24 +454,30 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             default -> throw new IllegalStateException("IrisChatSessionService.applyContextChange does not handle chat mode " + newMode);
         };
 
-        // Classify the transition so the client can pick the right icon + label:
+        // Classify the transition so the client can pick the right label:
         // - "removed": back to COURSE_CHAT — label with the lecture/exercise being removed (the old one).
         // - "added": from COURSE_CHAT into a lecture/exercise — label with the new entity.
         // - "changed": swapping one lecture/exercise for another — label with the new entity.
+        // The marker also carries the displayed entity's chat mode so the client can render the
+        // matching lecture/exercise icon next to the name.
         String transition;
         String markerName;
+        IrisChatMode entityMode;
         IrisChatMode previousMode = session.getMode();
         if (newMode == IrisChatMode.COURSE_CHAT) {
             transition = "removed";
             markerName = lookupRemovedContextName(previousMode, session.getEntityId());
+            entityMode = previousMode;
         }
         else if (previousMode == IrisChatMode.COURSE_CHAT) {
             transition = "added";
             markerName = newEntityName;
+            entityMode = newMode;
         }
         else {
             transition = "changed";
             markerName = newEntityName;
+            entityMode = newMode;
         }
 
         session.setMode(newMode);
@@ -480,6 +486,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
         var markerAttributes = JsonObjectMapper.get().createObjectNode();
         markerAttributes.put("transition", transition);
+        markerAttributes.put("entityMode", entityMode.name());
         markerAttributes.put("name", markerName);
         IrisMessage markerMessage = new IrisMessage();
         markerMessage.addContent(new IrisJsonMessageContent(markerAttributes));
