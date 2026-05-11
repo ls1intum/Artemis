@@ -36,8 +36,7 @@ public record TutorialGroupSummaryDTO(Long id, String title, @Nullable Integer c
      */
     public static TutorialGroupSummaryDTO from(TutorialGroup tutorialGroup) {
         return new TutorialGroupSummaryDTO(tutorialGroup.getId(), tutorialGroup.getTitle(), tutorialGroup.getCapacity(), tutorialGroup.getCampus(), tutorialGroup.getLanguage(),
-                tutorialGroup.getAdditionalInformation(), tutorialGroup.getIsOnline(), TutorialGroupSummaryScheduleDTO.from(tutorialGroup.getTutorialGroupSchedule()),
-                tutorialGroup.getTutorialGroupSessions() == null ? null : tutorialGroup.getTutorialGroupSessions().stream().map(TutorialGroupSummarySessionDTO::from).toList(),
+                tutorialGroup.getAdditionalInformation(), tutorialGroup.getIsOnline(), TutorialGroupSummaryScheduleDTO.from(tutorialGroup.getTutorialGroupSchedule()), null,
                 tutorialGroup.getChannel(), tutorialGroup.getIsUserRegistered(), tutorialGroup.getIsUserTutor(), tutorialGroup.getNumberOfRegisteredUsers(),
                 tutorialGroup.getTeachingAssistantName(), tutorialGroup.getTeachingAssistantId(), tutorialGroup.getTeachingAssistantImageUrl(), tutorialGroup.getCourseTitle(),
                 TutorialGroupSummarySessionDTO.from(tutorialGroup.getNextSession()), tutorialGroup.getAverageAttendance());
