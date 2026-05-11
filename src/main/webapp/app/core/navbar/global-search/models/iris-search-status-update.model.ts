@@ -7,6 +7,7 @@ import { LectureSearchResult } from 'app/core/navbar/global-search/models/lectur
  * - `isThinking: false` → Pipeline done. Show `answer` card if non-null, hide everything otherwise.
  */
 export interface IrisSearchStatusUpdate {
+    runId: string;
     isThinking: boolean;
     answer?: string;
     sources?: LectureSearchResult[];

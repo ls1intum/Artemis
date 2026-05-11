@@ -19,5 +19,5 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRe
  * </ul>
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record IrisGlobalSearchAnswerWebsocketDTO(boolean isThinking, @Nullable String answer, @Nullable List<PyrisLectureSearchResultDTO> sources) {
+public record IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisLectureSearchResultDTO> sources) {
 }

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.web;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.validation.Valid;
 
@@ -65,7 +66,7 @@ public class IrisLectureSearchResource {
      */
     @PostMapping("search-answer")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> ask(@RequestBody @Valid PyrisSearchAskRequestDTO requestDTO, Principal principal) {
+    public ResponseEntity<Map<String, String>> ask(@RequestBody @Valid PyrisSearchAskRequestDTO requestDTO, Principal principal) {
         var user = userRepository.findOneByLogin(principal.getName()).orElseThrow();
         var jobToken = pyrisJobService.addGlobalSearchAnswerJob(principal.getName());
         // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
@@ -73,6 +74,6 @@ public class IrisLectureSearchResource {
         // would break WebSocket routing for any callbacks that arrive later.
         // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
         pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), jobToken, user.getSelectedLLMUsage());
-        return ResponseEntity.accepted().build();
+        return ResponseEntity.accepted().body(Map.of("runId", jobToken));
     }
 }
