@@ -125,7 +125,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
@@ -801,6 +803,24 @@ public class ProgrammingExerciseTestService {
         assertThat(examExercise).isEqualTo(generatedExercise);
         final Exam loadedExam = examTestRepository.findWithExerciseGroupsAndExercisesById(examExercise.getExam().getId()).orElseThrow();
         assertThat(loadedExam.getNumberOfExercisesInExam()).isEqualTo(1);
+    }
+
+    // TEST
+    public void createProgrammingExerciseForExam_withoutBuildPlanConfiguration_setsAfterDueDateForResultPhases() throws Exception {
+        String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+        examExercise.setShortName("SHORT" + uniqueSuffix);
+        examExercise.setTitle("Title " + uniqueSuffix);
+        examExercise.getBuildConfig().setBuildPlanConfiguration(null);
+        mockDelegate.mockConnectorRequestsForSetup(examExercise, false, false, false);
+
+        final var generatedExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", examExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        assertThat(generatedExercise.getBuildConfig()).isNotNull();
+        assertThat(generatedExercise.getBuildConfig().getBuildPlanConfiguration()).isNotBlank();
+
+        final var phasesDto = BuildPlanPhasesDTO.fromBuildPlanConfiguration(generatedExercise.getBuildConfig().getBuildPlanConfiguration());
+        final var resultPhases = phasesDto.phases().stream().filter(phase -> phase.resultPaths() != null && !phase.resultPaths().isEmpty()).toList();
+        assertThat(resultPhases).isNotEmpty();
+        assertThat(resultPhases).allMatch(phase -> phase.condition() == BuildPhaseCondition.AFTER_DUE_DATE);
     }
 
     // TEST

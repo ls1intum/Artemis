@@ -267,7 +267,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public readonly importOptions: ImportOptions = {
         recreateBuildPlans: false,
         updateTemplate: false,
-        setTestCaseVisibilityToAfterDueDate: false,
+        setTestCaseVisibilityToAfterDueDate: true,
     };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 

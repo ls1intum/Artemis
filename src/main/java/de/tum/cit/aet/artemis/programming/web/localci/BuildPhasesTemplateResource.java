@@ -64,11 +64,11 @@ public class BuildPhasesTemplateResource {
     @EnforceAtLeastEditor
     public ResponseEntity<BuildPlanPhasesDTO> getBuildPhasesTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
-            @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns) {
-        log.debug("REST request to get phases template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}", language, projectType,
-                staticAnalysis, sequentialRuns);
+            @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns, @RequestParam(value = "examMode", defaultValue = "false") boolean examMode) {
+        log.debug("REST request to get phases template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, exam mode {}", language,
+                projectType, staticAnalysis, sequentialRuns, examMode);
 
-        return getBuildPhasesTemplateFileContentWithResponse(language, projectType, staticAnalysis, sequentialRuns);
+        return getBuildPhasesTemplateFileContentWithResponse(language, projectType, staticAnalysis, sequentialRuns, examMode);
     }
 
     /**
@@ -84,9 +84,12 @@ public class BuildPhasesTemplateResource {
      * @return The requested build plan phases, or 404 if the phases don't exist
      */
     private ResponseEntity<BuildPlanPhasesDTO> getBuildPhasesTemplateFileContentWithResponse(ProgrammingLanguage language, Optional<ProjectType> optionalProjectType,
-            boolean staticAnalysis, boolean sequentialRuns) {
+            boolean staticAnalysis, boolean sequentialRuns, boolean examMode) {
         try {
             List<BuildPhaseDTO> phases = buildPhasesTemplateService.getBuildPlanPhasesFor(language, optionalProjectType, staticAnalysis, sequentialRuns);
+            if (examMode) {
+                phases = buildPhasesTemplateService.applyExamDefaults(phases);
+            }
             if (phases == null) {
                 return ResponseEntity.notFound().build();
             }

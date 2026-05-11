@@ -114,17 +114,19 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
         this.sequentialTestRuns = this.programmingExercise.buildConfig?.sequentialTestRuns;
         this.isImportFromFile = isImportFromFile;
         if (!isImportFromFile || !this.programmingExercise.buildConfig?.buildPlanConfiguration) {
-            this.buildPhasesTemplateService.getTemplate(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
-                next: (buildPlanPhases) => {
-                    if (!buildPlanPhases?.phases?.length) {
-                        return;
-                    }
-                    this.buildPlanPhases = buildPlanPhases;
-                },
-                error: () => {
-                    this.resetCustomBuildPlan();
-                },
-            });
+            this.buildPhasesTemplateService
+                .getTemplate(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.programmingExerciseCreationConfig.isExamMode)
+                .subscribe({
+                    next: (buildPlanPhases) => {
+                        if (!buildPlanPhases?.phases?.length) {
+                            return;
+                        }
+                        this.buildPlanPhases = buildPlanPhases;
+                    },
+                    error: () => {
+                        this.resetCustomBuildPlan();
+                    },
+                });
         }
         this.programmingExerciseCreationConfig.buildPlanLoaded = true;
         if (!this.programmingExercise.buildConfig?.buildPlanConfiguration) {

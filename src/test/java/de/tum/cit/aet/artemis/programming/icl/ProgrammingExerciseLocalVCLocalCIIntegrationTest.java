@@ -540,6 +540,12 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExerciseForExam_withoutBuildPlanConfiguration_setsAfterDueDateForResultPhases() throws Exception {
+        programmingExerciseTestService.createProgrammingExerciseForExam_withoutBuildPlanConfiguration_setsAfterDueDateForResultPhases();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
         programmingExerciseTestService.updateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest();
     }

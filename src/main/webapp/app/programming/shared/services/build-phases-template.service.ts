@@ -10,18 +10,25 @@ export class BuildPhasesTemplateService {
 
     private resourceUrl = 'api/programming/phases/templates';
 
-    getTemplate(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean): Observable<BuildPlanPhases> {
-        const uriWithParams = this.buildURIWithParams(language, projectType, staticAnalysis, sequentialRuns);
+    getTemplate(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, examMode?: boolean): Observable<BuildPlanPhases> {
+        const uriWithParams = this.buildURIWithParams(language, projectType, staticAnalysis, sequentialRuns, examMode);
         return this.http.get<BuildPlanPhases>(`${this.resourceUrl}/` + uriWithParams.uri, {
             params: uriWithParams.params,
         });
     }
 
-    private buildURIWithParams(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean): { uri: string; params: any } {
+    private buildURIWithParams(
+        language: ProgrammingLanguage,
+        projectType?: ProjectType,
+        staticAnalysis?: boolean,
+        sequentialRuns?: boolean,
+        examMode?: boolean,
+    ): { uri: string; params: any } {
         const path: string = [language, projectType].filter(Boolean).join('/');
         const params = {
             staticAnalysis: !!staticAnalysis,
             sequentialRuns: !!sequentialRuns,
+            examMode: !!examMode,
         };
         return {
             uri: path,
