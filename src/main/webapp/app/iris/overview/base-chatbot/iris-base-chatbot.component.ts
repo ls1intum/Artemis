@@ -1,6 +1,5 @@
 import {
     faArrowDown,
-    faArrowsRotate,
     faCheck,
     faChevronDown,
     faCircleInfo,
@@ -10,8 +9,10 @@ import {
     faExpand,
     faLink,
     faMagnifyingGlass,
+    faMinus,
     faPaperPlane,
     faPenToSquare,
+    faPlus,
     faThumbsDown,
     faThumbsUp,
     faXmark,
@@ -48,6 +49,7 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import {
+    IrisJsonMessageContent,
     IrisMessageContent,
     IrisMessageContentType,
     IrisTextMessageContent,
@@ -56,8 +58,10 @@ import {
     McqSetData,
     getMcqData,
     getMcqSetData,
+    isJsonContent,
     isMcqContent,
     isMcqSetContent,
+    isTextContent,
 } from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisMcqQuestionComponent } from 'app/iris/overview/mcq-question/iris-mcq-question.component';
 import { IrisMcqCarouselComponent } from 'app/iris/overview/mcq-question/iris-mcq-carousel.component';
@@ -182,7 +186,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faCopy = faCopy;
     protected readonly faCheck = faCheck;
     protected readonly faChevronDown = faChevronDown;
-    protected readonly faArrowsRotate = faArrowsRotate;
+    protected readonly faPlus = faPlus;
+    protected readonly faMinus = faMinus;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -200,6 +205,22 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly getMcqSetData = (content: IrisMessageContent): McqSetData | undefined => getMcqSetData(content);
     protected messageHasMcq(message: IrisMessage): boolean {
         return message.content?.some((c) => isMcqContent(c) || isMcqSetContent(c)) ?? false;
+    }
+
+    /**
+     * Reads the new chat mode and entity name from a CTXSWAP marker. The marker carries
+     * `{ mode, name }` as IrisJsonMessageContent; legacy markers (with plain text content) are
+     * rendered as "added" since the only pre-feature-branch context was course-level.
+     */
+    protected getContextSwitchInfo(message: IrisMessage): { added: boolean; name: string } {
+        const jsonContent = message.content?.find((c) => isJsonContent(c)) as IrisJsonMessageContent | undefined;
+        if (jsonContent) {
+            const mode = jsonContent.attributes?.['mode'] as string | undefined;
+            const name = (jsonContent.attributes?.['name'] as string | undefined) ?? '';
+            return { added: mode !== ChatServiceMode.COURSE, name };
+        }
+        const textContent = message.content?.find((c) => isTextContent(c)) as IrisTextMessageContent | undefined;
+        return { added: true, name: textContent?.textContent ?? '' };
     }
 
     // Observable-derived signals (using toSignal for reactive state)

@@ -183,7 +183,8 @@
                 "courseGroup": "Course",
                 "lecturesGroup": "Lectures",
                 "exercisesGroup": "Exercises",
-                "divider": "Context changed to",
+                "contextAdded": "Context added:",
+                "contextRemoved": "Context removed:",
                 "addContextTooltip": "Select lecture or exercise"
             },
             "tutorSuggestion": {

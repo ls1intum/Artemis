@@ -21,8 +21,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
@@ -296,8 +296,23 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
 
             var markers = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.CTXSWAP).toList();
             assertThat(markers).hasSize(1);
-            var markerContent = (IrisTextMessageContent) markers.getFirst().getContent().getFirst();
-            assertThat(markerContent.getTextContent()).isEqualTo(lecture.getTitle());
+            var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
+            assertThat(markerContent.getJsonNode().get("mode").asText()).isEqualTo(IrisChatMode.LECTURE_CHAT.name());
+            assertThat(markerContent.getJsonNode().get("name").asText()).isEqualTo(lecture.getTitle());
+        }
+
+        @Test
+        void switchingBackToCourseLabelsMarkerWithRemovedEntityName() {
+            User user = student1();
+            IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.LECTURE_CHAT, user));
+
+            irisChatSessionService.applyContextChange(session, IrisChatMode.COURSE_CHAT, course.getId(), user);
+
+            var markers = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.CTXSWAP).toList();
+            assertThat(markers).hasSize(1);
+            var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
+            assertThat(markerContent.getJsonNode().get("mode").asText()).isEqualTo(IrisChatMode.COURSE_CHAT.name());
+            assertThat(markerContent.getJsonNode().get("name").asText()).isEqualTo(lecture.getTitle());
         }
 
         @Test

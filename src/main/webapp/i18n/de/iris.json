@@ -179,7 +179,8 @@
                 "courseGroup": "Kurs",
                 "lecturesGroup": "Vorlesungen",
                 "exercisesGroup": "Aufgaben",
-                "divider": "Kontext gewechselt zu",
+                "contextAdded": "Kontext hinzugefügt:",
+                "contextRemoved": "Kontext entfernt:",
                 "addContextTooltip": "Vorlesung oder Aufgabe wählen"
             },
             "citation": {

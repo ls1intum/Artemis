@@ -256,16 +256,17 @@
                                     </div>
                                 }
                                 @if (message.sender === IrisSender.CTXSWAP) {
+                                    @let contextSwitch = getContextSwitchInfo(message);
                                     <div class="context-switch-divider" role="separator">
                                         <span class="divider-line"></span>
                                         <span class="divider-label">
-                                            <fa-icon [icon]="faArrowsRotate" />
-                                            <span jhiTranslate="artemisApp.iris.contextSelection.divider"></span>
-                                            @for (content of message.content; track content.id ?? $index) {
-                                                @if (content.type === IrisMessageContentType.TEXT) {
-                                                    <span>{{ (content | as: IrisTextMessageContent).textContent }}</span>
-                                                }
-                                            }
+                                            <fa-icon [icon]="contextSwitch.added ? faPlus : faMinus" />
+                                            <span
+                                                [jhiTranslate]="
+                                                    contextSwitch.added ? 'artemisApp.iris.contextSelection.contextAdded' : 'artemisApp.iris.contextSelection.contextRemoved'
+                                                "
+                                            ></span>
+                                            <span>{{ contextSwitch.name }}</span>
                                         </span>
                                         <span class="divider-line"></span>
                                     </div>
