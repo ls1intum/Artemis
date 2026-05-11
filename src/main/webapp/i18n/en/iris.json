@@ -183,9 +183,9 @@
                 "courseGroup": "Course",
                 "lecturesGroup": "Lectures",
                 "exercisesGroup": "Exercises",
-                "contextAdded": "Context added:",
-                "contextRemoved": "Context removed:",
-                "contextChanged": "Context changed to:",
+                "chatTopicSet": "Chat topic set:",
+                "chatTopicCleared": "Chat topic cleared",
+                "chatTopicSwitched": "Chat topic switched:",
                 "addContextTooltip": "Select lecture or exercise"
             },
             "tutorSuggestion": {

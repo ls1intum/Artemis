@@ -179,9 +179,9 @@
                 "courseGroup": "Kurs",
                 "lecturesGroup": "Vorlesungen",
                 "exercisesGroup": "Aufgaben",
-                "contextAdded": "Kontext hinzugefügt:",
-                "contextRemoved": "Kontext entfernt:",
-                "contextChanged": "Kontext gewechselt zu:",
+                "chatTopicSet": "Chat-Thema gesetzt:",
+                "chatTopicCleared": "Chat-Thema entfernt",
+                "chatTopicSwitched": "Chat-Thema gewechselt:",
                 "addContextTooltip": "Vorlesung oder Aufgabe wählen"
             },
             "citation": {
