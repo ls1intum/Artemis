@@ -35,6 +35,39 @@
     }
 }
 
+.panel-drop-target {
+    transition: outline-color 0.15s ease;
+}
+
+.single-panel-split-drop-wrapper {
+    position: relative;
+}
+
+.single-panel-side-drop {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    bottom: 0;
+    width: 56px;
+    opacity: 0;
+    transition:
+        background-color 0.15s ease,
+        opacity 0.15s ease;
+
+    &:hover {
+        opacity: 1;
+        background-color: color-mix(in srgb, var(--bs-primary) 18%, transparent);
+    }
+}
+
+.single-panel-side-drop-left {
+    left: 0;
+}
+
+.single-panel-side-drop-right {
+    right: 0;
+}
+
 :host ::ng-deep {
     .p-tablist-tab-list {
         border-width: 0 0 var(--bs-border-width) 0;
