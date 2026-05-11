@@ -463,21 +463,25 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         String transition;
         String markerName;
         IrisChatMode entityMode;
+        Long markerEntityId;
         IrisChatMode previousMode = session.getMode();
         if (newMode == IrisChatMode.COURSE_CHAT) {
             transition = "removed";
             markerName = lookupRemovedContextName(previousMode, session.getEntityId());
             entityMode = previousMode;
+            markerEntityId = session.getEntityId();
         }
         else if (previousMode == IrisChatMode.COURSE_CHAT) {
             transition = "added";
             markerName = newEntityName;
             entityMode = newMode;
+            markerEntityId = newEntityId;
         }
         else {
             transition = "changed";
             markerName = newEntityName;
             entityMode = newMode;
+            markerEntityId = newEntityId;
         }
 
         session.setMode(newMode);
@@ -487,6 +491,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         var markerAttributes = JsonObjectMapper.get().createObjectNode();
         markerAttributes.put("transition", transition);
         markerAttributes.put("entityMode", entityMode.name());
+        markerAttributes.put("entityId", markerEntityId);
         markerAttributes.put("name", markerName);
         IrisMessage markerMessage = new IrisMessage();
         markerMessage.addContent(new IrisJsonMessageContent(markerAttributes));

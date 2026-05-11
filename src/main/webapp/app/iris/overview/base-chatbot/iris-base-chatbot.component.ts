@@ -208,20 +208,32 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     /**
-     * Reads the transition kind, entity icon, and entity name from a CTXSWAP marker. The marker
-     * carries `{ transition, entityMode, name }` as IrisJsonMessageContent; legacy markers (plain
-     * text content) are rendered as "added" since they predate the lecture/exercise switching feature.
+     * Reads the transition kind, entity icon, navigation route, and entity name from a CTXSWAP
+     * marker. The marker carries `{ transition, entityMode, entityId, name }` as
+     * IrisJsonMessageContent; legacy markers (plain text content) are rendered as "added" with no
+     * route since the entity id is not recoverable.
      */
-    protected getContextSwitchInfo(message: IrisMessage): { transition: 'added' | 'removed' | 'changed'; entityIcon: IconProp | undefined; name: string } {
+    protected getContextSwitchInfo(message: IrisMessage): {
+        transition: 'added' | 'removed' | 'changed';
+        entityIcon: IconProp | undefined;
+        entityRoute: string | undefined;
+        name: string;
+    } {
         const jsonContent = message.content?.find((c) => isJsonContent(c)) as IrisJsonMessageContent | undefined;
         if (jsonContent) {
             const transition = jsonContent.attributes?.['transition'] as 'added' | 'removed' | 'changed' | undefined;
             const entityMode = jsonContent.attributes?.['entityMode'] as string | undefined;
+            const entityId = jsonContent.attributes?.['entityId'] as number | undefined;
             const name = (jsonContent.attributes?.['name'] as string | undefined) ?? '';
-            return { transition: transition ?? 'added', entityIcon: this.iconForEntityMode(entityMode), name };
+            return {
+                transition: transition ?? 'added',
+                entityIcon: this.iconForEntityMode(entityMode),
+                entityRoute: this.computeRelatedEntityRoute(entityMode as ChatServiceMode | undefined, entityId),
+                name,
+            };
         }
         const textContent = message.content?.find((c) => isTextContent(c)) as IrisTextMessageContent | undefined;
-        return { transition: 'added', entityIcon: undefined, name: textContent?.textContent ?? '' };
+        return { transition: 'added', entityIcon: undefined, entityRoute: undefined, name: textContent?.textContent ?? '' };
     }
 
     private iconForEntityMode(entityMode: string | undefined): IconProp | undefined {
@@ -1221,12 +1233,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (!currentChatMode || !currentRelatedEntityId) {
             return undefined;
         }
+        // Absolute path so the link works in every layout (dashboard, embedded, widget), not only
+        // when the current URL is /courses/:courseId/iris where `../exercises/X` resolves cleanly.
+        const courseId = this.chatService.getCourseId();
+        if (!courseId) {
+            return undefined;
+        }
         switch (currentChatMode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
             case ChatServiceMode.TEXT_EXERCISE:
-                return `../exercises/${currentRelatedEntityId}`;
+                return `/courses/${courseId}/exercises/${currentRelatedEntityId}`;
             case ChatServiceMode.LECTURE:
-                return `../lectures/${currentRelatedEntityId}`;
+                return `/courses/${courseId}/lectures/${currentRelatedEntityId}`;
             default:
                 return undefined;
         }

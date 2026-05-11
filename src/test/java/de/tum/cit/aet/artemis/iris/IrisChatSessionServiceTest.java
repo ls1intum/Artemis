@@ -299,6 +299,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
             assertThat(markerContent.getJsonNode().get("transition").asText()).isEqualTo("added");
             assertThat(markerContent.getJsonNode().get("entityMode").asText()).isEqualTo(IrisChatMode.LECTURE_CHAT.name());
+            assertThat(markerContent.getJsonNode().get("entityId").asLong()).isEqualTo(lecture.getId());
             assertThat(markerContent.getJsonNode().get("name").asText()).isEqualTo(lecture.getTitle());
         }
 
@@ -314,6 +315,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
             assertThat(markerContent.getJsonNode().get("transition").asText()).isEqualTo("removed");
             assertThat(markerContent.getJsonNode().get("entityMode").asText()).isEqualTo(IrisChatMode.LECTURE_CHAT.name());
+            assertThat(markerContent.getJsonNode().get("entityId").asLong()).isEqualTo(lecture.getId());
             assertThat(markerContent.getJsonNode().get("name").asText()).isEqualTo(lecture.getTitle());
         }
 
@@ -329,6 +331,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
             assertThat(markerContent.getJsonNode().get("transition").asText()).isEqualTo("changed");
             assertThat(markerContent.getJsonNode().get("entityMode").asText()).isEqualTo(IrisChatMode.TEXT_EXERCISE_CHAT.name());
+            assertThat(markerContent.getJsonNode().get("entityId").asLong()).isEqualTo(textExercise.getId());
             assertThat(markerContent.getJsonNode().get("name").asText()).isEqualTo(textExercise.getTitle());
         }
 

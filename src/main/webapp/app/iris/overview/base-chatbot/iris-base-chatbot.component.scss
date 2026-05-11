@@ -831,5 +831,18 @@ cdk-global-scrollblock {
         padding: 0.25rem 0.75rem;
         border: 1px solid color-mix(in srgb, var(--bs-primary) 60%, transparent 40%);
         border-radius: 9999px;
+        background: transparent;
+        color: inherit;
+        font-size: inherit;
+    }
+
+    .divider-label-clickable {
+        cursor: pointer;
+
+        &:hover,
+        &:focus-visible {
+            background: color-mix(in srgb, var(--bs-primary) 12%, transparent 88%);
+            opacity: 1;
+        }
     }
 }

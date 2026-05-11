@@ -259,27 +259,40 @@
                                     @let contextSwitch = getContextSwitchInfo(message);
                                     <div class="context-switch-divider" role="separator">
                                         <span class="divider-line"></span>
-                                        <span class="divider-label">
-                                            @switch (contextSwitch.transition) {
-                                                @case ('removed') {
-                                                    <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicCleared"></span>
-                                                }
-                                                @case ('changed') {
+                                        @if (contextSwitch.transition === 'removed') {
+                                            <span class="divider-label">
+                                                <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicCleared"></span>
+                                            </span>
+                                        } @else if (contextSwitch.entityRoute) {
+                                            <button
+                                                type="button"
+                                                class="divider-label divider-label-clickable"
+                                                [routerLink]="contextSwitch.entityRoute"
+                                                [queryParamsHandling]="'preserve'"
+                                            >
+                                                @if (contextSwitch.transition === 'changed') {
                                                     <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicSwitched"></span>
-                                                    @if (contextSwitch.entityIcon) {
-                                                        <fa-icon [icon]="contextSwitch.entityIcon" />
-                                                    }
-                                                    <span>{{ contextSwitch.name }}</span>
-                                                }
-                                                @default {
+                                                } @else {
                                                     <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicSet"></span>
-                                                    @if (contextSwitch.entityIcon) {
-                                                        <fa-icon [icon]="contextSwitch.entityIcon" />
-                                                    }
-                                                    <span>{{ contextSwitch.name }}</span>
                                                 }
-                                            }
-                                        </span>
+                                                @if (contextSwitch.entityIcon) {
+                                                    <fa-icon [icon]="contextSwitch.entityIcon" />
+                                                }
+                                                <span>{{ contextSwitch.name }}</span>
+                                            </button>
+                                        } @else {
+                                            <span class="divider-label">
+                                                @if (contextSwitch.transition === 'changed') {
+                                                    <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicSwitched"></span>
+                                                } @else {
+                                                    <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicSet"></span>
+                                                }
+                                                @if (contextSwitch.entityIcon) {
+                                                    <fa-icon [icon]="contextSwitch.entityIcon" />
+                                                }
+                                                <span>{{ contextSwitch.name }}</span>
+                                            </span>
+                                        }
                                         <span class="divider-line"></span>
                                     </div>
                                 }
