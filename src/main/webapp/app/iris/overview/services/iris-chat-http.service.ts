@@ -59,9 +59,15 @@ export class IrisChatHttpService {
      * creates a new message in a session
      * @param sessionId of the session
      * @param request  the message request DTO containing content and optional uncommitted files
+     * @param pendingContext optional pending context change (mode + entityId) to apply atomically before the message is saved.
+     *        Forwarded as query params; the server inserts a CTXSWAP marker before the user message.
      */
-    createMessage(sessionId: number, request: IrisMessageRequestDTO): Response<IrisMessageResponseDTO> {
-        return this.httpClient.post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages`, request, { observe: 'response' });
+    createMessage(sessionId: number, request: IrisMessageRequestDTO, pendingContext?: { mode: ChatServiceMode; entityId: number }): Response<IrisMessageResponseDTO> {
+        const options: { observe: 'response'; params?: { pendingMode: string; pendingEntityId: string } } = { observe: 'response' };
+        if (pendingContext) {
+            options.params = { pendingMode: pendingContext.mode, pendingEntityId: String(pendingContext.entityId) };
+        }
+        return this.httpClient.post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages`, request, options);
     }
 
     /**
@@ -122,10 +128,6 @@ export class IrisChatHttpService {
             return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/${entityId}/sessions`, null, { observe: 'response' });
         }
         return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions`, null, { observe: 'response', params: { mode, entityId } });
-    }
-
-    updateSessionContext(courseId: number, sessionId: number, mode: ChatServiceMode, entityId: number): Response<IrisSession> {
-        return this.httpClient.patch<IrisSession>(`${this.apiPrefix}/chat/${courseId}/sessions/${sessionId}/context`, null, { observe: 'response', params: { mode, entityId } });
     }
 
     getChatSessions(courseId: number): Observable<IrisSessionDTO[]> {

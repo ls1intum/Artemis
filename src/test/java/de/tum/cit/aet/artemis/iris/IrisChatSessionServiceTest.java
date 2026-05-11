@@ -21,9 +21,12 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -42,6 +45,9 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
 
     @Autowired
     private IrisChatSessionRepository irisChatSessionRepository;
+
+    @Autowired
+    private IrisMessageRepository irisMessageRepository;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -267,6 +273,78 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             IrisChatSession result = irisChatSessionService.createSession(IrisChatMode.COURSE_CHAT, course.getId(), student1());
 
             assertThat(result.getTitle()).isNotBlank();
+        }
+    }
+
+    // =========================================================================
+    // applyContextChange — pending context change applied atomically with sendMessage
+    // =========================================================================
+
+    @Nested
+    class ApplyContextChange {
+
+        @Test
+        void switchesModeAndEntityIdAndAppendsCtxswapMarker() {
+            User user = student1();
+            IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.COURSE_CHAT, user));
+
+            irisChatSessionService.applyContextChange(session, IrisChatMode.LECTURE_CHAT, lecture.getId(), user);
+
+            IrisChatSession reloaded = irisChatSessionRepository.findById(session.getId()).orElseThrow();
+            assertThat(reloaded.getMode()).isEqualTo(IrisChatMode.LECTURE_CHAT);
+            assertThat(reloaded.getEntityId()).isEqualTo(lecture.getId());
+
+            var markers = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.CTXSWAP).toList();
+            assertThat(markers).hasSize(1);
+            var markerContent = (IrisTextMessageContent) markers.getFirst().getContent().getFirst();
+            assertThat(markerContent.getTextContent()).isEqualTo(lecture.getTitle());
+        }
+
+        @Test
+        void isIdempotentWhenContextUnchanged() {
+            User user = student1();
+            IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.COURSE_CHAT, user));
+
+            irisChatSessionService.applyContextChange(session, IrisChatMode.COURSE_CHAT, course.getId(), user);
+
+            assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+        }
+
+        @Test
+        void throwsAccessForbiddenForDifferentUser() {
+            IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.COURSE_CHAT, student2()));
+
+            assertThatExceptionOfType(AccessForbiddenException.class)
+                    .isThrownBy(() -> irisChatSessionService.applyContextChange(session, IrisChatMode.LECTURE_CHAT, lecture.getId(), student1()));
+        }
+
+        @Test
+        void throwsConflictWhenCourseChatEntityDoesNotMatchSessionCourse() {
+            User user = student1();
+            IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.LECTURE_CHAT, user));
+
+            assertThatExceptionOfType(ConflictException.class)
+                    .isThrownBy(() -> irisChatSessionService.applyContextChange(session, IrisChatMode.COURSE_CHAT, NON_EXISTENT_ID, user));
+        }
+
+        @Test
+        void throwsConflictForExamExerciseTarget() {
+            User user = student1();
+            IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.COURSE_CHAT, user));
+            TextExercise examExercise = createExamTextExercise();
+
+            assertThatExceptionOfType(ConflictException.class)
+                    .isThrownBy(() -> irisChatSessionService.applyContextChange(session, IrisChatMode.TEXT_EXERCISE_CHAT, examExercise.getId(), user));
+        }
+
+        @Test
+        void throwsAccessForbiddenWhenUserHasNotOptedIntoLLM() {
+            User user = student1();
+            IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.COURSE_CHAT, user));
+            user.setSelectedLLMUsage(null);
+
+            assertThatExceptionOfType(AccessForbiddenException.class)
+                    .isThrownBy(() -> irisChatSessionService.applyContextChange(session, IrisChatMode.LECTURE_CHAT, lecture.getId(), user));
         }
     }
 

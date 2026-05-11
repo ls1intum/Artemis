@@ -156,7 +156,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything());
+        expect(stub).toHaveBeenCalledWith(id, expect.anything(), undefined);
         const messages = await firstValueFrom(service.currentMessages());
         expect(messages).toHaveLength(mockConversation.messages!.length + 1);
         expect(messages.last()).toEqual(createdMessage);
@@ -173,7 +173,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything());
+        expect(stub).toHaveBeenCalledWith(id, expect.anything(), undefined);
         const error = await firstValueFrom(service.currentError());
         expect(error).toEqual(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
     });
@@ -187,6 +187,70 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         const messages = await firstValueFrom(service.currentMessages());
         expect(messages).toHaveLength(mockConversation.messages!.length);
+    });
+
+    describe('pending context change', () => {
+        it('should not call HTTP when switchContextOfCurrentSession is invoked, only update dropdown signals', async () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+            const createMessageSpy = vi.spyOn(httpService, 'createMessage');
+
+            service.switchTo(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+
+            const newEntityId = 42;
+            service.switchContextOfCurrentSession(ChatServiceMode.LECTURE, newEntityId);
+
+            // No HTTP call: the change is purely local until the user sends a message
+            expect(createMessageSpy).not.toHaveBeenCalled();
+
+            // Dropdown reflects the new selection (committed-look)
+            expect(await firstValueFrom(service.currentChatMode())).toBe(ChatServiceMode.LECTURE);
+            expect(await firstValueFrom(service.currentRelatedEntityId())).toBe(newEntityId);
+
+            // Messages and citations are untouched
+            expect(service.messages.getValue()).toEqual(mockConversation.messages);
+        });
+
+        it('should forward pendingContext as third arg to createMessage when context differs from session', async () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+            const createdMessage = mockUserMessageWithContent('hi');
+            const createMessageSpy = vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
+
+            service.switchTo(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+
+            const pendingEntityId = 42;
+            service.switchContextOfCurrentSession(ChatServiceMode.LECTURE, pendingEntityId);
+            await firstValueFrom(service.sendMessage('hi'));
+
+            expect(createMessageSpy).toHaveBeenCalledWith(id, expect.anything(), { mode: ChatServiceMode.LECTURE, entityId: pendingEntityId });
+            // After the send commits the switch, no pending context remains
+            expect(service['pendingContext']).toBeUndefined();
+            expect(service['sessionContext']).toEqual({ mode: ChatServiceMode.LECTURE, entityId: pendingEntityId });
+        });
+
+        it('should not forward pendingContext when user reverts to session current context before sending', async () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+            const createdMessage = mockUserMessageWithContent('hi');
+            const createMessageSpy = vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
+
+            service.switchTo(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+
+            // Pick a different context, then revert to the session's current context
+            service.switchContextOfCurrentSession(ChatServiceMode.LECTURE, 42);
+            service.switchContextOfCurrentSession(mockConversation.mode!, mockConversation.entityId!);
+
+            await firstValueFrom(service.sendMessage('hi'));
+
+            expect(createMessageSpy).toHaveBeenCalledWith(id, expect.anything(), undefined);
+        });
     });
 
     it('should clear chat', async () => {
@@ -246,7 +310,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything());
+        expect(stub).toHaveBeenCalledWith(id, expect.anything(), undefined);
         const error = await firstValueFrom(service.currentError());
         expect(error).toEqual(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED);
     });
@@ -262,7 +326,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything());
+        expect(stub).toHaveBeenCalledWith(id, expect.anything(), undefined);
         const error = await firstValueFrom(service.currentError());
         expect(error).toEqual(IrisErrorMessageKey.IRIS_DISABLED);
     });
