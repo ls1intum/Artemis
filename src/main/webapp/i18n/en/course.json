@@ -325,6 +325,7 @@
                 },
                 "shortname": {
                     "minlength": "Short Name must contain at least 3 characters.",
+                    "maxlength": "Short Name must not exceed 24 characters.",
                     "forbidden": "Short Name must start with a letter and cannot contain special characters."
                 },
                 "startDate": {

@@ -22,7 +22,7 @@ plugins {
     id "com.google.cloud.tools.jib" version "3.5.3"
     id "com.gorylenko.gradle-git-properties" version "2.5.7"
     id "io.spring.dependency-management" version "1.1.7"
-    id "nebula.lint" version "21.1.3"
+    id "nebula.lint" version "21.2.0"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "12.2.1"
     id "org.springframework.boot" version "${spring_boot_version}"
@@ -40,7 +40,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "9.1.2"
+version = "9.1.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -50,7 +50,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.4.1"
+    gradleVersion = "9.5.0"
 }
 
 node {
@@ -102,9 +102,9 @@ gitProperties {
 }
 
 // Override Spring Boot BOM versions to patched releases addressing known CVEs
-// thymeleaf 3.1.4.RELEASE: GHSA-7rgv-g3jm-rvv4, GHSA-vjp2-6m4m-cv5q
+// thymeleaf 3.1.5.RELEASE: GHSA-7rgv-g3jm-rvv4, GHSA-vjp2-6m4m-cv5q, GHSA-c9ph-gxww-7744
 // tomcat 11.0.21: GHSA-h9fx-5mv3-gmh6, GHSA-6q54-28g2-vpgm, GHSA-55j7-cm8x-wvmh
-ext["thymeleaf.version"] = "3.1.4.RELEASE"
+ext["thymeleaf.version"] = "3.1.5.RELEASE"
 ext["tomcat.version"] = "11.0.21"
 
 configurations {
@@ -198,8 +198,14 @@ dependencies {
 
     // Required by Sharing Platform
     implementation "org.codeability:SharingPluginPlatformAPI:1.2.1"
-    // Required by Spring cloud
-    // Cannot org.apache.httpcomponents to later version due to compatibility issues
+    // Required by Spring cloud.
+    // Pinned to 5.5.1: not vulnerable to CVE-2026-40542 / GHSA-v468-qcjx-r72w (vulnerable range >= 5.6-alpha1, < 5.6.1).
+    // The CVE affects the SCRAM-SHA-256 authentication scheme that was first introduced in 5.6; that code path does not
+    // exist in 5.5.x, and Artemis does not use SCRAM-SHA-256 anywhere. A transitive request for httpclient5:5.6 from
+    // io.weaviate:client6 (and httpclient5:5.5.2 from httpclient5-cache via the Spring BOM / Shibboleth) is resolved
+    // down to 5.5.1 by this explicit pin.
+    // We cannot upgrade to 5.6.1 (the patched release) because it breaks Hazelcast cluster formation; the bump was
+    // reverted in PR #12652.
     implementation "org.apache.httpcomponents.client5:httpclient5:5.5.1"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.3.6"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
@@ -294,7 +300,7 @@ dependencies {
 
     implementation "org.jsoup:jsoup:1.22.2"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
-    implementation "commons-codec:commons-codec:1.21.0"
+    implementation "commons-codec:commons-codec:1.22.0"
 
     implementation "com.vdurmont:semver4j:3.1.0"
 
@@ -347,12 +353,9 @@ dependencies {
     implementation "org.redisson:redisson-spring-boot-starter:${redisson_version}"
 
 
-    // Hibernate ORM — pinned to 7.2.12.Final (patch bumps over the 7.2.7 shipped by Spring Boot 4.0.5 BOM)
-    // to pick up HHH-20209 (race in JavaTypeRegistry during parallel UNION queries) and HHH-20231
-    // (cached native queries with same SQL but different result type). Drop this override once Spring Boot's
-    // BOM catches up to 7.2.12+. Keep hibernate-core and hibernate-envers in lockstep.
-    implementation "org.hibernate.orm:hibernate-core:7.2.12.Final"
-    implementation "org.hibernate.orm:hibernate-envers:7.2.12.Final"
+    // Hibernate ORM — version managed by the Spring Boot BOM.
+    implementation "org.hibernate.orm:hibernate-core"
+    implementation "org.hibernate.orm:hibernate-envers"
 
     // Required for jdbc connection pooling to databases
     implementation "com.zaxxer:HikariCP:7.0.2"
@@ -389,10 +392,10 @@ dependencies {
     implementation "org.springframework.data:spring-data-ldap"
     implementation "org.springframework.ldap:spring-ldap-core"
 
-    // Spring Cloud 2025.1.1 (Oakwood) — individual module version is 5.0.1. Kept explicit because the
+    // Spring Cloud 2025.1.1 (Oakwood) — individual module versions are pinned because the
     // spring-cloud-dependencies BOM does not publish versions for these specific modules.
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:5.0.1"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:5.0.1"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:5.0.2"
     implementation "org.springframework.cloud:spring-cloud-commons:5.0.1"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support).
@@ -449,7 +452,7 @@ dependencies {
 
     // required for database connections
     implementation "com.mysql:mysql-connector-j:${mysql_connector_version}"
-    implementation "org.postgresql:postgresql:42.7.10"
+    implementation "org.postgresql:postgresql:42.7.11"
 
     // Required by JPlag
     implementation "com.ibm.icu:icu4j-charset:78.3"
@@ -461,6 +464,10 @@ dependencies {
     implementation "org.apache.pdfbox:pdfbox:3.0.7"
     implementation "org.apache.commons:commons-csv:1.14.1"
     implementation "org.commonmark:commonmark:0.28.0"
+    implementation "org.webjars.npm:katex:0.16.44"
+    implementation "org.commonmark:commonmark-ext-gfm-tables:0.28.0"
+    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.28.0"
+
     implementation "commons-fileupload:commons-fileupload:1.6.0"
     implementation "net.lingala.zip4j:zip4j:2.11.6"
 
@@ -488,9 +495,9 @@ dependencies {
     implementation("net.bytebuddy:byte-buddy-agent") { version {        strictly byte_buddy_version } }
     annotationProcessor("net.bytebuddy:byte-buddy-agent") { version {   strictly byte_buddy_version } }
 
-    // Hibernate annotation processors — kept in lockstep with hibernate-core/envers above.
-    annotationProcessor "org.hibernate.orm:hibernate-processor:7.2.12.Final"
-    annotationProcessor "org.hibernate.orm:hibernate-core:7.2.12.Final"
+    // Hibernate annotation processors — version managed by the Spring Boot BOM.
+    annotationProcessor "org.hibernate.orm:hibernate-processor"
+    annotationProcessor "org.hibernate.orm:hibernate-core"
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
 
@@ -527,7 +534,7 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.184"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:9.4.1"
+    testImplementation "org.gradle:gradle-tooling-api:9.5.0"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.5"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
@@ -569,6 +576,21 @@ dependencyManagement {
     }
 }
 
+// Force every Netty module pulled in transitively (via Spring Boot, Spring AI, reactor-netty,
+// azure-core-http-netty, …) to the patched netty_version release. This addresses several
+// high/medium-severity advisories in 4.2.x <= 4.2.12 (HTTP smuggling, decompression bombs,
+// DNS codec input-validation bypass, epoll RST DoS, HTTP/3 QPACK unbounded allocation, etc.).
+// mockitoAgent is excluded because it is the Mockito inline-mock instrumentation jar, resolved
+// very early during configuration; mutating its resolutionStrategy after that point fails the build.
+configurations.matching { it.name != 'mockitoAgent' }.configureEach {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == "io.netty" && !details.requested.name.startsWith("netty-tcnative")) {
+            details.useVersion("${netty_version}")
+            details.because("Patched Netty release; pre-${netty_version} contains multiple high-severity CVEs.")
+        }
+    }
+}
+
 // Testcontainers 2.0 renamed modules with a "testcontainers-" prefix.
 // Redirect old artifact names (used by Zonky and Spring Boot BOM) to the new ones.
 configurations.matching { it.name != 'mockitoAgent' }.configureEach {
@@ -600,6 +622,7 @@ tasks.register("stage") {
 tasks.register("npmSetCacheDockerfile", NpmTask) {
     args = ["set", "cache", "/opt/artemis/.npm"]
 }
+
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {

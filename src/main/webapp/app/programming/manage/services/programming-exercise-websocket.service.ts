@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -21,16 +22,42 @@ export interface IProgrammingExerciseWebsocketService {
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgrammingExerciseWebsocketService {
     private websocketService = inject(WebsocketService);
+    private readonly accountService = inject(AccountService);
 
     private connections: Subscription[] = [];
     // Uses undefined for initial value.
     private subjects: { [programmingExerciseId: number]: BehaviorSubject<boolean | undefined> } = {};
+
+    private currentUserId?: number;
+    private authenticationStateSubscription: Subscription;
+
+    constructor() {
+        this.currentUserId = this.accountService.userIdentity()?.id;
+        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
+            if (this.currentUserId !== user?.id) {
+                this.currentUserId = user?.id;
+                this.resetState();
+            }
+        });
+    }
 
     /**
      * On destroy unsubscribe all connections.
      */
     ngOnDestroy(): void {
         Object.values(this.connections).forEach((connection) => connection.unsubscribe());
+        this.authenticationStateSubscription?.unsubscribe();
+    }
+
+    /**
+     * Tears down all websocket subscriptions and completes existing test-case-state subjects.
+     * Called on logout / user change so we don't leak the previous user's exercise subscriptions.
+     */
+    private resetState(): void {
+        Object.values(this.connections).forEach((connection) => connection.unsubscribe());
+        this.connections = [];
+        Object.values(this.subjects).forEach((subject) => subject.complete());
+        this.subjects = {};
     }
 
     /**
