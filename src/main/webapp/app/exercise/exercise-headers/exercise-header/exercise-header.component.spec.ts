@@ -105,7 +105,7 @@ describe('ExerciseHeaderComponent', () => {
         expect(fixture.debugElement.query(By.css('#submit-exercise'))).not.toBeNull();
     });
 
-    describe('hasGradedParticipation', () => {
+    describe('hasGradedSubmission', () => {
         it('should be false when there is no student participation', () => {
             const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
             exercise.type = ExerciseType.MODELING;
@@ -148,7 +148,7 @@ describe('ExerciseHeaderComponent', () => {
         });
     });
 
-    describe('hasPracticeParticipation', () => {
+    describe('hasPracticeSubmission', () => {
         it('should be false when there is no practice participation and mode is graded', () => {
             const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
             exercise.type = ExerciseType.MODELING;
