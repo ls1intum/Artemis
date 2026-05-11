@@ -82,7 +82,7 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
     void executeAutonomousTutorPipeline_sendsRequestToPyris() {
         Post post = createPostInChannel(student, "How does inheritance work?");
         var postDTO = new PyrisPostDTO(post);
-        var studentDTO = new PyrisUserDTO(student);
+        var studentDTO = new PyrisUserDTO(student, student.isMemirisEnabled());
 
         AtomicBoolean pipelineDone = new AtomicBoolean(false);
         AtomicReference<PyrisAutonomousTutorPipelineExecutionDTO> capturedDto = new AtomicReference<>();

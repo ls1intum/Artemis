@@ -9,6 +9,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -37,7 +38,7 @@ public class IrisChatSessionFactory {
         return new IrisChatSession(programmingExercise, user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
     }
 
-    public static <T extends IrisChatSession> T createSessionWithMessages(T session) {
+    public static <T extends IrisSession> T createSessionWithMessages(T session) {
         List<IrisMessage> messages = new ArrayList<>();
         messages.add(IrisMessageFactory.createIrisMessage(IrisMessageSender.LLM));
         messages.add(IrisMessageFactory.createIrisMessage(IrisMessageSender.USER));
