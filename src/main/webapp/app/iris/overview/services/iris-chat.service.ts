@@ -99,6 +99,15 @@ export class IrisChatService implements OnDestroy {
 
     private sessionContext?: SessionContext;
 
+    /**
+     * Context the user has selected via the dropdown but not yet committed by sending a message.
+     * Cleared on every successful send (whether or not it was applied) and on session close/reset.
+     * The dropdown reflects this selection immediately (committed-look) via {@link currentChatModeSubject}
+     * and {@link currentRelatedEntityIdSubject}; the server only learns about it when the next
+     * {@link sendMessage} forwards it as query params.
+     */
+    private pendingContext?: SessionContext;
+
     private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
     public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
 
@@ -180,6 +189,7 @@ export class IrisChatService implements OnDestroy {
         // Plain fields.
         this.latestStartedSession = undefined;
         this.sessionContext = undefined;
+        this.pendingContext = undefined;
         this.hasJustAcceptedLLMUsage = false;
         this.rateLimitInfo = undefined;
     }
@@ -255,6 +265,11 @@ export class IrisChatService implements OnDestroy {
 
     /**
      * Sends a message to the server and returns the created message.
+     * <p>
+     * If the user has selected a different context via the dropdown since the last send
+     * ({@link pendingContext}), it is forwarded as query params so the server applies the
+     * context switch atomically (CTXSWAP marker first, then the user message) in one round trip.
+     *
      * @param message to be created
      * @param uncommittedFiles optional map of uncommitted file changes (path to content)
      */
@@ -268,10 +283,19 @@ export class IrisChatService implements OnDestroy {
 
         const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles);
 
+        const contextToCommit =
+            this.pendingContext && (this.pendingContext.mode !== this.sessionContext?.mode || this.pendingContext.entityId !== this.sessionContext?.entityId)
+                ? this.pendingContext
+                : undefined;
+
         const generation = this.stateGeneration;
-        return this.irisChatHttpService.createMessage(this.sessionId, requestDTO).pipe(
+        return this.irisChatHttpService.createMessage(this.sessionId, requestDTO, contextToCommit).pipe(
             tap((response: HttpResponse<IrisMessageResponseDTO>) => {
                 if (this.stateGeneration !== generation) return;
+                if (contextToCommit) {
+                    this.sessionContext = contextToCommit;
+                }
+                this.pendingContext = undefined;
                 this.suggestions.next([]);
                 this.replaceOrAddMessage(this.mapMessageDTO(response.body!));
             }),
@@ -594,6 +618,7 @@ export class IrisChatService implements OnDestroy {
             this.citationInfo.next([]);
             this.numNewMessages.next(0);
             this.newIrisMessage.next(undefined);
+            this.pendingContext = undefined;
         }
         this.error.next(undefined);
     }
@@ -675,31 +700,29 @@ export class IrisChatService implements OnDestroy {
     }
 
     /**
-     * Updates the context (mode + entityId) of the currently active session in place via a PATCH request.
-     * Unlike switchToNewSession, this keeps the same session id and websocket subscription alive.
-     * A SYSTEM marker message is appended server-side and reflected in the returned session.
+     * Records a dropdown context selection as a {@link pendingContext} without touching the server.
+     * <p>
+     * The dropdown reflects the new selection immediately (committed-look) by emitting on the chat-mode
+     * and related-entity-id subjects, but the database, the message history, and the websocket subscription
+     * stay untouched. The change is only committed when the user actually sends a message — see
+     * {@link sendMessage}, which forwards the pending context as query params and lets the server insert
+     * the CTXSWAP marker atomically.
+     * <p>
+     * If the user toggles back to the session's current context (or picks a different option and then
+     * the original one) before sending, the next send simply finds {@link pendingContext} matching
+     * {@link sessionContext} and skips the server-side switch — no stray markers.
      */
     public switchContextOfCurrentSession(mode: ChatServiceMode, entityId: number): void {
-        const courseId = this.getCourseId();
-        if (!this.sessionId || !courseId) {
+        if (!this.sessionId) {
             return;
         }
         if (this.sessionContext?.mode === mode && this.sessionContext?.entityId === entityId) {
-            return;
+            this.pendingContext = undefined;
+        } else {
+            this.pendingContext = { mode, entityId };
         }
-        this.irisChatHttpService.updateSessionContext(courseId, this.sessionId, mode, entityId).subscribe({
-            next: (response: HttpResponse<IrisSession>) => {
-                const updatedSession = response.body!;
-                this.sessionContext = { mode, entityId };
-                this.updateCurrentSessionContext(updatedSession);
-                this.messages.next(updatedSession.messages ?? []);
-                this.citationInfo.next(updatedSession.citationInfo ?? []);
-                this.suggestions.next([]);
-            },
-            error: (error: HttpErrorResponse) => {
-                this.handleSendHttpError(error);
-            },
-        });
+        this.currentChatModeSubject.next(mode);
+        this.currentRelatedEntityIdSubject.next(entityId);
     }
 
     switchToNewSession(mode: ChatServiceMode, id?: number): void {

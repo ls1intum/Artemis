@@ -394,39 +394,36 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     }
 
     /**
-     * Updates the context (chatMode + entityId) of an existing Iris chat session in place.
+     * Applies a pending context (chatMode + entityId) change to an already-loaded Iris chat session.
      * <p>
-     * Persists a {@link IrisMessageSender#CTXSWAP CTXSWAP} marker message into the chat history
-     * so the LLM can interpret previous messages against the old context and focus subsequent
-     * replies on the new context. The session is <b>not</b> recreated; its id and websocket
-     * subscription remain valid.
+     * Persists a {@link IrisMessageSender#CTXSWAP CTXSWAP} marker message into the chat history so the
+     * LLM can interpret previous messages against the old context and focus subsequent replies on the
+     * new context, and pushes the marker over the websocket so the client can render the divider in
+     * sequence with the user message that triggered the switch. The session is <b>not</b> recreated;
+     * its id and websocket subscription remain valid.
      * <p>
-     * A context switch across course boundaries is rejected — users should create a new session
-     * in the target course instead.
+     * Intended to be called inline at the start of {@code POST sessions/{id}/messages} when the client
+     * forwards a pending context together with the new user message — so the switch and the message
+     * land in one atomic round trip.
      *
-     * @param sessionId   the id of the session to update
-     * @param courseId    the course id the session is expected to belong to (from the URL path)
+     * @param session     the chat session to update (must already be loaded with messages)
      * @param newMode     the new chat mode
      * @param newEntityId the new entity id (exerciseId / lectureId / courseId depending on mode)
      * @param user        the requesting user
-     * @return the updated session (with messages, including the new marker)
      */
-    public IrisChatSession updateSessionContext(long sessionId, long courseId, IrisChatMode newMode, long newEntityId, User user) {
+    public void applyContextChange(IrisChatSession session, IrisChatMode newMode, long newEntityId, User user) {
         user.hasOptedIntoLLMUsageElseThrow();
-
-        var session = (IrisChatSession) irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
 
         if (!Objects.equals(session.getUserId(), user.getId())) {
             throw new AccessForbiddenException("Iris Session", session.getId());
         }
-        if (session.getCourseId() != courseId) {
-            throw new ConflictException("Context switch across courses is not supported; create a new session instead.", "Iris", "irisContextSwitchCrossCourse");
-        }
 
         // Idempotent: nothing to do if context is unchanged
         if (session.getMode() == newMode && session.getEntityId() != null && session.getEntityId() == newEntityId) {
-            return session;
+            return;
         }
+
+        long courseId = session.getCourseId();
 
         // Validate + authorize the new context (reuses existing validators and role checks)
         String newEntityName = switch (newMode) {
@@ -452,7 +449,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
                 yield course.getTitle();
             }
-            default -> throw new IllegalStateException("IrisChatSessionService.updateSessionContext does not handle chat mode " + newMode);
+            default -> throw new IllegalStateException("IrisChatSessionService.applyContextChange does not handle chat mode " + newMode);
         };
 
         session.setMode(newMode);
@@ -461,10 +458,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
         IrisMessage markerMessage = new IrisMessage();
         markerMessage.addContent(new IrisTextMessageContent(newEntityName));
-        irisMessageService.saveMessage(markerMessage, session, IrisMessageSender.CTXSWAP);
-
-        // Re-fetch with messages to return the up-to-date history (including the marker)
-        return (IrisChatSession) irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
+        IrisMessage savedMarker = irisMessageService.saveMessage(markerMessage, session, IrisMessageSender.CTXSWAP);
+        sendOverWebsocket(session, savedMarker);
     }
 
     private void validateExerciseMode(Exercise exercise, IrisChatMode mode) {
