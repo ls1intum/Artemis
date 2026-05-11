@@ -327,8 +327,9 @@ public class ParticipationResource {
             }
         }
         else if (exercise instanceof ProgrammingExercise) {
-            if (participation.findLatestResult() == null) {
-                throw new BadRequestAlertException("You need to submit at least once and have the build results", "participation", "noSubmissionExists", true);
+            var latestSubmission = submissionRepository.findLatestSubmissionByParticipationId(participation.getId());
+            if (latestSubmission.isEmpty() || !latestSubmission.get().isSubmitted()) {
+                throw new BadRequestAlertException("You need to submit at least once", "participation", "noSubmissionExists", true);
             }
         }
 
