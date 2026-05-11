@@ -52,8 +52,6 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     private interactInstance: ReturnType<typeof interact> | undefined;
     private resizeHandler: (() => void) | undefined;
     private resizeObserver: ResizeObserver | undefined;
-    private readonly MIN_VIDEO_WIDTH = 200;
-    private readonly MIN_TRANSCRIPT_WIDTH = 200;
     protected readonly isResizing = signal<boolean>(false);
 
     constructor() {
