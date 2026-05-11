@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.tutorialgroup.web;
 import static de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupScheduleService.updateStatusAndFreePeriod;
 
 import java.net.URISyntaxException;
+import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -309,6 +310,11 @@ public class TutorialGroupSessionResource {
         if (configuration.getCourse().getTimeZone() == null) {
             throw new BadRequestException("The course has no time zone");
         }
-        return ZoneId.of(configuration.getCourse().getTimeZone());
+        try {
+            return ZoneId.of(configuration.getCourse().getTimeZone());
+        }
+        catch (DateTimeException e) {
+            throw new BadRequestException("The course has an invalid time zone");
+        }
     }
 }

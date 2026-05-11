@@ -183,6 +183,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         private void verifyPrivateInformationIsHidden(TutorialGroupSummaryDTO tutorialGroup) {
             assertThat(tutorialGroup).isNotNull();
+            assertThat(tutorialGroup.tutorialGroupSessions()).isNull();
             assertThat(tutorialGroup.numberOfRegisteredUsers()).isNull();
             assertThat(tutorialGroup.teachingAssistantName()).isNull();
             assertThat(tutorialGroup.teachingAssistantId()).isNull();
@@ -191,6 +192,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         private void verifyPrivateInformationIsShown(TutorialGroupSummaryDTO tutorialGroup) {
+            assertThat(tutorialGroup.tutorialGroupSessions()).isNull();
             assertThat(tutorialGroup.numberOfRegisteredUsers()).isNotNull();
             assertThat(tutorialGroup.numberOfRegisteredUsers()).isPositive();
             assertThat(tutorialGroup.teachingAssistantName()).isNotBlank();
