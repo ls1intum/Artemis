@@ -29,6 +29,10 @@ export interface ArtifactLocation {
      * End line number (1-based)
      */
     endLine: number;
+    /**
+     * Optional inline replacement code for this location
+     */
+    suggestedInlineFix?: string | null;
 }
 export namespace ArtifactLocation {
     export const TypeEnum = {

@@ -11,9 +11,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PreRemove;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -24,7 +21,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  */
 @Entity
 @Table(name = "grading_instruction")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradingInstruction extends DomainObject {
 
@@ -51,8 +47,9 @@ public class GradingInstruction extends DomainObject {
     @ManyToOne(fetch = FetchType.LAZY)
     private GradingCriterion gradingCriterion;
 
+    // No @Cache here on purpose: grows every time a tutor applies this grading instruction during manual assessment,
+    // same bug class as #12574 / #12584 on a clustered L2 cache.
     @OneToMany(mappedBy = "gradingInstruction", fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "gradingInstruction", allowSetters = true)
     private Set<Feedback> feedbacks = new HashSet<>();
 

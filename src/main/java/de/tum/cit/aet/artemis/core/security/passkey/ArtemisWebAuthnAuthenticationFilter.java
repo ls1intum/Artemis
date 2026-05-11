@@ -3,12 +3,11 @@ package de.tum.cit.aet.artemis.core.security.passkey;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.security.web.authentication.AuthenticationEntryPointFailureHandler;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthenticationFilter;
 
+import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 
@@ -24,7 +23,17 @@ public class ArtemisWebAuthnAuthenticationFilter extends WebAuthnAuthenticationF
         super();
         setSecurityContextRepository(new HttpSessionSecurityContextRepository());
         setRequestOptionsRepository(publicKeyCredentialRequestOptionsRepository);
-        setAuthenticationFailureHandler(new AuthenticationEntryPointFailureHandler(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
+        setAuthenticationFailureHandler((request, response, exception) -> {
+            if (exception instanceof UserNotActivatedException) {
+                response.setStatus(HttpStatus.FORBIDDEN.value());
+            }
+            else if (exception instanceof NoPasskeyFoundException) {
+                response.setStatus(HttpStatus.NOT_FOUND.value());
+            }
+            else {
+                response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            }
+        });
         setAuthenticationSuccessHandler(
                 new ArtemisHttpMessageConverterAuthenticationSuccessHandler(auditEventRepository, converter, jwtCookieService, artemisSuccessfulLoginService));
     }

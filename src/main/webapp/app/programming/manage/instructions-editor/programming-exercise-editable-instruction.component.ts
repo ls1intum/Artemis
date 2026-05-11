@@ -44,6 +44,9 @@ import { editor } from 'monaco-editor';
 import { MonacoBinding } from 'y-monaco';
 import { ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { InlineRefinementButtonComponent } from 'app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { getFirstCommentByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -70,6 +73,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private profileService = inject(ProfileService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private problemStatementSyncService = inject(ProblemStatementSyncService);
+    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     /**
      * Legacy manual diff state used inside the `effect()` below.
@@ -241,25 +245,27 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      **/
     saveInstructions(event: any) {
         event.stopPropagation();
+        this.persistProblemStatement().subscribe();
+    }
+
+    private persistProblemStatement(): Observable<void> {
         this.savingInstructions = true;
-        const problemStatementToSave = this.exercise().problemStatement?.trim() || undefined;
-        return this.programmingExerciseService
-            .updateProblemStatement(this.exercise().id!, problemStatementToSave)
-            .pipe(
-                tap(() => {
-                    this.unsavedChanges = false;
-                    this.onProblemStatementSaved.emit();
-                }),
-                catchError(() => {
-                    // TODO: move to programming exercise translations
-                    this.alertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
-                    return EMPTY;
-                }),
-                finalize(() => {
-                    this.savingInstructions = false;
-                }),
-            )
-            .subscribe();
+        const currentProblemStatement = this.getCurrentContent() ?? this.exercise().problemStatement;
+        const problemStatementToSave = currentProblemStatement?.trim() || undefined;
+        return this.programmingExerciseService.updateProblemStatement(this.exercise().id!, problemStatementToSave).pipe(
+            tap(() => {
+                this.unsavedChanges = false;
+                this.onProblemStatementSaved.emit();
+            }),
+            map(() => undefined),
+            catchError(() => {
+                this.alertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
+                return EMPTY;
+            }),
+            finalize(() => {
+                this.savingInstructions = false;
+            }),
+        );
     }
 
     @HostListener('document:keydown.control.s', ['$event'])
@@ -368,7 +374,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
         const lineWarnings = this.mapAnalysisToWarnings(analysis);
-        this.markdownEditorMonaco?.monacoEditor?.setAnnotations(lineWarnings as Annotation[]);
+        this.markdownEditorMonaco?.monacoEditor?.()?.setAnnotations(lineWarnings as Annotation[]);
     };
 
     /**
@@ -379,7 +385,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @returns The current editor content, or undefined if editor is not available.
      */
     getCurrentContent(): string | undefined {
-        const monacoEditor = this.markdownEditorMonaco?.monacoEditor;
+        const monacoEditor = this.markdownEditorMonaco?.monacoEditor?.();
         if (!monacoEditor) {
             return undefined;
         }
@@ -393,7 +399,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @param text The text to set in the editor.
      */
     setText(text: string): void {
-        const monacoEditor = this.markdownEditorMonaco?.monacoEditor;
+        const monacoEditor = this.markdownEditorMonaco?.monacoEditor?.();
         if (!monacoEditor) {
             return;
         }
@@ -409,7 +415,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      *        The line to reveal in the editor.
      */
     jumpToLine(lineNumber: number) {
-        this.markdownEditorMonaco?.monacoEditor.revealLine(lineNumber, editor.ScrollType.Immediate);
+        this.markdownEditorMonaco?.monacoEditor?.()?.revealLine(lineNumber, editor.ScrollType.Immediate);
     }
 
     clearReviewCommentDrafts(): void {
@@ -483,6 +489,27 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     /**
+     * Persists the current problem statement and marks the corresponding inline fix as applied.
+     *
+     * @param payload The thread id whose consistency inline fix was applied in the editor.
+     */
+    onApplyInlineFix(payload: { threadId: number }): void {
+        if (this.savingInstructions) {
+            return;
+        }
+
+        const thread = this.exerciseReviewCommentService.threads().find((candidate) => candidate.id === payload.threadId);
+        const firstComment = getFirstCommentByCreatedDateThenId(thread?.comments);
+        if (!firstComment || firstComment.type !== CommentType.CONSISTENCY_CHECK) {
+            return;
+        }
+
+        this.persistProblemStatement().subscribe(() => {
+            this.exerciseReviewCommentService.markInlineFixAppliedInContext(firstComment.id);
+        });
+    }
+
+    /**
      * Applies the refined content to the editor in diff mode.
      * @param refined The new content to show in the modified editor.
      */
@@ -497,7 +524,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     revertAll(): void {
         this.markdownEditorMonaco?.revertAll();
-        const currentContent = this.markdownEditorMonaco?.monacoEditor?.getText();
+        const currentContent = this.markdownEditorMonaco?.monacoEditor?.()?.getText();
         if (currentContent !== undefined) {
             this.updateProblemStatement(currentContent);
         }
@@ -518,11 +545,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (!this.editMode() || this.problemStatementBinding) {
             return;
         }
-        if (!this.markdownEditorMonaco?.monacoEditor) {
+        if (!this.markdownEditorMonaco?.monacoEditor?.()) {
             return;
         }
-        const model = this.markdownEditorMonaco.monacoEditor.getModel();
-        const editorInstance = this.markdownEditorMonaco.monacoEditor.getEditor();
+        const model = this.markdownEditorMonaco.monacoEditor()!.getModel();
+        const editorInstance = this.markdownEditorMonaco.monacoEditor()!.getEditor();
         if (!model || !editorInstance) {
             return;
         }

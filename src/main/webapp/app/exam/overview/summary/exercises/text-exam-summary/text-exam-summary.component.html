@@ -1,12 +1,12 @@
 <div>
-    @if (exercise?.studentParticipations?.length && exercise?.studentParticipations?.[0]?.id) {
+    @if (exercise()?.studentParticipations?.length && exercise()?.studentParticipations?.[0]?.id) {
         <jhi-text-editor
-            [participationId]="exercise.studentParticipations![0].id"
+            [participationId]="exercise().studentParticipations![0].id"
             [displayHeader]="false"
-            [expandProblemStatement]="expandProblemStatement"
-            [inputExercise]="isAfterResultsArePublished ? undefined : exercise"
-            [inputParticipation]="isAfterResultsArePublished ? undefined : exercise.studentParticipations![0]"
-            [inputSubmission]="isAfterResultsArePublished ? undefined : submission"
+            [expandProblemStatement]="expandProblemStatement()"
+            [inputExercise]="isAfterResultsArePublished() ? undefined : exercise()"
+            [inputParticipation]="isAfterResultsArePublished() ? undefined : exercise().studentParticipations![0]"
+            [inputSubmission]="isAfterResultsArePublished() ? undefined : submission()"
             [isExamSummary]="true"
         />
     } @else {

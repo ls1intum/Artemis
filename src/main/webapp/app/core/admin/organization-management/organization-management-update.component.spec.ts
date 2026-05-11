@@ -12,6 +12,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { OrganizationManagementUpdateComponent } from 'app/core/admin/organization-management/organization-management-update.component';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/core/shared/entities/organization.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('OrganizationManagementUpdateComponent', () => {
     setupTestBed({ zoneless: true });
@@ -31,7 +33,7 @@ describe('OrganizationManagementUpdateComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [OrganizationManagementUpdateComponent],
-            providers: [{ provide: ActivatedRoute, useValue: route }, provideHttpClient(), provideHttpClientTesting()],
+            providers: [{ provide: ActivatedRoute, useValue: route }, provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         })
             .overrideTemplate(OrganizationManagementUpdateComponent, '')
             .compileComponents();
