@@ -1,0 +1,10 @@
+- name: build
+  script: |-
+    cd "${testWorkingDirectory}"
+    go test -c -o /dev/null ./...
+- name: test
+  script: |-
+    cd "${testWorkingDirectory}"
+    go test ./... -json 2>&1 | go-junit-report -parser gojson -out test-results.xml
+  resultPaths:
+    - '${testWorkingDirectory}/test-results.xml'

@@ -350,7 +350,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private renderMarkdown(): void {
         // Highlight differences between previous and current markdown
         if (
-            this.examExerciseUpdateHighlighterComponent?.showHighlightedDifferences &&
+            this.examExerciseUpdateHighlighterComponent?.showHighlightedDifferences() &&
             this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement &&
             this.examExerciseUpdateHighlighterComponent.updatedProblemStatement
         ) {

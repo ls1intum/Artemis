@@ -23,6 +23,7 @@ export class ExerciseActionButtonComponent {
     buttonIcon = input<IconProp | undefined>(undefined);
     buttonLabel = input<string | undefined>(undefined);
     hideLabelMobile = input(true);
+    hideLabelBreakpoint = input<'md' | 'xl'>('md');
     overwriteDisabled = input(false);
     buttonLoading = input(false);
     outlined = input(false);
