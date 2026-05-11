@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree, provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -6,27 +6,23 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
-import { inject } from '@angular/core';
 
 @Component({ template: '', standalone: true })
 class DummyComponent {}
 
 /**
- * Extracted root route guard matching the one in app.routes.ts.
- * Authenticated users are redirected to /courses; unauthenticated users see the landing page.
+ * Extracted root route guard mirroring the one in app.routes.ts.
+ * The APP_INITIALIZER resolves the user identity (and, when returning from a SAML2 IdP, also
+ * completes the second-step JWT exchange) before this guard runs, so a synchronous read on
+ * userIdentity() is enough.
  */
-const rootRouteGuard = (): Promise<boolean | UrlTree> => {
+const rootRouteGuard = (): boolean | UrlTree => {
     const accountService = inject(AccountService);
     const router = inject(Router);
-    return accountService
-        .identity()
-        .then((account) => {
-            if (account) {
-                return router.parseUrl('/courses');
-            }
-            return true;
-        })
-        .catch(() => true);
+    if (accountService.userIdentity()) {
+        return router.parseUrl('/courses');
+    }
+    return true;
 };
 
 describe('Landing page route guard', () => {
@@ -55,7 +51,7 @@ describe('Landing page route guard', () => {
     });
 
     it('should redirect authenticated users to /courses', async () => {
-        vi.spyOn(accountService, 'identity').mockResolvedValue({ id: 1, login: 'user' } as User);
+        accountService.userIdentity.set({ id: 1, login: 'user' } as User);
 
         await router.navigateByUrl('/');
 
@@ -63,15 +59,7 @@ describe('Landing page route guard', () => {
     });
 
     it('should allow unauthenticated users to access the landing page', async () => {
-        vi.spyOn(accountService, 'identity').mockResolvedValue(undefined);
-
-        await router.navigateByUrl('/');
-
-        expect(router.url).toBe('/');
-    });
-
-    it('should allow access when identity call fails', async () => {
-        vi.spyOn(accountService, 'identity').mockRejectedValue(new Error('Network error'));
+        accountService.userIdentity.set(undefined);
 
         await router.navigateByUrl('/');
 

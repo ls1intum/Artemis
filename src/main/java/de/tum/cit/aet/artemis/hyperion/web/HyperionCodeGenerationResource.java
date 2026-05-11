@@ -87,7 +87,7 @@ public class HyperionCodeGenerationResource {
                     .orElseGet(() -> ResponseEntity.noContent().build());
         }
         Long courseId = resolveCourseId(exercise);
-        String jobId = codeGenerationJobService.startJob(user, exercise, courseId, request.repositoryType());
+        String jobId = codeGenerationJobService.startJob(user, exercise, courseId, request.repositoryType(), request.initialAutoGeneration());
         log.info("Started code generation job [{}] for exercise [{}]", jobId, exerciseId);
         return ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId, request.repositoryType()));
     }
