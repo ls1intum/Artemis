@@ -195,6 +195,7 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
         saveChatSessionWithMessages(IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user));
         var tutorSuggestionSession = IrisChatSessionFactory.createSessionWithMessages(new IrisTutorSuggestionSession(createPostForTutorSuggestion(user).getId(), user));
         saveChatSessionWithMessages(tutorSuggestionSession);
+        IrisChatSessionCountDTO countBeforeDelete = request.get("/api/iris/chat/sessions/count", HttpStatus.OK, IrisChatSessionCountDTO.class);
         Instant before = Instant.now().minusSeconds(1);
 
         request.delete("/api/iris/chat/sessions", HttpStatus.NO_CONTENT);
@@ -203,7 +204,8 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
         assertThat(irisSessionRepository.findById(tutorSuggestionSession.getId())).isEmpty();
         List<AuditEvent> auditEvents = auditEventRepository.find(user.getLogin(), before, Constants.DELETE_ALL_IRIS_SESSIONS);
         assertThat(auditEvents).hasSize(1);
-        assertThat(auditEvents.getFirst().getData()).containsEntry("sessions", "3").containsEntry("messages", "6");
+        assertThat(auditEvents.getFirst().getData()).containsEntry("sessions", String.valueOf(countBeforeDelete.sessions())).containsEntry("messages",
+                String.valueOf(countBeforeDelete.messages()));
     }
 
     @Test
