@@ -39,9 +39,11 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
     void search_shouldReturnResults() throws Exception {
         var results = List.of(
                 new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.CourseDTO(5L, "Machine Learning"), new PyrisLectureSearchResultDTO.LectureDTO(10L, "Intro to ML"),
-                        new PyrisLectureSearchResultDTO.LectureUnitDTO(1L, "Introduction Slide", "/link/1", 3), "supervised learning snippet"),
+                        new PyrisLectureSearchResultDTO.LectureUnitDTO(1L, "Introduction Slide", "/link/1", 3, "lecture_unit_slide", Map.of("unit", 1L, "page", 3), "p. 3"),
+                        "supervised learning snippet"),
                 new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.CourseDTO(5L, "Machine Learning"), new PyrisLectureSearchResultDTO.LectureDTO(10L, "Intro to ML"),
-                        new PyrisLectureSearchResultDTO.LectureUnitDTO(2L, "Neural Networks", "/link/2", 7), "backpropagation snippet"));
+                        new PyrisLectureSearchResultDTO.LectureUnitDTO(2L, "Neural Networks", "/link/2", 7, "lecture_unit_slide", Map.of("unit", 2L, "page", 7), "p. 7"),
+                        "backpropagation snippet"));
         irisRequestMockProvider.mockSearchLectures(results);
 
         var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5);
@@ -118,7 +120,7 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
 
         var source = new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.CourseDTO(1L, "ML"), new PyrisLectureSearchResultDTO.LectureDTO(2L, "Intro"),
-                new PyrisLectureSearchResultDTO.LectureUnitDTO(3L, "Neural Nets", "/link/3", 5), "backprop snippet");
+                new PyrisLectureSearchResultDTO.LectureUnitDTO(3L, "Neural Nets", "/link/3", 5, "lecture_unit_slide", Map.of("unit", 3L, "page", 5), "p. 5"), "backprop snippet");
         var doneStage = new PyrisStageDTO("LLM", 90, PyrisStageState.DONE, null, false, null);
         sendLectureSearchStatus(jobIdRef.get(), new PyrisGlobalSearchAnswerStatusUpdateDTO(List.of(doneStage), "Neural networks learn via backpropagation.", List.of(source)));
 

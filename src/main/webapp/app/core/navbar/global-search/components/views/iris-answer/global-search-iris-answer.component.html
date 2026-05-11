@@ -40,10 +40,16 @@
             @if (sources().length > 0) {
                 <div class="iris-chips d-flex align-items-center" [class.iris-chips--expanded]="moreOpen()">
                     @for (source of moreOpen() ? sources() : sources().slice(0, 2); track $index) {
-                        <a class="iris-chip d-inline-flex align-items-center text-decoration-none text-nowrap rounded-pill" [routerLink]="source.lectureUnit.link">
-                            <fa-icon [icon]="faFile" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
+                        <a
+                            class="iris-chip d-inline-flex align-items-center text-decoration-none text-nowrap rounded-pill"
+                            [routerLink]="source.lectureUnit.link"
+                            [queryParams]="source.lectureUnit.queryParams"
+                        >
+                            <fa-icon [icon]="iconFor(source.lectureUnit.sourceType)" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
                             <span class="iris-chip-name text-truncate">{{ source.lectureUnit.name }}</span>
-                            <span class="iris-chip-meta text-body-secondary">· {{ 'global.search.pageAbbreviation' | artemisTranslate }}{{ source.lectureUnit.pageNumber }}</span>
+                            @if (source.lectureUnit.displayMeta) {
+                                <span class="iris-chip-meta text-body-secondary">· {{ source.lectureUnit.displayMeta }}</span>
+                            }
                         </a>
                     }
                     @if (sources().length > 2 && !moreOpen()) {

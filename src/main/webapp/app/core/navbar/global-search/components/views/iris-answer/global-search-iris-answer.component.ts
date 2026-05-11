@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronUp, faFile } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faChevronUp, faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -41,7 +42,16 @@ export class GlobalSearchIrisAnswerComponent {
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faChevronUp = faChevronUp;
-    protected readonly faFile = faFile;
+
+    private readonly SOURCE_ICONS: Record<string, IconDefinition> = {
+        lecture_unit_slide: faFilePdf,
+        lecture_unit_slide_video: faFileVideo,
+        lecture_unit_video: faVideo,
+    };
+
+    protected iconFor(sourceType: string): IconDefinition {
+        return this.SOURCE_ICONS[sourceType] ?? faFile;
+    }
 
     constructor() {
         // Measure answer overflow after each new result; reset when the result clears.
