@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
  * Compatibility wrapper to keep existing calendar subscriptions working.
  * Moved from /api/core/calendar to /api/calendar.
  * Can be removed after October 2026 as most subscriptions should no longer be valid by then.
- * When removing this class, also remove the rest import exception in ArchitectureTest.java
+ * <b>When removing this class</b>, also remove the exceptions for this file in ArchitectureTest.java and in SecurityConfiguration.java
  */
 @Deprecated
 @Lazy
