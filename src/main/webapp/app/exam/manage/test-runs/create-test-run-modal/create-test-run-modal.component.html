@@ -1,76 +1,69 @@
-<div class="modal-content">
-    <div class="modal-header">
-        <h4 class="modal-title" id="createTestRunModal" jhiTranslate="artemisApp.examManagement.testRun.setup"></h4>
-        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="cancel()"></button>
+<div>
+    <div class="mb-3">
+        <h5><span jhiTranslate="artemisApp.studentExams.workingTime"></span></h5>
+        <p jhiTranslate="artemisApp.examManagement.testRun.setWorkingTime"></p>
+        <form class="d-flex gap-1 align-items-center" [formGroup]="workingTimeForm">
+            <input formControlName="minutes" id="workingTimeMinutes" type="number" style="width: 70px; height: 35px" class="form-control" min="0" step="1" required />
+            :
+            <input formControlName="seconds" id="workingTimeSeconds" type="number" style="width: 70px; height: 35px" class="form-control" min="0" max="59" step="1" required />
+        </form>
     </div>
-    <div class="modal-body">
-        <div class="mb-3">
-            <h5><span jhiTranslate="artemisApp.studentExams.workingTime"></span></h5>
-            <p jhiTranslate="artemisApp.examManagement.testRun.setWorkingTime"></p>
-            <form class="d-flex gap-1 align-items-center" [formGroup]="workingTimeForm">
-                <input formControlName="minutes" id="workingTimeMinutes" type="number" style="width: 70px; height: 35px" class="form-control" min="0" step="1" required />
-                :
-                <input formControlName="seconds" id="workingTimeSeconds" type="number" style="width: 70px; height: 35px" class="form-control" min="0" max="59" step="1" required />
-            </form>
-        </div>
-        <div class="mb-3">
-            <h5 jhiTranslate="artemisApp.exam.exercises"></h5>
-            <p jhiTranslate="artemisApp.examManagement.testRun.setupHint"></p>
-            <table class="table table-striped">
-                <thead class="thead-dark">
+    <div class="mb-3">
+        <h5 jhiTranslate="artemisApp.exam.exercises"></h5>
+        <p jhiTranslate="artemisApp.examManagement.testRun.setupHint"></p>
+        <table class="table table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn"></th>
+                    <th jhiTranslate="artemisApp.examScores.titleExerciseColumn"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (exerciseGroup of exam()?.exerciseGroups; track exerciseGroup) {
                     <tr>
-                        <th jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn"></th>
-                        <th jhiTranslate="artemisApp.examScores.titleExerciseColumn"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (exerciseGroup of exam.exerciseGroups; track exerciseGroup) {
-                        <tr>
-                            <td>
-                                <b> {{ exerciseGroup.title }} </b>
-                            </td>
-                            <td>
-                                <table class="table table-hover table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th jhiTranslate="artemisApp.exercise.title"></th>
-                                            <th jhiTranslate="artemisApp.exercise.difficulty"></th>
-                                            <th jhiTranslate="artemisApp.exercise.type"></th>
+                        <td>
+                            <b> {{ exerciseGroup.title }} </b>
+                        </td>
+                        <td>
+                            <table class="table table-hover table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th jhiTranslate="artemisApp.exercise.title"></th>
+                                        <th jhiTranslate="artemisApp.exercise.difficulty"></th>
+                                        <th jhiTranslate="artemisApp.exercise.type"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (exercise of exerciseGroup.exercises; track exercise) {
+                                        <tr
+                                            (click)="onSelectExercise(exercise, exerciseGroup)"
+                                            [class.active]="exerciseGroup.id && exercise.id === testRunConfiguration[exerciseGroup.id]?.id"
+                                            [id]="'exercise-' + exercise.id"
+                                        >
+                                            <td>{{ exercise.id }}</td>
+                                            <td>{{ exercise.title }}</td>
+                                            <td>{{ exercise.difficulty }}</td>
+                                            <td>{{ exercise.type }}</td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        @for (exercise of exerciseGroup.exercises; track exercise) {
-                                            <tr
-                                                (click)="onSelectExercise(exercise, exerciseGroup)"
-                                                [class.active]="exerciseGroup.id && exercise.id === testRunConfiguration[exerciseGroup.id]?.id"
-                                                [id]="'exercise-' + exercise.id"
-                                            >
-                                                <td>{{ exercise.id }}</td>
-                                                <td>{{ exercise.title }}</td>
-                                                <td>{{ exercise.difficulty }}</td>
-                                                <td>{{ exercise.type }}</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="cancel()" jhiTranslate="global.form.cancel"></button>
-            <button
-                id="createTestRunButton"
-                type="button"
-                class="btn btn-primary"
-                data-dismiss="modal"
-                [disabled]="!testRunConfigured"
-                (click)="createTestRun()"
-                jhiTranslate="artemisApp.examManagement.testRun.setup"
-            ></button>
-        </div>
+                                    }
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="d-flex justify-content-end gap-2 mt-3">
+        <button type="button" class="btn btn-secondary" (click)="cancel()" jhiTranslate="global.form.cancel"></button>
+        <button
+            id="createTestRunButton"
+            type="button"
+            class="btn btn-primary"
+            [disabled]="!testRunConfigured"
+            (click)="createTestRun()"
+            jhiTranslate="artemisApp.examManagement.testRun.setup"
+        ></button>
     </div>
 </div>

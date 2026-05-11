@@ -77,12 +77,29 @@ else
     run_playwright parallel e2e --project=fast-tests --project=slow-tests
 fi
 
+# Run the @multi-node project only when the surrounding stack opts in via env var. The multi-node
+# docker compose sets EXPECTED_CLUSTER_NODE_COUNT, the single-node compose does not. This keeps the
+# cluster smoke-test out of every other Playwright run while still running it automatically when
+# the multi-node stack is up.
+if [ -n "$EXPECTED_CLUSTER_NODE_COUNT" ]; then
+    echo "--- Running multi-node tests (cluster size $EXPECTED_CLUSTER_NODE_COUNT) ---"
+    if [ ${#TEST_PATHS[@]} -gt 0 ]; then
+        run_playwright multinode --project=multi-node-tests "${TEST_PATHS[@]}"
+    else
+        run_playwright multinode e2e --project=multi-node-tests
+    fi
+fi
+
 # Remove any stale results.xml (e.g. from playwright:setup init test) before
 # moving the real report into place, so CI never consumes an outdated report.
 echo "--- Finalizing test reports ---"
 rm -f ./test-reports/results.xml
-if [ -f ./test-reports/results-parallel.xml ]; then
+if [ -f ./test-reports/results-parallel.xml ] && [ -f ./test-reports/results-multinode.xml ]; then
+    npx junit-merge ./test-reports/results-parallel.xml ./test-reports/results-multinode.xml -o ./test-reports/results.xml
+elif [ -f ./test-reports/results-parallel.xml ]; then
     mv ./test-reports/results-parallel.xml ./test-reports/results.xml
+elif [ -f ./test-reports/results-multinode.xml ]; then
+    mv ./test-reports/results-multinode.xml ./test-reports/results.xml
 fi
 npm run merge-coverage-reports || true
 

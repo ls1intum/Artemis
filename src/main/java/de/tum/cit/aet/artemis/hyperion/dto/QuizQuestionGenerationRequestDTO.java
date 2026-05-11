@@ -18,7 +18,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Request to generate quiz questions")
-public record QuizQuestionGenerationRequestDTO(@NotBlank @Size(max = 500) @Schema(description = "Main topic for the generated quiz") String topic,
+public record QuizQuestionGenerationRequestDTO(@NotBlank @Size(min = 1, max = 500) @Schema(description = "Main topic for the generated quiz") String topic,
         @Size(max = 2000) @Schema(description = "Optional additional instructions") String optionalPrompt,
         @NotNull @Schema(description = "Target language for the generated quiz") QuizQuestionGenerationLanguage language,
         @NotEmpty @Schema(description = "Question types to include") Set<@NotNull QuizQuestionGenerationType> questionTypes,

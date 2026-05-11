@@ -15,7 +15,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
-import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 
 /**
  * Service for evaluating build phase conditions at build trigger time.
@@ -39,15 +38,14 @@ public class BuildPhaseEvaluationService {
      * instructors receive full feedback regardless of the exercise due date.
      * <p>
      *
-     * @param phasesDTO     the build plan phases configuration
+     * @param phases        the build plan phases configuration
      * @param participation the participation for which the build is being triggered
      * @return the evaluated build plan with active phases and result paths
      */
-    public List<BuildPhaseDTO> determineActiveBuildPhases(BuildPlanPhasesDTO phasesDTO, ProgrammingExerciseParticipation participation) {
-        if (phasesDTO == null || phasesDTO.phases() == null) {
+    public List<BuildPhaseDTO> determineActiveBuildPhases(List<BuildPhaseDTO> phases, ProgrammingExerciseParticipation participation) {
+        if (phases == null) {
             return List.of();
         }
-        final List<BuildPhaseDTO> phases = phasesDTO.phases();
 
         if (isInstructorParticipation(participation)) {
             return phases;

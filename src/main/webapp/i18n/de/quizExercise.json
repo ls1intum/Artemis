@@ -54,12 +54,17 @@
                 },
                 "errors": {
                     "invalidConfiguration": "Bitte gib ein Thema an und wähle mindestens einen Fragetyp aus.",
-                    "generationFailed": "Quizfragen konnten nicht generiert werden. Bitte versuche es erneut."
+                    "generationFailed": "Quizfragen konnten nicht generiert werden. Bitte versuche es erneut.",
+                    "refinementFailed": "Quizfragen konnten nicht verfeinert werden. Bitte versuche es erneut.",
+                    "partialRefinementFailed": "{{ count }} Frage(n) konnten nicht verfeinert werden und wurden übersprungen."
                 },
                 "refinement": {
                     "promptPlaceholder": "Beschreibe, wie die Frage verfeinert werden soll...",
+                    "globalPlaceholder": "Alle Multiple-Choice Fragen in diesem Quiz präzisieren...",
+                    "globalRefineFabLabel": "Alle Fragen mit KI verfeinern",
                     "changesLabel": "Vorgenommene Änderungen",
-                    "defaultReasoning": "Die Frage wurde entsprechend Ihren Anweisungen verfeinert.",
+                    "dismissChanges": "Änderungen schließen",
+                    "defaultReasoning": "Die Frage wurde basierend auf deinen Anweisungen verfeinert.",
                     "errors": {
                         "failed": "Die Frage konnte nicht verfeinert werden. Bitte versuche es erneut."
                     }
@@ -203,6 +208,7 @@
             "solution": "Lösung",
             "quizIsOverText": "Das Quiz ist beendet. Bitte warte. Wenn die Ergebnisse nach 60 Sekunden nicht automatisch angezeigt werden, lade die Seite bitte neu.",
             "notParticipatedText": "Das Quiz ist beendet und du hast nicht daran teilgenommen. Es gibt keine Ergebnisse, die angezeigt werden können.",
+            "missedDeadlinePracticeHint": "Du hast dieses Quiz nicht rechtzeitig eingereicht. Du kannst es immer noch üben mit dem <b>Übung starten</b>-Button.",
             "statisticsNotPublished": "Die Übungsleitung hat keine Statistiken freigegeben.",
             "successfullySubmittedText": "Deine Antworten wurden erfolgreich abgegeben.<br><br>Die Ergebnisse werden angezeigt, nachdem das Quiz beendet ist.<br><br>Wenn die Ergebnisse 60 Sekunden nach Quiz Ende nicht automatisch angezeigt werden, dann lade die Seite bitte neu.",
             "evaluateQuizExercise": "Quiz auswerten",

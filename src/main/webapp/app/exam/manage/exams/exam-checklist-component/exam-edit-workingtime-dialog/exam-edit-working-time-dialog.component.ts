@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, inject, output } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -18,23 +18,31 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     templateUrl: './exam-edit-working-time-dialog.component.html',
     imports: [FormsModule, TranslateDirective, WorkingTimeControlComponent, WorkingTimeChangeComponent, ConfirmEntityNameComponent, FaIconComponent],
 })
-export class ExamEditWorkingTimeDialogComponent {
+export class ExamEditWorkingTimeDialogComponent implements OnInit {
     protected readonly faBan = faBan;
     protected readonly faSpinner = faSpinner;
     protected readonly faCheck = faCheck;
 
-    private activeModal = inject(NgbActiveModal);
+    private dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
     private examManagementService = inject(ExamManagementService);
 
-    exam: Exam;
-    examChange = output<Exam>();
+    exam = signal<Exam | undefined>(undefined);
 
-    isLoading: boolean;
+    isLoading = false;
 
     workingTimeSeconds = 0;
 
+    ngOnInit(): void {
+        const data = this.dialogConfig?.data;
+        if (data?.exam) {
+            this.exam.set(data.exam);
+        }
+    }
+
     get oldWorkingTime() {
-        return examWorkingTime(this.exam);
+        const currentExam = this.exam();
+        return currentExam ? examWorkingTime(currentExam) : undefined;
     }
 
     get newWorkingTime() {
@@ -42,19 +50,18 @@ export class ExamEditWorkingTimeDialogComponent {
     }
 
     clear(): void {
-        this.activeModal.close();
+        this.dialogRef.close();
     }
 
     confirmUpdateWorkingTime(): void {
         if (!this.isWorkingTimeChangeValid) return;
+        const currentExam = this.exam();
+        if (!currentExam) return;
         this.isLoading = true;
-        this.examManagementService.updateWorkingTime(this.exam.course!.id!, this.exam.id!, this.workingTimeSeconds).subscribe({
+        this.examManagementService.updateWorkingTime(currentExam.course!.id!, currentExam.id!, this.workingTimeSeconds).subscribe({
             next: (res: HttpResponse<Exam>) => {
                 this.isLoading = false;
-                if (res.body) {
-                    this.examChange.emit(res.body);
-                }
-                this.clear();
+                this.dialogRef.close(res.body ?? undefined);
             },
             error: () => {
                 // If an error happens, the alert service takes care of displaying an error message

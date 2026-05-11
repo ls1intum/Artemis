@@ -132,6 +132,18 @@ describe('PdfViewerComponent', () => {
         expect(postMessageSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'viewerModeChange', data: { viewerMode: 'embedded' } }), window.location.origin);
     });
 
+    it('should close fullscreen on Escape and stop event propagation', () => {
+        component.isFullscreen.set(true);
+        const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+        const stopPropagationSpy = vi.spyOn(event, 'stopPropagation');
+
+        component.onFullscreenEscape(event);
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(stopPropagationSpy).toHaveBeenCalledOnce();
+        expect(component.isFullscreen()).toBe(false);
+    });
+
     it('should keep loading spinner visible until first pageRendered', () => {
         fixture.componentRef.setInput('pdfUrl', 'test.pdf');
         fixture.detectChanges();
