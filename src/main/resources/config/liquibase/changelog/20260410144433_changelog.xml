@@ -222,7 +222,11 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20260410144433-7-drop-index-course" author="senan-aslan">
+    <!-- Restricted to MySQL/PostgreSQL: H2 (used by the bean-instantiation startup check) refuses to drop an
+         index that backs an FK constraint, even when a suitable replacement index exists. The course FK is
+         kept here, so on H2 the legacy single-column index stays alongside the new composite — harmless,
+         since H2 is only used for the startup smoke test, not for persistent data. -->
+    <changeSet id="20260410144433-7-drop-index-course" author="senan-aslan" dbms="mysql,postgresql">
         <preConditions onFail="MARK_RAN">
             <indexExists tableName="iris_session" indexName="fk_iris_session_course_id"/>
         </preConditions>
