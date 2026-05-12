@@ -41,7 +41,9 @@ on:
     - develop
     - main
     - release/*
-    tags: '[0-9]+.[0-9]+.[0-9]+'
+    tags:
+    - '[0-9]+.[0-9]+'
+    - '[0-9]+.[0-9]+.[0-9]+'
   release:
     types:
     - created
@@ -55,11 +57,11 @@ on:
 #
 # - Pushes (branches & tags): Each branch or tag runs independently. If a run is in progress for the same branch or tag, it is canceled.
 #   Example: Push to "develop" → "build-refs/heads/develop"
-#   Example: Push to "release/1.2.3" → "build-refs/heads/release/1.2.3"
-#   Example: Tag "v1.2.3" → "build-refs/tags/v1.2.3"
+#   Example: Push to "release/9.2" → "build-refs/heads/release/9.2"
+#   Example: Tag "9.2" → "build-refs/tags/9.2"
 #
 # - Releases: Each release runs independently.
-#   Example: Release for "v1.2.3" → "build-release-v1.2.3"
+#   Example: Release for "9.2" → "build-release-9.2"
 #
 # - Default fallback: Ensures the workflow always has a concurrency group.
 #   Example: Unexpected event type → "build-default"

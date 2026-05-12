@@ -1,0 +1,21 @@
+name: Version Consistency
+
+on:
+  pull_request:
+    paths:
+    - 'build.gradle'
+    - 'openapi/openapi.yaml'
+    - 'README.md'
+    - 'supporting_scripts/update_version.sh'
+    - '.github/workflows/version-consistency.yml'
+  push:
+    branches:
+    - develop
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Verify version is consistent across build.gradle, openapi.yaml and README.md
+      run: bash supporting_scripts/update_version.sh --check
