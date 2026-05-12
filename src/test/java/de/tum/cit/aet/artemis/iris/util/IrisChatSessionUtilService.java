@@ -11,8 +11,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -29,7 +28,7 @@ public class IrisChatSessionUtilService {
     @Autowired
     private IrisSessionRepository irisSessionRepository;
 
-    public IrisProgrammingExerciseChatSession createAndSaveProgrammingExerciseChatSessionForUser(ProgrammingExercise exercise, User user) {
+    public IrisChatSession createAndSaveProgrammingExerciseChatSessionForUser(ProgrammingExercise exercise, User user) {
         return irisSessionRepository.save(IrisChatSessionFactory.createProgrammingExerciseChatSessionForUser(exercise, user));
     }
 
@@ -38,9 +37,9 @@ public class IrisChatSessionUtilService {
      *
      * @param course the course for which to create the session
      * @param user   the user for whom to create the session
-     * @return the persisted IrisCourseChatSession
+     * @return the persisted IrisChatSession (course context)
      */
-    public IrisCourseChatSession createAndSaveCourseChatSessionForUser(Course course, User user) {
+    public IrisChatSession createAndSaveCourseChatSessionForUser(Course course, User user) {
         return irisSessionRepository.save(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
     }
 }
