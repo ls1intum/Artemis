@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TeamService } from 'app/exercise/team/team.service';
@@ -9,43 +11,47 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { mockTeams } from 'test/helpers/mocks/service/mock-team.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+
 describe('TeamsExportButtonComponent', () => {
-    let comp: TeamsExportButtonComponent;
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TeamsExportButtonComponent>;
     let debugElement: DebugElement;
     let teamService: TeamService;
 
-    function resetComponent() {
-        comp.teams = mockTeams;
-    }
-
-    beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({
-            imports: [MockModule(NgbModule), MockDirective(FeatureToggleDirective)],
-            declarations: [TeamsExportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            providers: [MockProvider(TeamService)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                MockModule(NgbModule),
+                MockDirective(FeatureToggleDirective),
+                TeamsExportButtonComponent,
+                ButtonComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+            ],
+            providers: [MockProvider(TeamService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
-    }));
-    beforeEach(() => {
+
         fixture = TestBed.createComponent(TeamsExportButtonComponent);
-        comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
         teamService = TestBed.inject(TeamService);
+        fixture.componentRef.setInput('teams', mockTeams);
+        fixture.detectChanges(false);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     describe('exportTeams', () => {
-        let exportTeamsStub: jest.SpyInstance;
-        beforeEach(() => {
-            resetComponent();
-            exportTeamsStub = jest.spyOn(teamService, 'exportTeams');
-        });
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
         it('should call export teams from team service when called', () => {
+            const exportTeamsStub = vi.spyOn(teamService, 'exportTeams').mockImplementation(() => {});
             const button = debugElement.nativeElement.querySelector('button');
             button.click();
             expect(exportTeamsStub).toHaveBeenCalledOnce();
+            expect(exportTeamsStub).toHaveBeenCalledWith(mockTeams);
         });
     });
 });

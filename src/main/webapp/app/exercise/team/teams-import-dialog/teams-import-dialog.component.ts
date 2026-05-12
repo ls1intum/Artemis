@@ -1,6 +1,6 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
@@ -41,7 +41,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 })
 export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     private teamService = inject(TeamService);
-    private activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
     private alertService = inject(AlertService);
 
     readonly ImportStrategy = ImportStrategy;
@@ -49,8 +50,10 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
     readonly importForm = viewChild.required<NgForm>('importForm');
 
-    readonly exercise = input<Exercise>(undefined!);
-    readonly teams = input<Team[]>(undefined!); // existing teams already in exercise
+    // Inputs come from DynamicDialogConfig.data. Initialize at field declaration to
+    // avoid ExpressionChangedAfterItHasBeenCheckedError in zoneless dev mode.
+    readonly exercise = signal<Exercise>(this.dialogConfig.data.exercise);
+    readonly teams = signal<Team[]>(this.dialogConfig.data.teams); // existing teams already in exercise
 
     sourceExercise?: Exercise;
 
@@ -287,7 +290,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * Cancel the import dialog
      */
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close(undefined);
     }
 
     /**
@@ -365,7 +368,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * @param {HttpResponse<Team[]>} teams - Successfully updated teams
      */
     onSaveSuccess(teams: HttpResponse<Team[]>) {
-        this.activeModal.close(teams.body);
+        this.dialogRef.close(teams.body);
         this.isImporting = false;
 
         setTimeout(() => {
