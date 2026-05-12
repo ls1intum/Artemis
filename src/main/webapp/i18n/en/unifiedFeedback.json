@@ -4,10 +4,10 @@
             "reference": "Reference:",
             "points": "points",
             "type": {
-                "correct": "Correct",
+                "positive": "Positive",
+                "feedback": "Feedback",
                 "needsRevision": "Needs Revision",
-                "notAttempted": "Not Attempted",
-                "nonCompliant": "Non Compliant"
+                "notAttempted": "Not Attempted"
             }
         }
     }

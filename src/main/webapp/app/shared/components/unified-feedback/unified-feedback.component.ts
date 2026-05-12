@@ -2,7 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faMessage, faTimes } from '@fortawesome/free-solid-svg-icons';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
@@ -41,16 +41,16 @@ export class UnifiedFeedbackComponent {
 
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
         correct: { icon: faCheck, alertClass: 'alert-success' },
-        needs_revision: { icon: faRedo, alertClass: 'alert-secondary' },
+        needs_revision: { icon: faMessage, alertClass: 'alert-secondary' },
         not_attempted: { icon: faTimes, alertClass: 'alert-secondary' },
         non_compliant: { icon: faTimes, alertClass: 'alert-danger' },
     };
 
     private readonly feedbackTypeTitleKeys: Record<FeedbackType, string> = {
-        correct: 'artemisApp.feedback.type.correct',
-        needs_revision: 'artemisApp.feedback.type.needsRevision',
+        correct: 'artemisApp.feedback.type.positive',
+        needs_revision: 'artemisApp.feedback.type.feedback',
         not_attempted: 'artemisApp.feedback.type.notAttempted',
-        non_compliant: 'artemisApp.feedback.type.nonCompliant',
+        non_compliant: 'artemisApp.feedback.type.needsRevision',
     };
 
     readonly inferredType = computed(() => {

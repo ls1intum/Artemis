@@ -32,7 +32,7 @@ describe('UnifiedFeedbackComponent', () => {
 
     it('should infer needs_revision type by default when points = 0', () => {
         expect(component.inferredType()).toBe('needs_revision');
-        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.needsRevision');
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.feedback');
         expect(component.inferredAlertClass()).toBe('alert-secondary');
     });
 
@@ -79,7 +79,7 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('title', undefined);
         fixture.componentRef.setInput('feedback', { text: 'Feedback Text' } as any);
         fixture.detectChanges();
-        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.needsRevision');
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.feedback');
     });
 
     it('should infer title from assessmentsNames when feedback has referenceId and mapping exists', () => {
@@ -97,10 +97,10 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('assessmentsNames', undefined as any);
         fixture.componentRef.setInput('points', 0);
         fixture.detectChanges();
-        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.needsRevision');
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.feedback');
         fixture.componentRef.setInput('points', 2);
         fixture.detectChanges();
-        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.correct');
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.positive');
     });
 
     it('should use explicit reference when provided', () => {
@@ -150,7 +150,7 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('feedback', { referenceId: 999 } as any);
         fixture.componentRef.setInput('assessmentsNames', { 42: { type: 'Model', name: 'Class Diagram' } } as any);
         fixture.detectChanges();
-        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.needsRevision');
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.feedback');
     });
 
     it('should fall back to default title for modeling feedback with text but no detailText, even when assessmentsNames maps the referenceId', () => {
@@ -159,7 +159,7 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('feedback', { text: 'Instructor comment', referenceId: 42 } as any);
         fixture.componentRef.setInput('assessmentsNames', { 42: { type: 'Model', name: 'Class Diagram' } } as any);
         fixture.detectChanges();
-        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.needsRevision');
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.feedback');
     });
 
     it('should fall back to default title for modeling feedback with text but no detailText, even when referenceId not in assessmentsNames mapping', () => {
@@ -168,7 +168,7 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('feedback', { text: 'Instructor comment', referenceId: 999 } as any);
         fixture.componentRef.setInput('assessmentsNames', { 42: { type: 'Model', name: 'Class Diagram' } } as any);
         fixture.detectChanges();
-        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.needsRevision');
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.feedback');
     });
 
     it('should return undefined inferredReference when no mapping and no feedback.reference', () => {
