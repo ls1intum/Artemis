@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input } from '@angular/core';
 
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
@@ -70,22 +70,28 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly getCourseFromExercise = getCourseFromExercise;
     protected readonly AssessmentType = AssessmentType;
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() participation: Participation;
-    @Input() isBuilding: boolean;
-    @Input() isQueued = false;
-    @Input() short = true;
+    readonly isBuilding = input<boolean>(undefined!);
+    readonly isQueued = input(false);
+    readonly short = input(true);
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() result?: Result;
-    @Input() showUngradedResults = false;
-    @Input() showBadge = false;
-    @Input() showIcon = true;
-    @Input() isInSidebarCard = false;
-    @Input() showCompletion = true;
-    @Input() missingResultInfo = MissingResultInformation.NONE;
+    readonly showUngradedResults = input(false);
+    readonly showBadge = input(false);
+    readonly showIcon = input(true);
+    readonly isInSidebarCard = input(false);
+    readonly showCompletion = input(true);
+    readonly missingResultInfo = input(MissingResultInformation.NONE);
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() exercise?: Exercise;
-    @Input() estimatedCompletionDate?: dayjs.Dayjs;
-    @Input() buildStartDate?: dayjs.Dayjs;
-    @Input() showProgressBar = false;
-    @Input() showProgressBarBorder = false;
+    readonly estimatedCompletionDate = input<dayjs.Dayjs>();
+    readonly buildStartDate = input<dayjs.Dayjs>();
+    readonly showProgressBar = input(false);
+    readonly showProgressBarBorder = input(false);
 
     textColorClass: string;
     resultIconClass: IconProp;
@@ -133,7 +139,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                     });
                 }
                 // Make sure result and participation are connected
-                if (!this.showUngradedResults) {
+                if (!this.showUngradedResults()) {
                     const firstRatedResult = results.find((result) => result?.rated);
                     if (firstRatedResult) {
                         this.result = firstRatedResult;
@@ -162,11 +168,11 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
         this.translateService.onLangChange.subscribe(() => {
             if (this.resultString) {
-                this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short);
+                this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short());
             }
         });
 
-        if (this.showBadge && this.result) {
+        if (this.showBadge() && this.result) {
             this.badge = ResultService.evaluateBadge(this.participation, this.result);
         }
     }
@@ -205,10 +211,10 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         }
 
         clearInterval(this.estimatedDurationInterval);
-        if (this.estimatedCompletionDate && this.buildStartDate) {
+        if (this.estimatedCompletionDate() && this.buildStartDate()) {
             this.estimatedDurationInterval = setInterval(() => {
-                this.estimatedRemaining = Math.max(0, dayjs(this.estimatedCompletionDate).diff(dayjs(), 'seconds'));
-                this.estimatedDuration = dayjs(this.estimatedCompletionDate).diff(dayjs(this.buildStartDate), 'seconds');
+                this.estimatedRemaining = Math.max(0, dayjs(this.estimatedCompletionDate()).diff(dayjs(), 'seconds'));
+                this.estimatedDuration = dayjs(this.estimatedCompletionDate()).diff(dayjs(this.buildStartDate()), 'seconds');
             });
         }
     }
@@ -217,18 +223,18 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      * Sets the corresponding icon, styling and message to display results.
      */
     evaluate() {
-        this.templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, this.isBuilding, this.missingResultInfo, this.isQueued);
+        this.templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, this.isBuilding(), this.missingResultInfo(), this.isQueued());
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = getTextColorClass(this.result, this.participation, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.participation, this.templateStatus);
-            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short);
+            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short());
         } else if (
             this.result &&
-            ((this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) || isAthenaAIResult(this.result))
+            ((this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults())) || isAthenaAIResult(this.result))
         ) {
             this.textColorClass = getTextColorClass(this.result, this.participation, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.participation, this.templateStatus);
-            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short);
+            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short());
             this.resultTooltip = this.buildResultTooltip();
         } else if (this.templateStatus !== ResultTemplateStatus.MISSING) {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
