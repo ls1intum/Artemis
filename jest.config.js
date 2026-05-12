@@ -127,6 +127,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/exercise/synchronization/**', // exercise synchronization module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/version-history/**', // exercise version history module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/review/**', // review comment module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/team/**', // exercise team module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**', // checklist-panel uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // problem-statement service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // problem-statement utils uses Vitest (see vitest.config.ts)
@@ -183,6 +184,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/', // build phases editor uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/version-history/', // exercise version history module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/team/', // exercise team module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel uses Vitest
         '<rootDir>/src/main/webapp/app/hyperion/', // hyperion module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/version-history/', // programming version history module uses Vitest
@@ -265,6 +267,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module
         '<rootDir>/src/main/webapp/app/exercise/version-history/', // exercise version history module
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module
+        '<rootDir>/src/main/webapp/app/exercise/team/', // exercise team module
         '<rootDir>/src/main/webapp/app/hyperion/', // hyperion module
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel (vitest)
