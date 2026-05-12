@@ -128,21 +128,35 @@ describe('TeamsImportFromFileFormComponent', () => {
             resetComponent();
         });
 
-        it('should set import file correctly', () => {
+        it('should set import file correctly and render the loading spinner', () => {
+            // Spinner not visible before action: loading() is false initially.
+            fixture.detectChanges(false);
+            expect(fixture.debugElement.query(By.css('.loading-spinner'))).toBeNull();
+
             const file = new File(['content'], 'testFileName', { type: 'text/plain' });
             const ev = { target: { files: [file] } };
             comp.setImportFile(ev);
             expect(comp.importFile).toStrictEqual(file);
             expect(comp.importFileName).toBe('testFileName');
             expect(comp.loading()).toBe(true);
+
+            // After loading.set(true), the template re-renders and the spinner is visible.
+            fixture.detectChanges(false);
+            expect(fixture.debugElement.query(By.css('.loading-spinner'))).not.toBeNull();
         });
 
-        it('should set import file correctly for empty file', () => {
+        it('should set import file correctly for empty file and not render the loading spinner', () => {
+            fixture.detectChanges(false);
+            expect(fixture.debugElement.query(By.css('.loading-spinner'))).toBeNull();
+
             const ev = { target: { files: [] } };
             comp.setImportFile(ev);
             expect(comp.importFile).toBeUndefined();
             expect(comp.importFileName).toBe('');
             expect(comp.loading()).toBe(false);
+
+            fixture.detectChanges(false);
+            expect(fixture.debugElement.query(By.css('.loading-spinner'))).toBeNull();
         });
     });
 

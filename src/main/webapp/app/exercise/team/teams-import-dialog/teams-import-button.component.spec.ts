@@ -73,11 +73,31 @@ describe('TeamsImportButtonComponent', () => {
             expect(openedConfig.data).toEqual({ exercise: mockExercise, teams: mockTeams });
             expect(openedConfig.width).toBe('50rem');
             expect(openedConfig.modal).toBe(true);
+            expect(openedConfig.closable).toBe(true);
             expect(openedConfig.closeOnEscape).toBe(true);
             expect(openedConfig.dismissableMask).toBe(false);
+            // Header includes the exercise title parenthetically when the exercise has one.
             expect(openedConfig.header).toContain(mockExercise.title);
+            expect(openedConfig.header).toContain('(');
+            expect(openedConfig.header).toContain(')');
 
             expect(emittedTeams).toEqual(mockSourceTeams);
+        });
+
+        it('should fall back to translated label only when exercise has no title', () => {
+            const titlelessExercise = { ...mockExercise, title: undefined };
+            fixture.componentRef.setInput('exercise', titlelessExercise);
+            fixture.detectChanges(false);
+
+            const button = debugElement.nativeElement.querySelector('button');
+            button.click();
+
+            expect(dialogServiceOpenSpy).toHaveBeenCalledOnce();
+            const [, openedConfig] = dialogServiceOpenSpy.mock.calls[0];
+            // Without an exercise title the header degrades gracefully to just the translated label
+            // (no stray "(undefined)" rendered).
+            expect(openedConfig.header).not.toContain('(');
+            expect(openedConfig.header).not.toContain('undefined');
         });
 
         it('should not emit save when dialog is dismissed (undefined result)', () => {

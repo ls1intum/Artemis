@@ -160,7 +160,7 @@ export class TeamsImportFromFileFormComponent {
      * Convert imported team list to normal teams
      */
     convertTeams(importTeam: StudentWithTeam[]): Team[] {
-        const teams: Team[] = [];
+        let teams: Team[] = [];
         importTeam.forEach((student, index) => {
             const newStudent = new User();
             newStudent.firstName = student.firstName ?? '';
@@ -189,7 +189,7 @@ export class TeamsImportFromFileFormComponent {
                 newTeam.name = student.teamName;
                 newTeam.shortName = shortName;
                 newTeam.students = [newStudent];
-                teams.push(newTeam);
+                teams = [...teams, newTeam];
             } else {
                 teams[teamIndex].students = [...teams[teamIndex].students!, newStudent];
             }
