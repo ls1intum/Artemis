@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.iris.api.IrisChatSessionApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -74,11 +75,13 @@ public class ExerciseDeletionService {
 
     private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
 
+    private final Optional<IrisChatSessionApi> irisChatSessionApi;
+
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelService channelService,
-            Optional<CompetencyProgressApi> competencyProgressApi, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<ExerciseWeaviateService> exerciseWeaviateService, Optional<IrisChatSessionApi> irisChatSessionApi) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
@@ -92,6 +95,7 @@ public class ExerciseDeletionService {
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
         this.exerciseWeaviateService = exerciseWeaviateService;
+        this.irisChatSessionApi = irisChatSessionApi;
     }
 
     /**
@@ -181,6 +185,15 @@ public class ExerciseDeletionService {
                     api.save(studentExam);
                 }
             }
+        }
+
+        // Remove any Iris chat sessions referencing this exercise. Since the unified iris_session
+        // schema uses a plain entity_id column (no FK), cleanup must happen explicitly here.
+        if (exercise instanceof ProgrammingExercise) {
+            irisChatSessionApi.ifPresent(api -> api.deleteAllForProgrammingExercise(exerciseId));
+        }
+        else if (exercise instanceof TextExercise) {
+            irisChatSessionApi.ifPresent(api -> api.deleteAllForTextExercise(exerciseId));
         }
 
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).

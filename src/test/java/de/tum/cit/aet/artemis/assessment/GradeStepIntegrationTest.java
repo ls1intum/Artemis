@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.dto.GradeDTO;
+import de.tum.cit.aet.artemis.assessment.dto.GradeStepDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradeStepsDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -195,7 +196,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetGradeStepByIdForCourseNoGradingScaleExists() throws Exception {
-        request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStepDTO.class);
     }
 
     /**
@@ -214,7 +215,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         courseGradingScale = gradingScaleRepository.save(courseGradingScale);
         Long gradeStepId = courseGradingScale.getGradeSteps().stream().iterator().next().getId();
 
-        GradeStep foundGradeStep = request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps/" + gradeStepId, HttpStatus.OK, GradeStep.class);
+        GradeStepDTO foundGradeStep = request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps/" + gradeStepId, HttpStatus.OK, GradeStepDTO.class);
 
         assertThat(foundGradeStep).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(gradeStep);
     }
@@ -225,7 +226,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetGradeStepByIdForExamNoGradingScaleExists() throws Exception {
-        request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStepDTO.class);
     }
 
     /**
@@ -244,8 +245,8 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         examGradingScale = gradingScaleRepository.save(examGradingScale);
         Long gradeStepId = examGradingScale.getGradeSteps().stream().iterator().next().getId();
 
-        GradeStep foundGradeStep = request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps/" + gradeStepId, HttpStatus.OK,
-                GradeStep.class);
+        GradeStepDTO foundGradeStep = request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps/" + gradeStepId,
+                HttpStatus.OK, GradeStepDTO.class);
 
         assertThat(foundGradeStep).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(gradeStep);
     }
