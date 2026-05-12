@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -68,18 +68,15 @@ export class TeamParticipationTableComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;
 
-    readonly team = input<Team>(undefined!);
-    readonly course = input<Course>(undefined!);
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() exercise: Exercise;
+    readonly team = input.required<Team>();
+    readonly course = input.required<Course>();
+    readonly exercise = input.required<Exercise>();
     readonly isAdmin = input(false);
     readonly isTeamOwner = input(false);
 
-    exercises: ExerciseForTeam[] = [];
-    submissions: Submission[] = [];
-    isLoading: boolean;
+    exercises = signal<ExerciseForTeam[]>([]);
+    submissions = signal<Submission[]>([]);
+    isLoading = signal<boolean>(false);
 
     // Icons
     faFolderOpen = faFolderOpen;
@@ -97,10 +94,10 @@ export class TeamParticipationTableComponent implements OnInit {
      * For the team owner tutor or instructors, the participations also contains the latest submission (for assessment)
      */
     loadAll() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course(), this.team()).subscribe({
             next: (courseResponse) => {
-                this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
+                const exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
                     return {
                         ...exercise,
                         isAtLeastTutor: this.accountService.isAtLeastTutorInCourse(exercise.course),
@@ -108,8 +105,9 @@ export class TeamParticipationTableComponent implements OnInit {
                         isAtLeastInstructor: this.accountService.isAtLeastInstructorInCourse(exercise.course),
                     };
                 });
-                this.submissions = this.exercises.filter((exercise) => exercise.submission).map((exercise) => exercise.submission!);
-                this.isLoading = false;
+                this.exercises.set(exercises);
+                this.submissions.set(exercises.filter((exercise) => exercise.submission).map((exercise) => exercise.submission!));
+                this.isLoading.set(false);
             },
             error: (error) => this.onError(error),
         });
@@ -215,6 +213,6 @@ export class TeamParticipationTableComponent implements OnInit {
 
     private onError(error: HttpErrorResponse) {
         onError(this.alertService, error);
-        this.isLoading = false;
+        this.isLoading.set(false);
     }
 }
