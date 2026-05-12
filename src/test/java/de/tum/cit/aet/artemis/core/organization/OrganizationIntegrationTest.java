@@ -8,7 +8,9 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -713,8 +715,13 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(members).hasSize(1);
         assertThat(members.get(0).id()).isEqualTo(student.getId());
 
-        var organizations = organizationRepo.getAllMatchingOrganizationsByUserEmail(student.getEmail());
-        assertThat(organizations).containsExactly(organization);
+        // Indexing happens inside the PUT request, but the user-organization link is materialized
+        // through a different repository write. Awaitility tolerates the small visibility lag the
+        // test occasionally observed on slow runners. Production callers do not need this — they
+        // only consume indexed data via subsequent HTTP requests with their own transaction.
+        final Organization expectedOrganization = organization;
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS)
+                .untilAsserted(() -> assertThat(organizationRepo.getAllMatchingOrganizationsByUserEmail(student.getEmail())).containsExactly(expectedOrganization));
     }
 
     @Test

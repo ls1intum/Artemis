@@ -16,7 +16,10 @@ export class CourseOverviewPage {
      * @param term The search term to use.
      */
     async search(term: string) {
-        const searchInput = this.page.locator('jhi-sidebar input[formcontrolname="searchFilter"]');
+        // The sidebar's search field used to be a reactive form control bound via
+        // formControlName="searchFilter"; PR #12382 migrated it to a plain input with id="search"
+        // and a (input)/[value] binding. Match the new selector.
+        const searchInput = this.page.locator('jhi-sidebar input#search');
         await searchInput.pressSequentially(term, { delay: 20 });
     }
 
@@ -25,7 +28,11 @@ export class CourseOverviewPage {
      * @param exerciseId The ID of the exercise to start.
      */
     async startExercise(exerciseId: number) {
-        await this.getStartExerciseButton(exerciseId).click();
+        // Wait for the start-exercise button to be visible before clicking; the exercise list is
+        // populated asynchronously and the bare .click() races the render under parallel load.
+        const button = this.getStartExerciseButton(exerciseId);
+        await button.waitFor({ state: 'visible', timeout: 30_000 });
+        await button.click();
     }
 
     /**
