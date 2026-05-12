@@ -1,4 +1,5 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, model } from '@angular/core';
+import { Component, DestroyRef, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, model } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -61,6 +62,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
     private resultService = inject(ResultService);
     private router = inject(Router);
+    private destroyRef = inject(DestroyRef);
 
     // make constants available to html
     readonly ResultTemplateStatus = ResultTemplateStatus;
@@ -117,7 +119,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      */
     ngOnInit(): void {
         const participation = this.participation();
-        let result = this.result();
+        const result = this.result();
         let exercise = this.exercise();
         if (!result && participation) {
             exercise = exercise ?? getExercise(participation);
@@ -143,12 +145,10 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                 if (!this.showUngradedResults()) {
                     const firstRatedResult = results.find((r) => r?.rated);
                     if (firstRatedResult) {
-                        result = firstRatedResult;
                         this.result.set(firstRatedResult);
                     }
                 } else {
-                    result = getAllResultsOfAllSubmissions(participation.submissions).first();
-                    this.result.set(result);
+                    this.result.set(getAllResultsOfAllSubmissions(participation.submissions).first());
                 }
             }
         } else if (!participation && result) {
@@ -172,7 +172,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
         this.evaluate();
 
-        this.translateService.onLangChange.subscribe(() => {
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             if (this.resultString) {
                 this.resultString = this.resultService.getResultString(this.result(), this.exercise(), this.participation(), this.short());
             }
