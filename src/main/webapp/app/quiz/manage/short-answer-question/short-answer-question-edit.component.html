@@ -156,8 +156,8 @@
             </div>
         }
         @if (reEvaluationInProgress()) {
-            <div class="question-options question-options-reevaluation row align-items-center" style="width: 100%">
-                <div class="col-12 col-lg-4">
+            <div class="question-options question-options-reevaluation row align-items-start" style="width: 100%">
+                <div class="col-12 col-md-4">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
                         <select class="form-select" [(ngModel)]="shortAnswerQuestion.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
@@ -168,39 +168,35 @@
                         <jhi-quiz-scoring-info-modal />
                     </div>
                 </div>
-                <div class="col-12 col-lg-2">
+                <div class="col-12 col-md-2">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
                         <input class="form-control point-input" title="score" type="number" [value]="shortAnswerQuestion.points" disabled style="width: 100%" />
                     </div>
                 </div>
-                <div class="col-12 col-lg-6 row justify-content-lg-end align-items-start">
-                    <div class="col-8 col-lg-4 form-group">
-                        <button
-                            class="btn btn-outline-secondary invalid-button"
-                            [hidden]="shortAnswerQuestion.invalid"
-                            (click)="shortAnswerQuestion.invalid = true"
-                            jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
-                        ></button>
-                        <button
-                            class="btn btn-outline-secondary invalid-button"
-                            [hidden]="!shortAnswerQuestion.invalid"
-                            [disabled]="shortAnswerQuestion.invalid"
-                            jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
-                        ></button>
-                    </div>
-                    <div class="col-2 col-lg-1">
-                        <div class="re-evaluate-button" id="delete-button" class="delete-button" (click)="deleteQuestion()">
-                            <fa-icon [icon]="faTrash" size="2x" />
-                        </div>
+                <div class="col-12 col-md-6 d-flex align-items-center gap-2">
+                    <button
+                        class="btn btn-outline-secondary invalid-button w-auto ms-auto"
+                        [hidden]="shortAnswerQuestion.invalid"
+                        (click)="shortAnswerQuestion.invalid = true"
+                        jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
+                    ></button>
+                    <button
+                        class="btn btn-outline-secondary invalid-button w-auto ms-auto"
+                        [hidden]="!shortAnswerQuestion.invalid"
+                        [disabled]="shortAnswerQuestion.invalid"
+                        jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
+                    ></button>
+                    <div id="delete-button" class="delete-button flex-shrink-0" (click)="deleteQuestion()">
+                        <fa-icon [icon]="faTrash" size="2x" />
                     </div>
                 </div>
-                <div class="col-12 row align-items-center justify-content-center justify-content-lg-start">
-                    <div class="col-lg-6 row">
-                        <div class="col-12 col-lg-4 form-group mt-1">
+                <div class="col row align-items-center justify-content-center justify-content-md-start">
+                    <div class="col-md-6 row">
+                        <div class="col-12 col-md-4 form-group mt-1">
                             <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.quizExercise.answerMatching.title"></span>
                         </div>
-                        <div class="col-12 col-lg-7">
+                        <div class="col-12 col-md-7">
                             <div class="slider-container">
                                 <div style="display: flex">
                                     <input
@@ -221,7 +217,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-12 col-lg-3" style="padding: 0 0.5rem">
+                    <div class="col-12 col-md-3" style="padding: 0 0.5rem">
                         <div class="d-flex align-items-center gap-2">
                             <input
                                 #inputElement
@@ -234,7 +230,7 @@
                             <label for="{{ 'cbMatchAnswersExactly' + questionIndex() }}" jhiTranslate="artemisApp.quizExercise.matchPercentage.title"></label>
                         </div>
                     </div>
-                    <div class="col-12 col-lg-3" style="padding: 0 0.5rem">
+                    <div class="col-12 col-md-3" style="padding: 0 0.5rem">
                         <div class="d-flex align-items-center gap-2">
                             <p-checkbox
                                 inputId="{{ 'cbMatchLetterCase' + questionIndex() }}"
