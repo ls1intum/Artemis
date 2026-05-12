@@ -28,14 +28,15 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     readonly SHOW_TYPING_DURATION = 2000; // ms
     readonly SEND_TYPING_INTERVAL = this.SHOW_TYPING_DURATION / 1.5;
 
-    readonly typing$ = input<Observable<any>>(undefined!);
-    readonly participation = input<StudentParticipation>(undefined!);
+    readonly typing$ = input<Observable<any> | undefined>(undefined);
+    readonly participation = input.required<StudentParticipation>();
 
     currentUser: User;
     onlineTeamStudents: OnlineTeamStudent[] = [];
     typingTeamStudents: OnlineTeamStudent[] = [];
     websocketTopic: string;
     private websocketSubscription?: Subscription;
+    private typingSubscription?: Subscription;
 
     // Icons
     faCircle = faCircle;
@@ -75,7 +76,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     private setupTypingIndicatorSender() {
         const typing$ = this.typing$();
         if (typing$) {
-            typing$.pipe(throttleTime(this.SEND_TYPING_INTERVAL)).subscribe({
+            this.typingSubscription = typing$.pipe(throttleTime(this.SEND_TYPING_INTERVAL)).subscribe({
                 next: () => this.websocketService.send<object>(this.buildWebsocketTopic('/typing'), {}),
                 error: (error: unknown) => captureException(error),
             });
@@ -87,6 +88,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy(): void {
         this.websocketSubscription?.unsubscribe();
+        this.typingSubscription?.unsubscribe();
     }
 
     get team(): Team {

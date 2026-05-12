@@ -193,7 +193,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
         if (index === -1) {
             this.teams.set([...teams, team]);
         } else {
-            this.teams.set(Object.assign([], teams, { [index]: team }));
+            this.teams.set(teams.map((t, i) => (i === index ? team : t)));
         }
     }
 

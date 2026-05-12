@@ -112,7 +112,7 @@
                 [course]="exercise().course!"
                 [exercise]="exercise()"
                 [team]="team()"
-                [studentsFromPendingTeam]="pendingTeam.students!"
+                [studentsFromPendingTeam]="pendingTeam.students || []"
                 (selectStudent)="onAddStudent($event)"
                 (searching)="searchingStudents = $event"
                 (searchQueryTooShort)="searchingStudentsQueryTooShort = $event"

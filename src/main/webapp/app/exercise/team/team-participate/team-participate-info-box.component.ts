@@ -12,10 +12,10 @@ import { TeamStudentsOnlineListComponent } from './team-students-online-list.com
     imports: [JhiConnectionStatusComponent, TeamStudentsOnlineListComponent],
 })
 export class TeamParticipateInfoBoxComponent {
-    readonly exercise = input<Exercise>(undefined!);
-    readonly participation = input<StudentParticipation>(undefined!);
+    readonly exercise = input.required<Exercise>();
+    readonly participation = input.required<StudentParticipation>();
     readonly stickyEnabled = input(true);
     readonly dockedToLeftSide = input(false);
     readonly dockedToRightSide = input(false);
-    readonly typing$ = input<Observable<any>>(undefined!);
+    readonly typing$ = input.required<Observable<any>>();
 }
