@@ -73,7 +73,7 @@ public class OnlineUnitResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
-    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public OnlineUnitResource(LectureRepository lectureRepository, OnlineUnitRepository onlineUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
@@ -82,7 +82,7 @@ public class OnlineUnitResource {
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
         this.lectureUnitRepository = lectureUnitRepository;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 
     /**
@@ -137,20 +137,21 @@ public class OnlineUnitResource {
 
         // Note: Competency links are persisted automatically (due to CascadeType.PERSIST)
         existingOnlineUnit = onlineUnitRepository.save(existingOnlineUnit);
+        OnlineUnit savedOnlineUnit = existingOnlineUnit;
 
         if (competencyProgressApi.isPresent()) {
             // NOTE: this can be a very expensive operation, depending on how many users have progress for this learning object
             competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingOnlineUnit);
         }
 
-        if (searchableEntityWeaviateService != null) {
-            if (LectureUnitSearchableEntityDTO.isIndexable(existingOnlineUnit)) {
-                searchableEntityWeaviateService.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(existingOnlineUnit));
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (LectureUnitSearchableEntityDTO.isIndexable(savedOnlineUnit)) {
+                service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(savedOnlineUnit));
             }
             else {
-                searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, existingOnlineUnit.getId());
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, savedOnlineUnit.getId());
             }
-        }
+        });
 
         // convert into DTO
         var result = new OnlineUnitDTO(existingOnlineUnit.getId(), existingOnlineUnit.getName(), existingOnlineUnit.getReleaseDate(), existingOnlineUnit.getDescription(),
@@ -196,14 +197,14 @@ public class OnlineUnitResource {
         // TODO: return a DTO instead to avoid manipulation of the entity before sending it to the client
         lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedUnit);
 
-        if (searchableEntityWeaviateService != null) {
+        searchableEntityWeaviateService.ifPresent(service -> {
             if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {
-                searchableEntityWeaviateService.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(persistedUnit));
+                service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(persistedUnit));
             }
             else {
-                searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, persistedUnit.getId());
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, persistedUnit.getId());
             }
-        }
+        });
         return ResponseEntity.created(new URI("/api/online-units/" + persistedUnit.getId())).body(persistedUnit);
     }
 

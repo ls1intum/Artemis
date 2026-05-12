@@ -84,7 +84,7 @@ public class LectureUnitResource {
 
     private final LectureTranscriptionRepository transcriptionRepository;
 
-    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public LectureUnitResource(UserRepository userRepository, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
             LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<LectureContentProcessingService> lectureContentProcessingService,
@@ -98,7 +98,7 @@ public class LectureUnitResource {
         this.lectureContentProcessingService = lectureContentProcessingService;
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 
     /**
@@ -196,9 +196,7 @@ public class LectureUnitResource {
         long unitId = lectureUnitId;
         lectureUnitService.removeLectureUnit(lectureUnit);
 
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unitId);
-        }
+        searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unitId));
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureUnitName)).build();
     }

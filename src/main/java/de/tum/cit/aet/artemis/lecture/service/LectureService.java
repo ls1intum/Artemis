@@ -91,7 +91,7 @@ public class LectureService {
 
     private final Optional<IrisChatSessionApi> irisChatSessionApi;
 
-    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     private final YouTubeUrlService youTubeUrlService;
 
@@ -111,7 +111,7 @@ public class LectureService {
         this.exerciseService = exerciseService;
         this.lectureUnitRepository = lectureUnitRepository;
         this.irisChatSessionApi = irisChatSessionApi;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.youTubeUrlService = youTubeUrlService;
     }
 
@@ -212,10 +212,10 @@ public class LectureService {
 
         // Clean up Weaviate: remove the lecture row and every lecture unit row that belonged to this
         // lecture so the JPA cascade delete does not leave orphaned rows in the unified search index.
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE, lecture.getId());
-            searchableEntityWeaviateService.deleteAllLectureUnitsForLectureAsync(lecture.getId());
-        }
+        searchableEntityWeaviateService.ifPresent(service -> {
+            service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE, lecture.getId());
+            service.deleteAllLectureUnitsForLectureAsync(lecture.getId());
+        });
 
         lectureRepository.deleteById(lecture.getId());
     }
@@ -500,16 +500,16 @@ public class LectureService {
         lectureRepository.saveAll(existingLectures);
         channelRepository.saveAll(existingLectureChannels);
 
-        if (searchableEntityWeaviateService != null) {
-            lecturesToUpdate.forEach(lecture -> searchableEntityWeaviateService.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture)));
+        searchableEntityWeaviateService.ifPresent(service -> {
+            lecturesToUpdate.forEach(lecture -> service.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture)));
             channelsToUpdate.forEach(channel -> {
                 if (ChannelSearchableEntityDTO.isIndexable(channel)) {
-                    searchableEntityWeaviateService.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(channel));
+                    service.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(channel));
                 }
                 else {
-                    searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
+                    service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
                 }
             });
-        }
+        });
     }
 }

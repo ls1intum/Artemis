@@ -91,7 +91,7 @@ public class ExamDeletionService {
 
     private final StudentExamService studentExamService;
 
-    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationDeletionService participationDeletionService, CacheManager cacheManager,
             UserRepository userRepository, ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository,
@@ -118,7 +118,7 @@ public class ExamDeletionService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examUserRepository = examUserRepository;
         this.studentExamService = studentExamService;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 
     /**
@@ -163,9 +163,7 @@ public class ExamDeletionService {
 
         deleteGradingScaleOfExam(exam);
 
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXAM, examId);
-        }
+        searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXAM, examId));
 
         // fetch the exam again to allow Hibernate to delete it properly
         exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);

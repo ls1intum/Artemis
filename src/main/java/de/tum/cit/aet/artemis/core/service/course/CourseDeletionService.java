@@ -118,7 +118,7 @@ public class CourseDeletionService {
 
     private final SubmissionRepository submissionRepository;
 
-    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public CourseDeletionService(ExerciseDeletionService exerciseDeletionService, ExerciseRepository exerciseRepository, UserService userService, Optional<LectureApi> lectureApi,
             Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamDeletionApi> examDeletionApi, Optional<ExamRepositoryApi> examRepositoryApi,
@@ -159,7 +159,7 @@ public class CourseDeletionService {
         this.courseAdminService = courseAdminService;
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 
     /**
@@ -306,9 +306,7 @@ public class CourseDeletionService {
             stepsCompleted++;
 
             // Step 15: Clean up all Weaviate rows for the course (exercises, lectures, etc.)
-            if (searchableEntityWeaviateService != null) {
-                searchableEntityWeaviateService.deleteAllForCourseAsync(courseId);
-            }
+            searchableEntityWeaviateService.ifPresent(service -> service.deleteAllForCourseAsync(courseId));
 
             // Step 16: Delete the course itself
             progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting course", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
@@ -558,9 +556,7 @@ public class CourseDeletionService {
         // See: https://github.com/ls1intum/edutelligence/blob/main/iris/src/iris/pipeline/faq_ingestion_pipeline.py
         var faqs = faqRepository.findAllByCourseId(courseId);
         pyrisFaqApi.ifPresent(api -> faqs.forEach(api::deleteFaq));
-        if (searchableEntityWeaviateService != null) {
-            faqs.forEach(faq -> searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.FAQ, faq.getId()));
-        }
+        searchableEntityWeaviateService.ifPresent(service -> faqs.forEach(faq -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.FAQ, faq.getId())));
         faqRepository.deleteAllByCourseId(courseId);
     }
 

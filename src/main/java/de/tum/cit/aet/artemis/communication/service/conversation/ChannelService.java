@@ -57,7 +57,7 @@ public class ChannelService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, ConversationService conversationService,
             UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
@@ -67,17 +67,19 @@ public class ChannelService {
         this.conversationService = conversationService;
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 
     private void syncChannelWithWeaviate(Channel channel) {
-        if (searchableEntityWeaviateService != null && channel != null && channel.getId() != null) {
-            if (ChannelSearchableEntityDTO.isIndexable(channel)) {
-                searchableEntityWeaviateService.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(channel));
-            }
-            else {
-                searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
-            }
+        if (channel != null && channel.getId() != null) {
+            searchableEntityWeaviateService.ifPresent(service -> {
+                if (ChannelSearchableEntityDTO.isIndexable(channel)) {
+                    service.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(channel));
+                }
+                else {
+                    service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
+                }
+            });
         }
     }
 
@@ -217,9 +219,7 @@ public class ChannelService {
     public void deleteChannel(@Nullable Channel channel) {
         if (channel != null) {
             conversationService.deleteConversation(channel.getId());
-            if (searchableEntityWeaviateService != null) {
-                searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
-            }
+            searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId()));
         }
     }
 
@@ -541,9 +541,7 @@ public class ChannelService {
         Long exerciseChannelId = channelRepository.findChannelIdByExerciseId(exerciseId);
         if (exerciseChannelId != null) {
             conversationService.deleteConversation(exerciseChannelId);
-            if (searchableEntityWeaviateService != null) {
-                searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, exerciseChannelId);
-            }
+            searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, exerciseChannelId));
         }
     }
 
