@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, model, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, input, model, signal, viewChild } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 @Component({
@@ -12,6 +12,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
  */
 export class MonacoEditorFitTextComponent {
     readonly text = model<string>('');
+    readonly readOnly = input(false);
     protected readonly editorHeight = signal(0);
 
     private readonly editor = viewChild.required(MonacoEditorComponent);

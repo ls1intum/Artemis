@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
 
 import { ButtonModule } from 'primeng/button';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -21,6 +21,7 @@ export class BuildPhasesEditorComponent {
     protected readonly faPlus = faPlus;
 
     readonly phases = model.required<BuildPhase[]>();
+    readonly readonly = input(false);
 
     readonly phaseCount = computed(() => this.phases().length);
     readonly phaseNames = computed(() => this.phases().map((phase) => phase.name));

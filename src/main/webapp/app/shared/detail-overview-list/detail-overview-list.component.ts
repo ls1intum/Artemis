@@ -16,6 +16,7 @@ import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/asse
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/programming/shared/build-details/programming-exercise-repository-and-build-plan-details/programming-exercise-repository-and-build-plan-details.component';
+import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
 import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
@@ -42,6 +43,7 @@ export enum DetailType {
     ProgrammingProblemStatement = 'detail-problem-statement',
     ProgrammingTimeline = 'detail-timeline',
     ProgrammingCheckoutDirectories = 'detail-checkout-directories',
+    ProgrammingBuildPhases = 'detail-build-phases',
     ExerciseCategories = 'detail-exercise-categories',
 }
 
@@ -60,6 +62,7 @@ export enum DetailType {
         TranslateDirective,
         ModelingEditorComponent,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
+        BuildPhasesEditorComponent,
         NgStyle,
         ExerciseDetailDirective,
         NoDataComponent,

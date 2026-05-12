@@ -24,6 +24,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { Checkbox } from 'primeng/checkbox';
 import { Message } from 'primeng/message';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 
 @Component({
     selector: 'jhi-build-phase',
@@ -53,6 +54,7 @@ import { Message } from 'primeng/message';
  */
 export class BuildPhaseEditorComponent {
     private readonly translateService = inject(TranslateService);
+    private readonly artemisMarkdownService = inject(ArtemisMarkdownService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     protected readonly faPlus = faPlus;
@@ -68,6 +70,7 @@ export class BuildPhaseEditorComponent {
     readonly index = input.required<number>();
     readonly phaseNames = input.required<string[]>();
     readonly isLast = input.required<boolean>();
+    readonly readonly = input(false);
 
     readonly displayedNumber = computed(() => this.index() + 1);
     readonly isFirst = computed(() => this.index() === 0);
@@ -94,6 +97,7 @@ export class BuildPhaseEditorComponent {
     );
 
     readonly shouldShowNameValidationError = computed(() => !this.isNameValid());
+    readonly readonlyScriptHtml = computed(() => this.artemisMarkdownService.safeHtmlForMarkdown(`\`\`\`bash\n${this.phase().script}\n\`\`\``));
 
     readonly conditionOptions = computed(() => {
         this.currentLocale();

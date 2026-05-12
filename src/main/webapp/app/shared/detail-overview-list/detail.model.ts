@@ -11,6 +11,7 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { BuildPhase } from 'app/programming/shared/entities/build-plan-phases.model';
 
 export type Detail = NotShownDetail | ShownDetail;
 
@@ -33,6 +34,7 @@ export type ShownDetail =
     | ProgrammingProblemStatementDetail
     | ProgrammingTimelineDetail
     | ProgrammingCheckoutDirectoriesDetail
+    | ProgrammingBuildPhasesDetail
     | ExerciseCategoriesDetail;
 
 export interface DetailBase {
@@ -139,6 +141,11 @@ interface ProgrammingCheckoutDirectoriesDetail extends DetailBase {
         programmingLanguage?: ProgrammingLanguage;
         isLocal: boolean;
     };
+}
+
+interface ProgrammingBuildPhasesDetail extends DetailBase {
+    type: DetailType.ProgrammingBuildPhases;
+    data: { phases: BuildPhase[] };
 }
 
 export interface ExerciseCategoriesDetail extends DetailBase {
