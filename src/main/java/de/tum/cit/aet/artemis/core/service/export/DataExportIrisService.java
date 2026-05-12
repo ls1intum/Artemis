@@ -22,12 +22,12 @@ import de.tum.cit.aet.artemis.core.dto.export.IrisChatSessionExportDTO;
 import de.tum.cit.aet.artemis.core.dto.export.IrisMessageExportDTO;
 import de.tum.cit.aet.artemis.iris.api.IrisDataExportApi;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 
 /**
  * Service for creating Iris (AI tutor) data exports for GDPR compliance.
  * <p>
- * This service exports all AI tutor chat sessions and messages for a user,
+ * This service exports all AI tutor sessions and messages for a user,
  * including both the user's questions and the AI's responses.
  */
 @Profile(PROFILE_CORE)
@@ -47,7 +47,7 @@ public class DataExportIrisService {
     }
 
     /**
-     * Creates the Iris data export containing all AI tutor chat sessions and messages.
+     * Creates the Iris data export containing all AI tutor sessions and messages.
      * If Iris is not enabled, this method does nothing.
      *
      * @param userId           the ID of the user for which the data should be exported
@@ -59,36 +59,36 @@ public class DataExportIrisService {
             log.debug("Iris is not enabled, skipping Iris data export for user {}", userId);
             return;
         }
-        var chatSessions = irisDataExportApi.get().findAllChatSessionsWithMessagesByUserId(userId);
+        var chatSessions = irisDataExportApi.get().findAllSessionsWithMessagesByUserId(userId);
         createIrisExportFile(workingDirectory, chatSessions);
     }
 
     /**
-     * Creates a JSON file containing all Iris chat sessions and messages.
+     * Creates a JSON file containing all Iris sessions and messages.
      *
      * @param workingDirectory the directory where the export file should be created
-     * @param chatSessions     the set of chat sessions to be exported
+     * @param chatSessions     the set of Iris sessions to be exported
      * @throws IOException if the file cannot be created
      */
-    private void createIrisExportFile(Path workingDirectory, Set<IrisChatSession> chatSessions) throws IOException {
+    private void createIrisExportFile(Path workingDirectory, Set<IrisSession> chatSessions) throws IOException {
         if (chatSessions == null || chatSessions.isEmpty()) {
             return;
         }
 
         // sort after creation date to have a deterministic order
-        List<IrisChatSessionExportDTO> exportDTOs = chatSessions.stream().sorted(Comparator.comparing(IrisChatSession::getCreationDate)).map(this::convertToExportDTO).toList();
+        List<IrisChatSessionExportDTO> exportDTOs = chatSessions.stream().sorted(Comparator.comparing(IrisSession::getCreationDate)).map(this::convertToExportDTO).toList();
 
         Path outputFile = workingDirectory.resolve("iris_chat_sessions.json");
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(outputFile.toFile(), exportDTOs);
     }
 
     /**
-     * Converts an IrisChatSession to an export DTO.
+     * Converts an Iris session to an export DTO.
      *
-     * @param session the chat session to convert
+     * @param session the Iris session to convert
      * @return the export DTO
      */
-    private IrisChatSessionExportDTO convertToExportDTO(IrisChatSession session) {
+    private IrisChatSessionExportDTO convertToExportDTO(IrisSession session) {
         List<IrisMessageExportDTO> messages = session.getMessages().stream()
                 .map(message -> new IrisMessageExportDTO(message.getId(), message.getSentAt(), message.getSender() != null ? message.getSender().name() : null,
                         message.getContent().stream().map(IrisMessageContent::getContentAsString).filter(Objects::nonNull).reduce((a, b) -> a + "\n" + b).orElse(null),
