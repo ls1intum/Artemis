@@ -39,7 +39,6 @@ import de.tum.cit.aet.artemis.iris.repository.IrisTutorSuggestionSessionReposito
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
@@ -191,8 +190,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
 
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
 
-        var dummyTextExerciseDTO = new PyrisTextExerciseDTO(textExercise.getId(), textExercise.getTitle(), new PyrisCourseDTO(course), textExercise.getProblemStatement(),
-                Optional.empty(), null, null);
+        var dummyTextExerciseDTO = new PyrisTextExerciseDTO(textExercise.getId(), textExercise.getTitle(), textExercise.getProblemStatement(), Optional.empty(), null, null);
 
         pipelineDone.set(false);
         irisRequestMockProvider.mockTutorSuggestionResponse(dto -> {
