@@ -12,24 +12,13 @@ on:
     - 'documentation/**'
     - '.github/**'
     - '!.github/workflows/codeql-analysis.yml'
-  pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [develop]
-    paths-ignore:
-    - 'README.md'
-    - 'CODE_OF_CONDUCT.md'
-    - 'CONTRIBUTING.md'
-    - 'LICENSE'
-    - 'SECURITY.md'
-    - 'documentation/**'
-    - '.github/**'
-    - '!.github/workflows/codeql-analysis.yml'
   schedule:
     - cron: '0 16 * * 0'
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 # Keep in sync with build.yml and test.yml and analysis-of-endpoint-connections.yml
 env:
