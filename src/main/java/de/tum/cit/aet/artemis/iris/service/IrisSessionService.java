@@ -16,21 +16,15 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatBasedFeatureInterface;
-import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisRateLimitedFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisSubFeatureInterface;
-import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
@@ -44,13 +38,7 @@ public class IrisSessionService {
 
     private final UserRepository userRepository;
 
-    private final IrisTextExerciseChatSessionService irisTextExerciseChatSessionService;
-
-    private final IrisExerciseChatSessionService irisExerciseChatSessionService;
-
-    private final IrisCourseChatSessionService irisCourseChatSessionService;
-
-    private final IrisLectureChatSessionService irisLectureChatSessionService;
+    private final IrisChatSessionService irisChatSessionService;
 
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
 
@@ -58,15 +46,10 @@ public class IrisSessionService {
 
     private final IrisSettingsService irisSettingsService;
 
-    public IrisSessionService(UserRepository userRepository, IrisTextExerciseChatSessionService irisTextExerciseChatSessionService,
-            IrisExerciseChatSessionService irisExerciseChatSessionService, IrisCourseChatSessionService irisCourseChatSessionService,
-            IrisLectureChatSessionService irisLectureChatSessionService, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService,
+    public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService,
             IrisChatSessionRepository irisChatSessionRepository, IrisSettingsService irisSettingsService) {
         this.userRepository = userRepository;
-        this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
-        this.irisExerciseChatSessionService = irisExerciseChatSessionService;
-        this.irisCourseChatSessionService = irisCourseChatSessionService;
-        this.irisLectureChatSessionService = irisLectureChatSessionService;
+        this.irisChatSessionService = irisChatSessionService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
         this.irisChatSessionRepository = irisChatSessionRepository;
         this.irisSettingsService = irisSettingsService;
@@ -122,8 +105,8 @@ public class IrisSessionService {
     public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
-            if (!uncommittedFiles.isEmpty() && session instanceof IrisProgrammingExerciseChatSession programmingSession) {
-                irisExerciseChatSessionService.requestAndHandleResponseWithUncommittedChanges(programmingSession, uncommittedFiles);
+            if (!uncommittedFiles.isEmpty() && session instanceof IrisChatSession chatSession) {
+                irisChatSessionService.requestAndHandleResponseWithUncommittedChanges(chatSession, uncommittedFiles);
             }
             else {
                 chatWrapper.requestAndHandleResponse(wrapper.irisSession);
@@ -184,13 +167,10 @@ public class IrisSessionService {
     @SuppressWarnings("unchecked")
     private <S extends IrisSession> IrisSubFeatureWrapper<S> getIrisSessionSubService(S session) {
         return switch (session) {
-            case IrisTextExerciseChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisTextExerciseChatSessionService, chatSession);
-            case IrisProgrammingExerciseChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisExerciseChatSessionService, chatSession);
-            case IrisCourseChatSession courseChatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCourseChatSessionService, courseChatSession);
-            case IrisLectureChatSession lectureChatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisLectureChatSessionService, lectureChatSession);
+            case IrisChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisChatSessionService, chatSession);
             case IrisTutorSuggestionSession tutorSuggestionSession ->
                 (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisTutorSuggestionSessionService, tutorSuggestionSession);
-            case null, default -> throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
+            case null, default -> throw new BadRequestException("Unknown Iris session type: " + (session != null ? session.getClass().getSimpleName() : "null"));
         };
     }
 
