@@ -1,19 +1,24 @@
-import { ResultComponent } from 'app/exercise/result/result.component';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ResultComponent } from 'app/exercise/result/result.component';
 import { MissingResultInformation, ResultTemplateStatus } from 'app/exercise/result/result.utils';
+import { ResultProgressBarComponent } from 'app/exercise/result/result-progress-bar/result-progress-bar.component';
 import { SimpleChange } from '@angular/core';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { DialogService } from 'primeng/dynamicdialog';
 import * as utils from 'app/exercise/feedback/feedback.utils';
 import { FeedbackComponentPreparedParams } from 'app/exercise/feedback/feedback.utils';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
@@ -72,19 +77,21 @@ const preparedFeedback: FeedbackComponentPreparedParams = {
     showMissingAutomaticFeedbackInformation: true,
 };
 const participationServiceMock = {
-    downloadArtifact: jest.fn(),
+    downloadArtifact: vi.fn(),
 };
 
 describe('ResultComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ResultComponent;
     let fixture: ComponentFixture<ResultComponent>;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
     let router: Router;
 
     beforeEach(async () => {
-        participationServiceMock.downloadArtifact = jest.fn() as jest.Mock;
-        global.URL.createObjectURL = jest.fn(() => 'blob:test-url');
-        global.URL.revokeObjectURL = jest.fn();
+        participationServiceMock.downloadArtifact = vi.fn();
+        (global as any).URL.createObjectURL = vi.fn(() => 'blob:test-url');
+        (global as any).URL.revokeObjectURL = vi.fn();
 
         mockParticipation.submissions = [
             {
@@ -95,9 +102,9 @@ describe('ResultComponent', () => {
         ];
 
         await TestBed.configureTestingModule({
-            declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(TranslateDirective)],
+            imports: [ResultComponent],
             providers: [
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useClass: MockDialogService },
                 { provide: ParticipationService, useValue: participationServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -105,35 +112,47 @@ describe('ResultComponent', () => {
                 provideHttpClientTesting(),
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ResultComponent);
-                comp = fixture.componentInstance;
-                modalService = TestBed.inject(NgbModal);
-                router = TestBed.inject(Router);
+            .overrideComponent(ResultComponent, {
+                remove: { imports: [ResultProgressBarComponent, ArtemisTranslatePipe, ArtemisTimeAgoPipe, ArtemisDatePipe, ArtemisDurationFromSecondsPipe, TranslateDirective] },
+                add: {
+                    imports: [
+                        MockComponent(ResultProgressBarComponent),
+                        TranslatePipeMock,
+                        MockPipe(ArtemisDatePipe),
+                        MockPipe(ArtemisTimeAgoPipe),
+                        MockPipe(ArtemisDurationFromSecondsPipe),
+                        MockDirective(TranslateDirective),
+                    ],
+                },
+            })
+            .compileComponents();
 
-                participationServiceMock.downloadArtifact = jest.fn() as jest.Mock;
+        fixture = TestBed.createComponent(ResultComponent);
+        comp = fixture.componentInstance;
+        dialogService = TestBed.inject(DialogService);
+        router = TestBed.inject(Router);
 
-                comp.badge = {
-                    tooltip: 'Example Tooltip',
-                    class: 'Example Class',
-                    text: 'Example Test',
-                };
-                fixture.detectChanges();
-            });
+        participationServiceMock.downloadArtifact = vi.fn();
+
+        comp.badge = {
+            tooltip: 'Example Tooltip',
+            class: 'Example Class',
+            text: 'Example Test',
+        };
+        fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
-        global.URL.revokeObjectURL = jest.fn();
+        vi.restoreAllMocks();
+        (global as any).URL.revokeObjectURL = vi.fn();
     });
 
     it('should set template status to BUILDING if isBuilding changes to true even though participation changes', () => {
-        comp.participation = {
+        comp.participation.set({
             results: [],
-        } as any as StudentParticipation;
+        } as any as StudentParticipation);
 
-        comp.isBuilding = false;
+        fixture.componentRef.setInput('isBuilding', false);
         comp.ngOnInit();
         expect(comp.templateStatus).toEqual(ResultTemplateStatus.NO_RESULT);
 
@@ -141,8 +160,8 @@ describe('ResultComponent', () => {
             results: [],
         } as any as StudentParticipation;
 
-        comp.isBuilding = true;
-        comp.participation = newParticipation;
+        fixture.componentRef.setInput('isBuilding', true);
+        comp.participation.set(newParticipation);
         comp.ngOnChanges({
             isBuilding: { currentValue: true, previousValue: false } as any as SimpleChange,
             participation: { currentValue: newParticipation } as any as SimpleChange,
@@ -162,7 +181,7 @@ describe('ResultComponent', () => {
 
         it('should display result if present', () => {
             comp.resultIconClass = faTimesCircle;
-            comp.result = mockResult;
+            comp.result.set(mockResult);
             comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
 
             fixture.changeDetectorRef.detectChanges();
@@ -172,15 +191,12 @@ describe('ResultComponent', () => {
         });
 
         it('should display modal onClick and initialize results modal', () => {
-            const mockModalRef: NgbModalRef = { componentInstance: {} } as NgbModalRef;
-            const modalComponentInstance: FeedbackComponent = mockModalRef.componentInstance;
+            const showDetailsSpy = vi.spyOn(comp, 'showDetails');
+            const openModalSpy = vi.spyOn(dialogService, 'open');
+            const prepareFeedbackSpy = vi.spyOn(utils, 'prepareFeedbackComponentParameters').mockReturnValue(preparedFeedback);
 
-            const showDetailsSpy = jest.spyOn(comp, 'showDetails');
-            const openModalSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
-            const prepareFeedbackSpy = jest.spyOn(utils, 'prepareFeedbackComponentParameters').mockReturnValue(preparedFeedback);
-
-            comp.exercise = preparedFeedback.exercise;
-            comp.result = mockResult;
+            comp.exercise.set(preparedFeedback.exercise);
+            comp.result.set(mockResult);
             comp.resultIconClass = faTimesCircle;
             comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
 
@@ -192,22 +208,28 @@ describe('ResultComponent', () => {
             button.dispatchEvent(new Event('click'));
 
             expect(showDetailsSpy).toHaveBeenCalled();
-            expect(openModalSpy).toHaveBeenCalled();
+            expect(openModalSpy).toHaveBeenCalledWith(
+                FeedbackComponent,
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        exercise: preparedFeedback.exercise,
+                        result: preparedFeedback.result,
+                        exerciseType: preparedFeedback.exerciseType,
+                        showScoreChart: preparedFeedback.showScoreChart,
+                        messageKey: preparedFeedback.messageKey,
+                        latestDueDate: preparedFeedback.latestDueDate,
+                        showMissingAutomaticFeedbackInformation: preparedFeedback.showMissingAutomaticFeedbackInformation,
+                    }),
+                }),
+            );
             expect(prepareFeedbackSpy).toHaveBeenCalledOnce();
-            expect(modalComponentInstance.exercise).toEqual(preparedFeedback.exercise);
-            expect(modalComponentInstance.result).toEqual(preparedFeedback.result);
-            expect(modalComponentInstance.exerciseType).toEqual(preparedFeedback.exerciseType);
-            expect(modalComponentInstance.showScoreChart).toEqual(preparedFeedback.showScoreChart);
-            expect(modalComponentInstance.messageKey).toEqual(preparedFeedback.messageKey);
-            expect(modalComponentInstance.latestDueDate).toEqual(preparedFeedback.latestDueDate);
-            expect(modalComponentInstance.showMissingAutomaticFeedbackInformation).toEqual(preparedFeedback.showMissingAutomaticFeedbackInformation);
         });
     });
 
     it('should navigate to text exercise details when exercise type is TEXT', () => {
-        comp.exercise = { ...mockExercise, type: ExerciseType.TEXT };
-        comp.participation = mockParticipation;
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        comp.exercise.set({ ...mockExercise, type: ExerciseType.TEXT });
+        comp.participation.set(mockParticipation);
+        const navigateSpy = vi.spyOn(router, 'navigate');
         const courseId = 42;
         comp.showDetails(mockResult);
 
@@ -216,7 +238,7 @@ describe('ResultComponent', () => {
             courseId,
             'exercises',
             'text-exercises',
-            comp.exercise.id,
+            comp.exercise()!.id,
             'participate',
             mockParticipation.id,
             'submission',
@@ -227,9 +249,9 @@ describe('ResultComponent', () => {
     });
 
     it('should navigate to modeling exercise details when exercise type is MODELING', () => {
-        comp.exercise = { ...mockExercise, type: ExerciseType.MODELING };
-        comp.participation = mockParticipation;
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        comp.exercise.set({ ...mockExercise, type: ExerciseType.MODELING });
+        comp.participation.set(mockParticipation);
+        const navigateSpy = vi.spyOn(router, 'navigate');
         const courseId = 42;
         comp.showDetails(mockResult);
 
@@ -238,7 +260,7 @@ describe('ResultComponent', () => {
             courseId,
             'exercises',
             'modeling-exercises',
-            comp.exercise.id,
+            comp.exercise()!.id,
             'participate',
             mockParticipation.id,
             'submission',
@@ -249,13 +271,13 @@ describe('ResultComponent', () => {
     });
 
     it('should call showDetails only when isInSidebarCard is false', () => {
-        comp.result = mockResult;
-        const detailsSpy = jest.spyOn(comp, 'showDetails');
+        comp.result.set(mockResult);
+        const detailsSpy = vi.spyOn(comp, 'showDetails');
 
-        comp.isInSidebarCard = false;
+        fixture.componentRef.setInput('isInSidebarCard', false);
         comp.resultIconClass = faTimesCircle;
-        comp.exercise = { type: ExerciseType.PROGRAMMING, numberOfAssessmentsOfCorrectionRounds: [], secondCorrectionEnabled: false, studentAssignedTeamIdComputed: false };
-        comp.result = mockResult;
+        comp.exercise.set({ type: ExerciseType.PROGRAMMING, numberOfAssessmentsOfCorrectionRounds: [], secondCorrectionEnabled: false, studentAssignedTeamIdComputed: false });
+        comp.result.set(mockResult);
         comp.resultIconClass = faTimesCircle;
         comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
         fixture.changeDetectorRef.detectChanges();
@@ -264,7 +286,7 @@ describe('ResultComponent', () => {
         expect(detailsSpy).toHaveBeenCalledWith(mockResult);
 
         detailsSpy.mockClear();
-        comp.isInSidebarCard = true;
+        fixture.componentRef.setInput('isInSidebarCard', true);
         fixture.changeDetectorRef.detectChanges();
         resultElement.triggerEventHandler('click', null);
         expect(detailsSpy).not.toHaveBeenCalled();
@@ -278,9 +300,9 @@ describe('ResultComponent', () => {
     });
 
     it('should display badge when showBadge is true', () => {
-        comp.showBadge = true;
+        fixture.componentRef.setInput('showBadge', true);
         comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
-        comp.result = mockResult;
+        comp.result.set(mockResult);
         comp.resultIconClass = faTimesCircle;
         fixture.changeDetectorRef.detectChanges();
         const badge = fixture.nativeElement.querySelector('#result-score-badge');
@@ -288,10 +310,11 @@ describe('ResultComponent', () => {
     });
 
     it('should display the correct message for FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE and FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE', () => {
+        // setInput triggers ngOnChanges which calls evaluate() and may reset templateStatus,
+        // so we set MISSING after the input change and force re-render.
+        fixture.componentRef.setInput('missingResultInfo', MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE);
+        fixture.changeDetectorRef.detectChanges();
         comp.templateStatus = ResultTemplateStatus.MISSING;
-
-        // Test for FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE
-        comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
         fixture.changeDetectorRef.detectChanges();
         let compiled = fixture.nativeElement;
         let spanElement = compiled.querySelector('span[jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"]');
@@ -299,7 +322,9 @@ describe('ResultComponent', () => {
         expect(spanElement.getAttribute('jhiTranslate')).toBe('artemisApp.result.missing.programmingFailedSubmission.message');
 
         // Test for FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE
-        comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE;
+        fixture.componentRef.setInput('missingResultInfo', MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE);
+        fixture.changeDetectorRef.detectChanges();
+        comp.templateStatus = ResultTemplateStatus.MISSING;
         fixture.changeDetectorRef.detectChanges();
         compiled = fixture.nativeElement;
         spanElement = compiled.querySelector('span[jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"]');
@@ -337,53 +362,53 @@ describe('ResultComponent', () => {
 
     describe('ResultComponent - Graded Results', () => {
         beforeEach(() => {
-            comp.participation = mockParticipation;
+            comp.participation.set(mockParticipation);
         });
 
         it('should display the first rated result if showUngradedResults is false', () => {
-            comp.participation.submissions![0].results = [{ id: 2, rated: false, score: 50 } as Result, mockResult, { id: 3, rated: false, score: 70 } as Result];
-            comp.showUngradedResults = false;
+            comp.participation()!.submissions![0].results = [{ id: 2, rated: false, score: 50 } as Result, mockResult, { id: 3, rated: false, score: 70 } as Result];
+            fixture.componentRef.setInput('showUngradedResults', false);
             comp.ngOnInit();
 
-            expect(comp.result).toEqual(mockResult);
+            expect(comp.result()).toEqual(mockResult);
         });
 
         it('should display the first result if showUngradedResults is true', () => {
-            comp.participation.submissions![0].results = [{ id: 2, rated: false, score: 50 } as Result, mockResult];
-            comp.showUngradedResults = true;
+            comp.participation()!.submissions![0].results = [{ id: 2, rated: false, score: 50 } as Result, mockResult];
+            fixture.componentRef.setInput('showUngradedResults', true);
             comp.ngOnInit();
 
-            expect(comp.result).toEqual(comp.participation.submissions![0].results[0]);
+            expect(comp.result()).toEqual(comp.participation()!.submissions![0].results![0]);
         });
 
         it('should not have a result if there are no rated results and showUngradedResults is false', () => {
-            comp.participation.submissions![0].results = [{ id: 2, rated: false, score: 50 } as Result, { id: 3, rated: false, score: 70 } as Result];
-            comp.showUngradedResults = false;
+            comp.participation()!.submissions![0].results = [{ id: 2, rated: false, score: 50 } as Result, { id: 3, rated: false, score: 70 } as Result];
+            fixture.componentRef.setInput('showUngradedResults', false);
             comp.ngOnInit();
 
-            expect(comp.result).toBeUndefined();
+            expect(comp.result()).toBeUndefined();
         });
     });
 
     describe('ResultComponent - Feedback Generation', () => {
         beforeEach(() => {
-            jest.useFakeTimers();
-            comp.result = { ...mockResult, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().add(1, 'minute') };
-            comp.exercise = mockExercise;
-            comp.participation = mockParticipation;
+            vi.useFakeTimers();
+            comp.result.set({ ...mockResult, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().add(1, 'minute') });
+            comp.exercise.set(mockExercise);
+            comp.participation.set(mockParticipation);
         });
 
         afterEach(() => {
-            jest.clearAllTimers();
+            vi.clearAllTimers();
         });
 
         it('should call evaluate again after the specified due time', () => {
-            comp.result = { ...comp.result, completionDate: dayjs().add(2, 'seconds') };
+            comp.result.set({ ...comp.result()!, completionDate: dayjs().add(2, 'seconds') });
             comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
             comp.evaluate();
 
-            comp.result.completionDate = dayjs().subtract(2, 'seconds');
-            jest.runOnlyPendingTimers();
+            comp.result()!.completionDate = dayjs().subtract(2, 'seconds');
+            vi.runOnlyPendingTimers();
 
             expect(comp.templateStatus).not.toEqual(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
         });
@@ -391,15 +416,15 @@ describe('ResultComponent', () => {
         it('should clear the timeout if the component is destroyed before the feedback generation is complete', () => {
             comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
             comp.evaluate();
-            expect(jest.getTimerCount()).toBe(1);
+            expect(vi.getTimerCount()).toBe(1);
 
             comp.ngOnDestroy();
-            expect(jest.getTimerCount()).toBe(0);
+            expect(vi.getTimerCount()).toBe(0);
         });
     });
 
     it('should use special handling if result is an automatic AI result', () => {
-        comp.result = { ...mockResult, score: 90, assessmentType: AssessmentType.AUTOMATIC_ATHENA };
+        comp.result.set({ ...mockResult, score: 90, assessmentType: AssessmentType.AUTOMATIC_ATHENA });
 
         comp.evaluate();
 
@@ -408,18 +433,18 @@ describe('ResultComponent', () => {
     });
 
     it('should trigger Interval creation on estimatedCompletionDate change', () => {
-        jest.useFakeTimers();
-        comp.buildStartDate = dayjs().subtract(20, 'seconds');
-        comp.estimatedCompletionDate = dayjs().add(20, 'seconds');
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('buildStartDate', dayjs().subtract(20, 'seconds'));
+        fixture.componentRef.setInput('estimatedCompletionDate', dayjs().add(20, 'seconds'));
         comp.ngOnChanges({});
 
-        jest.advanceTimersByTime(1200);
+        vi.advanceTimersByTime(1200);
         expect(comp.estimatedDurationInterval).toBeDefined();
         expect(comp.estimatedRemaining).toBeGreaterThan(0);
         expect(comp.estimatedRemaining).toBeLessThan(40);
         expect(comp.estimatedDuration).toBe(40);
 
-        jest.clearAllTimers();
-        jest.useRealTimers();
+        vi.clearAllTimers();
+        vi.useRealTimers();
     });
 });

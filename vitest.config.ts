@@ -80,6 +80,7 @@ export default defineConfig({
             'src/main/webapp/app/exercise/participation/**/*.spec.ts', // include participation tests
             'src/main/webapp/app/exercise/participation-submission/**/*.spec.ts', // include participation-submission tests
             'src/main/webapp/app/exercise/exercise-scores/**/*.spec.ts', // include exercise-scores tests
+            'src/main/webapp/app/exercise/result/**/*.spec.ts', // include exercise result tests
             'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.spec.ts', // include filter-dropdown component tests
             'src/main/webapp/app/shared/search-filter/**/*.spec.ts', // include search-filter component tests
             'src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // include build phases template service tests
@@ -144,6 +145,7 @@ export default defineConfig({
                 'src/main/webapp/app/exercise/participation/**/*.ts', // include participation for code coverage
                 'src/main/webapp/app/exercise/participation-submission/**/*.ts', // include participation-submission for code coverage
                 'src/main/webapp/app/exercise/exercise-scores/**/*.ts', // include exercise-scores for code coverage
+                'src/main/webapp/app/exercise/result/**/*.ts', // include exercise result for code coverage
                 'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.ts', // include filter-dropdown component for code coverage
                 'src/main/webapp/app/shared/search-filter/**/*.ts', // include search-filter component for code coverage
                 'src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // include build phases template service for code coverage

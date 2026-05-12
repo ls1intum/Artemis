@@ -137,6 +137,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/exercise/participation/**', // participation module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/participation-submission/**', // participation-submission module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/exercise-scores/**', // exercise-scores module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/result/**', // exercise result module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/shared/filter-dropdown/**', // filter-dropdown component uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/search-filter/**', // search-filter component uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // build-phases-template uses Vitest (see vitest.config.ts)
@@ -189,6 +190,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exercise/participation/', // participation module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/participation-submission/', // participation-submission module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/exercise-scores/', // exercise-scores module uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/result/', // exercise result module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/shared/filter-dropdown/', // filter-dropdown component uses Vitest
         '<rootDir>/src/main/webapp/app/shared/search-filter/', // search-filter uses Vitest
         '<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.ts',
@@ -272,6 +274,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exercise/participation/', // participation module (Vitest)
         '<rootDir>/src/main/webapp/app/exercise/participation-submission/', // participation-submission module (Vitest)
         '<rootDir>/src/main/webapp/app/exercise/exercise-scores/', // exercise-scores module (Vitest)
+        '<rootDir>/src/main/webapp/app/exercise/result/', // exercise result module (Vitest)
         '<rootDir>/src/main/webapp/app/exercise/shared/filter-dropdown/', // filter-dropdown component (Vitest)
         '<rootDir>/src/main/webapp/app/shared/search-filter/', // search-filter (Vitest)
         '<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // implemented with Vitest
