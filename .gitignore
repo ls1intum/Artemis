@@ -243,6 +243,8 @@ deferredEagerBeanInstantiationViolations.dot
 # Fast local E2E runner
 ######################
 /.e2e-local/
+/.e2e-local-multinode-fast/
+/.e2e-local-multinode/
 
 ######################
 # Claude Code

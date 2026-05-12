@@ -75,7 +75,7 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
             await login(instructor);
             lecture = lastCreatedLecture = await courseManagementAPIRequests.createLecture(course);
             await page.goto(`/course-management/${course.id}/lectures`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
         });
 
         test('Deletes an existing lecture', async ({ lectureManagement }) => {
