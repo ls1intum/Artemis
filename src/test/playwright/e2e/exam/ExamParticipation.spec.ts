@@ -396,7 +396,7 @@ test.describe('Exam participation', () => {
         test('Instructor sends an announcement message and all participants receive it', { tag: '@slow' }, async ({ browser, login, page, examManagement }) => {
             await login(instructor);
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
 
             const studentPages = [];
 
@@ -413,7 +413,7 @@ test.describe('Exam participation', () => {
 
             // Wait for WebSocket connections to be established on student pages
             for (const studentPage of studentPages) {
-                await studentPage.waitForLoadState('networkidle');
+                await studentPage.waitForLoadState('domcontentloaded');
             }
 
             const announcement = 'Important announcement!';
@@ -434,7 +434,7 @@ test.describe('Exam participation', () => {
         test('Instructor changes working time and all participants are informed', { tag: '@slow' }, async ({ browser, login, page, examManagement }) => {
             await login(instructor);
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
 
             const studentPages = [];
 
@@ -473,7 +473,7 @@ test.describe('Exam participation', () => {
             async ({ browser, login, page, examExerciseGroups, examDetails, textExerciseCreation }) => {
                 await login(instructor);
                 await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
-                await page.waitForLoadState('networkidle');
+                await page.waitForLoadState('domcontentloaded');
 
                 const studentPages = [];
 
