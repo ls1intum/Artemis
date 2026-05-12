@@ -1,6 +1,7 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, model } from '@angular/core';
 
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -55,7 +56,7 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
  */
 export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     private translateService = inject(TranslateService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private exerciseService = inject(ExerciseService);
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
     private resultService = inject(ResultService);
@@ -70,24 +71,20 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly getCourseFromExercise = getCourseFromExercise;
     protected readonly AssessmentType = AssessmentType;
 
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() participation: Participation;
+    // model() rather than input() because ngOnInit normalises these (e.g. derives exercise from participation)
+    // and ngOnChanges rewrites result when a newer one arrives via the participation input.
+    readonly participation = model<Participation>(undefined!);
     readonly isBuilding = input<boolean>(undefined!);
     readonly isQueued = input(false);
     readonly short = input(true);
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() result?: Result;
+    readonly result = model<Result | undefined>(undefined);
     readonly showUngradedResults = input(false);
     readonly showBadge = input(false);
     readonly showIcon = input(true);
     readonly isInSidebarCard = input(false);
     readonly showCompletion = input(true);
     readonly missingResultInfo = input(MissingResultInformation.NONE);
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() exercise?: Exercise;
+    readonly exercise = model<Exercise | undefined>(undefined);
     readonly estimatedCompletionDate = input<dayjs.Dayjs>();
     readonly buildStartDate = input<dayjs.Dayjs>();
     readonly showProgressBar = input(false);
@@ -119,12 +116,16 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      * participation and displays the corresponding message.
      */
     ngOnInit(): void {
-        if (!this.result && this.participation) {
-            this.exercise = this.exercise ?? getExercise(this.participation);
-            this.participation.exercise = this.exercise;
-            const results = getAllResultsOfAllSubmissions(this.participation.submissions);
+        const participation = this.participation();
+        let result = this.result();
+        let exercise = this.exercise();
+        if (!result && participation) {
+            exercise = exercise ?? getExercise(participation);
+            participation.exercise = exercise;
+            this.exercise.set(exercise);
+            const results = getAllResultsOfAllSubmissions(participation.submissions);
             if (results.length) {
-                if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
+                if (exercise && exercise.type === ExerciseType.MODELING) {
                     // sort results by completionDate descending to ensure the newest result is shown
                     // this is important for modeling exercises since students can have multiple tries
                     // think about if this should be used for all types of exercises
@@ -140,40 +141,45 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                 }
                 // Make sure result and participation are connected
                 if (!this.showUngradedResults()) {
-                    const firstRatedResult = results.find((result) => result?.rated);
+                    const firstRatedResult = results.find((r) => r?.rated);
                     if (firstRatedResult) {
-                        this.result = firstRatedResult;
+                        result = firstRatedResult;
+                        this.result.set(firstRatedResult);
                     }
                 } else {
-                    this.result = getAllResultsOfAllSubmissions(this.participation.submissions).first();
+                    result = getAllResultsOfAllSubmissions(participation.submissions).first();
+                    this.result.set(result);
                 }
             }
-        } else if (!this.participation && this.result) {
-            // make sure this.participation is initialized in case it was not passed
-            this.participation = this.result.submission!.participation!;
-            this.exercise = this.exercise ?? getExercise(this.participation);
-            this.participation.exercise = this.exercise;
-        } else if (this.participation) {
-            this.exercise = this.exercise ?? getExercise(this.participation);
-            this.participation.exercise = this.exercise;
-        } else if (!this.result?.exampleResult) {
+        } else if (!participation && result) {
+            // make sure participation is initialized in case it was not passed
+            const newParticipation = result.submission!.participation!;
+            exercise = exercise ?? getExercise(newParticipation);
+            newParticipation.exercise = exercise;
+            this.participation.set(newParticipation);
+            this.exercise.set(exercise);
+        } else if (participation) {
+            exercise = exercise ?? getExercise(participation);
+            participation.exercise = exercise;
+            this.exercise.set(exercise);
+        } else if (!result?.exampleResult) {
             // result of example submission does not have participation
             captureException(new Error('The result component did not get a participation or result as parameter and can therefore not display the score'));
             return;
         }
-        // Note: it can still happen here that this.result is undefined, e.g. when this.participation.results.length == 0
-        this.submission = this.result?.submission;
+        // Note: it can still happen here that result is undefined, e.g. when participation.submissions.length == 0
+        this.submission = this.result()?.submission;
 
         this.evaluate();
 
         this.translateService.onLangChange.subscribe(() => {
             if (this.resultString) {
-                this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short());
+                this.resultString = this.resultService.getResultString(this.result(), this.exercise(), this.participation(), this.short());
             }
         });
 
-        if (this.showBadge() && this.result) {
-            this.badge = ResultService.evaluateBadge(this.participation, this.result);
+        if (this.showBadge() && this.result()) {
+            this.badge = ResultService.evaluateBadge(this.participation(), this.result()!);
         }
     }
 
@@ -223,29 +229,29 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      * Sets the corresponding icon, styling and message to display results.
      */
     evaluate() {
-        this.templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, this.isBuilding(), this.missingResultInfo(), this.isQueued());
+        const result = this.result();
+        const exercise = this.exercise();
+        const participation = this.participation();
+        this.templateStatus = evaluateTemplateStatus(exercise, participation, result, this.isBuilding(), this.missingResultInfo(), this.isQueued());
         if (this.templateStatus === ResultTemplateStatus.LATE) {
-            this.textColorClass = getTextColorClass(this.result, this.participation, this.templateStatus);
-            this.resultIconClass = getResultIconClass(this.result, this.participation, this.templateStatus);
-            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short());
-        } else if (
-            this.result &&
-            ((this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults())) || isAthenaAIResult(this.result))
-        ) {
-            this.textColorClass = getTextColorClass(this.result, this.participation, this.templateStatus);
-            this.resultIconClass = getResultIconClass(this.result, this.participation, this.templateStatus);
-            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short());
+            this.textColorClass = getTextColorClass(result, participation, this.templateStatus);
+            this.resultIconClass = getResultIconClass(result, participation, this.templateStatus);
+            this.resultString = this.resultService.getResultString(result, exercise, participation, this.short());
+        } else if (result && ((result.score !== undefined && (result.rated || result.rated == undefined || this.showUngradedResults())) || isAthenaAIResult(result))) {
+            this.textColorClass = getTextColorClass(result, participation, this.templateStatus);
+            this.resultIconClass = getResultIconClass(result, participation, this.templateStatus);
+            this.resultString = this.resultService.getResultString(result, exercise, participation, this.short());
             this.resultTooltip = this.buildResultTooltip();
         } else if (this.templateStatus !== ResultTemplateStatus.MISSING) {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
             // this state is only possible if no rated results are available at all, so we show the info that no graded result is available
             this.templateStatus = ResultTemplateStatus.NO_RESULT;
-            this.result = undefined;
+            this.result.set(undefined);
             this.resultString = '';
         }
 
-        if (this.templateStatus === ResultTemplateStatus.IS_GENERATING_FEEDBACK && this.result?.completionDate) {
-            const dueTime = -dayjs().diff(this.result.completionDate, 'milliseconds');
+        if (this.templateStatus === ResultTemplateStatus.IS_GENERATING_FEEDBACK && this.result()?.completionDate) {
+            const dueTime = -dayjs().diff(this.result()!.completionDate, 'milliseconds');
             this.resultUpdateSubscription = setTimeout(() => {
                 this.evaluate();
                 if (this.resultUpdateSubscription) {
@@ -260,25 +266,28 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      */
     buildResultTooltip(): string | undefined {
         // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
-        const programmingExercise = this.exercise as ProgrammingExercise;
+        const exercise = this.exercise();
+        const programmingExercise = exercise as ProgrammingExercise;
+        const result = this.result();
 
         // Automatically generated feedback section
-        if (this.result) {
+        if (result) {
             if (this.templateStatus === ResultTemplateStatus.FEEDBACK_GENERATION_FAILED) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackFailedTooltip';
             } else if (this.templateStatus === ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackTimedOutTooltip';
             } else if (this.templateStatus === ResultTemplateStatus.IS_GENERATING_FEEDBACK) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip';
-            } else if (this.templateStatus === ResultTemplateStatus.HAS_RESULT && isAthenaAIResult(this.result)) {
+            } else if (this.templateStatus === ResultTemplateStatus.HAS_RESULT && isAthenaAIResult(result)) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip';
             }
         }
+        const participation = this.participation();
         if (
-            this.participation &&
-            isProgrammingExerciseStudentParticipation(this.participation) &&
-            !isPracticeMode(this.participation) &&
-            isResultPreliminary(this.result!, this.participation, programmingExercise)
+            participation &&
+            isProgrammingExerciseStudentParticipation(participation) &&
+            !isPracticeMode(participation) &&
+            isResultPreliminary(result!, participation, programmingExercise)
         ) {
             if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {
                 return 'artemisApp.result.preliminaryTooltipSemiAutomatic';
@@ -293,20 +302,22 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      */
     showDetails(result: Result) {
         const exerciseService = this.exerciseCacheService ?? this.exerciseService;
-        if (this.exercise?.type === ExerciseType.TEXT || this.exercise?.type === ExerciseType.MODELING) {
-            const courseId = getCourseFromExercise(this.exercise)?.id;
+        const exercise = this.exercise();
+        const participation = this.participation();
+        if (exercise?.type === ExerciseType.TEXT || exercise?.type === ExerciseType.MODELING) {
+            const courseId = getCourseFromExercise(exercise)?.id;
             const submissionId = result.submission?.id;
 
-            const exerciseTypePath = this.exercise?.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
+            const exerciseTypePath = exercise?.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
 
             this.router.navigate([
                 '/courses',
                 courseId,
                 'exercises',
                 exerciseTypePath,
-                this.exercise?.id,
+                exercise?.id,
                 'participate',
-                this.participation?.id,
+                participation?.id,
                 'submission',
                 submissionId,
                 'result',
@@ -315,35 +326,35 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             return undefined;
         }
 
-        const feedbackComponentParameters = prepareFeedbackComponentParameters(this.exercise, result, this.participation, this.templateStatus, this.latestDueDate, exerciseService);
+        const feedbackComponentParameters = prepareFeedbackComponentParameters(exercise, result, participation, this.templateStatus, this.latestDueDate, exerciseService);
 
-        if (this.exercise?.type === ExerciseType.QUIZ) {
+        if (exercise?.type === ExerciseType.QUIZ) {
             // There is no feedback for quiz exercises.
             // Instead, the scoring is showed next to the different questions
             return undefined;
         }
 
-        const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'xl' });
-        const modalComponentInstance: FeedbackComponent = modalRef.componentInstance;
-
-        modalComponentInstance.exercise = this.exercise;
-        modalComponentInstance.result = result;
-        modalComponentInstance.participation = this.participation;
-        if (feedbackComponentParameters.exerciseType) {
-            modalComponentInstance.exerciseType = feedbackComponentParameters.exerciseType;
-        }
-        if (feedbackComponentParameters.showScoreChart) {
-            modalComponentInstance.showScoreChart = feedbackComponentParameters.showScoreChart;
-        }
-        if (feedbackComponentParameters.messageKey) {
-            modalComponentInstance.messageKey = feedbackComponentParameters.messageKey;
-        }
         if (feedbackComponentParameters.latestDueDate) {
             this.latestDueDate = feedbackComponentParameters.latestDueDate;
-            modalComponentInstance.latestDueDate = feedbackComponentParameters.latestDueDate;
         }
-        if (feedbackComponentParameters.showMissingAutomaticFeedbackInformation) {
-            modalComponentInstance.showMissingAutomaticFeedbackInformation = feedbackComponentParameters.showMissingAutomaticFeedbackInformation;
-        }
+
+        this.dialogService.open(FeedbackComponent, {
+            header: this.translateService.instant('artemisApp.result.detail.feedback'),
+            width: '80rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: {
+                exercise,
+                result,
+                participation,
+                exerciseType: feedbackComponentParameters.exerciseType,
+                showScoreChart: feedbackComponentParameters.showScoreChart,
+                messageKey: feedbackComponentParameters.messageKey,
+                latestDueDate: feedbackComponentParameters.latestDueDate,
+                showMissingAutomaticFeedbackInformation: feedbackComponentParameters.showMissingAutomaticFeedbackInformation,
+            },
+        });
     }
 }

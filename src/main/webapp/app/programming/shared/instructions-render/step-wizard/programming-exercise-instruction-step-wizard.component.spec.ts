@@ -10,6 +10,8 @@ import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { Task } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -24,7 +26,11 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         TestBed.configureTestingModule({
             imports: [MockModule(NgbTooltipModule)],
             declarations: [ProgrammingExerciseInstructionStepWizardComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [ProgrammingExerciseInstructionService, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                ProgrammingExerciseInstructionService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
+            ],
         })
             .compileComponents()
             .then(() => {

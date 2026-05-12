@@ -1,5 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
@@ -17,7 +19,8 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
     imports: [TranslateDirective, NgbTooltip, FaIconComponent],
 })
 export class ProgrammingExerciseInstructionStepWizardComponent implements OnChanges {
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
     private instructionService = inject(ProgrammingExerciseInstructionService);
 
     TestCaseState = TestCaseState;
@@ -60,14 +63,22 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
         const {
             detailed: { notExecutedTests },
         } = this.instructionService.testStatusForTask(tests, this.latestResult);
-        const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'lg' });
-        const componentInstance = modalRef.componentInstance as FeedbackComponent;
-        componentInstance.exercise = this.exercise;
-        componentInstance.result = this.latestResult;
-        componentInstance.participation = this.participation;
-        componentInstance.feedbackFilter = tests;
-        componentInstance.exerciseType = ExerciseType.PROGRAMMING;
-        componentInstance.taskName = taskName;
-        componentInstance.numberOfNotExecutedTests = notExecutedTests.length;
+        this.dialogService.open(FeedbackComponent, {
+            header: this.translateService.instant('artemisApp.result.detail.feedbackForTask', { taskName }),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: {
+                exercise: this.exercise,
+                result: this.latestResult,
+                participation: this.participation,
+                feedbackFilter: tests,
+                exerciseType: ExerciseType.PROGRAMMING,
+                taskName,
+                numberOfNotExecutedTests: notExecutedTests.length,
+            },
+        });
     }
 }

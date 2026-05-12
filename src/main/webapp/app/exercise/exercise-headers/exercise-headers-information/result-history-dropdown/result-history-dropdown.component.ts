@@ -14,7 +14,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
 import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs/operators';
@@ -35,7 +35,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 export class ResultHistoryDropdownComponent {
     private resultService = inject(ResultService);
     private translateService = inject(TranslateService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private router = inject(Router);
     private exerciseService = inject(ExerciseService);
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
@@ -267,25 +267,23 @@ export class ResultHistoryDropdownComponent {
         const exerciseServiceToUse = this.exerciseCacheService ?? this.exerciseService;
         const feedbackParams = prepareFeedbackComponentParameters(exercise, result, participation, templateStatus, undefined, exerciseServiceToUse);
 
-        const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'xl' });
-        const instance: FeedbackComponent = modalRef.componentInstance;
-        instance.exercise = exercise;
-        instance.result = result;
-        instance.participation = participation;
-        if (feedbackParams.exerciseType) {
-            instance.exerciseType = feedbackParams.exerciseType;
-        }
-        if (feedbackParams.showScoreChart) {
-            instance.showScoreChart = feedbackParams.showScoreChart;
-        }
-        if (feedbackParams.messageKey) {
-            instance.messageKey = feedbackParams.messageKey;
-        }
-        if (feedbackParams.latestDueDate) {
-            instance.latestDueDate = feedbackParams.latestDueDate;
-        }
-        if (feedbackParams.showMissingAutomaticFeedbackInformation) {
-            instance.showMissingAutomaticFeedbackInformation = feedbackParams.showMissingAutomaticFeedbackInformation;
-        }
+        this.dialogService.open(FeedbackComponent, {
+            header: this.translateService.instant('artemisApp.result.detail.feedback'),
+            width: '80rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: {
+                exercise,
+                result,
+                participation,
+                exerciseType: feedbackParams.exerciseType,
+                showScoreChart: feedbackParams.showScoreChart,
+                messageKey: feedbackParams.messageKey,
+                latestDueDate: feedbackParams.latestDueDate,
+                showMissingAutomaticFeedbackInformation: feedbackParams.showMissingAutomaticFeedbackInformation,
+            },
+        });
     }
 }

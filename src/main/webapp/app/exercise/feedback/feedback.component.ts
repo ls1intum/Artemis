@@ -1,6 +1,7 @@
 import { Component, Injector, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/buildagent/shared/entities/build-log.model';
@@ -65,7 +66,8 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private feedbackService = inject(FeedbackService);
     private feedbackChartService = inject(FeedbackChartService);
     private injector = inject(Injector);
-    activeModal? = inject(NgbActiveModal, { optional: true });
+    readonly dialogRef = inject(DynamicDialogRef, { optional: true });
+    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
 
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
@@ -154,6 +156,23 @@ export class FeedbackComponent implements OnInit, OnChanges {
      * When a result has feedbacks assigned to it, no server call will be executed.
      */
     ngOnInit(): void {
+        // When opened via DialogService, inputs arrive through DynamicDialogConfig.data rather than template bindings.
+        // The standalone-feedback page (and the existing spec) bind inputs directly, so dialogConfig may be absent.
+        const data = this.dialogConfig?.data;
+        if (data) {
+            this.exercise = data.exercise ?? this.exercise;
+            this.result = data.result ?? this.result;
+            this.participation = data.participation ?? this.participation;
+            this.exerciseType = data.exerciseType ?? this.exerciseType;
+            this.feedbackFilter = data.feedbackFilter ?? this.feedbackFilter;
+            this.showScoreChart = data.showScoreChart ?? this.showScoreChart;
+            this.messageKey = data.messageKey ?? this.messageKey;
+            this.showMissingAutomaticFeedbackInformation = data.showMissingAutomaticFeedbackInformation ?? this.showMissingAutomaticFeedbackInformation;
+            this.latestDueDate = data.latestDueDate ?? this.latestDueDate;
+            this.taskName = data.taskName ?? this.taskName;
+            this.numberOfNotExecutedTests = data.numberOfNotExecutedTests ?? this.numberOfNotExecutedTests;
+        }
+
         this.isLoading = true;
 
         this.initializeExerciseInformation();
