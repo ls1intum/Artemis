@@ -14,7 +14,8 @@ import { UserService } from 'app/core/user/shared/user.service';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -331,6 +332,82 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             // handleAthenaResult should now be a no-op for this attempt.
             (component as any).handleAthenaResult({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
             expect(component.athenaFeedbackUsed()).toBe(3);
+        });
+    });
+
+    describe('LLM selection modal', () => {
+        function setupForModal(): { llmModalService: LLMSelectionModalService; userService: UserService; requestSpy: ReturnType<typeof vi.spyOn> } {
+            enableAthena();
+            vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
+            const requestSpy = vi.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(of(undefined));
+
+            setStudentExam({ ...studentExamForTestExam, submitted: true });
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            return {
+                llmModalService: TestBed.inject(LLMSelectionModalService),
+                userService: TestBed.inject(UserService),
+                requestSpy,
+            };
+        }
+
+        it('should trigger the feedback request when the user picks LOCAL_AI in the modal', async () => {
+            const { llmModalService, userService, requestSpy } = setupForModal();
+            vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.LOCAL_AI);
+            const updateSpy = vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(undefined) as any);
+
+            await component.requestAIFeedback();
+
+            expect(updateSpy).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
+            expect(component.hasUserAcceptedLLMUsage()).toBe(true);
+            expect(requestSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should trigger the feedback request when the user picks CLOUD_AI in the modal', async () => {
+            const { llmModalService, userService, requestSpy } = setupForModal();
+            vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
+            const updateSpy = vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(undefined) as any);
+
+            await component.requestAIFeedback();
+
+            expect(updateSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+            expect(component.hasUserAcceptedLLMUsage()).toBe(true);
+            expect(requestSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not trigger the feedback request when the user picks NO_AI', async () => {
+            const { llmModalService, userService, requestSpy } = setupForModal();
+            vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.NO_AI);
+            const updateSpy = vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(undefined) as any);
+
+            await component.requestAIFeedback();
+
+            expect(updateSpy).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
+            expect(component.hasUserAcceptedLLMUsage()).toBe(false);
+            expect(requestSpy).not.toHaveBeenCalled();
+        });
+
+        it('should accept LOCAL_AI from previously-stored user identity without showing the modal', () => {
+            enableAthena();
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: LLMSelectionDecision.LOCAL_AI } as any);
+
+            setStudentExam({ ...studentExamForTestExam, submitted: true });
+            component.ngOnInit();
+
+            expect(component.hasUserAcceptedLLMUsage()).toBe(true);
+        });
+
+        it('should do nothing when the modal is dismissed', async () => {
+            const { llmModalService, userService, requestSpy } = setupForModal();
+            vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
+            const updateSpy = vi.spyOn(userService, 'updateLLMSelectionDecision');
+
+            await component.requestAIFeedback();
+
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(requestSpy).not.toHaveBeenCalled();
         });
     });
 

@@ -140,9 +140,13 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
         this.athenaResultSubscriptions.forEach((subscription) => subscription.unsubscribe());
     }
 
+    private isAcceptedLLMSelection(selection?: LLMSelectionDecision): boolean {
+        return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
+    }
+
     private setUserAcceptedLLMUsage(): void {
         const selection = this.accountService.userIdentity()?.selectedLLMUsage;
-        this.hasUserAcceptedLLMUsage.set(selection === LLMSelectionDecision.CLOUD_AI);
+        this.hasUserAcceptedLLMUsage.set(this.isAcceptedLLMSelection(selection));
     }
 
     async requestAIFeedback(): Promise<void> {
@@ -155,17 +159,18 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
 
     private async showLLMSelectionModal(): Promise<void> {
         const choice = await this.llmModalService.open(this.accountService.userIdentity()?.selectedLLMUsage);
-        if (choice === LLMSelectionDecision.CLOUD_AI) {
-            this.llmSelectionSubscription = this.userService.updateLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI).subscribe(() => {
-                this.hasUserAcceptedLLMUsage.set(true);
-                this.accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
-                this.triggerFeedbackRequest();
-            });
-        } else if (choice !== LLM_MODAL_DISMISSED) {
-            this.llmSelectionSubscription = this.userService.updateLLMSelectionDecision(choice as LLMSelectionDecision).subscribe(() => {
-                this.accountService.setUserLLMSelectionDecision(choice as LLMSelectionDecision);
-            });
+        if (choice === LLM_MODAL_DISMISSED) {
+            return;
         }
+        const decision = choice as LLMSelectionDecision;
+        const hasAccepted = this.isAcceptedLLMSelection(decision);
+        this.llmSelectionSubscription = this.userService.updateLLMSelectionDecision(decision).subscribe(() => {
+            this.hasUserAcceptedLLMUsage.set(hasAccepted);
+            this.accountService.setUserLLMSelectionDecision(decision);
+            if (hasAccepted) {
+                this.triggerFeedbackRequest();
+            }
+        });
     }
 
     private triggerFeedbackRequest(): void {
