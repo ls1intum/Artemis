@@ -16,7 +16,9 @@ on:
       - develop
       - main
       - release/*
-    tags: '[0-9]+.[0-9]+.[0-9]+'
+    tags:
+      - '[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+'
     paths-ignore:
       - 'README.md'
       - 'CODE_OF_CONDUCT.md'
