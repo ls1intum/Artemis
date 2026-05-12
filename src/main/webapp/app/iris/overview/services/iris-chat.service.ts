@@ -31,7 +31,7 @@ export enum ChatServiceMode {
     TUTOR_SUGGESTION = 'TUTOR_SUGGESTION',
 }
 
-interface SessionContext {
+export interface SessionContext {
     mode: ChatServiceMode;
     entityId: number;
 }
