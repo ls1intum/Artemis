@@ -41,7 +41,11 @@ export class CourseManagementPage {
      * @param courseID the id of the course
      */
     async openExercisesOfCourse(courseID: number) {
-        await this.getCourse(courseID).locator('#course-card-open-exercises').click();
+        // Wait for the course card and its open-exercises link to be visible. The course list is
+        // hydrated asynchronously after navigation, so the bare .click() races the render.
+        const link = this.getCourse(courseID).locator('#course-card-open-exercises');
+        await link.waitFor({ state: 'visible', timeout: 30_000 });
+        await link.click();
         await this.page.waitForURL('**/exercises**');
     }
 
@@ -58,7 +62,11 @@ export class CourseManagementPage {
      * @param courseID
      */
     async openCourse(courseID: number) {
-        await this.getCourse(courseID).locator('#course-card-header').click();
+        // Wait for the course card header to be visible before clicking; the course list renders
+        // asynchronously and the bare .click() races the render under parallel test load.
+        const header = this.getCourse(courseID).locator('#course-card-header');
+        await header.waitFor({ state: 'visible', timeout: 30_000 });
+        await header.click();
     }
 
     private async assertCourseSummary(expectedCourseSummary: CourseSummary) {
