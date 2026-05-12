@@ -6,12 +6,12 @@ on:
     workflows: ["Build"]
     types: [completed]
 
+# Single-line concurrency group to avoid YAML block-scalar quirks and keep the
+# group key reliably comparable across runs. head_branch is set on branch /
+# default-branch pushes (groups all E2E for that branch into one slot); head_sha
+# is the fallback for events with no branch.
 concurrency:
-  group: |
-    ${{
-      github.event.workflow_run.head_branch && format('e2e-{0}', github.event.workflow_run.head_branch)
-      || format('e2e-{0}', github.event.workflow_run.head_sha)
-    }}
+  group: e2e-${{ github.event.workflow_run.head_branch || github.event.workflow_run.head_sha }}
   cancel-in-progress: true
 
 env:
