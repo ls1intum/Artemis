@@ -4,6 +4,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResultHistoryDropdownComponent } from './result-history-dropdown.component';
 import { MockProvider } from 'ng-mocks';
+import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -379,7 +380,7 @@ describe('ResultHistoryDropdownComponent', () => {
 
             expect(event.stopPropagation).toHaveBeenCalled();
             expect(openSpy).toHaveBeenCalledWith(
-                expect.anything(),
+                FeedbackComponent,
                 expect.objectContaining({
                     header: 'artemisApp.result.detail.feedback',
                     width: '80rem',

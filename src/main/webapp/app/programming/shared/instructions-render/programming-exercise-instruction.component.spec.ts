@@ -505,6 +505,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(openModalStub).toHaveBeenLastCalledWith(
             FeedbackComponent,
             expect.objectContaining({
+                header: 'artemisApp.result.detail.feedbackForTask',
                 width: '50rem',
                 modal: true,
                 closable: true,
