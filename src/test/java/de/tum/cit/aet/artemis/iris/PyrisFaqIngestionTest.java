@@ -212,7 +212,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         activateIrisFor(faq1.getCourse());
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         String newJobToken = pyrisJobService.addFaqIngestionWebhookJob(123L, faq1.getId());
-        String chatJobToken = pyrisJobService.addCourseChatJob(123L, 123L, 123L);
+        String chatJobToken = pyrisJobService.addChatJob(123L, 123L, null, null);
         PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.", false, null);
         PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(errorStage), faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + chatJobToken))));
@@ -228,7 +228,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         activateIrisFor(faq1.getCourse());
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         String newJobToken = pyrisJobService.addFaqIngestionWebhookJob(123L, faq1.getId());
-        String chatJobToken = pyrisJobService.addCourseChatJob(123L, 123L, 123L);
+        String chatJobToken = pyrisJobService.addChatJob(123L, 123L, null, null);
         PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.", false, null);
         PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(errorStage), faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + chatJobToken))));
