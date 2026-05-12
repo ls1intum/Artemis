@@ -82,8 +82,8 @@ public class ExerciseDeletionService {
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelService channelService,
-            Optional<CompetencyProgressApi> competencyProgressApi, Optional<ExerciseWeaviateService> exerciseWeaviateService,
-            Optional<SearchableEntityWeaviateService> searchableItemWeaviateService, Optional<IrisChatSessionApi> irisChatSessionApi) {
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<SearchableEntityWeaviateService> searchableItemWeaviateService,
+            Optional<IrisChatSessionApi> irisChatSessionApi) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
