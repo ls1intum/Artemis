@@ -95,7 +95,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
             this.isLoading.set(true);
             this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                 this.exercise.set(exerciseResponse.body!);
-                const teamOwnerId = this.teamCriteria.filterProp === FilterProp.OWN ? this.currentUser()?.id! : undefined;
+                const teamOwnerId = this.teamCriteria.filterProp === FilterProp.OWN ? this.currentUser()?.id : undefined;
                 this.teamService.findAllByExerciseId(params['exerciseId'], teamOwnerId).subscribe((teamsResponse) => {
                     this.teams.set(teamsResponse.body!);
                     this.isLoading.set(false);
