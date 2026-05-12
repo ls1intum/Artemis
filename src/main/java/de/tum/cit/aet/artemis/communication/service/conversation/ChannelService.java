@@ -216,10 +216,10 @@ public class ChannelService {
      */
     public void deleteChannel(@Nullable Channel channel) {
         if (channel != null) {
+            conversationService.deleteConversation(channel.getId());
             if (searchableEntityWeaviateService != null) {
                 searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
             }
-            conversationService.deleteConversation(channel.getId());
         }
     }
 
@@ -540,10 +540,10 @@ public class ChannelService {
     public void deleteChannelForExerciseId(long exerciseId) {
         Long exerciseChannelId = channelRepository.findChannelIdByExerciseId(exerciseId);
         if (exerciseChannelId != null) {
+            conversationService.deleteConversation(exerciseChannelId);
             if (searchableEntityWeaviateService != null) {
                 searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, exerciseChannelId);
             }
-            conversationService.deleteConversation(exerciseChannelId);
         }
     }
 
