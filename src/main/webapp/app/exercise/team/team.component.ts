@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TeamService } from 'app/exercise/team/team.service';
@@ -55,13 +55,16 @@ export class TeamComponent implements OnInit {
 
     currentUser = signal<User | undefined>(undefined);
     isAdmin = signal(false);
-    isTeamOwner = signal(false);
+    readonly isTeamOwner = computed(() => {
+        const currentUser = this.currentUser();
+        const team = this.team();
+        return currentUser !== undefined && team !== undefined && currentUser.id === team.owner?.id;
+    });
 
     constructor() {
         this.accountService.identity().then((user: User) => {
             this.currentUser.set(user);
             this.isAdmin.set(this.accountService.isAdmin());
-            this.setTeamOwnerFlag();
         });
     }
 
@@ -78,7 +81,6 @@ export class TeamComponent implements OnInit {
                         this.teamService.find(this.exercise()!, params['teamId']).subscribe({
                             next: (teamResponse) => {
                                 this.team.set(teamResponse.body!);
-                                this.setTeamOwnerFlag();
                                 this.setLoadingState(false);
                             },
                             error: this.onLoadError,
@@ -89,14 +91,6 @@ export class TeamComponent implements OnInit {
             },
             error: this.onLoadError,
         });
-    }
-
-    private setTeamOwnerFlag() {
-        const currentUser = this.currentUser();
-        const team = this.team();
-        if (currentUser && team) {
-            this.isTeamOwner.set(currentUser.id === team.owner?.id);
-        }
     }
 
     private setLoadingState(loading: boolean) {

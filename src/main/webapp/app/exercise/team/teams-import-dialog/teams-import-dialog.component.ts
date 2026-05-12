@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
-import { FormsModule, NgForm } from '@angular/forms';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -47,8 +47,6 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
     readonly ImportStrategy = ImportStrategy;
     readonly ActionType = ActionType;
-
-    readonly importForm = viewChild.required<NgForm>('importForm');
 
     // Inputs come from DynamicDialogConfig.data. Initialize at field declaration to
     // avoid ExpressionChangedAfterItHasBeenCheckedError in zoneless dev mode.
