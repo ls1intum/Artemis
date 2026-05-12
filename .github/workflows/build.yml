@@ -90,9 +90,7 @@ jobs:
 
   build-war:
     name: Build .war artifact
-    # Larger self-hosted runner gives Angular's esbuild more cores; cuts wall clock
-    # vs ubuntu-latest. Same runner family used by server-tests / client-tests.
-    runs-on: aet-large-ubuntu
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
