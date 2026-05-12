@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { Component, Input, OnInit, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
 import { AbstractControl, FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -33,10 +33,12 @@ export class TeamUpdateDialogComponent implements OnInit {
     private teamService = inject(TeamService);
     private activeModal = inject(NgbActiveModal);
 
-    @ViewChild('editForm', { static: false }) editForm: NgForm;
+    readonly editForm = viewChild.required<NgForm>('editForm');
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() team: Team;
-    @Input() exercise: Exercise;
+    readonly exercise = input<Exercise>(undefined!);
 
     pendingTeam: Team;
     isSaving = false;
@@ -107,11 +109,11 @@ export class TeamUpdateDialogComponent implements OnInit {
     }
 
     get shortNameControl(): AbstractControl {
-        return this.editForm.control.get('shortName')!;
+        return this.editForm().control.get('shortName')!;
     }
 
     get config(): TeamAssignmentConfig {
-        return this.exercise.teamAssignmentConfig!;
+        return this.exercise().teamAssignmentConfig!;
     }
 
     get showIgnoreTeamSizeRecommendationOption(): boolean {
@@ -204,9 +206,9 @@ export class TeamUpdateDialogComponent implements OnInit {
         this.team = cloneDeep(this.pendingTeam);
 
         if (this.team.id !== undefined) {
-            this.subscribeToSaveResponse(this.teamService.update(this.exercise, this.team));
+            this.subscribeToSaveResponse(this.teamService.update(this.exercise(), this.team));
         } else {
-            this.subscribeToSaveResponse(this.teamService.create(this.exercise, this.team));
+            this.subscribeToSaveResponse(this.teamService.create(this.exercise(), this.team));
         }
     }
 
@@ -250,7 +252,7 @@ export class TeamUpdateDialogComponent implements OnInit {
         shortName$
             .pipe(
                 debounceTime(500),
-                switchMap((shortName) => this.teamService.existsByShortName(this.exercise.course!, shortName)),
+                switchMap((shortName) => this.teamService.existsByShortName(this.exercise().course!, shortName)),
             )
             .subscribe((alreadyTakenResponse) => {
                 const alreadyTaken = alreadyTakenResponse.body;

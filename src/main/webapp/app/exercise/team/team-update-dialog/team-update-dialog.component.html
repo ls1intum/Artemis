@@ -4,7 +4,7 @@
             <span [jhiTranslate]="pendingTeam.id ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label'">
                 {{ pendingTeam.id ? 'Update Team' : 'Create Team' }}
             </span>
-            <span>({{ exercise.title }})</span>
+            <span>({{ exercise().title }})</span>
         </h4>
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
@@ -86,9 +86,9 @@
             </div>
             <jhi-team-owner-search
                 id="teamOwner"
-                [inputDisabled]="!exercise.isAtLeastInstructor"
-                [course]="exercise.course!"
-                [exercise]="exercise"
+                [inputDisabled]="!exercise().isAtLeastInstructor"
+                [course]="exercise().course!"
+                [exercise]="exercise()"
                 [team]="team"
                 (selectOwner)="onSelectOwner($event)"
                 (searching)="searchingOwner = $event"
@@ -118,8 +118,8 @@
             </div>
             <jhi-team-student-search
                 id="teamStudents"
-                [course]="exercise.course!"
-                [exercise]="exercise"
+                [course]="exercise().course!"
+                [exercise]="exercise()"
                 [team]="team"
                 [studentsFromPendingTeam]="pendingTeam.students || []"
                 (selectStudent)="onAddStudent($event)"

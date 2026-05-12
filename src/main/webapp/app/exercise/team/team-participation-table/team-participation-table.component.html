@@ -23,7 +23,7 @@
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="row">
-                    <a [routerLink]="['/courses', course.id, 'exercises', value.id]">
+                    <a [routerLink]="['/courses', course().id, 'exercises', value.id]">
                         {{ value.title }}
                     </a>
                 </ng-template>
@@ -53,13 +53,13 @@
             <ngx-datatable-column [minWidth]="120" [width]="120" [maxWidth]="120" [frozenLeft]="true">
                 <ng-template ngx-datatable-cell-template let-value="row">
                     @if (exercise.id !== value.id) {
-                        <a (click)="onActivate()" [routerLink]="['/courses', course.id, 'exercises', value.id, 'teams', value.team.id]" jhiTranslate="entity.action.view"></a>
+                        <a (click)="onActivate()" [routerLink]="['/courses', course().id, 'exercises', value.id, 'teams', value.team.id]" jhiTranslate="entity.action.view"></a>
                     } @else {
                         <span class="current-team" jhiTranslate="entity.action.view"></span>
                     }
                 </ng-template>
             </ngx-datatable-column>
-            @if (isAdmin) {
+            @if (isAdmin()) {
                 <ngx-datatable-column prop="participation" [minWidth]="150" [width]="150" [maxWidth]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
@@ -74,7 +74,7 @@
                                     <a
                                         [routerLink]="[
                                             '/course-management',
-                                            course.id,
+                                            course().id,
                                             value.type + '-exercises',
                                             value.id,
                                             'participations',
@@ -109,7 +109,7 @@
                     }
                 </ng-template>
             </ngx-datatable-column>
-            @if (isTeamOwner || exercise.isAtLeastInstructor) {
+            @if (isTeamOwner() || exercise.isAtLeastInstructor) {
                 <ngx-datatable-column [minWidth]="200" [width]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper">

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { RouterLink } from '@angular/router';
 
@@ -9,16 +9,16 @@ import { RouterLink } from '@angular/router';
     imports: [RouterLink],
 })
 export class TeamStudentsListComponent {
-    @Input() students: User[];
-    @Input() errorStudentLogins: string[] = [];
-    @Input() renderLinks = false;
-    @Input() withRegistrationNumber = false;
-    @Input() errorStudentRegistrationNumbers: string[] = [];
+    readonly students = input<User[]>(undefined!);
+    readonly errorStudentLogins = input<string[]>([]);
+    readonly renderLinks = input(false);
+    readonly withRegistrationNumber = input(false);
+    readonly errorStudentRegistrationNumbers = input<string[]>([]);
 
     hasError(student: User) {
         return (
-            (student.login && this.errorStudentLogins.includes(student.login)) ||
-            (this.withRegistrationNumber && student.visibleRegistrationNumber && this.errorStudentRegistrationNumbers.includes(student.visibleRegistrationNumber))
+            (student.login && this.errorStudentLogins().includes(student.login)) ||
+            (this.withRegistrationNumber() && student.visibleRegistrationNumber && this.errorStudentRegistrationNumbers().includes(student.visibleRegistrationNumber))
         );
     }
 }

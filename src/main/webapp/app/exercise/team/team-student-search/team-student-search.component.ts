@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, inject, input, output, viewChild } from '@angular/core';
 import { Observable, combineLatest, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
@@ -19,18 +19,18 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class TeamStudentSearchComponent {
     private teamService = inject(TeamService);
 
-    @ViewChild('ngbTypeahead', { static: false }) ngbTypeahead: ElementRef;
+    readonly ngbTypeahead = viewChild.required<ElementRef>('ngbTypeahead');
 
-    @Input() course: Course;
-    @Input() exercise: Exercise;
-    @Input() team: Team;
-    @Input() studentsFromPendingTeam: User[] = [];
+    readonly course = input<Course>(undefined!);
+    readonly exercise = input<Exercise>(undefined!);
+    readonly team = input<Team>(undefined!);
+    readonly studentsFromPendingTeam = input<User[]>([]);
 
-    @Output() selectStudent = new EventEmitter<User>();
-    @Output() searching = new EventEmitter<boolean>();
-    @Output() searchQueryTooShort = new EventEmitter<boolean>();
-    @Output() searchFailed = new EventEmitter<boolean>();
-    @Output() searchNoResults = new EventEmitter<string | undefined>();
+    readonly selectStudent = output<User>();
+    readonly searching = output<boolean>();
+    readonly searchQueryTooShort = output<boolean>();
+    readonly searchFailed = output<boolean>();
+    readonly searchNoResults = output<string | undefined>();
 
     inputDisplayValue: string;
 
@@ -66,7 +66,7 @@ export class TeamStudentSearchComponent {
                 return combineLatest([
                     of(loginOrName),
                     this.teamService
-                        .searchInCourseForExerciseTeam(this.course, this.exercise, loginOrName)
+                        .searchInCourseForExerciseTeam(this.course(), this.exercise(), loginOrName)
                         .pipe(map((usersResponse) => usersResponse.body!))
                         .pipe(
                             catchError(() => {
@@ -98,22 +98,27 @@ export class TeamStudentSearchComponent {
     };
 
     private userCanBeAddedToPendingTeam(user: TeamSearchUser): boolean {
-        if (this.studentsFromPendingTeam.map((s) => s.id).includes(user.id)) {
+        const team = this.team();
+        if (
+            this.studentsFromPendingTeam()
+                .map((s) => s.id)
+                .includes(user.id)
+        ) {
             // If a student is already part of the pending team, they cannot (!) be added again
             return false;
         } else if (!user.assignedTeamId) {
             // If a student is not yet assigned to any team, they can be added
             return true;
-        } else if (!this.team.id) {
+        } else if (!team.id) {
             // If a student is assigned to an existing team but this team is just being created, they cannot (!) be added
             return false;
         }
         // If a student is assigned to a team, they can only be added if they are assigned to this team itself
         // This can happen if they were removed from the pending team and are then added back again
-        return user.assignedTeamId === this.team.id;
+        return user.assignedTeamId === team.id;
     }
 
     private get typeaheadButtons() {
-        return get(this.ngbTypeahead, 'nativeElement.nextSibling.children', []);
+        return get(this.ngbTypeahead(), 'nativeElement.nextSibling.children', []);
     }
 }

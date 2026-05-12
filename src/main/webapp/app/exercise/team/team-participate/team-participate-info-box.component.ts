@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Observable } from 'rxjs';
@@ -12,10 +12,10 @@ import { TeamStudentsOnlineListComponent } from './team-students-online-list.com
     imports: [JhiConnectionStatusComponent, TeamStudentsOnlineListComponent],
 })
 export class TeamParticipateInfoBoxComponent {
-    @Input() exercise: Exercise;
-    @Input() participation: StudentParticipation;
-    @Input() stickyEnabled = true;
-    @Input() dockedToLeftSide = false;
-    @Input() dockedToRightSide = false;
-    @Input() typing$: Observable<any>;
+    readonly exercise = input<Exercise>(undefined!);
+    readonly participation = input<StudentParticipation>(undefined!);
+    readonly stickyEnabled = input(true);
+    readonly dockedToLeftSide = input(false);
+    readonly dockedToRightSide = input(false);
+    readonly typing$ = input<Observable<any>>(undefined!);
 }

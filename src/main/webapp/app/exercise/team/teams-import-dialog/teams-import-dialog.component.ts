@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -47,10 +47,10 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     readonly ImportStrategy = ImportStrategy;
     readonly ActionType = ActionType;
 
-    @ViewChild('importForm', { static: false }) importForm: NgForm;
+    readonly importForm = viewChild.required<NgForm>('importForm');
 
-    @Input() exercise: Exercise;
-    @Input() teams: Team[]; // existing teams already in exercise
+    readonly exercise = input<Exercise>(undefined!);
+    readonly teams = input<Team[]>(undefined!); // existing teams already in exercise
 
     sourceExercise?: Exercise;
 
@@ -140,7 +140,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * since there is no need for conflict handling decisions when no teams exist yet.
      */
     initImportStrategy() {
-        this.importStrategy = this.teams.length === 0 ? this.defaultImportStrategy : undefined;
+        this.importStrategy = this.teams().length === 0 ? this.defaultImportStrategy : undefined;
     }
 
     /**
@@ -150,9 +150,9 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * 3. Registration numbers of students who already belong to teams of this exercise
      */
     computePotentialConflictsBasedOnExistingTeams() {
-        this.teamShortNamesAlreadyExistingInExercise = this.teams.map((team) => team.shortName!);
-        const studentLoginsAlreadyExistingInExercise = flatMap(this.teams, (team) => team.students!.map((student) => student.login!));
-        const studentRegistrationNumbersAlreadyExistingInExercise = flatMap(this.teams, (team) => team.students!.map((student) => student.visibleRegistrationNumber || ''));
+        this.teamShortNamesAlreadyExistingInExercise = this.teams().map((team) => team.shortName!);
+        const studentLoginsAlreadyExistingInExercise = flatMap(this.teams(), (team) => team.students!.map((student) => student.login!));
+        const studentRegistrationNumbersAlreadyExistingInExercise = flatMap(this.teams(), (team) => team.students!.map((student) => student.visibleRegistrationNumber || ''));
         this.conflictingRegistrationNumbersSet = this.addArrayToSet(this.conflictingRegistrationNumbersSet, studentRegistrationNumbersAlreadyExistingInExercise);
         this.conflictingLoginsSet = this.addArrayToSet(this.conflictingLoginsSet, studentLoginsAlreadyExistingInExercise);
     }
@@ -202,7 +202,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     get numberOfTeamsToBeDeleted() {
         switch (this.importStrategy) {
             case ImportStrategy.PURGE_EXISTING:
-                return this.teams.length;
+                return this.teams().length;
             case ImportStrategy.CREATE_ONLY:
                 return 0;
             default:
@@ -226,7 +226,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
             case ImportStrategy.PURGE_EXISTING:
                 return this.sourceTeams!.length;
             case ImportStrategy.CREATE_ONLY:
-                return this.teams.length + this.numberOfConflictFreeSourceTeams;
+                return this.teams().length + this.numberOfConflictFreeSourceTeams;
             default:
                 return 0;
         }
@@ -242,9 +242,9 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      */
     get showImportStrategyChoices(): boolean {
         if (this.showImportFromExercise) {
-            return this.sourceExercise !== undefined && this.sourceTeams !== undefined && this.sourceTeams.length > 0 && this.teams.length > 0;
+            return this.sourceExercise !== undefined && this.sourceTeams !== undefined && this.sourceTeams.length > 0 && this.teams().length > 0;
         }
-        return this.sourceTeams !== undefined && this.sourceTeams.length > 0 && this.teams.length > 0;
+        return this.sourceTeams !== undefined && this.sourceTeams.length > 0 && this.teams().length > 0;
     }
 
     /**
@@ -307,13 +307,13 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         }
         if (this.showImportFromExercise) {
             this.isImporting = true;
-            this.teamService.importTeamsFromSourceExercise(this.exercise, this.sourceExercise!, this.importStrategy!).subscribe({
+            this.teamService.importTeamsFromSourceExercise(this.exercise(), this.sourceExercise!, this.importStrategy!).subscribe({
                 next: (res) => this.onSaveSuccess(res),
                 error: (error) => this.onSaveError(error),
             });
         } else if (this.sourceTeams) {
             this.resetConflictingSets();
-            this.teamService.importTeams(this.exercise, this.sourceTeams, this.importStrategy!).subscribe({
+            this.teamService.importTeams(this.exercise(), this.sourceTeams, this.importStrategy!).subscribe({
                 next: (res) => this.onSaveSuccess(res),
                 error: (error) => this.onSaveError(error),
             });

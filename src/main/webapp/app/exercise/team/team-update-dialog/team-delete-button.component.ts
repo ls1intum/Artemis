@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
+import { Component, OnDestroy, inject, input, output } from '@angular/core';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -12,11 +12,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-team-delete-button',
     template: `
-        @if (exercise.isAtLeastInstructor) {
+        @if (exercise().isAtLeastInstructor) {
             <button
                 jhiDeleteButton
-                [buttonSize]="buttonSize"
-                [entityTitle]="team.shortName || ''"
+                [buttonSize]="buttonSize()"
+                [entityTitle]="team().shortName || ''"
                 deleteQuestion="artemisApp.team.delete.question"
                 deleteConfirmationText="artemisApp.team.delete.typeNameToConfirm"
                 (delete)="removeTeam()"
@@ -35,11 +35,11 @@ export class TeamDeleteButtonComponent implements OnDestroy {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
-    @Input() team: Team;
-    @Input() exercise: Exercise;
-    @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
+    readonly team = input<Team>(undefined!);
+    readonly exercise = input<Exercise>(undefined!);
+    readonly buttonSize = input<ButtonSize>(ButtonSize.SMALL);
 
-    @Output() delete = new EventEmitter<Team>();
+    readonly delete = output<Team>();
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -59,9 +59,9 @@ export class TeamDeleteButtonComponent implements OnDestroy {
      *
      */
     removeTeam = () => {
-        this.teamService.delete(this.exercise, this.team.id!).subscribe({
+        this.teamService.delete(this.exercise(), this.team().id!).subscribe({
             next: () => {
-                this.delete.emit(this.team);
+                this.delete.emit(this.team());
                 this.dialogErrorSource.next('');
             },
             error: () => this.alertService.error('artemisApp.team.removeTeam.error'),

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, Input, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -68,11 +68,14 @@ export class TeamParticipationTableComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;
 
-    @Input() team: Team;
-    @Input() course: Course;
+    readonly team = input<Team>(undefined!);
+    readonly course = input<Course>(undefined!);
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() exercise: Exercise;
-    @Input() isAdmin = false;
-    @Input() isTeamOwner = false;
+    readonly isAdmin = input(false);
+    readonly isTeamOwner = input(false);
 
     exercises: ExerciseForTeam[] = [];
     submissions: Submission[] = [];
@@ -95,7 +98,7 @@ export class TeamParticipationTableComponent implements OnInit {
      */
     loadAll() {
         this.isLoading = true;
-        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course, this.team).subscribe({
+        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course(), this.team()).subscribe({
             next: (courseResponse) => {
                 this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
                     return {
@@ -162,7 +165,7 @@ export class TeamParticipationTableComponent implements OnInit {
      */
     getAssessmentLink(exercise: Exercise, participation: Participation | undefined, submission: Submission | 'new' | undefined): string[] {
         const submissionUrlParameter: number | 'new' = submission === 'new' || submission == undefined ? 'new' : submission.id!;
-        return getLinkToSubmissionAssessment(exercise.type!, this.course.id!, exercise.id!, participation?.id, submissionUrlParameter, undefined, undefined);
+        return getLinkToSubmissionAssessment(exercise.type!, this.course().id!, exercise.id!, participation?.id, submissionUrlParameter, undefined, undefined);
     }
 
     /**
