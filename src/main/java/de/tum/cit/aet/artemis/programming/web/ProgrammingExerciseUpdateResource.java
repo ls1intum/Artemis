@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -100,11 +101,14 @@ public class ProgrammingExerciseUpdateResource {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final ProfileService profileService;
+
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
-            ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository, CompetencyExerciseLinkService competencyExerciseLinkService,
+            final ProfileService profileService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -120,6 +124,7 @@ public class ProgrammingExerciseUpdateResource {
         this.exerciseVersionService = exerciseVersionService;
         this.participationRepository = participationRepository;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.profileService = profileService;
     }
 
     /**
@@ -300,7 +305,7 @@ public class ProgrammingExerciseUpdateResource {
 
         // Only save after checking for errors
         ProgrammingExercise savedProgrammingExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(updatedProgrammingExercise, notificationText,
-                originalCompetencyIds, originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalProblemStatement);
+                originalCompetencyIds, originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalDueDate, originalProblemStatement);
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, updatedProgrammingExercise);
@@ -526,7 +531,7 @@ public class ProgrammingExerciseUpdateResource {
         // Call the service directly with the captured originals instead of re-entering the update path
         // (which would re-capture stale "originals" from the already-mutated L1 cache entity).
         ProgrammingExercise savedExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(programmingExercise, null, originalCompetencyIds,
-                originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalProblemStatement);
+                originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalDueDate, originalProblemStatement);
 
         // Apply all post-save side effects that the normal update path performs
         exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);

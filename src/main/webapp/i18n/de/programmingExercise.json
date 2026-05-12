@@ -640,6 +640,7 @@
                 "startDateTooltip": "Das Startdatum der Aufgabe. Falls dieses gesetzt ist, können Studierende vor diesem Datum die Aufgabe nur ansehen aber diese noch nicht bearbeiten.",
                 "dueDateTooltip": "Die finale Einreichungsfrist, zu welcher alle Abgaben und Commits für Studierende gesperrt werden.",
                 "afterDueDateTooltip": "Aktiviere diese Option, um alle Abgaben von Studierenden nach der Einreichungsfrist zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Abgaben von Studierenden ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
+                "automaticAfterDueDateTooltip": "Diese Option wurde aktiviert, weil der Build von der Abgabefrist abhängt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
                 "alertNewDueDate": "Die Einreichungsfrist wurde auf das Veröffentlichungsdatum gesetzt!",
                 "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
                 "alertNewExampleSolutionPublicationDateAsReleaseDate": "Das Veröffentlichungsdatum der Beispiellösung wurde auf das Datum der Veröffentlichung gesetzt!",

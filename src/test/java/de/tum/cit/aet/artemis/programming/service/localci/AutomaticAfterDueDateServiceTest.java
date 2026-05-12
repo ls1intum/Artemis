@@ -1,0 +1,232 @@
+package de.tum.cit.aet.artemis.programming.service.localci;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+
+@ExtendWith(MockitoExtension.class)
+class AutomaticAfterDueDateServiceTest {
+
+    @Mock
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Mock
+    private ExamDateApi examDateApi;
+
+    @Mock
+    private BuildPhasesTemplateService buildPhasesTemplateService;
+
+    AutomaticAfterDueDateService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new AutomaticAfterDueDateService(programmingExerciseRepository, Optional.of(examDateApi), buildPhasesTemplateService);
+    }
+
+    @Test
+    void recomputeBuildAndTestDate_courseExercise_withDueDateAndAfterDueDatePhase_setsDerivedDate() throws JsonProcessingException {
+        var dueDate = ZonedDateTime.now().plusDays(1);
+        var exercise = createCourseExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE);
+
+        service.recomputeBuildAndTestDate(exercise, null);
+
+        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(dueDate.plusMinutes(15));
+    }
+
+    @Test
+    void recomputeBuildAndTestDate_courseExercise_withoutDueDate_setsNull() throws JsonProcessingException {
+        var exercise = createCourseExercise(null, BuildPhaseCondition.AFTER_DUE_DATE);
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(2));
+
+        service.recomputeBuildAndTestDate(exercise, null);
+
+        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
+    }
+
+    @Test
+    void recomputeBuildAndTestDate_courseExercise_withoutAfterDueDatePhase_setsNull() throws JsonProcessingException {
+        var dueDate = ZonedDateTime.now().plusDays(1);
+        var exercise = createCourseExercise(dueDate, BuildPhaseCondition.ALWAYS);
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(2));
+
+        service.recomputeBuildAndTestDate(exercise, null);
+
+        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
+    }
+
+    @Test
+    void recomputeBuildAndTestDate_courseExercise_dueDateChanged_updatesDerivedDate() throws JsonProcessingException {
+        var originalDueDate = ZonedDateTime.now().plusDays(1);
+        var updatedDueDate = originalDueDate.plusHours(3);
+        var exercise = createCourseExercise(originalDueDate, BuildPhaseCondition.AFTER_DUE_DATE);
+
+        service.recomputeBuildAndTestDate(exercise, null);
+        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(originalDueDate.plusMinutes(15));
+
+        exercise.setDueDate(updatedDueDate);
+        service.recomputeBuildAndTestDate(exercise, originalDueDate);
+        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(updatedDueDate.plusMinutes(15));
+    }
+
+    @Test
+    void recomputeBuildAndTestDate_courseExercise_phaseAddedAndRemoved_updatesDerivedDate() throws JsonProcessingException {
+        var dueDate = ZonedDateTime.now().plusDays(1);
+        var exercise = createCourseExercise(dueDate, BuildPhaseCondition.ALWAYS);
+
+        service.recomputeBuildAndTestDate(exercise, null);
+        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
+
+        exercise.setBuildConfig(createBuildConfig(BuildPhaseCondition.AFTER_DUE_DATE));
+        service.recomputeBuildAndTestDate(exercise, null);
+        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(dueDate.plusMinutes(15));
+
+        exercise.setBuildConfig(createBuildConfig(BuildPhaseCondition.ALWAYS));
+        service.recomputeBuildAndTestDate(exercise, null);
+        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
+    }
+
+    @Test
+    void recomputeBuildAndTestDate_examExercise_usesLatestExamEndWithGrace() throws JsonProcessingException {
+        var dueDate = ZonedDateTime.now().plusDays(1);
+        var latestExamEndDate = ZonedDateTime.now().plusDays(2);
+        var exercise = createExamExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE, 180);
+        when(examDateApi.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam())).thenReturn(latestExamEndDate);
+
+        service.recomputeBuildAndTestDate(exercise, null);
+
+        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(latestExamEndDate.plusSeconds(180).plusMinutes(15));
+    }
+
+    @Test
+    void recomputeBuildAndTestDatesForExam_updatesChangedExercisesOnly() throws JsonProcessingException {
+        var examId = 42L;
+        var exerciseId = 10L;
+        var dueDate = ZonedDateTime.now().plusDays(1);
+        var latestExamEndDate = ZonedDateTime.now().plusDays(2);
+        var exercise = createExamExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE, 120);
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dueDate.plusMinutes(15));
+
+        when(programmingExerciseRepository.findProgrammingExerciseIdsByExamId(examId)).thenReturn(Set.of(exerciseId));
+        when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigElseThrow(exerciseId)).thenReturn(exercise);
+        when(examDateApi.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam())).thenReturn(latestExamEndDate);
+
+        Set<Long> updatedIds = service.recomputeBuildAndTestDatesForExam(examId, null);
+
+        assertThat(updatedIds).containsExactly(exerciseId);
+        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(latestExamEndDate.plusSeconds(120).plusMinutes(15));
+        verify(programmingExerciseRepository).save(exercise);
+    }
+
+    @Test
+    void recomputeBuildAndTestDatesForExam_doesNotSaveWhenDateUnchanged() throws JsonProcessingException {
+        var examId = 43L;
+        var exerciseId = 11L;
+        var dueDate = ZonedDateTime.now().plusDays(1);
+        var latestExamEndDate = ZonedDateTime.now().plusDays(2);
+        var exercise = createExamExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE, 90);
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(latestExamEndDate.plusSeconds(90).plusMinutes(15));
+
+        when(programmingExerciseRepository.findProgrammingExerciseIdsByExamId(examId)).thenReturn(Set.of(exerciseId));
+        when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigElseThrow(exerciseId)).thenReturn(exercise);
+        when(examDateApi.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam())).thenReturn(latestExamEndDate);
+
+        service.recomputeBuildAndTestDatesForExam(examId, null);
+
+        verify(programmingExerciseRepository, never()).save(exercise);
+    }
+
+    @Test
+    void getAutomaticBuildAndTestDate_existingCourseExercise_dueDateAndAfterDueDatePhase_returnsDerivedDate() throws JsonProcessingException {
+        var exerciseId = 10L;
+        var dueDate = ZonedDateTime.now().plusDays(2);
+        var exercise = createCourseExercise(ZonedDateTime.now().plusDays(1), BuildPhaseCondition.AFTER_DUE_DATE);
+        when(programmingExerciseRepository.findForUpdateByIdElseThrow(exerciseId)).thenReturn(exercise);
+
+        var previewDate = service.getAutomaticBuildAndTestDate(exerciseId, dueDate, null, null, null, null, null, null);
+
+        assertThat(previewDate).isEqualTo(dueDate.plusMinutes(15));
+    }
+
+    @Test
+    void getAutomaticBuildAndTestDate_newCourseExercise_withoutExplicitPhaseFlag_usesDefaultTemplate() throws IOException {
+        var dueDate = ZonedDateTime.now().plusDays(1);
+        var defaultPhases = List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml")));
+        when(buildPhasesTemplateService.getBuildPlanPhasesFor(ProgrammingLanguage.JAVA, Optional.of(ProjectType.PLAIN_MAVEN), true, false)).thenReturn(defaultPhases);
+
+        var previewDate = service.getAutomaticBuildAndTestDate(null, dueDate, null, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN, true, false, null);
+
+        assertThat(previewDate).isEqualTo(dueDate.plusMinutes(15));
+    }
+
+    @Test
+    void getAutomaticBuildAndTestDate_newExamExercise_usesExamEndWithGraceAndOffset() throws IOException {
+        var dueDate = ZonedDateTime.now().plusDays(1);
+        var latestExamEndDate = ZonedDateTime.now().plusDays(3);
+        var exam = new Exam();
+        exam.setGracePeriod(120);
+        when(examDateApi.getLatestIndividualExamEndDate(exam)).thenReturn(latestExamEndDate);
+        var templatePhases = List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/*.xml")));
+        when(buildPhasesTemplateService.getBuildPlanPhasesFor(ProgrammingLanguage.JAVA, Optional.of(ProjectType.PLAIN_MAVEN), false, false)).thenReturn(templatePhases);
+        when(buildPhasesTemplateService.applyExamDefaults(anyList()))
+                .thenReturn(List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"))));
+
+        var previewDate = service.getAutomaticBuildAndTestDate(null, dueDate, null, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN, false, false, exam);
+
+        assertThat(previewDate).isEqualTo(latestExamEndDate.plusSeconds(120).plusMinutes(15));
+    }
+
+    private static ProgrammingExercise createCourseExercise(ZonedDateTime dueDate, BuildPhaseCondition phaseCondition) throws JsonProcessingException {
+        var exercise = new ProgrammingExercise();
+        exercise.setDueDate(dueDate);
+        exercise.setBuildConfig(createBuildConfig(phaseCondition));
+        return exercise;
+    }
+
+    private static ProgrammingExercise createExamExercise(ZonedDateTime dueDate, BuildPhaseCondition phaseCondition, int gracePeriod) throws JsonProcessingException {
+        var exercise = new ProgrammingExercise();
+        exercise.setDueDate(dueDate);
+        exercise.setBuildConfig(createBuildConfig(phaseCondition));
+
+        var exam = new Exam();
+        exam.setGracePeriod(gracePeriod);
+        var exerciseGroup = new ExerciseGroup();
+        exerciseGroup.setExam(exam);
+        exercise.setExerciseGroup(exerciseGroup);
+        return exercise;
+    }
+
+    private static ProgrammingExerciseBuildConfig createBuildConfig(BuildPhaseCondition phaseCondition) throws JsonProcessingException {
+        var buildConfig = new ProgrammingExerciseBuildConfig();
+        var phase = new BuildPhaseDTO("test", "echo test", phaseCondition, false, List.of("build/test-results/*.xml"));
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        return buildConfig;
+    }
+}

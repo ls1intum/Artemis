@@ -62,6 +62,7 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
@@ -106,6 +107,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly localStorageService = inject(LocalStorageService);
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
+    private readonly buildPhasesTemplateService = inject(BuildPhasesTemplateService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
@@ -1285,7 +1287,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         const customBuildPlanComponent = this.exerciseLanguageComponent?.programmingExerciseCustomBuildPlanComponent;
-        const phasesValid = customBuildPlanComponent?.arePhaseNamesValid(customBuildPlanComponent.buildPlanPhases.phases);
+        const phasesValid = customBuildPlanComponent?.arePhaseNamesValid(this.buildPhasesTemplateService.buildPlan()?.phases ?? []);
         if (!phasesValid) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.buildPhasesEditor.invalidPhaseNames',

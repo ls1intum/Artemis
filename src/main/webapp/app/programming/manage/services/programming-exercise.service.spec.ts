@@ -480,6 +480,41 @@ describe('ProgrammingExercise Service', () => {
         expect(convertedExercise.solutionParticipation).toBeDefined();
     });
 
+    it('should preview automatic after due date with a date response', fakeAsync(() => {
+        const isoDate = '2026-06-01T12:15:00Z';
+        const request = {
+            programmingExerciseId: 42,
+            dueDate: '2026-06-01T12:00:00Z',
+            programmingLanguage: 'JAVA' as any,
+        };
+
+        service.previewAutomaticAfterDueDateDate(request).subscribe((result) => {
+            expect(result).toBeDefined();
+            expect(result!.toISOString()).toBe(dayjs(isoDate).toISOString());
+        });
+
+        const url = `${resourceUrl}/timeline/automatic-after-due-date-preview`;
+        const req = httpMock.expectOne({ method: 'POST', url });
+        req.flush(isoDate);
+        tick();
+    }));
+
+    it('should preview automatic after due date with null response', fakeAsync(() => {
+        const request = {
+            programmingExerciseId: 42,
+            dueDate: '2026-06-01T12:00:00Z',
+        };
+
+        service.previewAutomaticAfterDueDateDate(request).subscribe((result) => {
+            expect(result).toBeUndefined();
+        });
+
+        const url = `${resourceUrl}/timeline/automatic-after-due-date-preview`;
+        const req = httpMock.expectOne({ method: 'POST', url });
+        req.flush(null);
+        tick();
+    }));
+
     afterEach(() => {
         httpMock.verify();
     });

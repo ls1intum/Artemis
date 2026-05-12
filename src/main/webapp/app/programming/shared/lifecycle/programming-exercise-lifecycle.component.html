@@ -37,7 +37,7 @@
                 <jhi-programming-exercise-test-schedule-date-picker
                     [(ngModel)]="exercise.dueDate"
                     (ngModelChange)="updateExampleSolutionPublicationDate($event)"
-                    (onDateReset)="exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined"
+                    (onDateReset)="onDueDateReset()"
                     [startAt]="exercise.startDate ?? exercise.releaseDate"
                     [min]="exercise.startDate ?? exercise.releaseDate"
                     [readOnly]="readOnly"
@@ -47,15 +47,22 @@
                     id="programming-exercise-due-date-picker"
                 />
             }
-            @if ((isEditFieldDisplayedRecord()?.runTestsAfterDueDate || !isEditFieldDisplayedRecord()) && (isExamMode || exercise.dueDate)) {
+            @if (
+                (isEditFieldDisplayedRecord()?.runTestsAfterDueDate || !isEditFieldDisplayedRecord()) &&
+                (isExamMode || exercise.dueDate) &&
+                (exercise.buildAndTestStudentSubmissionsAfterDueDate || !isLocalCIEnabled)
+            ) {
                 <jhi-programming-exercise-test-schedule-date-picker
                     class="test-schedule-date px-1"
                     [(ngModel)]="exercise.buildAndTestStudentSubmissionsAfterDueDate"
                     [startAt]="exercise.dueDate"
                     [min]="exercise.dueDate"
                     [readOnly]="readOnly"
+                    [canReset]="!isLocalCIEnabled"
                     label="artemisApp.programmingExercise.timeline.afterDueDate"
-                    tooltipText="artemisApp.programmingExercise.timeline.afterDueDateTooltip"
+                    [tooltipText]="
+                        isLocalCIEnabled ? 'artemisApp.programmingExercise.timeline.automaticAfterDueDateTooltip' : 'artemisApp.programmingExercise.timeline.afterDueDateTooltip'
+                    "
                 />
             }
             @if ((isEditFieldDisplayedRecord()?.assessmentDueDate || !isEditFieldDisplayedRecord()) && (isExamMode || isImport || exercise.dueDate)) {

@@ -1,8 +1,7 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class BuildPhasesTemplateService {
@@ -10,11 +9,44 @@ export class BuildPhasesTemplateService {
 
     private resourceUrl = 'api/programming/phases/templates';
 
-    getTemplate(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, examMode?: boolean): Observable<BuildPlanPhases> {
+    static readonly DEFAULT_BUILD_PLAN: BuildPlanPhases = {
+        phases: [
+            {
+                name: '',
+                script: '# enter the script of this phase',
+                condition: 'ALWAYS',
+                forceRun: false,
+                resultPaths: [],
+            },
+        ],
+    } as BuildPlanPhases;
+
+    // shared signal
+    readonly buildPlan = signal<BuildPlanPhases | undefined>(BuildPhasesTemplateService.DEFAULT_BUILD_PLAN);
+
+    /**
+     * Fetches the build plan template for the given programming language and project type from the server.
+     * Updates the shared buildPlan signal with the result.
+     *
+     * @param language the programming language for which the template should be fetched
+     * @param projectType the project type for which the template should be fetched
+     * @param staticAnalysis whether the static analysis template should be used
+     * @param sequentialRuns whether the sequential runs template should be used
+     * @param examMode whether the template should be used in an exam
+     */
+    fetchTemplate(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, examMode?: boolean): void {
         const uriWithParams = this.buildURIWithParams(language, projectType, staticAnalysis, sequentialRuns, examMode);
-        return this.http.get<BuildPlanPhases>(`${this.resourceUrl}/` + uriWithParams.uri, {
-            params: uriWithParams.params,
+        this.http.get<BuildPlanPhases>(`${this.resourceUrl}/` + uriWithParams.uri, { params: uriWithParams.params }).subscribe({
+            next: (result) => this.buildPlan.set(result),
+            error: () => this.resetToDefault(),
         });
+    }
+
+    /**
+     * Resets the shared buildPlan signal to the default build plan.
+     */
+    resetToDefault(): void {
+        this.buildPlan.set(BuildPhasesTemplateService.DEFAULT_BUILD_PLAN);
     }
 
     private buildURIWithParams(

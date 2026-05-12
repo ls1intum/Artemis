@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input } from '@angular/core';
-import { PROFILE_ATHENA } from 'app/app.constants';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, effect, inject, input } from '@angular/core';
+import { PROFILE_ATHENA, PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import dayjs from 'dayjs/esm';
@@ -11,17 +11,21 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programming/shared/lifecycle/test-schedule-date-picker/programming-exercise-test-schedule-date-picker.component';
-import { every } from 'lodash-es';
+import { every, isEqual } from 'lodash-es';
 import { ActivatedRoute } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
+import { AutomaticAfterDueDatePreviewRequest, ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { convertDateFromClient } from 'app/shared/util/date.utils';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgStyle } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
+import { findParamInRouteHierarchy } from 'app/shared/util/navigation.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -41,8 +45,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnDestroy, OnInit, OnChanges {
     private translateService = inject(TranslateService);
     private exerciseService = inject(ExerciseService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
     private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
+    private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
 
     protected readonly assessmentType = AssessmentType;
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -55,6 +61,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     @Input() readOnly: boolean;
     @Input() importOptions?: ImportOptions;
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
+    readonly customizeBuildPlan = input<boolean | undefined>(undefined);
 
     @ViewChildren(ProgrammingExerciseTestScheduleDatePickerComponent) datePickerComponents: QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
 
@@ -66,9 +73,12 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     datePickerChildrenSubscription?: Subscription;
 
     isAthenaEnabled: boolean;
+    isLocalCIEnabled: boolean;
 
     isImport = false;
     private urlSubscription: Subscription;
+
+    private previousAutomaticAfterDueDatePreviewRequest: AutomaticAfterDueDatePreviewRequest | undefined = undefined;
 
     /**
      * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC
@@ -80,6 +90,16 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.updateAutomaticAfterDueDatePreview();
+    }
+
+    constructor() {
+        effect(() => {
+            this.buildPhasesTemplateService.buildPlan();
+            this.customizeBuildPlan();
+            this.updateAutomaticAfterDueDatePreview();
+        });
     }
 
     private updateIsImportBasedOnUrl() {
@@ -114,6 +134,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
                 this.updateReleaseDate(newExercise.releaseDate);
             }
         }
+        this.updateAutomaticAfterDueDatePreview();
     }
 
     ngOnDestroy() {
@@ -151,6 +172,11 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         if (this.importOptions) {
             this.importOptions.setTestCaseVisibilityToAfterDueDate = !this.importOptions.setTestCaseVisibilityToAfterDueDate;
         }
+    }
+
+    onDueDateReset() {
+        this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
+        this.updateAutomaticAfterDueDatePreview();
     }
 
     toggleFeedbackRequests() {
@@ -249,6 +275,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = dueDate;
             alert(this.translateService.instant('artemisApp.programmingExercise.timeline.alertNewAfterDueDate'));
         }
+        this.updateAutomaticAfterDueDatePreview();
     }
 
     /**
@@ -270,5 +297,53 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
                 this.exercise.releaseTestsWithExampleSolution = false;
             }
         }
+        this.updateAutomaticAfterDueDatePreview();
+    }
+
+    private updateAutomaticAfterDueDatePreview() {
+        if (!this.isLocalCIEnabled || this.readOnly || !this.exercise) {
+            return;
+        }
+
+        const dueDate = this.exercise.dueDate;
+        if (!dueDate && !this.isExamMode) {
+            this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
+            return;
+        }
+
+        const routeExamId = findParamInRouteHierarchy(this.activatedRoute, 'examId');
+
+        const requestData: AutomaticAfterDueDatePreviewRequest = {
+            programmingExerciseId: this.exercise.id,
+            examId: this.isExamMode ? (routeExamId ? Number(routeExamId) : undefined) : undefined,
+            dueDate: this.isExamMode ? undefined : convertDateFromClient(this.exercise.dueDate),
+            hasAfterDueDateBuildPhase: this.customizeBuildPlan()
+                ? !!this.buildPhasesTemplateService.buildPlan()?.phases?.some((phase) => phase.condition === 'AFTER_DUE_DATE')
+                : undefined,
+            programmingLanguage: this.exercise.programmingLanguage,
+            projectType: this.exercise.projectType,
+            staticCodeAnalysisEnabled: this.exercise.staticCodeAnalysisEnabled,
+            sequentialTestRuns: this.exercise.buildConfig?.sequentialTestRuns,
+        };
+
+        // avoid many calls to server when user is typing script for example
+        if (isEqual(requestData, this.previousAutomaticAfterDueDatePreviewRequest)) {
+            return;
+        }
+        this.previousAutomaticAfterDueDatePreviewRequest = requestData;
+
+        if (requestData.hasAfterDueDateBuildPhase === false) {
+            this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
+            return;
+        }
+
+        this.programmingExerciseService.previewAutomaticAfterDueDateDate(requestData).subscribe({
+            next: (previewDate) => {
+                this.exercise.buildAndTestStudentSubmissionsAfterDueDate = previewDate;
+            },
+            error: () => {
+                this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
+            },
+        });
     }
 }

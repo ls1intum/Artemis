@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.programming.service.localci.AutomaticAfterDueDateService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -50,12 +51,14 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
+
     public ProgrammingExerciseImportService(Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, TemplateUpgradePolicyService templateUpgradePolicyService,
             ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
@@ -66,6 +69,7 @@ public class ProgrammingExerciseImportService {
         this.programmingExerciseImportBasicService = programmingExerciseImportBasicService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.automaticAfterDueDateService = automaticAfterDueDateService;
     }
 
     /**
@@ -168,6 +172,10 @@ public class ProgrammingExerciseImportService {
         }
 
         newProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newProgrammingExercise);
+        if (automaticAfterDueDateService.isPresent()) {
+            automaticAfterDueDateService.orElseThrow().recomputeBuildAndTestDate(newProgrammingExercise, null);
+            programmingExerciseRepository.save(newProgrammingExercise);
+        }
         programmingExerciseImportBasicService.importRepositories(originalProgrammingExercise, newProgrammingExercise);
 
         if (setTestCaseVisibilityToAfterDueDate) {

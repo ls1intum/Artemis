@@ -7,11 +7,11 @@
     @if (programmingExercise.customizeBuildPlan) {
         <jhi-programming-exercise-build-configuration
             [programmingExercise]="programmingExercise"
-            [dockerImage]="buildPlanPhases.dockerImage ?? ''"
+            [dockerImage]="dockerImage()"
             (dockerImageChange)="setDockerImage($event)"
             [timeout]="programmingExercise.buildConfig!.timeoutSeconds === 0 ? 120 : programmingExercise.buildConfig!.timeoutSeconds!"
             (timeoutChange)="setTimeout($event)"
         />
-        <jhi-build-phases-editor [phases]="buildPlanPhases.phases" (phasesChange)="onPhasesChange($event)" />
+        <jhi-build-phases-editor [phases]="phases()" (phasesChange)="onPhasesChange($event)" />
     }
 </div>

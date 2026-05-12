@@ -1,5 +1,6 @@
 import dayjs from 'dayjs/esm';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProgrammingExerciseLifecycleComponent } from 'app/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programming/shared/lifecycle/test-schedule-date-picker/programming-exercise-test-schedule-date-picker.component';
@@ -19,8 +20,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { vi } from 'vitest';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ProgrammingExerciseLifecycleComponent;
     let fixture: ComponentFixture<ProgrammingExerciseLifecycleComponent>;
 
@@ -74,7 +78,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should do nothing if the release date is set to null', () => {
@@ -233,7 +237,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should alert correct date when exampleSolutionPublicationDate is updated automatically', () => {
-        const alertSpy = jest.spyOn(window, 'alert');
+        const alertSpy = vi.spyOn(window, 'alert');
 
         const now = dayjs();
         exercise.dueDate = now.add(10, 'days');
@@ -256,7 +260,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should alert each distinct string only once', () => {
-        const alertSpy = jest.spyOn(window, 'alert');
+        const alertSpy = vi.spyOn(window, 'alert');
 
         const newExercise = { ...exercise, includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY };
 
@@ -341,7 +345,8 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expectElementToBeDisabled(checkbox);
     });
 
-    it('should calculate form validation status', fakeAsync(() => {
+    it('should calculate form validation status', async () => {
+        comp.exercise = {} as ProgrammingExercise;
         const datePicker = {
             dateInput: {
                 valueChanges: new Subject(),
@@ -356,8 +361,8 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.ngAfterViewInit();
         (comp.datePickerComponents.changes as Subject<any>).next({ toArray: () => [datePicker] });
         (datePicker.dateInput.valueChanges as Subject<boolean>).next(true);
-        tick();
+        await new Promise((resolve) => setTimeout(resolve));
         expect(comp.formValid).toBeTrue();
         expect(comp.formEmpty).toBeTrue();
-    }));
+    });
 });

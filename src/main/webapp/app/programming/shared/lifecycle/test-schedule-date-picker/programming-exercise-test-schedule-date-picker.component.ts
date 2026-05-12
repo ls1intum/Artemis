@@ -32,6 +32,7 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
     @Input() tooltipText: string;
     @Input() readOnly: boolean;
     @Output() onDateReset = new EventEmitter();
+    @Input() canReset = true;
 
     // Icons
     faCalendarMinus = faCalendarMinus;
@@ -61,7 +62,9 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
      * This makes it easier to also reset date, that can only be selected if the current date is not set
      */
     resetDate() {
-        this.writeValue(undefined);
-        this.onDateReset.emit();
+        if (this.canReset) {
+            this.writeValue(undefined);
+            this.onDateReset.emit();
+        }
     }
 }

@@ -7,7 +7,7 @@ import { omit as _omit } from 'lodash-es';
 
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { toUpdateProgrammingExerciseDTO } from 'app/programming/manage/services/update-programming-exercise-dto.model';
 import { toProgrammingExerciseTimelineUpdateDTO } from 'app/programming/manage/services/programming-exercise-timeline-update-dto.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
@@ -32,6 +32,17 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     hasStudentResult: boolean;
     testCasesChanged: boolean;
     buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
+};
+
+export type AutomaticAfterDueDatePreviewRequest = {
+    programmingExerciseId?: number;
+    examId?: number;
+    dueDate?: string;
+    hasAfterDueDateBuildPhase?: boolean;
+    programmingLanguage?: ProgrammingLanguage;
+    projectType?: ProjectType;
+    staticCodeAnalysisEnabled?: boolean;
+    sequentialTestRuns?: boolean;
 };
 
 export type ProgrammingExerciseResetOptions = {
@@ -177,6 +188,12 @@ export class ProgrammingExerciseService {
         return this.http
             .put<ProgrammingExercise>(`${this.resourceUrl}/timeline`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
+    }
+
+    previewAutomaticAfterDueDateDate(requestData: AutomaticAfterDueDatePreviewRequest): Observable<dayjs.Dayjs | undefined> {
+        return this.http
+            .post<string | undefined>(`${this.resourceUrl}/timeline/automatic-after-due-date-preview`, requestData, { observe: 'response' })
+            .pipe(map((res) => (res.body ? dayjs(res.body) : undefined)));
     }
 
     /**

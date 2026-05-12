@@ -7,6 +7,7 @@ import static java.time.ZonedDateTime.now;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
@@ -72,6 +74,7 @@ import de.tum.cit.aet.artemis.exam.service.StudentExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
+import de.tum.cit.aet.artemis.programming.service.localci.AutomaticAfterDueDateService;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -116,6 +119,10 @@ public class StudentExamResource {
 
     private final ExamLiveEventRepository examLiveEventRepository;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
+    private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
+
     @Value("${info.studentExamStoreSessionData:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
 
@@ -128,7 +135,8 @@ public class StudentExamResource {
             StudentExamAccessService studentExamAccessService, UserRepository userRepository, AuditEventRepository auditEventRepository,
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService, ExamRepository examRepository,
             AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
-            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService, ExamLiveEventRepository examLiveEventRepository) {
+            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService, ExamLiveEventRepository examLiveEventRepository,
+            InstanceMessageSendService instanceMessageSendService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -145,6 +153,8 @@ public class StudentExamResource {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.examLiveEventsService = examLiveEventsService;
         this.examLiveEventRepository = examLiveEventRepository;
+        this.instanceMessageSendService = instanceMessageSendService;
+        this.automaticAfterDueDateService = automaticAfterDueDateService;
     }
 
     /**
@@ -213,8 +223,13 @@ public class StudentExamResource {
 
         if (!savedStudentExam.isTestRun()) {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
+            final ZonedDateTime originalLatestExamEndDateWithGrace = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(exam)).orElse(null);
             if (now.isAfter(exam.getVisibleDate())) {
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false);
+            }
+            if (automaticAfterDueDateService.isPresent()) {
+                automaticAfterDueDateService.orElseThrow().recomputeBuildAndTestDatesForExam(examId, originalLatestExamEndDateWithGrace)
+                        .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
             }
         }
 

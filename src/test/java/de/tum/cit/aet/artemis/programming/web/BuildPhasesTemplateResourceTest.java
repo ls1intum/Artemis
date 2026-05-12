@@ -40,26 +40,26 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     private static Stream<Arguments> templateProvider() {
         // @formatter:off
         return Stream.of(
-            new TestProvider("JAVA/PLAIN_GRADLE", 1),
-            new TestProvider("JAVA/PLAIN_GRADLE?sequentialRuns=true", 2),
-            new TestProvider("JAVA/PLAIN_GRADLE?staticAnalysis=true", 2),
-            new TestProvider("JAVA/PLAIN_MAVEN", 1),
-            new TestProvider("JAVA/PLAIN_MAVEN?sequentialRuns=true", 2),
-            new TestProvider("JAVA/PLAIN_MAVEN?staticAnalysis=true", 2),
+            new TestProvider("JAVA/PLAIN_GRADLE", 2),
+            new TestProvider("JAVA/PLAIN_GRADLE?sequentialRuns=true", 3),
+            new TestProvider("JAVA/PLAIN_GRADLE?staticAnalysis=true", 3),
+            new TestProvider("JAVA/PLAIN_MAVEN", 2),
+            new TestProvider("JAVA/PLAIN_MAVEN?sequentialRuns=true", 4),
+            new TestProvider("JAVA/PLAIN_MAVEN?staticAnalysis=true", 3),
             new TestProvider("JAVA/MAVEN_BLACKBOX", 7),
             new TestProvider("JAVA/MAVEN_BLACKBOX?staticAnalysis=true", 8),
-            new TestProvider("ASSEMBLER", 4),
-            new TestProvider("C/FACT", 2),
-            new TestProvider("C/GCC", 3),
-            new TestProvider("C/GCC?staticAnalysis=true", 3),
-            new TestProvider("KOTLIN", 1),
-            new TestProvider("KOTLIN?sequentialRuns=true", 3),
+            new TestProvider("ASSEMBLER", 5),
+            new TestProvider("C/FACT", 3),
+            new TestProvider("C/GCC", 4),
+            new TestProvider("C/GCC?staticAnalysis=true", 5),
+            new TestProvider("KOTLIN", 2),
+            new TestProvider("KOTLIN?sequentialRuns=true", 4),
             new TestProvider("VHDL", 4),
-            new TestProvider("HASKELL", 1),
-            new TestProvider("HASKELL?sequentialRuns=true", 2),
-            new TestProvider("OCAML", 2),
-            new TestProvider("SWIFT/PLAIN", 1),
-            new TestProvider("SWIFT/PLAIN?staticAnalysis=true", 2)
+            new TestProvider("HASKELL", 2),
+            new TestProvider("HASKELL?sequentialRuns=true", 3),
+            new TestProvider("OCAML", 3),
+            new TestProvider("SWIFT/PLAIN", 4),
+            new TestProvider("SWIFT/PLAIN?staticAnalysis=true", 5)
         ).map(provider -> Arguments.of(provider.templateKey(), provider.expectedPhases()));
         // @formatter:on
     }

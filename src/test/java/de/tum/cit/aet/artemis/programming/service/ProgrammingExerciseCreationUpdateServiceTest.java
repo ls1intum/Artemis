@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -29,7 +28,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @ExtendWith(MockitoExtension.class)
 class ProgrammingExerciseCreationUpdateServiceTest {
@@ -49,8 +47,7 @@ class ProgrammingExerciseCreationUpdateServiceTest {
                 mock(ProgrammingExerciseRepository.class), mock(ChannelService.class), mock(ProgrammingExerciseTaskService.class), mock(ProgrammingExerciseBuildPlanService.class),
                 mock(ProgrammingExerciseCreationScheduleService.class), mock(ProgrammingExerciseAtlasIrisService.class), moduleFeatureService,
                 mock(TemplateProgrammingExerciseParticipationRepository.class), mock(SolutionProgrammingExerciseParticipationRepository.class),
-                mock(AuxiliaryRepositoryRepository.class), Optional.<VersionControlService>empty(), mock(ParticipationRepository.class), mock(GitService.class),
-                mock(CompetencyExerciseLinkService.class));
+                mock(AuxiliaryRepositoryRepository.class), Optional.empty(), mock(GitService.class), mock(CompetencyExerciseLinkService.class), Optional.empty());
     }
 
     @Test

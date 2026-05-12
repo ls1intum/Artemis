@@ -72,9 +72,11 @@ export default defineConfig({
             'src/main/webapp/app/exercise/synchronization/**/*.spec.ts', // include exercise synchronization tests
             'src/main/webapp/app/exercise/version-history/**/*.spec.ts', // include exercise version history tests
             'src/main/webapp/app/exercise/review/**/*.spec.ts', // include review module tests
+            'src/main/webapp/app/programming/manage/detail/*.spec.ts', // include programming detail tests
             'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.spec.ts', // include checklist-panel tests
             'src/main/webapp/app/hyperion/**/*.spec.ts', // include hyperion module tests
             'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.spec.ts', // include build phases editor tests
+            'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/*.spec.ts', // include custom build plan component tests
             'src/main/webapp/app/programming/manage/version-history/**/*.spec.ts', // include programming version history tests
             'src/main/webapp/app/communication/**/*.spec.ts', // include all communication module tests
             'src/main/webapp/app/exercise/participation/**/*.spec.ts', // include participation tests
@@ -85,6 +87,7 @@ export default defineConfig({
             'src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // include build phases template service tests
             'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
             'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
+            'src/main/webapp/app/programming/shared/lifecycle/**/*.spec.ts', // include programming lifecycle tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -149,6 +152,7 @@ export default defineConfig({
                 'src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // include build phases template service for code coverage
                 'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
                 'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
+                'src/main/webapp/app/programming/shared/lifecycle/**/*.ts', // include programming lifecycle for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code

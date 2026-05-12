@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -119,6 +120,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.localci.AutomaticAfterDueDateService;
 
 /**
  * REST controller for managing Exam.
@@ -183,12 +185,15 @@ public class ExamResource {
 
     private final ExamUserService examUserService;
 
+    private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
+
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
             ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
             AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
-            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService) {
+            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -211,6 +216,7 @@ public class ExamResource {
         this.examLiveEventsService = examLiveEventsService;
         this.studentExamService = studentExamService;
         this.examUserService = examUserService;
+        this.automaticAfterDueDateService = automaticAfterDueDateService;
     }
 
     /**
@@ -269,6 +275,8 @@ public class ExamResource {
         ZonedDateTime originalVisibleDate = originalExam.getVisibleDate();
         ZonedDateTime originalStartDate = originalExam.getStartDate();
         ZonedDateTime originalEndDate = originalExam.getEndDate();
+        Integer originalGracePeriod = originalExam.getGracePeriod();
+        ZonedDateTime originalLatestEndDate = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(originalExam)).orElse(null);
 
         // The Exam Mode cannot be changed after creation -> Compare request with version in the database
         if (examUpdateDTO.testExam() != originalExam.isTestExam()) {
@@ -296,17 +304,21 @@ public class ExamResource {
         boolean visibleOrStartDateChanged = comparator.compare(originalVisibleDate, savedExam.getVisibleDate()) != 0
                 || comparator.compare(originalStartDate, savedExam.getStartDate()) != 0;
         boolean endDateChanged = comparator.compare(originalEndDate, savedExam.getEndDate()) != 0;
-        if (visibleOrStartDateChanged) {
-            // for all programming exercises in the exam, send their ids for scheduling
-            examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
-                    .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
-        }
+        boolean gracePeriodChanged = !Objects.equals(originalGracePeriod, savedExam.getGracePeriod());
 
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
         int workingTimeChange = savedExam.getDuration() - originalExamDuration;
         if (workingTimeChange != 0) {
             Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
+        }
+
+        boolean scheduleRelevantExamSettingsChanged = visibleOrStartDateChanged || endDateChanged || workingTimeChange != 0 || gracePeriodChanged;
+        if (scheduleRelevantExamSettingsChanged) {
+            automaticAfterDueDateService.ifPresent(service -> service.recomputeBuildAndTestDatesForExam(savedExam.getId(), originalLatestEndDate));
+            // for all programming exercises in the exam, send their ids for scheduling
+            examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
+                    .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
         }
 
         examService.syncExamExercisesMetadata(examWithExercises, visibleOrStartDateChanged, endDateChanged);
@@ -341,6 +353,7 @@ public class ExamResource {
         // We also need all student exams for updateStudentExamsAndRescheduleExercises.
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         var originalExamDuration = exam.getDuration();
+        final ZonedDateTime originalLatestExamEndDateWithGrace = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(exam)).orElse(null);
 
         // 1. Update the end date & working time of the exam
         exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
@@ -349,6 +362,10 @@ public class ExamResource {
 
         // 2. Re-calculate the working times of all student exams
         examService.updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
+        if (automaticAfterDueDateService.isPresent()) {
+            automaticAfterDueDateService.orElseThrow().recomputeBuildAndTestDatesForExam(exam.getId(), originalLatestExamEndDateWithGrace)
+                    .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
+        }
 
         // 3. Update Weaviate exercise metadata since the exam end date changed
         examService.syncExamExercisesMetadata(exam);

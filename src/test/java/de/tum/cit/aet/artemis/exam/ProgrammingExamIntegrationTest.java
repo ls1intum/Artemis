@@ -153,6 +153,18 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_rescheduleProgramming_gracePeriodChanged_shouldReschedule() throws Exception {
+        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
+        examWithProgrammingEx.setGracePeriod(examWithProgrammingEx.getGracePeriod() + 60);
+
+        request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+
+        verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithProgrammingExercise_preCheckFailed() throws Exception {
         Exam exam = ExamFactory.generateExam(course1);
         ExerciseGroup programmingGroup = ExamFactory.generateExerciseGroup(false, exam);

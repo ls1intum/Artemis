@@ -34,6 +34,16 @@ public class ExamAccessApi extends AbstractExamApi {
     }
 
     /**
+     * Checks if the current user is allowed to access the course as an editor and the exam.
+     *
+     * @param courseId The id of the course
+     * @param examId   The id of the exam
+     */
+    public void checkCourseAndExamAccessForEditorElseThrow(Long courseId, Long examId) {
+        examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
+    }
+
+    /**
      * Checks if the current user is allowed to access the course as an instructor and the exam.
      *
      * @param courseId The id of the course
