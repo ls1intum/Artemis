@@ -75,7 +75,10 @@ export class CourseManagementExercisesPage {
             await expect(this.getExercise(exercise.id!)).not.toBeAttached({ timeout: 5000 });
         } catch {
             await this.page.reload();
-            await this.page.waitForLoadState('networkidle');
+            await this.page.waitForLoadState('domcontentloaded');
+            // Re-assert after the reload so a still-present card surfaces as a real test failure
+            // instead of being silently swallowed by the catch.
+            await expect(this.getExercise(exercise.id!)).not.toBeAttached({ timeout: 5000 });
         }
     }
 
