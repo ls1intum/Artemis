@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -27,6 +33,8 @@ import de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionCountDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
@@ -60,6 +68,12 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
 
     @Autowired
     private CustomAuditEventRepository auditEventRepository;
+
+    @Autowired
+    private PostTestRepository postRepository;
+
+    @Autowired
+    private ChannelRepository channelRepository;
 
     @Override
     protected String getTestPrefix() {
@@ -179,13 +193,19 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         saveChatSessionWithMessages(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
         saveChatSessionWithMessages(IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user));
+        var tutorSuggestionSession = IrisChatSessionFactory.createSessionWithMessages(new IrisTutorSuggestionSession(createPostForTutorSuggestion(user).getId(), user));
+        saveChatSessionWithMessages(tutorSuggestionSession);
+        IrisChatSessionCountDTO countBeforeDelete = request.get("/api/iris/chat/sessions/count", HttpStatus.OK, IrisChatSessionCountDTO.class);
         Instant before = Instant.now().minusSeconds(1);
 
         request.delete("/api/iris/chat/sessions", HttpStatus.NO_CONTENT);
 
         assertThat(request.getList(overviewUrl(), HttpStatus.OK, IrisChatSessionDTO.class)).isEmpty();
+        assertThat(irisSessionRepository.findById(tutorSuggestionSession.getId())).isEmpty();
         List<AuditEvent> auditEvents = auditEventRepository.find(user.getLogin(), before, Constants.DELETE_ALL_IRIS_SESSIONS);
         assertThat(auditEvents).hasSize(1);
+        assertThat(auditEvents.getFirst().getData()).containsEntry("sessions", String.valueOf(countBeforeDelete.sessions())).containsEntry("messages",
+                String.valueOf(countBeforeDelete.messages()));
     }
 
     @Test
@@ -240,11 +260,12 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
 
         saveChatSessionWithMessages(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
         saveChatSessionWithMessages(IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user));
+        saveChatSessionWithMessages(IrisChatSessionFactory.createSessionWithMessages(new IrisTutorSuggestionSession(createPostForTutorSuggestion(user).getId(), user)));
 
         IrisChatSessionCountDTO updated = request.get("/api/iris/chat/sessions/count", HttpStatus.OK, IrisChatSessionCountDTO.class);
-        assertThat(updated.sessions()).isEqualTo(initial.sessions() + 2);
+        assertThat(updated.sessions()).isEqualTo(initial.sessions() + 3);
         // The factory creates two messages per session (one from Iris, one from the user).
-        assertThat(updated.messages()).isEqualTo(initial.messages() + 4);
+        assertThat(updated.messages()).isEqualTo(initial.messages() + 6);
     }
 
     // =========================================================================
@@ -395,9 +416,23 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
         return "/api/iris/chat/sessions?mode=" + mode.name() + "&entityId=" + entityId;
     }
 
-    private void saveChatSessionWithMessages(IrisChatSession session) {
+    private void saveChatSessionWithMessages(IrisSession session) {
         irisSessionRepository.save(session);
         irisMessageRepository.saveAll(session.getMessages());
+    }
+
+    private Post createPostForTutorSuggestion(User user) {
+        Channel channel = new Channel();
+        channel.setCourse(course);
+        channel.setName("ts-" + UUID.randomUUID().toString().substring(0, 8));
+        channel = channelRepository.save(channel);
+
+        Post post = new Post();
+        post.setAuthor(user);
+        post.setContent("Test tutor suggestion post");
+        post.setConversation(channel);
+        post.setDisplayPriority(DisplayPriority.NONE);
+        return postRepository.save(post);
     }
 
     private IrisChatSessionDTO findByEntityId(List<IrisChatSessionDTO> sessions, long entityId) {

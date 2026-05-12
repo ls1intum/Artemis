@@ -12,6 +12,34 @@
          New chat sub-modes are added by extending the chat_mode ENUM. New top-level session types
          are added by introducing new discriminator values without touching chat_mode. -->
 
+    <!-- Step 0: Guard against pre-existing CHAT rows. 'CHAT' is the unified discriminator introduced
+         by step 4 below; on a clean database no such row can exist before this migration runs.
+         A pre-existing row with discriminator='CHAT' therefore signals a partial-rollout or
+         hand-inserted state, and would survive steps 2–4 with entity_id NULL and chat_mode NULL —
+         an invalid state for the new unified entity. The guard is skipped on databases that have
+         already applied step 4 of an earlier draft of this migration (CHAT rows are legitimate
+         post-migration data there), so adding this changeset retroactively does not block those
+         environments. -->
+    <changeSet id="20260410144433-0-precondition-no-pre-existing-chat" author="senan-aslan">
+        <preConditions onFail="HALT" onFailMessage="iris_session contains rows with discriminator='CHAT' before this migration has run. This signals a partially rolled-back earlier attempt or hand-inserted data; the new IrisChatSession entity expects entity_id and chat_mode to be populated for every CHAT row. Classify or remove the offending rows before re-applying.">
+            <or>
+                <!-- Step 4 (the discriminator-unifying changeset) has already been recorded on this
+                     database. CHAT rows present at this point are legitimate post-migration data; do
+                     not halt. EXISTS is used instead of COUNT(*)=1 to tolerate FILENAME recording
+                     variants that could yield duplicate id/author rows; uppercase DATABASECHANGELOG
+                     matches Liquibase's conventional default table name and is safe on both backends. -->
+                <sqlCheck expectedResult="1">SELECT CASE WHEN EXISTS (SELECT 1 FROM DATABASECHANGELOG WHERE ID = '20260410144433-4-unify-discriminator' AND AUTHOR = 'senan-aslan') THEN 1 ELSE 0 END</sqlCheck>
+                <!-- Otherwise we are pre-step-4; require no pre-existing CHAT rows. UPPER() keeps the
+                     check portable: PostgreSQL string equality is case-sensitive, MySQL's default
+                     collation is not. -->
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM iris_session WHERE UPPER(discriminator) = 'CHAT'</sqlCheck>
+            </or>
+        </preConditions>
+        <!-- No-op body; the precondition is the entire purpose of this changeset. -->
+        <sql>SELECT 1</sql>
+        <rollback/>
+    </changeSet>
+
     <!-- Step 1: Add new column entity_id -->
     <changeSet id="20260410144433-1-add-entity-id" author="senan-aslan">
         <preConditions onFail="MARK_RAN">
@@ -222,7 +250,11 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20260410144433-7-drop-index-course" author="senan-aslan">
+    <!-- Restricted to MySQL/PostgreSQL: H2 (used by the bean-instantiation startup check) refuses to drop an
+         index that backs an FK constraint, even when a suitable replacement index exists. The course FK is
+         kept here, so on H2 the legacy single-column index stays alongside the new composite — harmless,
+         since H2 is only used for the startup smoke test, not for persistent data. -->
+    <changeSet id="20260410144433-7-drop-index-course" author="senan-aslan" dbms="mysql,postgresql">
         <preConditions onFail="MARK_RAN">
             <indexExists tableName="iris_session" indexName="fk_iris_session_course_id"/>
         </preConditions>

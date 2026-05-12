@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -102,12 +105,19 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     private IrisSessionService irisSessionService;
 
     @Autowired
+    private FeatureToggleService featureToggleService;
+
+    @Autowired
     private TeamRepository teamRepository;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
 
     private AtomicBoolean pipelineDone;
+
+    private boolean memirisFeatureEnabledBeforeTest;
+
+    private boolean student1MemirisEnabledBeforeTest;
 
     @Override
     protected String getTestPrefix() {
@@ -117,6 +127,20 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     @BeforeEach
     void initMessageTestState() {
         pipelineDone = new AtomicBoolean(false);
+        memirisFeatureEnabledBeforeTest = featureToggleService.isFeatureEnabled(Feature.Memiris);
+        student1MemirisEnabledBeforeTest = userUtilService.getUserByLogin(TEST_PREFIX + "student1").isMemirisEnabled();
+    }
+
+    @AfterEach
+    void restoreFeatureToggleState() {
+        if (memirisFeatureEnabledBeforeTest) {
+            featureToggleService.enableFeature(Feature.Memiris);
+        }
+        else {
+            featureToggleService.disableFeature(Feature.Memiris);
+        }
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userTestRepository.updateMemirisEnabled(user.getId(), student1MemirisEnabledBeforeTest);
     }
 
     // =========================================================================
@@ -163,6 +187,27 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
         await().until(pipelineDone::get);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessage_disablesMemirisInPyrisDtoWhenFeatureDisabled() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        user.setMemirisEnabled(true);
+        userTestRepository.saveAndFlush(user);
+        featureToggleService.disableFeature(Feature.Memiris);
+
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+        mockChatResponse(dto -> {
+            assertThat(dto.user().memirisEnabled()).isFalse();
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+        assertThat(userTestRepository.findByIdElseThrow(user.getId()).isMemirisEnabled()).isTrue();
     }
 
     @ParameterizedTest

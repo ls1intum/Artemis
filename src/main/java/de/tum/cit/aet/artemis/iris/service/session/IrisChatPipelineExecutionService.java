@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -64,8 +63,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Conditional(IrisEnabled.class)
 public class IrisChatPipelineExecutionService {
 
-    private final UserRepository userRepository;
-
     private final IrisSessionRepository irisSessionRepository;
 
     private final CourseRepository courseRepository;
@@ -92,12 +89,11 @@ public class IrisChatPipelineExecutionService {
 
     private final PyrisPipelineService pyrisPipelineService;
 
-    public IrisChatPipelineExecutionService(UserRepository userRepository, IrisSessionRepository irisSessionRepository, CourseRepository courseRepository,
-            ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            StudentParticipationRepository studentParticipationRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi,
-            Optional<LearningMetricsApi> learningMetricsApi, IrisSettingsService irisSettingsService, PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService) {
-        this.userRepository = userRepository;
+    public IrisChatPipelineExecutionService(IrisSessionRepository irisSessionRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository,
+            Optional<TextRepositoryApi> textRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LearningMetricsApi> learningMetricsApi,
+            IrisSettingsService irisSettingsService, PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService) {
         this.irisSessionRepository = irisSessionRepository;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
@@ -146,8 +142,8 @@ public class IrisChatPipelineExecutionService {
             }
         }
 
-        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), chatSession, event,
-                executionDto -> buildChatDTO(chatSession.getMode(), chatSession, executionDto, actualSettings.customInstructions(), course, latestSubmission, uncommittedFiles));
+        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), chatSession, event, (executionDto, user, pyrisUser) -> buildChatDTO(chatSession.getMode(),
+                chatSession, executionDto, actualSettings.customInstructions(), course, user, pyrisUser, latestSubmission, uncommittedFiles));
     }
 
     /**
@@ -155,8 +151,7 @@ public class IrisChatPipelineExecutionService {
      * Loads mode-specific data (exercise, lecture, submission) on top of the shared course and metrics base.
      */
     private PyrisChatPipelineExecutionDTO buildChatDTO(IrisChatMode chatMode, IrisChatSession session, PyrisPipelineExecutionDTO executionDto, String customInstructions,
-            Course course, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles) {
-        var user = userRepository.findByIdElseThrow(session.getUserId());
+            Course course, User user, PyrisUserDTO pyrisUser, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles) {
         var messages = pyrisDTOService.toPyrisMessageDTOList(session.getMessages());
 
         // Base data shared across all chat modes (course chat is the baseline)
@@ -207,8 +202,8 @@ public class IrisChatPipelineExecutionService {
             default -> throw new IllegalArgumentException("IrisChatPipelineExecutionService does not support chat mode " + chatMode);
         }
 
-        return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), new PyrisUserDTO(user), executionDto.initialStages(),
-                customInstructions, courseDto, programmingExercise, textExercise, lectureDto, null, progSubmission, textSubmission, metrics);
+        return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), pyrisUser, executionDto.initialStages(), customInstructions,
+                courseDto, programmingExercise, textExercise, lectureDto, null, progSubmission, textSubmission, metrics);
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {

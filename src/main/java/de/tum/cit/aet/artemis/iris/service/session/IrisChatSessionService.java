@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -219,9 +220,14 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     /**
      * Handles the new result event for a programming exercise session.
      * Checks if the build failed or if the student needs intervention based on their score trajectory.
+     * <p>
+     * Invoked indirectly: {@link de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService#trigger} republishes
+     * the incoming {@link NewResultEvent} via {@link org.springframework.context.ApplicationEventPublisher} so
+     * this service stays decoupled from the dispatch path (avoids a long deferred-eager init dependency chain).
      *
      * @param resultEvent The result event of the submission
      */
+    @EventListener
     public void handleNewResultEvent(NewResultEvent resultEvent) {
         var result = resultEvent.getEventObject();
         var participation = result.getSubmission().getParticipation();
