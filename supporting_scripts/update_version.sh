@@ -121,8 +121,12 @@ stamp_file() {
         echo "Expected pattern '$pattern' not found in $file; aborting." >&2
         exit 1
     fi
-    # macOS / BSD sed: -i '' for in-place edits.
-    sed -i '' -E "s|$pattern|$replacement|" "$file"
+    # Portable in-place edit: BSD sed (macOS) and GNU sed (Linux) disagree on -i syntax,
+    # so write to a temp sibling and atomically move it back.
+    local tmp
+    tmp=$(mktemp "$file.XXXXXX")
+    sed -E "s|$pattern|$replacement|" "$file" > "$tmp"
+    mv "$tmp" "$file"
 }
 
 bump_version() {

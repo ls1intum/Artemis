@@ -24,12 +24,16 @@ public final class ArtemisVersionUtil {
     /**
      * Parses an Artemis version string for comparison.
      * <p>
-     * Two-part inputs are padded to {@code x.y.0} internally; three-part inputs pass through.
+     * Accepts exactly two ({@code "9.2"}) or three ({@code "10.4.1"}) numeric dot-separated components.
+     * Two-part inputs are padded to {@code x.y.0} internally so strict semver4j semantics hold;
+     * three-part inputs pass through unchanged. Anything else — empty strings, non-numeric segments,
+     * or extra dotted segments like {@code "9.2.3.4"} — is rejected, because semver4j's strict mode
+     * silently tolerates trailing build-metadata-like segments which we do not want.
      *
      * @param version the version string, e.g. {@code "9.2"} or {@code "10.4.1"}
      * @return a strict {@link Semver} suitable for comparison
      * @throws NullPointerException if {@code version} is null
-     * @throws SemverException      if {@code version} cannot be parsed even after padding
+     * @throws SemverException      if {@code version} is not exactly two or three numeric components
      */
     public static Semver parseForComparison(String version) {
         String trimmed = Objects.requireNonNull(version, "version must not be null").trim();

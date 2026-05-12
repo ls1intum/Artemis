@@ -122,4 +122,16 @@ class DatabaseMigrationTest {
         verify(connection, never()).prepareStatement(anyString());
     }
 
+    @Test
+    void migrationPathAcceptsTwoPartRequiredVersion() {
+        MigrationPath path = new MigrationPath("9.2");
+
+        assertThat(path.requiredVersion.getMajor()).isEqualTo(9);
+        assertThat(path.requiredVersion.getMinor()).isEqualTo(2);
+        assertThat(path.upgradeVersion.getMajor()).isEqualTo(10);
+        assertThat(path.upgradeVersion.getMinor()).isEqualTo(0);
+        assertThat(path.nextUpgradeVersion.getMajor()).isEqualTo(11);
+        assertThat(path.nextUpgradeVersion.getMinor()).isEqualTo(0);
+    }
+
 }

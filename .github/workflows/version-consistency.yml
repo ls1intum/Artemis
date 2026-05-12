@@ -16,6 +16,6 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Verify version is consistent across build.gradle, openapi.yaml and README.md
       run: bash supporting_scripts/update_version.sh --check
