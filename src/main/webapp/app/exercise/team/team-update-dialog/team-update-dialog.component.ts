@@ -1,6 +1,6 @@
-import { Component, Input, OnInit, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { AbstractControl, FormsModule, NgForm } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { TeamService } from 'app/exercise/team/team.service';
@@ -31,16 +31,15 @@ export type StudentTeamConflict = { studentLogin: string; teamId: string };
 })
 export class TeamUpdateDialogComponent implements OnInit {
     private teamService = inject(TeamService);
-    private activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
 
     readonly editForm = viewChild.required<NgForm>('editForm');
 
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() team: Team;
-    readonly exercise = input<Exercise>(undefined!);
+    team = signal<Team>(this.dialogConfig.data.team);
+    exercise = signal<Exercise>(this.dialogConfig.data.exercise);
 
-    pendingTeam: Team;
+    pendingTeam: Team = cloneDeep(this.team());
     isSaving = false;
 
     searchingStudents = false;
@@ -71,12 +70,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      * Life cycle hook to indicate component creation is done
      */
     ngOnInit(): void {
-        this.initPendingTeam();
         this.shortNameValidation(this.shortNameValidator);
-    }
-
-    private initPendingTeam() {
-        this.pendingTeam = cloneDeep(this.team);
     }
 
     /**
@@ -192,7 +186,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      * Cancel the update-dialog
      */
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close(undefined);
     }
 
     /**
@@ -203,12 +197,12 @@ export class TeamUpdateDialogComponent implements OnInit {
             return;
         }
 
-        this.team = cloneDeep(this.pendingTeam);
+        const teamToSave = cloneDeep(this.pendingTeam);
 
-        if (this.team.id !== undefined) {
-            this.subscribeToSaveResponse(this.teamService.update(this.exercise(), this.team));
+        if (teamToSave.id !== undefined) {
+            this.subscribeToSaveResponse(this.teamService.update(this.exercise(), teamToSave));
         } else {
-            this.subscribeToSaveResponse(this.teamService.create(this.exercise(), this.team));
+            this.subscribeToSaveResponse(this.teamService.create(this.exercise(), teamToSave));
         }
     }
 
@@ -225,7 +219,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      * @param {HttpResponse<Team>}team - The successful updated team
      */
     onSaveSuccess(team: HttpResponse<Team>) {
-        this.activeModal.close(team.body);
+        this.dialogRef.close(team.body);
         this.isSaving = false;
     }
 

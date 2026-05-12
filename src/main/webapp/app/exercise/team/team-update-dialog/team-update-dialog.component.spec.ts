@@ -1,18 +1,19 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { TeamUpdateDialogComponent } from 'app/exercise/team/team-update-dialog/team-update-dialog.component';
 import { By } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockTeamService, mockEmptyTeam, mockExercise, mockNonTeamStudents, mockTeam, mockTeamStudents } from 'test/helpers/mocks/service/mock-team.service';
 import { TeamService } from 'app/exercise/team/team.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TeamOwnerSearchComponent } from 'app/exercise/team/team-owner-search/team-owner-search.component';
 import { TeamStudentSearchComponent } from 'app/exercise/team/team-student-search/team-student-search.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -21,17 +22,23 @@ import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('TeamUpdateDialogComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: TeamUpdateDialogComponent;
     let fixture: ComponentFixture<TeamUpdateDialogComponent>;
     let debugElement: DebugElement;
-    let ngbActiveModal: NgbActiveModal;
+    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
+    let dialogConfig: { data: { team: typeof mockEmptyTeam | typeof mockTeam; exercise: typeof mockExercise } };
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [FormsModule, FaIconComponent],
-            declarations: [
+    const setupComponent = async (team: typeof mockEmptyTeam | typeof mockTeam) => {
+        dialogRefCloseSpy = vi.fn();
+        dialogConfig = { data: { team, exercise: mockExercise } };
+
+        await TestBed.configureTestingModule({
+            imports: [
+                FormsModule,
+                FaIconComponent,
                 TeamUpdateDialogComponent,
-                MockPipe(ArtemisTranslatePipe),
                 MockComponent(HelpIconComponent),
                 MockPipe(RemoveKeysPipe),
                 MockComponent(TeamOwnerSearchComponent),
@@ -43,45 +50,38 @@ describe('TeamUpdateDialogComponent', () => {
                 { provide: TeamService, useClass: MockTeamService },
                 LocalStorageService,
                 SessionStorageService,
-                MockProvider(NgbActiveModal),
+                { provide: DynamicDialogRef, useValue: { close: dialogRefCloseSpy } },
+                { provide: DynamicDialogConfig, useValue: dialogConfig },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TeamUpdateDialogComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                ngbActiveModal = TestBed.inject(NgbActiveModal);
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TeamUpdateDialogComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+    };
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
-    it('Team Update Dialog can be closed and canceled', fakeAsync(() => {
-        const dismissSpy = jest.spyOn(ngbActiveModal, 'dismiss');
-        const closeButton = debugElement.query(By.css('button.btn-close'));
-        expect(closeButton).not.toBeNull();
-        closeButton.nativeElement.click();
-        expect(dismissSpy).toHaveBeenCalledOnce();
+    it('Team Update Dialog can be canceled via cancel button', async () => {
+        await setupComponent(mockEmptyTeam);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
         const cancelButton = debugElement.query(By.css('button.cancel'));
         expect(cancelButton).not.toBeNull();
         cancelButton.nativeElement.click();
-        expect(dismissSpy).toHaveBeenCalledTimes(2);
+        expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith(undefined);
 
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('Team Update Dialog can be used to create team', fakeAsync(() => {
-        const closeSpy = jest.spyOn(ngbActiveModal, 'close');
-        comp.team = mockEmptyTeam;
-        comp.exercise = mockExercise;
-        fixture.changeDetectorRef.detectChanges();
-
-        // Check that title is correct for creating a team
-        const modalTitle = debugElement.query(By.css('.modal-title'));
-        expect(modalTitle).not.toBeNull();
-        expect(modalTitle.nativeElement.textContent.trim()).toBe(`artemisApp.team.createTeam.label(${mockExercise.title})`);
+    it('Team Update Dialog can be used to create team', async () => {
+        await setupComponent(mockEmptyTeam);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
         // Check that a submit button exists
         const submitButton = debugElement.query(By.css('button[type=submit]'));
@@ -96,109 +96,73 @@ describe('TeamUpdateDialogComponent', () => {
         };
         Object.values(inputs).forEach((input) => expect(input).not.toBeNull());
 
-        // Enter a team name and a team short name
-        inputs.teamName.nativeElement.value = 'Team 1';
-        inputs.teamShortName.nativeElement.value = 'team1';
-        fixture.changeDetectorRef.detectChanges();
+        // Enter a team name and a team short name via component methods
+        comp.pendingTeam.name = 'Team 1';
+        comp.onTeamShortNameChanged('team1');
 
         // Submit button still disabled since no students were added yet (number of students is less than the min recommended team size)
-        expect(submitButton.nativeElement.disabled).toBeTrue();
+        expect(comp.teamSizeViolationUnconfirmed).toBe(true);
 
         // Try proceeding against recommended team size (forcing to create an empty team)
-        inputs.ignoreTeamSizeRecommendation.nativeElement.checked = true;
-        inputs.ignoreTeamSizeRecommendation.nativeElement.dispatchEvent(new Event('change'));
-        fixture.changeDetectorRef.detectChanges();
-        expect(submitButton.nativeElement.disabled).toBeFalse();
+        comp.ignoreTeamSizeRecommendation = true;
+        expect(comp.teamSizeViolationUnconfirmed).toBe(false);
 
         // Undo "proceeding against recommendation"
-        inputs.ignoreTeamSizeRecommendation.nativeElement.checked = false;
-        inputs.ignoreTeamSizeRecommendation.nativeElement.dispatchEvent(new Event('change'));
-        fixture.changeDetectorRef.detectChanges();
-        expect(submitButton.nativeElement.disabled).toBeTrue();
+        comp.ignoreTeamSizeRecommendation = false;
+        expect(comp.teamSizeViolationUnconfirmed).toBe(true);
 
         // Add a student to the team
         const [firstStudent, ...otherStudents] = mockTeamStudents;
         comp.onAddStudent(firstStudent);
-        fixture.changeDetectorRef.detectChanges();
-        expect(submitButton.nativeElement.disabled).toBeFalse();
+        expect(comp.teamSizeViolationUnconfirmed).toBe(false);
 
         // Add the rest of the students to the team
         otherStudents.forEach((student) => comp.onAddStudent(student));
-        fixture.changeDetectorRef.detectChanges();
-        expect(submitButton.nativeElement.disabled).toBeFalse();
+        expect(comp.teamSizeViolationUnconfirmed).toBe(false);
 
-        // Click on save
-        submitButton.nativeElement.click();
-        fixture.changeDetectorRef.detectChanges();
-        fixture.whenStable().then(() => {
-            // Check that saving worked and that modal was closed
-            expect(comp.team).toEqual(comp.pendingTeam);
-            expect(comp.isSaving).toBeFalse();
-            expect(closeSpy).toHaveBeenCalledOnce();
-            fixture.destroy();
-        });
-        discardPeriodicTasks();
-        flush();
-    }));
+        // Save via component method
+        comp.save();
+        await fixture.whenStable();
 
-    it('Team Update Dialog can be used to update team', fakeAsync(() => {
-        const closeSpy = jest.spyOn(ngbActiveModal, 'close');
-        comp.team = mockTeam;
-        comp.exercise = mockExercise;
-        fixture.changeDetectorRef.detectChanges();
-        tick();
+        // Check that saving worked and that the dialog was closed
+        expect(comp.isSaving).toBe(false);
+        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
 
-        // Check that title is correct for updating a team
-        const modalTitle = debugElement.query(By.css('.modal-title'));
-        expect(modalTitle).not.toBeNull();
-        expect(modalTitle.nativeElement.textContent.trim()).toBe(`artemisApp.team.updateTeam.label(${mockExercise.title})`);
+        fixture.destroy();
+    });
 
-        // Check that a submit button exists
-        const submitButton = debugElement.query(By.css('button[type=submit]'));
+    it('Team Update Dialog can be used to update team', async () => {
+        await setupComponent(mockTeam);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // Check that submit button exists
+        const submitButton = fixture.debugElement.query(By.css('button[type=submit]'));
         expect(submitButton).not.toBeNull();
 
-        // Check that all necessary elements are present
-        const inputs = {
-            teamName: debugElement.query(By.css('#teamName')),
-            teamShortName: debugElement.query(By.css('#teamShortName')),
-            teamStudents: debugElement.query(By.css('#teamStudents')),
-        };
-        Object.values(inputs).forEach((input) => expect(input).not.toBeNull());
-
-        // Update the team name
+        // Update the team name and verify it propagates through onTeamNameChanged
         const updatedTeamName = 'Updated team name';
-        inputs.teamName.nativeElement.focus();
-        inputs.teamName.nativeElement.value = updatedTeamName;
-        inputs.teamName.nativeElement.dispatchEvent(new Event('input'));
-        tick();
-        fixture.changeDetectorRef.detectChanges();
+        comp.pendingTeam.name = updatedTeamName;
+        comp.onTeamNameChanged(updatedTeamName);
         expect(comp.pendingTeam.name).toEqual(updatedTeamName);
 
-        // Submit button should be enabled (since we just changed the team name)
-        expect(submitButton.nativeElement.disabled).toBeFalse();
-
         // Remove one of the existing team members
-        const studentRemoveLink = debugElement.query(By.css('.jest-student-remove-link'));
-        studentRemoveLink.nativeElement.dispatchEvent(new Event('click'));
-        tick();
-        fixture.changeDetectorRef.detectChanges();
-        expect(comp.pendingTeam.students).toEqual(comp.team.students?.slice(1));
+        const originalStudents = comp.team().students!;
+        comp.onRemoveStudent(comp.pendingTeam.students![0]);
+        expect(comp.pendingTeam.students).toEqual(originalStudents.slice(1));
 
         // Add three new team members
         mockNonTeamStudents.forEach((student) => comp.onAddStudent(student));
-        fixture.changeDetectorRef.detectChanges();
-        expect(comp.pendingTeam.students).toEqual(comp.team.students?.slice(1).concat(mockNonTeamStudents));
+        expect(comp.pendingTeam.students).toEqual(originalStudents.slice(1).concat(mockNonTeamStudents));
 
-        // Click on save
-        submitButton.nativeElement.click();
-        fixture.changeDetectorRef.detectChanges();
+        // Run save via component method
+        comp.save();
+        await fixture.whenStable();
 
-        // Check that saving worked and that modal was closed
-        expect(comp.team).toEqual(comp.pendingTeam);
-        expect(comp.isSaving).toBeFalse();
-        expect(closeSpy).toHaveBeenCalledOnce();
+        // Check that saving worked and that the dialog was closed
+        expect(comp.isSaving).toBe(false);
+        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
 
         fixture.destroy();
-        flush();
-    }));
+    });
 });

@@ -1,5 +1,6 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { Component, inject, input, output } from '@angular/core';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { TeamUpdateDialogComponent } from 'app/exercise/team/team-update-dialog/team-update-dialog.component';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -12,25 +13,26 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
     template: `
         <jhi-button
             [btnType]="ButtonType.PRIMARY"
-            [btnSize]="buttonSize"
-            [icon]="team ? faPencilAlt : faPlus"
-            [title]="team ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label'"
+            [btnSize]="buttonSize()"
+            [icon]="team() ? faPencilAlt : faPlus"
+            [title]="team() ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label'"
             (onClick)="openTeamCreateDialog($event)"
         />
     `,
     imports: [ButtonComponent],
 })
 export class TeamUpdateButtonComponent {
-    private modalService = inject(NgbModal);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
 
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
-    @Input() team: Team | undefined;
-    @Input() exercise: Exercise;
-    @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
+    readonly team = input<Team | undefined>(undefined);
+    readonly exercise = input.required<Exercise>();
+    readonly buttonSize = input<ButtonSize>(ButtonSize.SMALL);
 
-    @Output() save: EventEmitter<Team> = new EventEmitter();
+    readonly save = output<Team>();
 
     // Icons
     faPencilAlt = faPencilAlt;
@@ -42,13 +44,20 @@ export class TeamUpdateButtonComponent {
      */
     openTeamCreateDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(TeamUpdateDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.team = this.team || new Team();
-        modalRef.componentInstance.exercise = this.exercise;
-
-        modalRef.result.then(
-            (team: Team) => this.save.emit(team),
-            () => {},
-        );
+        const team = this.team();
+        const ref = this.dialogService.open(TeamUpdateDialogComponent, {
+            header: this.translateService.instant(team ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label'),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: { team: team || new Team(), exercise: this.exercise() },
+        });
+        ref?.onClose.subscribe((result: Team | undefined) => {
+            if (result) {
+                this.save.emit(result);
+            }
+        });
     }
 }
