@@ -66,7 +66,7 @@ describe('UpdatingResultComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [UpdatingResultComponent, MockComponent(ResultComponent)],
+            imports: [UpdatingResultComponent],
             providers: [
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
@@ -74,7 +74,12 @@ describe('UpdatingResultComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DialogService, useClass: MockDialogService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(UpdatingResultComponent, {
+                remove: { imports: [ResultComponent] },
+                add: { imports: [MockComponent(ResultComponent)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(UpdatingResultComponent);
         comp = fixture.componentInstance;

@@ -378,7 +378,18 @@ describe('ResultHistoryDropdownComponent', () => {
             component.showFeedback(result, event);
 
             expect(event.stopPropagation).toHaveBeenCalled();
-            expect(openSpy).toHaveBeenCalled();
+            expect(openSpy).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.objectContaining({
+                    header: 'artemisApp.result.detail.feedback',
+                    width: '80rem',
+                    modal: true,
+                    closable: true,
+                    closeOnEscape: true,
+                    dismissableMask: true,
+                    data: expect.objectContaining({ result, participation }),
+                }),
+            );
         });
     });
 

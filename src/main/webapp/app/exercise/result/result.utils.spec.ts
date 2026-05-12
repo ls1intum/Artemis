@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import {
     ResultTemplateStatus,
     breakCircularResultBackReferences,
@@ -20,6 +21,8 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 
 describe('ResultUtils', () => {
+    setupTestBed({ zoneless: true });
+
     it('should filter out all non unreferenced feedbacks that do not have type MANUAL_UNREFERENCED', () => {
         const feedbacks = [
             { reference: 'foo' },

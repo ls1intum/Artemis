@@ -273,7 +273,7 @@ export class ResultHistoryDropdownComponent {
             modal: true,
             closable: true,
             closeOnEscape: true,
-            dismissableMask: false,
+            dismissableMask: true,
             data: {
                 exercise,
                 result,

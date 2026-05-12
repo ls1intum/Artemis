@@ -505,6 +505,11 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(openModalStub).toHaveBeenLastCalledWith(
             FeedbackComponent,
             expect.objectContaining({
+                width: '50rem',
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: true,
                 data: expect.objectContaining(expectedData),
             }),
         );

@@ -211,6 +211,12 @@ describe('ResultComponent', () => {
             expect(openModalSpy).toHaveBeenCalledWith(
                 FeedbackComponent,
                 expect.objectContaining({
+                    header: 'artemisApp.result.detail.feedback',
+                    width: '80rem',
+                    modal: true,
+                    closable: true,
+                    closeOnEscape: true,
+                    dismissableMask: true,
                     data: expect.objectContaining({
                         exercise: preparedFeedback.exercise,
                         result: preparedFeedback.result,

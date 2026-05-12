@@ -93,7 +93,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
             modal: true,
             closable: true,
             closeOnEscape: true,
-            dismissableMask: false,
+            dismissableMask: true,
             data: {
                 exercise: this.exercise,
                 result: this.latestResult,

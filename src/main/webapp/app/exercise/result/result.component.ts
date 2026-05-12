@@ -344,7 +344,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             modal: true,
             closable: true,
             closeOnEscape: true,
-            dismissableMask: false,
+            dismissableMask: true,
             data: {
                 exercise,
                 result,
