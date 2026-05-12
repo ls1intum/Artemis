@@ -34,6 +34,7 @@ export enum ChatServiceMode {
 export interface SessionContext {
     mode: ChatServiceMode;
     entityId: number;
+    entityName?: string;
 }
 
 /**
@@ -294,6 +295,17 @@ export class IrisChatService implements OnDestroy {
                 if (this.stateGeneration !== generation) return;
                 if (contextToCommit) {
                     this.sessionContext = contextToCommit;
+                    // Reflect the committed context in the sidebar entry immediately — without this,
+                    // the related-entity icon/tooltip would stay stale until the next loadChatSessions().
+                    const sessionId = this.sessionId;
+                    const updatedSessions = this.chatSessions
+                        .getValue()
+                        .map((session) =>
+                            session.id === sessionId
+                                ? { ...session, mode: contextToCommit.mode, entityId: contextToCommit.entityId, entityName: contextToCommit.entityName ?? session.entityName }
+                                : session,
+                        );
+                    this.chatSessions.next(updatedSessions);
                 }
                 this.pendingContext = undefined;
                 this.suggestions.next([]);
@@ -712,14 +724,14 @@ export class IrisChatService implements OnDestroy {
      * the original one) before sending, the next send simply finds {@link pendingContext} matching
      * {@link sessionContext} and skips the server-side switch — no stray markers.
      */
-    public switchContextOfCurrentSession(mode: ChatServiceMode, entityId: number): void {
+    public switchContextOfCurrentSession(mode: ChatServiceMode, entityId: number, entityName?: string): void {
         if (!this.sessionId) {
             return;
         }
         if (this.sessionContext?.mode === mode && this.sessionContext?.entityId === entityId) {
             this.pendingContext = undefined;
         } else {
-            this.pendingContext = { mode, entityId };
+            this.pendingContext = { mode, entityId, entityName };
         }
         this.currentChatModeSubject.next(mode);
         this.currentRelatedEntityIdSubject.next(entityId);
