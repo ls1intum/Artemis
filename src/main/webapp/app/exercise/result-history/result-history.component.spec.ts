@@ -5,6 +5,8 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -15,7 +17,13 @@ describe('ResultHistoryComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ResultHistoryComponent, MockPipe(ArtemisDatePipe)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(NgbModal), provideHttpClient(), provideHttpClientTesting()],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(NgbModal),
+                { provide: DialogService, useClass: MockDialogService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {

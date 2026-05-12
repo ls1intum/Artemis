@@ -21,6 +21,8 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('RepositoryViewComponent', () => {
     let component: RepositoryViewComponent;
@@ -49,6 +51,7 @@ describe('RepositoryViewComponent', () => {
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
             ],
         })
             .compileComponents()
