@@ -45,14 +45,18 @@ export class TeamUpdateButtonComponent {
     openTeamCreateDialog(event: MouseEvent) {
         event.stopPropagation();
         const team = this.team();
+        const exercise = this.exercise();
+        const titleLabel = this.translateService.instant(team ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label');
+        const exerciseTitle = exercise.title;
+        const header = exerciseTitle ? `${titleLabel} (${exerciseTitle})` : titleLabel;
         const ref = this.dialogService.open(TeamUpdateDialogComponent, {
-            header: this.translateService.instant(team ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label'),
+            header,
             width: '50rem',
             modal: true,
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
-            data: { team: team || new Team(), exercise: this.exercise() },
+            data: { team: team || new Team(), exercise },
         });
         ref?.onClose.subscribe((result: Team | undefined) => {
             if (result) {

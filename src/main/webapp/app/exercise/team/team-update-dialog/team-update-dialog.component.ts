@@ -158,10 +158,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      */
     onAddStudent(student: User) {
         if (!this.isStudentAlreadyInPendingTeam(student)) {
-            if (!this.pendingTeam.students) {
-                this.pendingTeam.students = [];
-            }
-            this.pendingTeam.students!.push(student);
+            this.pendingTeam.students = [...(this.pendingTeam.students ?? []), student];
         }
     }
 
