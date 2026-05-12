@@ -35,8 +35,8 @@ export class TeamDeleteButtonComponent implements OnDestroy {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
-    readonly team = input<Team>(undefined!);
-    readonly exercise = input<Exercise>(undefined!);
+    readonly team = input.required<Team>();
+    readonly exercise = input.required<Exercise>();
     readonly buttonSize = input<ButtonSize>(ButtonSize.SMALL);
 
     readonly delete = output<Team>();

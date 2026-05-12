@@ -21,9 +21,9 @@ export class TeamStudentSearchComponent {
 
     readonly ngbTypeahead = viewChild.required<ElementRef>('ngbTypeahead');
 
-    readonly course = input<Course>(undefined!);
-    readonly exercise = input<Exercise>(undefined!);
-    readonly team = input<Team>(undefined!);
+    readonly course = input.required<Course>();
+    readonly exercise = input.required<Exercise>();
+    readonly team = input.required<Team>();
     readonly studentsFromPendingTeam = input<User[]>([]);
 
     readonly selectStudent = output<User>();

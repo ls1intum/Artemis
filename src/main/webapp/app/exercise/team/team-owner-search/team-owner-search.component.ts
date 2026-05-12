@@ -23,11 +23,11 @@ export class TeamOwnerSearchComponent implements OnInit {
     focus = new Subject<string>();
     click = new Subject<string>();
 
-    readonly inputDisabled = input<boolean>(undefined!);
+    readonly inputDisabled = input(false);
 
-    readonly course = input<Course>(undefined!);
-    readonly exercise = input<Exercise>(undefined!);
-    readonly team = input<Team>(undefined!);
+    readonly course = input.required<Course>();
+    readonly exercise = input.required<Exercise>();
+    readonly team = input.required<Team>();
 
     readonly selectOwner = output<User>();
     readonly searching = output<boolean>();

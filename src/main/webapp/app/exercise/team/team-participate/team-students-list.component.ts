@@ -9,7 +9,7 @@ import { RouterLink } from '@angular/router';
     imports: [RouterLink],
 })
 export class TeamStudentsListComponent {
-    readonly students = input<User[]>(undefined!);
+    readonly students = input<User[]>([]);
     readonly errorStudentLogins = input<string[]>([]);
     readonly renderLinks = input(false);
     readonly withRegistrationNumber = input(false);

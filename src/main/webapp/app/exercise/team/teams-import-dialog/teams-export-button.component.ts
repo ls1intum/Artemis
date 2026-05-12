@@ -24,7 +24,7 @@ export class TeamsExportButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
-    readonly teams = input<Team[]>(undefined!);
+    readonly teams = input.required<Team[]>();
     readonly buttonSize = input<ButtonSize>(ButtonSize.SMALL);
 
     // Icons
