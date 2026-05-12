@@ -39,23 +39,33 @@ read_build_gradle_version() {
 }
 
 read_openapi_version() {
-    local raw
+    local raw version
     raw=$(grep -E '^  version: "[^"]+"' openapi/openapi.yaml | head -n 1 || true)
     if [[ -z "$raw" ]]; then
         echo "Could not find a quoted 'version: \"X.Y[.Z]\"' line in openapi/openapi.yaml." >&2
         exit 1
     fi
-    echo "$raw" | sed -E 's/^  version: "(.*)"$/\1/'
+    version=$(echo "$raw" | sed -E 's/^  version: "(.*)"$/\1/')
+    if ! [[ "$version" =~ $CANONICAL_REGEX ]]; then
+        echo "openapi/openapi.yaml version '$version' is not a canonical Artemis version (X.Y or X.Y.Z with Z>=1)." >&2
+        exit 1
+    fi
+    echo "$version"
 }
 
 read_readme_version() {
-    local raw
-    raw=$(grep -E 'Artemis-[0-9]+\.[0-9]+(\.[0-9]+)?\.war' README.md | head -n 1 || true)
+    local raw version
+    raw=$(grep -E 'Artemis-[0-9]+\.[0-9]+(\.[1-9][0-9]*)?\.war' README.md | head -n 1 || true)
     if [[ -z "$raw" ]]; then
         echo "Could not find an 'Artemis-X.Y[.Z].war' reference in README.md." >&2
         exit 1
     fi
-    echo "$raw" | sed -E 's/.*Artemis-([0-9]+\.[0-9]+(\.[0-9]+)?)\.war.*/\1/'
+    version=$(echo "$raw" | sed -E 's/.*Artemis-([0-9]+\.[0-9]+(\.[1-9][0-9]*)?)\.war.*/\1/')
+    if ! [[ "$version" =~ $CANONICAL_REGEX ]]; then
+        echo "README.md version '$version' is not a canonical Artemis version (X.Y or X.Y.Z with Z>=1)." >&2
+        exit 1
+    fi
+    echo "$version"
 }
 
 check_consistency() {
