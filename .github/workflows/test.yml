@@ -281,25 +281,6 @@ jobs:
             name: Vitest JUnit Test Results
             path: build/test-results/vitest/junit.xml
 
-  client-tests-selected:
-      runs-on: ubuntu-latest
-      timeout-minutes: 30
-      steps:
-          - uses: actions/checkout@v6
-            with:
-                fetch-depth: 0
-          - name: Setup Node.js
-            uses: actions/setup-node@v6
-            with:
-                node-version: '${{ env.node }}'
-                cache: 'npm'
-          - name: Install Dependencies
-            run: npm install
-          - name: Compile TypeScript Test Files With Typechecking
-            run: npm run compile:tests
-          - name: TypeScript Test (Selection) Without Typechecking
-            run: npm run test-diff:ci
-
   client-style:
     runs-on: ubuntu-latest
     timeout-minutes: 30
