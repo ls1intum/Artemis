@@ -7,7 +7,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisUserDTO(long id, String firstName, String lastName, boolean memirisEnabled, String langKey) {
 
-    public PyrisUserDTO(User user) {
-        this(user.getId(), user.getFirstName(), user.getLastName(), user.isMemirisEnabled(), user.getLangKey());
+    public PyrisUserDTO(User user, boolean memirisEnabled) {
+        this(user.getId(), user.getFirstName(), user.getLastName(), memirisEnabled, user.getLangKey());
     }
 }

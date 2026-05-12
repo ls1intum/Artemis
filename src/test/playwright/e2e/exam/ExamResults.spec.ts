@@ -161,7 +161,7 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
         const exercise = exercises['text'];
         await login(studentOne);
         await page.goto(`/courses/${course.id}/exams/${exam.id}`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         await examParticipation.checkResultScore('70%', exercise.id!);
         await examResultsPage.checkTextExerciseContent(exercise.id!, exercise.additionalData!.textFixture!);
         await examResultsPage.checkAdditionalFeedback(exercise.id!, 7, 'Good job');
@@ -171,7 +171,7 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
         const exercise = exercises['programming'];
         await login(studentOne);
         await page.goto(`/courses/${course.id}/exams/${exam.id}`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         await examParticipation.checkResultScore('50%', exercise.id!);
         await examResultsPage.checkProgrammingExerciseAssessments(exercise.id!, 'Wrong', 4);
         await examResultsPage.checkProgrammingExerciseAssessments(exercise.id!, 'Correct', 4);
@@ -187,7 +187,7 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
         const exercise = exercises['quiz'];
         await login(studentOne);
         await page.goto(`/courses/${course.id}/exams/${exam.id}`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         await examParticipation.checkResultScore('50%', exercise.id!);
         await examResultsPage.checkQuizExerciseScore(exercise.id!, 5, 10);
         const studentAnswers = [true, false, true, false];
@@ -199,7 +199,7 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
         const exercise = exercises['modeling'];
         await login(studentOne);
         await page.goto(`/courses/${course.id}/exams/${exam.id}`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         await examParticipation.checkResultScore('40%', exercise.id!);
         await examResultsPage.checkAdditionalFeedback(exercise.id!, 5, 'Good');
         await examResultsPage.checkModellingExerciseAssessment(exercise.id!, 'class TestClass', 'Wrong', -1);
@@ -209,7 +209,7 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
     test('Check exam result overview', async ({ page, login, examAPIRequests, examResultsPage }) => {
         await login(studentOne);
         await page.goto(`/courses/${course.id}/exams/${exam.id}`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         const gradeSummary = await examAPIRequests.getGradeSummary(exam, studentExam);
         await examResultsPage.checkGradeSummary(gradeSummary);
     });
@@ -227,7 +227,7 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
 async function navigateToExerciseAssessment(page: import('@playwright/test').Page, courseId: number, examId: number, exerciseId: number) {
     const url = `/course-management/${courseId}/exams/${examId}/assessment-dashboard/${exerciseId}`;
     await page.goto(url);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Click "I have read the instructions" to register tutor participation (persisted server-side).
     // After this, reloads will show the submissions table directly.

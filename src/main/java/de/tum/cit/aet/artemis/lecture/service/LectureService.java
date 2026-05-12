@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.iris.api.IrisChatSessionApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -88,6 +89,8 @@ public class LectureService {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final Optional<IrisChatSessionApi> irisChatSessionApi;
+
     private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     private final YouTubeUrlService youTubeUrlService;
@@ -95,7 +98,8 @@ public class LectureService {
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
             Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
-            LectureUnitRepository lectureUnitRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService) {
+            LectureUnitRepository lectureUnitRepository, Optional<IrisChatSessionApi> irisChatSessionApi,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -106,6 +110,7 @@ public class LectureService {
         this.competencyApi = competencyApi;
         this.exerciseService = exerciseService;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.irisChatSessionApi = irisChatSessionApi;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
         this.youTubeUrlService = youTubeUrlService;
     }
@@ -200,6 +205,10 @@ public class LectureService {
         channelService.deleteChannel(lectureChannel);
 
         competencyRelationApi.ifPresent(api -> api.deleteAllLectureUnitLinksByLectureId(lecture.getId()));
+
+        // Remove any Iris chat sessions referencing this lecture. Since the unified iris_session
+        // schema uses a plain entity_id column (no FK), cleanup must happen explicitly here.
+        irisChatSessionApi.ifPresent(api -> api.deleteAllForLecture(lecture.getId()));
 
         // Clean up Weaviate: remove the lecture row and every lecture unit row that belonged to this
         // lecture so the JPA cascade delete does not leave orphaned rows in the unified search index.
