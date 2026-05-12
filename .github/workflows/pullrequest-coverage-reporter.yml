@@ -143,9 +143,13 @@ jobs:
         continue-on-error: true
         with:
           name: Client Coverage Summaries
-          # upload-artifact preserves the relative paths, so files land back at
-          # build/test-results/{jest,vitest}/... as the coverage:pr script expects.
-          path: .
+          # upload-artifact@v6 strips the common ancestor of the uploaded paths.
+          # test.yml's uploader ships build/test-results/jest/coverage-summary.json
+          # and build/test-results/vitest/coverage/coverage-summary.json, so the
+          # archive contains jest/coverage-summary.json and vitest/coverage/coverage-summary.json.
+          # Restore the stripped ancestor here so the files land where
+          # supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs reads them.
+          path: build/test-results/
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
