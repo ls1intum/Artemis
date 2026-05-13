@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Unify IrisCourseChatSession, IrisProgrammingExerciseChatSession, IrisTextExerciseChatSession,
+         and IrisLectureChatSession into a single IrisChatSession entity.
+
+         Two orthogonal classification columns:
+           - discriminator (existing): top-level JPA class (CHAT vs. TUTOR_SUGGESTION; extensible).
+           - chat_mode (new): sub-classification within IrisChatSession (NULL for non-chat sessions).
+         New chat sub-modes are added by extending the chat_mode ENUM. New top-level session types
+         are added by introducing new discriminator values without touching chat_mode. -->
+
+    <!-- Step 0: Guard against pre-existing CHAT rows. 'CHAT' is the unified discriminator introduced
+         by step 4 below; on a clean database no such row can exist before this migration runs.
+         A pre-existing row with discriminator='CHAT' therefore signals a partial-rollout or
+         hand-inserted state, and would survive steps 2–4 with entity_id NULL and chat_mode NULL —
+         an invalid state for the new unified entity. The guard is skipped on databases that have
+         already applied step 4 of an earlier draft of this migration (CHAT rows are legitimate
+         post-migration data there), so adding this changeset retroactively does not block those
+         environments. -->
+    <changeSet id="20260410144433-0-precondition-no-pre-existing-chat" author="senan-aslan">
+        <preConditions onFail="HALT" onFailMessage="iris_session contains rows with discriminator='CHAT' before this migration has run. This signals a partially rolled-back earlier attempt or hand-inserted data; the new IrisChatSession entity expects entity_id and chat_mode to be populated for every CHAT row. Classify or remove the offending rows before re-applying.">
+            <or>
+                <!-- Step 4 (the discriminator-unifying changeset) has already been recorded on this
+                     database. CHAT rows present at this point are legitimate post-migration data; do
+                     not halt. EXISTS is used instead of COUNT(*)=1 to tolerate FILENAME recording
+                     variants that could yield duplicate id/author rows; uppercase DATABASECHANGELOG
+                     matches Liquibase's conventional default table name and is safe on both backends. -->
+                <sqlCheck expectedResult="1">SELECT CASE WHEN EXISTS (SELECT 1 FROM DATABASECHANGELOG WHERE ID = '20260410144433-4-unify-discriminator' AND AUTHOR = 'senan-aslan') THEN 1 ELSE 0 END</sqlCheck>
+                <!-- Otherwise we are pre-step-4; require no pre-existing CHAT rows. UPPER() keeps the
+                     check portable: PostgreSQL string equality is case-sensitive, MySQL's default
+                     collation is not. -->
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM iris_session WHERE UPPER(discriminator) = 'CHAT'</sqlCheck>
+            </or>
+        </preConditions>
+        <!-- No-op body; the precondition is the entire purpose of this changeset. -->
+        <sql>SELECT 1</sql>
+        <rollback/>
+    </changeSet>
+
+    <!-- Step 1: Add new column entity_id -->
+    <changeSet id="20260410144433-1-add-entity-id" author="senan-aslan">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_session" columnName="entity_id"/></not>
+        </preConditions>
+        <addColumn tableName="iris_session">
+            <column name="entity_id" type="BIGINT"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Step 1: Add chat_mode (DB-specific: ENUM on MySQL, TEXT on PostgreSQL).
+         Only the four chat sub-modes are valid; TUTOR_SUGGESTION is a top-level session type
+         (discriminator='TUTOR_SUGGESTION') and intentionally not part of this enum. -->
+    <changeSet id="20260410144433-1-add-chat-mode-mysql" author="senan-aslan" dbms="mysql,h2">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_session" columnName="chat_mode"/></not>
+        </preConditions>
+        <addColumn tableName="iris_session">
+            <column name="chat_mode" type="ENUM('PROGRAMMING_EXERCISE_CHAT','TEXT_EXERCISE_CHAT','COURSE_CHAT','LECTURE_CHAT')"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260410144433-1-add-chat-mode-postgres" author="senan-aslan" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_session" columnName="chat_mode"/></not>
+        </preConditions>
+        <addColumn tableName="iris_session">
+            <column name="chat_mode" type="text"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Step 2: Migrate data — populate entity_id and chat_mode from existing columns and discriminator.
+         TUTOR_SUGGESTION rows are intentionally left untouched (chat_mode stays NULL). -->
+    <changeSet id="20260410144433-2-migrate-data" author="senan-aslan">
+        <!-- COURSE_CHAT: entity_id = course_id -->
+        <update tableName="iris_session">
+            <column name="entity_id" valueComputed="course_id"/>
+            <column name="chat_mode" value="COURSE_CHAT"/>
+            <where>discriminator = 'COURSE_CHAT'</where>
+        </update>
+
+        <!-- PROGRAMMING_EXERCISE_CHAT: entity_id = exercise_id -->
+        <update tableName="iris_session">
+            <column name="entity_id" valueComputed="exercise_id"/>
+            <column name="chat_mode" value="PROGRAMMING_EXERCISE_CHAT"/>
+            <where>discriminator = 'PROGRAMMING_EXERCISE_CHAT'</where>
+        </update>
+
+        <!-- TEXT_EXERCISE_CHAT: entity_id = exercise_id -->
+        <update tableName="iris_session">
+            <column name="entity_id" valueComputed="exercise_id"/>
+            <column name="chat_mode" value="TEXT_EXERCISE_CHAT"/>
+            <where>discriminator = 'TEXT_EXERCISE_CHAT'</where>
+        </update>
+
+        <!-- LECTURE_CHAT: entity_id = lecture_id -->
+        <update tableName="iris_session">
+            <column name="entity_id" valueComputed="lecture_id"/>
+            <column name="chat_mode" value="LECTURE_CHAT"/>
+            <where>discriminator = 'LECTURE_CHAT'</where>
+        </update>
+
+        <rollback>
+            <update tableName="iris_session">
+                <column name="entity_id" value="NULL"/>
+                <column name="chat_mode" value="NULL"/>
+                <where>discriminator IN ('COURSE_CHAT', 'PROGRAMMING_EXERCISE_CHAT', 'TEXT_EXERCISE_CHAT', 'LECTURE_CHAT', 'CHAT')</where>
+            </update>
+        </rollback>
+    </changeSet>
+
+    <!-- Step 3: Backfill course_id for exercise-based and lecture sessions (was NULL before) -->
+    <changeSet id="20260410144433-3-backfill-course-id" author="senan-aslan">
+        <!-- Course-based exercises: get course_id directly from exercise table -->
+        <sql>
+            UPDATE iris_session s
+            SET course_id = (SELECT e.course_id FROM exercise e WHERE e.id = s.exercise_id)
+            WHERE s.discriminator IN ('PROGRAMMING_EXERCISE_CHAT', 'TEXT_EXERCISE_CHAT')
+              AND s.course_id IS NULL
+              AND s.exercise_id IS NOT NULL;
+        </sql>
+
+        <!-- Exam exercises: resolve course_id via exercise_group → exam → course -->
+        <sql>
+            UPDATE iris_session s
+            SET course_id = (
+                SELECT ex.course_id
+                FROM exercise e
+                JOIN exercise_group eg ON eg.id = e.exercise_group_id
+                JOIN exam ex ON ex.id = eg.exam_id
+                WHERE e.id = s.exercise_id
+            )
+            WHERE s.discriminator IN ('PROGRAMMING_EXERCISE_CHAT', 'TEXT_EXERCISE_CHAT')
+              AND s.course_id IS NULL
+              AND s.exercise_id IS NOT NULL;
+        </sql>
+
+        <!-- Lecture sessions: get course_id from lecture table -->
+        <sql>
+            UPDATE iris_session s
+            SET course_id = (SELECT l.course_id FROM lecture l WHERE l.id = s.lecture_id)
+            WHERE s.discriminator = 'LECTURE_CHAT'
+              AND s.course_id IS NULL
+              AND s.lecture_id IS NOT NULL;
+        </sql>
+
+        <rollback>
+            <!-- Backfill is not reversible: we cannot distinguish backfilled course_id values
+                 from values that already existed prior to this migration. -->
+        </rollback>
+    </changeSet>
+
+    <!-- Step 4: Unify the four chat-mode discriminator values into 'CHAT'.
+         TUTOR_SUGGESTION remains its own discriminator value. -->
+    <changeSet id="20260410144433-4-unify-discriminator" author="senan-aslan">
+        <update tableName="iris_session">
+            <column name="discriminator" value="CHAT"/>
+            <where>discriminator IN ('COURSE_CHAT', 'PROGRAMMING_EXERCISE_CHAT', 'TEXT_EXERCISE_CHAT', 'LECTURE_CHAT')</where>
+        </update>
+
+        <rollback>
+            <!-- Reconstruct the original chat-mode discriminator values from chat_mode. -->
+            <sql>
+                UPDATE iris_session
+                SET discriminator = chat_mode
+                WHERE discriminator = 'CHAT' AND chat_mode IS NOT NULL;
+            </sql>
+        </rollback>
+    </changeSet>
+
+    <!-- Step 5: Drop old foreign keys (entity_id is polymorphic; referential integrity is enforced at the application layer).
+         Rollback recreates the FKs against the (then again renamed-back) exercise_id / lecture_id columns; definitions
+         mirror the original constraints from 00000000000000_initial_schema.xml. -->
+    <changeSet id="20260410144433-5-drop-foreign-keys" author="senan-aslan">
+        <dropForeignKeyConstraint baseTableName="iris_session" constraintName="FK_IRIS_SESSION_ON_LECTURE"/>
+        <dropForeignKeyConstraint baseTableName="iris_session" constraintName="fk_iris_session_exercise_id"/>
+
+        <rollback>
+            <addForeignKeyConstraint baseColumnNames="lecture_id" baseTableName="iris_session"
+                                     constraintName="FK_IRIS_SESSION_ON_LECTURE"
+                                     referencedColumnNames="id" referencedTableName="lecture"
+                                     onDelete="CASCADE" onUpdate="NO ACTION"
+                                     deferrable="false" initiallyDeferred="false" validate="true"/>
+            <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="iris_session"
+                                     constraintName="fk_iris_session_exercise_id"
+                                     referencedColumnNames="id" referencedTableName="exercise"
+                                     onDelete="CASCADE" onUpdate="RESTRICT"
+                                     deferrable="false" initiallyDeferred="false" validate="true"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Step 6: Add new composite indexes for the new query patterns.
+         These are created BEFORE dropping the legacy fk_iris_session_course_id index in Step 7: the course-FK
+         (fk_iris_session_course_id) is intentionally kept, and MySQL refuses to drop an index that is the only
+         one covering an active FK column. The new (course_id, user_id, chat_mode) composite has course_id as
+         prefix, so MySQL can repurpose it as the FK's backing index when the old single-column index goes away.
+
+         Column order reflects WHERE-clause selectivity: equality filters first (course_id / entity_id, user_id),
+         then chat_mode as a secondary discriminator. The chat-history listing query
+         (IrisChatSessionRepository#findByCourseIdAndUserId) does not filter by chat_mode, so it benefits from
+         the (course_id, user_id) prefix. -->
+    <changeSet id="20260410144433-6-add-composite-indexes" author="senan-aslan">
+        <createIndex indexName="idx_iris_session_course_user_chatmode" tableName="iris_session">
+            <column name="course_id"/>
+            <column name="user_id"/>
+            <column name="chat_mode"/>
+        </createIndex>
+
+        <createIndex indexName="idx_iris_session_entity_user_chatmode" tableName="iris_session">
+            <column name="entity_id"/>
+            <column name="user_id"/>
+            <column name="chat_mode"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Step 7: Drop obsolete single-column indexes that are now redundant (covered by Step 6 composites)
+         or whose backing FK was removed in Step 5.
+         iris_session_discriminator is intentionally kept: it still helps the (rare) TUTOR_SUGGESTION lookups
+         driven by Hibernate's discriminator filter.
+
+         Each drop is its own changeSet guarded by <indexExists>: on MySQL the FK and its backing index share a
+         name, so dropping the FK in Step 5 may also remove the index — the precondition then marks the
+         changeSet as ran. On PostgreSQL, FK and index have independent identifiers, so the index still exists
+         and the drop runs normally. -->
+    <changeSet id="20260410144433-7-drop-index-lecture" author="senan-aslan">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="iris_session" indexName="FK_IRIS_SESSION_ON_LECTURE"/>
+        </preConditions>
+        <dropIndex tableName="iris_session" indexName="FK_IRIS_SESSION_ON_LECTURE"/>
+
+        <rollback>
+            <createIndex indexName="FK_IRIS_SESSION_ON_LECTURE" tableName="iris_session">
+                <column name="lecture_id"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260410144433-7-drop-index-exercise" author="senan-aslan">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="iris_session" indexName="fk_iris_session_exercise_id"/>
+        </preConditions>
+        <dropIndex tableName="iris_session" indexName="fk_iris_session_exercise_id"/>
+
+        <rollback>
+            <createIndex indexName="fk_iris_session_exercise_id" tableName="iris_session">
+                <column name="exercise_id"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <!-- Restricted to MySQL/PostgreSQL: H2 (used by the bean-instantiation startup check) refuses to drop an
+         index that backs an FK constraint, even when a suitable replacement index exists. The course FK is
+         kept here, so on H2 the legacy single-column index stays alongside the new composite — harmless,
+         since H2 is only used for the startup smoke test, not for persistent data. -->
+    <changeSet id="20260410144433-7-drop-index-course" author="senan-aslan" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="iris_session" indexName="fk_iris_session_course_id"/>
+        </preConditions>
+        <dropIndex tableName="iris_session" indexName="fk_iris_session_course_id"/>
+
+        <rollback>
+            <createIndex indexName="fk_iris_session_course_id" tableName="iris_session">
+                <column name="course_id"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <!-- Step 8: Rename obsolete columns instead of dropping them (rename-first delete policy).
+         The actual <dropColumn> happens in a later release once we are confident no rollback is needed. -->
+    <changeSet id="20260410144433-8-rename-exercise-id" author="senan-aslan">
+        <renameColumn tableName="iris_session" oldColumnName="exercise_id" newColumnName="legacy_exercise_id" columnDataType="BIGINT"/>
+    </changeSet>
+
+    <changeSet id="20260410144433-8-rename-lecture-id" author="senan-aslan">
+        <renameColumn tableName="iris_session" oldColumnName="lecture_id" newColumnName="legacy_lecture_id" columnDataType="BIGINT"/>
+    </changeSet>
+
+</databaseChangeLog>
