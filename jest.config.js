@@ -212,7 +212,9 @@ module.exports = {
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary', 'json-summary'],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
-    transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
+    // Pattern allows any path segments between `node_modules/` and the package name so it works
+    // with pnpm's `.pnpm/<pkg>@<ver>/node_modules/<pkg>/...` real-path layout as well as npm's flat layout.
+    transformIgnorePatterns: [`node_modules/(?!.*(?:${esModules})/)`],
     transform: {
         '^.+\\.(ts|js|mjs|html|svg)$': [
             'jest-preset-angular',
