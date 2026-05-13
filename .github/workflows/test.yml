@@ -254,17 +254,21 @@ jobs:
         # `--max-old-space-size` set in the .npmrc, therefore we delete it for this test as a workaround
         - name: remove project-wide node options set in .npmrc just for this test
           run: rm .npmrc || true
+        - name: Setup pnpm
+          uses: pnpm/action-setup@v4
+          with:
+              run_install: false
         - name: Setup Node.js
           uses: actions/setup-node@v6
           with:
               node-version: '${{ env.node }}'
-              cache: 'npm'
+              cache: 'pnpm'
         - name: Install Dependencies
-          run: npm install
+          run: pnpm install --frozen-lockfile
         - name: Compile TypeScript Test Files With Typechecking
-          run: npm run compile:tests
+          run: pnpm run compile:tests
         - name: TypeScript Test Without Typechecking
-          run: npm run test:ci
+          run: pnpm run test:ci
         - name: Upload Client Test Coverage Report
           if: success() || failure()
           uses: actions/upload-artifact@v6
@@ -304,24 +308,28 @@ jobs:
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v6
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        run_install: false
     - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
         node-version: '${{ env.node }}'
-        cache: 'npm'
+        cache: 'pnpm'
     - name: Install Dependencies
-      run: npm install
+      run: pnpm install --frozen-lockfile
     - name: TypeScript Formatting
-      run: npm run prettier:check
+      run: pnpm run prettier:check
     - name: TypeScript Code Style
-      run: npm run lint
+      run: pnpm run lint
       if: success() || failure()
     - name: Install Playwright Dependencies
-      run: npm ci
+      run: pnpm install --frozen-lockfile
       working-directory: src/test/playwright
       if: success() || failure()
     - name: Playwright Code Style
-      run: npm run lint
+      run: pnpm run lint
       working-directory: src/test/playwright
       if: success() || failure()
 
@@ -330,12 +338,16 @@ jobs:
     timeout-minutes: 5
     steps:
     - uses: actions/checkout@v6
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        run_install: false
     - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
         node-version: '${{ env.node }}'
-        cache: 'npm'
+        cache: 'pnpm'
     - name: Install Dependencies
-      run: npm install
+      run: pnpm install --frozen-lockfile
     - name: Compile TypeScript Files With Typechecking
-      run: npm run compile
+      run: pnpm run compile
