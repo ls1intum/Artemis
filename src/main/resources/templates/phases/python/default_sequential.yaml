@@ -1,0 +1,8 @@
+- name: compile_the_code
+  script: 'python3 -m compileall . -q'
+- name: run_structural_tests
+  script: 'pytest structural/* --junitxml=test-reports/structural-results.xml'
+- name: run_behavior_tests
+  script: 'pytest behavior/* --junitxml=test-reports/behavior-results.xml'
+  resultPaths:
+    - 'test-reports/*results.xml'

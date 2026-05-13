@@ -9,6 +9,7 @@
             "language": "Language",
             "button": "Save"
         },
+        "saml2SyncedInfo": "Your name and email address are managed by your institution via SAML2 and cannot be changed here.",
         "messages": {
             "error": {
                 "fail": "<strong>An error has occurred!</strong> Settings could not be saved.",

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
@@ -82,6 +83,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "buildConfig" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndBuildConfigById(long exerciseId);
+
+    @Query("SELECT COALESCE(bc.timeoutSeconds, 0) FROM ProgrammingExercise pe LEFT JOIN pe.buildConfig bc WHERE pe.id = :exerciseId")
+    Optional<Integer> findBuildTimeoutSecondsByExerciseId(@Param("exerciseId") long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
             "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "buildConfig" })
@@ -1005,6 +1009,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
         if (!shortNameMatcher.matches()) {
             throw new BadRequestAlertException("The shortname is invalid", "Exercise", "shortnameInvalid");
+        }
+
+        // Programming exercise short names are immutable after creation, so this check only applies to newly created or imported exercises.
+        // It guards against student repository URLs exceeding the participation.repository_url column / NAME_MAX limits.
+        if (programmingExercise.getShortName().length() > PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH) {
+            throw new BadRequestAlertException("The shortname must not exceed " + PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH + " characters", "Exercise",
+                    "programmingExerciseShortnameTooLong");
         }
 
         // NOTE: we have to cover two cases here: exercises directly stored in the course and exercises indirectly stored in the course (exercise -> exerciseGroup -> exam ->
