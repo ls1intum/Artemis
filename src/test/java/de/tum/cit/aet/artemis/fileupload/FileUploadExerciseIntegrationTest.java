@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
@@ -856,8 +857,10 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         var sourceExerciseId = expectedFileUploadExercise.getId();
         var importedFileUploadExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise,
                 FileUploadExercise.class, HttpStatus.CREATED);
+        // File upload exercises are always assessed manually — enforced server-side on import.
+        assertThat(importedFileUploadExercise.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
         assertThat(importedFileUploadExercise).usingRecursiveComparison().ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate",
-                "exampleSolutionPublicationDate", "channelNameTransient", "competencyLinks").isEqualTo(expectedFileUploadExercise);
+                "exampleSolutionPublicationDate", "channelNameTransient", "competencyLinks", "assessmentType").isEqualTo(expectedFileUploadExercise);
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedFileUploadExercise.getId());
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
