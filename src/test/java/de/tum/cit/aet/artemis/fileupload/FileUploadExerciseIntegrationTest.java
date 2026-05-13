@@ -857,7 +857,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         var sourceExerciseId = expectedFileUploadExercise.getId();
         var importedFileUploadExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise,
                 FileUploadExercise.class, HttpStatus.CREATED);
-        // File upload exercises are always assessed manually — enforced server-side on import.
+        // File upload exercises are always assessed manually
         assertThat(importedFileUploadExercise.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
         assertThat(importedFileUploadExercise).usingRecursiveComparison().ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate",
                 "exampleSolutionPublicationDate", "channelNameTransient", "competencyLinks", "assessmentType").isEqualTo(expectedFileUploadExercise);

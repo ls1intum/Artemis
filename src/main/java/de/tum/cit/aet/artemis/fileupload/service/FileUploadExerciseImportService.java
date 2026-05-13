@@ -89,9 +89,6 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         log.debug("Copying the exercise basis from {}", importedExercise);
         FileUploadExercise newExercise = new FileUploadExercise();
         super.copyExerciseBasis(newExercise, importedExercise, new HashMap<>());
-        // File upload exercises are always assessed manually. Enforcing it here guarantees the
-        // invariant regardless of what the source exercise or client payload carried, mirroring
-        // FileUploadExerciseResource#createFileUploadExercise.
         newExercise.setAssessmentType(AssessmentType.MANUAL);
         newExercise.setFilePattern(importedExercise.getFilePattern());
         newExercise.setExampleSolution(importedExercise.getExampleSolution());

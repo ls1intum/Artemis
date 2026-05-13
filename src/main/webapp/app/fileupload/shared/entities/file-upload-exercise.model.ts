@@ -11,8 +11,7 @@ export class FileUploadExercise extends Exercise {
         super(ExerciseType.FILE_UPLOAD);
         this.course = course;
         this.exerciseGroup = exerciseGroup;
-        // File upload exercises are always assessed manually; without this default the assessment dashboard
-        // button is hidden in the exercise detail view (see non-programming-exercise-detail-common-actions).
+        // Set default value
         this.assessmentType = AssessmentType.MANUAL;
     }
 }
