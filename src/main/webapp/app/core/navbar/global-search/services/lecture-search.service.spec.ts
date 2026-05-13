@@ -65,7 +65,14 @@ describe('LectureSearchService', () => {
                 {
                     course: { id: 1, name: 'Advanced Web Development' },
                     lecture: { id: 1, name: 'Angular Basics' },
-                    lectureUnit: { id: 1, name: 'Introduction to Signals', link: '/courses/1/lectures/1/units/1', pageNumber: 3 },
+                    lectureUnit: {
+                        id: 1,
+                        name: 'Introduction to Signals',
+                        link: '/courses/1/lectures/1/units/1',
+                        pageNumber: 3,
+                        sourceType: 'lecture_unit_slide',
+                        queryParams: { unit: 1, page: 3 },
+                    },
                     snippet: 'Signals are a reactive primitive...',
                 },
             ];
@@ -109,8 +116,8 @@ describe('LectureSearchService', () => {
             const req = httpTesting.expectOne('api/iris/search-answer');
             req.flush(null, { status: 202, statusText: 'Accepted' });
 
-            wsSubject.next({ isThinking: true });
-            wsSubject.next({ isThinking: false, answer: 'Signals are reactive.', sources: [] });
+            wsSubject.next({ runId: 'run-1', isThinking: true });
+            wsSubject.next({ runId: 'run-1', isThinking: false, answer: 'Signals are reactive.', sources: [] });
 
             expect(received).toHaveLength(2);
             expect(received[0].isThinking).toBe(true);
@@ -119,13 +126,21 @@ describe('LectureSearchService', () => {
 
         it('should return the answer and sources from the server via WebSocket', () => {
             const mockResult: IrisSearchStatusUpdate = {
+                runId: 'run-1',
                 isThinking: false,
                 answer: 'Signals are a reactive primitive in Angular...',
                 sources: [
                     {
                         course: { id: 1, name: 'Advanced Web Development' },
                         lecture: { id: 1, name: 'Angular Basics' },
-                        lectureUnit: { id: 1, name: 'Introduction to Signals', link: '/courses/1/lectures/1/units/1', pageNumber: 3 },
+                        lectureUnit: {
+                            id: 1,
+                            name: 'Introduction to Signals',
+                            link: '/courses/1/lectures/1/units/1',
+                            pageNumber: 3,
+                            sourceType: 'lecture_unit_slide',
+                            queryParams: { unit: 1, page: 3 },
+                        },
                         snippet: 'Signals are a reactive primitive...',
                     },
                 ],
