@@ -9,8 +9,8 @@
 #
 # What it does:
 #   - Locates the repository root based on this script's location.
-#   - Runs `npm ci` in the repo root.
-#   - Runs `npm ci` in src/test/playwright.
+#   - Runs `pnpm install --frozen-lockfile` in the repo root.
+#   - Runs `pnpm install --frozen-lockfile` in src/test/playwright.
 #   - Temporarily replaces the dotenv.config(...) line in
 #     src/test/playwright/playwright.config.ts to use ./playwright.env, verifies
 #     the patch, then reverts the change and keeps a backup copy.
@@ -18,7 +18,7 @@
 # Usage:
 #   Run this script from anywhere:
 #       supporting_scripts/playwright/prepareVSCodeForE2ETests.sh
-#   It will determine the repo root automatically. Requires bash, npm, and perl.
+#   It will determine the repo root automatically. Requires bash, pnpm (via Corepack), and perl.
 #
 set -euo pipefail
 
@@ -36,11 +36,11 @@ if [[ ! -f "$config_file" ]]; then
     exit 1
 fi
 
-echo "==> npm ci (repo root)"
-npm ci
+echo "==> pnpm install --frozen-lockfile (repo root)"
+pnpm install --frozen-lockfile
 
-echo "==> npm ci (src/test/playwright)"
-(cd "$repo_root/src/test/playwright" && npm ci)
+echo "==> pnpm install --frozen-lockfile (src/test/playwright)"
+(cd "$repo_root/src/test/playwright" && pnpm install --frozen-lockfile)
 
 backup_file="$(mktemp -t playwright.config.ts.XXXXXX)"
 cp "$config_file" "$backup_file"

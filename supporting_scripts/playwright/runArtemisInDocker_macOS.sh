@@ -32,7 +32,7 @@ echo "Finished docker compose"
 
 cd "$artemis_path"
 
-echo "Installing Artemis npm dependencies and start Artemis client"
+echo "Installing Artemis pnpm dependencies and start Artemis client"
 
-npm install
-npm run start
+pnpm install --frozen-lockfile
+pnpm start

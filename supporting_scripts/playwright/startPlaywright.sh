@@ -8,9 +8,9 @@ echo "Installing Playwright and dependencies"
 
 cd "$artemis_path/src/test/playwright"
 
-npm install
+pnpm install --frozen-lockfile
 
-npm run playwright:setup-local || true
+pnpm run playwright:setup-local || true
 
 echo "Run all playwright tests"
-npm run playwright:test
+pnpm run playwright:test
