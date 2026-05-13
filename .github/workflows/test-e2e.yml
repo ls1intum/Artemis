@@ -28,9 +28,41 @@ env:
   PLAYWRIGHT_REPORT_TRIGGERED_BY: ${{ github.event.workflow_run.event }}
 
 jobs:
+  # Guard against workflow_run queue stacking. Each Build retry fires a new
+  # workflow_run event that queues another E2E run for the same SHA; built-in
+  # concurrency cancel-in-progress does not reliably dedupe queued runs that
+  # sit waiting for the [self-hosted, e2e-test] pool. This job runs on
+  # ubuntu-latest (instant pickup) and uses styfle/cancel-workflow-action to
+  # cancel older same-SHA runs of this workflow, and self-cancels if a newer
+  # run already exists. Cross-SHA cancellation is the built-in `concurrency`
+  # block's responsibility (it works reliably when the next run starts
+  # immediately).
+  cancel-superseded:
+    name: Cancel superseded E2E runs
+    # Skip on Build failures — those workflow_run events would produce skipped
+    # E2E runs anyway, because all dependent jobs are if-gated on
+    # conclusion == 'success'. No queue stacking comes from failed Builds.
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      actions: write
+    steps:
+      - name: Cancel older E2E runs for this SHA
+        uses: styfle/cancel-workflow-action@0.13.1
+        with:
+          # all_but_latest: cancels every queued or in-progress run of this
+          # workflow except the absolute newest, including self if a newer run
+          # exists. ignore_sha defaults to false → only same-SHA runs are
+          # cancelled (we don't want to cancel a PR's E2E because of an
+          # unrelated develop push).
+          all_but_latest: true
+          access_token: ${{ github.token }}
+
   # Job to determine which tests are relevant based on changed files (only for PRs)
   determine-tests:
     name: Determine Relevant Tests
+    needs: cancel-superseded
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     outputs:
@@ -642,6 +674,7 @@ jobs:
   # Run all tests for non-PR events (push to develop, main, release branches)
   run-e2e-all-non-pr:
     name: Run All E2E Tests (Non-PR)
+    needs: cancel-superseded
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'pull_request'
     runs-on: [self-hosted, e2e-test]
     timeout-minutes: 120
