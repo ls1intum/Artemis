@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// IMPORTANT: The mock must be defined before '@tumaet/apollon' imports to prevent flaky client tests
 // Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
 const { MockApollonEditor } = vi.hoisted(() => {
     const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
