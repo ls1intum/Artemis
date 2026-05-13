@@ -25,7 +25,9 @@ on:
     - develop
     - main
     - release/*
-    tags: '[0-9]+.[0-9]+.[0-9]+'
+    tags:
+    - '[0-9]+.[0-9]+'
+    - '[0-9]+.[0-9]+.[0-9]+'
     paths-ignore:
     - 'README.md'
     - 'CODE_OF_CONDUCT.md'
@@ -202,6 +204,13 @@ jobs:
       with:
         name: Coverage Report Server Tests
         path: build/reports/jacoco/aggregated/html
+    - name: Upload JaCoCo XML Reports
+      if: success() || failure()
+      uses: actions/upload-artifact@v6
+      with:
+        name: Server JaCoCo XML
+        path: build/reports/jacoco/**/jacocoTestReport.xml
+        if-no-files-found: ignore
     - name: Append Per-Module Coverage to Job Summary
       if: success() || failure()
       run: |
@@ -268,6 +277,15 @@ jobs:
           with:
               name: Vitest Coverage Report
               path: build/test-results/vitest/coverage/
+        - name: Upload Client Coverage Summaries
+          if: success() || failure()
+          uses: actions/upload-artifact@v6
+          with:
+              name: Client Coverage Summaries
+              path: |
+                  build/test-results/jest/coverage-summary.json
+                  build/test-results/vitest/coverage/coverage-summary.json
+              if-no-files-found: ignore
         - name: Upload JUnit Test Results
           if: success() || failure()
           uses: actions/upload-artifact@v6
@@ -280,25 +298,6 @@ jobs:
           with:
             name: Vitest JUnit Test Results
             path: build/test-results/vitest/junit.xml
-
-  client-tests-selected:
-      runs-on: ubuntu-latest
-      timeout-minutes: 30
-      steps:
-          - uses: actions/checkout@v6
-            with:
-                fetch-depth: 0
-          - name: Setup Node.js
-            uses: actions/setup-node@v6
-            with:
-                node-version: '${{ env.node }}'
-                cache: 'npm'
-          - name: Install Dependencies
-            run: npm install
-          - name: Compile TypeScript Test Files With Typechecking
-            run: npm run compile:tests
-          - name: TypeScript Test (Selection) Without Typechecking
-            run: npm run test-diff:ci
 
   client-style:
     runs-on: ubuntu-latest
