@@ -24,11 +24,9 @@ ARG WAR_FILE_STAGE="builder"
 #-----------------------------------------------------------------------------------------------------------------------
 FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25-jdk AS builder
 
-# some Apple M1 (arm64) builds need python3 and build-essential(make+gcc) for node-gyp to not fail
-RUN echo "Installing build dependencies" \
-  && apt-get update && apt-get install -y --no-install-recommends python3 build-essential \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+# python3/build-essential were previously installed defensively for npm deps that
+# trigger node-gyp; no current Artemis dep needs that. If a future dep does, the
+# npm step below fails loudly and these can be reinstated.
 
 WORKDIR /opt/artemis
 # copy gradle related files
@@ -36,35 +34,29 @@ COPY gradlew gradlew.bat ./
 COPY build.gradle gradle.properties settings.gradle ./
 COPY gradle gradle/
 # copy npm related files and install node modules
-# (from https://stackoverflow.com/questions/63961934/how-to-use-docker-build-cache-when-version-bumping-a-react-app)
 COPY package.json package-lock.json ./
 # also copy this script which is required by postinstall lifecycle hook
 COPY src/main/webapp/app/lecture/manage/pdf-preview/pdfjs_copy_worker_script.mjs ./src/main/webapp/app/lecture/manage/pdf-preview/
 
+# One Gradle invocation does both the cache config and the npm install. Uses
+# `npm_install` so the BuildKit npm cache mount below is reused on warm builds
+# (`npm_ci` ignores the cache).
 RUN \
-  # Mount global cache for Gradle (project cache in /opt/artemis/.gradle doesn't seem to be populated)
   --mount=type=cache,target=/root/.gradle/caches \
-  # Mount cache for npm
   --mount=type=cache,target=/opt/artemis/.npm \
-  # Create .npm directory if not yet available
   mkdir -p /opt/artemis/.npm \
-  # Set .npm directory as npm cache
-  && ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npmSetCacheDockerfile \
-  # Pre-populate the npm and gradle caches if related files change (see COPY statements above)
-  && ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npm_ci
+  && ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npmSetCacheDockerfile npm_install
 
 # so far just using the .dockerignore to define what isn't necessary here
 COPY . .
 
+# `-x npm_install` skips re-running the install task — node_modules is already
+# in place from the previous RUN.
 RUN \
-  # Mount global cache for Gradle (project cache in /opt/artemis/.gradle doesn't seem to be populated)
   --mount=type=cache,target=/root/.gradle/caches \
-  # Mount cache for npm
   --mount=type=cache,target=/opt/artemis/.npm \
-  # Mount cache for the Angular CLI
   --mount=type=cache,target=/opt/artemis/.cache \
-  # Build the .war file
-  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
+  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar -x npm_install
 
 #-----------------------------------------------------------------------------------------------------------------------
 # external build stage

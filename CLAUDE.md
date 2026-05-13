@@ -83,7 +83,21 @@ npm run test:one -- --test-path-pattern='src/main/webapp/app/path/to/spec\.ts$'
 ./run-e2e-tests-local-multinode.sh --filter "Quiz"         # Multi-node, filtered
 ./run-e2e-tests-local-multinode.sh --skip-build --skip-up  # Quick re-run against an already-running stack
 ./run-e2e-tests-local-multinode.sh --stop                  # Tear everything down
+
+# Multi-node E2E (fast variant) — same topology, host-launched JVMs instead of Docker images
+# Skips the Docker image build that dominates the slow path (~5–8 min). Reuses the WAR built by
+# Gradle and runs 3 java -jar processes on the host; Postgres/Eureka/ActiveMQ/nginx still run as
+# containers. Use this for server-side iteration on multi-node bugs. Cold ~1–2 min, warm ~30 s.
+./run-e2e-tests-local-multinode-fast.sh                       # Full run (build WAR + infra + 3 host JVMs + tests)
+./run-e2e-tests-local-multinode-fast.sh --filter "Quiz"       # Filter to a subset of tests
+./run-e2e-tests-local-multinode-fast.sh --skip-build --skip-up  # Re-run tests against the running stack
+./run-e2e-tests-local-multinode-fast.sh --stop                # Tear everything down
 ```
+
+**Which E2E runner should I use?**
+- `run-e2e-tests-local-fast.sh` — single node, Angular dev server. Best for client (UI) iteration.
+- `run-e2e-tests-local-multinode-fast.sh` — multi-node, WAR run from host. Best for server iteration that needs the cluster (Hazelcast, ActiveMQ STOMP, LB).
+- `run-e2e-tests-local-multinode.sh` — full Docker image build, prod-faithful. Use this to reproduce a CI-only failure or before pushing a multi-node-sensitive change.
 
 ## Project Structure
 
