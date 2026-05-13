@@ -77,7 +77,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
@@ -131,7 +131,7 @@ function findElementById(elements: any[], id: string): any {
  * and returns empty nodes/edges. By mocking the getter, we can test the component's
  * logic for updating highlights and element counts.
  */
-function mockApollonEditorModel(apollonEditor: any, model: UMLModel): { getCapturedModel: () => UMLModel } {
+function mockApollonEditorModel(apollonEditor: ApollonEditor, model: UMLModel): { getCapturedModel: () => UMLModel } {
     let capturedModel = model;
     Object.defineProperty(apollonEditor, 'model', {
         get: () => capturedModel,
