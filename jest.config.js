@@ -212,9 +212,16 @@ module.exports = {
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary', 'json-summary'],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
-    // Pattern allows any path segments between `node_modules/` and the package name so it works
-    // with pnpm's `.pnpm/<pkg>@<ver>/node_modules/<pkg>/...` real-path layout as well as npm's flat layout.
-    transformIgnorePatterns: [`node_modules/(?!.*(?:${esModules})/)`],
+    // Under pnpm's symlinked layout, dep files live at
+    //   node_modules/.pnpm/<pkg>@<ver>/node_modules/<pkg>/...
+    // Jest follows the symlinks to those real paths before checking transformIgnorePatterns,
+    // so the original npm-flat negative-lookahead pattern (`node_modules/(?!${esModules})`)
+    // was rejecting Angular/d3/swimlane ESM files inside .pnpm/ and producing
+    // `Unexpected token 'export'` SyntaxErrors. Authoring a pattern that captures
+    // both layouts proved brittle in the joined regex Jest constructs internally,
+    // so we transform every file in node_modules. Cost: longer cold runs (~10-15s
+    // overhead on a full suite) for guaranteed correctness with the symlink layout.
+    transformIgnorePatterns: [],
     transform: {
         '^.+\\.(ts|js|mjs|html|svg)$': [
             'jest-preset-angular',
