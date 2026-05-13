@@ -45,8 +45,11 @@ on:
     - '[0-9]+.[0-9]+'
     - '[0-9]+.[0-9]+.[0-9]+'
   release:
+    # Use `published` (not `created`) so we also fire when a draft release is
+    # promoted to published; `created` does not fire for draft → published
+    # transitions, which previously caused release 9.2 to ship without a WAR.
     types:
-    - created
+    - published
 
 
 # Concurrency control for GitHub Actions workflow
@@ -132,7 +135,7 @@ jobs:
           name: Artemis.war
           path: build/libs/Artemis-*.war
       - name: Upload Release Artifact
-        if: github.event_name == 'release' && github.event.action == 'created'
+        if: github.event_name == 'release' && github.event.action == 'published'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
