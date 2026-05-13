@@ -89,7 +89,7 @@ rm -f ../src/test/playwright/test-reports/results*.xml
 # Create override file for local test execution.
 echo "Creating local test override..."
 if [ -n "$TEST_FILTER" ]; then
-    # With a filter, use a single npx command (--grep works across all projects)
+    # With a filter, use a single pnpm exec command (--grep works across all projects)
     cat > playwright-local-override.yml << EOF
 # AUTO-GENERATED - DO NOT COMMIT
 services:
@@ -227,7 +227,7 @@ if [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -eq 0 ] && [ $EXIT_CODE -eq 0 ]; then
     echo "All tests passed!"
 else
     echo "Tests failed! View HTML report:"
-    echo "  cd src/test/playwright && npx playwright show-report test-reports/monocart-report"
+    echo "  cd src/test/playwright && pnpm exec playwright show-report test-reports/monocart-report"
 fi
 
 echo ""

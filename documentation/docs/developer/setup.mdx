@@ -37,7 +37,7 @@ Before installing Artemis, install and configure the following dependencies:
    Download from [Node.js](https://nodejs.org/en/download).
    Required for compiling and running the Angular client.
 
-4. **pnpm (≥ 10.16.0)**
+4. **pnpm (≥ 11.1.0)**
    The version is pinned in `package.json` via the `packageManager` field.
    Activate it once via Corepack (shipped with Node.js 24):
 
@@ -493,7 +493,7 @@ This compiles TypeScript code to JavaScript code, starts the live reloading feat
 If you have configured `application-artemis.yml` correctly, then you should be able to login with your TUM Online account.
 
 <Callout variant={CalloutVariant.info}>
-    In case you encounter any problems regarding JavaScript heap memory leaks when executing `pnpm start` or any other scripts from `package.json`, you can adjust a [memory limit parameter](https://nodejs.org/docs/latest-v24.x/api/cli.html#--max-old-space-sizesize-in-megabytes) (`node-options=--max-old-space-size=6144`) which is set by default in the project-wide `.npmrc` file (pnpm reads the same `.npmrc` format as npm). If you still face the issue, you can try to set a lower/higher value than 6144 MB. Recommended values are 3072 (3GB), 4096 (4GB), 5120 (5GB), 6144 (6GB), 7168 (7GB), and 8192 (8GB). You can override the project-wide `.npmrc` file by [using a per-user `~/.npmrc`](https://pnpm.io/npmrc). Make sure to **not commit changes** in the project-wide `.npmrc` unless the GitHub build also needs these settings.
+    In case you encounter any problems regarding JavaScript heap memory leaks when executing `pnpm start` or any other scripts from `package.json`, you can adjust the [memory limit parameter](https://nodejs.org/docs/latest-v24.x/api/cli.html#--max-old-space-sizesize-in-megabytes) (`node-options=--max-old-space-size=6144`) which is set by default in the project-wide `.npmrc` file. pnpm 11 honours `node-options` from `.npmrc` for Node settings; pnpm's own install/resolution configuration lives in `pnpm-workspace.yaml` (e.g. `autoInstallPeers`, `allowBuilds`, `patchedDependencies`). If you still face the issue, you can try to set a lower/higher value than 6144 MB. Recommended values are 3072 (3GB), 4096 (4GB), 5120 (5GB), 6144 (6GB), 7168 (7GB), and 8192 (8GB). You can override the project-wide `.npmrc` file by [using a per-user `~/.npmrc`](https://pnpm.io/npmrc). Make sure to **not commit changes** in the project-wide `.npmrc` unless the GitHub build also needs these settings.
 </Callout>
 
 For more information, review [Working with Angular](https://angular.dev/tutorials).

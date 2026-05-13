@@ -35,6 +35,10 @@ COPY build.gradle gradle.properties settings.gradle ./
 COPY gradle gradle/
 # copy pnpm related files and install node modules
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+# patches/ is referenced by pnpm.patchedDependencies in pnpm-workspace.yaml and must
+# be present at install time (pnpm applies patches during resolution, not via a
+# postinstall hook like patch-package did).
+COPY patches patches/
 # also copy this script which is required by postinstall lifecycle hook
 COPY src/main/webapp/app/lecture/manage/pdf-preview/pdfjs_copy_worker_script.mjs ./src/main/webapp/app/lecture/manage/pdf-preview/
 

@@ -252,8 +252,8 @@ jobs:
         - uses: actions/checkout@v6
         # It seems like there is some memory issue with these tests with the project-wide default node option
         # `--max-old-space-size` set in the .npmrc, therefore we strip that single line as a workaround.
-        # The rest of the .npmrc (pnpm hoist config, lifecycle scripts) must stay — pnpm needs it to
-        # apply `shamefully-hoist=true` so that patch-package can resolve transitive deps.
+        # The rest of .npmrc (currently just Node settings) stays. pnpm install/resolution settings now
+        # live in pnpm-workspace.yaml, which we deliberately do not touch here.
         - name: remove project-wide node options set in .npmrc just for this test
           run: sed -i '/^node-options=/d' .npmrc || true
         - name: Setup pnpm
