@@ -39,7 +39,7 @@ Before installing Artemis, install and configure the following dependencies:
 
 4. **[pnpm](https://pnpm.io) (≥ 11.1.0) — the package manager Artemis uses for the Angular client**
 
-   The official pnpm website is [pnpm.io](https://pnpm.io/); the CLI reference lives at [pnpm.io/cli](https://pnpm.io/cli/add) and the installation guide at [pnpm.io/installation](https://pnpm.io/installation).
+   The official pnpm website is [pnpm.io](https://pnpm.io/); the CLI reference for `pnpm install` is at [pnpm.io/cli/install](https://pnpm.io/cli/install) and the installation guide at [pnpm.io/installation](https://pnpm.io/installation).
    Artemis uses pnpm instead of npm. We do **not** use `npm` / `npx` anywhere; please don't run `npm install` in this repo — it will create a `package-lock.json` that conflicts with the committed `pnpm-lock.yaml`. The exact pnpm version is pinned in `package.json` via the `packageManager` field, so every developer and every CI job uses the same version.
 
    You don't need to follow the official pnpm install steps manually — Node.js 24 ships with [Corepack](https://nodejs.org/api/corepack.html), a small shim that downloads and runs the pinned package manager on demand. This is also the [installation method recommended by the pnpm team](https://pnpm.io/installation#using-corepack). Activate it **once** per machine:
