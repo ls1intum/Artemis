@@ -6,11 +6,16 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { Table, TableLazyLoadEvent, TableModule, TablePageEvent } from 'primeng/table';
+import { TooltipModule } from 'primeng/tooltip';
 
 export interface ColumnDef<T> {
     field?: keyof T;
     header?: string;
     headerKey?: string;
+    /** PrimeIcons CSS class string, e.g. 'pi pi-hashtag'. Rendered as <i> in the column header. */
+    headerIcon?: string;
+    /** Translation key shown as a PrimeNG tooltip on the column header. */
+    headerTooltip?: string;
     width?: string;
     sort?: boolean;
     filter?: boolean;
@@ -20,7 +25,7 @@ export interface ColumnDef<T> {
     /** Which side the frozen column sticks to. Only used when `frozen` is true. Default: 'left'. */
     alignFrozen?: 'left' | 'right';
     /** Render the cell using a parent-defined template. Receives {@link CellRendererParams} as `$implicit`. Takes priority over `cellRenderer`. */
-    templateRef?: TemplateRef<{ $implicit: CellRendererParams<T> }>;
+    templateRef?: CellTemplateRef<T>;
     cellRenderer?: Type<unknown>;
 }
 
@@ -30,6 +35,8 @@ export interface CellRendererParams<T> {
     value: T[keyof T] | undefined;
     rowIndex: number;
 }
+
+export type CellTemplateRef<T> = TemplateRef<{ $implicit: CellRendererParams<T> }>;
 
 /**
  * The fully-resolved configuration for the table. All fields are required.

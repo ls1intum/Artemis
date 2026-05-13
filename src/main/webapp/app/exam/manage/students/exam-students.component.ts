@@ -1,9 +1,11 @@
-import { Component, ElementRef, EventEmitter, OnDestroy, TemplateRef, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
+import { Component, DestroyRef, ElementRef, EventEmitter, OnDestroy, TemplateRef, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { User } from 'app/core/user/user.model';
 import { Observable, Subject, forkJoin, of } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ConfirmDialog } from 'primeng/confirmdialog';
+import { DialogService } from 'primeng/dynamicdialog';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -49,7 +51,6 @@ import { TableLazyLoadEvent } from 'primeng/table';
 import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
 import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
@@ -61,11 +62,9 @@ interface MenuCommandEvent {
 @Component({
     selector: 'jhi-exam-students',
     templateUrl: './exam-students.component.html',
-    providers: [ConfirmationService],
     imports: [
         TranslateDirective,
         UsersImportDialogComponent,
-        StudentsUploadImagesDialogComponent,
         StudentsExportDialogComponent,
         StudentsRoomDistributionDialogComponent,
         FaIconComponent,
@@ -85,9 +84,10 @@ interface MenuCommandEvent {
         Tooltip,
         ProgressBar,
         TableViewComponent,
-        ConfirmDialogModule,
+        ConfirmDialog,
         FilterDropdownComponent,
     ],
+    providers: [DialogService, ConfirmationService],
 })
 export class ExamStudentsComponent implements OnDestroy {
     protected readonly ActionType = ActionType;
@@ -98,6 +98,7 @@ export class ExamStudentsComponent implements OnDestroy {
     private examManagementService = inject(ExamManagementService);
     private accountService = inject(AccountService);
     private deleteDialogService = inject(DeleteDialogService);
+    private dialogService = inject(DialogService);
     private confirmationService = inject(ConfirmationService);
     private router = inject(Router);
     private alertService = inject(AlertService);
@@ -105,8 +106,9 @@ export class ExamStudentsComponent implements OnDestroy {
     private websocketService = inject(WebsocketService);
     private examChecklistService = inject(ExamChecklistService);
 
+    private destroyRef = inject(DestroyRef);
+
     readonly usersImportDialog = viewChild.required(UsersImportDialogComponent);
-    readonly studentsUploadImagesDialog = viewChild.required(StudentsUploadImagesDialogComponent);
     readonly studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
     readonly studentsRoomDistributionDialog = viewChild.required(StudentsRoomDistributionDialogComponent);
     readonly addStudentsModal = viewChild.required(UserRegistrationModalComponent);
@@ -467,7 +469,23 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     openUploadImagesDialog() {
-        this.studentsUploadImagesDialog().openDialog();
+        const dialogRef = this.dialogService.open(StudentsUploadImagesDialogComponent, {
+            header: this.artemisTranslatePipe.transform('artemisApp.exam.examUsers.dialogTitle'),
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            width: '50rem',
+            data: {
+                courseId: this.courseId(),
+                exam: this.exam(),
+            },
+        });
+        dialogRef?.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
+            if (result === 'finished') {
+                this.reloadStudentsView();
+            }
+        });
     }
 
     openVerifyAttendance() {

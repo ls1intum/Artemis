@@ -21,7 +21,20 @@
             border-bottom: none !important;
         }
         .p-datatable-header {
+            jhi-search-filter .p-iconfield {
+                display: flex;
+
+                .p-component.p-inputtext {
+                    flex-grow: 1;
+                }
+
+                p-inputicon:last-child {
+                    right: 0.5rem;
+                    left: auto;
+                }
+            }
             padding: 0 0 12px 0 !important;
+            border-bottom: none;
         }
         .p-paginator {
             padding-bottom: 0 !important;

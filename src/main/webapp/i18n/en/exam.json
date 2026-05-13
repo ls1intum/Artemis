@@ -218,6 +218,7 @@
                 "relative": "Change relative to regular working time"
             },
             "events": {
+                "title": "Exam Notifications",
                 "button": "Notifications",
                 "type": {
                     "examWideAnnouncement": "Exam-Wide Announcement",

@@ -2,11 +2,17 @@ import { Component, input, output, signal } from '@angular/core';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
+import { Component, input, output, signal } from '@angular/core';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-search-filter',
     templateUrl: './search-filter.component.html',
+    styleUrls: ['./search-filter.component.scss'],
+    imports: [IconFieldModule, InputIconModule, InputTextModule, ArtemisTranslatePipe],
     styleUrls: ['./search-filter.component.scss'],
     imports: [IconFieldModule, InputIconModule, InputTextModule, ArtemisTranslatePipe],
 })
@@ -23,6 +29,7 @@ export class SearchFilterComponent {
     }
 
     resetSearchValue() {
+        this.searchValue.set('');
         this.searchValue.set('');
         this.newSearchEvent.emit('');
     }
