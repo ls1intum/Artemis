@@ -99,9 +99,10 @@ services:
             cd /app/artemis/src/test/playwright &&
             chmod 777 /root &&
             rm -f test-reports/results*.xml &&
-            npm ci &&
-            npm run playwright:setup &&
-            PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml npx playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
+            corepack enable &&
+            pnpm install --frozen-lockfile &&
+            pnpm run playwright:setup &&
+            PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml pnpm exec playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
             '
 EOF
     OVERRIDE_ARGS="-f playwright-local-override.yml"
