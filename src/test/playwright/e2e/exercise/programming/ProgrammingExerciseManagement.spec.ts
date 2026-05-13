@@ -54,7 +54,7 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createProgrammingExercise();
             await page.waitForURL('**/programming-exercises/new**');
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await programmingExerciseCreation.changeEditMode();
 
             const firstSectionHeadline = 'General';

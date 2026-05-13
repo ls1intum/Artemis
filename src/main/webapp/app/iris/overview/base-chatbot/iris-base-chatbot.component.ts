@@ -1082,7 +1082,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     private isSessionRelatedToCurrentContext(session: IrisSessionDTO): boolean {
         const currentMode = this.currentChatMode();
-        if (!currentMode || session.chatMode !== currentMode) {
+        if (!currentMode || session.mode !== currentMode) {
             return false;
         }
 
