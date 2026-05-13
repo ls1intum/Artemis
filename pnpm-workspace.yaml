@@ -20,6 +20,25 @@ preferFrozenLockfile: true
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
 
+# Tell pnpm that Angular 21 is an acceptable peer for packages whose published
+# peerDependencies range still lists only "18.x || 19.x || 20.x".
+# We already pin every relevant @angular/* dep under @swimlane/* and ng-mocks
+# to ^21.2.0 via pnpm.overrides in package.json; this block just suppresses
+# the cosmetic peer-range warning that overrides do not silence on their own.
+# When @swimlane / ng-mocks publish releases that declare Angular 21 in their
+# peer range, this block (and the matching pnpm.overrides) can be removed.
+peerDependencyRules:
+    allowedVersions:
+        '@angular/animations': '21'
+        '@angular/cdk': '21'
+        '@angular/common': '21'
+        '@angular/compiler': '21'
+        '@angular/core': '21'
+        '@angular/forms': '21'
+        '@angular/platform-browser': '21'
+        '@angular/platform-browser-dynamic': '21'
+        '@angular/router': '21'
+
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
