@@ -157,6 +157,12 @@ MISSING=""
 command -v docker >/dev/null 2>&1  || MISSING="$MISSING docker"
 command -v java >/dev/null 2>&1    || MISSING="$MISSING java"
 command -v node >/dev/null 2>&1    || MISSING="$MISSING node"
+
+# Activate the pnpm version pinned in package.json via Corepack (shipped with
+# Node 24). Idempotent; ensures `pnpm` is on PATH on fresh setups.
+if command -v corepack >/dev/null 2>&1; then
+    corepack enable >/dev/null 2>&1 || true
+fi
 command -v pnpm >/dev/null 2>&1    || MISSING="$MISSING pnpm"
 command -v unzip >/dev/null 2>&1   || MISSING="$MISSING unzip"
 command -v lsof >/dev/null 2>&1    || MISSING="$MISSING lsof"

@@ -20,14 +20,18 @@ preferFrozenLockfile: true
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
 
-# Native bindings that need their postinstall scripts to run for Angular CLI /
-# esbuild / eslint to work end-to-end.
+# Patch files applied by pnpm to specific transitive dependencies during install
+# (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
     '@angular-builders/jest@21.0.3': 'patches/@angular-builders+jest+21.0.3.patch'
     '@eslint/eslintrc@3.3.5': 'patches/@eslint+eslintrc+3.3.5.patch'
     '@swimlane/ngx-graph@11.0.0': 'patches/@swimlane+ngx-graph+11.0.0.patch'
     'eslint@9.39.4': 'patches/eslint+9.39.4.patch'
 
+# Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
+# pnpm 11 blocks build scripts by default; these are needed for native bindings
+# (@swc/core, esbuild, @parcel/watcher, lmdb, msgpackr-extract, unrs-resolver),
+# polyfill setup (core-js), or our own dev-time hooks (husky).
 allowBuilds:
     '@parcel/watcher': true
     '@swc/core': true
