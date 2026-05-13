@@ -722,7 +722,7 @@ describe('Exam Management Service Tests', () => {
             expect(req.request.params.get('sortingOrder')).toBe(SortingOrder.ASCENDING);
             expect(req.request.params.get('sortedColumn')).toBe('name');
             expect(req.request.params.get('searchTerm')).toBe('');
-            expect(req.request.params.has('filterProp')).toBeFalse();
+            expect(req.request.params.has('filterProp')).toBe(false);
 
             // CLEANUP
             req.flush(mockBody, { headers: { 'X-Total-Count': '1' } });
