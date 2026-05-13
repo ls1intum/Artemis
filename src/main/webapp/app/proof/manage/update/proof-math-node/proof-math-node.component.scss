@@ -1,0 +1,144 @@
+.math-node {
+    display: inline-flex;
+    align-items: center;
+    border: 1.5px solid transparent;
+    border-radius: 4px;
+    padding: 2px 4px;
+    cursor: pointer;
+    transition:
+        border-color 0.1s,
+        background-color 0.1s;
+
+    &:focus-visible {
+        outline: 2px solid var(--bs-primary);
+        outline-offset: 1px;
+    }
+
+    &--selected {
+        border-color: var(--bs-primary) !important;
+        background-color: rgba(var(--bs-primary-rgb), 0.15);
+    }
+
+    &--drop-target {
+        border-color: var(--bs-success) !important;
+        background-color: rgba(var(--bs-success-rgb), 0.15);
+    }
+}
+
+.math-node:hover:not(.math-node--selected) {
+    border-color: var(--bs-border-color);
+}
+
+.math-infix {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.math-op {
+    font-weight: 600;
+    color: var(--bs-body-color);
+    font-size: 1em;
+    padding: 0 2px;
+    user-select: none;
+}
+
+.math-paren {
+    font-size: 1.4em;
+    line-height: 1;
+    color: var(--bs-secondary-color);
+    user-select: none;
+}
+
+.math-fraction {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    vertical-align: middle;
+
+    &__top,
+    &__bottom {
+        display: flex;
+        justify-content: center;
+    }
+
+    &__line {
+        display: block;
+        width: 100%;
+        min-width: 20px;
+        height: 1.5px;
+        background: var(--bs-body-color);
+    }
+}
+
+.math-terminal {
+    border: none;
+    border-bottom: 1.5px solid var(--bs-border-color);
+    background: transparent;
+    color: inherit;
+    text-align: center;
+    font-size: inherit;
+    font-family: inherit;
+    outline: none;
+    padding: 0 2px;
+    min-width: 20px;
+
+    &:focus {
+        border-bottom-color: var(--bs-primary);
+    }
+
+    &--number {
+        width: 40px;
+    }
+
+    &--variable {
+        width: 28px;
+        font-style: italic;
+    }
+}
+
+.math-wildcard {
+    font-style: italic;
+    color: var(--bs-secondary-color);
+    padding: 0 2px;
+}
+
+.math-unknown {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.math-node__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    margin-left: 3px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--bs-secondary-color);
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition:
+        opacity 0.1s,
+        color 0.1s,
+        background-color 0.1s;
+    flex-shrink: 0;
+
+    &:hover {
+        color: var(--bs-danger);
+        background-color: rgba(var(--bs-danger-rgb), 0.15);
+        opacity: 1 !important;
+    }
+}
+
+.math-node:hover > .math-node__remove {
+    opacity: 0.5;
+}

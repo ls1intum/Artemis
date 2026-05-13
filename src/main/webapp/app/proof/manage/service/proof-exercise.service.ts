@@ -19,6 +19,7 @@ export class ProofExerciseService implements ExerciseServicable<ProofExercise> {
 
     create(proofExercise: ProofExercise): Observable<EntityResponseType> {
         const copy = ExerciseService.convertExerciseFromClient(proofExercise);
+        Object.assign(copy, { courseId: proofExercise.course?.id });
         return this.http
             .post<ProofExercise>(this.resourceUrl, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
@@ -26,6 +27,7 @@ export class ProofExerciseService implements ExerciseServicable<ProofExercise> {
 
     update(proofExercise: ProofExercise, req?: any): Observable<EntityResponseType> {
         const copy = ExerciseService.convertExerciseFromClient(proofExercise);
+        Object.assign(copy, { courseId: proofExercise.course?.id });
         return this.http
             .put<ProofExercise>(this.resourceUrl, copy, { params: req, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));

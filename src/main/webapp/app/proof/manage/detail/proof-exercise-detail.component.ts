@@ -24,11 +24,19 @@ import {
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { MathNodeLatexPipe } from 'app/proof/shared/math-node-latex.pipe';
 
 @Component({
     selector: 'jhi-proof-exercise-detail',
     templateUrl: './proof-exercise-detail.component.html',
-    imports: [TranslateDirective, DocumentationButtonComponent, NonProgrammingExerciseDetailCommonActionsComponent, ExerciseDetailStatisticsComponent, DetailOverviewListComponent],
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        NonProgrammingExerciseDetailCommonActionsComponent,
+        ExerciseDetailStatisticsComponent,
+        DetailOverviewListComponent,
+        MathNodeLatexPipe,
+    ],
 })
 export class ProofExerciseDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
@@ -66,7 +74,7 @@ export class ProofExerciseDetailComponent implements OnInit, OnDestroy {
         this.formattedProblemStatement = this.artemisMarkdownService.safeHtmlForMarkdown(this.proofExercise.problemStatement);
         this.formattedExampleSolution = this.artemisMarkdownService.safeHtmlForMarkdown(this.proofExercise.exampleSolution);
         this.detailOverviewSections = this.getExerciseDetailSections();
-        
+
         this.statisticsService.getExerciseStatistics(this.proofExercise.id!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
         });
@@ -86,7 +94,7 @@ export class ProofExerciseDetailComponent implements OnInit, OnDestroy {
         const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement, exercise);
         const solutionSection = getExerciseMarkdownSolution(exercise, this.formattedExampleSolution);
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
-        
+
         return [
             generalSection,
             modeSection,
@@ -94,17 +102,18 @@ export class ProofExerciseDetailComponent implements OnInit, OnDestroy {
             solutionSection,
             {
                 headline: 'artemisApp.exercise.sections.grading',
-                details: [
-                    ...defaultGradingDetails,
-                    { type: DetailType.Boolean, title: 'artemisApp.proofExercise.predefinedCheckboxState', data: { boolean: !!exercise.predefinedCheckboxState } },
-                ],
+                details: [...defaultGradingDetails],
             },
             {
                 headline: 'artemisApp.proofExercise.description',
                 details: [
-                    { type: DetailType.Markdown, title: 'artemisApp.proofExercise.description', data: { innerHtml: this.artemisMarkdownService.safeHtmlForMarkdown(exercise.description) } },
+                    {
+                        type: DetailType.Markdown,
+                        title: 'artemisApp.proofExercise.description',
+                        data: { innerHtml: this.artemisMarkdownService.safeHtmlForMarkdown(exercise.description) },
+                    },
                 ],
-            }
+            },
         ];
     }
 

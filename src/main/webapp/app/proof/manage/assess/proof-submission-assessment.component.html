@@ -10,45 +10,121 @@
     [exerciseDashboardLink]="['/course-management', (proofExercise?.course?.id || -1).toString(), 'assessment-dashboard', (proofExercise?.id || -1).toString()]"
 >
     @if (!isLoading) {
-        <div class="row">
-            <div class="col-12 col-md-6">
+        <div class="row g-3">
+            <!-- Left sidebar: problem statement + submission metadata (stacked, natural height) -->
+            <div [class]="hasAstExpressions ? 'col-12 col-lg-4 d-flex flex-column gap-3' : 'col-12 d-flex flex-column gap-3'">
+                <!-- Problem statement card -->
                 <div class="card">
                     <div class="card-header">
-                        <h4 class="card-title" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</h4>
+                        <h5 class="card-title mb-0" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</h5>
                     </div>
                     <div class="card-body">
                         @if (proofExercise.problemStatement) {
-                            <span [innerHTML]="proofExercise.problemStatement | htmlForMarkdown"></span>
+                            <div [innerHTML]="proofExercise.problemStatement | htmlForMarkdown"></div>
+                        }
+                        @if (hasAstExpressions) {
+                            <div class="mt-3 p-3 rounded border bg-light">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="badge bg-secondary" jhiTranslate="artemisApp.proofExercise.sourceExpression">Source</span>
+                                    <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
+                                </div>
+                                <div class="text-center text-muted small mb-2">&#8595; prove &#8595;</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-success" jhiTranslate="artemisApp.proofExercise.targetExpression">Target</span>
+                                    <span [innerHTML]="proofExercise.targetExpression | mathNodeLatex"></span>
+                                </div>
+                            </div>
                         }
                     </div>
                 </div>
-            </div>
-            <div class="col-12 col-md-6">
+
+                <!-- Submission metadata card -->
                 <div class="card">
                     <div class="card-header">
-                        <h4 class="card-title" jhiTranslate="artemisApp.proofExercise.submission">Submission</h4>
+                        <h5 class="card-title mb-0" jhiTranslate="artemisApp.proofExercise.submission">Submission</h5>
                     </div>
-                    <div class="card-body">
-                        <p><strong jhiTranslate="artemisApp.proofExercise.proofText"></strong></p>
-                        <pre>{{ submission?.text }}</pre>
-
-                        <p>
-                            <strong jhiTranslate="artemisApp.proofExercise.studentCheckboxState"></strong>:
-                            {{ submission?.studentCheckboxState }}
-                        </p>
-                        <p>
-                            <strong jhiTranslate="artemisApp.proofExercise.predefinedCheckboxState"></strong>:
-                            {{ proofExercise?.predefinedCheckboxState }}
-                        </p>
+                    <div class="card-body d-flex flex-column gap-3">
+                        @if (participation?.student) {
+                            <div>
+                                <small class="text-muted d-block">Student</small>
+                                <strong>{{ participation.student!.name ?? participation.student!.login }}</strong>
+                            </div>
+                        }
+                        @if (submission?.submissionDate) {
+                            <div>
+                                <small class="text-muted d-block">Submitted</small>
+                                <span>{{ submission.submissionDate | artemisDate }}</span>
+                            </div>
+                        }
+                        <div>
+                            <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.stepsCount">Steps</small>
+                            <strong>{{ submission?.steps?.length ?? 0 }}</strong>
+                        </div>
                         @if (result) {
-                            <p class="mt-2">
-                                <strong jhiTranslate="artemisApp.proofExercise.score"></strong>:
-                                {{ result.score }}%
-                            </p>
+                            <hr class="my-0" />
+                            <div>
+                                <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.score">Score</small>
+                                <div class="d-flex align-items-center gap-2 mt-1">
+                                    <div
+                                        class="progress flex-grow-1"
+                                        style="height: 6px"
+                                        role="progressbar"
+                                        [attr.aria-valuenow]="result.score"
+                                        aria-valuemin="0"
+                                        aria-valuemax="100"
+                                    >
+                                        <div class="progress-bar" [ngClass]="(result.score ?? 0) >= 50 ? 'bg-success' : 'bg-danger'" [style.width.%]="result.score ?? 0"></div>
+                                    </div>
+                                    <strong class="fs-5">{{ result.score }}%</strong>
+                                </div>
+                            </div>
                         }
                     </div>
                 </div>
             </div>
+
+            <!-- Right: derivation trace (wider column, grows with content) -->
+            @if (hasAstExpressions) {
+                <div class="col-12 col-lg-8">
+                    <div class="card" [ngClass]="{ 'border-success': isProofComplete, 'border-warning': !isProofComplete && (submission?.steps?.length ?? 0) > 0 }">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h5 class="card-title mb-0" jhiTranslate="artemisApp.proofExercise.derivation">Derivation</h5>
+                            @if (isProofComplete) {
+                                <span class="badge bg-success">&#10003; Proof Complete</span>
+                            } @else if ((submission?.steps?.length ?? 0) > 0) {
+                                <span class="badge bg-warning text-dark">Incomplete</span>
+                            } @else {
+                                <span class="badge bg-secondary">No steps</span>
+                            }
+                        </div>
+                        <div class="card-body">
+                            @if ((submission?.steps?.length ?? 0) === 0) {
+                                <p class="text-muted fst-italic mb-0">No derivation steps submitted.</p>
+                            } @else {
+                                <!-- Step 0: source expression -->
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge bg-secondary flex-shrink-0">Start</span>
+                                    <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
+                                </div>
+                                @for (step of submission.steps; track step.stepIndex; let last = $last) {
+                                    <!-- Arrow + rule label -->
+                                    <div class="d-flex align-items-center gap-2 py-1 ps-1 text-muted">
+                                        <span style="font-size: 1.1rem; line-height: 1">&#8595;</span>
+                                        <span class="badge bg-light text-dark border">{{ getRuleName(step.appliedRuleId) }}</span>
+                                    </div>
+                                    <!-- Result expression -->
+                                    <div class="d-flex align-items-center gap-2 mb-1 ps-3" [ngClass]="{ 'text-success': last && isProofComplete }">
+                                        <span [innerHTML]="step.resultExpression | mathNodeLatex"></span>
+                                        @if (last && isProofComplete) {
+                                            <span class="badge bg-success ms-1">Target</span>
+                                        }
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
     }
 </jhi-assessment-layout>

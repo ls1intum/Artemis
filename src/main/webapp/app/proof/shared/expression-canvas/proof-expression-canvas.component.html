@@ -1,0 +1,40 @@
+<div class="p-3 border rounded bg-light d-flex flex-wrap align-items-center" style="min-height: 64px; gap: 4px">
+    @for (gap of gaps(); track gap.gapIndex) {
+        @if (!readonly()) {
+            <div
+                [style.width.px]="draggingPayload() !== undefined ? 36 : 4"
+                [style.min-height.px]="draggingPayload() !== undefined ? 32 : 0"
+                [style.border]="
+                    draggingPayload() !== undefined ? '2px dashed ' + (dragHoveredGapIndex() === gap.gapIndex ? 'var(--bs-success)' : 'var(--bs-border-color)') : 'none'
+                "
+                [style.border-radius.px]="4"
+                [style.background-color]="dragHoveredGapIndex() === gap.gapIndex ? 'rgba(var(--bs-success-rgb), 0.15)' : 'transparent'"
+                [style.transition]="'all 0.15s'"
+                [style.display]="'flex'"
+                [style.align-items]="'center'"
+                [style.justify-content]="'center'"
+                (dragover)="onGapDragOver($event, gap.gapIndex)"
+                (dragleave)="onGapDragLeave($event)"
+                (drop)="onGapDrop($event, gap.gapIndex)"
+            >
+                @if (draggingPayload() !== undefined) {
+                    <small [style.color]="dragHoveredGapIndex() === gap.gapIndex ? 'var(--bs-success)' : 'var(--bs-secondary-color)'" style="font-size: 9px; user-select: none">
+                        @if (gap.gapIndex > 0 && gap.gapIndex < rootNodes().length) {
+                            ⊕
+                        } @else {
+                            ↓
+                        }
+                    </small>
+                }
+            </div>
+        }
+
+        @if (gap.gapIndex < rootNodes().length) {
+            <jhi-math-node [node]="rootNodes()[gap.gapIndex]" [path]="[]" [rootIndex]="gap.gapIndex" [ctx]="nodeCtx()" />
+        }
+    }
+
+    @if (rootNodes().length === 0) {
+        <span class="text-muted fst-italic small">Drag a block here or click Insert.</span>
+    }
+</div>

@@ -1,0 +1,58 @@
+<div class="d-flex gap-3">
+    <!-- Block palette -->
+    <div style="width: 140px; flex-shrink: 0">
+        <small class="text-muted fw-semibold d-block mb-2" jhiTranslate="artemisApp.proofExercise.builder.palette">Blocks</small>
+        @for (block of blocks(); track block.type) {
+            <div
+                class="mb-1 py-1 px-2 border rounded small"
+                [class.border-primary]="selectedBlockType() === block.type"
+                [class.bg-primary]="selectedBlockType() === block.type"
+                [class.text-white]="selectedBlockType() === block.type"
+                style="cursor: grab; user-select: none"
+                draggable="true"
+                (click)="selectedBlockType.set(block.type)"
+                (dragstart)="onBlockDragStart($event, block.type)"
+                (dragend)="onBlockDragEnd()"
+            >
+                {{ block.label }}
+            </div>
+        }
+    </div>
+
+    <!-- Canvas -->
+    <div class="flex-grow-1">
+        <div class="mb-1 fw-semibold small">{{ label() }}</div>
+
+        <!-- Expression canvas -->
+        <jhi-proof-expression-canvas
+            [rootNodes]="rootNodes()"
+            [draggingPayload]="draggingBlockType()"
+            [nodeCtx]="nodeCtx()"
+            [blocks]="blocks()"
+            (gapDrop)="handleGapDrop($event)"
+        />
+
+        <!-- LaTeX preview -->
+        @if (rootNodes().length > 0) {
+            <div class="mt-2 px-2 py-1 border rounded bg-light text-center small">
+                <span [innerHTML]="rootNodes()[0] | mathNodeLatex"></span>
+            </div>
+        }
+
+        <!-- Keyboard fallback controls -->
+        <div class="mt-2 d-flex gap-2 align-items-end flex-wrap">
+            @if (isTerminal) {
+                <div>
+                    <label class="form-label small mb-0" jhiTranslate="artemisApp.proofExercise.builder.value">Value</label>
+                    <input class="form-control form-control-sm" style="width: 80px" [value]="terminalValue()" (input)="terminalValue.set($any($event.target).value)" />
+                </div>
+            }
+            <button class="btn btn-sm btn-primary" (click)="insertAtSelected()" jhiTranslate="artemisApp.proofExercise.builder.insert">Insert</button>
+            <button class="btn btn-sm btn-outline-danger ms-auto" (click)="clearExpression()" jhiTranslate="artemisApp.proofExercise.builder.clear">Clear</button>
+        </div>
+
+        @if (errorMessage()) {
+            <div class="alert alert-danger mt-1 py-1 px-2 small">{{ errorMessage() }}</div>
+        }
+    </div>
+</div>

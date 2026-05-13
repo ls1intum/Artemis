@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="20260507000000-1" author="KilianSen">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="proof_exercise_details" columnName="source_expression"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="proof_exercise_details">
+            <column name="source_expression" type="longtext"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260507000000-2" author="KilianSen">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="proof_exercise_details" columnName="target_expression"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="proof_exercise_details">
+            <column name="target_expression" type="longtext"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260507000000-3" author="KilianSen">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="proof_derivation_step"/>
+            </not>
+        </preConditions>
+        <createTable tableName="proof_derivation_step">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="submission_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="step_index" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="applied_rule_id" type="varchar(255)"/>
+            <column name="target_node_path" type="longtext"/>
+            <column name="result_expression" type="longtext"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="proof_derivation_step"
+            baseColumnNames="submission_id"
+            constraintName="fk_proof_derivation_step_submission_id"
+            referencedTableName="submission"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="20260507000000-4" author="KilianSen">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="proof_exercise_details" columnName="example_solution"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="proof_exercise_details">
+            <column name="example_solution" type="longtext"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

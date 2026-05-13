@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.proof;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.proof.domain.MathNodes;
 import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
 import de.tum.cit.aet.artemis.proof.domain.ProofSubmission;
 import de.tum.cit.aet.artemis.proof.dto.ProofSubmissionDTO;
@@ -55,16 +58,16 @@ class ProofSubmissionIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(result).isNotNull();
         assertThat(result.id()).isNotNull();
         assertThat(result.text()).isEqualTo(submissionDTO.text());
-        assertThat(result.studentCheckboxState()).isEqualTo(submissionDTO.studentCheckboxState());
         assertThat(result.submitted()).isFalse();
         assertThat(result.results()).isNullOrEmpty();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void submitProofSubmission_checkboxMatchesPredefined_scores100() throws Exception {
-        // exercise.predefinedCheckboxState = true (set in factory), studentCheckboxState = true → match
-        ProofSubmissionDTO submissionDTO = new ProofSubmissionDTO(null, "My proof text", true, true, null, null, null);
+    void submitProofSubmission_withValidStep_scores100() throws Exception {
+        // apply add_zero_left at root: 0 + x → x (exercise source=0+x, target=x)
+        var stepDTO = new ProofSubmissionDTO.DerivationStepDTO(null, 0, "add_zero_left", List.of(), MathNodes.var("x"));
+        ProofSubmissionDTO submissionDTO = new ProofSubmissionDTO(null, null, null, true, null, null, null, List.of(stepDTO));
 
         ProofSubmissionDTO result = request.postWithResponseBody("/api/proof/exercises/" + exercise.getId() + "/proof-submissions", submissionDTO, ProofSubmissionDTO.class,
                 HttpStatus.OK);
@@ -76,9 +79,10 @@ class ProofSubmissionIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void submitProofSubmission_checkboxMismatch_scores0() throws Exception {
-        // exercise.predefinedCheckboxState = true, studentCheckboxState = false → mismatch
-        ProofSubmissionDTO submissionDTO = new ProofSubmissionDTO(null, "My proof text", false, true, null, null, null);
+    void submitProofSubmission_withWrongStep_scores0() throws Exception {
+        // wrong rule applied: result doesn't match target
+        var stepDTO = new ProofSubmissionDTO.DerivationStepDTO(null, 0, "add_zero_right", List.of(), MathNodes.var("x"));
+        ProofSubmissionDTO submissionDTO = new ProofSubmissionDTO(null, null, null, true, null, null, null, List.of(stepDTO));
 
         ProofSubmissionDTO result = request.postWithResponseBody("/api/proof/exercises/" + exercise.getId() + "/proof-submissions", submissionDTO, ProofSubmissionDTO.class,
                 HttpStatus.OK);
@@ -86,6 +90,23 @@ class ProofSubmissionIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(result.submitted()).isTrue();
         assertThat(result.results()).isNotEmpty();
         assertThat(result.results().getFirst().score()).isEqualTo(0.0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void submitProofSubmission_noSteps_sourceEqualsTarget_scores100() throws Exception {
+        // Edge case: exercise with source == target, no steps required
+        exercise.setSourceExpression(MathNodes.var("x"));
+        exercise.setTargetExpression(MathNodes.var("x"));
+        proofExerciseUtilService.saveExercise(exercise);
+
+        ProofSubmissionDTO submissionDTO = new ProofSubmissionDTO(null, null, null, true, null, null, null, null);
+
+        ProofSubmissionDTO result = request.postWithResponseBody("/api/proof/exercises/" + exercise.getId() + "/proof-submissions", submissionDTO, ProofSubmissionDTO.class,
+                HttpStatus.OK);
+
+        assertThat(result.submitted()).isTrue();
+        assertThat(result.results().getFirst().score()).isEqualTo(100.0);
     }
 
     @Test

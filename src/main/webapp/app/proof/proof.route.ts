@@ -30,6 +30,18 @@ export const proofExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: 'proof-exercises/new',
+        loadComponent: () => import('./manage/update/proof-exercise-update.component').then((m) => m.ProofExerciseUpdateComponent),
+        resolve: {
+            proofExercise: ProofExerciseResolver,
+        },
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+            pageTitle: 'artemisApp.proofExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: 'proof-exercises/:exerciseId',
         loadComponent: () => import('./manage/detail/proof-exercise-detail.component').then((m) => m.ProofExerciseDetailComponent),
         resolve: {

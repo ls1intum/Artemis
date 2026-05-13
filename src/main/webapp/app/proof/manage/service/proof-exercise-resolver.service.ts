@@ -22,19 +22,31 @@ export class ProofExerciseResolver implements Resolve<ProofExercise> {
                 filter((res) => !!res.body),
                 map((proofExercise: HttpResponse<ProofExercise>) => proofExercise.body!),
             );
-        } else if (route.params['courseId']) {
-            if (route.params['examId'] && route.params['exerciseGroupId']) {
-                return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['exerciseGroupId']).pipe(
+        }
+        const courseId = Number(this.findParam(route, 'courseId'));
+        if (courseId) {
+            const examId = Number(this.findParam(route, 'examId'));
+            const exerciseGroupId = Number(this.findParam(route, 'exerciseGroupId'));
+            if (examId && exerciseGroupId) {
+                return this.exerciseGroupService.find(courseId, examId, exerciseGroupId).pipe(
                     filter((res) => !!res.body),
                     map((exerciseGroup: HttpResponse<ExerciseGroup>) => new ProofExercise(undefined, exerciseGroup.body || undefined)),
                 );
-            } else {
-                return this.courseService.find(route.params['courseId']).pipe(
-                    filter((res) => !!res.body),
-                    map((course: HttpResponse<Course>) => new ProofExercise(course.body || undefined, undefined)),
-                );
             }
+            return this.courseService.find(courseId).pipe(
+                filter((res) => !!res.body),
+                map((course: HttpResponse<Course>) => new ProofExercise(course.body || undefined, undefined)),
+            );
         }
         return of(new ProofExercise(undefined, undefined));
+    }
+
+    private findParam(route: ActivatedRouteSnapshot, key: string): string | undefined {
+        let current: ActivatedRouteSnapshot | null = route;
+        while (current) {
+            if (current.params[key]) return current.params[key];
+            current = current.parent;
+        }
+        return undefined;
     }
 }

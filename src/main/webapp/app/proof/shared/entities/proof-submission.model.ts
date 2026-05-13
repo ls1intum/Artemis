@@ -1,8 +1,8 @@
 import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { DerivationStep } from './derivation-step.model';
 
 export class ProofSubmission extends Submission {
-    public text?: string;
-    public studentCheckboxState?: boolean;
+    public steps?: DerivationStep[];
 
     constructor() {
         super(SubmissionExerciseType.PROOF);

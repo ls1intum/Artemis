@@ -31,7 +31,6 @@ describe('ProofSubmissionComponent', () => {
         const ex = new ProofExercise(undefined, undefined);
         ex.id = 10;
         ex.type = ExerciseType.PROOF;
-        ex.predefinedCheckboxState = true;
         return ex;
     };
 
@@ -42,8 +41,6 @@ describe('ProofSubmissionComponent', () => {
     const mockSubmission = (participation: StudentParticipation): ProofSubmission => {
         const sub = new ProofSubmission();
         sub.id = 5;
-        sub.text = 'My proof';
-        sub.studentCheckboxState = false;
         sub.submitted = false;
         sub.participation = participation;
         return sub;
@@ -94,8 +91,6 @@ describe('ProofSubmissionComponent', () => {
         expect(component.proofExercise).toBe(exercise);
         expect(component.participation).toBe(participation);
         expect(component.submission).toBe(submission);
-        expect(component.answer).toBe('My proof');
-        expect(component.studentCheckboxState).toBe(false);
     });
 
     it('should show error alert when loading fails', () => {
@@ -116,7 +111,6 @@ describe('ProofSubmissionComponent', () => {
         const createSpy = vi.spyOn(proofSubmissionService, 'create').mockReturnValue(of(new HttpResponse({ body: submission })));
         fixture.detectChanges();
 
-        component.answer = 'new text';
         component.save();
 
         expect(createSpy).toHaveBeenCalled();

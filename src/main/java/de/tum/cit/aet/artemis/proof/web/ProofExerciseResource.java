@@ -69,7 +69,7 @@ public class ProofExerciseResource {
             Course course = courseRepository.findByIdElseThrow(proofExerciseDTO.courseId());
             exercise.setCourse(course);
         }
-        ProofExercise saved = proofExerciseRepository.save(exercise);
+        ProofExercise saved = proofExerciseRepository.findByIdWithCategories(proofExerciseRepository.save(exercise).getId()).orElseThrow();
         return ResponseEntity.created(new URI("/api/proof/proof-exercises/" + saved.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, saved.getTitle())).body(ProofExerciseDTO.of(saved));
     }
@@ -81,9 +81,9 @@ public class ProofExerciseResource {
         if (proofExerciseDTO.id() == null) {
             return createProofExercise(proofExerciseDTO);
         }
-        ProofExercise existing = proofExerciseRepository.findById(proofExerciseDTO.id()).orElseThrow();
+        ProofExercise existing = proofExerciseRepository.findByIdWithCategories(proofExerciseDTO.id()).orElseThrow();
         proofExerciseDTO.applyToEntity(existing);
-        ProofExercise saved = proofExerciseRepository.save(existing);
+        ProofExercise saved = proofExerciseRepository.findByIdWithCategories(proofExerciseRepository.save(existing).getId()).orElseThrow();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, saved.getId().toString())).body(ProofExerciseDTO.of(saved));
     }
 
@@ -91,7 +91,7 @@ public class ProofExerciseResource {
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProofExerciseDTO>> getProofExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProofExercises for course : {}", courseId);
-        List<ProofExerciseDTO> exercises = proofExerciseRepository.findByCourseId(courseId).stream().map(ProofExerciseDTO::of).toList();
+        List<ProofExerciseDTO> exercises = proofExerciseRepository.findByCourseIdWithCategories(courseId).stream().map(ProofExerciseDTO::of).toList();
         return ResponseEntity.ok(exercises);
     }
 
@@ -99,7 +99,7 @@ public class ProofExerciseResource {
     @EnforceAtLeastTutor
     public ResponseEntity<ProofExerciseDTO> getProofExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ProofExercise : {}", exerciseId);
-        ProofExercise exercise = proofExerciseRepository.findById(exerciseId).orElseThrow();
+        ProofExercise exercise = proofExerciseRepository.findByIdWithCategories(exerciseId).orElseThrow();
         return ResponseEntity.ok(ProofExerciseDTO.of(exercise));
     }
 
@@ -133,8 +133,8 @@ public class ProofExerciseResource {
     /**
      * POST /proof-exercises/import/:sourceExerciseId : import a proof exercise from an existing one
      *
-     * @param sourceExerciseId the id of the proof exercise to import
-     * @param importedExercise the proof exercise to import
+     * @param sourceExerciseId    the id of the proof exercise to import
+     * @param importedExerciseDTO the proof exercise to import
      * @return the ResponseEntity with status 201 (Created) and with body the new proof exercise, or with status 400 (Bad Request) if the proof exercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -145,14 +145,14 @@ public class ProofExerciseResource {
         if (importedExerciseDTO.id() != null) {
             throw new BadRequestAlertException("A new proof exercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        ProofExercise sourceExercise = proofExerciseRepository.findById(sourceExerciseId).orElseThrow();
+        ProofExercise sourceExercise = proofExerciseRepository.findByIdWithCategories(sourceExerciseId).orElseThrow();
         ProofExercise target = new ProofExercise();
         importedExerciseDTO.applyToEntity(target);
         if (importedExerciseDTO.courseId() != null) {
             Course course = courseRepository.findByIdElseThrow(importedExerciseDTO.courseId());
             target.setCourse(course);
         }
-        ProofExercise result = proofExerciseImportService.importProofExercise(sourceExercise, target);
+        ProofExercise result = proofExerciseRepository.findByIdWithCategories(proofExerciseImportService.importProofExercise(sourceExercise, target).getId()).orElseThrow();
         return ResponseEntity.created(new URI("/api/proof/proof-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(ProofExerciseDTO.of(result));
     }

@@ -1,10 +1,16 @@
 package de.tum.cit.aet.artemis.proof.domain;
 
-import jakarta.persistence.Column;
+import java.util.ArrayList;
+import java.util.List;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Lob;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -17,27 +23,17 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProofSubmission extends Submission {
 
-    @Lob
-    @Column(name = "text")
-    private String text;
+    @JsonIgnore
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("stepIndex ASC")
+    private List<DerivationStep> steps = new ArrayList<>();
 
-    @Column(name = "student_checkbox_state")
-    private Boolean studentCheckboxState = false;
-
-    public String getText() {
-        return text;
+    public List<DerivationStep> getSteps() {
+        return steps;
     }
 
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    public Boolean isStudentCheckboxState() {
-        return studentCheckboxState;
-    }
-
-    public void setStudentCheckboxState(Boolean studentCheckboxState) {
-        this.studentCheckboxState = studentCheckboxState;
+    public void setSteps(List<DerivationStep> steps) {
+        this.steps = steps != null ? steps : new ArrayList<>();
     }
 
     @Override
@@ -45,9 +41,10 @@ public class ProofSubmission extends Submission {
         return "proof";
     }
 
+    @JsonIgnore
     @Override
     public boolean isEmpty() {
-        return (text == null || text.isBlank()) && (studentCheckboxState == null || !studentCheckboxState);
+        return steps == null || steps.isEmpty();
     }
 
     @Override

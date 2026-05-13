@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
 import de.tum.cit.aet.artemis.proof.domain.ProofSubmission;
+import de.tum.cit.aet.artemis.proof.repository.ProofExerciseRepository;
 import de.tum.cit.aet.artemis.proof.repository.ProofSubmissionRepository;
 
 @Lazy
@@ -37,6 +38,9 @@ public class ProofExerciseUtilService {
     private ExerciseTestRepository exerciseRepository;
 
     @Autowired
+    private ProofExerciseRepository proofExerciseRepository;
+
+    @Autowired
     private ProofSubmissionRepository proofSubmissionRepository;
 
     @Autowired
@@ -52,6 +56,10 @@ public class ProofExerciseUtilService {
         course = courseRepo.save(course);
         addProofExerciseToCourse(course);
         return course;
+    }
+
+    public ProofExercise saveExercise(ProofExercise exercise) {
+        return proofExerciseRepository.save(exercise);
     }
 
     public ProofSubmission createAndSaveSubmissionForExercise(ProofExercise exercise, String login, boolean submitted) {

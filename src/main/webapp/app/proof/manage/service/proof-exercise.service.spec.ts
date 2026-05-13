@@ -21,7 +21,6 @@ describe('ProofExerciseService', () => {
         ex.id = 1;
         ex.title = 'Test Proof';
         ex.description = 'Prove X';
-        ex.predefinedCheckboxState = true;
         return ex;
     };
 

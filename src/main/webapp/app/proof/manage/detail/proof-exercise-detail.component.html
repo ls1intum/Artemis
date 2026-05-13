@@ -3,7 +3,8 @@
         <div class="col-12">
             <div class="d-flex align-items-center mb-2">
                 <h2 jhiTranslate="artemisApp.proofExercise.detail.title">Proof Exercise Detail</h2>
-                <jhi-documentation-button [type]="'Text'" /> <!-- TODO: Update to Proof when documentation exists -->
+                <jhi-documentation-button [type]="'Text'" />
+                <!-- TODO: Update to Proof when documentation exists -->
             </div>
             <jhi-non-programming-exercise-detail-common-actions [exercise]="proofExercise" [course]="course" (onExerciseRefresh)="load(proofExercise.id!)" />
             <div class="row mt-3">
@@ -14,6 +15,29 @@
                     <jhi-detail-overview-list [sections]="detailOverviewSections" />
                 </div>
             </div>
+
+            @if (proofExercise.sourceExpression && proofExercise.targetExpression) {
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="card-title" jhiTranslate="artemisApp.proofExercise.expressionsTitle">Proof Expressions</h4>
+                            </div>
+                            <div class="card-body d-flex gap-4 align-items-center flex-wrap">
+                                <div>
+                                    <small class="text-muted d-block mb-1" jhiTranslate="artemisApp.proofExercise.sourceExpression">Source</small>
+                                    <span class="fs-5" [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
+                                </div>
+                                <div class="fs-3 text-muted">→</div>
+                                <div>
+                                    <small class="text-muted d-block mb-1" jhiTranslate="artemisApp.proofExercise.targetExpression">Target</small>
+                                    <span class="fs-5" [innerHTML]="proofExercise.targetExpression | mathNodeLatex"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 }

@@ -32,6 +32,8 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
+import de.tum.cit.aet.artemis.proof.domain.ProofSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -463,6 +465,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             case TextExercise ignored -> new TextSubmission();
             case FileUploadExercise ignored -> new FileUploadSubmission();
             case QuizExercise ignored -> new QuizSubmission();
+            case ProofExercise ignored -> new ProofSubmission();
             case null, default -> throw new RuntimeException("Unsupported exercise type: " + exercise);
         };
 

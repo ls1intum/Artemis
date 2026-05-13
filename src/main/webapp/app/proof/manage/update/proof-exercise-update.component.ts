@@ -9,7 +9,10 @@ import { CategorySelectorComponent } from 'app/shared/category-selector/category
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MathNode } from '../../shared/entities/math-node.model';
+import { DerivationStep } from '../../shared/entities/derivation-step.model';
+import { ProofBuilderComponent } from './proof-builder/proof-builder.component';
+import { ProofDerivationWorkspaceComponent } from './proof-derivation-workspace/proof-derivation-workspace.component';
 
 @Component({
     selector: 'jhi-proof-exercise-update',
@@ -21,7 +24,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         DifficultyPickerComponent,
         IncludedInOverallScorePickerComponent,
         MarkdownEditorMonacoComponent,
-        ArtemisTranslatePipe,
+        ProofBuilderComponent,
+        ProofDerivationWorkspaceComponent,
     ],
 })
 export class ProofExerciseUpdateComponent implements OnInit {
@@ -39,11 +43,38 @@ export class ProofExerciseUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ proofExercise }) => {
             this.proofExercise = proofExercise;
             this.exerciseCategories.set(this.proofExercise.categories || []);
+            if (!this.proofExercise.exampleDerivations) {
+                this.proofExercise.exampleDerivations = [];
+            }
         });
     }
 
     updateCategories(categories: ExerciseCategory[]) {
         this.proofExercise.categories = categories;
+    }
+
+    onSourceExpressionChange(node: MathNode | undefined) {
+        this.proofExercise.sourceExpression = node;
+    }
+
+    onTargetExpressionChange(node: MathNode | undefined) {
+        this.proofExercise.targetExpression = node;
+    }
+
+    addExampleDerivation(): void {
+        this.proofExercise.exampleDerivations = [...(this.proofExercise.exampleDerivations ?? []), []];
+    }
+
+    removeExampleDerivation(index: number): void {
+        const updated = [...(this.proofExercise.exampleDerivations ?? [])];
+        updated.splice(index, 1);
+        this.proofExercise.exampleDerivations = updated;
+    }
+
+    onExampleStepsChange(index: number, steps: DerivationStep[]): void {
+        const updated = [...(this.proofExercise.exampleDerivations ?? [])];
+        updated[index] = steps;
+        this.proofExercise.exampleDerivations = updated;
     }
 
     save() {

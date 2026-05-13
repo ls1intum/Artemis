@@ -1,0 +1,133 @@
+<span
+    class="math-node"
+    [class.math-node--selected]="isSelected()"
+    [class.math-node--drop-target]="isHovered() && isDraggingActive()"
+    tabindex="0"
+    (click)="handleClick($event)"
+    (keydown.enter)="handleClick($any($event))"
+    (dragover)="handleDragOver($event)"
+    (dragleave)="handleDragLeave($event)"
+    (drop)="handleDrop($event)"
+>
+    @switch (node().type) {
+        @case ('number') {
+            <input
+                class="math-terminal math-terminal--number"
+                type="text"
+                [value]="node().value ?? '?'"
+                [attr.readonly]="!ctx().editable || null"
+                (input)="handleValueInput($event)"
+                (click)="stopEvent($event)"
+                (keydown)="stopEvent($event)"
+                (pointerdown)="stopEvent($event)"
+                (dragstart)="stopEvent($event)"
+                placeholder="?"
+            />
+        }
+
+        @case ('variable') {
+            <input
+                class="math-terminal math-terminal--variable"
+                type="text"
+                [value]="node().value ?? 'x'"
+                [attr.readonly]="!ctx().editable || null"
+                (input)="handleValueInput($event)"
+                (click)="stopEvent($event)"
+                (keydown)="stopEvent($event)"
+                (pointerdown)="stopEvent($event)"
+                (dragstart)="stopEvent($event)"
+                placeholder="x"
+            />
+        }
+
+        @case ('wildcard') {
+            <span class="math-wildcard">{{ node().value ?? '?' }}</span>
+        }
+
+        @case ('add') {
+            <span class="math-infix">
+                @if (slotChild('left'); as left) {
+                    <jhi-math-node [node]="left" [path]="slotChildPath('left')" [rootIndex]="rootIndex()" [ctx]="ctx()" />
+                }
+                <span class="math-op">+</span>
+                @if (slotChild('right'); as right) {
+                    <jhi-math-node [node]="right" [path]="slotChildPath('right')" [rootIndex]="rootIndex()" [ctx]="ctx()" />
+                }
+            </span>
+        }
+
+        @case ('sub') {
+            <span class="math-infix">
+                @if (slotChild('left'); as left) {
+                    <jhi-math-node [node]="left" [path]="slotChildPath('left')" [rootIndex]="rootIndex()" [ctx]="ctx()" />
+                }
+                <span class="math-op">−</span>
+                @if (slotChild('right'); as right) {
+                    <jhi-math-node [node]="right" [path]="slotChildPath('right')" [rootIndex]="rootIndex()" [ctx]="ctx()" />
+                }
+            </span>
+        }
+
+        @case ('mul') {
+            <span class="math-infix">
+                @if (slotChild('left'); as left) {
+                    <jhi-math-node [node]="left" [path]="slotChildPath('left')" [rootIndex]="rootIndex()" [ctx]="ctx()" />
+                }
+                <span class="math-op">·</span>
+                @if (slotChild('right'); as right) {
+                    <jhi-math-node [node]="right" [path]="slotChildPath('right')" [rootIndex]="rootIndex()" [ctx]="ctx()" />
+                }
+            </span>
+        }
+
+        @case ('equality') {
+            <span class="math-infix">
+                @if (slotChild('left'); as left) {
+                    <jhi-math-node [node]="left" [path]="slotChildPath('left')" [rootIndex]="rootIndex()" [ctx]="ctx()" />
+                }
+                <span class="math-op">=</span>
+                @if (slotChild('right'); as right) {
+                    <jhi-math-node [node]="right" [path]="slotChildPath('right')" [rootIndex]="rootIndex()" [ctx]="ctx()" />
+                }
+            </span>
+        }
+
+        @case ('fraction') {
+            <span class="math-fraction">
+                <span class="math-fraction__top">
+                    @if (slotChild('numerator'); as num) {
+                        <jhi-math-node [node]="num" [path]="slotChildPath('numerator')" [rootIndex]="rootIndex()" [ctx]="ctx()" />
+                    }
+                </span>
+                <span class="math-fraction__line"></span>
+                <span class="math-fraction__bottom">
+                    @if (slotChild('denominator'); as den) {
+                        <jhi-math-node [node]="den" [path]="slotChildPath('denominator')" [rootIndex]="rootIndex()" [ctx]="ctx()" />
+                    }
+                </span>
+            </span>
+        }
+
+        @case ('parentheses') {
+            <span class="math-infix">
+                <span class="math-paren">(</span>
+                @if (slotChild('content'); as content) {
+                    <jhi-math-node [node]="content" [path]="slotChildPath('content')" [rootIndex]="rootIndex()" [ctx]="ctx()" />
+                }
+                <span class="math-paren">)</span>
+            </span>
+        }
+
+        @default {
+            <span class="math-unknown">
+                <span class="badge bg-secondary me-1">{{ node().type }}</span>
+                @for (entry of unknownChildren(); track $index) {
+                    <jhi-math-node [node]="entry.child" [path]="entry.childPath" [rootIndex]="rootIndex()" [ctx]="ctx()" />
+                }
+            </span>
+        }
+    }
+    @if (ctx().editable) {
+        <button class="math-node__remove" type="button" title="Remove" (click)="handleRemove($event)" (pointerdown)="stopEvent($event)" (dragstart)="stopEvent($event)">×</button>
+    }
+</span>

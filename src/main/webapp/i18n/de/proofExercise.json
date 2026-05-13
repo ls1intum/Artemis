@@ -10,16 +10,12 @@
                 "title": "Details der Beweis-Aufgabe"
             },
             "submission": "Beweis-Abgabe",
-            "placeholder": "Geben Sie hier Ihren Beweis ein...",
             "description": "Beschreibung",
-            "predefinedCheckboxState": "Vordefinierter Checkbox-Status",
-            "studentCheckboxState": "Ich bestätige, dass dieser Beweis vollständig ist",
             "saveSuccessful": "Beweis erfolgreich gespeichert",
             "saveFailed": "Beweis konnte nicht gespeichert werden",
             "submitSuccessful": "Beweis erfolgreich abgegeben",
             "submitFailed": "Beweis konnte nicht abgegeben werden",
             "error": "Ein Fehler ist beim Laden der Beweis-Aufgabe aufgetreten",
-            "proofText": "Beweistext",
             "score": "Punkte",
             "assessedSubmission": "Ihr Beweis wurde bewertet.",
             "assessedSubmissionInstructor": "Dieser Beweis wurde bewertet."

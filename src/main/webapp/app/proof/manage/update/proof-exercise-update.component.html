@@ -1,9 +1,7 @@
 <div class="row justify-content-center">
     <div class="col-12 col-md-10 col-lg-8">
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-            <h2 id="jhi-proof-exercise-heading" jhiTranslate="artemisApp.proofExercise.home.createOrEditLabel">
-                Create or edit a Proof Exercise
-            </h2>
+            <h2 id="jhi-proof-exercise-heading" jhiTranslate="artemisApp.proofExercise.home.createOrEditLabel">Create or edit a Proof Exercise</h2>
 
             <div class="card p-3 mb-3 mt-3">
                 <div class="form-group" [hidden]="!proofExercise.id">
@@ -17,29 +15,19 @@
 
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
-                    <jhi-category-selector
-                        [categories]="exerciseCategories()"
-                        [existingCategories]="existingCategories()"
-                        (selectedCategories)="updateCategories($event)"
-                    />
+                    <jhi-category-selector [categories]="exerciseCategories()" [existingCategories]="existingCategories()" (selectedCategories)="updateCategories($event)" />
                 </div>
             </div>
 
             <div class="card p-3 mb-3">
                 <div class="form-group border-bottom pb-2">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
-                    <jhi-markdown-editor-monaco
-                        id="field_problemStatement"
-                        [(markdown)]="proofExercise.problemStatement"
-                    />
+                    <jhi-markdown-editor-monaco id="field_problemStatement" [(markdown)]="proofExercise.problemStatement" />
                 </div>
 
                 <div class="form-group mt-3">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.exampleSolution" for="field_exampleSolution">Example Solution</label>
-                    <jhi-markdown-editor-monaco
-                        id="field_exampleSolution"
-                        [(markdown)]="proofExercise.exampleSolution"
-                    />
+                    <jhi-markdown-editor-monaco id="field_exampleSolution" [(markdown)]="proofExercise.exampleSolution" />
                 </div>
             </div>
 
@@ -52,10 +40,7 @@
                         </div>
                     </div>
                     <div class="col-12 col-md-6">
-                        <jhi-included-in-overall-score-picker
-                            [(includedInOverallScore)]="proofExercise.includedInOverallScore"
-                            [allowNotIncluded]="true"
-                        />
+                        <jhi-included-in-overall-score-picker [(includedInOverallScore)]="proofExercise.includedInOverallScore" [allowNotIncluded]="true" />
                     </div>
                 </div>
 
@@ -75,17 +60,76 @@
                 </div>
             </div>
 
-            <div class="card p-3 mb-3 bg-light">
+            <div class="card p-3 mb-3">
                 <h4 class="card-title border-bottom pb-2">Proof Configuration</h4>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.proofExercise.description" for="field_description">Internal Description (Instructions for Students)</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.proofExercise.description" for="field_description"
+                        >Internal Description (Instructions for Students)</label
+                    >
                     <textarea class="form-control" name="description" id="field_description" rows="5" [(ngModel)]="proofExercise.description"></textarea>
                 </div>
-                <div class="form-check mt-3">
-                    <input type="checkbox" class="form-check-input" name="predefinedCheckboxState" id="field_predefinedCheckboxState" [(ngModel)]="proofExercise.predefinedCheckboxState" />
-                    <label class="form-check-label" jhiTranslate="artemisApp.proofExercise.predefinedCheckboxState" for="field_predefinedCheckboxState">Expected Checkbox State for 100% Score</label>
+            </div>
+
+            <div class="card p-3 mb-3">
+                <h4 class="card-title border-bottom pb-2" jhiTranslate="artemisApp.proofExercise.expressions">Expressions</h4>
+                @if (!proofExercise.sourceExpression || !proofExercise.targetExpression) {
+                    <div class="alert alert-warning py-2 px-3 small mb-3">
+                        <span jhiTranslate="artemisApp.proofExercise.expressionsRequired">
+                            Both a source and a target expression are required for the derivation workspace to appear for students.
+                        </span>
+                    </div>
+                }
+                <div class="d-flex flex-column gap-4">
+                    <div>
+                        <h6 jhiTranslate="artemisApp.proofExercise.sourceExpression">Source Expression (start)</h6>
+                        <jhi-proof-builder [expression]="proofExercise.sourceExpression" [label]="'Source'" (expressionChange)="onSourceExpressionChange($event)" />
+                    </div>
+                    <div class="border-top pt-3">
+                        <div class="text-center text-muted mb-2" style="font-size: 1.4rem">↓</div>
+                        <h6 jhiTranslate="artemisApp.proofExercise.targetExpression">Target Expression (goal)</h6>
+                        <jhi-proof-builder [expression]="proofExercise.targetExpression" [label]="'Target'" (expressionChange)="onTargetExpressionChange($event)" />
+                    </div>
                 </div>
             </div>
+
+            @if (proofExercise.sourceExpression) {
+                <div class="card p-3 mb-3">
+                    <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3">
+                        <h4 class="card-title mb-0" jhiTranslate="artemisApp.proofExercise.exampleSolutions">Example Solutions</h4>
+                        <button type="button" class="btn btn-sm btn-outline-primary" (click)="addExampleDerivation()">
+                            + <span jhiTranslate="artemisApp.proofExercise.addExampleSolution">Add example solution</span>
+                        </button>
+                    </div>
+
+                    @if ((proofExercise.exampleDerivations ?? []).length === 0) {
+                        <p class="text-muted fst-italic small mb-0" jhiTranslate="artemisApp.proofExercise.noExampleSolutions">
+                            No example solutions yet. Click "Add example solution" to add one.
+                        </p>
+                    }
+
+                    @for (derivation of proofExercise.exampleDerivations ?? []; track $index; let i = $index) {
+                        <div class="border rounded p-3 mb-3 bg-light">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="fw-semibold small text-muted">
+                                    Example Solution {{ i + 1 }}
+                                    @if (derivation.length > 0) {
+                                        <span class="badge bg-secondary ms-2">{{ derivation.length }} step{{ derivation.length !== 1 ? 's' : '' }}</span>
+                                    }
+                                </span>
+                                <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeExampleDerivation(i)">
+                                    <span jhiTranslate="entity.action.delete">Remove</span>
+                                </button>
+                            </div>
+                            <jhi-proof-derivation-workspace
+                                [sourceExpression]="proofExercise.sourceExpression"
+                                [targetExpression]="proofExercise.targetExpression"
+                                [initialSteps]="derivation"
+                                (stepsChange)="onExampleStepsChange(i, $event)"
+                            />
+                        </div>
+                    }
+                </div>
+            }
 
             <div class="d-flex gap-2">
                 <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">

@@ -74,7 +74,6 @@ public class ProofExerciseImportService extends ExerciseImportService {
 
         super.copyExerciseBasis(newExercise, importedExercise, gradingInstructionCopyTracker);
         newExercise.setDescription(importedExercise.getDescription());
-        newExercise.setPredefinedCheckboxState(importedExercise.isPredefinedCheckboxState());
         newExercise.setExampleSolution(importedExercise.getExampleSolution());
         return newExercise;
     }

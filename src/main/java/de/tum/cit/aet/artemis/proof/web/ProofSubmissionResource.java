@@ -25,11 +25,13 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.proof.domain.DerivationStep;
 import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
 import de.tum.cit.aet.artemis.proof.domain.ProofSubmission;
 import de.tum.cit.aet.artemis.proof.dto.ProofSubmissionDTO;
 import de.tum.cit.aet.artemis.proof.repository.ProofExerciseRepository;
 import de.tum.cit.aet.artemis.proof.repository.ProofSubmissionRepository;
+import de.tum.cit.aet.artemis.proof.service.ProofGradingService;
 
 @RestController
 @RequestMapping("api/proof/")
@@ -49,14 +51,18 @@ public class ProofSubmissionResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final ProofGradingService proofGradingService;
+
     public ProofSubmissionResource(ProofSubmissionRepository proofSubmissionRepository, ProofExerciseRepository proofExerciseRepository, ResultRepository resultRepository,
-            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService) {
+            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService,
+            ProofGradingService proofGradingService) {
         this.proofSubmissionRepository = proofSubmissionRepository;
         this.proofExerciseRepository = proofExerciseRepository;
         this.resultRepository = resultRepository;
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.authCheckService = authCheckService;
+        this.proofGradingService = proofGradingService;
     }
 
     @PostMapping("exercises/{exerciseId}/proof-submissions")
@@ -75,12 +81,17 @@ public class ProofSubmissionResource {
 
     private ProofSubmissionDTO saveAndEvaluate(Long exerciseId, ProofSubmissionDTO dto) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ProofExercise proofExercise = proofExerciseRepository.findById(exerciseId).orElseThrow();
+        ProofExercise proofExercise = proofExerciseRepository.findByIdWithCategories(exerciseId).orElseThrow();
         StudentParticipation participation = studentParticipationRepository.findFirstByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, user.getLogin()).orElseThrow();
 
         ProofSubmission submission = dto.toEntity();
         submission.setParticipation(participation);
+        for (DerivationStep step : submission.getSteps()) {
+            step.setSubmission(submission);
+        }
+
         submission = proofSubmissionRepository.save(submission);
+        submission = proofSubmissionRepository.findByIdWithStepsAndResults(submission.getId()).orElseThrow();
 
         if (Boolean.TRUE.equals(submission.isSubmitted())) {
             Result result = new Result();
@@ -90,13 +101,14 @@ public class ProofSubmissionResource {
             result.setRated(true);
             result.setExerciseId(exerciseId);
 
-            boolean isCorrect = proofExercise.isPredefinedCheckboxState() != null && proofExercise.isPredefinedCheckboxState().equals(submission.isStudentCheckboxState());
-            result.setScore(isCorrect ? 100.0 : 0.0, proofExercise.getCourseViaExerciseGroupOrCourseMember());
+            double score = proofGradingService.gradeSubmission(proofExercise, submission);
+            result.setScore(score, proofExercise.getCourseViaExerciseGroupOrCourseMember());
 
             resultRepository.save(result);
             submission.addResult(result);
         }
 
+        participation.setExercise(proofExercise);
         submission.setParticipation(participation);
         return ProofSubmissionDTO.of(submission);
     }
@@ -117,13 +129,22 @@ public class ProofSubmissionResource {
         if (!(participation.getExercise() instanceof ProofExercise proofExercise)) {
             throw new IllegalArgumentException("Participation does not belong to a proof exercise");
         }
+        // Reload with categories to avoid LazyInitializationException when DTO is serialized/logged
+        proofExercise = proofExerciseRepository.findByIdWithCategories(proofExercise.getId()).orElseThrow();
+        participation.setExercise(proofExercise);
         if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(proofExercise))) {
             throw new AccessForbiddenException("participation", participationId);
         }
 
         Optional<ProofSubmission> latestSubmission = participation.findLatestSubmission().filter(s -> s instanceof ProofSubmission).map(s -> (ProofSubmission) s);
 
-        ProofSubmission submission = latestSubmission.orElseGet(ProofSubmission::new);
+        ProofSubmission submission;
+        if (latestSubmission.isPresent()) {
+            submission = proofSubmissionRepository.findByIdWithStepsAndResults(latestSubmission.get().getId()).orElseThrow();
+        }
+        else {
+            submission = new ProofSubmission();
+        }
         submission.setParticipation(participation);
         return ResponseEntity.ok(ProofSubmissionDTO.of(submission));
     }
