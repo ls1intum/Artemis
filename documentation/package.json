@@ -10,7 +10,6 @@
         "docusaurus": "docusaurus",
         "lint": "eslint src",
         "lint:fix": "eslint --fix src",
-        "postinstall": "patch-package",
         "serve": "docusaurus serve",
         "start": "docusaurus start",
         "swizzle": "docusaurus swizzle",
@@ -42,7 +41,6 @@
         "@typescript-eslint/parser": "8.59.1",
         "baseline-browser-mapping": "2.10.21",
         "eslint": "10.2.1",
-        "patch-package": "8.0.1",
         "prettier": "3.8.3",
         "typescript": "6.0.3"
     },

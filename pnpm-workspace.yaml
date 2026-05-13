@@ -3,13 +3,10 @@
 # and into this file. Settings here govern the install behaviour in this
 # project root.
 
-# Keep an npm-like hoisted node_modules so the few places that deep-path into it
-# (Angular asset paths in angular.json, the pdfjs postinstall worker copy,
-# Jest moduleNameMapper) continue to resolve packages at the top level.
-# Follow-up: tighten by removing this once phantom dependencies are made explicit.
-shamefullyHoist: true
-publicHoistPattern:
-    - '*'
+# No hoist shim: rely on pnpm's default isolated layout. Every package the
+# project imports is declared as a direct dependency in package.json; patches
+# go through pnpm.patchedDependencies (which works on the .pnpm symlink store
+# directly, without requiring transitive deps at top-level node_modules).
 
 # Auto-install peer dependencies (default in pnpm 10, opt-in in pnpm 11).
 # Without this, peer deps such as `@angular/animations` (required by
@@ -25,6 +22,12 @@ enablePrePostScripts: true
 
 # Native bindings that need their postinstall scripts to run for Angular CLI /
 # esbuild / eslint to work end-to-end.
+patchedDependencies:
+    '@angular-builders/jest@21.0.3': 'patches/@angular-builders+jest+21.0.3.patch'
+    '@eslint/eslintrc@3.3.5': 'patches/@eslint+eslintrc+3.3.5.patch'
+    '@swimlane/ngx-graph@11.0.0': 'patches/@swimlane+ngx-graph+11.0.0.patch'
+    'eslint@9.39.4': 'patches/eslint+9.39.4.patch'
+
 allowBuilds:
     '@parcel/watcher': true
     '@swc/core': true

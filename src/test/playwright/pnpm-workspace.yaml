@@ -1,11 +1,9 @@
 # pnpm 11+ install/resolution settings for the Playwright tests subproject.
-
-shamefullyHoist: true
-publicHoistPattern:
-    - '*'
+# Default isolated layout: no hoist shim.
 
 preferFrozenLockfile: true
 enablePrePostScripts: true
+autoInstallPeers: true
 
 allowBuilds:
     esbuild: true

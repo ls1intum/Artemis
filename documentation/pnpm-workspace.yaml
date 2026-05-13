@@ -1,13 +1,14 @@
 # pnpm 11+ install/resolution settings for the documentation/ subproject.
-# Mirrors the root-level config so transitive deps (e.g. gray-matter) hoist
-# to top-level node_modules where patch-package can find them.
-
-shamefullyHoist: true
-publicHoistPattern:
-    - '*'
+# Default isolated layout: no hoist shim. The gray-matter patch is applied
+# via `pnpm.patchedDependencies` in package.json (works on the .pnpm symlink
+# store directly).
 
 preferFrozenLockfile: true
 enablePrePostScripts: true
+autoInstallPeers: true
+
+patchedDependencies:
+    'gray-matter@4.0.3': 'patches/gray-matter+4.0.3.patch'
 
 allowBuilds:
     '@swc/core': true
