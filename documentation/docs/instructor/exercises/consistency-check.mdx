@@ -1,0 +1,62 @@
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# Consistency Check
+
+The consistency check is an AI-assisted feature in Hyperion that detects cross-artifact inconsistencies in programming exercises before they are published to students.
+
+A programming exercise consists of four interconnected artifacts: the problem statement, the template repository, the solution repository, and the test repository.
+When one artifact is changed without updating the others, students may face exercises they cannot solve — for example, the problem statement describes a method named `calculateAverage` while the template declares `computeMean`.
+
+For the formal definition of the underlying issue types and ontology, see:
+[Dietrich et al., *"Automated Consistency Checking of Multi-Artifact Programming Exercises"*](https://dl.acm.org/doi/10.1145/3769994.3770042), Koli Calling 2025.
+
+---
+
+## Triggering a Consistency Check
+
+Instructors with at least **Editor** role can trigger a consistency check from the exercise management view.
+The check runs synchronously and typically completes within 20–50 seconds.
+
+---
+
+## Understanding the Report
+
+Each detected issue includes:
+
+| Field | Description |
+|---|---|
+| **Severity** | `LOW`, `MEDIUM`, or `HIGH` — indicates how likely the issue is to block students |
+| **Category** | The type of inconsistency (see issue types below) |
+| **Description** | Human-readable explanation of what is inconsistent and where |
+| **Suggested fix** | Concrete recommendation for resolving the issue |
+| **Locations** | Affected artifact, file path, and line range for each side of the inconsistency |
+
+### Issue Types
+
+| Category | What it detects |
+|---|---|
+| Method return type mismatch | A method's return type differs between artifacts |
+| Method parameter mismatch | A method's parameter list (names, types, or count) differs between artifacts |
+| Constructor parameter mismatch | A constructor's parameter list differs between artifacts |
+| Attribute type mismatch | A field's declared type differs between artifacts |
+| Visibility mismatch | A member's access modifier (`public`, `private`, …) differs between artifacts |
+| Identifier naming inconsistency | An identifier is spelled differently across artifacts |
+
+### What the Check Does Not Flag
+
+The checker deliberately ignores intentional pedagogical gaps:
+
+- Empty method stubs and `TODO` comments in the template repository
+- Abstract method bodies
+- Issues already covered by existing review threads on the exercise
+
+---
+
+## Reliability
+
+<Callout variant={CalloutVariant.info}>
+In evaluation across 325 exercise variants, the current approach correctly identified about 8 in 10 reported issues as genuine inconsistencies, and detected about 8 in 10 actual inconsistencies present in an exercise. Expect an occasional false positive — review each reported issue before acting on it. A clean report does not guarantee a fully consistent exercise.
+
+For full benchmark results across all evaluated approaches, see the [developer documentation](../../developer/hyperion/consistency-check#benchmark-results).
+</Callout>
