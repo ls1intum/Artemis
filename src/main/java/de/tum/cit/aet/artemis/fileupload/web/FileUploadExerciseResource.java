@@ -183,11 +183,9 @@ public class FileUploadExerciseResource {
         if (fileUploadExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new fileUploadExercise cannot already have an ID", "idExists")).body(null);
         }
-        // File upload exercises are always assessed manually. Setting a default guards against clients that
-        // omit the field, which would otherwise hide the assessment dashboard for the exercise.
-        if (fileUploadExercise.getAssessmentType() == null) {
-            fileUploadExercise.setAssessmentType(AssessmentType.MANUAL);
-        }
+        // File upload exercises are always assessed manually. Enforcing it server-side guarantees the
+        // invariant regardless of what the client sends and keeps the assessment dashboard visible.
+        fileUploadExercise.setAssessmentType(AssessmentType.MANUAL);
         // validates general settings: points, dates
         fileUploadExercise.validateGeneralSettings();
         // Validate the new file upload exercise
