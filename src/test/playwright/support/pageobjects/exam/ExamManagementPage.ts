@@ -65,7 +65,7 @@ export class ExamManagementPage {
      */
     async openAssessmentDashboard(courseID: number, examID: number, timeout = EXAM_DASHBOARD_TIMEOUT) {
         await this.page.goto(`/course-management/${courseID}/exams/${examID}/assessment-dashboard`);
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
     }
 
     /**
@@ -91,7 +91,7 @@ export class ExamManagementPage {
 
     async verifySubmitted(courseID: number, examID: number, username: string) {
         await this.page.goto(`/course-management/${courseID}/exams/${examID}/students`);
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
         const row = this.page.locator('tbody tr', { hasText: username }).first();
         await row.waitFor({ state: 'visible' });
         await expect(row).toContainText('Submitted');
@@ -99,7 +99,7 @@ export class ExamManagementPage {
 
     async checkQuizSubmission(courseID: number, examID: number, username: string, score: string) {
         await this.page.goto(`/course-management/${courseID}/exams/${examID}/students`);
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
         const row = this.page.locator('tbody tr', { hasText: username }).first();
         await row.waitFor({ state: 'visible' });
         await row.getByRole('link', { name: 'View exam' }).click();
