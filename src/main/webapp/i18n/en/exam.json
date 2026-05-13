@@ -218,6 +218,7 @@
                 "relative": "Change relative to regular working time"
             },
             "events": {
+                "title": "Exam Notifications",
                 "button": "Notifications",
                 "type": {
                     "examWideAnnouncement": "Exam-Wide Announcement",
@@ -526,7 +527,6 @@
             "confirmationStartText": "Exam start confirmation text",
             "confirmationEndText": "Exam end confirmation text",
             "assessmentDashboard": "Assessment",
-            "examChecklist": "Exam Checklist",
             "studentExams": "Student Exams",
             "students": "Students",
             "gradingSystem": "Grading Key",

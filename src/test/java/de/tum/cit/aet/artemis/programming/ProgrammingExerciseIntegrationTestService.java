@@ -1093,6 +1093,9 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
         programmingExercise.setShortName("hi");
         request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        // Reject short names exceeding PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH (36); 37 chars must fail.
+        programmingExercise.setShortName("a".repeat(37));
+        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_invalidCourseShortName_badRequest() throws Exception {
@@ -2260,6 +2263,9 @@ public class ProgrammingExerciseIntegrationTestService {
             Map.entry("C.java", "efg")
         ), "seed student files");
         // @formatter:on
+        // The endpoint under test resolves the bare repo by commit hash; ensure that specific
+        // hash is visible in the bare repo (not just HEAD) before issuing the request.
+        RepositoryExportTestUtil.waitForBareRepositoryToContainCommit(repo, commit.getId().getName());
 
         // Persist submission with commit hash
         var submission = new ProgrammingSubmission();

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -29,6 +31,8 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('StudentExamDetailTableRowComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let studentExamDetailTableRowComponentFixture: ComponentFixture<StudentExamDetailTableRowComponent>;
     let studentExamDetailTableRowComponent: StudentExamDetailTableRowComponent;
     let course: Course;
@@ -51,8 +55,17 @@ describe('StudentExamDetailTableRowComponent', () => {
         exercise.studentParticipations = [studentParticipation];
 
         return TestBed.configureTestingModule({
-            imports: [NgbModule, NgxDatatableModule, ReactiveFormsModule, TranslateModule.forRoot(), FaIconComponent, StudentExamDetailTableRowComponent],
-            declarations: [MockComponent(DataTableComponent), MockTranslateValuesDirective, MockPipe(ArtemisTranslatePipe)],
+            imports: [
+                NgbModule,
+                NgxDatatableModule,
+                ReactiveFormsModule,
+                TranslateModule.forRoot(),
+                FaIconComponent,
+                StudentExamDetailTableRowComponent,
+                MockComponent(DataTableComponent),
+                MockTranslateValuesDirective,
+                MockPipe(ArtemisTranslatePipe),
+            ],
             providers: [provideRouter([]), MockProvider(AlertService), MockDirective(TranslateDirective)],
         })
             .compileComponents()
@@ -62,7 +75,7 @@ describe('StudentExamDetailTableRowComponent', () => {
             });
     });
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should return the right icon based on exercise type', () => {
@@ -80,7 +93,7 @@ describe('StudentExamDetailTableRowComponent', () => {
     });
 
     it('should route to modeling submission', () => {
-        const getAssessmentLinkSpy = jest.spyOn(studentExamDetailTableRowComponent, 'getAssessmentLink');
+        const getAssessmentLinkSpy = vi.spyOn(studentExamDetailTableRowComponent, 'getAssessmentLink');
         const modelingExercise = {
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
