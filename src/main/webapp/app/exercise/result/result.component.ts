@@ -288,10 +288,11 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         }
         const participation = this.participation();
         if (
+            result &&
             participation &&
             isProgrammingExerciseStudentParticipation(participation) &&
             !isPracticeMode(participation) &&
-            isResultPreliminary(result!, participation, programmingExercise)
+            isResultPreliminary(result, participation, programmingExercise)
         ) {
             if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {
                 return 'artemisApp.result.preliminaryTooltipSemiAutomatic';
