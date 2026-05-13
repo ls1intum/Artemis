@@ -3,7 +3,7 @@
     "description": "Playwright tests for Artemis",
     "private": true,
     "license": "MIT",
-    "packageManager": "pnpm@10.33.4",
+    "packageManager": "pnpm@11.1.1",
     "devDependencies": {
         "@playwright/test": "1.59.1",
         "@typescript-eslint/eslint-plugin": "8.59.2",
@@ -28,9 +28,7 @@
             "nodemailer": "8.0.5",
             "lodash": "4.18.1"
         },
-        "onlyBuiltDependencies": [
-            "esbuild"
-        ]
+        "onlyBuiltDependencies": []
     },
     "scripts": {
         "playwright:test": "cross-env NODE_OPTIONS=--max-old-space-size=6144 npm-run-all --serial --continue-on-error playwright:test:parallel playwright:test:sequential merge-junit-reports merge-coverage-reports",

@@ -1,0 +1,11 @@
+# pnpm 11+ install/resolution settings for the Playwright tests subproject.
+
+shamefullyHoist: true
+publicHoistPattern:
+    - '*'
+
+preferFrozenLockfile: true
+enablePrePostScripts: true
+
+allowBuilds:
+    esbuild: true

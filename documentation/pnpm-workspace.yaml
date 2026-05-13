@@ -1,0 +1,16 @@
+# pnpm 11+ install/resolution settings for the documentation/ subproject.
+# Mirrors the root-level config so transitive deps (e.g. gray-matter) hoist
+# to top-level node_modules where patch-package can find them.
+
+shamefullyHoist: true
+publicHoistPattern:
+    - '*'
+
+preferFrozenLockfile: true
+enablePrePostScripts: true
+
+allowBuilds:
+    '@swc/core': true
+    core-js: true
+    core-js-pure: true
+    esbuild: true
