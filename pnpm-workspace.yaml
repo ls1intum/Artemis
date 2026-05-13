@@ -11,6 +11,12 @@ shamefullyHoist: true
 publicHoistPattern:
     - '*'
 
+# Auto-install peer dependencies (default in pnpm 10, opt-in in pnpm 11).
+# Without this, peer deps such as `@angular/animations` (required by
+# @swimlane/ngx-charts / @swimlane/ngx-graph) are not installed, and the
+# Angular esbuild bundle fails with "Could not resolve @angular/animations".
+autoInstallPeers: true
+
 # Treat the lockfile as authoritative; never silently update it during install.
 preferFrozenLockfile: true
 
