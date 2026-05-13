@@ -553,6 +553,11 @@ describe('ExamStudentsComponent', () => {
             expect(component.didNotAttendExam(dto)).toBeTruthy();
         });
 
+        it('didNotAttendExam should be false when attendance is undefined (not yet checked)', () => {
+            const dto: ExamStudentDTO = { id: 1 };
+            expect(component.didNotAttendExam(dto)).toBeFalsy();
+        });
+
         it('all attendance helpers should be falsy when exam has not ended', () => {
             component.hasExamEnded.set(false);
             const dto: ExamStudentDTO = {

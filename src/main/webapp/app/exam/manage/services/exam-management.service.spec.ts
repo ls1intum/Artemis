@@ -415,7 +415,7 @@ describe('Exam Management Service Tests', () => {
         const mockResponse = {};
 
         // WHEN
-        service.removeAllStudentsFromExam(course.id!, mockExam.id!, false).subscribe((resp) => expect(resp.body).toEqual({});
+        service.removeAllStudentsFromExam(course.id!, mockExam.id!, false).subscribe((resp) => expect(resp.body).toEqual({}));
 
         // THEN
         const req = httpMock.expectOne({
@@ -633,7 +633,7 @@ describe('Exam Management Service Tests', () => {
         const mockExam: Exam = { id: 1, studentExams: [{ id: 1, numberOfExamSessions: 0 }] };
 
         // WHEN
-        service.archiveExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual({});
+        service.archiveExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual({}));
 
         // THEN
         const req = httpMock.expectOne({
@@ -692,8 +692,6 @@ describe('Exam Management Service Tests', () => {
 
         // CLEANUP
         req.flush(true);
-
-
     });
 
     describe('findExamStudentsPaged', () => {
@@ -728,7 +726,6 @@ describe('Exam Management Service Tests', () => {
 
             // CLEANUP
             req.flush(mockBody, { headers: { 'X-Total-Count': '1' } });
-
         });
 
         it('should include filterProp in params when provided', async () => {
@@ -744,7 +741,6 @@ describe('Exam Management Service Tests', () => {
 
             // CLEANUP
             req.flush([]);
-
         });
 
         it('should read totalElements from X-Total-Count header', async () => {
@@ -761,7 +757,6 @@ describe('Exam Management Service Tests', () => {
 
             // CLEANUP
             req.flush([], { headers: { 'X-Total-Count': '42' } });
-
 
             expect(capturedTotal).toBe(42);
         });
@@ -782,7 +777,6 @@ describe('Exam Management Service Tests', () => {
 
             // CLEANUP
             req.flush(mockBody, { headers: { 'X-Total-Count': '1' } });
-
 
             expect(capturedRow?.startedDate).toBeDefined();
             expect(capturedRow?.submissionDate).toBeDefined();
@@ -805,7 +799,6 @@ describe('Exam Management Service Tests', () => {
 
             // CLEANUP
             req.flush([]);
-
 
             expect(capturedTotal).toBe(0);
         });
@@ -833,7 +826,6 @@ describe('Exam Management Service Tests', () => {
 
             // CLEANUP
             req.flush(mockUsers, { headers: { 'X-Total-Count': '1' } });
-
         });
 
         it('should read totalElements from X-Total-Count header', async () => {
@@ -850,7 +842,6 @@ describe('Exam Management Service Tests', () => {
 
             // CLEANUP
             req.flush([], { headers: { 'X-Total-Count': '99' } });
-
 
             expect(capturedTotal).toBe(99);
         });
@@ -870,7 +861,6 @@ describe('Exam Management Service Tests', () => {
             // CLEANUP
             req.flush([]);
 
-
             expect(capturedTotal).toBe(0);
         });
 
@@ -888,7 +878,6 @@ describe('Exam Management Service Tests', () => {
 
             // CLEANUP
             req.flush(null, { headers: { 'X-Total-Count': '0' } });
-
 
             expect(capturedContent).toEqual([]);
         });

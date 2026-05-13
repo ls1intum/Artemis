@@ -332,7 +332,8 @@ public class ExamUserService {
      */
     public Page<UserForRegistrationDTO> searchUsersForExamRegistration(long examId, String searchTerm, int page, int size) {
         PageRequest pageable = PageRequest.of(page, size);
-        Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(pageable, searchTerm.trim().toLowerCase(Locale.ROOT));
+        String escaped = searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(pageable, escaped);
 
         List<Long> userIds = users.getContent().stream().map(User::getId).toList();
         Set<Long> registeredIds = userIds.isEmpty() ? Set.of() : examUserRepository.findRegisteredUserIdsByExamIdAndUserIds(examId, userIds);

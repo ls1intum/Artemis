@@ -5,7 +5,7 @@ export interface ExamStudentSearch extends SearchTermPageableSearch {
     filterProp?: string;
 }
 
-export type ExamProgress = 'examMissing' | 'notStarted' | 'started' | 'submitted';
+export type ExamProgress = 'examMissing' | 'notStarted' | 'started' | 'submitted' | 'inconsistent';
 
 /**
  * Merged row shape for the exam-students table. Mirrors the server-side {@code ExamStudentDTO}:

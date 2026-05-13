@@ -1,5 +1,5 @@
 import { Component, DestroyRef, ElementRef, EventEmitter, OnDestroy, TemplateRef, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { User } from 'app/core/user/user.model';
 import { Observable, Subject, forkJoin, of } from 'rxjs';
@@ -54,11 +54,9 @@ import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam
 import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
-
 interface MenuCommandEvent {
     originalEvent?: Event;
 }
-
 @Component({
     selector: 'jhi-exam-students',
     templateUrl: './exam-students.component.html',
@@ -664,7 +662,7 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     didNotAttendExam(examUser: ExamStudentDTO | undefined) {
-        return !examUser?.didExamUserAttendExam && this.hasExamEnded();
+        return examUser?.didExamUserAttendExam === false && this.hasExamEnded();
     }
 
     /** Builds a minimal StudentExam from the DTO so working-time sub-components can compute % extension. */

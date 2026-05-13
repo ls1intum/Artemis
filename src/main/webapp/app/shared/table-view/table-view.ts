@@ -6,7 +6,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { Table, TableLazyLoadEvent, TableModule, TablePageEvent } from 'primeng/table';
-import { TooltipModule } from 'primeng/tooltip';
 
 export interface ColumnDef<T> {
     field?: keyof T;

@@ -634,10 +634,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
             WHERE user.deleted = FALSE
                 AND (
-                    user.login LIKE :#{#searchTerm}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#searchTerm}%
-                    OR user.email LIKE %:#{#searchTerm}%
-                    OR user.registrationNumber LIKE %:#{#searchTerm}%
+                    user.login LIKE :#{#searchTerm}% ESCAPE '\\'
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR user.email LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR user.registrationNumber LIKE %:#{#searchTerm}% ESCAPE '\\'
                 )
             """)
     Page<User> searchAllByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm);
