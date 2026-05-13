@@ -36,6 +36,9 @@ if [[ ! -f "$config_file" ]]; then
     exit 1
 fi
 
+# Activate the pnpm version pinned via `packageManager` in package.json.
+corepack enable
+
 echo "==> pnpm install --frozen-lockfile (repo root)"
 pnpm install --frozen-lockfile
 
