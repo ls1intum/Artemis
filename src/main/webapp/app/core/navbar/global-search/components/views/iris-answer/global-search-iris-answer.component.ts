@@ -34,6 +34,7 @@ export class GlobalSearchIrisAnswerComponent {
 
     protected readonly irisResult = signal<IrisSearchResult | undefined>(undefined);
     protected readonly irisThinking = signal(false);
+    private readonly currentRunId = signal<string | undefined>(undefined);
     protected readonly isExpanded = signal(false);
     protected readonly isOverflowing = signal(false);
     protected readonly moreOpen = signal(false);
@@ -83,6 +84,7 @@ export class GlobalSearchIrisAnswerComponent {
                 tap(() => {
                     this.irisResult.set(undefined);
                     this.irisThinking.set(false);
+                    this.currentRunId.set(undefined);
                 }),
                 switchMap((query) => {
                     if (!query.trim()) {
@@ -98,8 +100,12 @@ export class GlobalSearchIrisAnswerComponent {
                     return;
                 }
                 if (update.isThinking) {
+                    this.currentRunId.set(update.runId);
                     this.irisThinking.set(true);
                 } else {
+                    if (this.currentRunId() !== undefined && update.runId !== this.currentRunId()) {
+                        return; // stale response from a superseded pipeline run
+                    }
                     this.irisThinking.set(false);
                     this.irisResult.set(update.answer ? { answer: update.answer, sources: update.sources ?? [] } : undefined);
                 }
