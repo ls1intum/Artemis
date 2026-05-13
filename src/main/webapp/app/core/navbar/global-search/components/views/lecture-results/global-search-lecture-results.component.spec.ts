@@ -14,14 +14,21 @@ import { LectureSearchResult } from 'app/core/navbar/global-search/models/lectur
 const mockResult: LectureSearchResult = {
     course: { id: 1, name: 'Advanced Web Development' },
     lecture: { id: 1, name: 'Angular Basics' },
-    lectureUnit: { id: 1, name: 'Introduction to Signals', link: '/courses/1/lectures/1/units/1', pageNumber: 3 },
+    lectureUnit: {
+        id: 1,
+        name: 'Introduction to Signals',
+        link: '/courses/1/lectures/1/units/1',
+        pageNumber: 3,
+        sourceType: 'lecture_unit_slide',
+        queryParams: { unit: 1, page: 3 },
+    },
     snippet: 'Signals are a reactive primitive in Angular.',
 };
 
 const mockResultNoSnippet: LectureSearchResult = {
     course: { id: 2, name: 'Server-Side Development' },
     lecture: { id: 2, name: 'Backend Fundamentals' },
-    lectureUnit: { id: 2, name: 'Spring Boot Overview', link: '/courses/2/lectures/2/units/2', pageNumber: 7 },
+    lectureUnit: { id: 2, name: 'Spring Boot Overview', link: '/courses/2/lectures/2/units/2', pageNumber: 7, sourceType: 'lecture_unit_slide', queryParams: { unit: 2, page: 7 } },
 };
 
 const mockSearchService = { search: vi.fn() };
