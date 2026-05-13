@@ -37,15 +37,36 @@ Before installing Artemis, install and configure the following dependencies:
    Download from [Node.js](https://nodejs.org/en/download).
    Required for compiling and running the Angular client.
 
-4. **pnpm (≥ 11.1.0)**
-   The version is pinned in `package.json` via the `packageManager` field.
-   Activate it once via Corepack (shipped with Node.js 24):
+4. **pnpm (≥ 11.1.0) — the package manager Artemis uses for the Angular client**
+
+   Artemis uses [pnpm](https://pnpm.io) instead of npm. We do **not** use `npm` / `npx` anywhere; please don't run `npm install` in this repo — it will create a `package-lock.json` that conflicts with the committed `pnpm-lock.yaml`. The exact pnpm version is pinned in `package.json` via the `packageManager` field, so every developer and every CI job uses the same version.
+
+   You don't need to install pnpm manually. Node.js 24 ships with [Corepack](https://nodejs.org/api/corepack.html), a small shim that downloads and runs the pinned package manager on demand. Activate it **once** per machine:
 
    ```bash
    corepack enable
    ```
 
-   Subsequent `pnpm install` / `pnpm run …` invocations will use the pinned version automatically. We migrated from npm to pnpm to get deterministic, content-addressable installs (faster cold installs locally and in CI, byte-identical `node_modules` across machines, stricter override semantics).
+   After that, any `pnpm` command run inside the Artemis repository automatically uses the pinned version. Verify the setup with:
+
+   ```bash
+   pnpm --version          # should print 11.1.1 (matches packageManager in package.json)
+   which pnpm              # should point at the Corepack shim, e.g. ~/.nvm/.../bin/pnpm
+   ```
+
+   **First-time install of dependencies** (after cloning the repo):
+
+   ```bash
+   pnpm install            # installs everything declared in package.json + pnpm-lock.yaml
+   ```
+
+   **Troubleshooting `corepack enable`:**
+   - **Permission denied / EACCES on macOS or Linux:** Corepack writes shim symlinks next to the Node.js binary. If Node.js was installed system-wide (e.g. via `apt`/`brew install node`), run `sudo corepack enable` once. With [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or [Volta](https://volta.sh), no `sudo` is needed.
+   - **`corepack: command not found`:** Your Node.js install is too old or was built without Corepack. Reinstall Node.js 24+ from [nodejs.org](https://nodejs.org/en/download); Corepack is included by default.
+   - **`pnpm: command not found` after `corepack enable`:** Restart your shell so the new shim is picked up on `PATH`.
+   - **Behind a corporate proxy:** Corepack fetches the pinned pnpm tarball from npmjs.org on first use. Set `HTTPS_PROXY` / `HTTP_PROXY` env vars if your network requires it.
+
+   We migrated from npm to pnpm to get deterministic, content-addressable installs (faster cold installs locally and in CI, byte-identical `node_modules` across machines, stricter override semantics, and patch application via `pnpm.patchedDependencies` instead of a `postinstall` `patch-package` step).
 
 5. **Graphviz (Optional, but Recommended for Production Setups)**
    Install from [Graphviz](https://www.graphviz.org/download/) to enable graph generation in exercise descriptions.
@@ -453,7 +474,7 @@ For production setup, see [Hyperion Service](/admin/hyperion) in the Administrat
 
 ## Client Setup
 
-You need Node.js on your local machine, plus pnpm activated via Corepack (`corepack enable`). The pnpm version is pinned in `package.json` via the `packageManager` field.
+You need Node.js on your local machine, plus pnpm activated via Corepack (`corepack enable`). The pnpm version is pinned in `package.json` via the `packageManager` field. If you haven't activated pnpm yet, see [step 4 of Required Dependencies](#required-dependencies) above for the full first-time setup and troubleshooting tips.
 
 ### Using IntelliJ
 
@@ -523,6 +544,9 @@ For further instructions on how to develop with JHipster, have a look at [Using 
 ### Client
 
 - If you are using a machine with limited RAM *(e.g. ~8 GB RAM)* you might have issues starting the Artemis Client. You can resolve this by following the description in [Using the command line](#using-the-command-line).
+- **`pnpm: command not found`** after cloning the repo: run `corepack enable` once (see [step 4 of Required Dependencies](#required-dependencies)). If `corepack` itself is missing, your Node.js install is too old; reinstall Node.js 24+ from [nodejs.org](https://nodejs.org/en/download).
+- **Accidentally ran `npm install` and got a `package-lock.json`:** delete `package-lock.json` and `node_modules`, then run `pnpm install`. The repository's `.gitignore` blocks `package-lock.json` from being committed, but a stray copy still confuses tooling.
+- **`pnpm install` complains the lockfile is out of date:** the lockfile is authoritative; running `pnpm install` locally without `--frozen-lockfile` updates it. If your edit was intentional (e.g. you bumped a dependency in `package.json`), commit the updated `pnpm-lock.yaml`. If not, run `git checkout pnpm-lock.yaml` and rerun `pnpm install --frozen-lockfile`.
 
 ---
 
