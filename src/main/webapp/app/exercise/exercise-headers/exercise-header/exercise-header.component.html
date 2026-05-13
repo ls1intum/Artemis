@@ -19,8 +19,10 @@
             [submitLabel]="submitLabel()"
             [plagiarismCaseInfo]="plagiarismCaseInfo()"
             [participationMode]="participationMode()"
+            [isGeneratingFeedback]="isGeneratingFeedback()"
             (newParticipation)="onNewParticipation($event)"
             (participationModeChange)="participationMode.set($event)"
+            (generatingFeedback)="generatingFeedback.emit()"
         />
     </div>
 

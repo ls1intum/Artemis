@@ -99,12 +99,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     // Main exercise signal
     private readonly _exercise = signal<Exercise | undefined>(undefined);
+    private readonly _isGeneratingFeedback = signal(false);
     public get exercise(): Exercise | undefined {
         return this._exercise();
     }
     public set exercise(value: Exercise | undefined) {
         this._exercise.set(value);
     }
+
+    readonly isGeneratingFeedback = this._isGeneratingFeedback.asReadonly();
 
     // Student participations signal
     private readonly _studentParticipations = signal<StudentParticipation[]>([]);
@@ -365,6 +368,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             .subscribe((changedParticipation: StudentParticipation) => {
                 if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
                     const currentGraded = this.gradedStudentParticipation();
+                    const currentParticipations = this._studentParticipations() ?? [];
+                    const currentParticipation = currentParticipations.find((participation) => participation.id === changedParticipation.id);
                     // Notify student about late submission result
                     if (
                         changedParticipation.exercise?.dueDate &&
@@ -374,19 +379,25 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     ) {
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
-                    if (
-                        (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.length > getAllResultsOfAllSubmissions(currentGraded?.submissions).length ||
-                            getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.completionDate === undefined) &&
-                        getAllResultsOfAllSubmissions(changedParticipation.submissions).last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                        getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful !== undefined
-                    ) {
-                        if (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful === true) {
+                    const changedResults = getAllResultsOfAllSubmissions(changedParticipation.submissions);
+                    const currentResults = getAllResultsOfAllSubmissions(currentParticipation?.submissions);
+                    const latestChangedResult = changedResults.last();
+                    const previousLatestResult = currentResults.find((result) => result.id === latestChangedResult?.id);
+                    const athenaResultFinished =
+                        latestChangedResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
+                        latestChangedResult.successful !== undefined &&
+                        (changedResults.length > currentResults.length ||
+                            previousLatestResult?.successful !== latestChangedResult.successful ||
+                            (!!latestChangedResult.completionDate && !previousLatestResult?.completionDate));
+
+                    if (athenaResultFinished) {
+                        if (latestChangedResult.successful === true) {
                             this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
                         } else {
                             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                         }
+                        this._isGeneratingFeedback.set(false);
                     }
-                    const currentParticipations = this._studentParticipations();
                     let updatedParticipations: StudentParticipation[];
                     if (currentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
                         updatedParticipations = currentParticipations.map((participation) => {
@@ -410,10 +421,17 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                         updatedParticipations = [...currentParticipations, changedParticipation];
                     }
                     this._studentParticipations.set(updatedParticipations);
+                    this.exercise = { ...this.exercise, studentParticipations: updatedParticipations };
                     this.sortResults();
-                    this.navigateToAthenaResult(changedParticipation);
+                    if (athenaResultFinished && latestChangedResult.successful === true) {
+                        this.navigateToAthenaResult(changedParticipation);
+                    }
                 }
             });
+    }
+
+    onGeneratingFeedback() {
+        this._isGeneratingFeedback.set(true);
     }
 
     /**
@@ -506,6 +524,40 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     private onError(error: string) {
         this.alertService.error(error);
+    }
+
+    private navigateToAthenaResult(changedParticipation: StudentParticipation) {
+        const exercise = this.exercise;
+        if (!exercise?.id || !changedParticipation.id || (exercise.type !== ExerciseType.TEXT && exercise.type !== ExerciseType.MODELING)) {
+            return;
+        }
+
+        const athenaResultWithSubmission = changedParticipation.submissions
+            ?.flatMap((submission) => (submission.results ?? []).map((result) => ({ result, submission })))
+            .filter(({ result }) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true && !!result.completionDate)
+            .sort((a, b) => (a.result.id ?? 0) - (b.result.id ?? 0))
+            .last();
+
+        const submissionId = athenaResultWithSubmission?.submission.id;
+        const resultId = athenaResultWithSubmission?.result.id;
+        if (!submissionId || !resultId) {
+            return;
+        }
+
+        const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
+        this.router.navigate([
+            '/courses',
+            this.courseId,
+            'exercises',
+            exerciseTypePath,
+            exercise.id,
+            'participate',
+            changedParticipation.id,
+            'submission',
+            submissionId,
+            'result',
+            resultId,
+        ]);
     }
 
     toggleShowMoreResults() {
@@ -620,24 +672,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             icon: faWrench,
             translation: 'entity.action.re-evaluate',
         };
-    }
-
-    private navigateToAthenaResult(changedParticipation: StudentParticipation) {
-        const athenaSubmission = changedParticipation.submissions?.find((s) => s.results?.some((r) => r.assessmentType === AssessmentType.AUTOMATIC_ATHENA && r.successful));
-
-        const submissionId = athenaSubmission?.id;
-        if (!submissionId || !this.exercise?.type || !changedParticipation.id) {
-            return;
-        }
-        let exerciseTypePath: string;
-        if (this.exercise.type === ExerciseType.TEXT) {
-            exerciseTypePath = 'text-exercises';
-        } else if (this.exercise.type === ExerciseType.MODELING) {
-            exerciseTypePath = 'modeling-exercises';
-        } else {
-            return;
-        }
-        this.router.navigate(['/courses', this.courseId, 'exercises', exerciseTypePath, this.exercise.id, 'participate', changedParticipation.id, 'submission', submissionId]);
     }
 
     ngOnDestroy() {

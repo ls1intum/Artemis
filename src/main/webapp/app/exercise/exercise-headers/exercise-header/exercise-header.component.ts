@@ -28,7 +28,9 @@ export class ExerciseHeaderComponent {
     readonly participationMode = model<ParticipationMode>('graded');
     readonly athenaEnabled = input<boolean>(false);
     readonly feedbackRequestLimit = input<number>(10);
+    readonly isGeneratingFeedback = input<boolean>(false);
     readonly newParticipation = output<StudentParticipation>();
+    readonly generatingFeedback = output<void>();
 
     // Local signal to track a practice participation created in this session,
     // ensuring the toggle appears immediately without waiting for the parent round-trip.

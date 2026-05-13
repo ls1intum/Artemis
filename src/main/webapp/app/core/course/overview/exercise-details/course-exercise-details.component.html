@@ -14,8 +14,10 @@
             [plagiarismCaseInfo]="plagiarismCaseInfo()"
             [participationMode]="participationMode()"
             [athenaEnabled]="athenaEnabled"
+            [isGeneratingFeedback]="isGeneratingFeedback()"
             (participationModeChange)="participationMode.set($event)"
             (newParticipation)="onNewParticipation($event)"
+            (generatingFeedback)="onGeneratingFeedback()"
         />
 
         <jhi-exercise-split-panel

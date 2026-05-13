@@ -198,17 +198,18 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             .subscribe((changedParticipation: StudentParticipation) => {
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const oldResults = this.participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
-                if (
-                    results &&
-                    ((results?.length || 0) > (oldResults.length || 0) || results?.last()?.completionDate === undefined) &&
-                    results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                    results.last()?.successful !== undefined
-                ) {
+                const latestResult = results.last();
+                const previousLatestResult = oldResults.find((result) => result.id === latestResult?.id);
+                const athenaResultFinished =
+                    latestResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
+                    latestResult.successful !== undefined &&
+                    ((results?.length || 0) > (oldResults.length || 0) ||
+                        previousLatestResult?.successful !== latestResult.successful ||
+                        (!!latestResult.completionDate && !previousLatestResult?.completionDate));
+
+                if (athenaResultFinished) {
                     this.isGeneratingFeedback = false;
-                    if (results.last()?.successful === false) {
-                        this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
-                    } else {
-                        this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
+                    if (latestResult.successful === true) {
                         this.hasAthenaResultForLatestSubmission = true;
                     }
                 }

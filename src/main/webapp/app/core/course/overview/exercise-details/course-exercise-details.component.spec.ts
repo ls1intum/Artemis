@@ -60,6 +60,7 @@ import { LockRepositoryPolicy } from 'app/exercise/shared/entities/submission/su
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { AlertService } from 'app/shared/service/alert.service';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 import { ProblemStatementComponent } from 'app/core/course/overview/exercise-details/problem-statement/problem-statement.component';
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
@@ -441,6 +442,60 @@ describe('CourseExerciseDetailsComponent', () => {
         mergeStudentParticipationMock.mockReturnValue([newParticipation]);
 
         participationWebsocketBehaviorSubject.next({ ...newParticipation, exercise: programmingExercise });
+    });
+
+    it('should merge completed Athena result into exercise before navigating to the result route', async () => {
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+        const oldSubmission = new TextSubmission();
+        oldSubmission.id = 7;
+        oldSubmission.results = [];
+        const oldParticipation = {
+            id: 2,
+            testRun: false,
+            exercise,
+            submissions: [oldSubmission],
+        } as StudentParticipation;
+
+        const athenaResult = {
+            id: 99,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            completionDate: dayjs(),
+            successful: true,
+        } as Result;
+        const changedSubmission = new TextSubmission();
+        changedSubmission.id = oldSubmission.id;
+        changedSubmission.results = [athenaResult];
+        const changedParticipation = {
+            ...oldParticipation,
+            submissions: [changedSubmission],
+        } as StudentParticipation;
+
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, studentParticipations: [oldParticipation] };
+        comp.studentParticipations = [oldParticipation];
+        subscribeForParticipationChangesMock.mockReturnValue(of(undefined, changedParticipation));
+
+        comp.subscribeForNewResults();
+        await fixture.whenStable();
+
+        expect(comp.exercise?.studentParticipations?.[0].submissions?.[0].results?.[0]).toBe(athenaResult);
+        expect(comp.sortedHistoryResults).toEqual([athenaResult]);
+        expect(comp.sortedHistoryResults[0].submission?.id).toBe(changedSubmission.id);
+        expect(navigateSpy).toHaveBeenCalledWith([
+            '/courses',
+            1,
+            'exercises',
+            'text-exercises',
+            exercise.id,
+            'participate',
+            changedParticipation.id,
+            'submission',
+            7,
+            'result',
+            99,
+        ]);
     });
 
     it.each<[string[]]>([[[]], [[MODULE_FEATURE_IRIS]]])('should load iris settings only if module feature iris is active', async (activeModuleFeatures: string[]) => {

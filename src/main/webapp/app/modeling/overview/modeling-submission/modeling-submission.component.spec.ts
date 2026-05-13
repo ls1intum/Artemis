@@ -206,6 +206,8 @@ describe('ModelingSubmissionComponent', () => {
         // Reset shared submission state to prevent test pollution
         submission.submitted = true;
         submission.model = undefined;
+        submission.results = undefined;
+        submission.latestResult = undefined;
         submission.participation!.initializationDate = undefined;
         (<StudentParticipation>submission.participation).exercise!.dueDate = undefined;
         (<StudentParticipation>submission.participation).exercise!.exerciseGroup = undefined;
@@ -528,8 +530,8 @@ describe('ModelingSubmissionComponent', () => {
         resultSubject.next(failedAthenaResult);
         fixture.changeDetectorRef.detectChanges();
 
-        // Verify error was shown
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackFailed');
+        // Parent course exercise details handles Athena result alerts to avoid duplicate toasts.
+        expect(alertServiceSpy).not.toHaveBeenCalled();
         expect(comp.isGeneratingFeedback).toBe(false);
     });
 
@@ -580,7 +582,7 @@ describe('ModelingSubmissionComponent', () => {
 
         // Verify Athena result handling
         expect(comp.assessmentResult).toEqual(athenaResult);
-        expect(alterServiceSuccessSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackSuccessful');
+        expect(alterServiceSuccessSpy).not.toHaveBeenCalled();
     });
 
     it('should set result when new result comes in from websocket', async () => {
