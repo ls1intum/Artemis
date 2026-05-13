@@ -155,8 +155,7 @@
             "word-wrap": "1.2.5",
             "ws": "8.20.0",
             "yargs-parser": "22.0.0"
-        },
-        "onlyBuiltDependencies": []
+        }
     },
     "devDependencies": {
         "@analogjs/vite-plugin-angular": "2.5.0",
@@ -224,7 +223,7 @@
     },
     "engines": {
         "node": ">=24.7.0",
-        "pnpm": ">=10.16.0"
+        "pnpm": ">=11.1.0"
     },
     "scripts": {
         "build": "pnpm run webapp:prod --",

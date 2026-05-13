@@ -27,8 +27,7 @@
         "overrides": {
             "nodemailer": "8.0.5",
             "lodash": "4.18.1"
-        },
-        "onlyBuiltDependencies": []
+        }
     },
     "scripts": {
         "playwright:test": "cross-env NODE_OPTIONS=--max-old-space-size=6144 npm-run-all --serial --continue-on-error playwright:test:parallel playwright:test:sequential merge-junit-reports merge-coverage-reports",
