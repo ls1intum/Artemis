@@ -62,6 +62,11 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
     private static final String TEST_PREFIX = "exweaviateres";
 
+    // Deliberately unique, non-dictionary token so that BM25 tokenization never
+    // collides with titles created by other Weaviate test classes (e.g. "weaviate-wt-test").
+    // Must NOT contain "weaviate" or any other substring shared with other test data.
+    private static final String SEARCH_PREFIX = "Zvk9ExRes";
+
     @Autowired
     private SearchableEntityWeaviateService searchableEntityWeaviateService;
 
@@ -109,20 +114,20 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         // Clean up stale entries from previous test runs to prevent duplicates accumulating
         // in the shared Weaviate collection (which persists across @BeforeEach invocations).
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-        collection.data.deleteMany(Filter.property(SearchableEntitySchema.Properties.TITLE).like("ExWvtResTest*"));
+        collection.data.deleteMany(Filter.property(SearchableEntitySchema.Properties.TITLE).like(SEARCH_PREFIX + "*"));
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         // Create course with a released programming exercise
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         releasedExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        releasedExercise.setTitle("ExWvtResTest Released Exercise");
+        releasedExercise.setTitle(SEARCH_PREFIX + " Released Exercise");
         releasedExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         exerciseRepository.save(releasedExercise);
 
         // Create an unreleased exercise in the same course (release date in the future)
         unreleasedExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
-        unreleasedExercise.setTitle("ExWvtResTest Unreleased Exercise");
+        unreleasedExercise.setTitle(SEARCH_PREFIX + " Unreleased Exercise");
         unreleasedExercise.setReleaseDate(ZonedDateTime.now().plusDays(7));
         exerciseRepository.save(unreleasedExercise);
 
@@ -132,7 +137,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         var notStartedExerciseGroup = ExamFactory.generateExerciseGroup(true, notStartedExam);
         notStartedExerciseGroup = exerciseGroupRepository.save(notStartedExerciseGroup);
         notStartedExamExercise = TextExerciseFactory.generateTextExerciseForExam(notStartedExerciseGroup);
-        notStartedExamExercise.setTitle("ExWvtResTest NotStarted Exam Exercise");
+        notStartedExamExercise.setTitle(SEARCH_PREFIX + " NotStarted Exam Exercise");
         notStartedExamExercise = exerciseRepository.save(notStartedExamExercise);
 
         // Create an exam exercise where the exam is ongoing (started but not ended)
@@ -141,7 +146,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         var ongoingExerciseGroup = ExamFactory.generateExerciseGroup(true, ongoingExam);
         ongoingExerciseGroup = exerciseGroupRepository.save(ongoingExerciseGroup);
         ongoingExamExercise = TextExerciseFactory.generateTextExerciseForExam(ongoingExerciseGroup);
-        ongoingExamExercise.setTitle("ExWvtResTest Ongoing Exam Exercise");
+        ongoingExamExercise.setTitle(SEARCH_PREFIX + " Ongoing Exam Exercise");
         ongoingExamExercise = exerciseRepository.save(ongoingExamExercise);
 
         // Create an exam exercise where the exam has already ended
@@ -150,12 +155,12 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         var endedExerciseGroup = ExamFactory.generateExerciseGroup(true, endedExam);
         endedExerciseGroup = exerciseGroupRepository.save(endedExerciseGroup);
         endedExamExercise = TextExerciseFactory.generateTextExerciseForExam(endedExerciseGroup);
-        endedExamExercise.setTitle("ExWvtResTest Ended Exam Exercise");
+        endedExamExercise.setTitle(SEARCH_PREFIX + " Ended Exam Exercise");
         endedExamExercise = exerciseRepository.save(endedExamExercise);
 
         // Create a lecture in the same course
         lecture = lectureUtilService.createLecture(course);
-        lecture.setTitle("ExWvtResTest Test Lecture");
+        lecture.setTitle(SEARCH_PREFIX + " Test Lecture");
         lecture = lectureTestRepository.save(lecture);
 
         // Index all exercises and the lecture in Weaviate
@@ -179,7 +184,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             assertLectureExistsInWeaviate(weaviateService, lecture);
 
             // Verify BM25 inverted index is ready by checking that a keyword search finds all 6 items
-            var bm25Results = collection.query.bm25("ExWvtResTest", b -> b.limit(10).queryProperties(SearchableEntitySchema.Properties.TITLE));
+            var bm25Results = collection.query.bm25(SEARCH_PREFIX, b -> b.limit(10).queryProperties(SearchableEntitySchema.Properties.TITLE));
             assertThat(bm25Results.objects()).hasSizeGreaterThanOrEqualTo(6);
         });
     }
@@ -194,77 +199,77 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentCannotSeeNotStartedExamExercises() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).doesNotContain("ExWvtResTest NotStarted Exam Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " NotStarted Exam Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentCanSeeStartedAndEndedExamExercisesButNotNotStartedOnes() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("ExWvtResTest Ongoing Exam Exercise", "ExWvtResTest Ended Exam Exercise");
-            assertThat(titles).doesNotContain("ExWvtResTest NotStarted Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Ongoing Exam Exercise", SEARCH_PREFIX + " Ended Exam Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " NotStarted Exam Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentCannotSeeUnreleasedExercises() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("ExWvtResTest Released Exercise");
-            assertThat(titles).doesNotContain("ExWvtResTest Unreleased Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " Unreleased Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
         void testTutorCannotSeeNotEndedExamExercises() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).doesNotContain("ExWvtResTest NotStarted Exam Exercise", "ExWvtResTest Ongoing Exam Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " NotStarted Exam Exercise", SEARCH_PREFIX + " Ongoing Exam Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
         void testTutorCanSeeEndedExamExercises() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("ExWvtResTest Ended Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Ended Exam Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
         void testTutorCanSeeUnreleasedExercises() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("ExWvtResTest Unreleased Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Unreleased Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void testEditorCanSeeAllExercises() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("ExWvtResTest Released Exercise", "ExWvtResTest Unreleased Exercise", "ExWvtResTest NotStarted Exam Exercise",
-                    "ExWvtResTest Ongoing Exam Exercise", "ExWvtResTest Ended Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise", SEARCH_PREFIX + " Unreleased Exercise", SEARCH_PREFIX + " NotStarted Exam Exercise",
+                    SEARCH_PREFIX + " Ongoing Exam Exercise", SEARCH_PREFIX + " Ended Exam Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testInstructorCanSeeAllExercises() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("ExWvtResTest Released Exercise", "ExWvtResTest Unreleased Exercise", "ExWvtResTest NotStarted Exam Exercise",
-                    "ExWvtResTest Ongoing Exam Exercise", "ExWvtResTest Ended Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise", SEARCH_PREFIX + " Unreleased Exercise", SEARCH_PREFIX + " NotStarted Exam Exercise",
+                    SEARCH_PREFIX + " Ongoing Exam Exercise", SEARCH_PREFIX + " Ended Exam Exercise");
         }
     }
 
@@ -274,24 +279,24 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testGlobalSearchStudentFiltersCorrectly() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest", HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX, HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("ExWvtResTest Released Exercise", "ExWvtResTest Ongoing Exam Exercise");
-            assertThat(titles).doesNotContain("ExWvtResTest Unreleased Exercise", "ExWvtResTest NotStarted Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise", SEARCH_PREFIX + " Ongoing Exam Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " Unreleased Exercise", SEARCH_PREFIX + " NotStarted Exam Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testGlobalSearchInstructorSeesAll() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest", HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX, HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("ExWvtResTest Released Exercise", "ExWvtResTest NotStarted Exam Exercise", "ExWvtResTest Ongoing Exam Exercise",
-                    "ExWvtResTest Ended Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise", SEARCH_PREFIX + " NotStarted Exam Exercise", SEARCH_PREFIX + " Ongoing Exam Exercise",
+                    SEARCH_PREFIX + " Ended Exam Exercise");
 
-            var unreleasedResults = request.getList("/api/search?q=ExWvtResTest%20Unreleased&types=exercise", HttpStatus.OK, GlobalSearchResultDTO.class);
-            assertThat(getResultTitles(unreleasedResults)).contains("ExWvtResTest Unreleased Exercise");
+            var unreleasedResults = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Unreleased&types=exercise", HttpStatus.OK, GlobalSearchResultDTO.class);
+            assertThat(getResultTitles(unreleasedResults)).contains(SEARCH_PREFIX + " Unreleased Exercise");
         }
     }
 
@@ -301,30 +306,30 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentCannotSeeNotStartedExamOrUnreleasedExercises() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).doesNotContain("ExWvtResTest NotStarted Exam Exercise", "ExWvtResTest Unreleased Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " NotStarted Exam Exercise", SEARCH_PREFIX + " Unreleased Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentCanSeeStartedAndEndedExamExercisesButNotNotStartedOnes() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("ExWvtResTest Ongoing Exam Exercise", "ExWvtResTest Ended Exam Exercise");
-            assertThat(titles).doesNotContain("ExWvtResTest NotStarted Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Ongoing Exam Exercise", SEARCH_PREFIX + " Ended Exam Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " NotStarted Exam Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void testEditorCanSeeAllExercises() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("ExWvtResTest Released Exercise", "ExWvtResTest Unreleased Exercise", "ExWvtResTest NotStarted Exam Exercise",
-                    "ExWvtResTest Ongoing Exam Exercise", "ExWvtResTest Ended Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise", SEARCH_PREFIX + " Unreleased Exercise", SEARCH_PREFIX + " NotStarted Exam Exercise",
+                    SEARCH_PREFIX + " Ongoing Exam Exercise", SEARCH_PREFIX + " Ended Exam Exercise");
         }
 
         @Test
@@ -341,33 +346,33 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = "admin", roles = "ADMIN")
         void testAdminGlobalSearchWithTypeFilterReturnsOnlyRequestedType() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest&types=exercise", HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exercise", HttpStatus.OK, GlobalSearchResultDTO.class);
             var types = results.stream().map(GlobalSearchResultDTO::type).toList();
 
             assertThat(types).isNotEmpty();
             assertThat(types).allMatch("exercise"::equals);
-            assertThat(getResultTitles(results)).doesNotContain("ExWvtResTest Test Lecture");
+            assertThat(getResultTitles(results)).doesNotContain(SEARCH_PREFIX + " Test Lecture");
         }
 
         @Test
         @WithMockUser(username = "admin", roles = "ADMIN")
         void testAdminGlobalSearchWithLectureTypeFilterReturnsOnlyLectures() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest&types=lecture", HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=lecture", HttpStatus.OK, GlobalSearchResultDTO.class);
             var types = results.stream().map(GlobalSearchResultDTO::type).toList();
 
             assertThat(types).isNotEmpty();
             assertThat(types).allMatch("lecture"::equals);
-            assertThat(getResultTitles(results)).contains("ExWvtResTest Test Lecture");
-            assertThat(getResultTitles(results)).doesNotContain("ExWvtResTest Released Exercise");
+            assertThat(getResultTitles(results)).contains(SEARCH_PREFIX + " Test Lecture");
+            assertThat(getResultTitles(results)).doesNotContain(SEARCH_PREFIX + " Released Exercise");
         }
 
         @Test
         @WithMockUser(username = "admin", roles = "ADMIN")
         void testAdminGlobalSearchWithoutTypeFilterReturnsAllTypes() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest", HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX, HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("ExWvtResTest Released Exercise", "ExWvtResTest Test Lecture");
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise", SEARCH_PREFIX + " Test Lecture");
         }
     }
 
@@ -381,8 +386,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testInstructorReceivesIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
-            var endedExamResult = results.stream().filter(r -> "ExWvtResTest Ended Exam Exercise".equals(r.title())).findFirst();
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var endedExamResult = results.stream().filter(r -> (SEARCH_PREFIX + " Ended Exam Exercise").equals(r.title())).findFirst();
 
             assertThat(endedExamResult).isPresent();
             assertThat(endedExamResult.get().metadata()).containsEntry("isAtLeastTutor", true);
@@ -391,8 +396,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
         void testTutorReceivesIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
-            var endedExamResult = results.stream().filter(r -> "ExWvtResTest Ended Exam Exercise".equals(r.title())).findFirst();
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var endedExamResult = results.stream().filter(r -> (SEARCH_PREFIX + " Ended Exam Exercise").equals(r.title())).findFirst();
 
             assertThat(endedExamResult).isPresent();
             assertThat(endedExamResult.get().metadata()).containsEntry("isAtLeastTutor", true);
@@ -405,8 +410,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentDoesNotReceiveIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
-            var endedExamResult = results.stream().filter(r -> "ExWvtResTest Ended Exam Exercise".equals(r.title())).findFirst();
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var endedExamResult = results.stream().filter(r -> (SEARCH_PREFIX + " Ended Exam Exercise").equals(r.title())).findFirst();
 
             assertThat(endedExamResult).isPresent();
             assertThat(endedExamResult.get().metadata()).doesNotContainKey("isAtLeastTutor");
@@ -419,8 +424,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testIsAtLeastTutorFlagAbsentOnRegularExercise() throws Exception {
-            var results = request.getList("/api/search?q=ExWvtResTest%20Released&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
-            var regularResult = results.stream().filter(r -> "ExWvtResTest Released Exercise".equals(r.title())).findFirst();
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Released&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var regularResult = results.stream().filter(r -> (SEARCH_PREFIX + " Released Exercise").equals(r.title())).findFirst();
 
             assertThat(regularResult).isPresent();
             assertThat(regularResult.get().metadata()).doesNotContainKey("isAtLeastTutor");
