@@ -46,18 +46,18 @@ RUN \
   --mount=type=cache,target=/root/.gradle/caches \
   --mount=type=cache,target=/opt/artemis/.pnpm-store \
   mkdir -p /opt/artemis/.pnpm-store \
-  && ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar pnpmSetCacheDockerfile pnpm_install
+  && ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar pnpmSetCacheDockerfile pnpmInstall
 
 # so far just using the .dockerignore to define what isn't necessary here
 COPY . .
 
-# `-x pnpm_install` skips re-running the install task — node_modules is already
+# `-x pnpmInstall` skips re-running the install task — node_modules is already
 # in place from the previous RUN.
 RUN \
   --mount=type=cache,target=/root/.gradle/caches \
   --mount=type=cache,target=/opt/artemis/.pnpm-store \
   --mount=type=cache,target=/opt/artemis/.cache \
-  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar -x pnpm_install
+  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar -x pnpmInstall
 
 #-----------------------------------------------------------------------------------------------------------------------
 # external build stage

@@ -16,12 +16,12 @@ bootRun {
 }
 
 tasks.register("webapp_test", PnpmTask) {
-    dependsOn "pnpm_install"
+    dependsOn pnpmInstall
     args = ["run", "webapp:test"]
 }
 
 tasks.register("webapp", PnpmTask) {
-    dependsOn "pnpm_install"
+    dependsOn pnpmInstall
     args = ["run", "webapp:prod"]
     environment = [APP_VERSION: project.version]
 }
