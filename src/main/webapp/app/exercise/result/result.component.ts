@@ -113,6 +113,16 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     private resultUpdateSubscription?: ReturnType<typeof setTimeout>;
 
+    constructor() {
+        // Subscribed in the constructor (not ngOnInit) so language changes are wired up exactly once.
+        // ngOnChanges re-invokes ngOnInit when participation/result changes, which would otherwise stack subscriptions.
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+            if (this.resultString) {
+                this.resultString = this.resultService.getResultString(this.result(), this.exercise(), this.participation(), this.short());
+            }
+        });
+    }
+
     /**
      * Executed on initialization. It retrieves the results of a given
      * participation and displays the corresponding message.
@@ -171,12 +181,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         this.submission = this.result()?.submission;
 
         this.evaluate();
-
-        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-            if (this.resultString) {
-                this.resultString = this.resultService.getResultString(this.result(), this.exercise(), this.participation(), this.short());
-            }
-        });
 
         if (this.showBadge() && this.result()) {
             this.badge = ResultService.evaluateBadge(this.participation(), this.result()!);
