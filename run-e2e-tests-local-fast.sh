@@ -172,6 +172,10 @@ command -v pnpm >/dev/null 2>&1   || MISSING="$MISSING pnpm"
 
 if [ -n "$MISSING" ]; then
     echo -e "${RED}ERROR: Missing required commands:$MISSING${NC}"
+    if [[ "$MISSING" == *pnpm* ]]; then
+        echo -e "${RED}Activate the pnpm version pinned in package.json once via:${NC}"
+        echo -e "${RED}    corepack enable${NC}"
+    fi
     exit 1
 fi
 
