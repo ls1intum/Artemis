@@ -27,15 +27,21 @@ describe('ParseLinks Service', () => {
         }).toThrow(new Error('input must not be of zero length'));
     });
 
-    it('should throw an error when passed without comma', () => {
+    it('should throw an error when passed single link without semicolon', () => {
         expect(() => {
-            service.parse('<test>');
+            service.parse('test');
         }).toThrow(new Error('section could not be split on ";"'));
     });
 
     it('should throw an error when passed without semicolon', () => {
         expect(() => {
-            service.parse('<test>,<test2>');
+            service.parse('<test>;a,<test2>');
+        }).toThrow(new Error('section could not be split on ";"'));
+    });
+
+    it('should throw an error when passed multiple semicolon per link', () => {
+        expect(() => {
+            service.parse('<test>;a;a,<test2>;a');
         }).toThrow(new Error('section could not be split on ";"'));
     });
 
