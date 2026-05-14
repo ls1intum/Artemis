@@ -483,7 +483,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
         await initAndTick();
 
-        const initialCount = component.currentFeedbackRequestCount;
+        const initialCount = component.currentFeedbackRequestCount();
 
         // Simulate receiving an Athena assessment result
         const athenaResult: Result = {
@@ -496,7 +496,7 @@ describe('RequestFeedbackButtonComponent', () => {
         // Call the private method directly
         (component as any).handleAthenaAssessment(athenaResult);
 
-        expect(component.currentFeedbackRequestCount).toBe(initialCount + 1);
+        expect(component.currentFeedbackRequestCount()).toBe(initialCount + 1);
     });
 
     it('should not increment feedback count for unsuccessful Athena assessment', async () => {
@@ -508,7 +508,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
         await initAndTick();
 
-        const initialCount = component.currentFeedbackRequestCount;
+        const initialCount = component.currentFeedbackRequestCount();
 
         const athenaResult: Result = {
             id: 1,
@@ -519,7 +519,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
         (component as any).handleAthenaAssessment(athenaResult);
 
-        expect(component.currentFeedbackRequestCount).toBe(initialCount);
+        expect(component.currentFeedbackRequestCount()).toBe(initialCount);
     });
 
     it('should subscribe to result updates when participation has id', async () => {
@@ -685,23 +685,23 @@ describe('RequestFeedbackButtonComponent', () => {
 
         await initAndTick();
 
-        expect(component.currentFeedbackRequestCount).toBe(2);
+        expect(component.currentFeedbackRequestCount()).toBe(2);
     });
 
     describe('feedback request limit', () => {
         it('isFeedbackLimitReached should be true when count is at or above the limit', () => {
-            component.currentFeedbackRequestCount = component.feedbackRequestLimit;
+            component.currentFeedbackRequestCount.set(component.feedbackRequestLimit);
             expect(component.isFeedbackLimitReached()).toBe(true);
 
-            component.currentFeedbackRequestCount = component.feedbackRequestLimit + 5;
+            component.currentFeedbackRequestCount.set(component.feedbackRequestLimit + 5);
             expect(component.isFeedbackLimitReached()).toBe(true);
         });
 
         it('isFeedbackLimitReached should be false when count is below the limit', () => {
-            component.currentFeedbackRequestCount = 0;
+            component.currentFeedbackRequestCount.set(0);
             expect(component.isFeedbackLimitReached()).toBe(false);
 
-            component.currentFeedbackRequestCount = component.feedbackRequestLimit - 1;
+            component.currentFeedbackRequestCount.set(component.feedbackRequestLimit - 1);
             expect(component.isFeedbackLimitReached()).toBe(false);
         });
 
@@ -712,7 +712,7 @@ describe('RequestFeedbackButtonComponent', () => {
             const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
             setupComponentInputs(exercise, true, false);
             component.hasUserAcceptedLLMUsage = false;
-            component.currentFeedbackRequestCount = component.feedbackRequestLimit;
+            component.currentFeedbackRequestCount.set(component.feedbackRequestLimit);
 
             mockLLMModalService.open.mockClear();
             const requestSpy = vi.spyOn(courseExerciseService, 'requestFeedback');

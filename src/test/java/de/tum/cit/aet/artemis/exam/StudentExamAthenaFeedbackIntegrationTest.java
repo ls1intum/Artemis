@@ -13,6 +13,7 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,170 +107,6 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         return textExerciseUtilService.createTextExerciseForExam(exerciseGroup);
     }
 
-    @Test
-    void requestAthenaFeedback_shouldDispatchForTextParticipation() {
-        Exam testExam = examUtilService.addTestExam(course);
-        testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        testExam.setStartDate(ZonedDateTime.now().minusHours(1));
-        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
-        testExam = examRepository.save(testExam);
-        TextExercise textExercise = addTextExerciseToExam(testExam);
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-        exerciseRepository.save(textExercise);
-
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
-
-        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
-        studentExam.addExercise(textExercise);
-
-        StudentParticipation textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
-        addTextSubmission(textParticipation, "Meaningful text answer from the student.");
-
-        studentExam.getStudentParticipations().add(textParticipation);
-        studentExam = studentExamRepository.save(studentExam);
-
-        studentExam.setSubmitted(true);
-        studentExam.setSubmissionDate(ZonedDateTime.now());
-        studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
-
-        detachExerciseParticipationsCollection(studentExam);
-
-        studentExamService.requestAthenaFeedbackForTestExam(studentExam, student);
-
-        verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(textParticipation), any(Result.class));
-    }
-
-    @Test
-    void requestAthenaFeedback_shouldDispatchForModelingParticipation() {
-        Exam testExam = examUtilService.addTestExam(course);
-        testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        testExam.setStartDate(ZonedDateTime.now().minusHours(1));
-        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
-        testExam = examRepository.save(testExam);
-        testExam = examUtilService.addTextModelingProgrammingExercisesToExam(testExam, false, false);
-        ModelingExercise modelingExercise = (ModelingExercise) testExam.getExerciseGroups().get(1).getExercises().iterator().next();
-        modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_TEST);
-        exerciseRepository.save(modelingExercise);
-
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
-
-        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
-        studentExam.addExercise(modelingExercise);
-
-        StudentParticipation modelingParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, student.getLogin());
-        addModelingSubmission(modelingParticipation);
-
-        studentExam.getStudentParticipations().add(modelingParticipation);
-        studentExam = studentExamRepository.save(studentExam);
-
-        studentExam.setSubmitted(true);
-        studentExam.setSubmissionDate(ZonedDateTime.now());
-        studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
-
-        detachExerciseParticipationsCollection(studentExam);
-
-        studentExamService.requestAthenaFeedbackForTestExam(studentExam, student);
-
-        verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(modelingParticipation), any(Result.class));
-    }
-
-    @Test
-    void requestAthenaFeedback_shouldRejectForNonTestExam() {
-        Exam realExam = examUtilService.addExam(course);
-        realExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        realExam.setStartDate(ZonedDateTime.now().minusHours(1));
-        realExam.setEndDate(ZonedDateTime.now().plusHours(1));
-        realExam = examRepository.save(realExam);
-        realExam = examUtilService.addTextModelingProgrammingExercisesToExam(realExam, false, false);
-
-        TextExercise textExercise = (TextExercise) realExam.getExerciseGroups().getFirst().getExercises().iterator().next();
-
-        StudentExam studentExam = examUtilService.addStudentExamWithUser(realExam, student);
-        studentExam.addExercise(textExercise);
-        studentExam.setSubmitted(true);
-        studentExam.setSubmissionDate(ZonedDateTime.now());
-        studentExam = studentExamRepository.save(studentExam);
-
-        StudentExam finalStudentExam = studentExam;
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
-    }
-
-    @Test
-    void requestAthenaFeedback_shouldRejectWhenRateLimitExceeded() {
-        Exam testExam = examUtilService.addTestExam(course);
-        testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        testExam.setStartDate(ZonedDateTime.now().minusHours(1));
-        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
-        testExam = examRepository.save(testExam);
-        TextExercise textExercise = addTextExerciseToExam(testExam);
-
-        for (int i = 0; i < 10; i++) {
-            seedAttemptWithAthenaResult(testExam, textExercise);
-        }
-
-        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
-        studentExam.addExercise(textExercise);
-
-        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
-        addTextSubmission(participation, "This is the eleventh attempt and should not receive Athena feedback.");
-
-        studentExam.getStudentParticipations().add(participation);
-        studentExam = studentExamRepository.save(studentExam);
-
-        studentExam.setSubmitted(true);
-        studentExam.setSubmissionDate(ZonedDateTime.now());
-        studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
-
-        detachExerciseParticipationsCollection(studentExam);
-
-        StudentExam finalStudentExam = studentExam;
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
-    }
-
-    @Test
-    void requestAthenaFeedback_shouldStillDispatchPeersWhenOneSubmissionAlreadyHasAthenaResult() {
-        Exam testExam = examUtilService.addTestExam(course);
-        testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        testExam.setStartDate(ZonedDateTime.now().minusHours(1));
-        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
-        testExam = examRepository.save(testExam);
-        testExam = examUtilService.addTextModelingProgrammingExercisesToExam(testExam, false, false);
-
-        TextExercise textExercise = (TextExercise) testExam.getExerciseGroups().getFirst().getExercises().iterator().next();
-        ModelingExercise modelingExercise = (ModelingExercise) testExam.getExerciseGroups().get(1).getExercises().iterator().next();
-        modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_TEST);
-        exerciseRepository.save(modelingExercise);
-
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
-
-        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
-        studentExam.addExercise(textExercise);
-        studentExam.addExercise(modelingExercise);
-
-        // text submission already has an Athena result — must not block the modeling peer
-        StudentParticipation textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
-        TextSubmission textSubmission = addTextSubmission(textParticipation, "Answer for which Athena feedback was already generated.");
-        saveAthenaResult(textSubmission, textExercise.getId(), ZonedDateTime.now());
-
-        // modeling submission has no result yet — should still get dispatched
-        StudentParticipation modelingParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, student.getLogin());
-        addModelingSubmission(modelingParticipation);
-
-        studentExam.getStudentParticipations().add(textParticipation);
-        studentExam.getStudentParticipations().add(modelingParticipation);
-        studentExam = studentExamRepository.save(studentExam);
-
-        studentExam.setSubmitted(true);
-        studentExam.setSubmissionDate(ZonedDateTime.now());
-        studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
-
-        detachExerciseParticipationsCollection(studentExam);
-
-        studentExamService.requestAthenaFeedbackForTestExam(studentExam, student);
-
-        verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(modelingParticipation), any(Result.class));
-    }
-
     private void seedAttemptWithAthenaResult(Exam testExam, TextExercise textExercise) {
         StudentExam attempt = examUtilService.addStudentExamForTestExam(testExam, student);
         attempt.addExercise(textExercise);
@@ -316,198 +153,382 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         resultRepository.save(athenaResult);
     }
 
-    @Test
-    void requestAthenaFeedback_shouldRejectWhenNoExerciseHasFeedbackSuggestionModuleConfigured() {
-        Exam testExam = examUtilService.addTestExam(course);
-        testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        testExam.setStartDate(ZonedDateTime.now().minusHours(1));
-        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
-        testExam = examRepository.save(testExam);
-        TextExercise textExercise = addTextExerciseToExam(testExam);
-        // intentionally do NOT set feedbackSuggestionModule
+    @Nested
+    class DispatchHappyPath {
 
-        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
-        studentExam.addExercise(textExercise);
+        @Test
+        void requestAthenaFeedback_shouldDispatchForTextParticipation() {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            TextExercise textExercise = addTextExerciseToExam(testExam);
+            textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
+            exerciseRepository.save(textExercise);
 
-        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
-        addTextSubmission(participation, "Submission for an exercise without a configured feedback module.");
+            athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
 
-        studentExam.getStudentParticipations().add(participation);
-        studentExam = studentExamRepository.save(studentExam);
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            studentExam.addExercise(textExercise);
 
-        studentExam.setSubmitted(true);
-        studentExam.setSubmissionDate(ZonedDateTime.now());
-        studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
+            StudentParticipation textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
+            addTextSubmission(textParticipation, "Meaningful text answer from the student.");
 
-        detachExerciseParticipationsCollection(studentExam);
+            studentExam.getStudentParticipations().add(textParticipation);
+            studentExam = studentExamRepository.save(studentExam);
 
-        StudentExam finalStudentExam = studentExam;
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(ZonedDateTime.now());
+            studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
+
+            detachExerciseParticipationsCollection(studentExam);
+
+            studentExamService.requestAthenaFeedbackForTestExam(studentExam, student);
+
+            verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(textParticipation), any(Result.class));
+        }
+
+        @Test
+        void requestAthenaFeedback_shouldDispatchForModelingParticipation() {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            testExam = examUtilService.addTextModelingProgrammingExercisesToExam(testExam, false, false);
+            ModelingExercise modelingExercise = (ModelingExercise) testExam.getExerciseGroups().get(1).getExercises().iterator().next();
+            modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_TEST);
+            exerciseRepository.save(modelingExercise);
+
+            athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
+
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            studentExam.addExercise(modelingExercise);
+
+            StudentParticipation modelingParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, student.getLogin());
+            addModelingSubmission(modelingParticipation);
+
+            studentExam.getStudentParticipations().add(modelingParticipation);
+            studentExam = studentExamRepository.save(studentExam);
+
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(ZonedDateTime.now());
+            studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
+
+            detachExerciseParticipationsCollection(studentExam);
+
+            studentExamService.requestAthenaFeedbackForTestExam(studentExam, student);
+
+            verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(modelingParticipation), any(Result.class));
+        }
+
+        @Test
+        void requestAthenaFeedback_shouldStillDispatchPeersWhenOneSubmissionAlreadyHasAthenaResult() {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            testExam = examUtilService.addTextModelingProgrammingExercisesToExam(testExam, false, false);
+
+            TextExercise textExercise = (TextExercise) testExam.getExerciseGroups().getFirst().getExercises().iterator().next();
+            ModelingExercise modelingExercise = (ModelingExercise) testExam.getExerciseGroups().get(1).getExercises().iterator().next();
+            modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_TEST);
+            exerciseRepository.save(modelingExercise);
+
+            athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
+
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            studentExam.addExercise(textExercise);
+            studentExam.addExercise(modelingExercise);
+
+            // text submission already has an Athena result — must not block the modeling peer
+            StudentParticipation textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
+            TextSubmission textSubmission = addTextSubmission(textParticipation, "Answer for which Athena feedback was already generated.");
+            saveAthenaResult(textSubmission, textExercise.getId(), ZonedDateTime.now());
+
+            // modeling submission has no result yet — should still get dispatched
+            StudentParticipation modelingParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, student.getLogin());
+            addModelingSubmission(modelingParticipation);
+
+            studentExam.getStudentParticipations().add(textParticipation);
+            studentExam.getStudentParticipations().add(modelingParticipation);
+            studentExam = studentExamRepository.save(studentExam);
+
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(ZonedDateTime.now());
+            studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
+
+            detachExerciseParticipationsCollection(studentExam);
+
+            studentExamService.requestAthenaFeedbackForTestExam(studentExam, student);
+
+            verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(modelingParticipation), any(Result.class));
+        }
     }
 
-    @Test
-    void requestAthenaFeedback_shouldRejectUnsubmittedExam() {
-        Exam testExam = examUtilService.addTestExam(course);
-        testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        testExam.setStartDate(ZonedDateTime.now().minusHours(1));
-        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
-        testExam = examRepository.save(testExam);
+    @Nested
+    class Rejections {
 
-        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
-        // Do NOT mark as submitted
+        @Test
+        void requestAthenaFeedback_shouldRejectForNonTestExam() {
+            Exam realExam = examUtilService.addExam(course);
+            realExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            realExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            realExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            realExam = examRepository.save(realExam);
+            realExam = examUtilService.addTextModelingProgrammingExercisesToExam(realExam, false, false);
 
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamService.requestAthenaFeedbackForTestExam(studentExam, student));
+            TextExercise textExercise = (TextExercise) realExam.getExerciseGroups().getFirst().getExercises().iterator().next();
+
+            StudentExam studentExam = examUtilService.addStudentExamWithUser(realExam, student);
+            studentExam.addExercise(textExercise);
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(ZonedDateTime.now());
+            studentExam = studentExamRepository.save(studentExam);
+
+            StudentExam finalStudentExam = studentExam;
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+        }
+
+        @Test
+        void requestAthenaFeedback_shouldRejectUnsubmittedExam() {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            // Do NOT mark as submitted
+
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamService.requestAthenaFeedbackForTestExam(studentExam, student));
+        }
+
+        @Test
+        void requestAthenaFeedback_shouldRejectWhenNoExerciseHasFeedbackSuggestionModuleConfigured() {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            TextExercise textExercise = addTextExerciseToExam(testExam);
+            // intentionally do NOT set feedbackSuggestionModule
+
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            studentExam.addExercise(textExercise);
+
+            StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
+            addTextSubmission(participation, "Submission for an exercise without a configured feedback module.");
+
+            studentExam.getStudentParticipations().add(participation);
+            studentExam = studentExamRepository.save(studentExam);
+
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(ZonedDateTime.now());
+            studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
+
+            detachExerciseParticipationsCollection(studentExam);
+
+            StudentExam finalStudentExam = studentExam;
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+        }
     }
 
-    @Test
-    void getAthenaFeedbackUsage_shouldReturnZeroWhenNoAthenaResultsExist() {
-        Exam testExam = examUtilService.addTestExam(course);
-        testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        testExam.setStartDate(ZonedDateTime.now().minusHours(1));
-        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
-        testExam = examRepository.save(testExam);
+    @Nested
+    class RateLimit {
 
-        AthenaFeedbackUsageDTO usage = studentExamService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+        @Test
+        void requestAthenaFeedback_shouldRejectWhenRateLimitExceeded() {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            TextExercise textExercise = addTextExerciseToExam(testExam);
 
-        assertThat(usage.used()).isZero();
-        assertThat(usage.limit()).isPositive();
+            for (int i = 0; i < 10; i++) {
+                seedAttemptWithAthenaResult(testExam, textExercise);
+            }
+
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            studentExam.addExercise(textExercise);
+
+            StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
+            addTextSubmission(participation, "This is the eleventh attempt and should not receive Athena feedback.");
+
+            studentExam.getStudentParticipations().add(participation);
+            studentExam = studentExamRepository.save(studentExam);
+
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(ZonedDateTime.now());
+            studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
+
+            detachExerciseParticipationsCollection(studentExam);
+
+            StudentExam finalStudentExam = studentExam;
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+        }
     }
 
-    @Test
-    void getAthenaFeedbackUsage_shouldCountAttemptsWithSuccessfulAthenaResult() {
-        Exam testExam = examUtilService.addTestExam(course);
-        testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        testExam.setStartDate(ZonedDateTime.now().minusHours(1));
-        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
-        testExam = examRepository.save(testExam);
-        TextExercise textExercise = addTextExerciseToExam(testExam);
+    @Nested
+    class UsageCounting {
 
-        seedAttemptWithAthenaResult(testExam, textExercise);
-        seedAttemptWithAthenaResult(testExam, textExercise);
-        seedAttemptWithAthenaResult(testExam, textExercise);
+        @Test
+        void getAthenaFeedbackUsage_shouldReturnZeroWhenNoAthenaResultsExist() {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
 
-        AthenaFeedbackUsageDTO usage = studentExamService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+            AthenaFeedbackUsageDTO usage = studentExamService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
 
-        assertThat(usage.used()).isEqualTo(3L);
+            assertThat(usage.used()).isZero();
+            assertThat(usage.limit()).isPositive();
+        }
+
+        @Test
+        void getAthenaFeedbackUsage_shouldCountAttemptsWithSuccessfulAthenaResult() {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            TextExercise textExercise = addTextExerciseToExam(testExam);
+
+            seedAttemptWithAthenaResult(testExam, textExercise);
+            seedAttemptWithAthenaResult(testExam, textExercise);
+            seedAttemptWithAthenaResult(testExam, textExercise);
+
+            AthenaFeedbackUsageDTO usage = studentExamService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+
+            assertThat(usage.used()).isEqualTo(3L);
+        }
+
+        @Test
+        void getAthenaFeedbackUsage_shouldIgnoreAthenaResultsFromOtherExams() {
+            Exam otherExam = examUtilService.addTestExam(course);
+            otherExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            otherExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            otherExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            otherExam = examRepository.save(otherExam);
+            TextExercise otherTextExercise = addTextExerciseToExam(otherExam);
+            seedAttemptWithAthenaResult(otherExam, otherTextExercise);
+
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+
+            AthenaFeedbackUsageDTO usage = studentExamService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+
+            assertThat(usage.used()).isZero();
+        }
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void restRequestAthenaFeedback_shouldReturnOkAndInvokeApis() throws Exception {
-        Exam testExam = examUtilService.addTestExam(course);
-        testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        testExam.setStartDate(ZonedDateTime.now().minusHours(1));
-        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
-        testExam = examRepository.save(testExam);
-        testExam = examUtilService.addTextModelingProgrammingExercisesToExam(testExam, false, false);
+    @Nested
+    class RestEndpoints {
 
-        TextExercise textExercise = (TextExercise) testExam.getExerciseGroups().getFirst().getExercises().iterator().next();
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-        exerciseRepository.save(textExercise);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void restRequestAthenaFeedback_shouldReturnOkAndInvokeApis() throws Exception {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            testExam = examUtilService.addTextModelingProgrammingExercisesToExam(testExam, false, false);
 
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+            TextExercise textExercise = (TextExercise) testExam.getExerciseGroups().getFirst().getExercises().iterator().next();
+            textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
+            exerciseRepository.save(textExercise);
 
-        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
-        studentExam.addExercise(textExercise);
+            athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
 
-        StudentParticipation textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
-        addTextSubmission(textParticipation, "Meaningful text answer from the student.");
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            studentExam.addExercise(textExercise);
 
-        studentExam.getStudentParticipations().add(textParticipation);
-        studentExam = studentExamRepository.save(studentExam);
+            StudentParticipation textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
+            addTextSubmission(textParticipation, "Meaningful text answer from the student.");
 
-        studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
+            studentExam.getStudentParticipations().add(textParticipation);
+            studentExam = studentExamRepository.save(studentExam);
 
-        String url = "/api/exam/courses/" + course.getId() + "/exams/" + testExam.getId() + "/student-exams/" + studentExam.getId() + "/request-feedback";
-        request.postWithoutResponseBody(url, null, HttpStatus.OK);
+            studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
 
-        verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(textParticipation), any(Result.class));
-    }
+            String url = "/api/exam/courses/" + course.getId() + "/exams/" + testExam.getId() + "/student-exams/" + studentExam.getId() + "/request-feedback";
+            request.postWithoutResponseBody(url, null, HttpStatus.OK);
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
-    void restRequestAthenaFeedback_shouldReturnForbiddenWhenCurrentUserIsNotOwner() throws Exception {
-        Exam testExam = examUtilService.addTestExam(course);
-        testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        testExam.setStartDate(ZonedDateTime.now().minusHours(1));
-        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
-        testExam = examRepository.save(testExam);
-        TextExercise textExercise = addTextExerciseToExam(testExam);
+            verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(textParticipation), any(Result.class));
+        }
 
-        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
-        studentExam.addExercise(textExercise);
-        studentExam.setSubmitted(true);
-        studentExam.setSubmissionDate(ZonedDateTime.now());
-        studentExam = studentExamRepository.save(studentExam);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+        void restRequestAthenaFeedback_shouldReturnForbiddenWhenCurrentUserIsNotOwner() throws Exception {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            TextExercise textExercise = addTextExerciseToExam(testExam);
 
-        String url = "/api/exam/courses/" + course.getId() + "/exams/" + testExam.getId() + "/student-exams/" + studentExam.getId() + "/request-feedback";
-        request.postWithoutResponseBody(url, null, HttpStatus.FORBIDDEN);
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            studentExam.addExercise(textExercise);
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(ZonedDateTime.now());
+            studentExam = studentExamRepository.save(studentExam);
 
-        // Silence unused-field warning: otherStudent is the user authenticated via @WithMockUser.
-        assertThat(otherStudent.getLogin()).isEqualTo(TEST_PREFIX + "student2");
-    }
+            String url = "/api/exam/courses/" + course.getId() + "/exams/" + testExam.getId() + "/student-exams/" + studentExam.getId() + "/request-feedback";
+            request.postWithoutResponseBody(url, null, HttpStatus.FORBIDDEN);
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void restGetAthenaFeedbackUsage_shouldReturnDto() throws Exception {
-        Exam testExam = examUtilService.addTestExam(course);
-        testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        testExam.setStartDate(ZonedDateTime.now().minusHours(1));
-        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
-        testExam = examRepository.save(testExam);
-        TextExercise textExercise = addTextExerciseToExam(testExam);
+            // Silence unused-field warning: otherStudent is the user authenticated via @WithMockUser.
+            assertThat(otherStudent.getLogin()).isEqualTo(TEST_PREFIX + "student2");
+        }
 
-        seedAttemptWithAthenaResult(testExam, textExercise);
-        seedAttemptWithAthenaResult(testExam, textExercise);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void restGetAthenaFeedbackUsage_shouldReturnDto() throws Exception {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            TextExercise textExercise = addTextExerciseToExam(testExam);
 
-        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
-        studentExam.addExercise(textExercise);
-        studentExam = studentExamRepository.save(studentExam);
+            seedAttemptWithAthenaResult(testExam, textExercise);
+            seedAttemptWithAthenaResult(testExam, textExercise);
 
-        String url = "/api/exam/courses/" + course.getId() + "/exams/" + testExam.getId() + "/student-exams/" + studentExam.getId() + "/athena-feedback-usage";
-        AthenaFeedbackUsageDTO usage = request.get(url, HttpStatus.OK, AthenaFeedbackUsageDTO.class);
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            studentExam.addExercise(textExercise);
+            studentExam = studentExamRepository.save(studentExam);
 
-        assertThat(usage).isNotNull();
-        assertThat(usage.used()).isEqualTo(2L);
-        assertThat(usage.limit()).isPositive();
-    }
+            String url = "/api/exam/courses/" + course.getId() + "/exams/" + testExam.getId() + "/student-exams/" + studentExam.getId() + "/athena-feedback-usage";
+            AthenaFeedbackUsageDTO usage = request.get(url, HttpStatus.OK, AthenaFeedbackUsageDTO.class);
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
-    void restGetAthenaFeedbackUsage_shouldReturnForbiddenWhenCurrentUserIsNotOwner() throws Exception {
-        Exam testExam = examUtilService.addTestExam(course);
-        testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        testExam.setStartDate(ZonedDateTime.now().minusHours(1));
-        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
-        testExam = examRepository.save(testExam);
-        TextExercise textExercise = addTextExerciseToExam(testExam);
+            assertThat(usage).isNotNull();
+            assertThat(usage.used()).isEqualTo(2L);
+            assertThat(usage.limit()).isPositive();
+        }
 
-        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
-        studentExam.addExercise(textExercise);
-        studentExam = studentExamRepository.save(studentExam);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+        void restGetAthenaFeedbackUsage_shouldReturnForbiddenWhenCurrentUserIsNotOwner() throws Exception {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            TextExercise textExercise = addTextExerciseToExam(testExam);
 
-        String url = "/api/exam/courses/" + course.getId() + "/exams/" + testExam.getId() + "/student-exams/" + studentExam.getId() + "/athena-feedback-usage";
-        request.get(url, HttpStatus.FORBIDDEN, AthenaFeedbackUsageDTO.class);
-    }
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            studentExam.addExercise(textExercise);
+            studentExam = studentExamRepository.save(studentExam);
 
-    @Test
-    void getAthenaFeedbackUsage_shouldIgnoreAthenaResultsFromOtherExams() {
-        Exam otherExam = examUtilService.addTestExam(course);
-        otherExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        otherExam.setStartDate(ZonedDateTime.now().minusHours(1));
-        otherExam.setEndDate(ZonedDateTime.now().plusHours(1));
-        otherExam = examRepository.save(otherExam);
-        TextExercise otherTextExercise = addTextExerciseToExam(otherExam);
-        seedAttemptWithAthenaResult(otherExam, otherTextExercise);
-
-        Exam testExam = examUtilService.addTestExam(course);
-        testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        testExam.setStartDate(ZonedDateTime.now().minusHours(1));
-        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
-        testExam = examRepository.save(testExam);
-
-        AthenaFeedbackUsageDTO usage = studentExamService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
-
-        assertThat(usage.used()).isZero();
+            String url = "/api/exam/courses/" + course.getId() + "/exams/" + testExam.getId() + "/student-exams/" + studentExam.getId() + "/athena-feedback-usage";
+            request.get(url, HttpStatus.FORBIDDEN, AthenaFeedbackUsageDTO.class);
+        }
     }
 }

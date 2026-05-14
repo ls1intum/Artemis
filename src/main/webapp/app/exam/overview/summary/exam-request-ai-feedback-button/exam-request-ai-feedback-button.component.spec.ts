@@ -97,6 +97,10 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
         fixture.componentRef.setInput('studentExam', exam);
     }
 
+    function withOverrides<T>(base: T, overrides: Partial<T>): T {
+        return Object.assign({}, base, overrides) as T;
+    }
+
     function enableAthena(): void {
         const profileService = TestBed.inject(ProfileService);
         vi.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
@@ -112,8 +116,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             enableAthena();
             acceptLLMUsage();
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
 
             const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
@@ -123,8 +126,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
         it('should hide the button for a real exam', () => {
             enableAthena();
 
-            setStudentExam({ ...studentExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExam, { submitted: true }));
             fixture.detectChanges();
 
             const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
@@ -141,8 +143,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 exerciseGroup,
             } as TextExercise;
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true, exercises: [exerciseWithoutModule] });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [exerciseWithoutModule] }));
             fixture.detectChanges();
 
             const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
@@ -153,8 +154,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             const profileService = TestBed.inject(ProfileService);
             vi.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
 
             const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
@@ -165,8 +165,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             enableAthena();
             acceptLLMUsage();
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
+            fixture.detectChanges();
             component.isRequestingFeedback.set(true);
             fixture.detectChanges();
 
@@ -180,8 +180,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
             const requestSpy = vi.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(of(undefined));
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
 
             const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
@@ -199,8 +198,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             enableAthena();
             acceptLLMUsage();
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
 
             const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
@@ -214,8 +212,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
             vi.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
 
             const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
@@ -230,8 +227,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
             vi.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
 
             const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
@@ -249,8 +245,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             enableAthena();
             const usageSpy = vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of(athenaUsage));
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
+            fixture.detectChanges();
 
             expect(usageSpy).toHaveBeenCalledOnce();
             expect(usageSpy).toHaveBeenCalledWith(1, studentExamForTestExam.exam!.id, studentExamForTestExam.id);
@@ -263,8 +259,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             acceptLLMUsage();
             vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
 
             expect(component.athenaFeedbackUsed()).toBe(0);
@@ -280,8 +275,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             enableAthena();
             const usageSpy = vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage');
 
-            setStudentExam({ ...studentExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExam, { submitted: true }));
+            fixture.detectChanges();
 
             expect(usageSpy).not.toHaveBeenCalled();
         });
@@ -291,8 +286,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             vi.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
             const usageSpy = vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage');
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
+            fixture.detectChanges();
 
             expect(usageSpy).not.toHaveBeenCalled();
         });
@@ -301,8 +296,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             enableAthena();
             const usageSpy = vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage');
 
-            setStudentExam({ ...studentExamForTestExam, submitted: false });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: false }));
+            fixture.detectChanges();
 
             expect(usageSpy).not.toHaveBeenCalled();
         });
@@ -326,8 +321,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 feedbackSuggestionModule: 'module_text_test',
             } as TextExercise;
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true, exercises: [athenaTextExercise] });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [athenaTextExercise] }));
+            fixture.detectChanges();
 
             // handleAthenaResult should now be a no-op for this attempt.
             (component as any).handleAthenaResult({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
@@ -341,8 +336,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
             const requestSpy = vi.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(of(undefined));
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
 
             return {
@@ -393,8 +387,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             const accountService = TestBed.inject(AccountService);
             vi.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: LLMSelectionDecision.LOCAL_AI } as any);
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
+            fixture.detectChanges();
 
             expect(component.hasUserAcceptedLLMUsage()).toBe(true);
         });
@@ -478,8 +472,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             enableAthena();
             vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true, exercises: [textExercise] });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [textExercise] }));
+            fixture.detectChanges();
             // Simulate a post-click state to exercise the spinner gate.
             component.feedbackRequested.set(true);
 
@@ -504,8 +498,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 feedbackSuggestionModule: 'module_text_test',
             } as TextExercise;
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true, exercises: [filledExercise] });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [filledExercise] }));
+            fixture.detectChanges();
             component.feedbackRequested.set(true);
 
             // One eligible exercise, no result yet → spinner active.
@@ -530,7 +524,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             const participation = { id: 42, student: user, submissions: [submissionWithAthena] } as StudentParticipation;
             const exercise = { id: 99, type: ExerciseType.TEXT, studentParticipations: [participation], exerciseGroup } as TextExercise;
 
-            setStudentExam({ ...studentExamForTestExam, exercises: [exercise] });
+            setStudentExam(withOverrides(studentExamForTestExam, { exercises: [exercise] }));
             expect(component.hasAnyAthenaResultForCurrentAttempt).toBe(true);
         });
 
@@ -544,7 +538,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 exerciseGroup,
             } as QuizExercise;
 
-            setStudentExam({ ...studentExamForTestExam, exercises: [quizExerciseWithAthena] });
+            setStudentExam(withOverrides(studentExamForTestExam, { exercises: [quizExerciseWithAthena] }));
             expect(component.hasAnyAthenaResultForCurrentAttempt).toBe(false);
         });
     });
@@ -581,8 +575,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 return participationId === nonEmptyTextParticipation.id! ? textSubject : modelingSubject;
             });
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true, exercises: [nonEmptyTextExercise, modelingExercise] });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [nonEmptyTextExercise, modelingExercise] }));
+            fixture.detectChanges();
             return [textSubject, modelingSubject];
         }
 
@@ -643,8 +637,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             } as TextExercise;
 
             localStorage.setItem(feedbackRequestedKey, 'true');
-            setStudentExam({ ...studentExamForTestExam, submitted: true, exercises: [seededExercise] });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [seededExercise] }));
+            fixture.detectChanges();
 
             expect(component.feedbackRequested()).toBe(true);
             expect(component.hasAllAthenaResultsForCurrentAttempt()).toBe(true);
@@ -661,8 +655,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             const websocketService = TestBed.inject(ParticipationWebsocketService);
             const subscribeSpy = vi.spyOn(websocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
+            fixture.detectChanges();
 
             expect(subscribeSpy).toHaveBeenCalled();
 
@@ -683,16 +677,15 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             const websocketService = TestBed.inject(ParticipationWebsocketService);
             vi.spyOn(websocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(new BehaviorSubject<Result | undefined>(undefined));
 
-            setStudentExam({ ...studentExamForTestExam, submitted: true });
-            component.ngOnInit();
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
+            fixture.detectChanges();
 
-            const subscriptions: { unsubscribe: () => void }[] = (component as any).athenaResultSubscriptions;
+            const subscriptions: { closed: boolean }[] = (component as any).athenaResultSubscriptions;
             expect(subscriptions.length).toBeGreaterThan(0);
-            const unsubscribeSpies = subscriptions.map((sub) => vi.spyOn(sub, 'unsubscribe'));
 
-            component.ngOnDestroy();
+            fixture.destroy();
 
-            unsubscribeSpies.forEach((spy) => expect(spy).toHaveBeenCalled());
+            subscriptions.forEach((sub) => expect(sub.closed).toBe(true));
         });
     });
 });

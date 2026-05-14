@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { Subscription, filter, skip } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -62,8 +62,9 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     isExamExercise: boolean;
     participation?: StudentParticipation;
     hasUserAcceptedLLMUsage: boolean;
-    currentFeedbackRequestCount = 0;
+    currentFeedbackRequestCount = signal(0);
     readonly feedbackRequestLimit = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
+    readonly isFeedbackLimitReached = computed(() => this.currentFeedbackRequestCount() >= this.feedbackRequestLimit);
 
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);
@@ -105,10 +106,11 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
                     // Prefer practice participation when it exists (student is working in practice mode)
                     this.participation = practiceParticipation ?? gradedParticipation;
                     if (this.participation) {
-                        this.currentFeedbackRequestCount =
+                        this.currentFeedbackRequestCount.set(
                             getAllResultsOfAllSubmissions(this.participation.submissions)?.filter(
                                 (result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA && result.successful == true,
-                            ).length ?? 0;
+                            ).length ?? 0,
+                        );
                         this.subscribeToResultUpdates();
                     }
                 },
@@ -170,10 +172,6 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         this.requestFeedback();
     }
 
-    isFeedbackLimitReached(): boolean {
-        return this.currentFeedbackRequestCount >= this.feedbackRequestLimit;
-    }
-
     private subscribeToResultUpdates() {
         if (!this.participation?.id) {
             return;
@@ -192,7 +190,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     private handleAthenaAssessment(result: Result) {
         if (result.completionDate && result.successful) {
-            this.currentFeedbackRequestCount += 1;
+            this.currentFeedbackRequestCount.update((count) => count + 1);
         }
     }
 

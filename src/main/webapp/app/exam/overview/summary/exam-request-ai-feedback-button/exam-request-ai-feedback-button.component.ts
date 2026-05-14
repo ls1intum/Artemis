@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription, filter, skip } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faRobot, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -30,7 +31,7 @@ const FEEDBACK_REQUESTED_LOCAL_STORAGE_PREFIX = 'artemis_exam_ai_feedback_reques
     templateUrl: './exam-request-ai-feedback-button.component.html',
     imports: [FaIconComponent, TranslateDirective],
 })
-export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
+export class ExamRequestAiFeedbackButtonComponent {
     private readonly examParticipationService = inject(ExamParticipationService);
     private readonly profileService = inject(ProfileService);
     private readonly accountService = inject(AccountService);
@@ -39,6 +40,7 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
     private readonly llmModalService = inject(LLMSelectionModalService);
     private readonly participationWebsocketService = inject(ParticipationWebsocketService);
     private readonly alertService = inject(AlertService);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly courseId = input.required<number>();
     readonly studentExam = input.required<StudentExam>();
@@ -122,31 +124,44 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
         });
     }
 
-    private feedbackSubscription?: Subscription;
-    private llmSelectionSubscription?: Subscription;
     private athenaResultSubscriptions: Subscription[] = [];
     private currentAttemptCounted = false;
 
-    ngOnInit(): void {
-        this.athenaEnabled.set(this.profileService.isProfileActive(PROFILE_ATHENA));
-        this.feedbackRequested.set(this.localStorageService.retrieve<boolean>(this.getFeedbackRequestedStorageKey()) ?? false);
-        this.setUserAcceptedLLMUsage();
-        this.loadAthenaFeedbackUsage();
-    }
+    constructor() {
+        let initialized = false;
+        effect(() => {
+            if (initialized) {
+                return;
+            }
+            initialized = true;
+            this.athenaEnabled.set(this.profileService.isProfileActive(PROFILE_ATHENA));
+            this.hasUserAcceptedLLMUsage.set(this.isAcceptedLLMSelection(this.accountService.userIdentity()?.selectedLLMUsage));
+        });
 
-    ngOnDestroy(): void {
-        this.feedbackSubscription?.unsubscribe();
-        this.llmSelectionSubscription?.unsubscribe();
-        this.athenaResultSubscriptions.forEach((subscription) => subscription.unsubscribe());
+        // Read the persisted "feedback requested" flag whenever the studentExam input is (re)set.
+        effect(() => {
+            const exam = this.studentExam();
+            if (exam?.id === undefined) {
+                return;
+            }
+            untracked(() => {
+                this.feedbackRequested.set(this.localStorageService.retrieve<boolean>(this.getFeedbackRequestedStorageKey()) ?? false);
+            });
+        });
+
+        // Load Athena feedback usage and subscribe to result updates once the button becomes visible.
+        let usageLoaded = false;
+        effect(() => {
+            if (!this.isVisible() || usageLoaded) {
+                return;
+            }
+            usageLoaded = true;
+            untracked(() => this.loadAthenaFeedbackUsage());
+        });
     }
 
     private isAcceptedLLMSelection(selection?: LLMSelectionDecision): boolean {
         return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
-    }
-
-    private setUserAcceptedLLMUsage(): void {
-        const selection = this.accountService.userIdentity()?.selectedLLMUsage;
-        this.hasUserAcceptedLLMUsage.set(this.isAcceptedLLMSelection(selection));
     }
 
     async requestAIFeedback(): Promise<void> {
@@ -164,13 +179,16 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
         }
         const decision = choice as LLMSelectionDecision;
         const hasAccepted = this.isAcceptedLLMSelection(decision);
-        this.llmSelectionSubscription = this.userService.updateLLMSelectionDecision(decision).subscribe(() => {
-            this.hasUserAcceptedLLMUsage.set(hasAccepted);
-            this.accountService.setUserLLMSelectionDecision(decision);
-            if (hasAccepted) {
-                this.triggerFeedbackRequest();
-            }
-        });
+        this.userService
+            .updateLLMSelectionDecision(decision)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => {
+                this.hasUserAcceptedLLMUsage.set(hasAccepted);
+                this.accountService.setUserLLMSelectionDecision(decision);
+                if (hasAccepted) {
+                    this.triggerFeedbackRequest();
+                }
+            });
     }
 
     private triggerFeedbackRequest(): void {
@@ -179,19 +197,22 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
             return;
         }
         this.isRequestingFeedback.set(true);
-        this.feedbackSubscription = this.examParticipationService.requestAthenaFeedback(ids.courseId, ids.examId, ids.studentExamId).subscribe({
-            next: () => {
-                this.feedbackRequested.set(true);
-                this.isRequestingFeedback.set(false);
-                this.localStorageService.store(this.getFeedbackRequestedStorageKey(), true);
-                this.alertService.success('artemisApp.exam.examSummary.feedbackRequestSent');
-            },
-            error: (error: HttpErrorResponse) => {
-                this.isRequestingFeedback.set(false);
-                const errorKey = error.error?.errorKey;
-                this.alertService.error(errorKey ? `artemisApp.exercise.${errorKey}` : `error.http.${error.status}`);
-            },
-        });
+        this.examParticipationService
+            .requestAthenaFeedback(ids.courseId, ids.examId, ids.studentExamId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.feedbackRequested.set(true);
+                    this.isRequestingFeedback.set(false);
+                    this.localStorageService.store(this.getFeedbackRequestedStorageKey(), true);
+                    this.alertService.success('artemisApp.exam.examSummary.feedbackRequestSent');
+                },
+                error: (error: HttpErrorResponse) => {
+                    this.isRequestingFeedback.set(false);
+                    const errorKey = error.error?.errorKey;
+                    this.alertService.error(errorKey ? `artemisApp.exercise.${errorKey}` : `error.http.${error.status}`);
+                },
+            });
     }
 
     private loadAthenaFeedbackUsage(): void {
@@ -202,20 +223,23 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
         if (!ids) {
             return;
         }
-        this.examParticipationService.getAthenaFeedbackUsage(ids.courseId, ids.examId, ids.studentExamId).subscribe({
-            next: (usage) => {
-                this.athenaFeedbackUsed.set(usage.used);
-                this.athenaFeedbackLimit.set(usage.limit);
-                // If the server already counts this attempt as consumed, don't bump again on incoming websocket results.
-                this.currentAttemptCounted = this.hasAnyAthenaResultForCurrentAttempt;
-                this.subscribeToAthenaResultsForCurrentAttempt();
-            },
-            error: () => {
-                this.alertService.error('artemisApp.exam.examSummary.feedbackUsageLoadFailed');
-                this.currentAttemptCounted = this.hasAnyAthenaResultForCurrentAttempt;
-                this.subscribeToAthenaResultsForCurrentAttempt();
-            },
-        });
+        this.examParticipationService
+            .getAthenaFeedbackUsage(ids.courseId, ids.examId, ids.studentExamId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (usage) => {
+                    this.athenaFeedbackUsed.set(usage.used);
+                    this.athenaFeedbackLimit.set(usage.limit);
+                    // If the server already counts this attempt as consumed, don't bump again on incoming websocket results.
+                    this.currentAttemptCounted = this.hasAnyAthenaResultForCurrentAttempt;
+                    this.subscribeToAthenaResultsForCurrentAttempt();
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.exam.examSummary.feedbackUsageLoadFailed');
+                    this.currentAttemptCounted = this.hasAnyAthenaResultForCurrentAttempt;
+                    this.subscribeToAthenaResultsForCurrentAttempt();
+                },
+            });
     }
 
     private getExamRequestIds(): { courseId: number; examId: number; studentExamId: number } | undefined {
@@ -259,6 +283,7 @@ export class ExamRequestAiFeedbackButtonComponent implements OnInit, OnDestroy {
                     skip(1),
                     filter((result): result is Result => !!result),
                     filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA),
+                    takeUntilDestroyed(this.destroyRef),
                 )
                 .subscribe((result) => this.handleAthenaResult(result, exerciseId));
             this.athenaResultSubscriptions.push(subscription);
