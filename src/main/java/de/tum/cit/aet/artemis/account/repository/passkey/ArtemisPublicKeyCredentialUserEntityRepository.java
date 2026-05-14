@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
  *
  * @see PublicKeyCredentialUserEntityRepository
  * @see UserRepository
- * @see de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnConfigurer
+ * @see de.tum.cit.aet.artemis.account.security.passkey.ArtemisWebAuthnConfigurer
  */
 @Conditional(PasskeyEnabled.class)
 @Lazy
