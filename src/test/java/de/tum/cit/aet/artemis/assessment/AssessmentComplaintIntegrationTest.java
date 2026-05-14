@@ -846,8 +846,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final TextExercise examExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         final long examId = examExercise.getExerciseGroup().getExam().getId();
         final TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
-        textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        final var examExerciseComplaint = new ComplaintRequestDTO(1, "This is not fair", ComplaintType.COMPLAINT, Optional.of(examId));
+        final TextSubmission savedSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
+        final var examExerciseComplaint = new ComplaintRequestDTO(savedSubmission.getLatestResult().getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.of(examId));
 
         final String url = "/api/assessment/complaints";
         request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);
