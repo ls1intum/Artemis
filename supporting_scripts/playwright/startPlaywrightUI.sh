@@ -8,9 +8,12 @@ echo "Installing Playwright and dependencies"
 
 cd "$artemis_path/src/test/playwright"
 
-npm install
+# Activate the pnpm version pinned via `packageManager` in package.json.
+corepack enable
 
-npm run playwright:setup-local || true
+pnpm install --frozen-lockfile
+
+pnpm run playwright:setup-local || true
 
 echo "Start Playwright in UI mode"
-npm run playwright:open
+pnpm run playwright:open

@@ -36,10 +36,10 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             exam = await examAPIRequests.createExam(examConfig);
             await login(studentOne);
             await page.goto(`/courses`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await expect(page.getByText(examTitle)).not.toBeVisible();
             await page.goto(`/courses/${course.id}`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await expect(page.getByText(examTitle)).not.toBeVisible();
         });
 
@@ -55,7 +55,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await examAPIRequests.registerStudentForExam(exam, studentOne);
             await login(studentOne);
             await page.goto(`/courses/${course.id}`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await courseOverview.openExamsTab();
             await page.waitForURL(`**/exams/${exam.id}`);
         });
@@ -120,7 +120,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await examAPIRequests.prepareExerciseStartForExam(exam);
             await login(studentOne);
             await page.goto(`/courses/${course.id}/exams/${exam.id}`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await page.waitForURL(`**/exams/${exam.id}`);
             await expect(page.getByText(exam.title!).first()).toBeVisible();
             await examStartEnd.startExam();
