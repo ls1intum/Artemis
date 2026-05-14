@@ -270,10 +270,11 @@ public class CompetencyProgressService {
         }
         catch (org.hibernate.ObjectNotFoundException e) {
             // The competency was deleted between the findById above and the flush triggered by save (or
-            // by a subsequent statement in the same transaction). Bail out instead of letting the async
-            // exception handler log a stack trace.
-            log.debug("Competency was deleted while updating progress, skipping.");
-            return null;
+            // by a subsequent statement in the same transaction). Skip persistence and the learning-path
+            // propagation. Return the in-memory studentProgress (rather than null) so synchronous callers
+            // that read getProgress()/getConfidence() do not NPE on the race.
+            log.debug("Competency was deleted while updating progress, skipping persistence.");
+            return studentProgress;
         }
 
         log.debug("Updated progress for user {} in competency {} to {} / {}.", user.getLogin(), competency.getId(), studentProgress.getProgress(), studentProgress.getConfidence());

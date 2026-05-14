@@ -81,7 +81,11 @@ public class CalendarSubscriptionService {
                 calendarSubscriptionTokenStoreRepository.saveAndFlush(store);
                 return token;
             }
-            catch (DataIntegrityViolationException violation) {
+            catch (DataIntegrityViolationException ignored) {
+                // Either a token collision (rare; retry with a fresh token) or a user-already-has-a-token
+                // collision (concurrent request inserted the row). Read back the user's token: if present,
+                // a concurrent insert won and we return the winner; otherwise it was a token collision and
+                // we keep retrying.
                 Optional<String> existing = calendarSubscriptionTokenStoreRepository.findTokenByUserLogin(userLogin);
                 if (existing.isPresent()) {
                     return existing.get();
