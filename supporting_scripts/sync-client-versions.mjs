@@ -205,7 +205,7 @@ function syncForward(env, checkOnly) {
     }
 
     writePkg(ROOT_PKG, pkg);
-    console.log(`\nUpdated ${changes} version(s). Run \`npm install\` to apply.`);
+    console.log(`\nUpdated ${changes} version(s). Run \`pnpm install\` to apply.`);
     return 0;
 }
 
