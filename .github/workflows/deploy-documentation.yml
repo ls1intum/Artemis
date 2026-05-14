@@ -22,17 +22,24 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: documentation/package.json
+          run_install: false
+
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
+          cache: 'pnpm'
+          cache-dependency-path: documentation/pnpm-lock.yaml
 
       - name: Install dependencies
         working-directory: documentation
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build Docusaurus site
         working-directory: documentation
-        run: npm run build
+        run: pnpm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4

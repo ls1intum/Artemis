@@ -1,7 +1,7 @@
-diff --git a/node_modules/eslint/lib/shared/ajv.js b/node_modules/eslint/lib/shared/ajv.js
+diff --git a/lib/shared/ajv.js b/lib/shared/ajv.js
 index 5c5c41b..102d2dc 100644
---- a/node_modules/eslint/lib/shared/ajv.js
-+++ b/node_modules/eslint/lib/shared/ajv.js
+--- a/lib/shared/ajv.js
++++ b/lib/shared/ajv.js
 @@ -8,27 +8,82 @@
  // Requirements
  //------------------------------------------------------------------------------
