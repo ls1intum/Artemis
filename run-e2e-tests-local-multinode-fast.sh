@@ -157,7 +157,13 @@ MISSING=""
 command -v docker >/dev/null 2>&1  || MISSING="$MISSING docker"
 command -v java >/dev/null 2>&1    || MISSING="$MISSING java"
 command -v node >/dev/null 2>&1    || MISSING="$MISSING node"
-command -v npm >/dev/null 2>&1     || MISSING="$MISSING npm"
+
+# Activate the pnpm version pinned in package.json via Corepack (shipped with
+# Node 24). Idempotent; ensures `pnpm` is on PATH on fresh setups.
+if command -v corepack >/dev/null 2>&1; then
+    corepack enable >/dev/null 2>&1 || true
+fi
+command -v pnpm >/dev/null 2>&1    || MISSING="$MISSING pnpm"
 command -v unzip >/dev/null 2>&1   || MISSING="$MISSING unzip"
 command -v lsof >/dev/null 2>&1    || MISSING="$MISSING lsof"
 command -v pgrep >/dev/null 2>&1   || MISSING="$MISSING pgrep"
@@ -165,6 +171,10 @@ command -v python3 >/dev/null 2>&1 || MISSING="$MISSING python3"
 command -v curl >/dev/null 2>&1    || MISSING="$MISSING curl"
 if [ -n "$MISSING" ]; then
     echo -e "${RED}ERROR: Missing required commands:$MISSING${NC}"
+    if [[ "$MISSING" == *pnpm* ]]; then
+        echo -e "${RED}Activate the pnpm version pinned in package.json once via:${NC}"
+        echo -e "${RED}    corepack enable${NC}"
+    fi
     exit 1
 fi
 
@@ -473,7 +483,7 @@ export EXPECTED_CLUSTER_NODE_COUNT="2"
 export EXPECTED_MIN_BUILD_AGENTS="1"
 
 cd src/test/playwright
-npm run playwright:setup-local 2>/dev/null
+pnpm run playwright:setup-local 2>/dev/null
 
 rm -f test-reports/results*.xml
 rm -rf test-reports/monocart-report*/
@@ -488,7 +498,7 @@ TEST_START=$(date +%s)
 EXIT_CODE=0
 echo -e "${BLUE}Running fast/slow/multi-node tests with $TEST_WORKERS workers...${NC}"
 export PLAYWRIGHT_TEST_TYPE="parallel"
-TEST_CMD=(npx playwright test "${BASE_ARGS[@]}" \
+TEST_CMD=(pnpm exec playwright test "${BASE_ARGS[@]}" \
           --project=fast-tests --project=slow-tests --project=multi-node-tests \
           --workers="$TEST_WORKERS")
 echo "Running: ${TEST_CMD[*]}"
