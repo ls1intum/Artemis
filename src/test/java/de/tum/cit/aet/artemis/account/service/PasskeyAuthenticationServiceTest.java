@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service;
+package de.tum.cit.aet.artemis.account.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;

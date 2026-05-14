@@ -29,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.AccountService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -39,7 +40,6 @@ import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsExcepti
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.service.AccountService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;

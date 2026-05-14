@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.AccountService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -49,7 +50,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
-import de.tum.cit.aet.artemis.core.service.AccountService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 
 /**

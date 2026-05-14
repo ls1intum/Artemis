@@ -39,11 +39,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.weaviate.WeaviateContainer;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
-import de.tum.cit.aet.artemis.core.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.VulnerabilityService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service;
+package de.tum.cit.aet.artemis.account.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 
 /**
  * Helper service for getting the fingerprints for the Android app.

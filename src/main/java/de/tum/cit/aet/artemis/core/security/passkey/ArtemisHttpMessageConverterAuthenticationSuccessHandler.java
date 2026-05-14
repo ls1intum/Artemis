@@ -24,10 +24,10 @@ import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.util.Assert;
 
+import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
-import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 
 /**
