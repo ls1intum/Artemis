@@ -1,5 +1,13 @@
 # ===================================================================
-# Spring Boot configuration for the "saml2" profile.
+# SAML2 configuration example for Artemis.
+#
+# SAML2 is no longer activated via the "saml2" Spring profile. Instead, set
+#     artemis.user-management.saml2.enabled: true
+# and merge the YAML blocks below into your env-specific override (e.g. application-prod.yml),
+# or pass this file via --spring.config.additional-location=classpath:/config/application-saml2.yml.example.
+#
+# Without the `saml2`, `spring.security.saml2.*`, and `info.saml2.*` blocks present in the active
+# environment, SAML2Properties will fail to bind and the login UI will not surface the SAML2 button.
 #
 # See https://docs.spring.io/spring-security/site/docs/5.2.8.RELEASE/reference/html/saml2.html
 # ===================================================================

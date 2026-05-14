@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.core.web.admin;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 
@@ -318,7 +317,6 @@ public class AdminUserResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated user
      */
     @PutMapping("users/{userId}/sync-ldap")
-    @Profile(PROFILE_LDAP)
     public ResponseEntity<UserDTO> syncUserViaLdap(@PathVariable Long userId) {
         log.debug("REST request to update ldap information User : {}", userId);
 

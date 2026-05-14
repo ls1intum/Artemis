@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+import static de.tum.cit.aet.artemis.core.config.Constants.MODULE_FEATURE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;
 
@@ -145,7 +145,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
             log.debug("Submission id: {}", submission.getId());
 
-            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
+            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA));
             var athenaResponse = api.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission, false);
 
             List<Feedback> feedbacks = athenaResponse.stream().filter(individualFeedbackItem -> individualFeedbackItem.filePath() != null)
