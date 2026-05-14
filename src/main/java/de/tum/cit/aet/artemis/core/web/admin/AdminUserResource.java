@@ -320,9 +320,11 @@ public class AdminUserResource {
     public ResponseEntity<UserDTO> syncUserViaLdap(@PathVariable Long userId) {
         log.debug("REST request to update ldap information User : {}", userId);
 
-        var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        LdapUserService service = ldapUserService
+                .orElseThrow(() -> new BadRequestAlertException("LDAP is not enabled on this Artemis instance.", "userManagement", "ldapNotEnabled"));
 
-        ldapUserService.ifPresent(service -> service.loadUserDetailsFromLdap(user));
+        var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        service.loadUserDetailsFromLdap(user);
         var updatedUser = userCreationService.saveUser(user);
 
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.updated", user.getLogin())).body(new UserDTO(updatedUser));
