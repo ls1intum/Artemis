@@ -202,11 +202,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return message.content?.some((c) => isMcqContent(c) || isMcqSetContent(c)) ?? false;
     }
 
+    private readonly currentChatMode = computed(() => this.chatService.displayContext()?.mode);
+    readonly relatedEntityRoute = computed<string | undefined>(() =>
+        this.computeRelatedEntityRoute(this.chatService.committedContext()?.mode, this.chatService.committedContext()?.entityId),
+    );
+    readonly relatedEntityLinkButtonLabel = computed<string | undefined>(() => this.computeRelatedEntityLinkButtonLabel(this.chatService.committedContext()?.mode));
+
     // Observable-derived signals (using toSignal for reactive state)
-    private readonly currentRelatedEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
-    private readonly currentChatMode = toSignal(this.chatService.currentChatMode(), { initialValue: undefined });
-    readonly relatedEntityRoute = computed<string | undefined>(() => this.computeRelatedEntityRoute(this.currentChatMode(), this.currentRelatedEntityId()));
-    readonly relatedEntityLinkButtonLabel = computed<string | undefined>(() => this.computeRelatedEntityLinkButtonLabel(this.currentChatMode()));
 
     readonly currentSessionId = toSignal(this.chatService.currentSessionId(), { initialValue: undefined });
     readonly chatSessions = toSignal(this.chatService.availableChatSessions(), { initialValue: [] as IrisSessionDTO[] });
@@ -1046,7 +1048,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             return false;
         }
 
-        const currentEntityId = this.currentRelatedEntityId();
+        const currentEntityId = this.chatService.displayContext()?.entityId;
         if (currentEntityId === undefined) {
             return session.entityId === undefined;
         }
