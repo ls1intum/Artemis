@@ -21,9 +21,9 @@ import org.springframework.security.web.webauthn.management.WebAuthnRelyingParty
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.security;
+package de.tum.cit.aet.artemis.account.exception;
 
 import java.io.Serial;
 

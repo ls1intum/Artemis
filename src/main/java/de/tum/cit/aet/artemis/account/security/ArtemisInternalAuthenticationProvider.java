@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.security;
+package de.tum.cit.aet.artemis.account.security;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -16,8 +16,10 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 @Profile(PROFILE_CORE)
 @Component

@@ -41,8 +41,8 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
+import de.tum.cit.aet.artemis.account.security.ArtemisInternalAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
-import de.tum.cit.aet.artemis.core.security.ArtemisInternalAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;

@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
@@ -58,7 +59,6 @@ import de.tum.cit.aet.artemis.core.exception.AccountRegistrationBlockedException
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
 import de.tum.cit.aet.artemis.core.exception.UsernameAlreadyUsedException;
-import de.tum.cit.aet.artemis.core.security.RandomUtil;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;

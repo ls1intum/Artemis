@@ -7,8 +7,8 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthenticationFilter;
 
+import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
 import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
-import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 
 /**

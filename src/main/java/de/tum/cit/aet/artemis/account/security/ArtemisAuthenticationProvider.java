@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.security;
+package de.tum.cit.aet.artemis.account.security;
 
 import java.util.Optional;
 
