@@ -93,7 +93,7 @@ out/
 /build/
 
 ######################
-# NPM
+# Package manager
 ######################
 .npm/
 .cache/
@@ -101,6 +101,8 @@ out/
 .yarnrc
 yarn.lock
 yarn-error.log
+.pnpm-store/
+.pnpm-debug.log
 
 ######################
 # Package Files

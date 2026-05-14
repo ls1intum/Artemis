@@ -102,11 +102,15 @@ jobs:
           # Use PR head commit on pull_request, otherwise fall back to the event SHA
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '${{ env.node }}'
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
@@ -115,13 +119,13 @@ jobs:
           cache: 'gradle'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
-      - name: Install npm dependencies
-        run: npm install
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
       - name: Build Angular Client
         # Build the Angular client separately so that Node.js/esbuild get full system
         # memory without competing with the Gradle JVM (which reserves up to 4g).
         # Use --optimization=false to work around esbuild crash during script optimization.
-        run: npm run clean-www && npm run prebuild && npx ng build --configuration production --optimization=false
+        run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false
       - name: Build .war
         # Skip the webapp Gradle task since the Angular client was already built above.
         run: ./gradlew -Pprod -Pwar bootWar -x webapp
