@@ -44,7 +44,7 @@ describe('ParseLinks Service', () => {
         const parsedLinks = service.parse(' </api/audits?page=0&size=20>; rel="last",</api/audits?page=1&size=20>; rel="first"');
         expect(parsedLinks).toEqual(expectedLinks);
     });
-    it('should return links when headers are passed', () => {
+    it('should return links when headers are passed even if link contains ,', () => {
         const expectedLinks = { last: 0, first: 1 };
         const parsedLinks = service.parse(
             '<https://localhost/api/communication/system-notifications' +
@@ -54,7 +54,7 @@ describe('ParseLinks Service', () => {
         expect(parsedLinks).toEqual(expectedLinks);
     });
     // Precaution for cases where matrix parameters are used
-    it('should return links when headers are passed', () => {
+    it('should return links when headers are passed even if link contains ;', () => {
         const expectedLinks = { last: 0, first: 1 };
         const parsedLinks = service.parse(
             '<https://localhost/api/communication' +
