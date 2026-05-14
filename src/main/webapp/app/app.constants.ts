@@ -87,8 +87,6 @@ export const PROFILE_LOCALCI = 'localci';
 
 export const PROFILE_BUILDAGENT = 'buildagent';
 
-export const PROFILE_AEOLUS = 'aeolus';
-
 export const PROFILE_LTI = 'lti';
 
 export const PROFILE_PROD = 'prod';
@@ -110,7 +108,6 @@ export const PROFILE_SAML2 = 'saml2';
 export type ProfileFeature =
     | typeof PROFILE_LOCALCI
     | typeof PROFILE_BUILDAGENT
-    | typeof PROFILE_AEOLUS
     | typeof PROFILE_LTI
     | typeof PROFILE_PROD
     | typeof PROFILE_DEV

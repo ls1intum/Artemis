@@ -18,7 +18,7 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
     test('Instructor enables learning paths via activation card', async ({ page }) => {
         // Arrange: course initially without learning paths enabled
         await page.goto(`/course-management/${course.id}/learning-path-management`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Wait for the loading spinner to disappear before checking for the activation card
         const spinner = page.locator('.spinner-border');
@@ -36,7 +36,7 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
     test('Instructor enables learning paths via course settings', async ({ page }) => {
         // Arrange: course initially without learning paths enabled
         await page.goto(`/course-management/${course.id}`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         await page.getByRole('link', { name: 'Settings' }).click();
 
@@ -46,7 +46,7 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
         await page.locator('#save-entity').click();
 
         await page.goto(`/course-management/${course.id}/learning-path-management`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Wait for loading to complete
         const spinner = page.locator('.spinner-border');
@@ -58,7 +58,7 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
 
     test('Instructor disables learning paths via course settings', async ({ page }) => {
         await page.goto(`/course-management/${course.id}`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         await page.getByRole('link', { name: 'Settings' }).click();
 
@@ -71,7 +71,7 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
         await page.locator('#save-entity').click();
 
         await page.goto(`/course-management/${course.id}/learning-path-management`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Wait for loading to complete
         const spinner = page.locator('.spinner-border');
@@ -83,7 +83,7 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
     test('Create simple learning path', async ({ page, courseManagementAPIRequests }) => {
         // Enable learning paths first
         await page.goto(`/course-management/${course.id}/learning-path-management`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Wait for loading to complete
         const spinner = page.locator('.spinner-border');
@@ -117,7 +117,7 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
         await courseManagementAPIRequests.createCompetencyRelation(course, comp5.id, comp6.id, 'ASSUMES');
 
         await page.reload();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         const reloadSpinner = page.locator('.spinner-border');
         await expect(reloadSpinner).not.toBeVisible({ timeout: 30000 });
         await expect(page.locator('.learning-paths-analytics-container')).toBeVisible({ timeout: 30000 });

@@ -141,6 +141,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private readonly _submitTitleKey = signal('entity.action.submit');
     readonly isSubmitDisabled = this._isSubmitDisabled.asReadonly();
     readonly submitTitleKey = this._submitTitleKey.asReadonly();
+    private readonly _shouldTreatAsSubmittedForUi = signal(false);
+    readonly shouldTreatAsSubmittedForUi = this._shouldTreatAsSubmittedForUi.asReadonly();
 
     quizId: number;
     courseId: number;
@@ -695,6 +697,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.submission = new QuizSubmission();
             this.initQuiz();
         }
+
+        // Re-sync after submission state is set (applyQuizFull called syncSubmitState before submission was assigned)
+        this.syncSubmitState();
     }
 
     /**
@@ -1135,8 +1140,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @returns `true` if the submission should be considered submitted in the UI;
      *          `false` otherwise.
      */
-
-    get shouldTreatAsSubmittedForUi(): boolean {
+    private computeShouldTreatAsSubmittedForUi(): boolean {
         const hasSavedOrAnswered = this.hasAnyAnswer() || !!this.submission?.submissionDate || !!this.submission?.id;
         return this.submission.submitted || (this.remainingTimeSeconds < 0 && hasSavedOrAnswered);
     }
@@ -1147,8 +1151,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * on a button inside this component.
      */
     syncSubmitState(): void {
-        const disabled = this.shouldTreatAsSubmittedForUi || this.isSubmitting || this.waitingForQuizStart || this.remainingTimeSeconds < 0;
+        const submittedForUi = this.computeShouldTreatAsSubmittedForUi();
+        this._shouldTreatAsSubmittedForUi.set(submittedForUi);
+        const disabled = submittedForUi || this.isSubmitting || this.waitingForQuizStart || this.remainingTimeSeconds < 0;
         this._isSubmitDisabled.set(disabled);
-        this._submitTitleKey.set(this.shouldTreatAsSubmittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');
+        this._submitTitleKey.set(submittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');
     }
 }

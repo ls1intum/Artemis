@@ -54,12 +54,17 @@
                 },
                 "errors": {
                     "invalidConfiguration": "Please provide a topic and select at least one question type.",
-                    "generationFailed": "Failed to generate quiz questions. Please try again."
+                    "generationFailed": "Failed to generate quiz questions. Please try again.",
+                    "refinementFailed": "Failed to refine quiz questions. Please try again.",
+                    "partialRefinementFailed": "{{ count }} question(s) could not be refined and were skipped."
                 },
                 "refinement": {
                     "promptPlaceholder": "Describe how to refine this question...",
+                    "globalPlaceholder": "Describe how to refine all multiple-choice questions in this quiz...",
+                    "globalRefineFabLabel": "Refine all questions with AI",
                     "changesLabel": "Changes made",
-                    "defaultReasoning": "The question was refined according to your instructions.",
+                    "dismissChanges": "Dismiss changes",
+                    "defaultReasoning": "The question was refined based on your instructions.",
                     "errors": {
                         "failed": "Failed to refine the question. Please try again."
                     }
@@ -203,6 +208,7 @@
             "solution": "Solution",
             "quizIsOverText": "The quiz has ended. Please wait. If the results do not load automatically within 60s, please refresh the page.",
             "notParticipatedText": "The quiz has ended and you did not participate. There are no results to display.",
+            "missedDeadlinePracticeHint": "You did not submit this quiz in time. You can still practice it using the <b>Start practice</b> button.",
             "statisticsNotPublished": "The instructor has not published any statistics.",
             "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear after the quiz has ended.<br><br>If the results are not displayed automatically within 60s after the end of the quiz, please reload the page.",
             "evaluateQuizExercise": "Evaluate quiz",

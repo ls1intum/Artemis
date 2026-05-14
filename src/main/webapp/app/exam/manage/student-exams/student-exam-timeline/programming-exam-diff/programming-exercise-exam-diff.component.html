@@ -15,6 +15,24 @@
     [submissions]="submissions()"
     [exerciseProjectKey]="exercise()?.projectKey"
 />
+<p-dialog
+    [(visible)]="diffModalVisible"
+    [modal]="true"
+    [closable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    [draggable]="false"
+    [appendTo]="'body'"
+    styleClass="diff-view-modal"
+    [style]="{ width: '90dvw', height: '90dvh' }"
+>
+    <ng-template #header>
+        <h3 class="modal-title mb-0" jhiTranslate="artemisApp.programmingExercise.diffReport.titleForSubmissions"></h3>
+    </ng-template>
+    @if (diffModalInformation()) {
+        <jhi-git-diff-report [repositoryDiffInformation]="diffModalInformation()!" [diffForTemplateAndSolution]="false" />
+    }
+</p-dialog>
 @if (diffInformation() && diffReady()) {
     <div>
         <dt>

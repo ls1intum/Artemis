@@ -137,6 +137,13 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     afterEach(() => {
+        // Properly clean up the Apollon editor (React-based) before test environment teardown.
+        // Prevents "Should not already be working" React scheduler errors firing from setImmediate
+        // after the test ends. Mirrors the pattern in modeling-editor.component.spec.ts.
+        if (comp) {
+            comp.ngOnDestroy();
+        }
+        fixture?.destroy();
         vi.restoreAllMocks();
     });
 

@@ -1,51 +1,39 @@
 <form name="makeLiveExamAnnouncementForm">
-    <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="artemisApp.examManagement.announcementCreate.title"></h4>
-        @if (status !== 'submitting') {
-            <button type="button" class="btn-close" aria-label="Close" (click)="clear()"></button>
-        }
-    </div>
     @if (status === 'not_submitted') {
-        <div class="modal-body">
-            <div class="form-group">
-                <div class="mb-4" jhiTranslate="artemisApp.examManagement.announcementCreate.task"></div>
-                <jhi-markdown-editor-monaco
-                    class="markdown-editor"
-                    [markdown]="textContent"
-                    [showPreviewButton]="false"
-                    [showEditButton]="false"
-                    [enableFileUpload]="false"
-                    [colorAction]="undefined"
-                    [defaultActions]="actions"
-                    (markdownChange)="textContentChanged($event)"
-                />
-            </div>
-            @if (announcement) {
-                <h3 class="p-2" jhiTranslate="artemisApp.examManagement.announcementCreate.preview"></h3>
-                <jhi-exam-live-event [event]="announcement!" />
-            }
+        <div class="form-group">
+            <div class="mb-4" jhiTranslate="artemisApp.examManagement.announcementCreate.task"></div>
+            <jhi-markdown-editor-monaco
+                class="markdown-editor"
+                [markdown]="textContent"
+                [showPreviewButton]="false"
+                [showEditButton]="false"
+                [enableFileUpload]="false"
+                [colorAction]="undefined"
+                [defaultActions]="actions"
+                (markdownChange)="textContentChanged($event)"
+            />
         </div>
+        @if (announcement) {
+            <h3 class="p-2" jhiTranslate="artemisApp.examManagement.announcementCreate.preview"></h3>
+            <jhi-exam-live-event [event]="announcement!" />
+        }
     }
     @if (status === 'submitting') {
-        <div class="modal-body">
-            <h2 class="mb-0">
-                <fa-icon [icon]="faSpinner" animation="spin" />
-                <span jhiTranslate="artemisApp.examManagement.announcementCreate.sending"></span>
-            </h2>
-        </div>
+        <h2 class="mb-0">
+            <fa-icon [icon]="faSpinner" animation="spin" />
+            <span jhiTranslate="artemisApp.examManagement.announcementCreate.sending"></span>
+        </h2>
     }
     @if (status === 'submitted') {
-        <div class="modal-body">
-            <h2 class="mb-4">
-                <fa-icon [icon]="faCheckCircle" class="success-color" />
-                <span jhiTranslate="artemisApp.examManagement.announcementCreate.sent"></span>
-            </h2>
-            @if (announcement) {
-                <jhi-exam-live-event [event]="announcement!" />
-            }
-        </div>
+        <h2 class="mb-4">
+            <fa-icon [icon]="faCheckCircle" class="success-color" />
+            <span jhiTranslate="artemisApp.examManagement.announcementCreate.sent"></span>
+        </h2>
+        @if (announcement) {
+            <jhi-exam-live-event [event]="announcement!" />
+        }
     }
-    <div class="modal-footer">
+    <div class="d-flex justify-content-end gap-2 mt-3">
         <button type="button" class="btn btn-secondary" [class.btn-primary]="status === 'submitted'" (click)="clear()" jhiTranslate="entity.action.close"></button>
         @if (status !== 'submitted') {
             <button

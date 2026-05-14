@@ -24,14 +24,77 @@ EduTelligence is a comprehensive suite of AI-powered microservices designed to e
 
 **Compatibility**: EduTelligence maintains compatibility with different versions of Artemis. Please refer to the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions for optimal integration and functionality.
 
-**Repository**: <a href="https://github.com/ls1intum/edutelligence">https://github.com/ls1intum/edutelligence</a>
+**Repository**: <a href="https://github.com/ls1intum/edutelligence">github.com/ls1intum/edutelligence</a>
+
+---
+
+## Global Search (Standalone Weaviate)
+
+Artemis can run its global keyword and semantic search directly against Weaviate, **without** Pyris. This is useful for deployments that do not need Iris but still want global search across lectures, exercises, and channels.
+
+### When to use this section
+
+- You want to enable Artemis global search and **do not** run Pyris.
+- You run both Artemis and Pyris and want them to share a single Weaviate instance — read this section first, then continue with the [Iris & Pyris Setup Guide](#iris--pyris-setup-guide). Both consumers can coexist as long as their `collection-prefix` values differ (Artemis defaults to `Artemis_`).
+
+### Deploying Weaviate
+
+The Artemis repository ships its own Weaviate compose files for development; for production, use the same images and reuse the configuration documented in the [Weaviate Setup developer guide](/developer/weaviate-setup) (env files, vectorizer choice, API-key auth). You do not need any EduTelligence component for this path.
+
+A typical standalone production layout:
+
+- One Weaviate container (e.g. behind Traefik with TLS).
+- Anonymous access disabled, API key authentication enabled (see the developer guide's [Authentication](/developer/weaviate-setup#authentication) section).
+- Either `text2vec-openai` (OpenAI-compatible API such as Ollama or a TUM GPU server) or self-provided vectors (`vectorizer-module: none`) depending on your embedding strategy.
+
+### Configuring Artemis
+
+In `application-artemis.yml`, enable Weaviate and point it at your server:
+
+```yaml
+artemis:
+  weaviate:
+    enabled: true
+    http-host: weaviate.your-domain.com
+    http-port: 443
+    grpc-port: 50051
+    scheme: https
+    collection-prefix: Artemis_       # Differentiates from a Pyris-managed instance if you share one
+    vectorizer-module: text2vec-openai  # or "none" / "text2vec-transformers"
+    api-key: your-weaviate-api-key
+    # The following two are only needed for vectorizer-module: text2vec-openai
+    open-ai-embedding-model: Qwen/Qwen3-Embedding-8B
+    open-ai-base-url: https://gpu.aet.cit.tum.de/api/
+    gpu-api-key: your-gpu-key
+```
+
+Iris remains independent — `artemis.iris.enabled` does not have to be set for Weaviate to work.
+
+### Verifying
+
+Once Artemis starts, the Weaviate health indicator is registered automatically and shows up under `/management/health` (gated by `artemis.weaviate.enabled`). You can also probe Weaviate directly:
+
+```bash
+curl -H "Authorization: Bearer your-weaviate-api-key" \
+  https://weaviate.your-domain.com/v1/.well-known/ready
+```
+
+### Sharing one Weaviate between Artemis and Pyris
+
+If you already run a Weaviate instance for Pyris and want Artemis global search to use it as well:
+
+- Keep Pyris's `collection-prefix` (it manages its own collections).
+- Set Artemis's `collection-prefix` to a distinct value (default `Artemis_`).
+- Use a single API key with sufficient permissions, or distinct keys if you enable per-user authorization on the Weaviate server.
 
 ---
 
 ## Iris & Pyris Setup Guide
 
 <Callout variant={CalloutVariant.info}>
-  <p>Pyris is part of the <a href="https://github.com/ls1intum/edutelligence">EduTelligence</a> suite. Always check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure your Artemis version matches the EduTelligence version you deploy.</p>
+
+  Pyris is part of the <a href="https://github.com/ls1intum/edutelligence">EduTelligence</a> suite. Always check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure your Artemis version matches the EduTelligence version you deploy.
+
 </Callout>
 
 ### Overview
@@ -55,7 +118,9 @@ artemis:
 ```
 
 <Callout variant={CalloutVariant.info}>
-  <p>The `secret-token` value must exactly match one of the tokens under `api_keys` in the Pyris `application.yml`. If they don't match, Artemis will receive 401 errors when calling Pyris.</p>
+
+  The `secret-token` value must exactly match one of the tokens under `api_keys` in the Pyris `application.yml`. If they don't match, Artemis will receive 401 errors when calling Pyris.
+
 </Callout>
 
 #### 1.2 Optional: Configure rate limiting
@@ -107,7 +172,9 @@ env_vars:
 ```
 
 <Callout variant={CalloutVariant.warning}>
-  <p>When running inside Docker, set `weaviate.host` to `"weaviate"` (the Docker service name), not `"localhost"`. The containers communicate over an internal Docker network.</p>
+
+  When running inside Docker, set `weaviate.host` to `"weaviate"` (the Docker service name), not `"localhost"`. The containers communicate over an internal Docker network.
+
 </Callout>
 
 Edit `llm_config.yml` with your model configurations. Pyris needs **three types of models**:
@@ -117,7 +184,9 @@ Edit `llm_config.yml` with your model configurations. Pyris needs **three types 
 - **Reranker models** (optional) — improves retrieval quality
 
 <Callout variant={CalloutVariant.warning}>
-  <p>The examples below use Azure OpenAI, which is recommended for production (GDPR-compliant). For local development, you can also use direct OpenAI entries — see `llm_config.example.yml` for examples.</p>
+
+  The examples below use Azure OpenAI, which is recommended for production (GDPR-compliant). For local development, you can also use direct OpenAI entries — see `llm_config.example.yml` for examples.
+
 </Callout>
 
 **Azure OpenAI chat model example:**
@@ -166,7 +235,9 @@ See `llm_config.example.yml` for the complete list of model types, including Ope
 - `cost_per_million_input_token` / `cost_per_million_output_token`: Pricing info used for model routing decisions.
 
 <Callout variant={CalloutVariant.info}>
-  <p>Most Iris pipelines require the GPT-5 model family (`gpt-5.2`, `gpt-5-mini`, `gpt-5-nano`) plus at least one embedding model. Monitor Pyris logs for warnings about missing models.</p>
+
+  Most Iris pipelines require the GPT-5 model family (`gpt-5.2`, `gpt-5-mini`, `gpt-5-nano`) plus at least one embedding model. Monitor Pyris logs for warnings about missing models.
+
 </Callout>
 
 **3. Choose a Docker Compose profile and start**
@@ -199,7 +270,9 @@ docker compose -f docker/pyris-production-internal.yml up -d
 ```
 
 <Callout variant={CalloutVariant.info}>
-  <p>Instead of passing environment variables inline, you can create a `docker.env` file and use `--env-file docker.env` with `docker compose`. This is the recommended approach for production servers.</p>
+
+  Instead of passing environment variables inline, you can create a `docker.env` file and use `--env-file docker.env` with `docker compose`. This is the recommended approach for production servers.
+
 </Callout>
 
 **Environment variable reference:**
@@ -327,7 +400,9 @@ If Iris does not respond, check:
 The semi-automatic text assessment relies on the <a href="https://github.com/ls1intum/edutelligence/tree/main/athena">Athena</a> service, which is part of the EduTelligence suite. To enable automatic text assessments, special configuration is required:
 
 <Callout variant={CalloutVariant.info}>
-  <p>Athena is now part of the EduTelligence suite. Please check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions of Artemis and EduTelligence.</p>
+
+  Athena is now part of the EduTelligence suite. Please check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions of Artemis and EduTelligence.
+
 </Callout>
 
 ### Enable the athena Spring profile
@@ -437,7 +512,9 @@ artemis:
 ### Hyperion Service
 
 <Callout variant={CalloutVariant.info}>
-  <p>This documentation has been migrated to the new documentation system. Please refer to the <a href="/admin/hyperion">Hyperion Setup Guide</a>.</p>
+
+  This documentation has been migrated to the new documentation system. Please refer to the <a href="/admin/hyperion">Hyperion Setup Guide</a>.
+
 </Callout>
 
 ---
@@ -534,8 +611,8 @@ If the health status is not **`up`**, check the error message in the details. If
 
 #### Conclusion
 
-Once everything is set up correctly, you should see the <Image src={sharingButton1} alt={"Sharing button Artemis"} size={ImageSize.inline} /> button in the **Programming Exercise Details** dialog in Artemis.
+Once everything is set up correctly, you should see the <Image src={sharingButton1} alt={"Sharing button Artemis"} inline /> button in the **Programming Exercise Details** dialog in Artemis.
 
-Similarly, the <Image src={sharingButton2} alt={"Sharing button Sharing"} size={ImageSize.inline} /> button should appear on the sharing platform for any programming exercise available there.
+Similarly, the <Image src={sharingButton2} alt={"Sharing button Sharing"} inline /> button should appear on the sharing platform for any programming exercise available there.
 
 Before testing the import and export functionality, refer to the user documentation for further details.

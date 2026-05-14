@@ -6,12 +6,12 @@ on:
     workflows: ["Build"]
     types: [completed]
 
+# Single-line concurrency group to avoid YAML block-scalar quirks and keep the
+# group key reliably comparable across runs. head_branch is set on branch /
+# default-branch pushes (groups all E2E for that branch into one slot); head_sha
+# is the fallback for events with no branch.
 concurrency:
-  group: |
-    ${{
-      github.event.workflow_run.head_branch && format('e2e-{0}', github.event.workflow_run.head_branch)
-      || format('e2e-{0}', github.event.workflow_run.head_sha)
-    }}
+  group: e2e-${{ github.event.workflow_run.head_branch || github.event.workflow_run.head_sha }}
   cancel-in-progress: true
 
 env:
@@ -28,9 +28,41 @@ env:
   PLAYWRIGHT_REPORT_TRIGGERED_BY: ${{ github.event.workflow_run.event }}
 
 jobs:
+  # Guard against workflow_run queue stacking. Each Build retry fires a new
+  # workflow_run event that queues another E2E run for the same SHA; built-in
+  # concurrency cancel-in-progress does not reliably dedupe queued runs that
+  # sit waiting for the [self-hosted, e2e-test] pool. This job runs on
+  # ubuntu-latest (instant pickup) and uses styfle/cancel-workflow-action to
+  # cancel older same-SHA runs of this workflow, and self-cancels if a newer
+  # run already exists. Cross-SHA cancellation is the built-in `concurrency`
+  # block's responsibility (it works reliably when the next run starts
+  # immediately).
+  cancel-superseded:
+    name: Cancel superseded E2E runs
+    # Skip on Build failures — those workflow_run events would produce skipped
+    # E2E runs anyway, because all dependent jobs are if-gated on
+    # conclusion == 'success'. No queue stacking comes from failed Builds.
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      actions: write
+    steps:
+      - name: Cancel older E2E runs for this SHA
+        uses: styfle/cancel-workflow-action@0.13.1
+        with:
+          # all_but_latest: cancels every queued or in-progress run of this
+          # workflow except the absolute newest, including self if a newer run
+          # exists. ignore_sha defaults to false → only same-SHA runs are
+          # cancelled (we don't want to cancel a PR's E2E because of an
+          # unrelated develop push).
+          all_but_latest: true
+          access_token: ${{ github.token }}
+
   # Job to determine which tests are relevant based on changed files (only for PRs)
   determine-tests:
     name: Determine Relevant Tests
+    needs: cancel-superseded
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     outputs:
@@ -87,7 +119,6 @@ jobs:
       PLAYWRIGHT_REPORT_PHASE: phase1
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
     outputs:
-      phase1_status: ${{ job.status }}
       reporter_failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
     steps:
       # workflow_run events do not create check runs, so we set a status manually
@@ -231,7 +262,7 @@ jobs:
             body += `<!-- OVERALL -->\n\n`;
             body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
             if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
-              body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
+              body += ` · 📊 [Test Report Phase 1](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
             }
             body += `\n`;
             body += `<!-- E2E Test Results -->`;
@@ -396,14 +427,14 @@ jobs:
 
             const phase2Row = `| **Phase 2** (Remaining) | ${emoji} ${status} | ${details} |`;
 
-            // Pass Phase 2 notes as output so the report-results job can insert them
-            // alongside the overall status when it replaces <!-- OVERALL -->.
-            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote);
-
             // Fetch flakiness scores for Phase 2 failed tests
             const failedTests = parseFailedTests('phase2-test-results/results.xml');
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
             const flakinessTable = buildFlakinessTable(flakinessResults);
+
+            // Pass Phase 2 notes as output so the report-results job can insert them
+            // alongside the overall status when it replaces <!-- OVERALL -->.
+            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote + flakinessTable);
 
             if (existingCommentId) {
               let body = (await github.rest.issues.getComment({
@@ -416,15 +447,12 @@ jobs:
               // is left untouched for the report-results job to handle.
               body = body.replace(/<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s, phase2Row);
 
-              // Replace or insert Phase 2 flakiness table using idempotent markers
-              const phase2FlakinessMarker = /<!-- PHASE2_FLAKINESS -->[\s\S]*?<!-- \/PHASE2_FLAKINESS -->\n?/;
-              const phase2FlakinessBlock = flakinessTable
-                ? `<!-- PHASE2_FLAKINESS -->${flakinessTable}\n<!-- /PHASE2_FLAKINESS -->\n`
-                : '';
-              if (phase2FlakinessMarker.test(body)) {
-                body = body.replace(phase2FlakinessMarker, phase2FlakinessBlock);
-              } else if (flakinessTable) {
-                body = body.replace('<!-- OVERALL -->', phase2FlakinessBlock + '<!-- OVERALL -->');
+              // Append Phase 2 report link to the footer (idempotent).
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                const phase2ReportUrl = `${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase2`;
+                if (!body.includes(phase2ReportUrl)) {
+                  body = body.replace('\n<!-- E2E Test Results -->', ` · 📊 [Test Report Phase 2](${phase2ReportUrl})\n<!-- E2E Test Results -->`);
+                }
               }
 
               await github.rest.issues.updateComment({
@@ -436,18 +464,17 @@ jobs:
               console.log(`Updated comment ${existingCommentId} with Phase 2 results`);
             } else {
               // Fallback: create new comment if Phase 1 comment not found.
-              // Notes are omitted here — the report-results job will insert them
-              // when it replaces <!-- OVERALL --> with the final status.
+              // Failures and flakiness are omitted here — the report-results job will
+              // insert them via phase2_notes when it replaces <!-- OVERALL -->.
               let body = `## End-to-End Test Results\n\n`;
               body += `| Phase | Status | Details |\n`;
               body += `|-------|--------|---------|\n`;
               body += `| **Phase 1** (Relevant) | ✅ Passed | *(completed in previous step)* |\n`;
               body += `${phase2Row}\n`;
-              body += flakinessTable;
               body += `<!-- OVERALL -->\n\n`;
               body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
               if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
-                body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase2)`;
+                body += ` · 📊 [Test Report Phase 2](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase2)`;
               }
               body += `\n`;
               body += `<!-- E2E Test Results -->`;
@@ -647,6 +674,7 @@ jobs:
   # Run all tests for non-PR events (push to develop, main, release branches)
   run-e2e-all-non-pr:
     name: Run All E2E Tests (Non-PR)
+    needs: cancel-superseded
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'pull_request'
     runs-on: [self-hosted, e2e-test]
     timeout-minutes: 120
@@ -864,7 +892,7 @@ jobs:
               body += `**Overall: ${overallEmoji} ${description}**\n\n`;
               body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
               if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
-                body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
+                body += ` · 📊 [Test Report Phase 1](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
               }
               body += `\n`;
               body += marker;

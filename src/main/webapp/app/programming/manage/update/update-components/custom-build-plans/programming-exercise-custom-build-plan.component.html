@@ -1,17 +1,16 @@
 <div class="form-group">
     <div class="form-check custom-checkbox">
-        <input class="form-check-input" type="checkbox" name="customizeBuildPlan" id="field_customizeBuildPlan" [(ngModel)]="programmingExercise.customizeBuildPlanWithAeolus" />
+        <input class="form-check-input" type="checkbox" name="customizeBuildPlan" id="field_customizeBuildPlan" [(ngModel)]="programmingExercise.customizeBuildPlan" />
         <label class="form-check-label custom-control-label" for="field_customizeBuildPlan" jhiTranslate="artemisApp.programmingExercise.customizeBuildPlan"></label>
-        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeBuildPlansWithAeolusTooltip" />
+        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeBuildPlanTooltip" />
     </div>
-    @if (programmingExercise.customizeBuildPlanWithAeolus) {
+    @if (programmingExercise.customizeBuildPlan) {
         <jhi-programming-exercise-build-configuration
             [programmingExercise]="programmingExercise"
             [dockerImage]="buildPlanPhases.dockerImage ?? ''"
             (dockerImageChange)="setDockerImage($event)"
             [timeout]="programmingExercise.buildConfig!.timeoutSeconds === 0 ? 120 : programmingExercise.buildConfig!.timeoutSeconds!"
             (timeoutChange)="setTimeout($event)"
-            [isAeolus]="false"
         />
         <jhi-build-phases-editor [phases]="buildPlanPhases.phases" (phasesChange)="onPhasesChange($event)" />
     }
