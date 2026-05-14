@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.repository.passkey;
+package de.tum.cit.aet.artemis.account.repository.passkey;
 
 import org.springframework.security.web.webauthn.api.COSEAlgorithmIdentifier;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialParameters;

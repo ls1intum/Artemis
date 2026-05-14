@@ -25,10 +25,10 @@ import org.springframework.security.web.webauthn.management.WebAuthnRelyingParty
 import org.springframework.security.web.webauthn.management.Webauthn4JRelyingPartyOperations;
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 
+import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
-import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.core.service.RateLimitService;
@@ -44,8 +44,8 @@ import de.tum.cit.aet.artemis.core.service.RateLimitService;
  * <li>
  * Using custom repositories for register & authenticate option requests, as the default implementation in
  * memory storage would not work on multinode systems (instead we are using hazelcast
- * {@link de.tum.cit.aet.artemis.core.repository.passkey.HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository}
- * {@link de.tum.cit.aet.artemis.core.repository.passkey.HazelcastPublicKeyCredentialRequestOptionsRepository})
+ * {@link de.tum.cit.aet.artemis.account.repository.passkey.HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository}
+ * {@link de.tum.cit.aet.artemis.account.repository.passkey.HazelcastPublicKeyCredentialRequestOptionsRepository})
  * </li>
  * </ul>
  *

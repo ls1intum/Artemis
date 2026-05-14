@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.account.domain.PasskeyType;
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
+import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to {@link de.tum.cit.aet.artemis.account.domain.PasskeyCredential} for use in integration tests.

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.repository.passkey;
+package de.tum.cit.aet.artemis.account.repository.passkey;
 
 import static de.tum.cit.aet.artemis.core.authentication.CredentialRecordFactory.createCredentialRecord;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,7 +18,7 @@ import org.springframework.security.web.webauthn.api.CredentialRecord;
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
+import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

@@ -40,7 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission_;
 
 /**
  * JPA Specifications for {@link StudentParticipation} queries.
- * Follows the same pattern as {@link de.tum.cit.aet.artemis.core.repository.UserSpecs}.
+ * Follows the same pattern as {@link de.tum.cit.aet.artemis.account.repository.UserSpecs}.
  */
 public class StudentParticipationSpecs {
 

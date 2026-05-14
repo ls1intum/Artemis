@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.repository;
+package de.tum.cit.aet.artemis.account.repository;
 
 import static de.tum.cit.aet.artemis.core.authentication.PasskeyCredentialFactory.createAndSavePasskey;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,8 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.passkey.ArtemisUserCredentialRepository;
 import de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO;
-import de.tum.cit.aet.artemis.core.repository.passkey.ArtemisUserCredentialRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;

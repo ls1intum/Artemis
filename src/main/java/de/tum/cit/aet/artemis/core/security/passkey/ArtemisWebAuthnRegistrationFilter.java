@@ -17,10 +17,10 @@ import org.springframework.security.web.webauthn.management.WebAuthnRelyingParty
 import org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 /**
  * Custom WebAuthn registration filter for Artemis that extends Spring Security's {@link WebAuthnRegistrationFilter}.

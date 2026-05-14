@@ -18,8 +18,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 @Lazy
 @Service

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.repository.passkey;
+package de.tum.cit.aet.artemis.account.repository.passkey;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 

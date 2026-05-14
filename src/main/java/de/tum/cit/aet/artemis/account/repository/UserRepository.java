@@ -1,14 +1,14 @@
-package de.tum.cit.aet.artemis.core.repository;
+package de.tum.cit.aet.artemis.account.repository;
 
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.distinct;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getActivatedOrDeactivatedSpecification;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getAllUsersWithoutUserGroups;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getAuthoritySpecification;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getInternalOrExternalSpecification;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getSearchTermSpecification;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getWithOrWithoutRegistrationNumberSpecification;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.notSoftDeleted;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.repository.UserSpecs.distinct;
-import static de.tum.cit.aet.artemis.core.repository.UserSpecs.getActivatedOrDeactivatedSpecification;
-import static de.tum.cit.aet.artemis.core.repository.UserSpecs.getAllUsersWithoutUserGroups;
-import static de.tum.cit.aet.artemis.core.repository.UserSpecs.getAuthoritySpecification;
-import static de.tum.cit.aet.artemis.core.repository.UserSpecs.getInternalOrExternalSpecification;
-import static de.tum.cit.aet.artemis.core.repository.UserSpecs.getSearchTermSpecification;
-import static de.tum.cit.aet.artemis.core.repository.UserSpecs.getWithOrWithoutRegistrationNumberSpecification;
-import static de.tum.cit.aet.artemis.core.repository.UserSpecs.notSoftDeleted;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;

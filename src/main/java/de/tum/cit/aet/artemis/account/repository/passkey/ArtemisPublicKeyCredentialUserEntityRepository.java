@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.repository.passkey;
+package de.tum.cit.aet.artemis.account.repository.passkey;
 
 import java.util.Optional;
 
@@ -13,9 +13,9 @@ import org.springframework.security.web.webauthn.management.PublicKeyCredentialU
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 /**
  * Repository implementation for managing {@link PublicKeyCredentialUserEntity} entities.

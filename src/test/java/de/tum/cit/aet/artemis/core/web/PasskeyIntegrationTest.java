@@ -32,9 +32,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
-import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.util.PasskeyCredentialUtilService;
 import de.tum.cit.aet.artemis.core.util.WebAuthnClientSimulator;
 import de.tum.cit.aet.artemis.core.util.WebAuthnClientSimulator.AuthenticationResponse;
