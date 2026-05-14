@@ -145,6 +145,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/**/*.ts',
     ],
     coveragePathIgnorePatterns: [
+        '<rootDir>/src/main/webapp/app/account/', // account module uses Vitest
         '<rootDir>/src/main/webapp/app/assessment/', // assessment module uses Vitest
         '<rootDir>/src/main/webapp/app/buildagent/', // buildagent module uses Vitest
         '<rootDir>/src/main/webapp/app/communication/', // communication module uses Vitest
@@ -237,6 +238,7 @@ module.exports = {
     modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
     // Exclude modules migrated to Vitest (see vitest.config.ts)
     testPathIgnorePatterns: [
+        '<rootDir>/src/main/webapp/app/account/', // account module
         '<rootDir>/src/main/webapp/app/assessment/', // assessment module
         '<rootDir>/src/main/webapp/app/buildagent/', // buildagent module
         '<rootDir>/src/main/webapp/app/communication/', // communication module

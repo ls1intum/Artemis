@@ -6,7 +6,7 @@ import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { Subject, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { ProfileService } from '../../../layouts/profiles/shared/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { ScienceSetting } from 'app/account/user/settings/science-settings/science-settings-structure';
 import { SCIENCE_SETTING_LOCAL_STORAGE_KEY, ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
