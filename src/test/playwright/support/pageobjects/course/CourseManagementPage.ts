@@ -172,9 +172,16 @@ export class CourseManagementPage {
 
     /**
      * Removes the first user from the registered students.
+     * <p>
+     * The students table re-renders after `addStudent()` and the bare click() can race that
+     * second render under parallel load — the row that previously had the delete button is
+     * detached and the locator points at nothing. Wait for the delete button to be attached
+     * and visible before clicking.
      */
     async removeFirstUser() {
-        await this.page.locator('#registered-students button[jhideletebutton]').first().click();
+        const deleteButton = this.page.locator('#registered-students button[jhideletebutton]').first();
+        await deleteButton.waitFor({ state: 'visible', timeout: 30_000 });
+        await deleteButton.click();
         await this.page.getByTestId('delete-dialog-confirm-button').click();
     }
 
