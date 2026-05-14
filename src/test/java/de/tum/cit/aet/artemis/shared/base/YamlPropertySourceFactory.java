@@ -23,9 +23,19 @@ public class YamlPropertySourceFactory implements PropertySourceFactory {
     @NonNull
     public PropertySource<?> createPropertySource(@Nullable String name, @NonNull EncodedResource resource) throws IOException {
         String sourceName = name != null ? name : resource.getResource().getFilename();
+        if (sourceName == null || sourceName.isBlank()) {
+            sourceName = "yaml";
+        }
         var loaded = new YamlPropertySourceLoader().load(sourceName, resource.getResource());
         if (loaded.isEmpty()) {
-            return new PropertiesPropertySource(sourceName != null ? sourceName : "yaml", new Properties());
+            return new PropertiesPropertySource(sourceName, new Properties());
+        }
+        // A PropertySourceFactory must return a single PropertySource. YamlPropertySourceLoader returns multiple entries
+        // for multi-document YAML (separated by `---`). We only support single-document YAML here; fail fast so the
+        // failure mode is obvious rather than silently dropping property documents.
+        if (loaded.size() > 1) {
+            throw new IllegalStateException("YamlPropertySourceFactory only supports single-document YAML, but '" + sourceName + "' contains " + loaded.size()
+                    + " documents. Split the file or load it via an EnvironmentPostProcessor / ApplicationContextInitializer instead.");
         }
         return loaded.getFirst();
     }

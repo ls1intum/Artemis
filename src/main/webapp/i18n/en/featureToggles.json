@@ -102,7 +102,7 @@
                     "description": "Enables the Apollon UML modeling editor for creating and editing diagrams in modeling exercises."
                 },
                 "ldap": {
-                    "name": "LDAP Authentication",
+                    "name": "LDAP Synchronization",
                     "description": "Enables LDAP-based user synchronization for fetching user details from institutional directory services."
                 },
                 "saml2": {
