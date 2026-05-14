@@ -108,6 +108,7 @@ for (const comp of sbom.components || []) {
 const keptRefs = new Set();
 const newComponents = [];
 const fallbackMatches = [];
+const fallbackMatchedNames = new Set();
 for (const comp of sbom.components || []) {
     const name = fullName(comp);
     const key = `${name}@${comp.version}`;
@@ -127,6 +128,7 @@ for (const comp of sbom.components || []) {
         keptRefs.add(comp['bom-ref']);
         newComponents.push(comp);
         fallbackMatches.push({ name, version: comp.version });
+        fallbackMatchedNames.add(name);
     }
 }
 
@@ -147,16 +149,33 @@ sbom.dependencies = newDependencies;
 // is `incomplete_third_party_only`: first-party (`metadata.component` itself)
 // is fully known; third-party components were filtered to a subset.
 const newComposition = { 'bom-ref': metadataRef, aggregate: 'incomplete_third_party_only' };
-if (metadataRef) {
-    sbom.compositions = (sbom.compositions || []).filter((c) => c['bom-ref'] !== metadataRef);
-    sbom.compositions.push(newComposition);
-}
+// Prune ref arrays on any pre-existing compositions cdxgen emitted so they
+// can't reference components we just dropped, and replace any composition the
+// input already had for our metadata component.
+const pruneRefs = (refs) => (refs || []).filter((r) => keptRefs.has(r));
+sbom.compositions = (sbom.compositions || [])
+    .filter((c) => c['bom-ref'] !== metadataRef)
+    .map((c) => ({
+        ...c,
+        ...(c.assemblies ? { assemblies: pruneRefs(c.assemblies) } : {}),
+        ...(c.dependencies ? { dependencies: pruneRefs(c.dependencies) } : {}),
+        ...(c.vulnerabilities ? { vulnerabilities: pruneRefs(c.vulnerabilities) } : {}),
+    }));
+if (metadataRef) sbom.compositions.push(newComposition);
 
 writeFileSync(outputPath, JSON.stringify(sbom, null, 2));
 
-const missing = [...shipped.values()].filter(
-    (s) => !newComponents.some((c) => fullName(c) === s.name && c.version === s.version),
-);
+// A shipped package counts as "missing" only if neither an exact (name, version)
+// match nor an opaque-version fallback claimed it. Opaque-version source-map
+// versions (e.g. `https+++cdn.../xlsx-0.20.3.tgz`) never match cdxgen's
+// version string (`xlsx-0.20.3.tgz`), so they must be excluded from the gap
+// list to avoid false positives that would fail CI.
+const exactMatches = new Set(newComponents.map((c) => `${fullName(c)}@${c.version}`));
+const missing = [...shipped.values()].filter((s) => {
+    if (exactMatches.has(`${s.name}@${s.version}`)) return false;
+    if (fallbackMatchedNames.has(s.name) && isOpaqueVersion(s.version)) return false;
+    return true;
+});
 
 console.log(
     `sbom filter: ${mapCount} maps scanned, ${shipped.size} shipped packages, ${newComponents.length} components kept`,
