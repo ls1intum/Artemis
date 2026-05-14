@@ -230,7 +230,7 @@
   },
   "cli": {
     "analytics": false,
-    "packageManager": "npm",
+    "packageManager": "pnpm",
     "cache": {
       "enabled": true,
       "path": "./build/angular/",
