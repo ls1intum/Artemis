@@ -9,6 +9,9 @@ export class ProofExercise extends Exercise {
     public description?: string;
     public sourceExpression?: MathNode;
     public targetExpression?: MathNode;
+    public manualDerivation?: boolean;
+    public allowVerification?: boolean;
+    public onlyShowApplicableRules?: boolean;
     public exampleDerivations?: DerivationStep[][];
 
     constructor(course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {

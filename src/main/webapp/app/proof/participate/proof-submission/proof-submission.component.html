@@ -65,25 +65,40 @@
                     </div>
                 </div>
 
-                <!-- Submission + result card -->
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="card-title mb-0" jhiTranslate="artemisApp.proofExercise.submission">Submission</h4>
-                    </div>
-                    <div class="card-body d-flex flex-column gap-3">
-                        <div class="d-flex gap-2 flex-wrap">
-                            <jhi-button [disabled]="isSaving || !!submission?.submitted" [title]="'entity.action.save'" (onClick)="save()" />
-                            <jhi-exercise-submit-button [exercise]="proofExercise" [isLoading]="isSaving" [isSubmitted]="!!submission?.submitted" (onSubmit)="submit()" />
-                        </div>
-                        @if (result) {
-                            <hr class="my-0" />
-                            <div>
+                <!-- Submission card -->
+                @if (submission?.submitted) {
+                    <!-- Submitted state: prominent green banner -->
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center gap-3">
+                                <div
+                                    class="rounded-circle bg-success d-flex align-items-center justify-content-center flex-shrink-0"
+                                    style="width: 40px; height: 40px"
+                                >
+                                    <span class="text-white fw-bold fs-5">✓</span>
+                                </div>
+                                <div>
+                                    <strong class="text-success d-block" jhiTranslate="artemisApp.proofExercise.submittedTitle">Submitted</strong>
+                                    @if (submission?.submissionDate) {
+                                        <small class="text-muted">{{ submission.submissionDate!.toDate().toLocaleString() }}</small>
+                                    }
+                                </div>
+                            </div>
+                            @if (result) {
+                                <hr class="my-3" />
                                 <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.score">Score</small>
                                 <p class="fs-4 mb-0">{{ result.score }}%</p>
-                            </div>
-                        }
+                            }
+                        </div>
                     </div>
-                </div>
+                } @else {
+                    <!-- Not submitted: single primary action -->
+                    <div class="card">
+                        <div class="card-body d-flex flex-column gap-2">
+                            <jhi-exercise-submit-button [exercise]="proofExercise" [isLoading]="isSaving" [isSubmitted]="false" (onSubmit)="submit()" />
+                        </div>
+                    </div>
+                }
             </div>
 
             <!-- Right: derivation workspace (wider column) -->
@@ -92,7 +107,7 @@
                     <div class="card">
                         <div class="card-header d-flex align-items-center justify-content-between">
                             <h4 class="card-title mb-0" jhiTranslate="artemisApp.proofExercise.derivation">Derivation</h4>
-                            @if (steps().length > 0 && !submission?.submitted) {
+                            @if (steps().length > 0 && !submission?.submitted && canVerify) {
                                 <button type="button" class="btn btn-sm btn-outline-secondary" (click)="verifyFullProof()" jhiTranslate="artemisApp.proofExercise.verifyProof">
                                     Verify Proof
                                 </button>
@@ -100,8 +115,8 @@
                         </div>
                         <div class="card-body d-flex gap-3">
                             <!-- Rule palette sidebar -->
-                            @if (!submission?.submitted) {
-                                <div style="width: 164px; flex-shrink: 0; overflow-y: auto">
+                            @if (!submission?.submitted && !pendingManualStep()) {
+                                <div class="d-flex flex-column" style="width: 180px; flex-shrink: 0">
                                     @if (operatorBlocks.length > 0) {
                                         <small class="text-muted fw-semibold d-block mb-1" jhiTranslate="artemisApp.proofExercise.blocksPanel">Blocks</small>
                                         @for (block of operatorBlocks; track block.type) {
@@ -117,9 +132,19 @@
                                         }
                                         <hr class="my-2" />
                                     }
-                                    <small class="text-muted fw-semibold d-block mb-2" jhiTranslate="artemisApp.proofExercise.rulesPanel">Rules</small>
-                                    @for (block of blocks(); track block.type) {
-                                        @if ((block.rules?.length ?? 0) > 0) {
+                                    <small class="text-muted fw-semibold d-block mb-1" jhiTranslate="artemisApp.proofExercise.rulesPanel">Rules</small>
+                                    <input
+                                        type="search"
+                                        class="form-control form-control-sm mb-2"
+                                        [placeholder]="'artemisApp.proofExercise.searchRules' | artemisTranslate"
+                                        [value]="ruleSearch()"
+                                        (input)="ruleSearch.set($any($event.target).value)"
+                                    />
+                                    <div class="overflow-y-auto flex-grow-1" style="max-height: 420px">
+                                        @if (filteredBlocks().length === 0) {
+                                            <small class="text-muted fst-italic" jhiTranslate="artemisApp.proofExercise.noRulesFound">No rules found</small>
+                                        }
+                                        @for (block of filteredBlocks(); track block.type) {
                                             <div class="mb-2">
                                                 <small class="text-muted d-block mb-1">{{ block.label }}</small>
                                                 @for (rule of block.rules ?? []; track rule.id) {
@@ -146,27 +171,12 @@
                                                 }
                                             </div>
                                         }
-                                    }
+                                    </div>
                                 </div>
                             }
 
                             <!-- Expression canvas + step history + controls -->
                             <div class="flex-grow-1 d-flex flex-column">
-                                <!-- Interactive expression canvas -->
-                                <div class="mb-3">
-                                    @if (!submission?.submitted) {
-                                        <small class="text-muted d-block mb-1" jhiTranslate="artemisApp.proofExercise.selectNode">Click a node or drop a rule onto it:</small>
-                                    }
-                                    <jhi-proof-expression-canvas
-                                        [rootNodes]="submissionRootNodes()"
-                                        [draggingPayload]="draggingPayload()"
-                                        [nodeCtx]="submissionNodeCtx()"
-                                        [blocks]="blocks()"
-                                        [readonly]="!!submission?.submitted"
-                                        (gapDrop)="handleGapDrop($event)"
-                                    />
-                                </div>
-
                                 <!-- Step history (timeline) -->
                                 @if (steps().length > 0) {
                                     <div class="mb-3 d-flex flex-column" style="gap: 2px">
@@ -175,16 +185,28 @@
                                             <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
                                         </div>
                                         @for (step of steps(); track step.stepIndex; let i = $index) {
-                                            <div class="d-flex align-items-center gap-1 ps-2" style="font-size: 0.8em">
-                                                <span class="text-muted">↓</span>
+                                            <!-- Rule application slot: clearly labels which rule bridges from the previous expression to the next -->
+                                            <div
+                                                class="d-flex align-items-center gap-2 px-3 py-1 rounded border"
+                                                style="font-size: 0.78em; pointer-events: none; user-select: none"
+                                                [class.border-secondary]="stepStatuses()[i] === 'pending'"
+                                                [class.bg-light]="stepStatuses()[i] === 'pending'"
+                                                [class.text-secondary]="stepStatuses()[i] === 'pending'"
+                                                [class.border-success]="stepStatuses()[i] === 'valid'"
+                                                [class.bg-success-subtle]="stepStatuses()[i] === 'valid'"
+                                                [class.border-danger]="stepStatuses()[i] === 'invalid'"
+                                                [class.bg-danger-subtle]="stepStatuses()[i] === 'invalid'"
+                                            >
+                                                <span class="fst-italic opacity-75" jhiTranslate="artemisApp.proofExercise.by">by</span>
                                                 <span
-                                                    class="badge"
-                                                    [class.bg-secondary]="stepStatuses()[i] === 'pending'"
-                                                    [class.bg-success]="stepStatuses()[i] === 'valid'"
-                                                    [class.bg-danger]="stepStatuses()[i] === 'invalid'"
+                                                    class="fw-semibold"
+                                                    [class.text-secondary]="stepStatuses()[i] === 'pending'"
+                                                    [class.text-success-emphasis]="stepStatuses()[i] === 'valid'"
+                                                    [class.text-danger-emphasis]="stepStatuses()[i] === 'invalid'"
                                                     >{{ getRuleName(step.appliedRuleId) }}</span
                                                 >
                                             </div>
+                                            <!-- Result expression for this step -->
                                             <div
                                                 class="py-1 px-2 border rounded small"
                                                 [class.border-success]="stepStatuses()[i] === 'valid'"
@@ -201,25 +223,89 @@
                                     </div>
                                 }
 
+                                <!-- Interactive expression canvas -->
+                                <div class="mb-3">
+                                    @if (!submission?.submitted) {
+                                        <small class="text-muted d-block mb-1" jhiTranslate="artemisApp.proofExercise.selectNode">Click a node or drop a rule onto it:</small>
+                                    }
+                                    <jhi-proof-expression-canvas
+                                        [rootNodes]="submissionRootNodes()"
+                                        [draggingPayload]="draggingPayload()"
+                                        [nodeCtx]="submissionNodeCtx()"
+                                        [blocks]="blocks()"
+                                        [readonly]="!!submission?.submitted || pendingManualStep()"
+                                        (gapDrop)="handleGapDrop($event)"
+                                    />
+                                </div>
+
                                 <!-- Controls -->
                                 @if (!submission?.submitted) {
-                                    <div class="d-flex gap-2 align-items-center flex-wrap mt-auto">
-                                        @if (!selectedRuleId() && selectedNodePath() === undefined) {
-                                            <small class="text-muted fst-italic">← Select a rule, then click a node</small>
-                                        } @else if (selectedRuleId() && selectedNodePath() === undefined) {
-                                            <span class="badge bg-primary">{{ selectedRuleName }}</span>
-                                            <small class="text-muted fst-italic">Now click a node →</small>
-                                        } @else if (!selectedRuleId() && selectedNodePath() !== undefined) {
-                                            <small class="text-muted fst-italic">← Now select a rule</small>
+                                    @if (pendingManualStep()) {
+                                        <!-- Manual mode: student constructs the result expression -->
+                                        <div class="border border-primary rounded p-3 mt-2">
+                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                <small class="text-muted" jhiTranslate="artemisApp.proofExercise.manualStepClaimedRule">Claimed rule:</small>
+                                                <span class="badge bg-primary">{{ selectedRuleName }}</span>
+                                            </div>
+                                            <small class="text-muted d-block mb-2" jhiTranslate="artemisApp.proofExercise.manualStepBuildResult"
+                                                >Build the result expression:</small
+                                            >
+                                            <jhi-proof-builder
+                                                [expression]="manualResultExpression()"
+                                                (expressionChange)="manualResultExpression.set($event)"
+                                            />
+                                            <div class="d-flex gap-2 mt-3">
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-sm btn-primary"
+                                                    (click)="confirmManualStep()"
+                                                    jhiTranslate="artemisApp.proofExercise.manualStepConfirm"
+                                                >
+                                                    Confirm Step
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-sm btn-outline-secondary"
+                                                    (click)="cancelManualStep()"
+                                                    jhiTranslate="artemisApp.proofExercise.cancel"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                            @if (ruleApplicationError()) {
+                                                <div class="alert alert-warning mt-2 py-1 px-2 small">{{ ruleApplicationError() }}</div>
+                                            }
+                                        </div>
+                                    } @else {
+                                        <!-- Normal controls: hints + undo -->
+                                        <div class="d-flex gap-2 align-items-center flex-wrap mt-auto">
+                                            @if (!selectedRuleId() && selectedNodePath() === undefined) {
+                                                @if (isManualMode) {
+                                                    <small class="text-muted fst-italic" jhiTranslate="artemisApp.proofExercise.manualHintSelectBoth"
+                                                        >← Select a rule and click a node, then write the result</small
+                                                    >
+                                                } @else {
+                                                    <small class="text-muted fst-italic">← Select a rule, then click a node</small>
+                                                }
+                                            } @else if (selectedRuleId() && selectedNodePath() === undefined) {
+                                                <span class="badge bg-primary">{{ selectedRuleName }}</span>
+                                                <small class="text-muted fst-italic">Now click a node →</small>
+                                            } @else if (!selectedRuleId() && selectedNodePath() !== undefined) {
+                                                <small class="text-muted fst-italic">← Now select a rule</small>
+                                            }
+                                            @if (steps().length > 0) {
+                                                <button
+                                                    class="btn btn-sm btn-outline-secondary ms-auto"
+                                                    (click)="undoLastStep()"
+                                                    jhiTranslate="artemisApp.proofExercise.undo"
+                                                >
+                                                    Undo
+                                                </button>
+                                            }
+                                        </div>
+                                        @if (ruleApplicationError()) {
+                                            <div class="alert alert-warning mt-2 py-1 px-2 small">{{ ruleApplicationError() }}</div>
                                         }
-                                        @if (steps().length > 0) {
-                                            <button class="btn btn-sm btn-outline-secondary ms-auto" (click)="undoLastStep()" jhiTranslate="artemisApp.proofExercise.undo">
-                                                Undo
-                                            </button>
-                                        }
-                                    </div>
-                                    @if (ruleApplicationError()) {
-                                        <div class="alert alert-warning mt-2 py-1 px-2 small">{{ ruleApplicationError() }}</div>
                                     }
                                 }
                             </div>

@@ -8,7 +8,6 @@ import { ProofSubmission } from 'app/proof/shared/entities/proof-submission.mode
 import { DerivationStep } from 'app/proof/shared/entities/derivation-step.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -20,6 +19,7 @@ import { BlockDefinitionModel, RewriteRuleModel } from 'app/proof/shared/entitie
 import { ProofBlockRegistryService } from 'app/proof/manage/service/proof-block-registry.service';
 import { MathNodeContext } from 'app/proof/manage/update/proof-math-node/proof-math-node.component';
 import { ProofExpressionCanvasComponent } from 'app/proof/shared/expression-canvas/proof-expression-canvas.component';
+import { ProofBuilderComponent } from 'app/proof/manage/update/proof-builder/proof-builder.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 
 type StepStatus = 'pending' | 'valid' | 'invalid';
@@ -29,7 +29,6 @@ type StepStatus = 'pending' | 'valid' | 'invalid';
     templateUrl: './proof-submission.component.html',
     imports: [
         HeaderParticipationPageComponent,
-        ButtonComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
@@ -37,6 +36,7 @@ type StepStatus = 'pending' | 'valid' | 'invalid';
         MathNodeLatexPipe,
         KatexStringPipe,
         ProofExpressionCanvasComponent,
+        ProofBuilderComponent,
     ],
 })
 export class ProofSubmissionComponent implements OnInit, OnDestroy {
@@ -62,6 +62,39 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
     selectedNodePath = signal<number[] | undefined>(undefined);
     ruleApplicationError = signal<string | undefined>(undefined);
     draggingPayload = signal<string | undefined>(undefined);
+
+    // Manual mode state
+    pendingManualStep = signal(false);
+    manualResultExpression = signal<MathNode | undefined>(undefined);
+
+    // Rule palette search
+    ruleSearch = signal('');
+
+    filteredBlocks = computed<BlockDefinitionModel[]>(() => {
+        const raw = this.ruleSearch().trim().toLowerCase();
+        const compact = raw.replace(/\s+/g, '');
+
+        let result = this.blocks();
+
+        if (this.proofExercise?.onlyShowApplicableRules && this.selectedNodePath() !== undefined) {
+            const applicable = this.applicableRuleIds();
+            result = result
+                .map((block) => ({ ...block, rules: (block.rules ?? []).filter((r) => applicable.has(r.id)) }))
+                .filter((block) => block.rules.length > 0);
+        }
+
+        if (!raw) return result;
+        return result
+            .map((block) => ({
+                ...block,
+                rules: (block.rules ?? []).filter((r) => {
+                    if (r.name.toLowerCase().includes(raw)) return true;
+                    const latex = (r.paletteLatex ?? '').toLowerCase().replace(/\s+/g, '');
+                    return latex.includes(compact);
+                }),
+            }))
+            .filter((block) => block.rules.length > 0);
+    });
 
     // Verification state
     stepStatuses = signal<StepStatus[]>([]);
@@ -110,7 +143,11 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
             if (rule) {
                 this.selectedNodePath.set(path);
                 this.selectedRuleId.set(payload);
-                this.applySelectedRule();
+                if (this.isManualMode) {
+                    this.openManualBuilder();
+                } else {
+                    this.applySelectedRule();
+                }
             }
         },
         valueChangeFn: () => {},
@@ -170,6 +207,14 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
         return !!(this.proofExercise?.sourceExpression && this.proofExercise?.targetExpression);
     }
 
+    get isManualMode(): boolean {
+        return !!this.proofExercise?.manualDerivation;
+    }
+
+    get canVerify(): boolean {
+        return this.proofExercise?.allowVerification !== false;
+    }
+
     get allRules(): RewriteRuleModel[] {
         return this.blocks().flatMap((b) => b.rules ?? []);
     }
@@ -192,22 +237,65 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
         return sel.length === path.length && sel.every((v, i) => v === path[i]);
     }
 
-    /** Select a rule from the palette. Auto-applies if a node is already highlighted. */
     selectRule(ruleId: string): void {
         this.selectedRuleId.set(ruleId);
         this.ruleApplicationError.set(undefined);
         if (this.selectedNodePath() !== undefined) {
-            this.applySelectedRule();
+            if (this.isManualMode) {
+                this.openManualBuilder();
+            } else {
+                this.applySelectedRule();
+            }
         }
     }
 
-    /** Select a node in the expression canvas. Auto-applies if a rule is already selected. */
     selectNode(path: number[]): void {
         this.selectedNodePath.set(path);
         this.ruleApplicationError.set(undefined);
         if (this.selectedRuleId()) {
-            this.applySelectedRule();
+            if (this.isManualMode) {
+                this.openManualBuilder();
+            } else {
+                this.applySelectedRule();
+            }
         }
+    }
+
+    openManualBuilder(): void {
+        this.manualResultExpression.set(this.currentExpression());
+        this.pendingManualStep.set(true);
+    }
+
+    confirmManualStep(): void {
+        const result = this.manualResultExpression();
+        if (!result) {
+            this.ruleApplicationError.set('Please build the result expression first.');
+            return;
+        }
+        const newStep: DerivationStep = {
+            stepIndex: this.steps().length,
+            appliedRuleId: this.selectedRuleId(),
+            targetNodePath: this.selectedNodePath() ?? [],
+            resultExpression: result,
+        };
+        this.steps.update((s) => [...s, newStep]);
+        this.stepStatuses.update((s) => [...s, 'pending']);
+        this.stepErrors.update((s) => [...s, undefined]);
+        this.currentExpression.set(result);
+        this.selectedNodePath.set(undefined);
+        this.selectedRuleId.set('');
+        this.pendingManualStep.set(false);
+        this.manualResultExpression.set(undefined);
+        this.ruleApplicationError.set(undefined);
+        this.hasUnsavedChanges.set(true);
+    }
+
+    cancelManualStep(): void {
+        this.pendingManualStep.set(false);
+        this.manualResultExpression.set(undefined);
+        this.selectedNodePath.set(undefined);
+        this.selectedRuleId.set('');
+        this.ruleApplicationError.set(undefined);
     }
 
     applySelectedRule() {
@@ -321,6 +409,8 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
         this.ruleApplicationError.set(undefined);
         this.selectedNodePath.set(undefined);
         this.selectedRuleId.set('');
+        this.pendingManualStep.set(false);
+        this.manualResultExpression.set(undefined);
         this.hasUnsavedChanges.set(true);
     }
 

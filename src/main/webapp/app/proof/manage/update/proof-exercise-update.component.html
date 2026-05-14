@@ -68,6 +68,47 @@
                     >
                     <textarea class="form-control" name="description" id="field_description" rows="5" [(ngModel)]="proofExercise.description"></textarea>
                 </div>
+                <div class="form-check mt-3">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="field_derivationMode"
+                        name="derivationMode"
+                        [(ngModel)]="proofExercise.manualDerivation"
+                    />
+                    <label class="form-check-label" for="field_derivationMode" jhiTranslate="artemisApp.proofExercise.derivationModeManual">Manual derivation mode</label>
+                    <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.derivationModeHint">
+                        Student writes the result expression; in inference mode the system applies the rule automatically.
+                    </small>
+                </div>
+                <div class="form-check mt-3">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="field_allowVerification"
+                        name="allowVerification"
+                        [(ngModel)]="proofExercise.allowVerification"
+                    />
+                    <label class="form-check-label" for="field_allowVerification" jhiTranslate="artemisApp.proofExercise.allowVerification">Allow Verification</label>
+                    <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.allowVerificationHint"
+                        >Show the "Verify Proof" button so students can check their steps.</small
+                    >
+                </div>
+                <div class="form-check mt-2">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="field_onlyShowApplicableRules"
+                        name="onlyShowApplicableRules"
+                        [(ngModel)]="proofExercise.onlyShowApplicableRules"
+                    />
+                    <label class="form-check-label" for="field_onlyShowApplicableRules" jhiTranslate="artemisApp.proofExercise.onlyShowApplicableRules"
+                        >Only Show Applicable Rules</label
+                    >
+                    <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.onlyShowApplicableRulesHint"
+                        >Hide rules that cannot be applied at the currently selected node.</small
+                    >
+                </div>
             </div>
 
             <div class="card p-3 mb-3">
@@ -96,9 +137,21 @@
                 <div class="card p-3 mb-3">
                     <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3">
                         <h4 class="card-title mb-0" jhiTranslate="artemisApp.proofExercise.exampleSolutions">Example Solutions</h4>
-                        <button type="button" class="btn btn-sm btn-outline-primary" (click)="addExampleDerivation()">
-                            + <span jhiTranslate="artemisApp.proofExercise.addExampleSolution">Add example solution</span>
-                        </button>
+                        <div class="d-flex align-items-center gap-2">
+                            <button
+                                type="button"
+                                class="btn btn-sm"
+                                [class.btn-outline-secondary]="!onlyShowApplicableRules()"
+                                [class.btn-secondary]="onlyShowApplicableRules()"
+                                (click)="onlyShowApplicableRules.set(!onlyShowApplicableRules())"
+                                title="Only show rules applicable at the selected node"
+                            >
+                                <span>{{ onlyShowApplicableRules() ? '★' : '☆' }} Only applicable rules</span>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" (click)="addExampleDerivation()">
+                                + <span jhiTranslate="artemisApp.proofExercise.addExampleSolution">Add example solution</span>
+                            </button>
+                        </div>
                     </div>
 
                     @if ((proofExercise.exampleDerivations ?? []).length === 0) {
@@ -124,6 +177,7 @@
                                 [sourceExpression]="proofExercise.sourceExpression"
                                 [targetExpression]="proofExercise.targetExpression"
                                 [initialSteps]="derivation"
+                                [onlyShowApplicableRules]="onlyShowApplicableRules()"
                                 (stepsChange)="onExampleStepsChange(i, $event)"
                             />
                         </div>

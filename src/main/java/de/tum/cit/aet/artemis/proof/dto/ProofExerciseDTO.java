@@ -42,6 +42,9 @@ import de.tum.cit.aet.artemis.proof.dto.ProofSubmissionDTO.DerivationStepDTO;
  * @param exerciseGroupId                        the exam exercise group ID (for exam exercises)
  * @param sourceExpression                       the starting expression of the proof (root MathNode)
  * @param targetExpression                       the goal expression students must derive
+ * @param manualDerivation                       true if students write the result expression themselves (false = system auto-applies)
+ * @param allowVerification                      whether students may trigger proof verification
+ * @param onlyShowApplicableRules                whether the rule palette shows only rules applicable at the selected node
  * @param exampleDerivations                     instructor-supplied example derivations (each is an ordered list of steps)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -49,7 +52,8 @@ public record ProofExerciseDTO(Long id, String title, String shortName, String p
         DifficultyLevel difficulty, Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments,
         Boolean allowFeedbackRequests, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions,
         ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, Long courseId,
-        Long exerciseGroupId, MathNode sourceExpression, MathNode targetExpression, List<List<DerivationStepDTO>> exampleDerivations) {
+        Long exerciseGroupId, MathNode sourceExpression, MathNode targetExpression, Boolean manualDerivation, Boolean allowVerification, Boolean onlyShowApplicableRules,
+        List<List<DerivationStepDTO>> exampleDerivations) {
 
     public static ProofExerciseDTO of(ProofExercise exercise) {
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
@@ -59,7 +63,8 @@ public record ProofExerciseDTO(Long id, String title, String shortName, String p
                 exercise.getIncludedInOverallScore(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(),
                 exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(),
                 exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), courseId,
-                exerciseGroupId, exercise.getSourceExpression(), exercise.getTargetExpression(), exercise.getExampleDerivations());
+                exerciseGroupId, exercise.getSourceExpression(), exercise.getTargetExpression(), exercise.isManualDerivation(), exercise.isAllowVerification(),
+                exercise.isOnlyShowApplicableRules(), exercise.getExampleDerivations());
     }
 
     /**
@@ -92,6 +97,9 @@ public record ProofExerciseDTO(Long id, String title, String shortName, String p
         }
         exercise.setSourceExpression(sourceExpression);
         exercise.setTargetExpression(targetExpression);
+        exercise.setManualDerivation(Boolean.TRUE.equals(manualDerivation));
+        exercise.setAllowVerification(allowVerification == null || allowVerification);
+        exercise.setOnlyShowApplicableRules(Boolean.TRUE.equals(onlyShowApplicableRules));
         exercise.setExampleDerivations(exampleDerivations);
     }
 }

@@ -1,9 +1,11 @@
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MathNode, applyRule, mathNodesEqual } from '../../../shared/entities/math-node.model';
 import { DerivationStep } from '../../../shared/entities/derivation-step.model';
 import { BlockDefinitionModel, RewriteRuleModel } from '../../../shared/entities/block-definition.model';
 import { MathNodeLatexPipe } from '../../../shared/math-node-latex.pipe';
 import { KatexStringPipe } from '../../../shared/katex-string.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProofBlockRegistryService } from '../../service/proof-block-registry.service';
 import { ProofExpressionCanvasComponent } from '../../../shared/expression-canvas/proof-expression-canvas.component';
 import { MathNodeContext } from '../proof-math-node/proof-math-node.component';
@@ -11,7 +13,7 @@ import { MathNodeContext } from '../proof-math-node/proof-math-node.component';
 @Component({
     selector: 'jhi-proof-derivation-workspace',
     templateUrl: './proof-derivation-workspace.component.html',
-    imports: [MathNodeLatexPipe, KatexStringPipe, ProofExpressionCanvasComponent],
+    imports: [FormsModule, MathNodeLatexPipe, KatexStringPipe, ArtemisTranslatePipe, ProofExpressionCanvasComponent],
 })
 export class ProofDerivationWorkspaceComponent implements OnInit {
     private blockRegistryService = inject(ProofBlockRegistryService);
@@ -19,6 +21,7 @@ export class ProofDerivationWorkspaceComponent implements OnInit {
     sourceExpression = input<MathNode | undefined>(undefined);
     targetExpression = input<MathNode | undefined>(undefined);
     initialSteps = input<DerivationStep[]>([]);
+    onlyShowApplicableRules = input<boolean>(false);
     stepsChange = output<DerivationStep[]>();
 
     currentExpression = signal<MathNode | undefined>(undefined);
@@ -28,6 +31,28 @@ export class ProofDerivationWorkspaceComponent implements OnInit {
     selectedNodePath = signal<number[] | undefined>(undefined);
     ruleApplicationError = signal<string | undefined>(undefined);
     draggingPayload = signal<string | undefined>(undefined);
+    ruleSearch = signal('');
+
+    filteredBlocks = computed<BlockDefinitionModel[]>(() => {
+        const filterApplicable = this.onlyShowApplicableRules() && this.selectedNodePath() !== undefined;
+        const applicable = filterApplicable ? this.applicableRuleIds() : undefined;
+
+        const raw = this.ruleSearch().trim().toLowerCase();
+        const compact = raw.replace(/\s+/g, '');
+
+        return this.blocks()
+            .map((block) => ({
+                ...block,
+                rules: (block.rules ?? []).filter((r) => {
+                    if (applicable && !applicable.has(r.id)) return false;
+                    if (!raw) return true;
+                    if (r.name.toLowerCase().includes(raw)) return true;
+                    const latex = (r.paletteLatex ?? '').toLowerCase().replace(/\s+/g, '');
+                    return latex.includes(compact);
+                }),
+            }))
+            .filter((block) => block.rules.length > 0);
+    });
 
     rootNodes = computed<MathNode[]>(() => {
         const e = this.currentExpression();
@@ -105,6 +130,7 @@ export class ProofDerivationWorkspaceComponent implements OnInit {
     }
 
     selectRule(ruleId: string): void {
+        if (this.isComplete()) return;
         this.selectedRuleId.set(ruleId);
         this.ruleApplicationError.set(undefined);
         if (this.selectedNodePath() !== undefined) {
@@ -113,6 +139,7 @@ export class ProofDerivationWorkspaceComponent implements OnInit {
     }
 
     selectNode(path: number[]): void {
+        if (this.isComplete()) return;
         this.selectedNodePath.set(path);
         this.ruleApplicationError.set(undefined);
         if (this.selectedRuleId()) {
@@ -166,6 +193,10 @@ export class ProofDerivationWorkspaceComponent implements OnInit {
     }
 
     onRuleDragStart(event: DragEvent, ruleId: string): void {
+        if (this.isComplete()) {
+            event.preventDefault();
+            return;
+        }
         this.draggingPayload.set(ruleId);
         event.dataTransfer!.setData('text/plain', ruleId);
         event.dataTransfer!.effectAllowed = 'copy';

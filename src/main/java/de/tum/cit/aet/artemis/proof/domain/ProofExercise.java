@@ -40,9 +40,42 @@ public class ProofExercise extends Exercise {
     @Column(table = "proof_exercise_details", name = "example_solution")
     private String exampleSolution;
 
+    @Column(table = "proof_exercise_details", name = "manual_derivation")
+    private boolean manualDerivation = false;
+
+    @Column(table = "proof_exercise_details", name = "allow_verification")
+    private boolean allowVerification = true;
+
+    @Column(table = "proof_exercise_details", name = "only_show_applicable_rules")
+    private boolean onlyShowApplicableRules = false;
+
     @Convert(converter = ExampleDerivationsConverter.class)
     @Column(table = "proof_exercise_details", name = "example_derivations", columnDefinition = "longtext")
     private List<List<DerivationStepDTO>> exampleDerivations = Collections.emptyList();
+
+    public boolean isManualDerivation() {
+        return manualDerivation;
+    }
+
+    public void setManualDerivation(boolean manualDerivation) {
+        this.manualDerivation = manualDerivation;
+    }
+
+    public boolean isAllowVerification() {
+        return allowVerification;
+    }
+
+    public void setAllowVerification(boolean allowVerification) {
+        this.allowVerification = allowVerification;
+    }
+
+    public boolean isOnlyShowApplicableRules() {
+        return onlyShowApplicableRules;
+    }
+
+    public void setOnlyShowApplicableRules(boolean onlyShowApplicableRules) {
+        this.onlyShowApplicableRules = onlyShowApplicableRules;
+    }
 
     public MathNode getSourceExpression() {
         return sourceExpression;

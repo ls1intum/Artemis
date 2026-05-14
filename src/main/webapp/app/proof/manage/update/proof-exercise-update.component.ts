@@ -37,6 +37,7 @@ export class ProofExerciseUpdateComponent implements OnInit {
     isSaving: boolean;
     exerciseCategories = signal<ExerciseCategory[]>([]);
     existingCategories = signal<ExerciseCategory[]>([]);
+    onlyShowApplicableRules = signal(false);
 
     ngOnInit() {
         this.isSaving = false;
@@ -55,10 +56,12 @@ export class ProofExerciseUpdateComponent implements OnInit {
 
     onSourceExpressionChange(node: MathNode | undefined) {
         this.proofExercise.sourceExpression = node;
+        this.proofExercise.exampleDerivations = [];
     }
 
     onTargetExpressionChange(node: MathNode | undefined) {
         this.proofExercise.targetExpression = node;
+        // Workspaces re-evaluate isComplete automatically via the targetExpression signal input.
     }
 
     addExampleDerivation(): void {
