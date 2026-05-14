@@ -16,7 +16,7 @@ export class ParseLinks {
         }
 
         // Split parts by comma
-        const parts: string[] = header.split(',');
+        const parts: string[] = header.split(/,(?=<)/);
         const links: { [key: string]: number } = {};
 
         // Parse each part into a named link
