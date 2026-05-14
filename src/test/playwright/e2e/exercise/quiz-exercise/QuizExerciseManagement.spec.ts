@@ -36,7 +36,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             const quiz: QuizExercise = await quizResponse.json();
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await expect(page.getByText(title)).toBeVisible();
         });
 
@@ -50,7 +50,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             const quiz: QuizExercise = await quizResponse.json();
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await expect(page.getByText(title)).toBeVisible();
             for (const answerOption of answerOptions) {
                 await expect(page.getByText(answerOption)).toBeVisible();
@@ -64,7 +64,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             const quiz: QuizExercise = await quizResponse.json();
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await expect(page.getByText(title)).toBeVisible();
         });
 
@@ -75,7 +75,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             const quiz = await response.json();
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await expect(page.getByText(quizQuestionTitle)).toBeVisible();
         });
     });
