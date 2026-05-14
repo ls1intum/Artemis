@@ -23,7 +23,7 @@ export class ParseLinks {
         parts.forEach((part) => {
             const section: string[] = part.split(/(?<=> *);/);
 
-            if (section.length !== 2) {
+            if (section.length !== 2 || section[1].includes(';')) {
                 throw new Error('section could not be split on ";"');
             }
 
