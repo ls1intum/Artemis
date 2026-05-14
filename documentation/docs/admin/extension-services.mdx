@@ -407,7 +407,7 @@ The semi-automatic text assessment relies on the <a href="https://github.com/ls1
 
 ### Enable Athena
 
-Set the Athena module-feature flag in `src/main/resources/config/application-artemis.yml`:
+Set the Athena module-feature flag in your deployment-specific override (e.g. `application-prod.yml`, or the equivalent file mounted into your container — **not** the source-tree `src/main/resources/config/application-artemis.yml`, which would be ignored by a packaged or containerized deployment):
 ```yaml
 artemis:
   athena:
@@ -463,7 +463,7 @@ info:
 
 #### Enable Apollon
 
-Set the Apollon module-feature flag in `src/main/resources/config/application-artemis.yml`:
+Set the Apollon module-feature flag in your deployment-specific override (e.g. `application-prod.yml`, or the equivalent file mounted into your container — **not** the source-tree `src/main/resources/config/application-artemis.yml`, which would be ignored by a packaged or containerized deployment):
 ```yaml
 artemis:
   apollon:

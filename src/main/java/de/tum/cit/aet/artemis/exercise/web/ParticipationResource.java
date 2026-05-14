@@ -212,7 +212,7 @@ public class ParticipationResource {
         }
         if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !isAthenaEnabled) {
             throw new ServiceUnavailableAlertException("Practice mode for text and modeling exercises requires Athena to be enabled (artemis.athena.enabled=true)", ENTITY_NAME,
-                    "dueDateOver.athenaProfileRequired");
+                    "dueDateOver.athenaNotEnabled");
         }
         if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate())
                 || (optionalGradedStudentParticipation.isPresent() && exerciseDateService.isBeforeDueDate(optionalGradedStudentParticipation.get()))) {
@@ -306,7 +306,7 @@ public class ParticipationResource {
 
         if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !isAthenaEnabled) {
             throw new ServiceUnavailableAlertException("Feedback requests for text and modeling exercises require Athena to be enabled (artemis.athena.enabled=true)", ENTITY_NAME,
-                    "feedbackRequest.athenaProfileRequired");
+                    "feedbackRequest.athenaNotEnabled");
         }
 
         if (exercise.getDueDate() != null && now().isAfter(exercise.getDueDate()) && !participation.isPracticeMode()) {

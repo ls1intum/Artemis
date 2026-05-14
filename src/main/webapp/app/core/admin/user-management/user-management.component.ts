@@ -185,7 +185,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     readonly searchInvalid = signal(false);
 
     /** Whether LDAP profile is active */
-    readonly isLdapProfileActive = signal(false);
+    readonly isLdapEnabled = signal(false);
 
     /** User filters */
     readonly filters = signal(new UserFilter());
@@ -257,7 +257,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.userListSubscription = this.eventManager.subscribe('userListModification', () => this.loadAll());
             this.handleNavigation();
         });
-        this.isLdapProfileActive.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LDAP));
+        this.isLdapEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LDAP));
     }
 
     /**
