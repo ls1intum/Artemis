@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.security.passkey;
+package de.tum.cit.aet.artemis.account.security.passkey;
 
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.http.HttpStatus;

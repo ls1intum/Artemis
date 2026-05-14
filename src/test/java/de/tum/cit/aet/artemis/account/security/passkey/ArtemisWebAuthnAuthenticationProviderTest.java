@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.security.passkey;
+package de.tum.cit.aet.artemis.account.security.passkey;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

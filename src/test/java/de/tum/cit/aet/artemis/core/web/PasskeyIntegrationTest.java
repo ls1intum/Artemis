@@ -53,7 +53,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  * <p>
  * Note: The WebAuthn endpoints (/webauthn/*) are handled by Spring Security filters,
  * not by explicit REST controllers. These filters are configured in
- * {@link de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnConfigurer}.
+ * {@link de.tum.cit.aet.artemis.account.security.passkey.ArtemisWebAuthnConfigurer}.
  */
 class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -468,7 +468,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * Tests for the WebAuthn registration options endpoint.
      * <p>
      * This endpoint is handled by Spring Security's
-     * {@link de.tum.cit.aet.artemis.core.security.passkey.ArtemisPublicKeyCredentialCreationOptionsFilter}
+     * {@link de.tum.cit.aet.artemis.account.security.passkey.ArtemisPublicKeyCredentialCreationOptionsFilter}
      * at POST /webauthn/register/options.
      * <p>
      * The endpoint returns a PublicKeyCredentialCreationOptions object containing:
@@ -554,7 +554,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * Tests for the WebAuthn login endpoint.
      * <p>
      * This endpoint is handled by Spring Security's
-     * {@link de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnAuthenticationFilter}
+     * {@link de.tum.cit.aet.artemis.account.security.passkey.ArtemisWebAuthnAuthenticationFilter}
      * at POST /login/webauthn.
      * <p>
      * Note: Full passkey login flow cannot be tested in integration tests without
@@ -596,7 +596,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * Tests for the WebAuthn registration endpoint.
      * <p>
      * This endpoint is handled by Spring Security's
-     * {@link de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnRegistrationFilter}
+     * {@link de.tum.cit.aet.artemis.account.security.passkey.ArtemisWebAuthnRegistrationFilter}
      * at POST /webauthn/register.
      * <p>
      * Note: Full passkey registration flow cannot be tested in integration tests without
