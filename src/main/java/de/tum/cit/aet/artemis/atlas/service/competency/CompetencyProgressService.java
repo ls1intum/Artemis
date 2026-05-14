@@ -117,16 +117,30 @@ public class CompetencyProgressService {
     }
 
     /**
-     * Asynchronously update the existing progress for a specific competency
+     * Asynchronously update the existing progress for a specific competency.
+     * <p>
+     * Because this runs on a different thread, the competency may have been deleted between the caller's
+     * scheduling and the async execution (common during course/competency cleanup in tests and on cascade
+     * delete in production). Touching {@code competency.getId()} can then throw
+     * {@link org.hibernate.ObjectNotFoundException} when the lazy proxy is initialized. Treat the
+     * missing entity as "nothing to do" rather than letting the async exception handler log a stack trace.
      *
      * @param competency The competency for which to update all existing student progress
      */
     @Async
     public void updateProgressByCompetencyAsync(CourseCompetency competency) {
         SecurityUtils.setAuthorizationObject(); // Required for async
-        List<CompetencyProgress> existingProgress = competencyProgressRepository.findAllByCompetencyId(competency.getId());
+        Long competencyId;
+        try {
+            competencyId = competency.getId();
+        }
+        catch (org.hibernate.ObjectNotFoundException e) {
+            log.debug("Competency was deleted before async progress update could run, skipping.");
+            return;
+        }
+        List<CompetencyProgress> existingProgress = competencyProgressRepository.findAllByCompetencyId(competencyId);
         log.debug("Updating competency progress for {} users.", existingProgress.size());
-        existingProgress.stream().map(CompetencyProgress::getUser).forEach(user -> updateCompetencyProgress(competency.getId(), user));
+        existingProgress.stream().map(CompetencyProgress::getUser).forEach(user -> updateCompetencyProgress(competencyId, user));
     }
 
     /**
@@ -253,6 +267,13 @@ public class CompetencyProgressService {
         catch (DataIntegrityViolationException e) {
             // In rare instances of initially creating a progress entity, async updates might run in parallel.
             // This fails the SQL unique constraint and throws an exception. We can safely ignore it.
+        }
+        catch (org.hibernate.ObjectNotFoundException e) {
+            // The competency was deleted between the findById above and the flush triggered by save (or
+            // by a subsequent statement in the same transaction). Bail out instead of letting the async
+            // exception handler log a stack trace.
+            log.debug("Competency was deleted while updating progress, skipping.");
+            return null;
         }
 
         log.debug("Updated progress for user {} in competency {} to {} / {}.", user.getLogin(), competency.getId(), studentProgress.getProgress(), studentProgress.getConfidence());

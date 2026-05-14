@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -50,12 +51,23 @@ public class CalendarSubscriptionService {
     }
 
     /**
-     * Uses a CSPRNG that is part of SecureRandom to generate a cryptographically secure, random subscription token.
-     * Each token is a string of 32 lower-case, hexadecimal characters.
-     * Attempts to generate a unique token 10 times, then throws (should never happen in practice because of astronomical unlikeliness).
+     * Returns the user's existing token, or atomically creates one using a CSPRNG-derived 32-char hex string.
+     * <p>
+     * The store has two unique constraints — one on {@code jhi_user_id} (one row per user) and one on
+     * {@code token}. The retry loop must distinguish the two:
+     * <ul>
+     * <li>{@code jhi_user_id} collision means a concurrent request already inserted a row for this user;
+     * read it back and return it instead of retrying (retrying would keep tripping the same constraint
+     * until the loop gives up and bubbles a 500 to the client).</li>
+     * <li>{@code token} collision is the astronomically rare case the original retry was written for;
+     * retry with a fresh token.</li>
+     * </ul>
+     * Without this distinction, concurrent logins of the same user (one Playwright worker per node logging
+     * the admin user in repeatedly during E2E) reproduce {@code DataIntegrityViolationException} ten times
+     * and end with an {@code IllegalStateException}.
      *
      * @param userLogin the login of the {@link User} for whom the subscription token is requested
-     * @return the generated token
+     * @return the existing or newly-generated token
      */
     public String createSubscriptionTokenForUser(String userLogin) {
         User user = userRepository.getUserByLoginElseThrow(userLogin);
@@ -69,7 +81,11 @@ public class CalendarSubscriptionService {
                 calendarSubscriptionTokenStoreRepository.saveAndFlush(store);
                 return token;
             }
-            catch (DataIntegrityViolationException ignored) {
+            catch (DataIntegrityViolationException violation) {
+                Optional<String> existing = calendarSubscriptionTokenStoreRepository.findTokenByUserLogin(userLogin);
+                if (existing.isPresent()) {
+                    return existing.get();
+                }
             }
         }
         throw new IllegalStateException("Could not generate a unique calendar subscription token after " + MAXIMUM_ATTEMPT_NUMBER + " attempts");
