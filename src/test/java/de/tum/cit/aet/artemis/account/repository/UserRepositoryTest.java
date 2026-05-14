@@ -1,6 +1,6 @@
-package de.tum.cit.aet.artemis.core.user;
+package de.tum.cit.aet.artemis.account.repository;
 
-import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
+import static de.tum.cit.aet.artemis.account.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -12,9 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;

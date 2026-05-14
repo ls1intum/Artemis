@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.account.repository.passkey;
 
-import static de.tum.cit.aet.artemis.core.authentication.CredentialRecordFactory.createCredentialRecord;
+import static de.tum.cit.aet.artemis.account.authentication.CredentialRecordFactory.createCredentialRecord;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;

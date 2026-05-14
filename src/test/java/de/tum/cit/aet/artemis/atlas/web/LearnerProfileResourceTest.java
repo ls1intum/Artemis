@@ -9,12 +9,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 
 class LearnerProfileResourceTest extends AbstractAtlasIntegrationTest {
 

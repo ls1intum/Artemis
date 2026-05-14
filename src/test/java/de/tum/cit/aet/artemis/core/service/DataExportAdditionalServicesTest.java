@@ -25,6 +25,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -49,7 +50,6 @@ import de.tum.cit.aet.artemis.core.service.export.DataExportCompetencyProgressSe
 import de.tum.cit.aet.artemis.core.service.export.DataExportIrisService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportLearnerProfileService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportTutorialGroupService;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;

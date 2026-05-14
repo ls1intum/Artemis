@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.authentication;
+package de.tum.cit.aet.artemis.account.authentication;
 
 import java.security.SecureRandom;
 import java.time.Instant;

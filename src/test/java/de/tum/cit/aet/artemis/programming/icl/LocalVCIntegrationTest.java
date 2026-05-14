@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
-import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
+import static de.tum.cit.aet.artemis.account.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;

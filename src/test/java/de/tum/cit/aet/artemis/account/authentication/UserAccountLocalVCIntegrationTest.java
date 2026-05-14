@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.authentication;
+package de.tum.cit.aet.artemis.account.authentication;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.user.util.UserTestService;
+import de.tum.cit.aet.artemis.account.util.UserTestService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class UserAccountLocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {

@@ -16,12 +16,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
 import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class SavedPostServiceTest {

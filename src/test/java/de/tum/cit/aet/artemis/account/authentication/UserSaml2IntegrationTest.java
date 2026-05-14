@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.authentication;
+package de.tum.cit.aet.artemis.account.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;

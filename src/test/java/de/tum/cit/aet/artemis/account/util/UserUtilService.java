@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.user.util;
+package de.tum.cit.aet.artemis.account.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,12 +26,12 @@ import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to Users for use in integration tests.

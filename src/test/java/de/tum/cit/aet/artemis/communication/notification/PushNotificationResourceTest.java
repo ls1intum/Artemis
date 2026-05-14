@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationApiType;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
@@ -19,8 +21,6 @@ import de.tum.cit.aet.artemis.communication.dto.PushNotificationRegisterBody;
 import de.tum.cit.aet.artemis.communication.dto.PushNotificationRegisterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PushNotificationUnregisterRequest;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentTest {

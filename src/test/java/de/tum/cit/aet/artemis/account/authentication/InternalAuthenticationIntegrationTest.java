@@ -1,7 +1,7 @@
-package de.tum.cit.aet.artemis.core.authentication;
+package de.tum.cit.aet.artemis.account.authentication;
 
 import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
-import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
+import static de.tum.cit.aet.artemis.account.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;

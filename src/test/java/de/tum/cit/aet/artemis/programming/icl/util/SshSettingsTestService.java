@@ -16,8 +16,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO;

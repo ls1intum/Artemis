@@ -1,7 +1,8 @@
-package de.tum.cit.aet.artemis.core.authentication;
+package de.tum.cit.aet.artemis.account.util;
 
 import org.springframework.security.web.webauthn.api.CredentialRecord;
 
+import de.tum.cit.aet.artemis.account.authentication.CredentialRecordFactory;
 import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;

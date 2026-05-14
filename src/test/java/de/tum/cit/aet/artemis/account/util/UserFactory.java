@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.user.util;
+package de.tum.cit.aet.artemis.account.util;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
