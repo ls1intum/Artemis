@@ -19,7 +19,7 @@
  */
 
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'fs';
-import { join, basename } from 'path';
+import { join } from 'path';
 
 const [, , inputPath, outputPath, buildDir] = process.argv;
 if (!inputPath || !outputPath || !buildDir) {
@@ -36,6 +36,19 @@ function parsePnpmId(eid) {
     return { name: m[1].replace('+', '/'), version: m[2] };
 }
 
+function collectMaps(dir) {
+    const out = [];
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) {
+            out.push(...collectMaps(path));
+        } else if (entry.isFile() && (entry.name.endsWith('.js.map') || entry.name.endsWith('.css.map'))) {
+            out.push(path);
+        }
+    }
+    return out;
+}
+
 function scanMaps(dir) {
     const shipped = new Map(); // 'name@version' -> { name, version }
     const seenNames = new Set();
@@ -43,15 +56,15 @@ function scanMaps(dir) {
         console.error(`sbom filter: build directory not found: ${dir}`);
         process.exit(1);
     }
-    const entries = readdirSync(dir).filter((f) => f.endsWith('.js.map') || f.endsWith('.css.map'));
-    if (entries.length === 0) {
-        console.error(`sbom filter: no .js.map / .css.map files in ${dir} — run the production webapp build first.`);
+    const mapPaths = collectMaps(dir);
+    if (mapPaths.length === 0) {
+        console.error(`sbom filter: no .js.map / .css.map files under ${dir} — run the production webapp build first.`);
         process.exit(1);
     }
-    for (const file of entries) {
+    for (const path of mapPaths) {
         let sm;
         try {
-            sm = JSON.parse(readFileSync(join(dir, file), 'utf8'));
+            sm = JSON.parse(readFileSync(path, 'utf8'));
         } catch {
             continue;
         }
@@ -65,35 +78,55 @@ function scanMaps(dir) {
             shipped.set(`${parsed.name}@${parsed.version}`, parsed);
         }
     }
-    return { shipped, seenNames, mapCount: entries.length };
+    return { shipped, seenNames, mapCount: mapPaths.length };
 }
 
 function fullName(component) {
     return component.group ? `${component.group}/${component.name}` : component.name;
 }
 
+// URL- and tarball-installed packages render different version strings in the
+// pnpm source-map path vs. in cdxgen's component (e.g. cdxgen reports xlsx
+// version `xlsx-0.20.3.tgz` while the source map sees the full CDN URL). For
+// those we accept a unique-by-name match. For semver-shaped versions, version
+// drift means a stale build — failing loud is correct.
+function isOpaqueVersion(version) {
+    return /^https?[+:]|^git[+:]|\.(tgz|tar\.gz)$|^[a-z]+\+\+\+/i.test(version);
+}
+
 const { shipped, seenNames, mapCount } = scanMaps(buildDir);
 const sbom = JSON.parse(readFileSync(inputPath, 'utf8'));
 
+const componentsByName = new Map();
+for (const comp of sbom.components || []) {
+    const name = fullName(comp);
+    const list = componentsByName.get(name) || [];
+    list.push(comp);
+    componentsByName.set(name, list);
+}
+
 const keptRefs = new Set();
 const newComponents = [];
+const fallbackMatches = [];
 for (const comp of sbom.components || []) {
-    const key = `${fullName(comp)}@${comp.version}`;
+    const name = fullName(comp);
+    const key = `${name}@${comp.version}`;
     if (shipped.has(key)) {
         keptRefs.add(comp['bom-ref']);
         newComponents.push(comp);
         continue;
     }
-    // Fallback for non-semver-like versions (URL- or tarball-installed packages)
-    // where the source map and cdxgen disagree on the version string but the
-    // package name is unambiguous in both.
-    const name = fullName(comp);
-    if (seenNames.has(name)) {
-        const sameName = (sbom.components || []).filter((c) => fullName(c) === name);
-        if (sameName.length === 1) {
-            keptRefs.add(comp['bom-ref']);
-            newComponents.push(comp);
-        }
+    if (!seenNames.has(name)) continue;
+    const sameName = componentsByName.get(name) || [];
+    if (sameName.length !== 1) continue;
+    // We have a single cdxgen component for a name we saw in source maps but
+    // with a different version. Accept only if the version is opaque (URL /
+    // tarball) — those legitimately disagree in representation. Otherwise this
+    // is build / lockfile drift and we must not silently substitute.
+    if (isOpaqueVersion(comp.version)) {
+        keptRefs.add(comp['bom-ref']);
+        newComponents.push(comp);
+        fallbackMatches.push({ name, version: comp.version });
     }
 }
 
@@ -109,9 +142,14 @@ const newDependencies = (sbom.dependencies || [])
 
 sbom.components = newComponents;
 sbom.dependencies = newDependencies;
-sbom.compositions = sbom.compositions || [];
+// Per CycloneDX 1.6, `complete` asserts no further relationships exist. We
+// intentionally drop ~1500 components from the input, so the post-filter BOM
+// is `incomplete_third_party_only`: first-party (`metadata.component` itself)
+// is fully known; third-party components were filtered to a subset.
+const newComposition = { 'bom-ref': metadataRef, aggregate: 'incomplete_third_party_only' };
 if (metadataRef) {
-    sbom.compositions.push({ 'bom-ref': metadataRef, aggregate: 'complete' });
+    sbom.compositions = (sbom.compositions || []).filter((c) => c['bom-ref'] !== metadataRef);
+    sbom.compositions.push(newComposition);
 }
 
 writeFileSync(outputPath, JSON.stringify(sbom, null, 2));
@@ -119,9 +157,18 @@ writeFileSync(outputPath, JSON.stringify(sbom, null, 2));
 const missing = [...shipped.values()].filter(
     (s) => !newComponents.some((c) => fullName(c) === s.name && c.version === s.version),
 );
+
 console.log(
-    `sbom filter: ${mapCount} maps scanned, ${shipped.size} shipped packages, ${newComponents.length} components kept (${missing.length} shipped pkgs not in input SBOM)`,
+    `sbom filter: ${mapCount} maps scanned, ${shipped.size} shipped packages, ${newComponents.length} components kept`,
 );
-if (missing.length > 0 && process.env.SBOM_FILTER_VERBOSE) {
-    for (const m of missing) console.error(`  shipped but not in input SBOM: ${m.name}@${m.version}`);
+
+if (fallbackMatches.length > 0) {
+    console.warn(`sbom filter: ${fallbackMatches.length} opaque-version fallback match(es):`);
+    for (const m of fallbackMatches) console.warn(`  ${m.name}@${m.version}`);
+}
+
+if (missing.length > 0) {
+    console.error(`sbom filter: ${missing.length} shipped package(s) not found in input SBOM:`);
+    for (const m of missing) console.error(`  ${m.name}@${m.version}`);
+    process.exit(1);
 }

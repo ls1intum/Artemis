@@ -269,7 +269,7 @@
         "update": "ncu -i --format group",
         "webapp:build": "pnpm run clean-www && pnpm run prebuild -- --develop && ng build --configuration development",
         "webapp:prod": "pnpm run clean-www && pnpm run prebuild && cross-env NG_BUILD_OPTIMIZE_CHUNKS=1 ng build --configuration production",
-        "sbom:generate-full": "pnpm dlx @cyclonedx/cdxgen@12 --type pnpm --output build/reports/client-sbom-full.json --spec-version 1.6 --no-babel --no-recurse 2>/dev/null",
+        "sbom:generate-full": "pnpm dlx @cyclonedx/cdxgen@12 --type pnpm --output build/reports/client-sbom-full.json --spec-version 1.6 --no-babel --no-recurse",
         "sbom:filter-shipped": "node supporting_scripts/sbom-filter-by-bundle.mjs build/reports/client-sbom-full.json build/reports/client-sbom.json build/resources/main/static",
         "sbom:generate": "pnpm run sbom:generate-full && pnpm run sbom:filter-shipped"
     }
