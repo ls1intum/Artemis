@@ -143,13 +143,14 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await exerciseTeams.checkTeamOnList(teamShortName);
 
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
-            // Wait for the exercise details container to render before asserting on its contents —
-            // login() returns at `load` but the lazy-loaded route component may not have mounted yet.
-            await expect(programmingExerciseOverview.getExerciseDetails()).toBeVisible({ timeout: 30_000 });
-            await expect(programmingExerciseOverview.getExerciseDetails().locator('.view-team')).toBeVisible({ timeout: 30_000 });
+            // The exercise-details template is wrapped in `@if (exercise)`, so the element only
+            // appears once the route component finishes its initial GET for the exercise. Under
+            // parallel CI load that round-trip occasionally creeps past 30s; allow up to 60s here.
+            await expect(programmingExerciseOverview.getExerciseDetails()).toBeVisible({ timeout: 60_000 });
+            await expect(programmingExerciseOverview.getExerciseDetails().locator('.view-team')).toBeVisible({ timeout: 60_000 });
             await login(studentFour, `/courses/${course.id}/exercises/${exercise.id}`);
-            await expect(programmingExerciseOverview.getExerciseDetails()).toBeVisible({ timeout: 30_000 });
-            await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText(/No team yet/, { timeout: 30_000 });
+            await expect(programmingExerciseOverview.getExerciseDetails()).toBeVisible({ timeout: 60_000 });
+            await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText(/No team yet/, { timeout: 60_000 });
         });
     });
 
