@@ -41,10 +41,15 @@ on:
     - develop
     - main
     - release/*
-    tags: '[0-9]+.[0-9]+.[0-9]+'
+    tags:
+    - '[0-9]+.[0-9]+'
+    - '[0-9]+.[0-9]+.[0-9]+'
   release:
+    # Use `published` (not `created`) so we also fire when a draft release is
+    # promoted to published; `created` does not fire for draft → published
+    # transitions, which previously caused release 9.2 to ship without a WAR.
     types:
-    - created
+    - published
 
 
 # Concurrency control for GitHub Actions workflow
@@ -55,11 +60,11 @@ on:
 #
 # - Pushes (branches & tags): Each branch or tag runs independently. If a run is in progress for the same branch or tag, it is canceled.
 #   Example: Push to "develop" → "build-refs/heads/develop"
-#   Example: Push to "release/1.2.3" → "build-refs/heads/release/1.2.3"
-#   Example: Tag "v1.2.3" → "build-refs/tags/v1.2.3"
+#   Example: Push to "release/9.2" → "build-refs/heads/release/9.2"
+#   Example: Tag "9.2" → "build-refs/tags/9.2"
 #
 # - Releases: Each release runs independently.
-#   Example: Release for "v1.2.3" → "build-release-v1.2.3"
+#   Example: Release for "9.2" → "build-release-9.2"
 #
 # - Default fallback: Ensures the workflow always has a concurrency group.
 #   Example: Unexpected event type → "build-default"
@@ -88,7 +93,7 @@ env:
 
 jobs:
 
-  build:
+  build-war:
     name: Build .war artifact
     runs-on: ubuntu-latest
     steps:
@@ -126,7 +131,7 @@ jobs:
           name: Artemis.war
           path: build/libs/Artemis-*.war
       - name: Upload Release Artifact
-        if: github.event_name == 'release' && github.event.action == 'created'
+        if: github.event_name == 'release' && github.event.action == 'published'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -136,32 +141,101 @@ jobs:
           asset_name: Artemis.war
           asset_content_type: application/x-webarchive
 
-  docker:
+  # Fast PR path: single-arch (linux/amd64) image that reuses the .war produced by
+  # `build-war` via the Dockerfile's `external_builder` stage. Skips the duplicate
+  # Angular + Gradle build that the reusable multi-arch workflow would otherwise
+  # run inside the image.
+  docker-pr:
+    name: Build and Push Docker Image (PR, amd64)
+    needs: build-war
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Download .war artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: Artemis.war
+          path: build/libs
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/ls1intum/artemis
+          tags: |
+            type=ref,event=pr
+      - name: Build and push (linux/amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./docker/artemis/Dockerfile
+          platforms: linux/amd64
+          # Skip the in-image .war build; COPY the artifact produced by `build-war` instead.
+          build-args: WAR_FILE_STAGE=external_builder
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # Consumed by .github/actions/e2e-setup, which downloads the `docker-tag`
+      # artifact from the triggering Build run and pulls ghcr.io/ls1intum/artemis:<tag>.
+      - name: Save Docker tag to file
+        env:
+          DOCKER_TAG: ${{ steps.meta.outputs.version }}
+        run: |
+          printf '%s' "$DOCKER_TAG" > docker-tag.txt
+          echo "Using Docker tag: $DOCKER_TAG"
+      - name: Upload Docker tag as artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: docker-tag
+          path: docker-tag.txt
+
+  # Release / default-branch path: multi-arch publish via the shared reusable workflow.
+  # Kept as-is because the reusable workflow runs its own checkout and cannot see the
+  # `build-war` artifact, so it must keep rebuilding the .war inside the image. This
+  # path only fires on develop/main/release/* pushes, tags, and release events — not
+  # on the PR-to-test-server critical path.
+  docker-release:
     name: Build and Push Docker Image
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'release' }}
     uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.1.1
     with:
-      # Checkout pull request HEAD commit instead of merge commit to include the correct branch and git information inside the build
-      # Or use the push event ref name
-      ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      ref: ${{ github.ref_name }}
       image-name: ls1intum/artemis
       docker-file: ./docker/artemis/Dockerfile
       tags: |
         type=ref,event=tag
 
-  # Save Docker image tag as an artifact
+  # Mirrors the `docker-tag` artifact upload from `docker-pr` for the release path,
+  # so .github/actions/e2e-setup can consume it uniformly regardless of which docker
+  # job produced the image.
   save-docker-tag:
     name: Save Docker Image Tag
-    needs: docker
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
+    needs: docker-release
+    if: ${{ github.event_name == 'push' || github.event_name == 'release' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Save Docker Tag to File
+      - name: Save Docker tag to file
+        env:
+          DOCKER_TAG: ${{ needs.docker-release.outputs.image_tag }}
         run: |
-          echo "${{ needs.docker.outputs.image_tag }}" > docker-tag.txt
-          echo "Using Docker tag: ${{ needs.docker.outputs.image_tag }}"
-
-      - name: Upload Docker Tag as Artifact
+          printf '%s' "$DOCKER_TAG" > docker-tag.txt
+          echo "Using Docker tag: $DOCKER_TAG"
+      - name: Upload Docker tag as artifact
         uses: actions/upload-artifact@v6
         with:
           name: docker-tag

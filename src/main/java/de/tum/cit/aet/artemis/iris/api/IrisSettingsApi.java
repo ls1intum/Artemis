@@ -11,9 +11,9 @@ import de.tum.cit.aet.artemis.core.dto.export.IrisChatSessionExportDTO;
 import de.tum.cit.aet.artemis.core.dto.export.IrisMessageExportDTO;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
-import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
@@ -26,13 +26,13 @@ public class IrisSettingsApi extends AbstractIrisApi {
 
     private final IrisCourseSettingsRepository irisCourseSettingsRepository;
 
-    private final IrisCourseChatSessionRepository irisCourseChatSessionRepository;
+    private final IrisChatSessionRepository irisChatSessionRepository;
 
     public IrisSettingsApi(IrisSettingsService irisSettingsService, IrisCourseSettingsRepository irisCourseSettingsRepository,
-            IrisCourseChatSessionRepository irisCourseChatSessionRepository) {
+            IrisChatSessionRepository irisChatSessionRepository) {
         this.irisSettingsService = irisSettingsService;
         this.irisCourseSettingsRepository = irisCourseSettingsRepository;
-        this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
+        this.irisChatSessionRepository = irisChatSessionRepository;
     }
 
     public IrisCourseSettingsWithRateLimitDTO getSettingsForCourse(long courseId) {
@@ -58,7 +58,7 @@ public class IrisSettingsApi extends AbstractIrisApi {
      * @param courseId the ID of the course
      */
     public void deleteCourseChatSessions(long courseId) {
-        irisCourseChatSessionRepository.deleteAllByCourseId(courseId);
+        irisChatSessionRepository.deleteAllByCourseId(courseId);
     }
 
     /**
@@ -68,7 +68,7 @@ public class IrisSettingsApi extends AbstractIrisApi {
      * @return the number of chat sessions in the course
      */
     public long countCourseChatSessionsByCourseId(long courseId) {
-        return irisCourseChatSessionRepository.countByCourseId(courseId);
+        return irisChatSessionRepository.countByCourseId(courseId);
     }
 
     /**
@@ -78,11 +78,11 @@ public class IrisSettingsApi extends AbstractIrisApi {
      * @return list of chat session export DTOs with messages, sorted by creation date
      */
     public List<IrisChatSessionExportDTO> findCourseChatSessionsForExport(long courseId) {
-        List<IrisCourseChatSession> sessions = irisCourseChatSessionRepository.findAllWithMessagesByCourseIdSortedByCreationDate(courseId);
+        List<IrisChatSession> sessions = irisChatSessionRepository.findAllWithMessagesByCourseIdSortedByCreationDate(courseId);
         return sessions.stream().map(this::convertToExportDTO).toList();
     }
 
-    private IrisChatSessionExportDTO convertToExportDTO(IrisCourseChatSession session) {
+    private IrisChatSessionExportDTO convertToExportDTO(IrisChatSession session) {
         List<IrisMessageExportDTO> messages = session.getMessages().stream().map(message -> new IrisMessageExportDTO(message.getId(), message.getSentAt(),
                 message.getSender() != null ? message.getSender().name() : null, extractMessageContent(message.getContent()), message.getHelpful())).toList();
 

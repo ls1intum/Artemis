@@ -51,8 +51,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -203,16 +202,13 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected ExamLiveEventsService examLiveEventsService;
 
     @MockitoSpyBean
-    protected IrisCourseChatSessionService irisCourseChatSessionService;
+    protected IrisChatSessionService irisChatSessionService;
 
     @MockitoSpyBean
     protected IrisCitationService irisCitationService;
 
     @MockitoSpyBean
     protected PyrisPipelineService pyrisPipelineService;
-
-    @MockitoSpyBean
-    protected IrisExerciseChatSessionService irisExerciseChatSessionService;
 
     @MockitoSpyBean
     protected PyrisEventService pyrisEventService;
@@ -275,7 +271,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(gitServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService, programmingMessagingService,
-                competencyProgressService, competencyProgressApi, irisCitationService);
+                competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, pyrisPipelineService, pyrisEventService);
         super.resetSpyBeans();
     }
 

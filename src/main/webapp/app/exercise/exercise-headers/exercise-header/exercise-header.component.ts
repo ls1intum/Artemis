@@ -45,18 +45,15 @@ export class ExerciseHeaderComponent {
         return this.practiceParticipation() ?? this.localPracticeParticipation();
     });
 
-    readonly hasParticipation = computed(() => {
-        return !!this.studentParticipation() || !!this.effectivePracticeParticipation();
+    readonly hasGradedSubmission = computed(() => {
+        return !!this.studentParticipation()?.submissions?.some((s) => s.submitted);
     });
 
-    readonly hasBothParticipations = computed(() => {
-        // Also show both toggle buttons when the mode is explicitly set to 'practice'
-        // with a graded participation, even if the practice participation hasn't been
-        // created yet (e.g. quiz practice just started).
-        if (this.participationMode() === 'practice' && !!this.studentParticipation()) {
-            return true;
-        }
-        return !!this.studentParticipation() && !!this.effectivePracticeParticipation();
+    // Also treat practice as present when the mode is explicitly set to 'practice'
+    // with a graded participation, even if the practice participation hasn't been
+    // created yet (e.g. quiz practice just started).
+    readonly hasPracticeSubmission = computed(() => {
+        return !!this.effectivePracticeParticipation()?.submissions?.some((s) => s.submitted) || this.participationMode() === 'practice';
     });
 
     readonly activeParticipation = computed(() => {
