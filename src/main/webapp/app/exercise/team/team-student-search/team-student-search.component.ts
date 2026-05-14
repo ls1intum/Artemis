@@ -1,6 +1,6 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { Observable, combineLatest, of } from 'rxjs';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { get } from 'lodash-es';
 import { Course } from 'app/core/course/shared/entities/course.model';

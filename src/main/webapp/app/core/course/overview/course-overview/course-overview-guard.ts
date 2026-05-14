@@ -8,8 +8,8 @@ import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { CourseOverviewRoutePath } from 'app/core/course/overview/courses.route';
 import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { User } from 'app/account/user/user.model';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Injectable({
     providedIn: 'root',

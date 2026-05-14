@@ -15,7 +15,7 @@ import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exer
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { UserService } from 'app/core/user/shared/user.service';
+import { UserService } from 'app/account/user/shared/user.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -24,7 +24,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Component({
     selector: 'jhi-request-feedback-button',

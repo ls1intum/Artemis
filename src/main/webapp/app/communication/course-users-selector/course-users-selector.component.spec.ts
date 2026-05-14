@@ -10,7 +10,7 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/communication/course-users-selector/course-users-selector.component';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 
 import { TranslateModule } from '@ngx-translate/core';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';

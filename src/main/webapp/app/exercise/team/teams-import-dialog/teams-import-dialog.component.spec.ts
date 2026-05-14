@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Team, TeamImportStrategyType } from 'app/exercise/shared/entities/team/team.model';

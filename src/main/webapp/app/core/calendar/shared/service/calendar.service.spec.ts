@@ -13,7 +13,7 @@ import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entit
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 
 describe('CalendarService', () => {
     setupTestBed({ zoneless: true });

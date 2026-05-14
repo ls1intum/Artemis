@@ -11,7 +11,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 
 import { DeleteUsersButtonComponent } from 'app/core/admin/user-management/delete-users-button/delete-users-button.component';
-import { AdminUserService } from 'app/core/user/shared/admin-user.service';
+import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import * as globalUtils from 'app/shared/util/global.utils';

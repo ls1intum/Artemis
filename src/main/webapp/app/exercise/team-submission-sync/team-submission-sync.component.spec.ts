@@ -16,7 +16,7 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { Observable, Subject, of } from 'rxjs';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { SubmissionSyncPayload } from 'app/exercise/shared/entities/submission/submission-sync-payload.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { SubmissionPatchPayload } from 'app/exercise/shared/entities/submission/submission-patch-payload.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';

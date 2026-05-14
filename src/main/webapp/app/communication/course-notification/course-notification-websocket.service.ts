@@ -8,7 +8,7 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 
 /**
  * Service for handling course notification websocket connections.

@@ -1,7 +1,7 @@
 import { Component, ViewEncapsulation, input, model, output, signal, viewChild } from '@angular/core';
 import { Observable, Subject, of } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';

@@ -21,7 +21,7 @@ import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';

@@ -51,7 +51,7 @@ const routes: Routes = [
     },
     {
         path: '',
-        loadChildren: () => import('app/core/user/settings/user-settings.route').then((m) => m.routes),
+        loadChildren: () => import('app/account/user/settings/user-settings.route').then((m) => m.routes),
         data: {
             usesModuleBackground: true,
         },
@@ -151,7 +151,7 @@ const routes: Routes = [
             {
                 path: 'activate',
                 pathMatch: 'full',
-                loadComponent: () => import('app/core/account/activate/activate.component').then((m) => m.ActivateComponent),
+                loadComponent: () => import('app/account/activate/activate.component').then((m) => m.ActivateComponent),
                 data: {
                     pageTitle: 'activate.title',
                 },
@@ -159,7 +159,7 @@ const routes: Routes = [
             {
                 path: 'password',
                 pathMatch: 'full',
-                loadComponent: () => import('app/core/account/password/password.component').then((m) => m.PasswordComponent),
+                loadComponent: () => import('app/account/password/password.component').then((m) => m.PasswordComponent),
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'global.menu.account.password',
@@ -169,7 +169,7 @@ const routes: Routes = [
             {
                 path: 'reset/finish',
                 pathMatch: 'full',
-                loadComponent: () => import('app/core/account/password-reset/finish/password-reset-finish.component').then((m) => m.PasswordResetFinishComponent),
+                loadComponent: () => import('app/account/password-reset/finish/password-reset-finish.component').then((m) => m.PasswordResetFinishComponent),
                 data: {
                     pageTitle: 'global.menu.account.password',
                 },
@@ -177,7 +177,7 @@ const routes: Routes = [
             {
                 path: 'reset/request',
                 pathMatch: 'full',
-                loadComponent: () => import('app/core/account/password-reset/init/password-reset-init.component').then((m) => m.PasswordResetInitComponent),
+                loadComponent: () => import('app/account/password-reset/init/password-reset-init.component').then((m) => m.PasswordResetInitComponent),
                 data: {
                     pageTitle: 'global.menu.account.password',
                 },
@@ -185,7 +185,7 @@ const routes: Routes = [
             {
                 path: 'register',
                 pathMatch: 'full',
-                loadComponent: () => import('app/core/account/register/register.component').then((m) => m.RegisterComponent),
+                loadComponent: () => import('app/account/register/register.component').then((m) => m.RegisterComponent),
                 data: {
                     pageTitle: 'register.title',
                 },
@@ -193,7 +193,7 @@ const routes: Routes = [
             {
                 path: 'settings',
                 pathMatch: 'full',
-                loadComponent: () => import('app/core/account/settings/settings.component').then((m) => m.SettingsComponent),
+                loadComponent: () => import('app/account/settings/settings.component').then((m) => m.SettingsComponent),
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'global.menu.account.settings',
