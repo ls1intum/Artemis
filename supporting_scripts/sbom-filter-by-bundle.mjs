@@ -65,8 +65,9 @@ function scanMaps(dir) {
         let sm;
         try {
             sm = JSON.parse(readFileSync(path, 'utf8'));
-        } catch {
-            continue;
+        } catch (err) {
+            console.error(`sbom filter: failed to read source map ${path}: ${err.message}`);
+            process.exit(1);
         }
         for (const src of sm.sources || []) {
             if (!src.includes('/.pnpm/')) continue;
@@ -105,10 +106,21 @@ for (const comp of sbom.components || []) {
     componentsByName.set(name, list);
 }
 
+const shippedByName = new Map();
+for (const pkg of shipped.values()) {
+    const list = shippedByName.get(pkg.name) || [];
+    list.push(pkg);
+    shippedByName.set(pkg.name, list);
+}
+
 const keptRefs = new Set();
 const newComponents = [];
 const fallbackMatches = [];
-const fallbackMatchedNames = new Set();
+// Track fallback acceptances by the *shipped* (name, version) tuple, not by
+// name alone. If a package has multiple opaque source-map versions, a single
+// fallback can't legitimately cover both — claiming it by name would silently
+// mask the second.
+const fallbackMatchedKeys = new Set();
 for (const comp of sbom.components || []) {
     const name = fullName(comp);
     const key = `${name}@${comp.version}`;
@@ -119,7 +131,10 @@ for (const comp of sbom.components || []) {
     }
     if (!seenNames.has(name)) continue;
     const sameName = componentsByName.get(name) || [];
-    if (sameName.length !== 1) continue;
+    const shippedWithSameName = shippedByName.get(name) || [];
+    // Require exactly one component on both sides so the fallback unambiguously
+    // pairs the shipped version to the cdxgen entry.
+    if (sameName.length !== 1 || shippedWithSameName.length !== 1) continue;
     // We have a single cdxgen component for a name we saw in source maps but
     // with a different version. Accept only if the version is opaque (URL /
     // tarball) — those legitimately disagree in representation. Otherwise this
@@ -128,7 +143,7 @@ for (const comp of sbom.components || []) {
         keptRefs.add(comp['bom-ref']);
         newComponents.push(comp);
         fallbackMatches.push({ name, version: comp.version });
-        fallbackMatchedNames.add(name);
+        fallbackMatchedKeys.add(`${name}@${shippedWithSameName[0].version}`);
     }
 }
 
@@ -166,14 +181,16 @@ if (metadataRef) sbom.compositions.push(newComposition);
 writeFileSync(outputPath, JSON.stringify(sbom, null, 2));
 
 // A shipped package counts as "missing" only if neither an exact (name, version)
-// match nor an opaque-version fallback claimed it. Opaque-version source-map
-// versions (e.g. `https+++cdn.../xlsx-0.20.3.tgz`) never match cdxgen's
-// version string (`xlsx-0.20.3.tgz`), so they must be excluded from the gap
-// list to avoid false positives that would fail CI.
+// match nor a per-tuple opaque-version fallback claimed it. Opaque-version
+// source-map versions (e.g. `https+++cdn.../xlsx-0.20.3.tgz`) never match
+// cdxgen's version string (`xlsx-0.20.3.tgz`), so the matching fallback tuple
+// must be excluded from the gap list to avoid false positives that would
+// fail CI.
 const exactMatches = new Set(newComponents.map((c) => `${fullName(c)}@${c.version}`));
 const missing = [...shipped.values()].filter((s) => {
-    if (exactMatches.has(`${s.name}@${s.version}`)) return false;
-    if (fallbackMatchedNames.has(s.name) && isOpaqueVersion(s.version)) return false;
+    const tupleKey = `${s.name}@${s.version}`;
+    if (exactMatches.has(tupleKey)) return false;
+    if (fallbackMatchedKeys.has(tupleKey)) return false;
     return true;
 });
 
