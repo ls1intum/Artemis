@@ -48,18 +48,19 @@ describe('ParseLinks Service', () => {
         const expectedLinks = { last: 0, first: 1 };
         const parsedLinks = service.parse(
             '<https://localhost/api/communication/system-notifications' +
-            '?sort=notificationDate,desc&sort=id&page=0&size=50>; rel="last",' +
-            '<https://localhost/api/communication/system-notifications' +
-            '?sort=notificationDate,desc&sort=id&page=1&size=50>; rel="first"');
+                '?sort=notificationDate,desc&sort=id&page=0&size=50>; rel="last",' +
+                '<https://localhost/api/communication/system-notifications' +
+                '?sort=notificationDate,desc&sort=id&page=1&size=50>; rel="first"');
         expect(parsedLinks).toEqual(expectedLinks);
     });
     // Precaution for cases where matrix parameters are used
     it('should return links when headers are passed', () => {
         const expectedLinks = { last: 0, first: 1 };
-        const parsedLinks = service.parse('<https://localhost/api/communication' +
-            ';a=b/system-notifications?sort=notificationDate,desc&sort=id&page=0&size=50>; rel="last",' +
-            '<https://localhost/api/communication/system-notifications' +
-            '?sort=notificationDate,desc&sort=id&page=1&size=50>; rel="first"');
+        const parsedLinks = service.parse(
+            '<https://localhost/api/communication' +
+                ';a=b/system-notifications?sort=notificationDate,desc&sort=id&page=0&size=50>; rel="last",' +
+                '<https://localhost/api/communication/system-notifications' +
+                '?sort=notificationDate,desc&sort=id&page=1&size=50>; rel="first"');
         expect(parsedLinks).toEqual(expectedLinks);
     });
 });
