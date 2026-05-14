@@ -10,8 +10,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.web.AccountResource;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.web.AccountResource;
 import de.tum.cit.aet.artemis.core.web.open.PublicAccountResource;
 
 /**

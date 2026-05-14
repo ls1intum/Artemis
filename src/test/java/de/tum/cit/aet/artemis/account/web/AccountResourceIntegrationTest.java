@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.user;
+package de.tum.cit.aet.artemis.account.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.core.organization.util.OrganizationUtilService;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.util.ConfigUtil;
 import de.tum.cit.aet.artemis.core.util.PasskeyCredentialUtilService;
-import de.tum.cit.aet.artemis.core.web.AccountResource;
 import de.tum.cit.aet.artemis.core.web.open.PublicAccountResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 

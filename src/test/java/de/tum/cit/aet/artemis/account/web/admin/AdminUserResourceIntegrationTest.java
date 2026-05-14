@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.web.admin;
+package de.tum.cit.aet.artemis.account.web.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;

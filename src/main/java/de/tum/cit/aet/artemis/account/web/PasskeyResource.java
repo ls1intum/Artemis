@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.web;
+package de.tum.cit.aet.artemis.account.web;
 
 import java.util.List;
 import java.util.Optional;
