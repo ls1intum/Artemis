@@ -22,12 +22,12 @@ import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
+import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
+import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
+import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
-import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
-import de.tum.cit.aet.artemis.core.service.user.AuthorityService;
-import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 
 /**
  * This class is responsible for authenticating users against an LDAP server.

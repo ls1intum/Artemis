@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service.user;
+package de.tum.cit.aet.artemis.account.service.user;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 

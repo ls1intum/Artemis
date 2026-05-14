@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service.user;
+package de.tum.cit.aet.artemis.account.service.user;
 
 import static de.tum.cit.aet.artemis.account.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.cit.aet.artemis.account.domain.Authority.SUPER_ADMIN_AUTHORITY;

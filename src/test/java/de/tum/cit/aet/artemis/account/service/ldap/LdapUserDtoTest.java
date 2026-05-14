@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service.ldap;
+package de.tum.cit.aet.artemis.account.service.ldap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
