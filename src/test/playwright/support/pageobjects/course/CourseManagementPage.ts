@@ -23,9 +23,16 @@ export class CourseManagementPage {
 
     /**
      * Opens the course settings page.
+     * <p>
+     * Waits explicitly for the settings tab to render before clicking. The course detail layout is
+     * hydrated asynchronously after openCourse() navigates, so the bare .click() races the render
+     * under parallel CI load (see CourseManagement.spec.ts:260, where the deletion-summary test
+     * builds up 25+ child entities via API before reaching the UI step).
      */
     async openCourseSettings() {
-        await this.page.locator('#course-settings').click();
+        const settings = this.page.locator('#course-settings');
+        await settings.waitFor({ state: 'visible', timeout: 30_000 });
+        await settings.click();
     }
 
     /**
@@ -67,6 +74,10 @@ export class CourseManagementPage {
         const header = this.getCourse(courseID).locator('#course-card-header');
         await header.waitFor({ state: 'visible', timeout: 30_000 });
         await header.click();
+        // Wait for SPA navigation into the course detail to complete before subsequent steps
+        // (e.g. openCourseSettings) race the next render. Without this, the next click() can fire
+        // while the previous page is still mounted, then auto-wait against the wrong DOM.
+        await this.page.waitForURL(new RegExp(`/course-management/${courseID}(/|$)`));
     }
 
     private async assertCourseSummary(expectedCourseSummary: CourseSummary) {
