@@ -26,13 +26,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.account.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;

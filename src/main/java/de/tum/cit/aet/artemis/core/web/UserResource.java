@@ -28,9 +28,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;

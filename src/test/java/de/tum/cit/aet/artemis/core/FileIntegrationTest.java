@@ -38,10 +38,10 @@ import org.springframework.test.web.servlet.MvcResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;

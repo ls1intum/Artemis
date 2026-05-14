@@ -18,10 +18,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;

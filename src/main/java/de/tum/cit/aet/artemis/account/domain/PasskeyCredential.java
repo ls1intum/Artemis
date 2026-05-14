@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.domain;
+package de.tum.cit.aet.artemis.account.domain;
 
 import java.time.Instant;
 import java.util.Set;
@@ -19,6 +19,7 @@ import org.springframework.security.web.webauthn.api.ImmutableCredentialRecord;
 import org.springframework.security.web.webauthn.api.PublicKeyCose;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialType;
 
+import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.converter.AuthenticatorTransportConverter;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.domain.converter.PublicKeyCoseConverter;

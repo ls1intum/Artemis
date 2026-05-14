@@ -16,10 +16,10 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;

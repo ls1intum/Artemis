@@ -18,8 +18,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.DateUtil;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;

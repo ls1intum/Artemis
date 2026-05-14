@@ -12,11 +12,11 @@ import org.springframework.security.web.webauthn.api.CredentialRecord;
 import org.springframework.security.web.webauthn.management.UserCredentialRepository;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.account.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
+import de.tum.cit.aet.artemis.account.domain.PasskeyType;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
-import de.tum.cit.aet.artemis.core.domain.Authority;
-import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
-import de.tum.cit.aet.artemis.core.domain.PasskeyType;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;

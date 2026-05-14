@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
@@ -44,7 +45,6 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;

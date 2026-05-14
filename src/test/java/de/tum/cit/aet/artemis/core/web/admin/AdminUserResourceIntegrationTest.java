@@ -19,8 +19,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.domain.Authority;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.user.UserService;

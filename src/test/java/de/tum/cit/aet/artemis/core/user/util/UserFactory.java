@@ -6,9 +6,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.account.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
-import de.tum.cit.aet.artemis.core.domain.Authority;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 
 /**

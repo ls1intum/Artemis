@@ -7,11 +7,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.service.PresentationPointsCalculationService;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;

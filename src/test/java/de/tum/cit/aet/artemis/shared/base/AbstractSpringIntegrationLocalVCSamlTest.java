@@ -34,7 +34,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;

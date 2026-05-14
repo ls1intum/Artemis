@@ -18,7 +18,7 @@ import org.springframework.security.saml2.provider.service.authentication.Saml2A
 import org.springframework.security.saml2.provider.service.authentication.Saml2Authentication;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;

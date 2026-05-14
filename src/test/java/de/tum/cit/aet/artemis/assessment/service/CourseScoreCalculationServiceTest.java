@@ -20,6 +20,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
@@ -32,7 +33,6 @@ import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseScoresDTO;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;

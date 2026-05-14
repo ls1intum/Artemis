@@ -16,10 +16,10 @@ import org.springframework.security.web.webauthn.management.UserCredentialReposi
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations;
 import org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 /**

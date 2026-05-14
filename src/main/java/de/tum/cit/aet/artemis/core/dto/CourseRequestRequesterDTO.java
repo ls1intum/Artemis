@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.core.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 
 /**
  * A lightweight DTO containing only the requester fields needed for course request display.

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -28,7 +29,6 @@ import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificat
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationStatusTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;

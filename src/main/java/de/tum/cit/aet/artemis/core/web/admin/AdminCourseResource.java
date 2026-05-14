@@ -30,11 +30,11 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseCreateDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseGroupsDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseOperationProgressDTO;

@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.core.service.user;
 
+import static de.tum.cit.aet.artemis.account.domain.Authority.ADMIN_AUTHORITY;
+import static de.tum.cit.aet.artemis.account.domain.Authority.SUPER_ADMIN_AUTHORITY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.cit.aet.artemis.core.domain.Authority.SUPER_ADMIN_AUTHORITY;
 import static de.tum.cit.aet.artemis.core.security.Role.EDITOR;
 import static de.tum.cit.aet.artemis.core.security.Role.INSTRUCTOR;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
@@ -15,8 +15,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.domain.Authority;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 
 @Profile(PROFILE_CORE)

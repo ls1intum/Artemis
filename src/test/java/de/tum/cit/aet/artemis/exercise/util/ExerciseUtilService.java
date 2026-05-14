@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
@@ -26,7 +27,6 @@ import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;

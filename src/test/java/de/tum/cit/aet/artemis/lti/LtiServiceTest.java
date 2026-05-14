@@ -28,8 +28,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;

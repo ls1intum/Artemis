@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;

@@ -20,7 +20,7 @@ import org.springframework.ldap.query.SearchScope;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.repository.ldap.LdapUserRepository;
 
 @Lazy

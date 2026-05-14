@@ -14,6 +14,8 @@ import org.jspecify.annotations.NonNull;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+
 @Entity
 @Table(name = "organization")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

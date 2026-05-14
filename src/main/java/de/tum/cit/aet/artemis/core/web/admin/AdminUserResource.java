@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.core.web.admin;
 
+import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
-import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 
 import java.net.URI;
@@ -36,8 +36,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;

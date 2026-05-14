@@ -11,11 +11,11 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;

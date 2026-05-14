@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
@@ -20,7 +21,6 @@ import de.tum.cit.aet.artemis.assessment.dto.GradeStepDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradeStepsDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;

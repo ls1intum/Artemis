@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -33,7 +34,6 @@ import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticip
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;

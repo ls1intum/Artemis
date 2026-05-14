@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.dto.ConversationDTO;
@@ -39,7 +40,6 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationSer
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;

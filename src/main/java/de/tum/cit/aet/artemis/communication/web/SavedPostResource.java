@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Posting;
@@ -34,7 +35,6 @@ import de.tum.cit.aet.artemis.communication.dto.PostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.service.SavedPostService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;

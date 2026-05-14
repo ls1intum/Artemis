@@ -65,6 +65,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
@@ -102,7 +103,6 @@ import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.core.domain.Organization;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseCreateDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseExistingExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;

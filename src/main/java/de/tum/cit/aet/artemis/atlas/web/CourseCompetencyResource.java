@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -43,7 +44,6 @@ import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyRelationService
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseCompetencyProgressDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.CompetencyPageableSearchDTO;

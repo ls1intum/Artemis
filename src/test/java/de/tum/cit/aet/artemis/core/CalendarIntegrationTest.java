@@ -32,9 +32,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.CalendarSubscriptionFilterOption;

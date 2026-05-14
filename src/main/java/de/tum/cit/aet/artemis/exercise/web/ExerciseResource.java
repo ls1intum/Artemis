@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
@@ -30,7 +31,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;

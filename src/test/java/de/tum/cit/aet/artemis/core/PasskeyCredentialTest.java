@@ -6,7 +6,7 @@ import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
+import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 
 class PasskeyCredentialTest {

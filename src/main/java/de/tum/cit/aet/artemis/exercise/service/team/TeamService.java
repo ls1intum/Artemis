@@ -16,8 +16,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.StudentsAppearMultipleTimesException;
 import de.tum.cit.aet.artemis.core.exception.StudentsNotFoundException;

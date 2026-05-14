@@ -24,8 +24,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;

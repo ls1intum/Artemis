@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.domain;
+package de.tum.cit.aet.artemis.account.domain;
 
 import java.io.Serializable;
 import java.util.Objects;

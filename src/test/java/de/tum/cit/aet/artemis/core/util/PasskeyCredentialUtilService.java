@@ -13,13 +13,13 @@ import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.security.web.webauthn.api.ImmutablePublicKeyCose;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
-import de.tum.cit.aet.artemis.core.domain.PasskeyType;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
+import de.tum.cit.aet.artemis.account.domain.PasskeyType;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 
 /**
- * Service responsible for initializing the database with specific testdata related to {@link de.tum.cit.aet.artemis.core.domain.PasskeyCredential} for use in integration tests.
+ * Service responsible for initializing the database with specific testdata related to {@link de.tum.cit.aet.artemis.account.domain.PasskeyCredential} for use in integration tests.
  */
 @Lazy
 @Service

@@ -41,6 +41,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -55,7 +56,6 @@ import de.tum.cit.aet.artemis.core.connector.apollon.ApollonRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.export.DataExportCreationService;
 import de.tum.cit.aet.artemis.core.test_repository.DataExportTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;

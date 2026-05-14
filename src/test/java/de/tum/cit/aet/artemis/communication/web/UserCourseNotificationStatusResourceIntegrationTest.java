@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationStatus;
 import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationStatusType;
@@ -21,7 +22,6 @@ import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTe
 import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationStatusTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {

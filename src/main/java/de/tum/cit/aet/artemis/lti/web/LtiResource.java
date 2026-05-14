@@ -29,8 +29,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nimbusds.jwt.SignedJWT;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.OnlineCourseDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;

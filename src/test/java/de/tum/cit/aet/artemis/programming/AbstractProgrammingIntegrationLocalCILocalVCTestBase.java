@@ -17,8 +17,8 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.dockerjava.api.DockerClient;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;

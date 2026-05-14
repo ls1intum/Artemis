@@ -21,6 +21,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
@@ -42,7 +43,6 @@ import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationOverviewDTO;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;

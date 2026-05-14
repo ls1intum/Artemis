@@ -48,6 +48,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentDashboardService;
@@ -56,7 +57,6 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;

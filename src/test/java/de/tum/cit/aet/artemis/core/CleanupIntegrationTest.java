@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Rating;
@@ -35,7 +36,6 @@ import de.tum.cit.aet.artemis.core.domain.CleanupJobExecution;
 import de.tum.cit.aet.artemis.core.domain.CleanupJobType;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.core.dto.NonLatestNonRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.NonLatestRatedResultsCleanupCountDTO;

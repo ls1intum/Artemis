@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.authentication;
 
-import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
+import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,9 +29,9 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import de.tum.cit.aet.artemis.core.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;

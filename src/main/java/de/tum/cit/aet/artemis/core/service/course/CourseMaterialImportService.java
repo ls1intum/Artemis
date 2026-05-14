@@ -13,12 +13,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyImportApi;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.communication.service.FaqImportService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseMaterialImportOptionsDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseMaterialImportResultDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.service.user;
 
+import static de.tum.cit.aet.artemis.account.domain.Authority.SUPER_ADMIN_AUTHORITY;
+import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
@@ -8,8 +10,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_LAST_NAME_AFTER_SOFT_DELETE;
-import static de.tum.cit.aet.artemis.core.domain.Authority.SUPER_ADMIN_AUTHORITY;
-import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
@@ -36,6 +36,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.account.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
@@ -44,8 +46,6 @@ import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingSer
 import de.tum.cit.aet.artemis.communication.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.communication.service.UserCourseNotificationStatusService;
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.domain.Authority;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;

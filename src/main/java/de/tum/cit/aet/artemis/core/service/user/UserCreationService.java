@@ -19,10 +19,10 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.account.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Organization;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;

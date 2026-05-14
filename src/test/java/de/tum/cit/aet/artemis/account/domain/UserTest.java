@@ -1,6 +1,6 @@
-package de.tum.cit.aet.artemis.core.domain;
+package de.tum.cit.aet.artemis.account.domain;
 
-import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
+import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;

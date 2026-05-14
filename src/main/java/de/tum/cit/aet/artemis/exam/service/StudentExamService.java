@@ -30,8 +30,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;

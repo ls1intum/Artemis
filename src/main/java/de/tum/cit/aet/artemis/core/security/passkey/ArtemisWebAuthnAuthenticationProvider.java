@@ -16,8 +16,8 @@ import org.springframework.security.web.webauthn.authentication.WebAuthnAuthenti
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations;
 import org.springframework.util.Assert;
 
-import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;

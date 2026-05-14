@@ -26,9 +26,9 @@ import org.springframework.scheduling.config.CronTask;
 import org.springframework.scheduling.config.ScheduledTask;
 import org.springframework.scheduling.config.ScheduledTaskHolder;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.DataExportTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;

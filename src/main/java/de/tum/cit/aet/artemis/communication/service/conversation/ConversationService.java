@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -42,7 +43,6 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRep
 import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;

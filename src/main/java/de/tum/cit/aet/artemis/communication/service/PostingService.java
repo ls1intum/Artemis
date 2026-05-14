@@ -16,6 +16,7 @@ import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -30,7 +31,6 @@ import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRe
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;

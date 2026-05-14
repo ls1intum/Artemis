@@ -18,10 +18,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
 import de.tum.cit.aet.artemis.core.config.validator.Base64Url;
-import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;

@@ -28,9 +28,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyNameDTO;
@@ -45,7 +46,6 @@ import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRecommendat
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRepositoryService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;

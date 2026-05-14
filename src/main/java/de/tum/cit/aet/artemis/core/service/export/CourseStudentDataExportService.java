@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
@@ -41,7 +42,6 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;

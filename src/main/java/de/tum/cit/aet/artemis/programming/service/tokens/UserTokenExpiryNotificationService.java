@@ -14,10 +14,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 @Profile(PROFILE_CORE_AND_SCHEDULING)

@@ -12,8 +12,8 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialUserEnti
 import org.springframework.security.web.webauthn.management.PublicKeyCredentialUserEntityRepository;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 

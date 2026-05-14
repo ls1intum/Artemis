@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.AddedToChannelNotification;
@@ -47,7 +48,6 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTO
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ErrorConstants;

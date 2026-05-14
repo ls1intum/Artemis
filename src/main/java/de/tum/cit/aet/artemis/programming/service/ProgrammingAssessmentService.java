@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -24,7 +25,6 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;

@@ -24,13 +24,13 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseUpdateDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;

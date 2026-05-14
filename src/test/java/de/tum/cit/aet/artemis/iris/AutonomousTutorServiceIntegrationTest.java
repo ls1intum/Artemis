@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
@@ -22,7 +23,6 @@ import de.tum.cit.aet.artemis.communication.repository.ConversationMessageReposi
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorService;

@@ -11,7 +11,7 @@ import org.springframework.security.web.webauthn.api.ImmutableCredentialRecord;
 import org.springframework.security.web.webauthn.api.ImmutablePublicKeyCose;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialType;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 
 /**

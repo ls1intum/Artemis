@@ -24,6 +24,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -41,7 +42,6 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.export.IrisChatSessionExportDTO;
 import de.tum.cit.aet.artemis.core.dto.export.IrisMessageExportDTO;
 import de.tum.cit.aet.artemis.core.service.export.DataExportCommunicationDataService;

@@ -30,8 +30,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
@@ -365,11 +365,11 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             // Create admin users with ADMIN authority
             User admin1 = userUtilService.createAndSaveUser(TEST_PREFIX + "admin1");
-            admin1.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
+            admin1.setAuthorities(Set.of(de.tum.cit.aet.artemis.account.domain.Authority.ADMIN_AUTHORITY));
             userTestRepository.save(admin1);
 
             User admin2 = userUtilService.createAndSaveUser(TEST_PREFIX + "admin2");
-            admin2.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
+            admin2.setAuthorities(Set.of(de.tum.cit.aet.artemis.account.domain.Authority.ADMIN_AUTHORITY));
             userTestRepository.save(admin2);
 
             PasskeyCredential credential1 = passkeyCredentialUtilService.createAndSavePasskeyCredential(admin1);
@@ -416,7 +416,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             // Create an admin user without any passkeys to verify the endpoint handles users with no passkeys
             User adminWithoutPasskeys = userUtilService.createAndSaveUser(TEST_PREFIX + "adminnopk");
-            adminWithoutPasskeys.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
+            adminWithoutPasskeys.setAuthorities(Set.of(de.tum.cit.aet.artemis.account.domain.Authority.ADMIN_AUTHORITY));
             userTestRepository.save(adminWithoutPasskeys);
 
             List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
@@ -432,13 +432,13 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             // Create admin users with ADMIN authority
             User admin1 = userUtilService.createAndSaveUser(TEST_PREFIX + "adminuser1");
-            admin1.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
+            admin1.setAuthorities(Set.of(de.tum.cit.aet.artemis.account.domain.Authority.ADMIN_AUTHORITY));
             userTestRepository.save(admin1);
 
             // Create regular users (students, instructors, etc.) without ADMIN authority
             User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
             User instructor = userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1");
-            instructor.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.INSTRUCTOR_AUTHORITY));
+            instructor.setAuthorities(Set.of(de.tum.cit.aet.artemis.account.domain.Authority.INSTRUCTOR_AUTHORITY));
             userTestRepository.save(instructor);
 
             // Create passkeys for all users
