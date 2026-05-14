@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.service;
+package de.tum.cit.aet.artemis.account.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -6,9 +6,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.ConductAgreement;
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.communication.domain.ConductAgreement;
-import de.tum.cit.aet.artemis.communication.repository.ConductAgreementRepository;
+import de.tum.cit.aet.artemis.account.repository.ConductAgreementRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
 /**

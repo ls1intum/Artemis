@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.repository;
+package de.tum.cit.aet.artemis.account.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -10,8 +10,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.communication.domain.ConductAgreement;
-import de.tum.cit.aet.artemis.communication.domain.ConductAgreementId;
+import de.tum.cit.aet.artemis.account.domain.ConductAgreement;
+import de.tum.cit.aet.artemis.account.domain.ConductAgreementId;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**

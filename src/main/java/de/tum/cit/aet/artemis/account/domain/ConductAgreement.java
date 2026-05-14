@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.domain;
+package de.tum.cit.aet.artemis.account.domain;
 
 import java.util.Objects;
 
@@ -11,7 +11,6 @@ import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
 /**
