@@ -2,18 +2,25 @@ package de.tum.cit.aet.artemis.programming.service.ci;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.dto.BuildJobInterface;
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
+import de.tum.cit.aet.artemis.programming.dto.TestCaseBase;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
 
 public abstract class AbstractContinuousIntegrationResultService implements ContinuousIntegrationResultService {
+
+    private static final Logger log = LoggerFactory.getLogger(AbstractContinuousIntegrationResultService.class);
 
     protected final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
@@ -63,7 +70,16 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
     private void addTestCaseFeedbacksToResult(Result result, List<? extends BuildJobInterface> jobs, ProgrammingExercise programmingExercise) {
         var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
+
+        log.debug("Building result feedbacks for exercise {}: {} active test cases in DB (names: {})", programmingExercise.getId(), activeTestCases.size(),
+                activeTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
+
         jobs.forEach(job -> {
+            var failedTestNames = job.failedTests().stream().map(TestCaseBase::name).sorted().toList();
+            var successfulTestNames = job.successfulTests().stream().map(TestCaseBase::name).sorted().toList();
+            log.debug("Build job for exercise {}: {} failed tests {}, {} successful tests {}", programmingExercise.getId(), failedTestNames.size(), failedTestNames,
+                    successfulTestNames.size(), successfulTestNames);
+
             job.failedTests().forEach(failedTest -> result
                     .addFeedback(feedbackCreationService.createFeedbackFromTestCase(failedTest.name(), failedTest.testMessages(), false, programmingExercise, activeTestCases)));
             result.setTestCaseCount(result.getTestCaseCount() + job.failedTests().size());

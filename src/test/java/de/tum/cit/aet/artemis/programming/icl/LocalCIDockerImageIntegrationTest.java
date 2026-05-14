@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIEventListenerService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIResultListenerService;
@@ -89,8 +90,6 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     private static final int MAX_DIAGNOSTIC_LOG_LENGTH = 4000;
 
     private static final int MAX_BUILD_ATTEMPTS = 2;
-
-    private static final Logger log = LoggerFactory.getLogger(LocalCIDockerImageIntegrationTest.class);
 
     private DockerClient realDockerClient;
 
@@ -255,6 +254,13 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         assertThat(persistedSubmission.isBuildFailed()).isFalse();
         Result result = persistedSubmission.getLatestResult();
         assertThat(result.getCompletionDate()).isNotNull();
+
+        // Log the DB test case state at assertion time — helps diagnose flaky testCaseCount mismatches
+        var dbTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
+        log.info("At assertion time for exercise {} (projectType={}): result has testCaseCount={}, passedTestCaseCount={}, score={}; DB has {} active test cases (names: {})",
+                programmingExercise.getId(), projectType, result.getTestCaseCount(), result.getPassedTestCaseCount(), result.getScore(), dbTestCases.size(),
+                dbTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
+
         // Attach per-feedback PASS/FAIL detail to the assertion description so a CI failure
         // names the offending test case directly instead of just printing the numeric mismatch.
         String feedbackDiagnostics = loadAndFormatTestCaseFeedback(result.getId());
@@ -285,10 +291,13 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         programmingExercise.setProjectType(projectType);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.getBuildConfig().setBuildScript(null);
-        programmingExercise.getBuildConfig()
-                .setBuildPlanConfiguration(objectMapper.writeValueAsString(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise)));
+        var phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
+        var dockerImage = buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise);
+        var buildPlanPhasesDTO = new BuildPlanPhasesDTO(phases, dockerImage);
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(buildPlanPhasesDTO.toBuildPlanConfiguration());
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExerciseRepository.save(programmingExercise);
+        // Capture the managed entity returned by merge() to avoid stale detached entity issues
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
     }
 
     private void replaceExerciseTestCases(ProjectType projectType) {
@@ -298,10 +307,22 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
             default -> throw new IllegalArgumentException("Unsupported project type: " + projectType);
         };
 
-        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        var existingTestCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        log.info("Deleting {} existing test cases for exercise {} (names: {})", existingTestCases.size(), programmingExercise.getId(),
+                existingTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
+        testCaseRepository.deleteAll(existingTestCases);
+        testCaseRepository.flush();
+
         List<ProgrammingExerciseTestCase> testCases = testCaseNames.stream().map(testCaseName -> new ProgrammingExerciseTestCase().testName(testCaseName).weight(1.0).active(true)
                 .exercise(programmingExercise).visibility(de.tum.cit.aet.artemis.assessment.domain.Visibility.ALWAYS).bonusMultiplier(1D).bonusPoints(0D)).toList();
         testCaseRepository.saveAll(testCases);
+        testCaseRepository.flush();
+
+        // Verify the exact number of test cases persisted — any mismatch here means a JPA/cache issue
+        var verifiedTestCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        log.info("After replacement: {} test cases in DB for exercise {} (expected {}, names: {})", verifiedTestCases.size(), programmingExercise.getId(), testCaseNames.size(),
+                verifiedTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
+        assertThat(verifiedTestCases).as("Test case count after replacement for exercise %d", programmingExercise.getId()).hasSize(testCaseNames.size());
     }
 
     private RepositoryExportTestUtil.BaseRepositories createAndSeedBaseRepositories(ProjectType projectType) throws Exception {
@@ -318,7 +339,13 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         seedRepositoryFromTemplate(baseRepositories.solutionRepository(), Path.of("templates", "c", templateDirectory, "solution"), "solution");
         seedRepositoryFromTemplate(baseRepositories.testsRepository(), Path.of("templates", "c", templateDirectory, "test"), "tests");
 
-        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        // Verify test cases were not disturbed by saving the exercise entity (orphanRemoval/cascade check)
+        var testCasesAfterRepoSetup = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
+        log.info("After repository setup: {} active test cases for exercise {} (names: {})", testCasesAfterRepoSetup.size(), programmingExercise.getId(),
+                testCasesAfterRepoSetup.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
+
         return baseRepositories;
     }
 
