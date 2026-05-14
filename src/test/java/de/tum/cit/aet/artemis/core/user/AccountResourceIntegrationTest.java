@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
@@ -61,6 +62,16 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     private void testWithRegistrationDisabled(Executable test) throws Throwable {
         ConfigUtil.testWithChangedConfig(accountService, "registrationEnabled", Optional.of(Boolean.FALSE), test);
+    }
+
+    private void testWithSaml2Active(Executable test) throws Throwable {
+        Mockito.doReturn(true).when(profileService).isSaml2Active();
+        try {
+            test.execute();
+        }
+        finally {
+            Mockito.doCallRealMethod().when(profileService).isSaml2Active();
+        }
     }
 
     private String getValidPassword() {
@@ -621,5 +632,45 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         ZonedDateTime actualTimestamp = unchangedUser.get().getSelectedLLMUsageTimestamp();
         assertThat(actualTimestamp).isNotNull();
         assertThat(actualTimestamp.truncatedTo(ChronoUnit.MILLIS)).isEqualTo(originalTimestamp);
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountSaml2ActiveOnlyUpdatesLangKey() throws Throwable {
+        testWithSaml2Active(() -> {
+            User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+            String originalFirstName = user.getFirstName();
+            String originalLastName = user.getLastName();
+            String originalEmail = user.getEmail();
+
+            // Attempt to change name and email; only langKey should be persisted
+            user.setFirstName("HackedFirstName");
+            user.setLastName("HackedLastName");
+            user.setEmail("hacked@evil.com");
+            user.setLangKey("de");
+
+            request.put("/api/core/account", new UserDTO(user), HttpStatus.OK);
+
+            Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
+            assertThat(updatedUser).isPresent();
+            // Name and email must remain unchanged
+            assertThat(updatedUser.get().getFirstName()).isEqualTo(originalFirstName);
+            assertThat(updatedUser.get().getLastName()).isEqualTo(originalLastName);
+            assertThat(updatedUser.get().getEmail()).isEqualTo(originalEmail);
+            // Only the language key must have been updated
+            assertThat(updatedUser.get().getLangKey()).isEqualTo("de");
+        });
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountSaml2ActiveReturnsOk() throws Throwable {
+        testWithSaml2Active(() -> {
+            User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+            user.setLangKey("de");
+
+            // The endpoint must still return 200 so the language preference can be saved
+            request.put("/api/core/account", new UserDTO(user), HttpStatus.OK);
+        });
     }
 }

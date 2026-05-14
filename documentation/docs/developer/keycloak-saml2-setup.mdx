@@ -132,7 +132,7 @@ Replace `<ABSOLUTE_PATH>` with the actual absolute path from `realpath` in Step 
 
 ### Angular Dev Server (port 9000)
 
-When using `npm start` (Angular dev server on port 9000), the SAML2 paths must be proxied to the Spring Boot backend. The proxy configuration in `proxy.conf.mjs` must include `/saml2/` and `/login/saml2/` — these are already configured in the project.
+When using `pnpm start` (Angular dev server on port 9000), the SAML2 paths must be proxied to the Spring Boot backend. The proxy configuration in `proxy.conf.mjs` must include `/saml2/` and `/login/saml2/` — these are already configured in the project.
 
 The Keycloak realm also needs `http://localhost:9000/login/saml2/sso/keycloak` as an allowed redirect URI. This is preconfigured in the provided `artemis-realm.json`.
 
@@ -249,7 +249,7 @@ You have `spring.profiles.active` set inside `application-local.yml`, which Spri
 
 The browser stays on the Artemis login page after clicking "SAML2 Login".
 
-**Fix (Angular dev server):** Ensure the proxy config in `proxy.conf.mjs` includes `/saml2/` and `/login/saml2/`. Restart `npm start` after changes.
+**Fix (Angular dev server):** Ensure the proxy config in `proxy.conf.mjs` includes `/saml2/` and `/login/saml2/`. Restart `pnpm start` after changes.
 
 ### Container Logs
 

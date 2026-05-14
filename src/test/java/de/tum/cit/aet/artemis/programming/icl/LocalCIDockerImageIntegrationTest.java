@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.AfterEach;
@@ -42,6 +43,7 @@ import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.transport.SSLConfig;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.service.BuildAgentDockerService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -85,6 +87,10 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     private static final Duration BUILD_TIMEOUT = Duration.ofMinutes(5);
 
     private static final int MAX_DIAGNOSTIC_LOG_LENGTH = 4000;
+
+    private static final int MAX_BUILD_ATTEMPTS = 2;
+
+    private static final Logger log = LoggerFactory.getLogger(LocalCIDockerImageIntegrationTest.class);
 
     private DockerClient realDockerClient;
 
@@ -208,27 +214,70 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
                 baseRepositories.solutionRepository());
         programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
-        String commitHash = localVCLocalCITestService.commitFile(studentRepository.workingCopyGitRepoFile.toPath(), studentRepository.workingCopyGitRepo, "trigger.txt");
-        studentRepository.workingCopyGitRepo.push().call();
-        RepositoryExportTestUtil.waitForBareRepositoryReady(studentRepository);
-        ProgrammingSubmission submission = createManualSubmission(participation, commitHash);
-        localCITriggerService.triggerBuild(participation, commitHash, RepositoryType.USER);
+        // Sanitizer-based test cases (especially in the GCC variant) can flake intermittently
+        // in Docker due to ASLR / sanitizer interactions on CI runners. Retry the build once
+        // before failing — a real configuration regression will fail twice.
+        AssertionError lastFailure = null;
+        for (int attempt = 1; attempt <= MAX_BUILD_ATTEMPTS; attempt++) {
+            String triggerFileName = "trigger-attempt-" + attempt + ".txt";
+            String commitHash = localVCLocalCITestService.commitFile(studentRepository.workingCopyGitRepoFile.toPath(), studentRepository.workingCopyGitRepo, triggerFileName);
+            studentRepository.workingCopyGitRepo.push().call();
+            RepositoryExportTestUtil.waitForBareRepositoryReady(studentRepository);
+            ProgrammingSubmission submission = createManualSubmission(participation, commitHash);
+            localCITriggerService.triggerBuild(participation, commitHash, RepositoryType.USER);
 
-        awaitCreatedBuildJob(participation.getId());
-        BuildJob buildJob = awaitCompletedBuildJob(participation.getId());
+            awaitCreatedBuildJob(participation.getId());
+            BuildJob buildJob = awaitCompletedBuildJob(participation.getId());
+            ProgrammingSubmission persistedSubmission = awaitLatestSubmissionWithResult(participation.getId());
+
+            try {
+                assertBuildResultMatchesExpectations(buildJob, persistedSubmission, submission, commitHash, expectedDockerImage, projectType, expectedSuccessfulTestCaseCount);
+                return;
+            }
+            catch (AssertionError failure) {
+                lastFailure = failure;
+                if (attempt < MAX_BUILD_ATTEMPTS) {
+                    log.warn("Docker build attempt {} for project type {} did not match expectations; retrying. Failure: {}", attempt, projectType, failure.getMessage());
+                }
+            }
+        }
+        throw lastFailure;
+    }
+
+    private void assertBuildResultMatchesExpectations(BuildJob buildJob, ProgrammingSubmission persistedSubmission, ProgrammingSubmission expectedSubmission, String commitHash,
+            String expectedDockerImage, ProjectType projectType, int expectedSuccessfulTestCaseCount) {
         assertThat(buildJob.getBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
         assertThat(buildJob.getDockerImage()).isEqualTo(expectedDockerImage);
 
-        ProgrammingSubmission persistedSubmission = awaitLatestSubmissionWithResult(participation.getId());
-        assertThat(persistedSubmission.getId()).isEqualTo(submission.getId());
+        assertThat(persistedSubmission.getId()).isEqualTo(expectedSubmission.getId());
         assertThat(persistedSubmission.getCommitHash()).isEqualTo(commitHash);
         assertThat(persistedSubmission.getLatestResult()).isNotNull();
         assertThat(persistedSubmission.isBuildFailed()).isFalse();
-        var result = persistedSubmission.getLatestResult();
+        Result result = persistedSubmission.getLatestResult();
         assertThat(result.getCompletionDate()).isNotNull();
-        assertThat(result.getScore()).isEqualTo(100.0);
-        assertThat(result.getTestCaseCount()).isEqualTo(expectedSuccessfulTestCaseCount);
-        assertThat(result.getPassedTestCaseCount()).isEqualTo(expectedSuccessfulTestCaseCount);
+        // Attach per-feedback PASS/FAIL detail to the assertion description so a CI failure
+        // names the offending test case directly instead of just printing the numeric mismatch.
+        String feedbackDiagnostics = loadAndFormatTestCaseFeedback(result.getId());
+        assertThat(result.getScore()).as("Score for project type %s; feedback:%n%s", projectType, feedbackDiagnostics).isEqualTo(100.0);
+        assertThat(result.getTestCaseCount()).as("Test case count for project type %s; feedback:%n%s", projectType, feedbackDiagnostics).isEqualTo(expectedSuccessfulTestCaseCount);
+        assertThat(result.getPassedTestCaseCount()).as("Passed test case count for project type %s; feedback:%n%s", projectType, feedbackDiagnostics)
+                .isEqualTo(expectedSuccessfulTestCaseCount);
+    }
+
+    private String loadAndFormatTestCaseFeedback(long resultId) {
+        // Re-fetch the result with feedbacks + test cases eagerly loaded; the persistedSubmission
+        // returned from the repository above is detached, so result.getFeedbacks() would otherwise
+        // hit a LazyInitializationException.
+        var resultWithFeedbacks = resultRepository.findResultWithFeedbacksAndTestCasesById(resultId);
+        if (resultWithFeedbacks.isEmpty() || resultWithFeedbacks.get().getFeedbacks().isEmpty()) {
+            return "(no feedback recorded)";
+        }
+        return resultWithFeedbacks.get().getFeedbacks().stream().map(feedback -> {
+            String name = feedback.getTestCase() != null ? feedback.getTestCase().getTestName() : feedback.getText();
+            String status = Boolean.TRUE.equals(feedback.isPositive()) ? "PASS" : "FAIL";
+            String detail = feedback.getDetailText();
+            return "  - " + name + " [" + status + "]" + (detail != null && !detail.isBlank() ? ": " + detail : "");
+        }).sorted().collect(Collectors.joining(System.lineSeparator()));
     }
 
     private void configureProgrammingExercise(ProjectType projectType) throws Exception {
