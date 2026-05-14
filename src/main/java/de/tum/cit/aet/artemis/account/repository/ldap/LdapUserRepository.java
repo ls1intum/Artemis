@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.repository.ldap;
+package de.tum.cit.aet.artemis.account.repository.ldap;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 

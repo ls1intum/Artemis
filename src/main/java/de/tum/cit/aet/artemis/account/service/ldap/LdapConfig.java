@@ -13,7 +13,7 @@ import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 
 @Configuration
 @Profile(PROFILE_LDAP)
-@EnableLdapRepositories(basePackages = "de.tum.cit.aet.artemis.core.repository.ldap")
+@EnableLdapRepositories(basePackages = "de.tum.cit.aet.artemis.account.repository.ldap")
 @Lazy
 public class LdapConfig {
 
