@@ -26,7 +26,6 @@ const courseData = {
     editorGroupName: process.env.EDITOR_GROUP_NAME ?? '',
     instructorGroupName: process.env.INSTRUCTOR_GROUP_NAME ?? '',
     enableComplaints: true,
-    enableFaqs: true,
     maxComplaints: 5,
     maxTeamComplaints: 3,
     maxComplaintTimeDays: 6,
@@ -120,7 +119,6 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await courseCreation.setCourseMaxPoints(courseData.maxPoints);
             await courseCreation.setProgrammingLanguage(courseData.programmingLanguage);
             await courseCreation.setEnableComplaints(courseData.enableComplaints);
-            await courseCreation.setEnableFaq(courseData.enableFaqs);
             await courseCreation.setMaxComplaints(courseData.maxComplaints);
             await courseCreation.setMaxTeamComplaints(courseData.maxTeamComplaints);
             await courseCreation.setMaxComplaintsTimeDays(courseData.maxComplaintTimeDays);
@@ -141,7 +139,6 @@ test.describe('Course management', { tag: '@fast' }, () => {
             expect(courseBody.maxPoints).toBe(courseData.maxPoints);
             expect(courseBody.defaultProgrammingLanguage).toBe(courseData.programmingLanguage);
             expect(courseBody.complaintsEnabled).toBe(courseData.enableComplaints);
-            expect(courseBody.faqEnabled).toBe(courseData.enableFaqs);
             expect(courseBody.maxComplaints).toBe(courseData.maxComplaints);
             expect(courseBody.maxTeamComplaints).toBe(courseData.maxTeamComplaints);
             expect(courseBody.maxComplaintTimeDays).toBe(courseData.maxComplaintTimeDays);
@@ -301,8 +298,8 @@ test.describe('Course management', { tag: '@fast' }, () => {
 
             const channel = await courseMessages.setupCommunicationChannel(login, admin, course, communicationAPIRequests);
             const messageText = 'Test Message';
-            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id, messageText + ' 1');
-            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id, messageText + ' 2');
+            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id!, messageText + ' 1');
+            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id!, messageText + ' 2');
 
             const expectedCourseSummaryValues: CourseSummary = {
                 isTestCourse: true,

@@ -87,6 +87,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     highlightDifferences = input<boolean>(false);
     disableAutoSave = input<boolean>(false);
     isProblemStatementVisible = input<boolean>(true);
+    showNavbar = input<boolean>(true);
     course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
     fileSyncService = input<CodeEditorFileSyncService | undefined>();
@@ -357,6 +358,16 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     /**
+     * Applies commit-state transitions after a successful inline-fix apply commit.
+     * Keeps UNCOMMITTED_CHANGES if new edits appeared while the commit request was in flight.
+     */
+    onInlineFixCommitted(): void {
+        this.commitState = _isEmpty(this.unsavedFiles) ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES;
+        this.onCommitStateChange.emit(this.commitState);
+        this.onCommit.emit();
+    }
+
+    /**
      * On successful pull during a refresh operation, we remove all unsaved files.
      */
     onRefreshFiles() {
@@ -398,6 +409,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
 
     getText(): string {
         return this.monacoEditor?.getText() ?? '';
+    }
+
+    commit(): void {
+        this.actions?.commit();
     }
 
     getNumberOfLines(): number {

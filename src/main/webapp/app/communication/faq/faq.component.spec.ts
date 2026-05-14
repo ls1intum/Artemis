@@ -6,7 +6,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaqService } from 'app/communication/faq/faq.service';
@@ -25,6 +24,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();
@@ -304,29 +304,5 @@ describe('FaqComponent', () => {
         faqComponent.ngOnInit();
         expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(faqComponent.courseId);
         expect(faqComponent.irisEnabled).toBe(true);
-    });
-
-    it('should call faq service to enable faq', () => {
-        const enableFaqSpy = vi.spyOn(faqService, 'enable').mockReturnValue(of(new HttpResponse<void>()));
-        faqComponentFixture.detectChanges();
-        faqComponent.enableFaq();
-        expect(enableFaqSpy).toHaveBeenCalledExactlyOnceWith(courseId);
-        expect(faqComponent.course.faqEnabled).toBe(true);
-    });
-
-    it('should set dialog error source when error while enabling faq', () => {
-        const errorResponse = new HttpErrorResponse({
-            error: 'Test error',
-            status: 500,
-            statusText: 'Server Error',
-        });
-        const enableSpy = vi.spyOn(faqService, 'enable').mockReturnValue(throwError(() => errorResponse));
-        let dialogErrorMessage: string | undefined;
-        faqComponent.dialogError$.subscribe((msg) => (dialogErrorMessage = msg));
-        faqComponentFixture.detectChanges();
-        faqComponent.enableFaq();
-        expect(enableSpy).toHaveBeenCalledExactlyOnceWith(courseId);
-        expect(faqComponent.course.faqEnabled).toBeFalsy();
-        expect(dialogErrorMessage).toBe('Http failure response for (unknown url): 500 Server Error');
     });
 });

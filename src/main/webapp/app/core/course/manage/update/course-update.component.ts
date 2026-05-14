@@ -1,4 +1,4 @@
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Component, DestroyRef, ElementRef, OnInit, inject, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
@@ -15,7 +15,7 @@ import { ImageComponent } from 'app/shared/image/image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { COURSE_SHORT_NAME_MAX_LENGTH, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -74,6 +74,7 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         FeatureOverlayComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
+        RouterLink,
     ],
 })
 export class CourseUpdateComponent implements OnInit {
@@ -95,6 +96,7 @@ export class CourseUpdateComponent implements OnInit {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+    protected readonly COURSE_SHORT_NAME_MAX_LENGTH = COURSE_SHORT_NAME_MAX_LENGTH;
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
@@ -124,7 +126,6 @@ export class CourseUpdateComponent implements OnInit {
     courseOrganizations: Organization[];
     isAdmin = false;
 
-    faqEnabled = true;
     communicationEnabled = true;
     messagingEnabled = true;
     atlasEnabled = false;
@@ -155,7 +156,6 @@ export class CourseUpdateComponent implements OnInit {
                     this.courseOrganizations = organizations;
                 });
                 this.originalTimeZone = this.course.timeZone;
-                this.faqEnabled = course.faqEnabled;
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
                 this.complaintsEnabled =
                     (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) &&
@@ -208,7 +208,7 @@ export class CourseUpdateComponent implements OnInit {
                 shortName: new FormControl(
                     { value: this.course.shortName, disabled: !!this.course.id },
                     {
-                        validators: [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)],
+                        validators: [Validators.required, Validators.minLength(3), Validators.maxLength(COURSE_SHORT_NAME_MAX_LENGTH), regexValidator(SHORT_NAME_PATTERN)],
                         updateOn: 'blur',
                     },
                 ),
@@ -229,7 +229,6 @@ export class CourseUpdateComponent implements OnInit {
                 studentCourseAnalyticsDashboardEnabled: new FormControl(this.course.studentCourseAnalyticsDashboardEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
-                faqEnabled: new FormControl(this.faqEnabled),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
                 maxPoints: new FormControl(this.course.maxPoints, {
                     validators: [Validators.min(1)],
@@ -565,10 +564,6 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm.controls['instructorGroupName'].setValue(instructorGroupName);
     }
 
-    changeFaqEnabled() {
-        this.faqEnabled = !this.faqEnabled;
-        this.courseForm.controls['faqEnabled'].setValue(this.faqEnabled);
-    }
     /**
      * Enable or disable test course
      */

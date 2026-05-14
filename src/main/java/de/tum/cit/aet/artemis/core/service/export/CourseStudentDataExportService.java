@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -29,8 +30,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
@@ -117,7 +116,8 @@ public class CourseStudentDataExportService {
     public CourseStudentDataExportService(ParticipationRepository participationRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupApi> tutorialGroupApi,
-            GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository) {
+            GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
+            ObjectMapper objectMapper) {
         this.participationRepository = participationRepository;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
@@ -130,11 +130,7 @@ public class CourseStudentDataExportService {
         this.gradingScaleRepository = gradingScaleRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
-
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.registerModule(new JavaTimeModule());
-        this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -434,7 +430,7 @@ public class CourseStudentDataExportService {
             }
 
             Path outputFile = outputDir.resolve("iris-sessions.json");
-            objectMapper.writeValue(outputFile.toFile(), sessions);
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(outputFile.toFile(), sessions);
             return Optional.of(outputFile);
         }
         catch (Exception e) {
@@ -1149,8 +1145,10 @@ public class CourseStudentDataExportService {
                 .orElse(null);
     }
 
-    private String formatFeedbacks(List<Feedback> feedbacks) {
-        return feedbacks.stream().map(f -> {
+    private String formatFeedbacks(Collection<Feedback> feedbacks) {
+        // Sort by id (insertion order under IDENTITY) so the exported CSV is deterministic regardless of
+        // the underlying Set iteration order.
+        return feedbacks.stream().sorted(Comparator.comparing(Feedback::getId, Comparator.nullsLast(Comparator.naturalOrder()))).map(f -> {
             String text = f.getDetailText() != null ? f.getDetailText() : (f.getText() != null ? f.getText() : "");
             String credits = f.getCredits() != null ? " (" + f.getCredits() + " pts)" : "";
             return text + credits;

@@ -23,7 +23,7 @@ import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseU
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { AlertService } from 'app/shared/service/alert.service';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

@@ -75,6 +75,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
     readonly participationId = input<number>();
     readonly displayHeader = input(true);
     readonly expandProblemStatement = input(true);
+    readonly showProblemStatement = input(true);
     readonly displayedInExamSummary = input(false);
 
     readonly inputExercise = input<FileUploadExercise>();

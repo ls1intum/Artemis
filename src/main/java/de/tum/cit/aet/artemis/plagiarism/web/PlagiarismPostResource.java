@@ -33,11 +33,11 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationResponseDTO;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
-import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller for managing Post.
@@ -94,7 +94,7 @@ public class PlagiarismPostResource {
         long start = System.nanoTime();
         Post updatedPost = plagiarismPostService.updatePost(courseId, postId, post);
         log.info("updatePost took {}", TimeLogUtil.formatDurationFrom(start));
-        return new ResponseEntity<>(updatedPost, null, HttpStatus.OK);
+        return ResponseEntity.ok(updatedPost);
     }
 
     /**

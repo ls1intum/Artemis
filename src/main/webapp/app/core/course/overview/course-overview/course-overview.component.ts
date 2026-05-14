@@ -26,7 +26,7 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
-import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-tutorial-groups/course-tutorial-groups.component';
+import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/overview/course-tutorial-groups/course-tutorial-groups.component';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { CourseUnenrollmentModalComponent } from 'app/core/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
@@ -115,7 +115,11 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
     async ngOnInit() {
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
-            this.isSidebarCollapsed.update((value) => this.activatedComponentReference()?.isCollapsed ?? !value);
+            this.isSidebarCollapsed.update((value) => {
+                const componentRef = this.activatedComponentReference();
+                const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
+                return componentCollapsed ?? !value;
+            });
         });
 
         this.subscription = this.route?.params.subscribe(async (params: { courseId: string }) => {
@@ -149,7 +153,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         });
 
         this.courseActionItems.set(this.getCourseActionItems());
-        this.isSidebarCollapsed.set(this.activatedComponentReference()?.isCollapsed ?? false);
+        const componentRef = this.activatedComponentReference();
+        const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
+        this.isSidebarCollapsed.set(componentCollapsed ?? false);
         this.sidebarItems.set(this.getSidebarItems());
         await this.initAfterCourseLoad();
     }
@@ -293,7 +299,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         }
         const childRouteComponent = this.activatedComponentReference();
         childRouteComponent?.toggleSidebar();
-        this.isSidebarCollapsed.set(childRouteComponent!.isCollapsed);
+        const componentCollapsed = typeof childRouteComponent!.isCollapsed === 'function' ? childRouteComponent!.isCollapsed() : (childRouteComponent!.isCollapsed as boolean);
+        this.isSidebarCollapsed.set(componentCollapsed);
     }
 
     getShowRefreshButton(): void {
@@ -329,7 +336,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             sidebarItems.push(communicationsItem);
         }
 
-        if (this.hasTutorialGroups()) {
+        if (this.tutorialGroupEnabled && this.hasTutorialGroups()) {
             const tutorialGroupsItem = this.sidebarItemService.getTutorialGroupsItem();
             sidebarItems.push(tutorialGroupsItem);
         }
@@ -344,7 +351,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             }
         }
 
-        if (currentCourse?.faqEnabled) {
+        if ((currentCourse?.numberOfAcceptedFaqs ?? 0) > 0) {
             const faqItem = this.sidebarItemService.getFaqItem();
             sidebarItems.push(faqItem);
         }

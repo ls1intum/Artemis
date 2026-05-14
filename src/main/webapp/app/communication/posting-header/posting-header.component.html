@@ -11,6 +11,7 @@
                     [authorId]="authorOfPosting.id"
                     [authorName]="authorOfPosting.name"
                     [imageUrl]="addPublicFilePrefix(authorOfPosting.imageUrl)"
+                    [imageBackgroundColor]="authorOfPosting.bot ? 'transparent' : undefined"
                     [isEditable]="currentUser !== undefined && authorOfPosting.id === currentUser.id"
                 />
                 <span class="fs-small d-inline-flex flex-column align-items-start">

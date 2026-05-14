@@ -35,8 +35,10 @@ try:
     COURSE_EXERCISES: Dict[str, Dict[str, List[str]]] = json.loads(config.get('PECVExerciseSettings', 'course_exercises'))
 
     MODEL_NAME: str = config.get('PECVConsistencyCheckSettings', 'model_name', fallback="azure-openai-gpt-5-mini")
+    MODEL_EFFORT: str = config.get('PECVConsistencyCheckSettings', 'model_effort', fallback="medium")
     CONSISTENCY_CHECK_EXERCISES: Dict[str, Dict[str, List[str]]] = json.loads(config.get('PECVConsistencyCheckSettings', 'consistency_check_exercises', fallback='{}'))
-    REFERENCE: str = config.get('PECVConsistencyCheckSettings', 'reference', fallback="No Data Available")
+    CODE_SNAPSHOT_FILES: Dict[str, List[str]] = json.loads(config.get('PECVConsistencyCheckSettings', 'code_snapshot_files', fallback='{}'))
+    REFERENCE: Dict[str, str] = json.loads(config.get('PECVConsistencyCheckSettings', 'reference', fallback='{}'))
 except (configparser.Error, json.JSONDecodeError, ValueError) as e:
     logging.critical(f"Error loading configuration: {e}")
     sys.exit(1)
@@ -49,6 +51,7 @@ def login_as_admin(session: requests.Session) -> None:
 
     :param requests.Session session: The session to authenticate.
     :return: None
+    :rtype: None
     """
     authenticate_user(ADMIN_USER, ADMIN_PASSWORD, session)
 
@@ -79,7 +82,8 @@ def authenticate_user(username: str, password: str, session: requests.Session) -
     if response.status_code == 200:
         logging.info(f"Authentication successful for user {username}")
     else:
-        raise Exception(
-            f"Authentication failed for user {username}. Status code: {response.status_code}\n Response content: {response.text}")
+        logging.error(f"Step 6 failed: Authentication failed for user {username}. Status code: {response.status_code}\nResponse content: {response.text}")
+        logging.error(f"Check admin_user and admin_password in config.ini, verify the server is running at {SERVER_URL}, then execute Step 6")
+        raise Exception(f"Step 6 failed: Authentication failed for user {username}. Status code: {response.status_code}")
 
     return response

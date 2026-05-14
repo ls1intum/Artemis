@@ -15,6 +15,7 @@ export type AccordionGroups = Record<
     { entityData: SidebarCardElement[]; isHideCount?: boolean }
 >;
 export type ChannelGroupCategory =
+    | 'unreadMessages'
     | 'favoriteChannels'
     | 'recents'
     | 'generalChannels'

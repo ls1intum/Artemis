@@ -62,13 +62,13 @@ export class OnlineEditorPage {
     }
 
     async submit(exerciseID: number) {
-        await getExercise(this.page, exerciseID).locator('#submit_button').click();
-        await expect(getExercise(this.page, exerciseID).locator('#result-score-badge', { hasText: 'GRADED' })).toBeVisible({ timeout: 200000 });
+        await this.page.locator('#submit-exercise, #submit-exercise-popover, #submit_button').first().click();
+        await expect(this.page.locator('#exercise-header #result-score, jhi-code-editor-container #result-score').first()).toBeVisible({ timeout: 200000 });
     }
 
     async submitPractice(exerciseID: number) {
-        await getExercise(this.page, exerciseID).locator('#submit_button').click();
-        await expect(getExercise(this.page, exerciseID).locator('#result-score-badge', { hasText: 'PRACTICE' })).toBeVisible({ timeout: 200000 });
+        await this.page.locator('#submit-exercise, #submit-exercise-popover, #submit_button').first().click();
+        await expect(this.page.locator('#exercise-header #result-score, jhi-code-editor-container #result-score').first()).toBeVisible({ timeout: 200000 });
     }
 
     async createFileInRootFolder(exerciseID: number, fileName: string) {

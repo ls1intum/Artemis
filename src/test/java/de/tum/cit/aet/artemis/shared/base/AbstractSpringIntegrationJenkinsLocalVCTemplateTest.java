@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.shared.base;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
@@ -8,7 +8,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -27,7 +26,7 @@ import org.springframework.test.context.TestPropertySource;
 @Tag("BucketJenkinsLocalVCTemplate")
 @ResourceLock("AbstractSpringIntegrationJenkinsLocalVCTemplateTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALVC, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_AEOLUS, PROFILE_APOLLON })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALVC, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_APOLLON })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false",
         "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc_template", "info.contact=test@localhost",

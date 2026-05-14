@@ -19,15 +19,14 @@ test.describe('File upload exercise participation', { tag: '@fast' }, () => {
     test('Starts a file upload exercise in the UI', async ({ login, courseOverview, fileUploadExerciseEditor }) => {
         await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
         await courseOverview.startExercise(exercise.id!);
-        await courseOverview.openRunningExercise(exercise.id!);
 
-        // Verify the initial state of the text editor
-        await fileUploadExerciseEditor.shouldShowExerciseTitleInHeader(exercise.title!);
-        await fileUploadExerciseEditor.shouldShowProblemStatement();
+        // Verify the initial state of the file upload editor
+        await courseOverview.shouldShowExerciseTitleInHeader(exercise.title!);
+        await courseOverview.shouldShowProblemStatement();
 
         // Make a submission
         await fileUploadExerciseEditor.attachFile('pdf-test-file.pdf');
-        const fileUploadResponse = await fileUploadExerciseEditor.submit();
+        const fileUploadResponse = await courseOverview.submitExercise('api/fileupload/exercises/*/file-upload-submissions');
         const submission: FileUploadSubmission = await fileUploadResponse.json();
         expect(submission.submitted).toBe(true);
         expect(fileUploadResponse.status()).toBe(200);

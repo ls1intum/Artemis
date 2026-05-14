@@ -1,4 +1,4 @@
-import { Component, OnChanges, input } from '@angular/core';
+import { Component, effect, input } from '@angular/core';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroupVariantColumn } from 'app/exam/shared/entities/exercise-group-variant-column.model';
@@ -15,7 +15,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     styleUrls: ['./exam-checklist-exercisegroup-table.component.scss'],
     imports: [TranslateDirective, NgbTooltip, FaIconComponent, NoDataComponent, ArtemisTranslatePipe],
 })
-export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
+export class ExamChecklistExerciseGroupTableComponent {
     quizExamMaxPoints = input.required<number>();
     exerciseGroups = input.required<ExerciseGroup[]>();
     exerciseGroupVariantColumns: ExerciseGroupVariantColumn[] = [];
@@ -26,7 +26,13 @@ export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
     faExclamationTriangle = faExclamationTriangle;
     totalParticipants: number;
 
-    ngOnChanges() {
+    constructor() {
+        effect(() => {
+            this.recomputeColumns();
+        });
+    }
+
+    private recomputeColumns() {
         this.exerciseGroupVariantColumns = []; // Clear any previously existing entries
         if (this.exerciseGroups()) {
             let exerciseGroupIndex = 1;

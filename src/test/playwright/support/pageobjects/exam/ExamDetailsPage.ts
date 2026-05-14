@@ -33,15 +33,15 @@ export class ExamDetailsPage {
     }
 
     async clickStudentsToRegister() {
-        await this.page.getByTestId('students-button-register').click();
+        await this.page.getByTestId('students-button-at-least-one-student').click();
     }
 
     async clickStudentExamsToGenerate() {
-        await this.page.getByTestId('student-exams-button-generate').click();
+        await this.page.getByTestId('students-button-all-exams-generated').click();
     }
 
     async clickStudentExamsToPrepareStart() {
-        await this.page.getByTestId('student-exams-button-prepare-start').click();
+        await this.page.getByTestId('students-button-all-exercises-prepared').click();
     }
 
     async clickEditExamForPublishDate() {

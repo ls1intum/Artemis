@@ -12,8 +12,7 @@
                 "createLabel": "Quiz erstellen",
                 "editLabel": "Quiz bearbeiten",
                 "importLabel": "Quiz importieren",
-                "createModelDragAndDrop": "Drag-and-Drop Model Quiz erstellen",
-                "exportLabel": "Quizübungen exportieren"
+                "createModelDragAndDrop": "Drag-and-Drop Model Quiz erstellen"
             },
             "aiGeneration": {
                 "button": "Mit KI generieren",
@@ -55,7 +54,20 @@
                 },
                 "errors": {
                     "invalidConfiguration": "Bitte gib ein Thema an und wähle mindestens einen Fragetyp aus.",
-                    "generationFailed": "Quizfragen konnten nicht generiert werden. Bitte versuche es erneut."
+                    "generationFailed": "Quizfragen konnten nicht generiert werden. Bitte versuche es erneut.",
+                    "refinementFailed": "Quizfragen konnten nicht verfeinert werden. Bitte versuche es erneut.",
+                    "partialRefinementFailed": "{{ count }} Frage(n) konnten nicht verfeinert werden und wurden übersprungen."
+                },
+                "refinement": {
+                    "promptPlaceholder": "Beschreibe, wie die Frage verfeinert werden soll...",
+                    "globalPlaceholder": "Alle Multiple-Choice Fragen in diesem Quiz präzisieren...",
+                    "globalRefineFabLabel": "Alle Fragen mit KI verfeinern",
+                    "changesLabel": "Vorgenommene Änderungen",
+                    "dismissChanges": "Änderungen schließen",
+                    "defaultReasoning": "Die Frage wurde basierend auf deinen Anweisungen verfeinert.",
+                    "errors": {
+                        "failed": "Die Frage konnte nicht verfeinert werden. Bitte versuche es erneut."
+                    }
                 },
                 "preview": {
                     "title": "Vorschau",
@@ -95,8 +107,11 @@
                 "saving": "Speichern...",
                 "saved": "Gespeichert!",
                 "quizHasStarted": "Das Quiz hat angefangen. Es sind keine Änderungen mehr möglich.<br><br>Nachträgliche Korrekturen können vorgenommen werden, sobald das Quiz beendet wurde. Gehe zurück zur Übersicht und klicke auf \"Re-evaluate\", sobald das Quiz beendet wurde. (\"Re-evaluate\" ist nicht für TAs verfügbar.)",
-                "testRunSubmissionsExist": "Dieses Quiz enthält Abgaben für einen der Testläufe der Klausur. Lösche den Testlauf, um die Antwortoptionen zu bearbeiten."
+                "testRunSubmissionsExist": "Dieses Quiz enthält Abgaben für einen der Testläufe der Klausur. Lösche den Testlauf, um die Antwortoptionen zu bearbeiten.",
+                "editNotPossibleDuringQuiz": "Während des Quizzes ist eine Bearbeitung nicht möglich. Nach dem Ende des Quizzes kannst du eine Re-Evaluierung durchführen.",
+                "editNotPossibleAfterEnd": "Nach dem Ende der Quiz-Bearbeitungszeit ist eine Bearbeitung nicht möglich."
             },
+            "editNotPossibleDuringQuiz": "Während des Quizzes ist eine Bearbeitung nicht möglich.",
             "saveError": "Beim Speichern ist ein Fehler ist aufgetreten. Bitte überprüfe deine Eingabe und versuche es später noch einmal.",
             "export": {
                 "title": "Alle Quizfragen zum Kurs {{ param }}",
@@ -193,6 +208,7 @@
             "solution": "Lösung",
             "quizIsOverText": "Das Quiz ist beendet. Bitte warte. Wenn die Ergebnisse nach 60 Sekunden nicht automatisch angezeigt werden, lade die Seite bitte neu.",
             "notParticipatedText": "Das Quiz ist beendet und du hast nicht daran teilgenommen. Es gibt keine Ergebnisse, die angezeigt werden können.",
+            "missedDeadlinePracticeHint": "Du hast dieses Quiz nicht rechtzeitig eingereicht. Du kannst es immer noch üben mit dem <b>Übung starten</b>-Button.",
             "statisticsNotPublished": "Die Übungsleitung hat keine Statistiken freigegeben.",
             "successfullySubmittedText": "Deine Antworten wurden erfolgreich abgegeben.<br><br>Die Ergebnisse werden angezeigt, nachdem das Quiz beendet ist.<br><br>Wenn die Ergebnisse 60 Sekunden nach Quiz Ende nicht automatisch angezeigt werden, dann lade die Seite bitte neu.",
             "evaluateQuizExercise": "Quiz auswerten",

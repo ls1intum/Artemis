@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_DEVELOPMENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.UPLOADS_FILE_PATH_DEFAULT;
 import static de.tum.cit.aet.artemis.core.config.Constants.UPLOADS_FILE_PATH_PROPERTY_NAME;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -19,10 +19,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
+import org.springframework.boot.liquibase.autoconfigure.LiquibaseProperties;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
@@ -32,20 +32,21 @@ import com.hazelcast.spring.HazelcastObjectExtractionConfiguration;
 import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
+import de.tum.cit.aet.artemis.core.config.ArtemisConstants;
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
+import de.tum.cit.aet.artemis.core.config.DefaultProfileUtil;
 import de.tum.cit.aet.artemis.core.config.DeferredEagerBeanInitializer;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
-import tech.jhipster.config.DefaultProfileUtil;
-import tech.jhipster.config.JHipsterConstants;
 
 // Exclude HazelcastObjectExtractionConfiguration due to incompatibility with custom Hazelcast configuration
 // See: https://github.com/hazelcast/hazelcast/issues/26553
 @SpringBootApplication(exclude = HazelcastObjectExtractionConfiguration.class)
 @EnableConfigurationProperties({ LiquibaseProperties.class, ProgrammingLanguageConfiguration.class, TheiaConfiguration.class, LicenseConfiguration.class,
-        ArtemisCompatibleVersionsConfiguration.class })
+        ArtemisCompatibleVersionsConfiguration.class, ArtemisProperties.class })
 public class ArtemisApp {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisApp.class);
@@ -68,10 +69,10 @@ public class ArtemisApp {
     @PostConstruct
     public void initApplication() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
+        if (activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(ArtemisConstants.SPRING_PROFILE_PRODUCTION)) {
             log.error("You have misconfigured your application! It should not run with both the 'dev' and 'prod' profiles at the same time.");
         }
-        if (activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_CLOUD)) {
+        if (activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(ArtemisConstants.SPRING_PROFILE_CLOUD)) {
             log.error("You have misconfigured your application! It should not run with both the 'dev' and 'cloud' profiles at the same time.");
         }
     }

@@ -1,10 +1,26 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, SimpleChanges, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    DestroyRef,
+    HostListener,
+    OnChanges,
+    OnInit,
+    SimpleChanges,
+    ViewEncapsulation,
+    inject,
+    signal,
+    viewChild,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { QuizBatch, QuizExercise, QuizMode, resetQuizForExam, resetQuizForImport } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
@@ -30,7 +46,7 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/util/quiz-exercise-validation.directive';
-import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCircleNotch, faExclamationCircle, faPaperPlane, faPlus, faWandMagicSparkles, faWrench, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
@@ -52,6 +68,8 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ButtonModule } from 'primeng/button';
+import { TextareaModule } from 'primeng/textarea';
+import { QuizAiGenerationService } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.service';
 import { QuizAiGenerationModalComponent } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
 import { GeneratedQuestion, GeneratedQuestionType } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
@@ -82,7 +100,9 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
         NgClass,
         JsonPipe,
         ArtemisTranslatePipe,
+        RouterLink,
         ButtonModule,
+        TextareaModule,
         QuizAiGenerationModalComponent,
     ],
 })
@@ -101,10 +121,18 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private calendarService = inject(CalendarService);
     private location = inject(Location);
     private profileService = inject(ProfileService);
+    private quizAiGenerationService = inject(QuizAiGenerationService);
+    private destroyRef = inject(DestroyRef);
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
     aiGenerationModalVisible = false;
+
+    // Global refinement FAB
+    isRefinementFabOpen = signal(false);
+    isGlobalRefining = signal(false);
+    globalRefinementPrompt = signal('');
+    private globalRefinementSubscription?: Subscription;
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
@@ -147,6 +175,11 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     faPlus = faPlus;
     faXmark = faXmark;
     faExclamationCircle = faExclamationCircle;
+    faArrowLeft = faArrowLeft;
+    faWrench = faWrench;
+    faWandMagicSparkles = faWandMagicSparkles;
+    faPaperPlane = faPaperPlane;
+    faCircleNotch = faCircleNotch;
 
     readonly QuizMode = QuizMode;
     readonly documentationType: DocumentationType = 'Quiz';
@@ -221,9 +254,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.init();
-                if (!this.quizExercise.isEditable) {
-                    this.alertService.error('error.http.403');
-                }
                 if (this.testRunExistsAndShouldNotBeIgnored()) {
                     this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
                 }
@@ -307,7 +337,73 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     }
 
     canShowAiGenerationButton(): boolean {
-        return !!this.hyperionEnabled && !this.isImport && !this.isExamMode && !!this.courseId && !!this.quizExercise?.isEditable;
+        return this.hyperionEnabled && !this.isImport && !this.isExamMode && !!this.courseId && !!this.quizExercise?.isEditable;
+    }
+
+    /**
+     * Returns true when the global refinement FAB should be shown:
+     * Hyperion must be active, the quiz must be editable
+     * and contain at least one multiple-choice question.
+     */
+    get hasMcQuestionsForRefinement(): boolean {
+        return (
+            this.hyperionEnabled &&
+            !this.isImport &&
+            !this.isExamMode &&
+            !!this.quizExercise?.isEditable &&
+            (this.quizExercise?.quizQuestions?.some((q) => q.type === QuizQuestionType.MULTIPLE_CHOICE) ?? false)
+        );
+    }
+
+    /** Submits the global refinement on Enter, but allows Shift+Enter to insert a newline. */
+    onGlobalRefinementEnterKey(event: Event): void {
+        if (!(event as KeyboardEvent).shiftKey) {
+            event.preventDefault();
+            this.submitGlobalRefinement();
+        }
+    }
+
+    /** Cancels any running global refinement request and hides the refinement FAB. */
+    closeRefinementFab(): void {
+        this.globalRefinementSubscription?.unsubscribe();
+        this.globalRefinementSubscription = undefined;
+        this.isGlobalRefining.set(false);
+        this.globalRefinementPrompt.set('');
+        this.isRefinementFabOpen.set(false);
+    }
+
+    /**
+     * Submits the global refinement prompt to Hyperion for all multiple-choice questions in the quiz.
+     * On success, applies refined content to each question via the list-edit child component.
+     */
+    submitGlobalRefinement(): void {
+        const prompt = this.globalRefinementPrompt().trim();
+        this.quizQuestionListEditComponent().parseAllQuestions();
+        const mcQuestions = (this.quizExercise?.quizQuestions ?? []).filter((q) => q.type === QuizQuestionType.MULTIPLE_CHOICE) as MultipleChoiceQuestion[];
+        if (!prompt || this.isGlobalRefining() || !mcQuestions.length || !this.courseId) {
+            return;
+        }
+        this.isGlobalRefining.set(true);
+        this.globalRefinementSubscription = this.quizAiGenerationService
+            .refineAllMultipleChoiceQuestions(this.courseId, mcQuestions, prompt)
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => this.isGlobalRefining.set(false)),
+            )
+            .subscribe({
+                next: (results) => {
+                    const failedCount = mcQuestions.length - results.size;
+                    if (failedCount > 0) {
+                        this.alertService.warning('artemisApp.quizExercise.aiGeneration.errors.partialRefinementFailed', { count: failedCount });
+                    }
+                    this.quizQuestionListEditComponent().applyBulkRefinement(results);
+                    this.globalRefinementPrompt.set('');
+                    this.isRefinementFabOpen.set(false);
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.quizExercise.aiGeneration.errors.refinementFailed');
+                },
+            });
     }
 
     appendAiGeneratedQuestions(generatedQuestions: GeneratedQuestion[]): void {
@@ -411,6 +507,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      * Returns whether pending changes are present, preventing a deactivation.
      */
     canDeactivate(): boolean {
+        if (!this.quizExercise?.isEditable) {
+            return true;
+        }
         return !this.pendingChangesCache;
     }
 
@@ -595,7 +694,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.reconcileMappingReferences(quizExercise);
         this.prepareEntity(quizExercise);
         this.quizExercise = quizExercise;
-        this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
+        // Prefer the server-provided editability flag (e.g. exam-date-aware) when present; otherwise fall back to the
+        // local check. The create/update endpoints currently omit the field, which is why the unconditional overwrite
+        // by the previous implementation flipped the banner on for fresh, not-yet-started quizzes.
+        this.quizExercise.isEditable = this.quizExercise.isEditable ?? isQuizEditable(this.quizExercise);
         this.exerciseService.validateDate(this.quizExercise);
         this.savedEntity = cloneDeep(this.quizExercise);
         this.changeDetector.detectChanges();
@@ -704,6 +806,28 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.quizExercise);
     }
 
+    navigateBack(): void {
+        this.previousState();
+    }
+
+    get reEvaluateUrl(): string[] {
+        const groupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
+        if (this.isExamMode) {
+            return [
+                '/course-management',
+                String(this.courseId),
+                'exams',
+                String(this.examId),
+                'exercise-groups',
+                String(groupId),
+                'quiz-exercises',
+                String(this.quizExercise?.id),
+                're-evaluate',
+            ];
+        }
+        return ['/course-management', String(this.courseId), 'quiz-exercises', String(this.quizExercise?.id), 're-evaluate'];
+    }
+
     /**
      * Check if the saved quiz has started
      * @return {boolean} true if the saved quiz has started, otherwise false
@@ -727,7 +851,25 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     }
 
     isSaveDisabled(): boolean {
-        return this.isSaving || !this.pendingChangesCache || !this.quizIsValid || this.hasSavedQuizStarted || this.quizExercise.dueDateError || this.hasErrorInQuizBatches();
+        return (
+            this.isSaving ||
+            !this.pendingChangesCache ||
+            !this.quizIsValid ||
+            this.hasSavedQuizStarted ||
+            !this.quizExercise.isEditable ||
+            this.quizExercise.dueDateError ||
+            this.hasErrorInQuizBatches()
+        );
+    }
+
+    get saveButtonTooltip(): string {
+        if (!this.quizExercise.isEditable) {
+            if (this.quizExercise.quizEnded) {
+                return this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleAfterEnd');
+            }
+            return this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleDuringQuiz');
+        }
+        return '';
     }
 
     hasErrorInQuizBatches(): boolean {
@@ -742,6 +884,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         const question = new MultipleChoiceQuestion();
         question.title = generatedQuestion.title || `AI Question ${questionNumber}`;
         question.text = generatedQuestion.questionText;
+        question.hint = generatedQuestion.hint;
+        question.explanation = generatedQuestion.explanation;
         question.points = 1;
         question.randomizeOrder = true;
         question.scoringType = ScoringType.ALL_OR_NOTHING;
@@ -750,6 +894,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             const answerOption = new AnswerOption();
             answerOption.text = generatedOption.text;
             answerOption.isCorrect = generatedOption.correct;
+            answerOption.hint = generatedOption.hint;
+            answerOption.explanation = generatedOption.explanation;
             answerOption.question = question;
             return answerOption;
         });

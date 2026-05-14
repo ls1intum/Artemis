@@ -16,6 +16,7 @@ import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
 import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/modal/global-search-modal.component';
+import { SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 
 @Component({
     selector: 'jhi-app',
@@ -32,6 +33,7 @@ import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/compon
         CourseNotificationPopupOverlayComponent,
         LLMSelectionModalComponent,
         GlobalSearchModalComponent,
+        SetupPasskeyModalComponent,
     ],
 })
 export class AppComponent implements OnInit, OnDestroy {
@@ -65,6 +67,7 @@ export class AppComponent implements OnInit, OnDestroy {
     isTestRunExam = false;
     isShownViaLti = false;
     usesModuleBackground = false;
+    showPageRibbon = true;
 
     constructor() {
         this.setupErrorHandling().then(undefined);
@@ -92,7 +95,13 @@ export class AppComponent implements OnInit, OnDestroy {
         return this.getDeepestSnapshot(root).data?.['usesModuleBackground'] ?? false;
     }
 
+    private getDeepestHidePageRibbon(root: ActivatedRouteSnapshot): boolean {
+        return this.getDeepestSnapshot(root).data?.['hidePageRibbon'] ?? false;
+    }
+
     ngOnInit() {
+        this.showPageRibbon = !this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root);
+
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationStart) {
                 /*
@@ -118,6 +127,17 @@ export class AppComponent implements OnInit, OnDestroy {
             if (event instanceof NavigationEnd) {
                 this.jhiLanguageHelper.updateTitle(this.getPageTitle(this.router.routerState.snapshot.root));
                 this.usesModuleBackground = this.getDeepestUsesModuleBackground(this.router.routerState.snapshot.root);
+                this.showPageRibbon = !this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root);
+                const showSkeletonFromRoute = this.getDeepestShowSkeleton(this.router.routerState.snapshot.root);
+                if (showSkeletonFromRoute !== undefined) {
+                    if (!showSkeletonFromRoute && this.showSkeleton) {
+                        this.showSkeleton = false;
+                        this.renderer.addClass(this.document.body, 'transparent-background');
+                    } else if (showSkeletonFromRoute && !this.showSkeleton) {
+                        this.showSkeleton = true;
+                        this.renderer.removeClass(this.document.body, 'transparent-background');
+                    }
+                }
             }
             if (event instanceof NavigationError && event.error.status === 404) {
                 // noinspection JSIgnoredPromiseFromCall
@@ -146,13 +166,19 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * The skeleton should not be shown for the problem statement component if it is directly accessed and
-     * for the standalone feedback component.
+     * The skeleton should not be shown for the problem statement component if it is directly accessed,
+     * for the standalone feedback component, and for the PDF viewer iframe content.
      */
     private shouldShowSkeleton(url: string): boolean {
+        const isLandingPage = url === '/' || url === '';
         const isStandaloneProblemStatement = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/problem-statement(\\/\\d*)?(\\/)?');
         const isStandaloneFeedback = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/participations\\/\\d+\\/results\\/\\d+\\/feedback(\\/)?');
-        return !isStandaloneProblemStatement && !isStandaloneFeedback;
+        const isPdfViewerIframe = url.includes('/pdf-viewer-iframe');
+        return !isLandingPage && !isStandaloneProblemStatement && !isStandaloneFeedback && !isPdfViewerIframe;
+    }
+
+    private getDeepestShowSkeleton(root: ActivatedRouteSnapshot): boolean | undefined {
+        return this.getDeepestSnapshot(root).data?.['showSkeleton'];
     }
 
     ngOnDestroy(): void {

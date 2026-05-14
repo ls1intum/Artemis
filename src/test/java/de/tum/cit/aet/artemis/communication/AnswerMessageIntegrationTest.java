@@ -9,7 +9,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -154,7 +153,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateAnswerInLectureChannel() throws Exception {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        Lecture lecture = lectureUtilService.createLecture(course);
         Channel channel = lectureUtilService.addLectureChannel(lecture);
         testCreateChannelAnswer(channel, 1);
     }

@@ -51,7 +51,7 @@ import { ConversationGlobalSearchComponent } from 'app/communication/shared/conv
 import { AlertService } from 'app/shared/service/alert.service';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { TranslateModule } from '@ngx-translate/core';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const examples: (ConversationDTO | undefined)[] = [
@@ -156,7 +156,9 @@ examples.forEach((activeConversation) => {
                     MockProvider(SidebarEventService),
                     MockProvider(ProfileService),
                     MockProvider(AlertService),
-                    MockProvider(FaqService),
+                    MockProvider(FaqService, {
+                        findAllByCourseIdAndState: () => of(new HttpResponse({ body: [] })),
+                    }),
                     provideHttpClient(),
                     provideHttpClientTesting(),
                 ],

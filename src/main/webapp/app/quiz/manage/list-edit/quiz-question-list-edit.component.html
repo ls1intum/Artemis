@@ -13,10 +13,24 @@
                             #editMultipleChoice
                             [question]="quizQuestion"
                             [questionIndex]="i + 1"
+                            [hyperionEnabled]="hyperionEnabled()"
                             (questionUpdated)="handleQuestionUpdated()"
-                            (questionDeleted)="handleQuestionDeleted(i)"
+                            (questionDeleted)="handleQuestionDeleted(quizQuestion)"
+                            (refineRequested)="toggleRefinement(quizQuestion)"
+                            (collapseChanged)="handleCollapseChanged(quizQuestion, $event)"
                         />
                     </div>
+                    @if (hyperionEnabled()) {
+                        <jhi-quiz-ai-question-refinement-panel
+                            [question]="quizQuestion"
+                            [courseId]="courseId()"
+                            [isOpen]="openRefinementQuestions().has(quizQuestion)"
+                            [isRefinementPanelCollapsed]="collapsedQuestions().has(quizQuestion)"
+                            [externalReasoning]="bulkRefinementReasonings().get(quizQuestion)"
+                            (questionRefined)="handleQuestionRefined(quizQuestion, $event)"
+                            (reasoningDismissed)="clearReasoning(quizQuestion)"
+                        />
+                    }
                 }
                 @if (quizQuestion.type === DRAG_AND_DROP) {
                     <div>
@@ -26,7 +40,7 @@
                             [questionIndex]="i + 1"
                             [filePool]="fileMap"
                             (questionUpdated)="handleQuestionUpdated()"
-                            (questionDeleted)="handleQuestionDeleted(i)"
+                            (questionDeleted)="handleQuestionDeleted(quizQuestion)"
                             (addNewFile)="handleFileAdded($event)"
                             (removeFile)="handleFileRemoved($event)"
                         />
@@ -39,7 +53,7 @@
                             [question]="quizQuestion"
                             [questionIndex]="i + 1"
                             (questionUpdated)="handleQuestionUpdated()"
-                            (questionDeleted)="handleQuestionDeleted(i)"
+                            (questionDeleted)="handleQuestionDeleted(quizQuestion)"
                         />
                     </div>
                 }

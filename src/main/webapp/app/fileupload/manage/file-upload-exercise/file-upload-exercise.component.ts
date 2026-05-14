@@ -43,7 +43,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
-    protected exerciseService = inject(ExerciseService); // needed in html code
+    protected exerciseService = inject(ExerciseService);
     protected fileUploadExerciseService = inject(FileUploadExerciseService); // needed in html code
     private courseExerciseService = inject(CourseExerciseService);
     private alertService = inject(AlertService);

@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.dto.GradingScaleDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradingScaleUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
@@ -84,16 +85,16 @@ public class GradingScaleResource {
      * GET /courses/{courseId}/grading-scale : Find grading scale for course
      *
      * @param courseId the course to which the grading scale belongs
-     * @return ResponseEntity with status 200 (Ok) with body the grading scale if it exists and 404 (Not found) otherwise
+     * @return the ResponseEntity with status 200 (OK) and with body the grading scale, or with a null body if no grading scale exists
      */
     @GetMapping("courses/{courseId}/grading-scale")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradingScale> getGradingScaleForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<GradingScaleDTO> getGradingScaleForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourseId(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        return gradingScale.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
+        return gradingScale.map(GradingScaleDTO::of).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }
 
     /**
@@ -101,35 +102,35 @@ public class GradingScaleResource {
      *
      * @param courseId the course to which the exam belongs
      * @param examId   the exam to which the grading scale belongs
-     * @return ResponseEntity with status 200 (Ok) with body the grading scale if it exists and 404 (Not found) otherwise
+     * @return ResponseEntity with status 200 (Ok) with body the grading scale dto if it exists and 404 (Not found) otherwise
      */
     @GetMapping("courses/{courseId}/exams/{examId}/grading-scale")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradingScale> getGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<GradingScaleDTO> getGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get grading scale for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        return gradingScale.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
+        return gradingScale.map(GradingScaleDTO::of).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }
 
     /**
      * Search for all grading scales among the grading scales having grade type BONUS. The search will be done by the
-     * title of the course or exam that is directly associated with that grading scale. If the user does not have ADMIN role,
+     * title of the course or exam that is directly associated with that grading scale. If the user does not have an ADMIN role,
      * they can only access the grading scales if they are an instructor in the course related to it. The result is pageable.
      *
-     * @param search The pageable search containing the page size, page number and query string
+     * @param search The pageable search containing the page size, page number, and query string
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("grading-scales")
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<GradingScale>> getAllGradingScalesInInstructorGroupOnPage(SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<GradingScaleDTO>> getAllGradingScalesInInstructorGroupOnPage(SearchTermPageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(gradingScaleService.getAllOnPageWithSize(search, user));
     }
 
     /**
-     * POST /courses/{courseId}/grading-scale : Create grading scale for course
+     * POST /courses/{courseId}/grading-scale : Create a grading scale for a course
      *
      * @param courseId the course to which the grading scale belongs
      * @param dto      the DTO containing the grading scale values
@@ -138,7 +139,7 @@ public class GradingScaleResource {
      */
     @PostMapping("courses/{courseId}/grading-scale")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradingScale> createGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScaleUpdateDTO dto) throws URISyntaxException {
+    public ResponseEntity<GradingScaleDTO> createGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScaleUpdateDTO dto) throws URISyntaxException {
         log.debug("REST request to create a grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByCourseId(courseId);
@@ -156,7 +157,7 @@ public class GradingScaleResource {
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.created(new URI("/api/assessment/courses/" + courseId + "/grading-scale/"))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(GradingScaleDTO.of(savedGradingScale));
     }
 
     private void validateGradingScaleForCreate(Optional<GradingScale> existingGradingScale, GradingScaleUpdateDTO dto) {
@@ -169,7 +170,7 @@ public class GradingScaleResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}grading-scale : Create grading scale for exam
+     * POST /courses/{courseId}/exams/{examId}/grading-scale : Create grading scale for exam
      *
      * @param courseId the course to which the exam belongs
      * @param examId   the exam to which the grading scale belongs
@@ -179,7 +180,7 @@ public class GradingScaleResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/grading-scale")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradingScale> createGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScaleUpdateDTO dto)
+    public ResponseEntity<GradingScaleDTO> createGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScaleUpdateDTO dto)
             throws URISyntaxException {
         log.debug("REST request to create a grading scale for exam: {}", examId);
         ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
@@ -201,7 +202,7 @@ public class GradingScaleResource {
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.created(new URI("/api/assessment/courses/" + courseId + "/exams/" + examId + "/grading-scale/"))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(GradingScaleDTO.of(savedGradingScale));
     }
 
     /**
@@ -213,7 +214,7 @@ public class GradingScaleResource {
      */
     @PutMapping("courses/{courseId}/grading-scale")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradingScale> updateGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScaleUpdateDTO dto) {
+    public ResponseEntity<GradingScaleDTO> updateGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScaleUpdateDTO dto) {
         log.debug("REST request to update a grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -232,7 +233,7 @@ public class GradingScaleResource {
         saveCourseIfChanged(dto, course);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(existingGradingScale);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(GradingScaleDTO.of(savedGradingScale));
     }
 
     /**
@@ -245,7 +246,7 @@ public class GradingScaleResource {
      */
     @PutMapping("courses/{courseId}/exams/{examId}/grading-scale")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradingScale> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScaleUpdateDTO dto) {
+    public ResponseEntity<GradingScaleDTO> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScaleUpdateDTO dto) {
         log.debug("REST request to update a grading scale for exam: {}", examId);
         ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
 
@@ -268,7 +269,7 @@ public class GradingScaleResource {
         existingGradingScale.setExam(exam);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(existingGradingScale);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(GradingScaleDTO.of(savedGradingScale));
     }
 
     /**
@@ -345,7 +346,7 @@ public class GradingScaleResource {
 
         final var course = getCourse(gradingScale);
 
-        // Check validity of graded presentation configuration
+        // Check the validity of the graded presentation configuration
         if (gradingScale.getPresentationsNumber() != null || gradingScale.getPresentationsWeight() != null) {
             // The gradingScale must belong to a course.
             if (course == null) {

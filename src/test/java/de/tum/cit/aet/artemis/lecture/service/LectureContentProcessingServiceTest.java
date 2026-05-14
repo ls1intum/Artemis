@@ -1,16 +1,20 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -19,6 +23,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
@@ -29,20 +34,18 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
-import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
-import de.tum.cit.aet.artemis.nebula.api.LectureTranscriptionApi;
-import de.tum.cit.aet.artemis.nebula.api.TumLiveApi;
 
 /**
- * Unit tests for {@link LectureContentProcessingService}.
- * Tests the automated lecture content processing pipeline including:
- * - Transcription triggering
- * - Ingestion triggering
- * - Cancellation (including Nebula job cancellation)
- * - State transitions
- * - Retry logic
+ * Unit tests for {@link LectureContentProcessingService} and {@link ProcessingStateCallbackService}.
+ * Tests the unified Iris-based processing pipeline including:
+ * - Enqueuing units as IDLE
+ * - Capacity-aware dispatch
+ * - Checkpoint handling (transcription data)
+ * - Completion callbacks
+ * - Failure and retry logic
  */
 class LectureContentProcessingServiceTest {
 
@@ -50,19 +53,15 @@ class LectureContentProcessingServiceTest {
 
     private LectureContentProcessingService service;
 
-    private ProcessingStateCallbackService processingStateCallbackService;
+    private ProcessingStateCallbackService callbackService;
 
     private LectureUnitProcessingStateRepository processingStateRepository;
 
     private LectureTranscriptionRepository transcriptionRepository;
 
-    private LectureTranscriptionApi transcriptionApi;
-
-    private TumLiveApi tumLiveApi;
-
     private IrisLectureApi irisLectureApi;
 
-    private FeatureToggleService featureToggleService;
+    private WebsocketMessagingService websocketMessagingService;
 
     private AttachmentVideoUnit testUnit;
 
@@ -74,21 +73,16 @@ class LectureContentProcessingServiceTest {
     void setUp() {
         processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
         transcriptionRepository = mock(LectureTranscriptionRepository.class);
-        transcriptionApi = mock(LectureTranscriptionApi.class);
-        tumLiveApi = mock(TumLiveApi.class);
         irisLectureApi = mock(IrisLectureApi.class);
-        featureToggleService = mock(FeatureToggleService.class);
+        FeatureToggleService featureToggleService = mock(FeatureToggleService.class);
 
-        // Enable the feature toggle by default
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
 
-        // Create real ProcessingStateCallbackService with the same mocked dependencies
-        processingStateCallbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.of(irisLectureApi));
+        websocketMessagingService = mock(WebsocketMessagingService.class);
+        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.of(irisLectureApi), websocketMessagingService);
 
-        service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.of(tumLiveApi),
-                Optional.of(irisLectureApi), featureToggleService, processingStateCallbackService);
+        service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService);
 
-        // Set up test data
         testLecture = new Lecture();
         testLecture.setId(1L);
         testLecture.setTitle("Test Lecture");
@@ -102,250 +96,502 @@ class LectureContentProcessingServiceTest {
         testState.setPhase(ProcessingPhase.IDLE);
     }
 
-    // ==================== FLOW 1: New Unit with Video ====================
+    // ==================== FLOW 1: Enqueue New Unit ====================
 
     @Nested
     class TriggerProcessingNewUnit {
 
         @Test
-        void shouldCreateProcessingStateForNewUnit() {
-            // Given: A new unit with video source, no existing state
+        void shouldEnqueueUnitAsIdle() {
+            // Given: A new unit with video source
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
-            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("job-123");
+            // Mock dispatch — no slots available (dispatch tested separately)
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             // When
             service.triggerProcessing(testUnit);
 
-            // Then: State should be saved when transitioning to TRANSCRIBING
+            // Then: State should be saved as IDLE
             ArgumentCaptor<LectureUnitProcessingState> stateCaptor = ArgumentCaptor.forClass(LectureUnitProcessingState.class);
             verify(processingStateRepository).save(stateCaptor.capture());
 
             LectureUnitProcessingState savedState = stateCaptor.getValue();
-            assertThat(savedState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
-        }
-
-        @Test
-        void shouldStartTranscriptionWhenPlaylistFound() {
-            // Given
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
-            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("job-123");
-
-            // When
-            service.triggerProcessing(testUnit);
-
-            // Then
-            verify(transcriptionApi).startNebulaTranscription(eq(testLecture.getId()), eq(testUnit.getId()), any(NebulaTranscriptionRequestDTO.class));
-        }
-
-        @Test
-        void shouldSkipTranscriptionWhenNoPlaylistFound() {
-            // Given
-            Attachment pdfAttachment = new Attachment();
-            pdfAttachment.setLink("/path/to/file.pdf");
-            pdfAttachment.setVersion(1);
-            testUnit.setAttachment(pdfAttachment);
-
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.empty());
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
-
-            // When
-            service.triggerProcessing(testUnit);
-
-            // Then: Should skip transcription and go to ingestion
-            verify(transcriptionApi, never()).startNebulaTranscription(anyLong(), anyLong(), any());
-            verify(irisLectureApi).addLectureUnitToPyrisDB(testUnit);
-        }
-
-        @Test
-        void shouldGoDirectlyToIngestionForPdfOnlyUnit() {
-            // Given: Unit with PDF but no video
-            testUnit.setVideoSource(null);
-            Attachment pdfAttachment = new Attachment();
-            pdfAttachment.setLink("/path/to/file.pdf");
-            pdfAttachment.setVersion(1);
-            testUnit.setAttachment(pdfAttachment);
-
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
-
-            // When
-            service.triggerProcessing(testUnit);
-
-            // Then: Should skip transcription entirely
-            verify(tumLiveApi, never()).getTumLivePlaylistLink(any());
-            verify(transcriptionApi, never()).startNebulaTranscription(anyLong(), anyLong(), any());
-            verify(irisLectureApi).addLectureUnitToPyrisDB(testUnit);
+            assertThat(savedState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
         }
 
         @Test
         void shouldNotProcessUnitWithNoContent() {
-            // Given: Unit with no video and no PDF
             testUnit.setVideoSource(null);
             testUnit.setAttachment(null);
 
-            // When
             service.triggerProcessing(testUnit);
 
-            // Then: Should not start processing
             verify(processingStateRepository, never()).save(any());
-            verify(tumLiveApi, never()).getTumLivePlaylistLink(any());
         }
 
         @Test
         void shouldSkipTutorialLectures() {
-            // Given
             testLecture.setIsTutorialLecture(true);
 
-            // When
             service.triggerProcessing(testUnit);
 
-            // Then
             verify(processingStateRepository, never()).save(any());
         }
 
         @Test
-        void shouldHandlePlaylistCheckExceptionGracefully() {
-            // Given: Unit with video AND PDF, playlist check throws exception
-            Attachment pdfAttachment = new Attachment();
-            pdfAttachment.setLink("/path/to/file.pdf");
-            pdfAttachment.setVersion(1);
-            testUnit.setAttachment(pdfAttachment);
+        void shouldSkipWhenIrisNotAvailable() {
+            // Given: No Iris API
+            FeatureToggleService fts = mock(FeatureToggleService.class);
+            when(fts.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
+            ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.empty(),
+                    mock(WebsocketMessagingService.class));
+            service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback);
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(tumLiveApi.getTumLivePlaylistLink(any())).thenThrow(new RuntimeException("TUM Live unavailable"));
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
-
-            // When
             service.triggerProcessing(testUnit);
 
-            // Then: Should fall back to PDF-only ingestion
-            verify(irisLectureApi).addLectureUnitToPyrisDB(testUnit);
-            verify(transcriptionApi, never()).startNebulaTranscription(anyLong(), anyLong(), any());
+            verify(processingStateRepository, never()).save(any());
         }
 
         @Test
-        void shouldStayIdleWhenPlaylistCheckFailsWithoutPdf() {
-            // Given: Unit with video but NO PDF, playlist check throws exception
-            testUnit.setAttachment(null);
-
+        void shouldNotReenqueueAlreadyProcessingUnit() {
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(tumLiveApi.getTumLivePlaylistLink(any())).thenThrow(new RuntimeException("TUM Live unavailable"));
 
-            // When
             service.triggerProcessing(testUnit);
 
-            // Then: Should stay in IDLE (no processing possible)
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            verify(processingStateRepository, never()).save(any());
         }
 
         @Test
-        void shouldTransitionToIngestingWhenIngestionApiThrows() {
-            // Given: PDF-only unit, ingestion API throws exception
-            testUnit.setVideoSource(null);
-            Attachment pdfAttachment = new Attachment();
-            pdfAttachment.setLink("/path/to/file.pdf");
-            pdfAttachment.setVersion(1);
-            testUnit.setAttachment(pdfAttachment);
-
+        void shouldNotReenqueueDoneUnit() {
+            testState.setPhase(ProcessingPhase.DONE);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenThrow(new RuntimeException("Pyris unavailable"));
 
-            // When
             service.triggerProcessing(testUnit);
 
-            // Then: Should transition to INGESTING so scheduler can retry
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
-            assertThat(testState.getRetryCount()).isEqualTo(1);
+            verify(processingStateRepository, never()).save(any());
         }
     }
 
-    // ==================== FLOW 2: Video URL Changed ====================
+    // ==================== FLOW 2: Capacity-Aware Dispatch ====================
 
     @Nested
-    class TriggerProcessingVideoChanged {
+    class DispatchPendingJobs {
 
         @Test
-        void shouldDetectVideoUrlChangeAndReprocess() {
-            // Given: Existing state with different video hash
-            testState.setVideoSourceHash("old-hash-12345");
-            testState.setPhase(ProcessingPhase.DONE);
-
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+        void shouldDispatchIdleJobWithVideoAsTranscribing() {
+            // Given: One IDLE job, one slot available, unit has video, no existing transcription
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(1L); // 1 slot available (MAX_CONCURRENT_PROCESSING - 1)
+            when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(TEST_JOB_TOKEN);
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
-            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("new-job");
 
             // When
-            service.triggerProcessing(testUnit);
+            callbackService.dispatchPendingJobs();
 
-            // Then: Should restart processing
-            verify(transcriptionApi).startNebulaTranscription(anyLong(), anyLong(), any());
+            // Then: Should dispatch as TRANSCRIBING (has video, no completed transcription)
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+            assertThat(testState.getIngestionJobToken()).isEqualTo(TEST_JOB_TOKEN);
+            verify(irisLectureApi).addLectureUnitToPyrisDB(testUnit);
         }
 
         @Test
-        void shouldCancelOnNebulaWhenVideoChangedDuringTranscription() {
-            // Given: Unit is currently transcribing, video URL changed
-            testState.setVideoSourceHash("old-hash-12345");
+        void shouldDispatchAsIngestingWhenTranscriptionExists() {
+            // Given: IDLE job with completed transcription (retry after ingestion failure)
+            LectureTranscription completedTranscription = new LectureTranscription();
+            completedTranscription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
+            when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(completedTranscription));
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(TEST_JOB_TOKEN);
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            // When
+            callbackService.dispatchPendingJobs();
+
+            // Then: Should dispatch as INGESTING (transcription already done)
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+        }
+
+        @Test
+        void shouldDispatchPdfOnlyAsIngesting() {
+            // Given: IDLE job with no video (PDF only)
+            testUnit.setVideoSource(null);
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/file.pdf");
+            testUnit.setAttachment(pdfAttachment);
+
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
+            when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(TEST_JOB_TOKEN);
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            // When
+            callbackService.dispatchPendingJobs();
+
+            // Then: Should dispatch as INGESTING (no video to transcribe)
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+        }
+
+        @Test
+        void shouldNotDispatchWhenNoSlotsAvailable() {
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L); // All slots full
+
+            callbackService.dispatchPendingJobs();
+
+            verify(processingStateRepository, never()).findIdleForDispatch(any(), anyInt());
+        }
+
+        @Test
+        void shouldMarkDoneWhenIrisReturnsNull() {
+            // Given: Iris returns null (not applicable for course)
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
+            when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(null);
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            callbackService.dispatchPendingJobs();
+
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
+        }
+
+        @Test
+        void shouldHandleDispatchFailureWithRetry() {
+            // Given: Iris throws exception during dispatch
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
+            when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenThrow(new RuntimeException("Iris unavailable"));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            callbackService.dispatchPendingJobs();
+
+            // Then: Should mark as FAILED with retry backoff scheduled
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+            assertThat(testState.getRetryCount()).isEqualTo(1);
+            assertThat(testState.getRetryEligibleAt()).isNotNull();
+            assertThat(testState.getStartedAt()).isNull(); // Back in queue
+        }
+    }
+
+    // ==================== FLOW 3: Checkpoint Handling ====================
+
+    @Nested
+    class HandleCheckpointData {
+
+        @Test
+        void shouldSaveRawTranscriptionAndStayInTranscribing() {
+            // Given: State is TRANSCRIBING with valid token
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(transcriptionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
-            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("new-job");
-            doNothing().when(transcriptionApi).cancelNebulaTranscription(anyLong());
+
+            // Raw transcript: all slideNumber=0
+            String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
 
             // When
-            service.triggerProcessing(testUnit);
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
 
-            // Then: Should cancel on Nebula before restarting
-            verify(transcriptionApi).cancelNebulaTranscription(testUnit.getId());
-            verify(transcriptionApi).startNebulaTranscription(anyLong(), anyLong(), any());
+            // Then: Should save transcription as PENDING and stay in TRANSCRIBING
+            verify(transcriptionRepository).save(any());
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
         }
 
         @Test
-        void shouldDeleteFromPyrisWhenVideoChanged() {
-            // Given
+        void shouldSaveEnrichedTranscriptionAndTransitionToIngesting() {
+            // Given: State is TRANSCRIBING with valid token
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            testState.setRetryCount(2); // Had retries during transcription
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(transcriptionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            // Enriched transcript: some slideNumber≠0
+            String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
+
+            // When
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            // Then: Should save as COMPLETED and transition to INGESTING
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            assertThat(testState.getRetryCount()).isZero(); // Reset for ingestion phase
+        }
+
+        @Test
+        void shouldIgnoreCheckpointWithStaleToken() {
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken("current-token");
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+
+            callbackService.handleCheckpointData(testUnit.getId(), "stale-token", "{\"segments\":[]}");
+
+            verify(transcriptionRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldIgnoreCheckpointWhenNotTranscribing() {
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, "{\"segments\":[{\"startTime\":0,\"endTime\":5,\"text\":\"x\",\"slideNumber\":0}]}");
+
+            verify(transcriptionRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldIgnoreNullOrBlankResult() {
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, null);
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, "");
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, "  ");
+
+            verify(processingStateRepository, never()).findByLectureUnit_Id(anyLong());
+        }
+    }
+
+    // ==================== FLOW 4: Completion Callbacks ====================
+
+    @Nested
+    class HandleIngestionComplete {
+
+        @Test
+        void shouldMarkAsDoneOnSuccess() {
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            // Mock dispatch after completion
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null);
+
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
+            assertThat(testState.getIngestionJobToken()).isNull();
+        }
+
+        @Test
+        void shouldAlsoAcceptSuccessFromTranscribingPhase() {
+            // Iris may complete the entire pipeline (transcription + ingestion) while
+            // Artemis still shows TRANSCRIBING (no checkpoint sent)
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null);
+
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
+        }
+
+        @Test
+        void shouldMarkAsFailedWithRetryOnFailure() {
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            testState.setRetryCount(0);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null);
+
+            // Should mark as FAILED with backoff scheduled for re-dispatch
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+            assertThat(testState.getRetryCount()).isEqualTo(1);
+            assertThat(testState.getStartedAt()).isNull();
+            assertThat(testState.getRetryEligibleAt()).isNotNull();
+        }
+
+        @Test
+        void shouldMarkAsFailedAfterMaxRetries() {
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            testState.setRetryCount(MAX_PROCESSING_RETRIES - 1);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null);
+
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+        }
+
+        @Test
+        void shouldIgnoreStaleCallbackWithWrongToken() {
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken("new-job-token");
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+
+            callbackService.handleIngestionComplete(testUnit.getId(), "old-job-token", true, null);
+
+            verify(processingStateRepository, never()).save(any());
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+        }
+
+        @Test
+        void shouldIgnoreCallbackWhenNotProcessing() {
+            testState.setPhase(ProcessingPhase.DONE);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null);
+
+            verify(processingStateRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldNotScheduleRetryForPermanentYoutubeError() {
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            testState.setRetryCount(0);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, "YOUTUBE_PRIVATE");
+
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+            assertThat(testState.getRetryCount()).isEqualTo(1);
+            assertThat(testState.getRetryEligibleAt()).isNull();
+            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate");
+            assertThat(testState.getIngestionJobToken()).isNull();
+        }
+
+        @Test
+        void shouldScheduleRetryForTransientYoutubeError() {
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            testState.setRetryCount(0);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, "YOUTUBE_DOWNLOAD_FAILED");
+
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+            assertThat(testState.getRetryCount()).isEqualTo(1);
+            assertThat(testState.getRetryEligibleAt()).isNotNull();
+            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.youtubeDownloadFailed");
+        }
+    }
+
+    // ==================== FLOW 5: Retry Processing ====================
+
+    @Nested
+    class RetryProcessing {
+
+        @Test
+        void shouldRetryOnlyIfFailed() {
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setRetryCount(5);
+            testState.setId(42L);
+
+            // First call finds FAILED state, second call (after delete) returns empty, then returns new saved state
+            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
+            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
+                savedState.set(inv.getArgument(0));
+                return inv.getArgument(0);
+            });
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
+            // Mock dispatch — no slots
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            verify(processingStateRepository).delete(testState);
+            assertThat(result).isNotNull();
+            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        }
+
+        @Test
+        void shouldNotRetryIfNotFailed() {
+            testState.setPhase(ProcessingPhase.DONE);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            assertThat(result).isNull();
+        }
+
+        @Test
+        void shouldReturnNullWhenNoStateExists() {
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            assertThat(result).isNull();
+        }
+
+        @Test
+        void shouldReturnNullForNullInput() {
+            assertThat(service.retryProcessing(null)).isNull();
+        }
+    }
+
+    // ==================== FLOW 6: Content Change Detection ====================
+
+    @Nested
+    class ContentChangeDetection {
+
+        @Test
+        void shouldResetToIdleOnVideoUrlChange() {
+            // Given: Existing DONE state with different video hash
             testState.setVideoSourceHash("old-hash-12345");
             testState.setPhase(ProcessingPhase.DONE);
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
-            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("new-job");
+            // Mock dispatch — no slots
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
-            // When
             service.triggerProcessing(testUnit);
 
-            // Then: Should delete from Pyris
+            // Then: Should reset to IDLE for re-processing
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(testState.getStartedAt()).isNull(); // In queue
+            verify(processingStateRepository).save(testState);
+        }
+
+        @Test
+        void shouldDeleteFromIrisOnVideoChange() {
+            testState.setVideoSourceHash("old-hash-12345");
+            testState.setPhase(ProcessingPhase.DONE);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            service.triggerProcessing(testUnit);
+
             verify(irisLectureApi).deleteLectureFromPyrisDB(any());
         }
 
         @Test
         void shouldNotReprocessIfContentUnchanged() {
-            // Given: Same video hash, already done
             testUnit.setVideoSource("https://live.rbg.tum.de/w/course/12345");
-
-            // Compute the same hash the service would compute
             testState.setVideoSourceHash(computeTestHash("https://live.rbg.tum.de/w/course/12345"));
             testState.setPhase(ProcessingPhase.DONE);
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
 
-            // When
             service.triggerProcessing(testUnit);
 
-            // Then: Should not restart processing
-            verify(transcriptionApi, never()).startNebulaTranscription(anyLong(), anyLong(), any());
+            // Should not re-enqueue — already done with same content
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
         }
 
         private String computeTestHash(String value) {
@@ -360,466 +606,6 @@ class LectureContentProcessingServiceTest {
         }
     }
 
-    // ==================== FLOW 3: Transcription Complete ====================
-
-    @Nested
-    class HandleTranscriptionComplete {
-
-        @Test
-        void shouldMoveToIngestionOnSuccess() {
-            // Given
-            testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            LectureTranscription transcription = new LectureTranscription();
-            transcription.setId(42L);
-            transcription.setLectureUnit(testUnit);
-            transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
-
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(transcription));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
-
-            // When
-            processingStateCallbackService.handleTranscriptionComplete(transcription);
-
-            // Then
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
-            verify(irisLectureApi).addLectureUnitToPyrisDB(any());
-        }
-
-        @Test
-        void shouldResetRetryCountWhenMovingToIngestion() {
-            // Given: Transcription succeeded after some retries
-            testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            testState.setRetryCount(3); // Had 3 retries during transcription
-            LectureTranscription transcription = new LectureTranscription();
-            transcription.setId(42L);
-            transcription.setLectureUnit(testUnit);
-            transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
-
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(transcription));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
-
-            // When
-            processingStateCallbackService.handleTranscriptionComplete(transcription);
-
-            // Then: Retry count should be reset for fresh ingestion retries
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
-            assertThat(testState.getRetryCount()).isZero();
-        }
-
-        @Test
-        void shouldIncrementRetryCountAndSetRetryEligibleAtOnFailure() {
-            // Given
-            testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            testState.setRetryCount(0);
-            LectureTranscription transcription = new LectureTranscription();
-            transcription.setId(42L);
-            transcription.setLectureUnit(testUnit);
-            transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
-
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(transcription));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-            ZonedDateTime beforeCall = ZonedDateTime.now();
-
-            // When
-            processingStateCallbackService.handleTranscriptionComplete(transcription);
-
-            // Then
-            assertThat(testState.getRetryCount()).isEqualTo(1);
-            assertThat(testState.getRetryEligibleAt()).isNotNull();
-            // Backoff for retry 1 is 2^1 = 2 minutes
-            ZonedDateTime expectedEligibleAt = beforeCall.plusMinutes(2);
-            assertThat(testState.getRetryEligibleAt()).isAfterOrEqualTo(expectedEligibleAt.minusSeconds(5));
-            assertThat(testState.getRetryEligibleAt()).isBeforeOrEqualTo(expectedEligibleAt.plusSeconds(5));
-        }
-
-        @Test
-        void shouldMarkAsFailedAfterMaxRetries() {
-            // Given: Already at max retries (MAX_PROCESSING_RETRIES = 5)
-            testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            testState.setRetryCount(4); // Will become 5 after this failure
-            LectureTranscription transcription = new LectureTranscription();
-            transcription.setId(42L);
-            transcription.setLectureUnit(testUnit);
-            transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
-
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(transcription));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-            // When
-            processingStateCallbackService.handleTranscriptionComplete(transcription);
-
-            // Then
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
-        }
-
-        @Test
-        void shouldFallbackToPdfIngestionOnTranscriptionFailure() {
-            // Given: Transcription failed but unit has PDF, at max retries (MAX_PROCESSING_RETRIES = 5)
-            testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            testState.setRetryCount(4); // Will become 5 after this failure, triggering fallback
-            Attachment pdfAttachment = new Attachment();
-            pdfAttachment.setLink("/path/to/file.pdf");
-            testUnit.setAttachment(pdfAttachment);
-
-            LectureTranscription transcription = new LectureTranscription();
-            transcription.setId(42L);
-            transcription.setLectureUnit(testUnit);
-            transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
-
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(transcription));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
-
-            // When
-            processingStateCallbackService.handleTranscriptionComplete(transcription);
-
-            // Then: Should proceed with PDF-only ingestion after max retries
-            verify(irisLectureApi).addLectureUnitToPyrisDB(any());
-        }
-    }
-
-    // ==================== FLOW 5: Ingestion Complete ====================
-
-    @Nested
-    class HandleIngestionComplete {
-
-        @Test
-        void shouldMarkAsDoneOnSuccess() {
-            // Given
-            testState.setPhase(ProcessingPhase.INGESTING);
-            testState.setIngestionJobToken(TEST_JOB_TOKEN);
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-            // When
-            processingStateCallbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true);
-
-            // Then
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            assertThat(testState.getIngestionJobToken()).isNull(); // Token cleared after success
-        }
-
-        @Test
-        void shouldHandleCallbackWhenStateNotFound() {
-            // Given: State was deleted (unit may have been removed during ingestion)
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
-
-            // When: Callback arrives for deleted unit
-            processingStateCallbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true);
-
-            // Then: Should handle gracefully without exception
-            verify(processingStateRepository, never()).save(any());
-        }
-
-        @Test
-        void shouldIgnoreStaleCallbackWhenNotIngesting() {
-            // Given: State is in a different phase (callback may be stale)
-            testState.setPhase(ProcessingPhase.DONE);
-            testState.setIngestionJobToken(TEST_JOB_TOKEN);
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-
-            // When: Stale callback arrives
-            processingStateCallbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true);
-
-            // Then: Should ignore and not modify state
-            verify(processingStateRepository, never()).save(any());
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
-        }
-
-        @Test
-        void shouldIgnoreStaleCallbackWithWrongToken() {
-            // Given: State has a different token (new job was started)
-            testState.setPhase(ProcessingPhase.INGESTING);
-            testState.setIngestionJobToken("new-job-token");
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-
-            // When: Stale callback arrives with old token
-            processingStateCallbackService.handleIngestionComplete(testUnit.getId(), "old-job-token", true);
-
-            // Then: Should ignore - no save, state unchanged
-            verify(processingStateRepository, never()).save(any());
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
-        }
-
-        @Test
-        void shouldMarkAsFailedAfterMaxIngestionRetries() {
-            // Given (MAX_PROCESSING_RETRIES = 5)
-            testState.setPhase(ProcessingPhase.INGESTING);
-            testState.setIngestionJobToken(TEST_JOB_TOKEN);
-            testState.setRetryCount(4); // Will become 5 after failure
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-            // When
-            processingStateCallbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false);
-
-            // Then
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
-        }
-    }
-
-    // ==================== FLOW 6: Retry Processing ====================
-
-    @Nested
-    class RetryProcessing {
-
-        @Test
-        void shouldRetryOnlyIfFailed() {
-            // Given: Failed state with retry count from previous attempts
-            testState.setPhase(ProcessingPhase.FAILED);
-            testState.setRetryCount(5);
-            testState.setId(42L); // Existing state in DB
-
-            // First call finds FAILED state, second call (after delete) returns empty
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenReturn(Optional.empty());
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
-            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("new-job");
-
-            // When
-            service.retryProcessing(testUnit);
-
-            // Then: Old state deleted, fresh state created and processing started
-            verify(processingStateRepository).delete(testState);
-            verify(transcriptionApi).startNebulaTranscription(anyLong(), anyLong(), any());
-        }
-
-        @Test
-        void shouldNotRetryIfNotFailed() {
-            // Given
-            testState.setPhase(ProcessingPhase.DONE);
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-
-            // When
-            LectureUnitProcessingState result = service.retryProcessing(testUnit);
-
-            // Then: Should not restart
-            assertThat(result).isNull();
-            verify(transcriptionApi, never()).startNebulaTranscription(anyLong(), anyLong(), any());
-        }
-
-        @Test
-        void shouldReturnNullWhenNoStateExists() {
-            // Given: No existing state
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
-
-            // When
-            LectureUnitProcessingState result = service.retryProcessing(testUnit);
-
-            // Then
-            assertThat(result).isNull();
-            verify(processingStateRepository, never()).delete(any());
-        }
-
-        @Test
-        void shouldReturnNullWhenNoProcessingPossible() {
-            // Given: Failed state but unit has no content
-            testState.setPhase(ProcessingPhase.FAILED);
-            testState.setId(42L);
-            testUnit.setVideoSource(null);
-            testUnit.setAttachment(null);
-
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-
-            // When
-            LectureUnitProcessingState result = service.retryProcessing(testUnit);
-
-            // Then: Should return null without deleting state (preserves error context)
-            assertThat(result).isNull();
-            verify(processingStateRepository, never()).delete(any());
-        }
-
-        @Test
-        void shouldReturnNullForNullInput() {
-            // Given: null input
-            // When
-            LectureUnitProcessingState result = service.retryProcessing(null);
-
-            // Then
-            assertThat(result).isNull();
-            verify(processingStateRepository, never()).findByLectureUnit_Id(anyLong());
-        }
-
-        @Test
-        void shouldReturnNullForUnsavedUnit() {
-            // Given: unit without ID
-            testUnit.setId(null);
-
-            // When
-            LectureUnitProcessingState result = service.retryProcessing(testUnit);
-
-            // Then
-            assertThat(result).isNull();
-            verify(processingStateRepository, never()).findByLectureUnit_Id(anyLong());
-        }
-
-        @Test
-        void shouldReturnActualStateWhenTranscriptionStarts() {
-            // Given: Failed state with video
-            testState.setPhase(ProcessingPhase.FAILED);
-            testState.setId(42L);
-
-            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
-            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
-                savedState.set(inv.getArgument(0));
-                return inv.getArgument(0);
-            });
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
-            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
-            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("job-123");
-
-            // When
-            LectureUnitProcessingState result = service.retryProcessing(testUnit);
-
-            // Then: Should return actual state in TRANSCRIBING phase
-            assertThat(result).isNotNull();
-            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
-        }
-
-        @Test
-        void shouldScheduleRetryWhenTranscriptionFails() {
-            // Given: Failed state with video AND PDF, transcription throws exception
-            testState.setPhase(ProcessingPhase.FAILED);
-            testState.setId(42L);
-            Attachment pdfAttachment = new Attachment();
-            pdfAttachment.setLink("/path/to/file.pdf");
-            pdfAttachment.setVersion(1);
-            testUnit.setAttachment(pdfAttachment);
-
-            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
-            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
-                savedState.set(inv.getArgument(0));
-                return inv.getArgument(0);
-            });
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
-            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
-            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenThrow(new RuntimeException("Nebula error"));
-
-            // When
-            LectureUnitProcessingState result = service.retryProcessing(testUnit);
-
-            // Then: Should be in TRANSCRIBING phase with retry scheduled (standard retry mechanism)
-            assertThat(result).isNotNull();
-            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
-            assertThat(result.getRetryCount()).isEqualTo(1);
-        }
-
-        @Test
-        void shouldFailWhenNoPlaylistAndNoPdf() {
-            // Given: Failed state with video but no playlist found and no PDF
-            testState.setPhase(ProcessingPhase.FAILED);
-            testState.setId(42L);
-            testUnit.setAttachment(null);
-
-            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
-            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
-                savedState.set(inv.getArgument(0));
-                return inv.getArgument(0);
-            });
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
-            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.empty());
-
-            // When
-            LectureUnitProcessingState result = service.retryProcessing(testUnit);
-
-            // Then: Should return failed state
-            assertThat(result).isNotNull();
-            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.FAILED);
-            assertThat(result.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.noPlaylist");
-        }
-
-        @Test
-        void shouldRetryPdfOnlyUnit() {
-            // Given: Failed state with PDF only (no video)
-            testState.setPhase(ProcessingPhase.FAILED);
-            testState.setId(42L);
-            testUnit.setVideoSource(null);
-            Attachment pdfAttachment = new Attachment();
-            pdfAttachment.setLink("/path/to/file.pdf");
-            pdfAttachment.setVersion(1);
-            testUnit.setAttachment(pdfAttachment);
-
-            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
-            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
-                savedState.set(inv.getArgument(0));
-                return inv.getArgument(0);
-            });
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
-
-            // When
-            LectureUnitProcessingState result = service.retryProcessing(testUnit);
-
-            // Then: Should go directly to ingestion
-            assertThat(result).isNotNull();
-            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
-            verify(tumLiveApi, never()).getTumLivePlaylistLink(any());
-        }
-
-        @Test
-        void shouldReturnDoneWhenIngestionReturnsNull() {
-            // Given: Failed state with PDF only, ingestion returns null (not applicable)
-            testState.setPhase(ProcessingPhase.FAILED);
-            testState.setId(42L);
-            testUnit.setVideoSource(null);
-            Attachment pdfAttachment = new Attachment();
-            pdfAttachment.setLink("/path/to/file.pdf");
-            pdfAttachment.setVersion(1);
-            testUnit.setAttachment(pdfAttachment);
-
-            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
-            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
-                savedState.set(inv.getArgument(0));
-                return inv.getArgument(0);
-            });
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(null);
-
-            // When
-            LectureUnitProcessingState result = service.retryProcessing(testUnit);
-
-            // Then: Should mark as DONE (nothing to do)
-            assertThat(result).isNotNull();
-            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.DONE);
-        }
-
-        @Test
-        void shouldScheduleRetryWhenIngestionThrows() {
-            // Given: Failed state with PDF only, ingestion throws
-            testState.setPhase(ProcessingPhase.FAILED);
-            testState.setId(42L);
-            testUnit.setVideoSource(null);
-            Attachment pdfAttachment = new Attachment();
-            pdfAttachment.setLink("/path/to/file.pdf");
-            pdfAttachment.setVersion(1);
-            testUnit.setAttachment(pdfAttachment);
-
-            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
-            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
-                savedState.set(inv.getArgument(0));
-                return inv.getArgument(0);
-            });
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenThrow(new RuntimeException("Pyris error"));
-
-            // When
-            LectureUnitProcessingState result = service.retryProcessing(testUnit);
-
-            // Then: Should be in INGESTING phase with retry scheduled (standard retry mechanism)
-            assertThat(result).isNotNull();
-            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
-            assertThat(result.getRetryCount()).isEqualTo(1);
-        }
-    }
-
     // ==================== Exponential Backoff ====================
 
     @Nested
@@ -827,7 +613,6 @@ class LectureContentProcessingServiceTest {
 
         @Test
         void shouldCalculateCorrectBackoffMinutes() {
-            // Exponential backoff formula: 2^retryCount minutes
             assertThat(ProcessingStateCallbackService.calculateBackoffMinutes(1)).isEqualTo(2);
             assertThat(ProcessingStateCallbackService.calculateBackoffMinutes(2)).isEqualTo(4);
             assertThat(ProcessingStateCallbackService.calculateBackoffMinutes(3)).isEqualTo(8);
@@ -836,229 +621,126 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldStayInTranscribingPhaseOnFailureForSchedulerRetry() {
-            // Given: Transcription fails but not at max retries
-            testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            testState.setRetryCount(0);
-            LectureTranscription transcription = new LectureTranscription();
-            transcription.setId(42L);
-            transcription.setLectureUnit(testUnit);
-            transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
-
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(transcription));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-            // When
-            processingStateCallbackService.handleTranscriptionComplete(transcription);
-
-            // Then: Should stay in TRANSCRIBING phase (scheduler will retry with backoff)
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
-            assertThat(testState.getRetryCount()).isEqualTo(1);
-            // Should NOT trigger immediate retry - no transcription API call
-            verify(transcriptionApi, never()).startNebulaTranscription(anyLong(), anyLong(), any());
-        }
-
-        @Test
-        void shouldStayInIngestingPhaseOnFailureForSchedulerRetry() {
-            // Given: Ingestion fails but not at max retries
+        void shouldMarkAsFailedWithCorrectBackoff() {
+            // Given: Ingestion fails (not at max retries)
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(1);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
-            // When
-            processingStateCallbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false);
+            ZonedDateTime beforeCall = ZonedDateTime.now();
 
-            // Then: Should stay in INGESTING phase (scheduler will retry with backoff)
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null);
+
+            // Then: Should mark as FAILED with backoff scheduled (2^2 = 4 minutes)
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
             assertThat(testState.getRetryCount()).isEqualTo(2);
-            // Should NOT trigger immediate retry - no ingestion API call
-            verify(irisLectureApi, never()).addLectureUnitToPyrisDB(any());
-        }
-
-        @Test
-        void shouldRetryTranscriptionWhenCalledByScheduler() {
-            // Given: State is ready for scheduler retry
-            testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            testState.setRetryCount(2);
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
-            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("retry-job");
-
-            // When: Scheduler calls retryTranscription
-            service.retryTranscription(testState);
-
-            // Then: Should start new transcription job
-            verify(transcriptionApi).startNebulaTranscription(anyLong(), anyLong(), any());
-        }
-
-        @Test
-        void shouldRetryIngestionWhenCalledByScheduler() {
-            // Given: State is ready for scheduler retry
-            testState.setPhase(ProcessingPhase.INGESTING);
-            testState.setRetryCount(3);
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("retry-ingestion");
-
-            // When: Scheduler calls retryIngestion
-            service.retryIngestion(testState);
-
-            // Then: Should start new ingestion job
-            verify(irisLectureApi).addLectureUnitToPyrisDB(any());
-        }
-
-        @Test
-        void shouldClearRetryEligibleAtWhenRetryStarts() {
-            // Given: State has retryEligibleAt set (was waiting for retry)
-            testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            testState.setRetryCount(1);
-            testState.scheduleRetry(2); // Sets retryEligibleAt
-            assertThat(testState.getRetryEligibleAt()).isNotNull(); // Precondition
-
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
-            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("retry-job");
-
-            // When: Scheduler calls retryTranscription
-            service.retryTranscription(testState);
-
-            // Then: retryEligibleAt should be cleared after successful retry start
-            assertThat(testState.getRetryEligibleAt()).isNull();
+            assertThat(testState.getRetryEligibleAt()).isNotNull();
+            ZonedDateTime expectedEligibleAt = beforeCall.plusMinutes(4);
+            assertThat(testState.getRetryEligibleAt()).isAfterOrEqualTo(expectedEligibleAt.minusSeconds(5));
+            assertThat(testState.getRetryEligibleAt()).isBeforeOrEqualTo(expectedEligibleAt.plusSeconds(5));
         }
     }
 
-    // ==================== Service Not Available Scenarios ====================
+    // ==================== WebSocket Notification Correctness ====================
 
     @Nested
-    class ServiceNotAvailable {
+    class WebSocketNotifications {
 
         @Test
-        void shouldSkipTranscriptionWhenNebulaNotAvailable() {
-            // Given: Service created without transcription API
-            ProcessingStateCallbackService callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.of(irisLectureApi));
-            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), // No transcription API
-                    Optional.of(tumLiveApi), Optional.of(irisLectureApi), featureToggleService, callbackService);
+        void shouldPreserveTranscriptionStatusOnFailure() {
+            // Given: Unit in INGESTING phase with a completed transcription
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
 
-            Attachment pdfAttachment = new Attachment();
-            pdfAttachment.setLink("/path/to/file.pdf");
-            pdfAttachment.setVersion(1);
-            testUnit.setAttachment(pdfAttachment);
+            LectureTranscription completedTranscription = new LectureTranscription();
+            completedTranscription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(completedTranscription));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
-            // When
-            service.triggerProcessing(testUnit);
+            // When: Ingestion fails
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null);
 
-            // Then: Should go to ingestion without transcription
-            verify(irisLectureApi).addLectureUnitToPyrisDB(testUnit);
+            // Then: WebSocket notification must include the transcription status (not null)
+            ArgumentCaptor<LectureUnitCombinedStatusDTO> dtoCaptor = ArgumentCaptor.forClass(LectureUnitCombinedStatusDTO.class);
+            verify(websocketMessagingService).sendMessage(anyString(), dtoCaptor.capture());
+
+            LectureUnitCombinedStatusDTO sentDto = dtoCaptor.getValue();
+            assertThat(sentDto.transcriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
+            assertThat(sentDto.processingPhase()).isEqualTo(ProcessingPhase.FAILED);
         }
+    }
+
+    // ==================== Dispatch Slot Limiting ====================
+
+    @Nested
+    class DispatchSlotLimiting {
 
         @Test
-        void shouldSkipPlaylistCheckWhenTumLiveNotAvailable() {
-            // Given: Service created without TUM Live API
-            ProcessingStateCallbackService callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.of(irisLectureApi));
-            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.empty(), // No TUM Live API
-                    Optional.of(irisLectureApi), featureToggleService, callbackService);
+        void shouldPassAvailableSlotsAsLimitToRetryQuery() {
+            // Given: 1 active job, so 1 slot available (MAX_CONCURRENT_PROCESSING = 2)
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(1L);
+            when(processingStateRepository.findStatesReadyForRetry(anyString(), any(), anyInt())).thenReturn(List.of());
+            when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of());
 
-            Attachment pdfAttachment = new Attachment();
-            pdfAttachment.setLink("/path/to/file.pdf");
-            pdfAttachment.setVersion(1);
-            testUnit.setAttachment(pdfAttachment);
+            // When
+            callbackService.dispatchPendingJobs();
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            // Then: Should pass availableSlots (2 - 1 = 1) as the limit
+            verify(processingStateRepository).findStatesReadyForRetry(eq(ProcessingPhase.FAILED.name()), any(ZonedDateTime.class), eq(1));
+        }
+    }
+
+    // ==================== Iris Reset ====================
+
+    @Nested
+    class IrisReset {
+
+        @Test
+        void shouldResetActiveStatesToIdlePreservingRetryBudget() {
+            // Given: Two in-flight jobs with existing retry counts
+            LectureUnitProcessingState transcribingState = new LectureUnitProcessingState(testUnit);
+            transcribingState.setPhase(ProcessingPhase.TRANSCRIBING);
+            transcribingState.setRetryCount(2);
+            transcribingState.setIngestionJobToken("token-1");
+            transcribingState.setStartedAt(ZonedDateTime.now().minusMinutes(5));
+
+            AttachmentVideoUnit unit2 = new AttachmentVideoUnit();
+            unit2.setId(200L);
+            unit2.setLecture(testLecture);
+            LectureUnitProcessingState ingestingState = new LectureUnitProcessingState(unit2);
+            ingestingState.setPhase(ProcessingPhase.INGESTING);
+            ingestingState.setRetryCount(3);
+            ingestingState.setIngestionJobToken("token-2");
+            ingestingState.setStartedAt(ZonedDateTime.now().minusMinutes(10));
+
+            when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(transcribingState, ingestingState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
+            when(transcriptionRepository.findByLectureUnit_Id(anyLong())).thenReturn(Optional.empty());
 
             // When
-            service.triggerProcessing(testUnit);
+            int resetCount = callbackService.handleIrisReset();
 
-            // Then: Should go to ingestion without checking playlist
-            verify(irisLectureApi).addLectureUnitToPyrisDB(testUnit);
-        }
+            // Then: Both reset to IDLE, retry budget preserved, tokens cleared
+            assertThat(resetCount).isEqualTo(2);
 
-        @Test
-        void shouldStillTranscribeWhenIrisNotAvailable() {
-            // Given: Service created WITHOUT Iris API but WITH Nebula (transcription only deployment)
-            ProcessingStateCallbackService callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.empty());
-            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.of(tumLiveApi),
-                    Optional.empty(), featureToggleService, callbackService); // No Iris API
+            assertThat(transcribingState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(transcribingState.getRetryCount()).isEqualTo(2); // Unchanged
+            assertThat(transcribingState.getIngestionJobToken()).isNull();
+            assertThat(transcribingState.getStartedAt()).isNull();
 
-            // Unit has video (can transcribe) - transcription should still happen
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
-            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("job-123");
+            assertThat(ingestingState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(ingestingState.getRetryCount()).isEqualTo(3); // Unchanged
+            assertThat(ingestingState.getIngestionJobToken()).isNull();
+            assertThat(ingestingState.getStartedAt()).isNull();
 
-            // When
-            service.triggerProcessing(testUnit);
-
-            // Then: Should transcribe (transcriptions are useful even without Iris)
-            verify(transcriptionApi).startNebulaTranscription(anyLong(), anyLong(), any());
-        }
-
-        @Test
-        void shouldSkipProcessingWhenNeitherNebulaNorIrisAvailable() {
-            // Given: Service with NO Iris and NO Nebula (no processing possible)
-            ProcessingStateCallbackService callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.empty());
-            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), // No Nebula
-                    Optional.of(tumLiveApi), Optional.empty(), featureToggleService, callbackService); // No Iris
-
-            Attachment pdfAttachment = new Attachment();
-            pdfAttachment.setLink("/path/to/file.pdf");
-            pdfAttachment.setVersion(1);
-            testUnit.setAttachment(pdfAttachment);
-
-            // When
-            service.triggerProcessing(testUnit);
-
-            // Then: Should skip entirely - no state created, no APIs called
-            verify(processingStateRepository, never()).save(any());
-        }
-
-        @Test
-        void shouldSkipPdfOnlyUnitWhenIrisNotAvailable() {
-            // Given: Service WITHOUT Iris, unit has only PDF (no video)
-            ProcessingStateCallbackService callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.empty());
-            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.of(tumLiveApi),
-                    Optional.empty(), featureToggleService, callbackService); // No Iris API
-
-            testUnit.setVideoSource(null); // No video
-            Attachment pdfAttachment = new Attachment();
-            pdfAttachment.setLink("/path/to/file.pdf");
-            pdfAttachment.setVersion(1);
-            testUnit.setAttachment(pdfAttachment);
-
-            // When
-            service.triggerProcessing(testUnit);
-
-            // Then: Should skip - PDF-only needs Iris for ingestion
-            verify(processingStateRepository, never()).save(any());
-        }
-
-        @Test
-        void shouldGoToIdleWhenNebulaUnavailableAndNoPdf() {
-            // Given: Service without Nebula, unit has video but no PDF
-            ProcessingStateCallbackService callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.of(irisLectureApi));
-            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), // No transcription API
-                    Optional.of(tumLiveApi), Optional.of(irisLectureApi), featureToggleService, callbackService);
-
-            testUnit.setAttachment(null); // No PDF
-
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
-
-            // When
-            service.triggerProcessing(testUnit);
-
-            // Then: Should go to IDLE (not FAILED) since Nebula is intentionally unavailable
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
-            assertThat(testState.getErrorKey()).isNull(); // Not an error, just nothing to do
+            verify(processingStateRepository, times(2)).save(any());
+            verify(websocketMessagingService, times(2)).sendMessage(anyString(), any(LectureUnitCombinedStatusDTO.class));
         }
     }
 }

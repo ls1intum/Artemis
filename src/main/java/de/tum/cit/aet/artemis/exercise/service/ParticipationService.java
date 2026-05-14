@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,11 +18,18 @@ import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -33,12 +41,20 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -48,6 +64,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Service Implementation for managing Participation.
@@ -136,18 +153,13 @@ public class ParticipationService {
 
         // All other cases, i.e. normal exercises, and regular exam exercises
         else {
-            if (exercise instanceof QuizExercise) {
-                optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
-            }
-            else {
-                optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
-            }
+            optionalStudentParticipation = findOneGradedByExerciseAndParticipant(exercise, participant);
             if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isPracticeMode() && exercise.isCourseExercise()) {
                 // In case there is already a practice participation, set it to inactive
                 optionalStudentParticipation.get().setInitializationState(InitializationState.INACTIVE);
                 studentParticipationRepository.saveAndFlush(optionalStudentParticipation.get());
 
-                optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
+                optionalStudentParticipation = findOneGradedByExerciseAndParticipant(exercise, participant);
             }
             // Check if participation already exists
             if (optionalStudentParticipation.isEmpty()) {
@@ -288,14 +300,14 @@ public class ParticipationService {
      */
     public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
             boolean useGradedParticipation) {
-        if (!(exercise instanceof ProgrammingExercise || exercise instanceof QuizExercise)) {
-            throw new IllegalStateException("Only programming and quiz exercises support the practice mode at the moment");
+        if (exercise instanceof FileUploadExercise) {
+            throw new IllegalStateException("File upload exercises do not support practice mode.");
         }
         optionalGradedStudentParticipation.ifPresent(participation -> {
             participation.setInitializationState(InitializationState.FINISHED);
             participationRepository.save(participation);
         });
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, true);
+        Optional<StudentParticipation> optionalStudentParticipation = findOnePracticeByExerciseAndParticipant(exercise, participant);
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
@@ -333,6 +345,11 @@ public class ParticipationService {
             if (participation.getInitializationDate() == null) {
                 participation.setInitializationDate(ZonedDateTime.now());
             }
+
+            boolean isTextOrModelingExercise = exercise instanceof TextExercise || exercise instanceof ModelingExercise;
+            if (isTextOrModelingExercise && !submissionRepository.existsByParticipationId(participation.getId())) {
+                submissionRepository.initializeSubmission(participation, exercise, null);
+            }
         }
 
         return studentParticipationRepository.saveAndFlush(participation);
@@ -349,7 +366,7 @@ public class ParticipationService {
      * @return the participation connecting the given exercise and user
      */
     public StudentParticipation createParticipationWithEmptySubmissionIfNotExisting(Exercise exercise, Participant participant, SubmissionType submissionType) {
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
+        Optional<StudentParticipation> optionalStudentParticipation = findOneGradedByExerciseAndParticipant(exercise, participant);
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
@@ -561,15 +578,15 @@ public class ParticipationService {
     }
 
     /**
-     * Get one participation (in any state) by its participant and exercise.
+     * Get one graded participation (in any state) by its participant and exercise.
      *
      * @param exercise    the exercise for which to find a participation
      * @param participant the participant for which to find a participation
-     * @return the participation of the given participant and exercise in any state
+     * @return the graded participation of the given participant and exercise in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyState(Exercise exercise, Participant participant) {
+    public Optional<StudentParticipation> findOneGradedByExerciseAndParticipant(Exercise exercise, Participant participant) {
         if (participant instanceof User user) {
-            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), false);
         }
         else if (participant instanceof Team team) {
             return studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId());
@@ -580,16 +597,15 @@ public class ParticipationService {
     }
 
     /**
-     * Get one participation (in any state) by its participant and exercise.
+     * Get one practice participation (in any state) by its participant and exercise.
      *
      * @param exercise    the exercise for which to find a participation
-     * @param participant the short name of the team
-     * @param testRun     the indicator if it should be a testRun participation
-     * @return the participation of the given team and exercise in any state
+     * @param participant the participant for which to find a participation
+     * @return the practice participation of the given participant and exercise in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyStateAndTestRun(Exercise exercise, Participant participant, boolean testRun) {
+    public Optional<StudentParticipation> findOnePracticeByExerciseAndParticipant(Exercise exercise, Participant participant) {
         if (participant instanceof User user) {
-            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), testRun);
+            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), true);
         }
         else if (participant instanceof Team team) {
             return studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId());
@@ -635,7 +651,29 @@ public class ParticipationService {
         if (exercise.isTestExamExercise()) {
             return studentParticipationRepository.findLatestWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
         }
-        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+        // After the effective due date (respecting individual extensions), prefer the practice participation
+        Optional<StudentParticipation> gradedParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(),
+                username, false);
+        ZonedDateTime effectiveDueDate = gradedParticipation.map(p -> p.getIndividualDueDate() != null ? p.getIndividualDueDate() : exercise.getDueDate())
+                .orElse(exercise.getDueDate());
+        if (effectiveDueDate != null && ZonedDateTime.now().isAfter(effectiveDueDate)) {
+            Optional<StudentParticipation> practiceParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(),
+                    username, true);
+            if (practiceParticipation.isPresent()) {
+                return practiceParticipation;
+            }
+        }
+        // For regular exam exercises (not test exams), if no graded participation was found,
+        // fall back to looking for a test run participation. This handles the case where an
+        // instructor performs a test run on a regular exam — their participation has testRun=true
+        // but the exercise is not a test exam exercise, so it isn't caught by the check above.
+        // Without this fallback, submissions during test runs fail with a "no participation found" error.
+        // We use findLatest... to deterministically return the most recent participation when
+        // multiple test runs exist for the same exercise.
+        if (gradedParticipation.isEmpty() && exercise.isExamExercise() && !exercise.isTestExamExercise()) {
+            return studentParticipationRepository.findLatestWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+        }
+        return gradedParticipation;
     }
 
     /**
@@ -757,36 +795,235 @@ public class ParticipationService {
     }
 
     /**
-     * Finds all student participations for a given exercise with the latest submission and result, including the assessment note.
+     * Returns a paginated list of {@link ParticipationManagementDTO} for the participation management view.
+     * Uses a 3-step approach: paginated ID query → full entity load → DTO mapping.
      *
-     * @param exerciseId   the id of the exercise
-     * @param teamExercise true if the exercise is a team exercise, false otherwise
-     * @return a set of student participations with the latest submission and result, including the assessment note
+     * @param exercise the exercise to query
+     * @param search   search parameters including pagination, sorting, search term, and filter
+     * @return a page of ParticipationManagementDTO
      */
-    public Set<StudentParticipation> findByExerciseIdWithLatestSubmissionResultAndAssessmentNote(long exerciseId, boolean teamExercise) {
-        Set<StudentParticipation> participations = teamExercise ? studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithTeamInformation(exerciseId)
-                : studentParticipationRepository.findByExerciseIdWithLatestSubmission(exerciseId);
-        Set<Long> submissionIds = participations.stream().flatMap(p -> p.getSubmissions().stream()).map(Submission::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+    public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, ParticipationSearchDTO search) {
+        SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
+        Pageable pageable = PageRequest.of(search.page(), search.pageSize());
+        boolean teamMode = exercise.isTeamMode();
 
-        if (submissionIds.isEmpty()) {
-            return participations;
+        ZonedDateTime stuckBuildCutoff = null;
+        if ("Failed".equals(search.filterProp()) && exercise instanceof ProgrammingExercise) {
+            int timeoutSeconds = programmingExerciseRepository.findBuildTimeoutSecondsByExerciseId(exercise.getId()).filter(t -> t > 0).orElse(120);
+            stuckBuildCutoff = ZonedDateTime.now().minusSeconds(timeoutSeconds);
         }
-        Set<Result> results = resultRepository.findLatestResultsWithAssessmentNoteBySubmissionIds(submissionIds);
-        Map<Long, Result> resultBySubmissionId = results.stream().collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity()));
-        for (StudentParticipation participation : participations) {
-            if (!participation.getSubmissions().isEmpty()) {
-                Submission latestSubmission = participation.getSubmissions().iterator().next();
-                Result latest = resultBySubmissionId.get(latestSubmission.getId());
-                if (latest != null) {
-                    latestSubmission.setResults(List.of(latest));
-                }
-                else {
-                    latestSubmission.setResults(Collections.emptyList());
-                }
+
+        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search.searchTerm(), search.filterProp(), stuckBuildCutoff,
+                pageable, sortOrder, search.sortedColumn());
+
+        List<Long> ids = idPage.getContent();
+        if (ids.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, idPage.getTotalElements());
+        }
+
+        List<StudentParticipation> participations = teamMode ? studentParticipationRepository.findByIdsWithLatestSubmissionWithTeamInformation(ids)
+                : studentParticipationRepository.findByIdsWithLatestSubmission(ids);
+
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(ids);
+
+        Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(p -> p.getId(), Function.identity()));
+        List<ParticipationManagementDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull).map(p -> mapToManagementDTO(p, submissionCountMap)).toList();
+
+        return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
+    }
+
+    private ParticipationManagementDTO mapToManagementDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap) {
+        String participantName;
+        String participantIdentifier;
+        Long studentId = null;
+        String studentLogin = null;
+        Long teamId = null;
+        List<UserNameAndLoginDTO> teamStudents = null;
+
+        if (participation.getStudent().isPresent()) {
+            User student = participation.getStudent().get();
+            participantName = student.getName();
+            participantIdentifier = student.getLogin();
+            studentId = student.getId();
+            studentLogin = student.getLogin();
+        }
+        else if (participation.getTeam().isPresent()) {
+            Team team = participation.getTeam().get();
+            participantName = team.getName();
+            participantIdentifier = team.getShortName();
+            teamId = team.getId();
+            teamStudents = team.getStudents().stream().map(s -> new UserNameAndLoginDTO(s.getName(), s.getLogin())).toList();
+        }
+        else {
+            participantName = null;
+            participantIdentifier = null;
+        }
+
+        Submission latestSubmission = participation.getSubmissions().isEmpty() ? null : participation.getSubmissions().iterator().next();
+        Boolean buildFailed = null;
+        if (latestSubmission instanceof ProgrammingSubmission progSubmission) {
+            buildFailed = progSubmission.isBuildFailed();
+        }
+
+        Boolean lastResultIsManual = null;
+        if (latestSubmission != null && !latestSubmission.getResults().isEmpty()) {
+            Result latestResult = latestSubmission.getResults().stream().filter(r -> r.getId() != null).max((r1, r2) -> Long.compare(r1.getId(), r2.getId())).orElse(null);
+            if (latestResult != null && latestResult.getAssessmentType() != null) {
+                lastResultIsManual = latestResult.getAssessmentType() != AssessmentType.AUTOMATIC && latestResult.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA;
             }
         }
 
-        return participations;
+        String buildPlanId = null;
+        String repositoryUri = null;
+        if (participation instanceof ProgrammingExerciseStudentParticipation progParticipation) {
+            buildPlanId = progParticipation.getBuildPlanId();
+            repositoryUri = progParticipation.getRepositoryUri();
+        }
+
+        int submissionCount = submissionCountMap.getOrDefault(participation.getId(), 0);
+        boolean testRun = Boolean.TRUE.equals(participation.isTestRun());
+
+        return new ParticipationManagementDTO(participation.getId(), participation.getInitializationState(), participation.getInitializationDate(), submissionCount,
+                participantName, participantIdentifier, studentId, studentLogin, teamId, teamStudents, testRun, participation.getPresentationScore(),
+                participation.getIndividualDueDate(), buildPlanId, repositoryUri, buildFailed, lastResultIsManual);
     }
 
+    /**
+     * Finds participation scores for a given exercise using server-side pagination and filtering.
+     * <p>
+     * This method performs a three-step query:
+     * 1. ID query — paginated, filtered participation IDs via Criteria API (no expensive LEFT JOINs)
+     * 2. Data query — loads full entity data for the page-sized set of IDs (FETCH JOINs, bounded)
+     * 3. DTO mapping — maps entities to flat DTOs for the REST response
+     *
+     * @param exercise the exercise to query
+     * @param search   the search parameters including pagination, sorting, search term, filter, and score range
+     * @return a page of ParticipationScoreDTO
+     */
+    public Page<ParticipationScoreDTO> findParticipationScoresForExercise(Exercise exercise, ParticipationScoreSearchDTO search) {
+        SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
+        Pageable pageable = PageRequest.of(search.page(), search.pageSize());
+        boolean teamMode = exercise.isTeamMode();
+
+        // Step 1: Get paginated participation IDs with filters
+        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForScores(exercise.getId(), teamMode, search.searchTerm(), search.filterProp(),
+                search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn());
+        List<Long> ids = idPage.getContent();
+        if (ids.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, idPage.getTotalElements());
+        }
+
+        // Step 2: Load full entity data for those IDs
+        List<StudentParticipation> participations = teamMode ? studentParticipationRepository.findByIdsWithLatestSubmissionWithTeamInformation(ids)
+                : studentParticipationRepository.findByIdsWithLatestSubmission(ids);
+
+        // Load latest results with assessment notes
+        Set<Long> submissionIds = participations.stream().flatMap(p -> p.getSubmissions().stream()).map(Submission::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, Result> resultBySubmissionId = Map.of();
+        if (!submissionIds.isEmpty()) {
+            Set<Result> results = resultRepository.findLatestResultsWithAssessmentNoteBySubmissionIds(submissionIds);
+            resultBySubmissionId = results.stream().collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity()));
+        }
+
+        // Load submission counts for these IDs
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(ids);
+
+        // Step 3: Map to DTOs, preserving the ID query order
+        Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(p -> p.getId(), Function.identity()));
+        final Map<Long, Result> finalResultMap = resultBySubmissionId;
+        List<ParticipationScoreDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull).map(p -> mapToDTO(p, submissionCountMap, finalResultMap)).toList();
+
+        return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
+    }
+
+    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId) {
+        // Participant info
+        String participantName;
+        String participantIdentifier;
+        Long studentId = null;
+        Long teamId = null;
+
+        if (participation.getStudent().isPresent()) {
+            User student = participation.getStudent().get();
+            participantName = student.getName();
+            participantIdentifier = student.getLogin();
+            studentId = student.getId();
+        }
+        else if (participation.getTeam().isPresent()) {
+            Team team = participation.getTeam().get();
+            participantName = team.getName();
+            participantIdentifier = team.getShortName();
+            teamId = team.getId();
+        }
+        else {
+            participantName = null;
+            participantIdentifier = null;
+        }
+
+        // Latest submission & result
+        Submission latestSubmission = participation.getSubmissions().isEmpty() ? null : participation.getSubmissions().iterator().next();
+        Result latestResult = (latestSubmission != null && latestSubmission.getId() != null) ? resultBySubmissionId.get(latestSubmission.getId()) : null;
+
+        Long resultId = latestResult != null ? latestResult.getId() : null;
+        Double score = latestResult != null ? latestResult.getScore() : null;
+        Boolean successful = latestResult != null ? latestResult.isSuccessful() : null;
+        ZonedDateTime completionDate = latestResult != null ? latestResult.getCompletionDate() : null;
+        AssessmentType assessmentType = latestResult != null ? latestResult.getAssessmentType() : null;
+        String assessmentNote = (latestResult != null && latestResult.getAssessmentNote() != null) ? latestResult.getAssessmentNote().getNote() : null;
+
+        // Duration in seconds
+        Long durationInSeconds = null;
+        if (completionDate != null && participation.getInitializationDate() != null) {
+            durationInSeconds = Duration.between(participation.getInitializationDate(), completionDate).getSeconds();
+        }
+
+        // Submission info
+        Long submissionId = latestSubmission != null ? latestSubmission.getId() : null;
+        Boolean buildFailed = null;
+        if (latestSubmission instanceof ProgrammingSubmission progSubmission) {
+            buildFailed = progSubmission.isBuildFailed();
+        }
+
+        // Programming participation info
+        String buildPlanId = null;
+        String repositoryUri = null;
+        if (participation instanceof ProgrammingExerciseStudentParticipation progParticipation) {
+            buildPlanId = progParticipation.getBuildPlanId();
+            repositoryUri = progParticipation.getRepositoryUri();
+        }
+
+        boolean testRun = Boolean.TRUE.equals(participation.isTestRun());
+        int submissionCount = submissionCountMap.getOrDefault(participation.getId(), 0);
+
+        return new ParticipationScoreDTO(participation.getId(), participation.getInitializationDate(), submissionCount, participantName, participantIdentifier, studentId, teamId,
+                resultId, score, successful, completionDate, assessmentType, assessmentNote, durationInSeconds, submissionId, buildFailed, buildPlanId, repositoryUri, testRun);
+    }
+
+    /**
+     * Returns participant identity data for all participations in the given exercise.
+     *
+     * @param exercise the exercise to query
+     * @return list of {@link ParticipationNameExportDTO}, one per participation
+     */
+    public List<ParticipationNameExportDTO> getParticipationNamesForExport(Exercise exercise) {
+        if (exercise.isTeamMode()) {
+            return studentParticipationRepository.findWithTeamInformationByExerciseId(exercise.getId()).stream().map(p -> {
+                Team team = p.getTeam().orElse(null);
+                if (team == null) {
+                    return null;
+                }
+                List<String> studentNames = team.getStudents() != null ? team.getStudents().stream().map(User::getName).filter(Objects::nonNull).sorted().toList() : List.of();
+                return new ParticipationNameExportDTO(team.getName(), team.getShortName(), studentNames);
+            }).filter(Objects::nonNull).toList();
+        }
+        else {
+            return studentParticipationRepository.findWithStudentByExerciseId(exercise.getId()).stream().map(p -> {
+                User student = p.getStudent().orElse(null);
+                if (student == null) {
+                    return null;
+                }
+                return new ParticipationNameExportDTO(student.getName(), student.getLogin(), null);
+            }).filter(Objects::nonNull).toList();
+        }
+    }
 }

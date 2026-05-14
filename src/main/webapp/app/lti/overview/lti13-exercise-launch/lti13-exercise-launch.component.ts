@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-
+import { filter, take } from 'rxjs';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { captureException } from '@sentry/angular';
@@ -98,13 +98,14 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
 
     redirectUserToLoginThenTargetLink(error: any): void {
         // Redirect the user to the login page
-        this.router.navigate(['/']).then(() => {
+        this.router.navigate(['/sign-in']).then(() => {
             // After navigating to the login page, set up a listener for when the user logs in
-            this.accountService.getAuthenticationState().subscribe((user) => {
-                if (user) {
+            this.accountService
+                .getAuthenticationState()
+                .pipe(filter(Boolean), take(1))
+                .subscribe(() => {
                     this.redirectUserToTargetLink(error);
-                }
-            });
+                });
         });
     }
 

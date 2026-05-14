@@ -41,7 +41,7 @@ public class PlagiarismMatch {
         PlagiarismMatch match = new PlagiarismMatch();
         match.setStartA(jplagMatch.startOfFirst());
         match.setStartB(jplagMatch.startOfSecond());
-        match.setLength(jplagMatch.length());
+        match.setLength(jplagMatch.minimumLength());
         return match;
     }
 

@@ -113,8 +113,8 @@
                 <jhi-confirm-icon
                     iconSize="sm"
                     (confirmEvent)="deletePosting()"
-                    [initialTooltip]="'artemisApp.metis.deleteAnswer' | artemisTranslate"
-                    [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
+                    [initialTooltip]="'artemisApp.metis.delete' + (getPostingType() === 'answerPost' ? 'Answer' : 'Post') | artemisTranslate"
+                    [confirmTooltip]="'artemisApp.metis.confirmDelete' + (getPostingType() === 'answerPost' ? 'Answer' : 'Post') | artemisTranslate"
                 />
             </button>
         }

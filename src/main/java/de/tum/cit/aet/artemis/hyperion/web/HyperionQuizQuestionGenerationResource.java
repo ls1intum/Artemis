@@ -17,8 +17,12 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionBulkRefinementRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionBulkRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionRefinementRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionGenerationService;
 
 /**
@@ -54,6 +58,39 @@ public class HyperionQuizQuestionGenerationResource {
         log.debug("REST request to Hyperion generate quiz questions for course [{}]", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         var result = quizQuestionGenerationService.generateQuizQuestions(course, request);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * POST /courses/{courseId}/quiz-exercises/refine-question : Refine an existing quiz question based on user instructions.
+     *
+     * @param courseId the id of the course
+     * @param request  the original question and user refinement instructions
+     * @return the refined question and an explanation of the changes
+     */
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/quiz-exercises/refine-question")
+    public ResponseEntity<QuizQuestionRefinementResponseDTO> refineQuizQuestion(@PathVariable long courseId, @Valid @RequestBody QuizQuestionRefinementRequestDTO request) {
+        log.debug("REST request to Hyperion refine quiz question for course [{}]", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        var result = quizQuestionGenerationService.refineQuizQuestion(course, request);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * POST /courses/{courseId}/quiz-exercises/refine-all-questions : Refine all provided quiz questions using a single prompt.
+     *
+     * @param courseId the id of the course
+     * @param request  the questions and user refinement instructions
+     * @return one refinement result per input question, in the same order
+     */
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/quiz-exercises/refine-all-questions")
+    public ResponseEntity<QuizQuestionBulkRefinementResponseDTO> refineAllQuizQuestions(@PathVariable long courseId,
+            @Valid @RequestBody QuizQuestionBulkRefinementRequestDTO request) {
+        log.debug("REST request to Hyperion bulk-refine quiz questions for course [{}]", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        var result = quizQuestionGenerationService.refineAllQuizQuestions(course, request);
         return ResponseEntity.ok(result);
     }
 }

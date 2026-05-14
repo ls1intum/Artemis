@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USER_EMAIL_DOMAIN_AFT
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_LAST_NAME_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.domain.Authority.SUPER_ADMIN_AUTHORITY;
+import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
@@ -30,7 +31,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsExcepti
 import de.tum.cit.aet.artemis.core.exception.UsernameAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.RandomUtil;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
@@ -65,7 +66,6 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
-import tech.jhipster.security.RandomUtil;
 
 /**
  * Service class for managing users.
@@ -96,8 +96,6 @@ public class UserService {
 
     private final Optional<LdapUserService> ldapUserService;
 
-    private final CacheManager cacheManager;
-
     private final AuthorityRepository authorityRepository;
 
     private final InstanceMessageSendService instanceMessageSendService;
@@ -121,16 +119,14 @@ public class UserService {
     private final GlobalNotificationSettingService globalNotificationSettingService;
 
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
-            CacheManager cacheManager, Optional<LdapUserService> ldapUserService, PasswordService passwordService, InstanceMessageSendService instanceMessageSendService,
-            FileService fileService, Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
-            Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService,
-            CourseNotificationSettingService courseNotificationSettingService, UserCourseNotificationStatusService userCourseNotificationStatusService,
-            GlobalNotificationSettingService globalNotificationSettingService) {
+            Optional<LdapUserService> ldapUserService, PasswordService passwordService, InstanceMessageSendService instanceMessageSendService, FileService fileService,
+            Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi,
+            SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
+            UserCourseNotificationStatusService userCourseNotificationStatusService, GlobalNotificationSettingService globalNotificationSettingService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
         this.authorityRepository = authorityRepository;
-        this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;
         this.passwordService = passwordService;
         this.instanceMessageSendService = instanceMessageSendService;
@@ -253,13 +249,12 @@ public class UserService {
     }
 
     /**
-     * saves the user and clears the cache
+     * Saves the user.
      *
      * @param user the user object that will be saved into the database
      * @return the saved and potentially updated user object
      */
     public User saveUser(User user) {
-        clearUserCaches(user);
         log.debug("Save user {}", user);
         return userRepository.save(user);
     }
@@ -292,6 +287,9 @@ public class UserService {
         final var newUser = new User();
         String passwordHash = passwordService.hashPassword(password);
         newUser.setLogin(userDTO.getLogin().toLowerCase());
+        if (IRIS_BOT_LOGIN.equals(newUser.getLogin())) {
+            throw new UsernameAlreadyUsedException();
+        }
         // new user gets initially a generated password
         newUser.setPassword(passwordHash);
         newUser.setFirstName(userDTO.getFirstName());
@@ -496,7 +494,6 @@ public class UserService {
         courseNotificationSettingService.deleteAllForUser(user.getId());
 
         userRepository.save(user);
-        clearUserCaches(user);
         userRepository.flush();
 
         scienceEventApi.ifPresent(api -> api.renameIdentity(originalLogin, anonymizedLogin));
@@ -579,54 +576,16 @@ public class UserService {
         }
     }
 
-    private void clearUserCaches(User user) {
-        var userCache = cacheManager.getCache(User.class.getName());
-        if (userCache != null) {
-            userCache.evict(user.getLogin());
-        }
-    }
-
     /**
      * Removes the passed group from all users in the Artemis database using a single bulk delete query.
      * This is more efficient than loading, modifying, and saving each user individually.
-     * <p>
-     * The method first retrieves the logins of affected users for cache eviction,
-     * then performs the bulk delete, and finally evicts all affected users from the cache.
      *
      * @param groupName the group that should be removed from all existing users
      */
     public void removeGroupFromAllUsers(String groupName) {
         log.info("Remove group {} from all users", groupName);
-
-        // First, get the logins of users who have this group (for cache eviction)
-        Set<String> affectedLogins = userRepository.findLoginsByGroupName(groupName);
-        log.debug("Found {} users with group {}", affectedLogins.size(), groupName);
-
-        if (affectedLogins.isEmpty()) {
-            return;
-        }
-
-        // Perform bulk delete directly in the database
         int deletedCount = userRepository.removeGroupFromAllUsers(groupName);
         log.info("Removed group {} from {} user-group associations", groupName, deletedCount);
-
-        // Evict all affected users from the cache
-        evictUsersFromCache(affectedLogins);
-    }
-
-    /**
-     * Evicts multiple users from the cache by their logins.
-     *
-     * @param logins the set of user logins to evict from cache
-     */
-    private void evictUsersFromCache(Set<String> logins) {
-        var userCache = cacheManager.getCache(User.class.getName());
-        if (userCache != null) {
-            for (String login : logins) {
-                userCache.evict(login);
-            }
-            log.debug("Evicted {} users from cache", logins.size());
-        }
     }
 
     /**

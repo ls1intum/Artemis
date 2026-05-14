@@ -15,7 +15,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 /**
  * An IrisJsonMessageContent represents the content of a message in an IrisSession as an arbitrary JSON object.
@@ -33,7 +34,7 @@ public class IrisJsonMessageContent extends IrisMessageContent {
     @NonNull
     @Transient
     @JsonIgnore
-    private JsonNode jsonNode = new ObjectMapper().createObjectNode();
+    private JsonNode jsonNode = JsonObjectMapper.get().createObjectNode();
 
     // Required by JPA
     public IrisJsonMessageContent() {
@@ -68,7 +69,7 @@ public class IrisJsonMessageContent extends IrisMessageContent {
      */
     public void setJsonContent(@NonNull String jsonContent) {
         try {
-            this.jsonNode = new ObjectMapper().readTree(jsonContent);
+            this.jsonNode = JsonObjectMapper.get().readTree(jsonContent);
             this.jsonContent = jsonContent;
         }
         catch (JsonProcessingException e) {
@@ -98,7 +99,7 @@ public class IrisJsonMessageContent extends IrisMessageContent {
     @PostLoad
     private void postLoad() {
         try {
-            this.jsonNode = new ObjectMapper().readTree(jsonContent);
+            this.jsonNode = JsonObjectMapper.get().readTree(jsonContent);
         }
         catch (JsonProcessingException e) {
             throw new RuntimeException("Error while loading Json content", e);

@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
  * Deprecation: please throw exceptions instead of using the below methods,
  * use e.g. AccessForbiddenException, EntityNotFoundException, BadRequestAlertException, ConflictException
  */
-public final class ResponseUtil implements tech.jhipster.web.util.ResponseUtil {
+public final class ResponseUtil {
 
     /**
      * Sends an OK response entity that contains a filepath. Returns a not found response

@@ -60,7 +60,7 @@ public class TutorialGroupsConfigurationService {
         for (TutorialGroupSchedule schedule : schedules) {
             var tutorialGroupConfiguration = new TutorialGroupsConfiguration();
             tutorialGroupConfiguration.setCourse(course);
-            newSessions.addAll(tutorialGroupScheduleService.generateSessions(tutorialGroupConfiguration, schedule));
+            newSessions.addAll(tutorialGroupScheduleService.generateSessionsForSchedule(course, schedule));
         }
         tutorialGroupSessionRepository.saveAll(newSessions);
     }

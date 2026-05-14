@@ -6,9 +6,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -17,9 +14,11 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 /**
  * A AnswerOption.
  */
+// No @Cache here on purpose: resolved via internalLoad during quiz-submission merge cascade. A stale L2 cache entry
+// (NONSTRICT_READ_WRITE on clustered Hazelcast) could return not-found for an existing row, producing the exact
+// ObjectNotFoundException seen in #12584. The answer_option table is small; always hitting the DB is fine.
 @Entity
 @Table(name = "answer_option")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AnswerOption extends DomainObject implements QuizQuestionComponent<MultipleChoiceQuestion> {
 

@@ -1,0 +1,158 @@
+{
+    "landing": {
+        "pageTitle": "Artemis - Interactive Learning Platform",
+        "navbar": {
+            "logIn": "Log in",
+            "toggleMenu": "Toggle menu"
+        },
+        "hero": {
+            "tagline": "For Universities & Educational Institutions",
+            "title": "A learning platform built for university education.",
+            "subtitle": "Artemis is an open-source learning platform for university education. Instant feedback on exercises, AI-powered tutoring, and collaborative tools keep students and instructors in sync, all while keeping your data under your control."
+        },
+        "spotlight": {
+            "title": "AI that teaches, not just answers",
+            "description": "Iris, Artemis's built-in AI tutor, guides students through problems with hints and leading questions, drawing on course-specific content to stay relevant. For instructors, it surfaces patterns across student questions and keeps FAQs up to date automatically. Iris supports open-source large language models (LLMs), so institutions can keep all interactions within their own infrastructure.",
+            "steps": {
+                "tutor": {
+                    "title": "AI that teaches, not just answers",
+                    "description": "Iris, Artemis's built-in AI tutor, guides students through problems with hints and leading questions, drawing on course-specific content to stay relevant. For instructors, it surfaces patterns across student questions and keeps FAQs up to date automatically. Iris supports open-source large language models (LLMs), so institutions can keep all interactions within their own infrastructure."
+                },
+                "feedback": {
+                    "title": "Instant feedback, every submission",
+                    "description": "Submit code, a quiz, or a modeling task and get structured, individual feedback within seconds. Artemis runs test cases, static analysis, and grading criteria automatically, so students always know exactly where they stand. Instructors can fine-tune feedback settings and test configurations for each exercise."
+                },
+                "transcribedLecture": {
+                    "title": "Lectures that keep working after class",
+                    "description": "Upload lecture videos and Artemis automatically generates searchable transcriptions. Students revisit specific moments, Iris draws on the content to answer questions, and instructors can link units directly to learning objectives."
+                },
+                "insights": {
+                    "title": "Learning paths that adapt to every student",
+                    "description": "Define competencies, map them to lectures and exercises, and let Artemis build personalized learning paths based on each student's progress. Struggling students receive targeted support while advanced learners get room to move ahead."
+                }
+            },
+            "carousel": {
+                "previous": "Previous slide",
+                "next": "Next slide",
+                "slide": "Slide {{ n }}"
+            }
+        },
+        "socialProof": {
+            "title": "Adopted across leading educational institutions"
+        },
+        "features": {
+            "title": "A complete learning ecosystem",
+            "cards": {
+                "assessment": {
+                    "category": "Assessment",
+                    "description": "From anonymous, rubric-based manual grading with AI-assisted correction suggestions to fully automatic evaluation of quizzes and programming submissions. Grading criteria are fully customizable per exercise.",
+                    "imageAlt": "Assessment dashboard"
+                },
+                "tutorials": {
+                    "category": "Tutorials",
+                    "description": "Structured small-group sessions with exercise assignments, attendance tracking, and tutor tooling designed to scale across large cohorts.",
+                    "imageAlt": "Tutorial groups"
+                },
+                "lectures": {
+                    "category": "Lectures",
+                    "description": "Upload slides, embed videos, and divide content into structured units, all linked directly to learning objectives.",
+                    "imageAlt": "Lecture content"
+                },
+                "examMode": {
+                    "category": "Exam Mode",
+                    "description": "Online exams with randomized variants, plagiarism detection, and structured grading criteria. Fully configurable to fit your institution's exam workflows.",
+                    "imageAlt": "Exam mode"
+                },
+                "communication": {
+                    "category": "Communication",
+                    "description": "Course-wide channels, exercise-specific discussion threads, and direct messaging keep everyone connected with a streamlined communication experience.",
+                    "imageAlt": "Communication tools"
+                },
+                "faq": {
+                    "category": "FAQ",
+                    "description": "Searchable, course-level FAQ library that reduces repetitive queries and feeds directly into Iris for smarter AI responses.",
+                    "imageAlt": "FAQ management"
+                },
+                "iris": {
+                    "category": "Iris - AI Tutor",
+                    "description": "An AI-powered tutor that guides students with hints and questions rather than answers. Supports on-premise deployment with open-source LLMs for full data privacy.",
+                    "imageAlt": "Iris AI Tutor"
+                },
+                "mobileApps": {
+                    "category": "Mobile Apps",
+                    "description": "Dedicated iOS and Android apps let students access courses, exercises, lectures, and discussions with a seamless mobile experience.",
+                    "imageAlt": "Mobile apps"
+                }
+            }
+        },
+        "faq": {
+            "label": "FAQ",
+            "title": "Commonly asked questions",
+            "items": {
+                "free": {
+                    "question": "Is Artemis free to use?",
+                    "answer": "Yes. Artemis is fully open source under the MIT license. You can self-host it for full control over your data and configuration, or use the hosted instance provided by the Technical University of Munich for partner institutions."
+                },
+                "languages": {
+                    "question": "Which programming languages can I use with Artemis?",
+                    "answer": "Artemis is language-independent. Automated testing works with any programming language that can run in a CI pipeline. It ships with predefined templates for Java, Python, C, Haskell, Kotlin, Swift, and more, making it easy for instructors to set up exercises quickly."
+                },
+                "grading": {
+                    "question": "How does automated grading work?",
+                    "answer": "Programming submissions are built and tested automatically via CI pipelines, with results appearing within seconds. Quizzes are graded instantly on submission. Text and modeling exercises support both AI-assisted and manual assessment with structured rubrics."
+                },
+                "scale": {
+                    "question": "Can I run exams for 1000+ students?",
+                    "answer": "Yes. Artemis has been proven with online exams for over 2,000 concurrent students. The exam mode uses exercise pools to generate unique exam variants per student, supports real-time monitoring, and scales horizontally."
+                },
+                "iris": {
+                    "question": "How does Iris differ from ChatGPT?",
+                    "answer": "Iris is designed specifically for education. It guides students with hints and leading questions instead of giving direct answers, drawing on course-specific content within the learning workflow. Institutions can run Iris with open-source LLMs on their own servers, ensuring that student data never leaves their infrastructure."
+                },
+                "docs": {
+                    "question": "Where can I find the full documentation?",
+                    "answer": "Full documentation is available at docs.artemis.cit.tum.de, including setup guides, feature references, and developer docs."
+                }
+            }
+        },
+        "footer": {
+            "tagline": "Built by educators, for education.",
+            "subtitle": "Open-source and continuously improved by a growing community of universities and developers.",
+            "getStarted": "Get Started",
+            "description": "A learning platform built for university education.",
+            "links": {
+                "features": {
+                    "title": "Features",
+                    "exercises": "Exercises",
+                    "lectures": "Lectures",
+                    "communication": "Communication",
+                    "adaptiveLearning": "Adaptive Learning",
+                    "iris": "Iris - AI Tutor"
+                },
+                "instructors": {
+                    "title": "For Instructors",
+                    "examMode": "Exam Mode",
+                    "assessment": "Assessment",
+                    "tutorials": "Tutorials",
+                    "faq": "FAQ"
+                },
+                "resources": {
+                    "title": "Resources",
+                    "documentation": "Documentation",
+                    "publication": "Publication"
+                }
+            },
+            "website": "Website",
+            "linkedin": "LinkedIn",
+            "instagram": "Instagram",
+            "imprint": {
+                "about": "About",
+                "releases": "Releases",
+                "feedback": "Feedback",
+                "privacy": "Privacy",
+                "imprint": "Imprint"
+            },
+            "copyright": "© {{year}} Technical University of Munich. All rights reserved."
+        }
+    }
+}

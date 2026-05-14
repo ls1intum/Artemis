@@ -4,11 +4,13 @@ import { Observable } from 'rxjs';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { map, tap } from 'rxjs/operators';
+import { McqResponseData } from 'app/iris/shared/entities/iris-content-type.model';
 import dayjs from 'dayjs/esm';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { randomInt } from 'app/shared/util/utils';
+import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 
@@ -98,20 +100,36 @@ export class IrisChatHttpService {
         return this.httpClient.put<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/helpful`, helpful, { observe: 'response' });
     }
 
-    getCurrentSessionOrCreateIfNotExists<T extends IrisSession>(identifier: string): Response<T> {
-        return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions/current`, null, { observe: 'response' });
+    /**
+     * Saves the user's MCQ answer selection for persistence across page reloads
+     * @param sessionId of the session
+     * @param messageId of the message containing the MCQ
+     * @param response the user's answer selection
+     */
+    saveMcqResponse(sessionId: number, messageId: number, response: McqResponseData): Response<void> {
+        return this.httpClient.put<void>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/mcq-response`, response, { observe: 'response' });
     }
 
-    createSession<T extends IrisSession>(identifier: string): Response<T> {
-        return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions`, null, { observe: 'response' });
+    getCurrentSessionOrCreateIfNotExists(mode: ChatServiceMode, entityId: number): Response<IrisSession> {
+        if (mode === ChatServiceMode.TUTOR_SUGGESTION) {
+            return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/${entityId}/sessions/current`, null, { observe: 'response' });
+        }
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions/current`, null, { observe: 'response', params: { mode, entityId } });
+    }
+
+    createSession(mode: ChatServiceMode, entityId: number): Response<IrisSession> {
+        if (mode === ChatServiceMode.TUTOR_SUGGESTION) {
+            return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/${entityId}/sessions`, null, { observe: 'response' });
+        }
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions`, null, { observe: 'response', params: { mode, entityId } });
     }
 
     getChatSessions(courseId: number): Observable<IrisSessionDTO[]> {
-        return this.httpClient.get<any[]>(`${this.apiPrefix}/chat-history/${courseId}/sessions`).pipe();
+        return this.httpClient.get<IrisSessionDTO[]>(`${this.apiPrefix}/chat/${courseId}/sessions/overview`);
     }
 
     getChatSessionById(courseId: number, sessionId: number): Observable<IrisSession> {
-        return this.httpClient.get<IrisSession>(`${this.apiPrefix}/chat-history/${courseId}/session/${sessionId}`).pipe();
+        return this.httpClient.get<IrisSession>(`${this.apiPrefix}/chat/${courseId}/session/${sessionId}`);
     }
 
     /**
@@ -120,7 +138,7 @@ export class IrisChatHttpService {
      */
     getSessionAndMessageCount(): Observable<{ sessions: number; messages: number }> {
         return this.httpClient
-            .get<{ sessions?: number; messages?: number }>(`${this.apiPrefix}/chat-history/sessions/count`)
+            .get<{ sessions?: number; messages?: number }>(`${this.apiPrefix}/chat/sessions/count`)
             .pipe(map((counts) => ({ sessions: counts.sessions ?? 0, messages: counts.messages ?? 0 })));
     }
 
@@ -129,7 +147,7 @@ export class IrisChatHttpService {
      * @return Observable of the HTTP response
      */
     deleteAllSessions(): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.apiPrefix}/chat-history/sessions`, { observe: 'response' });
+        return this.httpClient.delete<void>(`${this.apiPrefix}/chat/sessions`, { observe: 'response' });
     }
 
     /**
@@ -138,6 +156,6 @@ export class IrisChatHttpService {
      * @return Observable of the HTTP response
      */
     deleteSession(sessionId: number): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.apiPrefix}/chat-history/sessions/${sessionId}`, { observe: 'response' });
+        return this.httpClient.delete<void>(`${this.apiPrefix}/chat/sessions/${sessionId}`, { observe: 'response' });
     }
 }

@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, computed, inject, input, model, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, computed, effect, inject, input, model, signal, viewChild } from '@angular/core';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { Validation, ValidationStatus } from 'app/shared/util/validation';
 import { InputGroupModule } from 'primeng/inputgroup';
@@ -23,12 +23,17 @@ export class TutorialEditLanguagesInputComponent implements OnDestroy {
     private viewContainerRef = inject(ViewContainerRef);
     private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
     private panelTemplate = viewChild<TemplateRef<unknown>>('panelTemplate');
+    private languageValidationResultInternal = computed<Validation>(() => this.computeLanguageValidation());
 
     alreadyUsedLanguages = input.required<string[]>();
     language = model<string>('');
     languageInputTouched = signal(false);
-    languageValidationResult = computed<Validation>(() => this.computeLanguageValidation());
+    languageValidationResult = model<Validation>({ status: ValidationStatus.VALID });
     suggestionHighlightIndex = signal<number | undefined>(undefined);
+
+    constructor() {
+        effect(() => this.languageValidationResult.set(this.languageValidationResultInternal()));
+    }
 
     ngOnDestroy(): void {
         this.closePanel();

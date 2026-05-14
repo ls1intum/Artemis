@@ -38,6 +38,15 @@ export class FileService {
     }
 
     /**
+     * Fetches a file from a fully qualified URL and returns it as a Blob.
+     *
+     * @param fileUrl URL of the file to fetch
+     */
+    getBlobFromUrl(fileUrl: string): Observable<Blob> {
+        return this.http.get(fileUrl, { responseType: 'blob' });
+    }
+
+    /**
      * Fetches the template code of conduct
      * @returns markdown file
      */

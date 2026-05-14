@@ -20,10 +20,19 @@ export default defineConfig({
             test: path.resolve(__dirname, 'src/test/javascript/spec'),
         },
     },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                loadPaths: [path.resolve(__dirname)],
+                silenceDeprecations: ['color-functions', 'global-builtin', 'import', 'if-function'],
+            },
+        },
+    },
     // JIT mode required for ng-mocks compatibility
     plugins: [angular({ jit: true }), tsconfigPaths({ projects: ['tsconfig.app.json', 'tsconfig.spec.json'] })],
     test: {
         globals: true,
+        pool: 'forks',
         environment: 'jsdom',
         setupFiles: ['src/test/javascript/spec/vitest-test-setup.ts'],
         include: [
@@ -40,20 +49,42 @@ export default defineConfig({
             'src/main/webapp/app/atlas/**/*.spec.ts', // include atlas tests
             'src/main/webapp/app/iris/**/*.spec.ts', // include iris tests
             'src/main/webapp/app/exam/manage/students/**/*.spec.ts', // include exam manage students tests
+            'src/main/webapp/app/exam/manage/student-exams/**/*.spec.ts', // include exam manage student-exams tests
+            'src/main/webapp/app/exam/manage/test-runs/**/*.spec.ts', // include exam manage test-runs tests
+            'src/main/webapp/app/exam/manage/exercise-groups/**/*.spec.ts', // include exam manage exercise groups tests
+            'src/main/webapp/app/exam/manage/suspicious-behavior/**/*.spec.ts', // include exam manage suspicious behavior tests
+            'src/main/webapp/app/exam/manage/services/**/*.spec.ts', // include exam manage services tests
+            'src/main/webapp/app/exam/manage/exam-management/**/*.spec.ts', // include exam management tests
+            'src/main/webapp/app/exam/manage/exam-scores/**/*.spec.ts', // include exam scores tests
+            'src/main/webapp/app/exam/manage/exam-status/**/*.spec.ts', // include exam status tests
+            'src/main/webapp/app/exam/manage/exams/**/*.spec.ts', // include exams (detail/import/update/checklist/mode-picker) tests
+            'src/main/webapp/app/exam/shared/**/*.spec.ts', // include exam shared tests
+            'src/main/webapp/app/exam/overview/**/*.spec.ts', // include exam overview tests
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
             'src/main/webapp/app/shared/table-view/**/*.spec.ts', // include shared table view
+            'src/main/webapp/app/shared/feature-toggle/**/*.spec.ts', // include feature-toggle service tests
             'src/main/webapp/app/shared/sort/**/*.directive.spec.ts', // include sort directives
             'src/main/webapp/app/shared/user-import/util/**/*.spec.ts', // include user import util tests
             'src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // include problem statement service tests
             'src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // include problem statement utils tests
             'src/main/webapp/app/shared/monaco-editor/inline-refinement-button/*.spec.ts', // include inline refinement button tests
+            'src/main/webapp/app/exercise/exercise-headers/**/*.spec.ts', // include exercise headers tests
             'src/main/webapp/app/exercise/synchronization/**/*.spec.ts', // include exercise synchronization tests
             'src/main/webapp/app/exercise/version-history/**/*.spec.ts', // include exercise version history tests
             'src/main/webapp/app/exercise/review/**/*.spec.ts', // include review module tests
             'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.spec.ts', // include checklist-panel tests
             'src/main/webapp/app/hyperion/**/*.spec.ts', // include hyperion module tests
+            'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.spec.ts', // include build phases editor tests
             'src/main/webapp/app/programming/manage/version-history/**/*.spec.ts', // include programming version history tests
             'src/main/webapp/app/communication/**/*.spec.ts', // include all communication module tests
+            'src/main/webapp/app/exercise/participation/**/*.spec.ts', // include participation tests
+            'src/main/webapp/app/exercise/participation-submission/**/*.spec.ts', // include participation-submission tests
+            'src/main/webapp/app/exercise/exercise-scores/**/*.spec.ts', // include exercise-scores tests
+            'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.spec.ts', // include filter-dropdown component tests
+            'src/main/webapp/app/shared/search-filter/**/*.spec.ts', // include search-filter component tests
+            'src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // include build phases template service tests
+            'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
+            'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -61,7 +92,7 @@ export default defineConfig({
         outputFile: './build/test-results/vitest/junit.xml',
         server: {
             deps: {
-                inline: [/@ls1intum\/apollon/, /html-diff-ts/, /monaco-editor/],
+                inline: [/@tumaet\/apollon/, /html-diff-ts/, /monaco-editor/],
             },
         },
         coverage: {
@@ -82,36 +113,60 @@ export default defineConfig({
                 'src/main/webapp/app/atlas/**/*.ts', // include atlas for code coverage
                 'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
                 'src/main/webapp/app/exam/manage/students/**/*.ts', // include exam manage students for code coverage
+                'src/main/webapp/app/exam/manage/student-exams/**/*.ts', // include exam manage student-exams for code coverage
+                'src/main/webapp/app/exam/manage/test-runs/**/*.ts', // include exam manage test-runs for code coverage
+                'src/main/webapp/app/exam/manage/exercise-groups/**/*.ts', // include exam manage exercise groups for code coverage
+                'src/main/webapp/app/exam/manage/suspicious-behavior/**/*.ts', // include exam manage suspicious behavior for code coverage
+                'src/main/webapp/app/exam/manage/services/**/*.ts', // include exam manage services for code coverage
+                'src/main/webapp/app/exam/manage/exam-management/**/*.ts', // include exam management for code coverage
+                'src/main/webapp/app/exam/manage/exam-scores/**/*.ts', // include exam scores for code coverage
+                'src/main/webapp/app/exam/manage/exam-status/**/*.ts', // include exam status for code coverage
+                'src/main/webapp/app/exam/manage/exams/**/*.ts', // include exams (detail/import/update/checklist/mode-picker) for code coverage
+                'src/main/webapp/app/exam/overview/**/*.ts', // include exam overview for code coverage
+                'src/main/webapp/app/exam/shared/**/*.ts', // include exam shared for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
+                'src/main/webapp/app/shared/feature-toggle/**/*.ts', // include feature-toggle service for code coverage
                 'src/main/webapp/app/shared/user-import/util/**/*.ts', // include user import utils for code coverage
                 'src/main/webapp/app/shared/table-view/**/*.ts', // include shared table view for code coverage
                 'src/main/webapp/app/shared/sort/**/*.directive.ts', // include sort directives for code coverage
                 'src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // include problem statement service for code coverage
                 'src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // include problem statement utils for code coverage
                 'src/main/webapp/app/shared/monaco-editor/inline-refinement-button/*.ts', // include inline refinement button for code coverage
+                'src/main/webapp/app/exercise/exercise-headers/**/*.ts', // include exercise headers for code coverage
                 'src/main/webapp/app/exercise/synchronization/**/*.ts', // include exercise synchronization for code coverage
                 'src/main/webapp/app/exercise/version-history/**/*.ts', // include exercise version history for code coverage
                 'src/main/webapp/app/exercise/review/**/*.ts', // include review module for code coverage
                 'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.ts', // include checklist-panel for code coverage
                 'src/main/webapp/app/hyperion/**/*.ts', // include hyperion module for code coverage
+                'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.ts', // include build phases editor for code coverage
                 'src/main/webapp/app/programming/manage/version-history/**/*.ts', // include programming version history for code coverage
                 'src/main/webapp/app/communication/**/*.ts', // include all communication module for code coverage
+                'src/main/webapp/app/exercise/participation/**/*.ts', // include participation for code coverage
+                'src/main/webapp/app/exercise/participation-submission/**/*.ts', // include participation-submission for code coverage
+                'src/main/webapp/app/exercise/exercise-scores/**/*.ts', // include exercise-scores for code coverage
+                'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.ts', // include filter-dropdown component for code coverage
+                'src/main/webapp/app/shared/search-filter/**/*.ts', // include search-filter component for code coverage
+                'src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // include build phases template service for code coverage
+                'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
+                'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
             ],
             exclude: [
-                '**/node_modules/**',   // exclude node_modules with third-party code
-                '**/*.spec.ts',         // exclude test specification files
-                '**/*.route.ts',        // exclude route definition files (not really testable)
-                '**/*.routes.ts',       // exclude route definition files (not really testable)
-                '**/*.model.ts',        // exclude data model files (not really testable)
-                'src/main/webapp/app/core/config/dayjs.ts',             // exclude dayjs configuration file (not really testable)
-                'src/main/webapp/app/core/config/monaco.config.ts',     // exclude monaco configuration file (not really testable)
-                'src/main/webapp/app/core/config/prod.config.ts',       // exclude dayjs configuration file (not really testable)
+                '**/node_modules/**', // exclude node_modules with third-party code
+                '**/*.spec.ts', // exclude test specification files
+                '**/*.route.ts', // exclude route definition files (not really testable)
+                '**/*.routes.ts', // exclude route definition files (not really testable)
+                '**/*.model.ts', // exclude data model files (not really testable)
+                'src/main/webapp/app/core/config/dayjs.ts', // exclude dayjs configuration file (not really testable)
+                'src/main/webapp/app/core/config/monaco.config.ts', // exclude monaco configuration file (not really testable)
+                'src/main/webapp/app/core/config/prod.config.ts', // exclude dayjs configuration file (not really testable)
             ],
             thresholds: {
-                lines: 92.05,
-                statements: 91.95,
-                branches: 76.90,
-                functions: 89.10,
+                // Lowered ~0.5pp below current actuals to absorb further Jest→Vitest
+                // migration drift. Re-tune when migration completes.
+                lines: 89.6,
+                statements: 89.4,
+                branches: 73.6,
+                functions: 87.4,
             },
         },
     },

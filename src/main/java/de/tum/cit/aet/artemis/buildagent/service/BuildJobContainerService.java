@@ -37,6 +37,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
@@ -262,13 +263,14 @@ public class BuildJobContainerService {
      *
      * @param containerId the id of the container in which the script should be run
      * @param buildJobId  the id of the build job that is currently being executed
+     * @return the exit code of the build script (0 = success, non-zero = failure)
      */
-    public void runScriptInContainer(String containerId, String buildJobId) {
+    public int runScriptInContainer(String containerId, String buildJobId) {
         log.info("Started running the build script for build job in container with id {}", containerId);
         // The build script is executed as an additional process inside the container (docker exec), independent of the container's main process.
         // The call blocks until the script finishes, so it is safe to extract results after it returns.
         // forceRoot=false: the build script runs as the container's default user (not root) for security.
-        executeDockerCommand(containerId, buildJobId, false, DOCKER_BUILD_SCRIPT_TIMEOUT_MINUTES, "bash", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
+        return executeDockerCommand(containerId, buildJobId, false, DOCKER_BUILD_SCRIPT_TIMEOUT_MINUTES, "bash", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
     }
 
     /**
@@ -886,17 +888,19 @@ public class BuildJobContainerService {
      * @param buildJobId  the build job ID for logging (can be null if output capture not needed)
      * @param forceRoot   if true, execute the command as root user
      * @param command     the command and arguments to execute
+     * @return the exit code of the command (0 = success, non-zero = failure)
      * @throws LocalCIException if the command execution fails or is interrupted
      */
-    private void executeDockerCommand(String containerId, String buildJobId, boolean forceRoot, String... command) {
-        executeDockerCommand(containerId, buildJobId, forceRoot, DOCKER_SETUP_TIMEOUT_MINUTES, command);
+    private int executeDockerCommand(String containerId, String buildJobId, boolean forceRoot, String... command) {
+        return executeDockerCommand(containerId, buildJobId, forceRoot, DOCKER_SETUP_TIMEOUT_MINUTES, command);
     }
 
-    private void executeDockerCommand(String containerId, String buildJobId, boolean forceRoot, int timeoutMinutes, String... command) {
+    private int executeDockerCommand(String containerId, String buildJobId, boolean forceRoot, int timeoutMinutes, String... command) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         try (var execCreateCommandTemp = dockerClient.execCreateCmd(containerId).withAttachStdout(true).withAttachStderr(true).withCmd(command)) {
             final var execCreateCommand = forceRoot ? execCreateCommandTemp.withUser("root") : execCreateCommandTemp;
             ExecCreateCmdResponse execCreateCmdResponse = execCreateCommand.exec();
+            final String execId = execCreateCmdResponse.getId();
             final CountDownLatch latch = new CountDownLatch(1);
             final AtomicReference<Throwable> errorRef = new AtomicReference<>();
             try {
@@ -905,7 +909,7 @@ public class BuildJobContainerService {
                 // actually completed. Without this (i.e. withDetach(true)), the call returns immediately while the process may still
                 // be running in the container, causing race conditions where subsequent commands (e.g. the build script) start before
                 // setup commands (mkdir, chmod, cp) have finished.
-                dockerClient.execStartCmd(execCreateCmdResponse.getId()).withDetach(false).exec(new ResultCallback.Adapter<>() {
+                dockerClient.execStartCmd(execId).withDetach(false).exec(new ResultCallback.Adapter<>() {
 
                     @Override
                     public void onNext(Frame item) {
@@ -956,6 +960,12 @@ public class BuildJobContainerService {
             Throwable execError = errorRef.get();
             if (execError != null) {
                 throw new LocalCIException("Docker command failed: " + String.join(" ", command), execError);
+            }
+
+            try (var inspectCmd = dockerClient.inspectExecCmd(execId)) {
+                InspectExecResponse inspectResponse = inspectCmd.exec();
+                Long exitCode = inspectResponse.getExitCodeLong();
+                return (exitCode != null) ? exitCode.intValue() : -1;
             }
         }
     }

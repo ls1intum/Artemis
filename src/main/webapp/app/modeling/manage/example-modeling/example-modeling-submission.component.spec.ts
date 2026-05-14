@@ -11,7 +11,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackCorrectionError, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExampleModelingSubmissionComponent } from 'app/modeling/manage/example-modeling/example-modeling-submission.component';
@@ -52,14 +52,14 @@ class StubModelingEditorComponent {
 
     getCurrentModel(): UMLModel {
         return {
-            elements: {},
-            relationships: {},
-            version: '3.0.0',
+            version: '4.0.0',
+            id: 'test-id',
+            title: 'Test Model',
             type: 'ClassDiagram',
-            size: { width: 0, height: 0 },
-            interactive: { elements: {}, relationships: {} },
+            nodes: [],
+            edges: [],
             assessments: {},
-        } as UMLModel;
+        } as any as UMLModel;
     }
 }
 

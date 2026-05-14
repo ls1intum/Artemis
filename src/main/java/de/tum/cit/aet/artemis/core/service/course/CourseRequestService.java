@@ -195,9 +195,11 @@ public class CourseRequestService {
             throw new BadRequestAlertException("The course title is too long", CourseRequest.ENTITY_NAME, "courseRequestTitleTooLong");
         }
 
+        Course validationCourse = new Course();
+        validationCourse.setShortName(updateDTO.shortName());
+        validationCourse.validateShortName();
         // Validate date range if both dates are provided
         if (updateDTO.startDate() != null && updateDTO.endDate() != null) {
-            Course validationCourse = new Course();
             validationCourse.setStartDate(updateDTO.startDate());
             validationCourse.setEndDate(updateDTO.endDate());
             validationCourse.validateStartAndEndDate();
@@ -309,7 +311,6 @@ public class CourseRequestService {
         course.setStudentCourseAnalyticsDashboardEnabled(false);
         course.setRestrictedAthenaModulesAccess(false);
         course.setAccuracyOfScores(1);
-        course.setFaqEnabled(true);
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
 
         var templatePath = Path.of("templates", "codeofconduct", "README.md");

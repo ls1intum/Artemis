@@ -17,7 +17,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -25,6 +24,7 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -303,8 +303,9 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
         feedbackCreationService.categorizeScaFeedback(result, feedbacks, programmingExerciseSCAEnabled);
         assertThat(feedbacks).hasSize(1);
         assertThat(result.getFeedbacks()).containsExactlyInAnyOrderElementsOf(feedbacks);
-        assertThat(result.getFeedbacks().getFirst().getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");
-        assertThat(new ObjectMapper().readValue(result.getFeedbacks().getFirst().getDetailText(), StaticCodeAnalysisIssue.class).penalty()).isEqualTo(3.0);
+        Feedback storedFeedback = result.getFeedbacks().iterator().next();
+        assertThat(storedFeedback.getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");
+        assertThat(JsonObjectMapper.get().readValue(storedFeedback.getDetailText(), StaticCodeAnalysisIssue.class).penalty()).isEqualTo(3.0);
     }
 
     @Test

@@ -21,7 +21,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 const mockLecture = {
     title: 'Test Lecture',
     description: 'Test Description',
-    visibleDate: dayjs(),
     startDate: dayjs(),
     endDate: dayjs(),
     course: {

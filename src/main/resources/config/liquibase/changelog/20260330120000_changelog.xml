@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Migrate ILLEGAL submission types to OTHER before removing the enum value -->
+    <changeSet id="20260330120000-1" author="artemis">
+        <update tableName="submission">
+            <column name="jhi_type" value="OTHER"/>
+            <where>jhi_type = 'ILLEGAL'</where>
+        </update>
+    </changeSet>
+
+    <!-- Drop the deprecated visible_date column from the lecture table -->
+    <changeSet id="20260330120000-2" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="lecture" columnName="visible_date"/>
+        </preConditions>
+        <dropColumn tableName="lecture" columnName="visible_date"/>
+    </changeSet>
+</databaseChangeLog>

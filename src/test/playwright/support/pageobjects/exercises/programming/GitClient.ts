@@ -23,7 +23,7 @@ class GitClient {
 
         for (let attempt = 1; attempt <= MAX_CLONE_RETRIES; attempt++) {
             try {
-                const git = simpleGit();
+                const git = simpleGit({ unsafe: { allowUnsafeSshCommand: true } });
                 if (gitSshCommand) {
                     git.env({ GIT_SSH_COMMAND: gitSshCommand });
                 }
@@ -45,7 +45,7 @@ class GitClient {
             }
         }
 
-        const clonedRepo = simpleGit(repoPath);
+        const clonedRepo = simpleGit(repoPath, { unsafe: { allowUnsafeSshCommand: true } });
 
         if (gitSshCommand) {
             clonedRepo.env({ GIT_SSH_COMMAND: gitSshCommand });

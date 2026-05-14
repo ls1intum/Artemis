@@ -1,0 +1,158 @@
+{
+    "landing": {
+        "pageTitle": "Artemis - Interaktive Lernplattform",
+        "navbar": {
+            "logIn": "Anmelden",
+            "toggleMenu": "Menü umschalten"
+        },
+        "hero": {
+            "tagline": "Für Universitäten & Bildungseinrichtungen",
+            "title": "Eine Lernplattform für die universitäre Lehre.",
+            "subtitle": "Artemis ist eine Open-Source-Lernplattform für die universitäre Lehre. Sofortiges Feedback bei Übungen, KI-gestütztes Tutoring und kollaborative Werkzeuge halten Studierende und Lehrende synchron. Auf Wunsch selbst hostbar für volle Kontrolle über deine Daten."
+        },
+        "spotlight": {
+            "title": "KI, die lehrt, nicht nur antwortet",
+            "description": "Iris, der integrierte KI-Tutor von Artemis, führt Studierende mit Hinweisen und Leitfragen durch Probleme, basierend auf kursspezifischen Inhalten. Für Lehrende erkennt er Muster in Studierendenfragen und hält FAQs automatisch aktuell. Iris unterstützt Open-Source-Sprachmodelle (LLMs), sodass Institutionen alle Interaktionen innerhalb der eigenen Infrastruktur halten können.",
+            "steps": {
+                "tutor": {
+                    "title": "KI, die lehrt, nicht nur antwortet",
+                    "description": "Iris, der integrierte KI-Tutor von Artemis, führt Studierende mit Hinweisen und Leitfragen durch Probleme, basierend auf kursspezifischen Inhalten. Für Lehrende erkennt er Muster in Studierendenfragen und hält FAQs automatisch aktuell. Iris unterstützt Open-Source-Sprachmodelle (LLMs), sodass Institutionen alle Interaktionen innerhalb der eigenen Infrastruktur halten können."
+                },
+                "feedback": {
+                    "title": "Sofortiges Feedback bei jeder Abgabe",
+                    "description": "Code, Quiz oder Modellierungsaufgabe einreichen und innerhalb von Sekunden strukturiertes, individuelles Feedback erhalten. Artemis führt Testfälle, statische Analyse und Bewertungskriterien automatisch aus, sodass Studierende immer wissen, wo sie stehen. Lehrende können Feedback-Einstellungen und Testkonfigurationen für jede Aufgabe anpassen."
+                },
+                "transcribedLecture": {
+                    "title": "Vorlesungen, die nach dem Unterricht weiterarbeiten",
+                    "description": "Vorlesungsvideos hochladen und Artemis generiert automatisch durchsuchbare Transkriptionen. Studierende können bestimmte Stellen erneut ansehen, Iris nutzt die Inhalte zur Beantwortung von Fragen, und Lehrende können Einheiten direkt mit Lernzielen verknüpfen."
+                },
+                "insights": {
+                    "title": "Lernpfade, die sich an jeden Studierenden anpassen",
+                    "description": "Kompetenzen definieren, mit Vorlesungen und Übungen verknüpfen und Artemis personalisierte Lernpfade basierend auf dem Fortschritt jedes Studierenden erstellen lassen. Schwächere erhalten gezielte Unterstützung, Fortgeschrittene bekommen Freiraum."
+                }
+            },
+            "carousel": {
+                "previous": "Vorherige Folie",
+                "next": "Nächste Folie",
+                "slide": "Folie {{ n }}"
+            }
+        },
+        "socialProof": {
+            "title": "Im Einsatz an führenden Bildungseinrichtungen"
+        },
+        "features": {
+            "title": "Ein vollständiges Lern-Ökosystem",
+            "cards": {
+                "assessment": {
+                    "category": "Bewertung",
+                    "description": "Von anonymer, kriterienbasierter manueller Bewertung mit KI-gestützten Korrekturvorschlägen bis zur vollautomatischen Auswertung von Quizzen und Programmieraufgaben. Bewertungskriterien sind pro Aufgabe frei konfigurierbar.",
+                    "imageAlt": "Bewertungsübersicht"
+                },
+                "tutorials": {
+                    "category": "Tutorien",
+                    "description": "Strukturierte Kleingruppenarbeit mit Übungsaufgaben, Anwesenheitsverfolgung und Tutor-Werkzeugen für große Kohorten.",
+                    "imageAlt": "Tutoriengruppen"
+                },
+                "lectures": {
+                    "category": "Vorlesungen",
+                    "description": "Folien hochladen, Videos einbetten und Inhalte in strukturierte Einheiten aufteilen, direkt verknüpft mit Lernzielen.",
+                    "imageAlt": "Vorlesungsinhalte"
+                },
+                "examMode": {
+                    "category": "Prüfungsmodus",
+                    "description": "Online-Prüfungen mit randomisierten Varianten, Plagiatserkennung und strukturierten Bewertungskriterien. Vollständig konfigurierbar für die Prüfungsabläufe deiner Institution.",
+                    "imageAlt": "Prüfungsmodus"
+                },
+                "communication": {
+                    "category": "Kommunikation",
+                    "description": "Kursweite Kanäle, aufgabenspezifische Diskussionsfäden und Direktnachrichten sorgen für eine übersichtliche Kommunikation.",
+                    "imageAlt": "Kommunikationswerkzeuge"
+                },
+                "faq": {
+                    "category": "FAQ",
+                    "description": "Durchsuchbare FAQ-Bibliothek auf Kursebene, die repetitive Anfragen reduziert und direkt in Iris für intelligentere KI-Antworten einfließt.",
+                    "imageAlt": "FAQ-Verwaltung"
+                },
+                "iris": {
+                    "category": "Iris - KI-Tutor",
+                    "description": "Ein KI-gestützter Tutor, der Studierende mit Hinweisen und Fragen statt Antworten anleitet. Unterstützt On-Premise-Betrieb mit Open-Source-LLMs für vollständigen Datenschutz.",
+                    "imageAlt": "Iris KI-Tutor"
+                },
+                "mobileApps": {
+                    "category": "Mobile Apps",
+                    "description": "Eigene iOS- und Android-Apps ermöglichen Studierenden den Zugriff auf Kurse, Übungen, Vorlesungen und Diskussionen mit einer nahtlosen mobilen Erfahrung.",
+                    "imageAlt": "Mobile Apps"
+                }
+            }
+        },
+        "faq": {
+            "label": "FAQ",
+            "title": "Häufig gestellte Fragen",
+            "items": {
+                "free": {
+                    "question": "Ist Artemis kostenlos?",
+                    "answer": "Ja. Artemis ist vollständig Open Source unter der MIT-Lizenz. Du kannst es selbst hosten für volle Kontrolle über Daten und Konfiguration, oder die von der Technischen Universität München bereitgestellte Instanz für Partnerinstitutionen nutzen."
+                },
+                "languages": {
+                    "question": "Welche Programmiersprachen kann ich mit Artemis verwenden?",
+                    "answer": "Artemis ist sprachunabhängig. Automatisierte Tests funktionieren mit jeder Programmiersprache, die in einer CI-Pipeline ausgeführt werden kann. Es enthält vordefinierte Vorlagen für Java, Python, C, Haskell, Kotlin, Swift und weitere Sprachen, sodass Lehrende Aufgaben schnell einrichten können."
+                },
+                "grading": {
+                    "question": "Wie funktioniert die automatische Bewertung?",
+                    "answer": "Programmieraufgaben werden durch Ausführen von Test-Suiten gegen Studierendenabgaben über CI/CD-Pipelines bewertet. Quizze werden sofort ausgewertet. Text- und Modellierungsaufgaben unterstützen KI-gestützte und manuelle Bewertung."
+                },
+                "scale": {
+                    "question": "Kann ich Prüfungen für 1000+ Studierende durchführen?",
+                    "answer": "Ja. Artemis wurde mit Online-Prüfungen für über 2.000 gleichzeitige Studierende erprobt. Der Prüfungsmodus verwendet Aufgabenpools zur Generierung einzigartiger Prüfungsvarianten pro Studierendem, unterstützt Echtzeit-Überwachung und skaliert horizontal."
+                },
+                "iris": {
+                    "question": "Wie unterscheidet sich Iris von ChatGPT?",
+                    "answer": "Iris ist speziell für die Lehre konzipiert. Es führt Studierende mit Hinweisen und Leitfragen statt direkten Antworten und nutzt kursspezifische Inhalte innerhalb des Lernprozesses. Institutionen können Iris mit Open-Source-LLMs auf eigenen Servern betreiben, sodass Studierendendaten die eigene Infrastruktur nie verlassen."
+                },
+                "docs": {
+                    "question": "Wo finde ich die vollständige Dokumentation?",
+                    "answer": "Besuche docs.artemis.cit.tum.de für umfassende Dokumentation zu Einrichtung, Konfiguration und Nutzung für Studierende, Tutoren und Lehrende."
+                }
+            }
+        },
+        "footer": {
+            "tagline": "Von Lehrenden, für die Lehre.",
+            "subtitle": "Open-Source und kontinuierlich verbessert durch eine wachsende Gemeinschaft von Universitäten und Entwicklern.",
+            "getStarted": "Loslegen",
+            "description": "Eine Lernplattform für die universitäre Lehre.",
+            "links": {
+                "features": {
+                    "title": "Funktionen",
+                    "exercises": "Übungen",
+                    "lectures": "Vorlesungen",
+                    "communication": "Kommunikation",
+                    "adaptiveLearning": "Adaptives Lernen",
+                    "iris": "Iris - KI-Tutor"
+                },
+                "instructors": {
+                    "title": "Für Lehrende",
+                    "examMode": "Prüfungsmodus",
+                    "assessment": "Bewertung",
+                    "tutorials": "Tutorien",
+                    "faq": "FAQ"
+                },
+                "resources": {
+                    "title": "Ressourcen",
+                    "documentation": "Dokumentation",
+                    "publication": "Publikation"
+                }
+            },
+            "website": "Webseite",
+            "linkedin": "LinkedIn",
+            "instagram": "Instagram",
+            "imprint": {
+                "about": "Über uns",
+                "releases": "Releases",
+                "feedback": "Feedback",
+                "privacy": "Datenschutz",
+                "imprint": "Impressum"
+            },
+            "copyright": "© {{year}} Technische Universität München. Alle Rechte vorbehalten."
+        }
+    }
+}

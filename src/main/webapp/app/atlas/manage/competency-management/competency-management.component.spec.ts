@@ -10,6 +10,7 @@ import { AgentChatModalComponent } from 'app/atlas/manage/agent-chat-modal/agent
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
@@ -73,7 +74,7 @@ describe('CompetencyManagementComponent', () => {
             declarations: [],
             providers: [
                 provideRouter([]),
-                MockProvider(AccountService),
+                { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
                 {
                     provide: AlertService,
@@ -129,6 +130,8 @@ describe('CompetencyManagementComponent', () => {
                 type: CourseCompetencyType.PREREQUISITE,
             } as Prerequisite,
         ]);
+
+        vi.spyOn(courseCompetencyApiService, 'getCourseProgressForCourse').mockResolvedValue([courseCompetencyProgress]);
 
         const profileInfoResponse = {
             activeModuleFeatures: [MODULE_FEATURE_IRIS],

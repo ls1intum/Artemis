@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestReposit
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
@@ -132,12 +132,12 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTokenTrackingHandledExerciseChat() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         List<PyrisStageDTO> doneStage = new ArrayList<>();
-        doneStage.add(new PyrisStageDTO("DoneTest", 10, PyrisStageState.DONE, "Done", false));
+        doneStage.add(new PyrisStageDTO("DoneTest", 10, PyrisStageState.DONE, "Done", false, null));
         irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
             assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", doneStage, tokens));
@@ -167,7 +167,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTokenTrackingSavedExerciseChat() {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage irisMessage = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         irisMessageRepository.save(irisMessage);
@@ -184,12 +184,12 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTokenTrackingExerciseChatWithPipelineFail() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         List<PyrisStageDTO> failedStages = new ArrayList<>();
-        failedStages.add(new PyrisStageDTO("TestTokenFail", 10, PyrisStageState.ERROR, "Failed running pipeline", false));
+        failedStages.add(new PyrisStageDTO("TestTokenFail", 10, PyrisStageState.ERROR, "Failed running pipeline", false, null));
         irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
             assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), null, failedStages, tokens));
@@ -219,7 +219,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, List<LLMRequest> tokens) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/programming-exercise-chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, stages, null, null, tokens, null, null), HttpStatus.OK, headers);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status", new PyrisChatStatusUpdateDTO(result, stages, null, null, tokens, null, null),
+                HttpStatus.OK, headers);
     }
 }

@@ -26,11 +26,11 @@ describe('Structured Grading Criteria Service', () => {
             limitedSGI.credits = 1.0;
             limitedSGI.usageCount = 1;
             const unlimitedSGI = new GradingInstruction();
-            limitedSGI.id = 2;
+            unlimitedSGI.id = 2;
             unlimitedSGI.credits = 1.0;
             unlimitedSGI.usageCount = 0;
             const bigLimitSGI = new GradingInstruction();
-            limitedSGI.id = 3;
+            bigLimitSGI.id = 3;
             bigLimitSGI.credits = 1.0;
             bigLimitSGI.usageCount = 3;
 
@@ -54,11 +54,11 @@ describe('Structured Grading Criteria Service', () => {
             limitedSGI.credits = 1.5;
             limitedSGI.usageCount = 1;
             const unlimitedSGI = new GradingInstruction();
-            limitedSGI.id = 2;
+            unlimitedSGI.id = 2;
             unlimitedSGI.credits = -0.5;
             unlimitedSGI.usageCount = 0;
             const bigLimitSGI = new GradingInstruction();
-            limitedSGI.id = 3;
+            bigLimitSGI.id = 3;
             bigLimitSGI.credits = 1.0;
             bigLimitSGI.usageCount = 3;
 

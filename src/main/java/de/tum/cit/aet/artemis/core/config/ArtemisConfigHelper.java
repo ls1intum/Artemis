@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ATLASML_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
-import static de.tum.cit.aet.artemis.core.config.Constants.NEBULA_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.THEIA_ENABLED_PROPERTY_NAME;
@@ -62,6 +62,16 @@ public class ArtemisConfigHelper {
      */
     public boolean isAtlasEnabled(Environment environment) {
         return getPropertyOrExitArtemis(ATLAS_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the AtlasML submodule is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the AtlasML module is enabled, false otherwise
+     */
+    public boolean isAtlasMLEnabled(Environment environment) {
+        return isAtlasEnabled(environment) && getPropertyOrExitArtemis(ATLASML_ENABLED_PROPERTY_NAME, environment);
     }
 
     /**
@@ -155,16 +165,6 @@ public class ArtemisConfigHelper {
     }
 
     /**
-     * Check if the Nebula module is enabled.
-     *
-     * @param environment the Spring environment
-     * @return true if the Nebula module is enabled, false otherwise
-     */
-    public boolean isNebulaEnabled(Environment environment) {
-        return getPropertyOrExitArtemis(NEBULA_ENABLED_PROPERTY_NAME, environment);
-    }
-
-    /**
      * Check if the LTI module is enabled.
      *
      * @param environment the Spring environment
@@ -208,6 +208,9 @@ public class ArtemisConfigHelper {
         if (isAtlasEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_ATLAS);
         }
+        if (isAtlasMLEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_ATLASML);
+        }
         if (isHyperionEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION);
         }
@@ -240,9 +243,6 @@ public class ArtemisConfigHelper {
             if (isPasskeyRequiredForAdmin(environment)) {
                 enabledFeatures.add(Constants.FEATURE_PASSKEY_REQUIRE_ADMIN);
             }
-        }
-        if (isNebulaEnabled(environment)) {
-            enabledFeatures.add(Constants.MODULE_FEATURE_NEBULA);
         }
         if (isSharingEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_SHARING);

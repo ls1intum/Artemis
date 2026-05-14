@@ -234,7 +234,7 @@ public class LectureUnitResource {
     public ResponseEntity<List<LectureUnitCombinedStatusDTO>> getUnitStatuses(@PathVariable Long lectureId) {
         log.debug("REST request to get combined statuses for all lecture units in lecture: {}", lectureId);
 
-        // If processing is not enabled (Iris/Nebula disabled), return empty list
+        // If processing is not enabled (Iris disabled), return empty list
         // This prevents the UI from showing "Awaiting Processing" when processing will never happen
         if (lectureContentProcessingService.isEmpty()) {
             return ResponseEntity.ok(List.of());

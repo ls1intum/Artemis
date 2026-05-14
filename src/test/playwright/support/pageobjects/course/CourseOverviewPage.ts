@@ -1,5 +1,5 @@
 import { BASE_API } from '../../constants';
-import { Locator, Page } from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Overview page (/courses/*).
@@ -16,7 +16,10 @@ export class CourseOverviewPage {
      * @param term The search term to use.
      */
     async search(term: string) {
-        const searchInput = this.page.locator('input[formcontrolname="searchFilter"]');
+        // The sidebar's search field used to be a reactive form control bound via
+        // formControlName="searchFilter"; PR #12382 migrated it to a plain input with id="search"
+        // and a (input)/[value] binding. Match the new selector.
+        const searchInput = this.page.locator('jhi-sidebar input#search');
         await searchInput.pressSequentially(term, { delay: 20 });
     }
 
@@ -25,15 +28,11 @@ export class CourseOverviewPage {
      * @param exerciseId The ID of the exercise to start.
      */
     async startExercise(exerciseId: number) {
-        await this.getStartExerciseButton(exerciseId).click();
-    }
-
-    /**
-     * Opens an already running exercise given its ID.
-     * @param exerciseId The ID of the exercise to open.
-     */
-    async openRunningExercise(exerciseId: number) {
-        await this.getOpenRunningExerciseButton(exerciseId).click();
+        // Wait for the start-exercise button to be visible before clicking; the exercise list is
+        // populated asynchronously and the bare .click() races the render under parallel load.
+        const button = this.getStartExerciseButton(exerciseId);
+        await button.waitFor({ state: 'visible', timeout: 30_000 });
+        await button.click();
     }
 
     /**
@@ -78,6 +77,14 @@ export class CourseOverviewPage {
     }
 
     /**
+     * Clicks the start practice button for an exercise given its ID.
+     * @param exerciseId The ID of the exercise to start in practice mode.
+     */
+    async startPracticeExercise(exerciseId: number) {
+        await this.page.locator(`#start-practice-${exerciseId} button`).click();
+    }
+
+    /**
      * Opens an exercise given its name.
      * @param exerciseName The title of the exercise to open.
      */
@@ -92,7 +99,6 @@ export class CourseOverviewPage {
      */
     async openRunningProgrammingExercise(exerciseID: number) {
         const responsePromise = this.page.waitForRequest(`${BASE_API}/programming/programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks`);
-        await this.openRunningExercise(exerciseID);
         await responsePromise;
     }
 
@@ -117,5 +123,30 @@ export class CourseOverviewPage {
      */
     async openTeam() {
         await this.page.locator('.view-team').click();
+    }
+
+    /**
+     * Verifies that the exercise title is shown in the exercise header.
+     * @param exerciseTitle The expected exercise title.
+     */
+    async shouldShowExerciseTitleInHeader(exerciseTitle: string): Promise<void> {
+        await expect(this.page.locator('#exercise-header').getByText(exerciseTitle)).toBeVisible();
+    }
+
+    /**
+     * Verifies that the problem statement panel is visible.
+     */
+    async shouldShowProblemStatement(): Promise<void> {
+        await expect(this.page.locator('#problem-statement')).toBeVisible();
+    }
+
+    /**
+     * Clicks the submit button in the shared exercise header and waits for the API response.
+     * @param apiPattern The URL pattern of the submission API endpoint to wait for.
+     */
+    async submitExercise(apiPattern: string) {
+        const responsePromise = this.page.waitForResponse(apiPattern);
+        await this.page.locator('#submit-exercise, #submit-exercise-popover').first().click();
+        return await responsePromise;
     }
 }

@@ -1,0 +1,118 @@
+<div>
+    <div class="step-hero step-hero--general">
+        <div class="step-hero-icon">
+            <fa-icon [icon]="faCog" />
+        </div>
+        <div class="step-hero-text">
+            <h4>
+                <span jhiTranslate="artemisApp.course.onboarding.generalSettings.title"></span>
+                <jhi-documentation-button [type]="'Course'" />
+            </h4>
+            <p jhiTranslate="artemisApp.course.onboarding.generalSettings.description"></p>
+        </div>
+    </div>
+    <div class="step-body">
+        <div class="row mb-3">
+            <div class="col">
+                <label class="form-label" jhiTranslate="artemisApp.course.description"></label>
+                <textarea class="form-control" rows="3" [ngModel]="course().description" (ngModelChange)="updateField('description', $event)"></textarea>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-auto" style="position: relative">
+                <label class="form-label" jhiTranslate="artemisApp.course.color"></label>
+                <button
+                    type="button"
+                    class="color-preview"
+                    [ngStyle]="{ backgroundColor: course().color || ARTEMIS_DEFAULT_COLOR, width: '36px', height: '36px', borderRadius: '4px', cursor: 'pointer' }"
+                    (click)="openColorSelector($event)"
+                ></button>
+                <jhi-color-selector (selectedColor)="onSelectedColor($event)" />
+            </div>
+        </div>
+
+        <div class="row mb-3 g-3">
+            <div class="col-md-6">
+                <jhi-date-time-picker
+                    labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}"
+                    [ngModel]="course().startDate"
+                    (ngModelChange)="updateField('startDate', $event)"
+                />
+            </div>
+            <div class="col-md-6">
+                <jhi-date-time-picker
+                    labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}"
+                    [ngModel]="course().endDate"
+                    (ngModelChange)="updateField('endDate', $event)"
+                />
+            </div>
+        </div>
+
+        <div class="row mb-3 g-3">
+            <div class="col-md-6">
+                <label class="form-label" jhiTranslate="artemisApp.course.semester"></label>
+                <select class="form-select" [ngModel]="course().semester" (ngModelChange)="updateField('semester', $event)">
+                    <option [ngValue]="undefined"></option>
+                    @for (semester of semesters; track semester) {
+                        <option [value]="semester">{{ semester }}</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" jhiTranslate="artemisApp.course.language"></label>
+                <select class="form-select" [ngModel]="course().language" (ngModelChange)="updateField('language', $event)">
+                    <option [ngValue]="undefined"></option>
+                    @for (lang of languageOptions; track lang.key) {
+                        <option [value]="lang.key">{{ lang.value }}</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label" jhiTranslate="artemisApp.course.defaultProgrammingLanguage"></label>
+                <select class="form-select" [ngModel]="course().defaultProgrammingLanguage" (ngModelChange)="updateField('defaultProgrammingLanguage', $event)">
+                    <option [ngValue]="undefined"></option>
+                    @for (pl of ProgrammingLanguage | keyvalue; track pl) {
+                        <option [value]="pl.key">{{ pl.value }}</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        @if (irisEnabled) {
+            <hr />
+            <div class="mb-3">
+                <h5 class="d-flex align-items-center gap-2">
+                    <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
+                    <span jhiTranslate="artemisApp.course.onboarding.generalSettings.irisTitle"></span>
+                    <a class="iris-learn-more" (click)="openAboutIrisModal()" jhiTranslate="artemisApp.iris.aboutIrisModal.learnMore"></a>
+                </h5>
+                @if (isIrisEnabled()) {
+                    <p class="text-muted small mb-2" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisEnabledHint"></p>
+                } @else {
+                    <p class="text-muted small mb-2" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisDisabledHint"></p>
+                }
+                <div class="feature-toggle">
+                    <button type="button" class="toggle-btn" [ngClass]="{ 'active-enabled': isIrisEnabled() }" [attr.aria-pressed]="isIrisEnabled()" (click)="setIrisEnabled(true)">
+                        <fa-icon [icon]="faCheck" />
+                        <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
+                    </button>
+                    <button
+                        type="button"
+                        class="toggle-btn"
+                        [ngClass]="{ 'active-disabled': !isIrisEnabled() }"
+                        [attr.aria-pressed]="!isIrisEnabled()"
+                        (click)="setIrisEnabled(false)"
+                    >
+                        <fa-icon [icon]="faTimes" />
+                        <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
+                    </button>
+                </div>
+                <p class="text-muted small mt-2" [innerHTML]="'artemisApp.course.onboarding.generalSettings.irisPrivacyNote' | artemisTranslate"></p>
+            </div>
+        }
+    </div>
+</div>

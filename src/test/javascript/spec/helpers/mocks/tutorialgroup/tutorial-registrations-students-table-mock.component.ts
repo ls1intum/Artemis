@@ -1,16 +1,16 @@
 import { Component, input } from '@angular/core';
 import { TutorialRegistrationsStudentsTableRemoveActionColumnInfo } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
-import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
 @Component({
     selector: 'jhi-tutorial-registrations-students-table',
     template: '',
 })
 export class TutorialRegistrationsStudentsTableMockComponent {
-    students = input.required<TutorialGroupRegisteredStudentDTO[]>();
+    students = input.required<TutorialGroupStudent[]>();
     removeActionColumnInfo = input<TutorialRegistrationsStudentsTableRemoveActionColumnInfo>();
 
-    triggerRemove(student: TutorialGroupRegisteredStudentDTO, event = new Event('click')) {
+    triggerRemove(student: TutorialGroupStudent, event = new Event('click')) {
         this.removeActionColumnInfo()?.onRemove(event, student);
     }
 }

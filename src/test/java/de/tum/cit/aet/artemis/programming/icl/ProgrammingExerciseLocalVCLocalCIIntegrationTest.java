@@ -54,7 +54,6 @@ import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
-import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -208,8 +207,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY,
                 templateBuildTestResults, solutionBuildTestResults);
         newExercise.setChannelName("testchannelname-pe");
-        aeolusRequestMockProvider.enableMockingOfRequests();
-        aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
         ProgrammingExercise createdExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class,
                 HttpStatus.CREATED);
 
@@ -330,6 +327,73 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     // Note: testUpdateProgrammingExercise_templateRepositoryUriIsInvalid was removed because
     // UpdateProgrammingExerciseDTO intentionally doesn't include templateRepositoryUri.
     // Repository URIs are immutable after exercise creation and cannot be modified through the update endpoint.
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExercise_invalidBuildPhaseName() throws Exception {
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration("""
+                {
+                  "phases": [
+                    {
+                      "name": "invalid phase",
+                      "script": "echo test",
+                      "condition": "ALWAYS",
+                      "forceRun": false,
+                      "resultPaths": []
+                    }
+                  ]
+                }
+                """);
+
+        request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExercise_duplicateBuildPhaseNames_caseInsensitive() throws Exception {
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration("""
+                {
+                  "phases": [
+                    {
+                      "name": "Build",
+                      "script": "echo build",
+                      "condition": "ALWAYS",
+                      "forceRun": false,
+                      "resultPaths": []
+                    },
+                    {
+                      "name": "build",
+                      "script": "echo test",
+                      "condition": "ALWAYS",
+                      "forceRun": false,
+                      "resultPaths": []
+                    }
+                  ]
+                }
+                """);
+
+        request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExercise_reservedBuildPhaseName_caseInsensitive() throws Exception {
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration("""
+                {
+                  "phases": [
+                    {
+                      "name": "main",
+                      "script": "echo build",
+                      "condition": "ALWAYS",
+                      "forceRun": false,
+                      "resultPaths": []
+                    }
+                  ]
+                }
+                """);
+
+        request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
+    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -487,8 +551,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importFromFile_validImportZip_changeTitle_success() throws Exception {
-        aeolusRequestMockProvider.enableMockingOfRequests();
-        aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
 
         String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
         String newTitle = "TITLE" + uniqueSuffix;
@@ -521,8 +583,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importFromFile_validImportZip() throws Exception {
-        aeolusRequestMockProvider.enableMockingOfRequests();
-        aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
 
         ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> null, course);
         ProgrammingExercise importedExercise = importResult.importedExercise();
@@ -541,8 +601,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importFromFile_verifyBuildPlansTriggered() throws Exception {
-        aeolusRequestMockProvider.enableMockingOfRequests();
-        aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
 
         ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> null, course);
 
@@ -579,8 +637,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY,
                 templateBuildTestResults, solutionBuildTestResults);
         newExercise.setChannelName("testchannelname-pe-sequential");
-        aeolusRequestMockProvider.enableMockingOfRequests();
-        aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
 
         // Create the exercise and verify status code 201
         request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);

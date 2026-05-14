@@ -180,7 +180,4 @@ export class FaqService {
             observe: 'response',
         });
     }
-    enable(courseId: number): Observable<HttpResponse<void>> {
-        return this.http.put<void>(`${this.resourceUrl}/${courseId}/faqs/enable`, null, { observe: 'response' });
-    }
 }

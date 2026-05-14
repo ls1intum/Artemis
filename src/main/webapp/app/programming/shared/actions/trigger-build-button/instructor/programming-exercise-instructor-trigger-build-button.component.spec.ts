@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -57,7 +57,7 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('should trigger build', () => {
+    it('should trigger build', fakeAsync(() => {
         const mockReturnValue = {
             result: Promise.resolve(),
             componentInstance: {},
@@ -73,7 +73,9 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
             keyboard: true,
         });
 
+        flushMicrotasks();
+
         expect(submissionService.triggerBuild).toHaveBeenCalledOnce();
         expect(submissionService.triggerBuild).toHaveBeenCalledWith(participation.id, SubmissionType.INSTRUCTOR);
-    });
+    }));
 });

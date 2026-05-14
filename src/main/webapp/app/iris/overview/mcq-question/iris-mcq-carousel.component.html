@@ -1,0 +1,68 @@
+<div class="mcq-carousel">
+    @if (!showScore()) {
+        <div class="carousel-header">
+            <span>{{ 'artemisApp.iris.mcq.questionOf' | artemisTranslate: { current: currentIndex() + 1, total: totalQuestions() } }}</span>
+        </div>
+
+        <jhi-iris-mcq-question
+            [mcqData]="mcqSetData().questions[currentIndex()]"
+            [citationInfo]="citationInfo()"
+            [initialSelectedIndex]="currentAnswer()?.selectedIndex"
+            [initialSubmitted]="currentAnswer()?.submitted ?? false"
+            (answerChanged)="onAnswerChanged($event)"
+        />
+
+        <div class="carousel-navigation">
+            <button class="nav-btn" [disabled]="currentIndex() === 0" (click)="previousQuestion()">
+                <fa-icon [icon]="faChevronLeft" />
+            </button>
+
+            @if (useDots()) {
+                <div class="carousel-dots">
+                    @for (q of mcqSetData().questions; track $index) {
+                        <button
+                            class="dot"
+                            [class.active]="currentIndex() === $index"
+                            [class.correct]="isQuestionCorrect($index)"
+                            [class.incorrect]="isQuestionIncorrect($index)"
+                            (click)="goToQuestion($index)"
+                        ></button>
+                    }
+                </div>
+            } @else {
+                <span class="carousel-counter">{{ currentIndex() + 1 }} / {{ totalQuestions() }}</span>
+            }
+
+            <button class="nav-btn" [disabled]="currentIndex() === totalQuestions() - 1" (click)="nextQuestion()">
+                <fa-icon [icon]="faChevronRight" />
+            </button>
+        </div>
+
+        @if (allAnswered()) {
+            <button class="view-score-btn" (click)="showScore.set(true)" jhiTranslate="artemisApp.iris.mcq.viewScore"></button>
+        }
+    } @else {
+        <div class="score-summary">
+            <div class="score-display">
+                <span class="score-fraction">{{ correctCount() }}/{{ totalQuestions() }}</span>
+                <span class="score-percentage">({{ scorePercentage() }}%)</span>
+            </div>
+            <div class="score-label" jhiTranslate="artemisApp.iris.mcq.score"></div>
+
+            @if (useDots()) {
+                <div class="carousel-dots score-dots">
+                    @for (q of mcqSetData().questions; track $index) {
+                        <button
+                            class="dot"
+                            [class.correct]="isQuestionCorrect($index)"
+                            [class.incorrect]="isQuestionIncorrect($index)"
+                            (click)="showScore.set(false); goToQuestion($index)"
+                        ></button>
+                    }
+                </div>
+            }
+
+            <button class="review-btn" (click)="showScore.set(false)" jhiTranslate="artemisApp.iris.mcq.reviewQuestions"></button>
+        </div>
+    }
+</div>

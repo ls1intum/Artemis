@@ -30,13 +30,5 @@ public enum SubmissionType {
     /**
      * Submission that was added through the add external submission dialogue.
      */
-    EXTERNAL,
-    /**
-     * Submission of an exam programming exercise that is submitted before the exercise start date or after the individual exercise end date.
-     *
-     * @deprecated
-     *             NOTE: this is only available for compatibility reasons and should NOT be used anymore. It will be removed in the future when the database entries are cleaned up.
-     */
-    @Deprecated(since = "8.2", forRemoval = true)
-    ILLEGAL
+    EXTERNAL
 }

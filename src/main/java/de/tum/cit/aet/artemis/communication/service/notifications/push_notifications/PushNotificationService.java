@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.communication.dto.CourseNotificationSerializedDTO;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 /**
  * Wraps the sending of iOS and Android Notifications to the Relay Service
@@ -51,7 +52,7 @@ public abstract class PushNotificationService {
 
     private static final SecureRandom random = new SecureRandom();
 
-    protected final ObjectMapper mapper = new ObjectMapper();
+    protected final ObjectMapper mapper = JsonObjectMapper.get();
 
     private static final Logger log = LoggerFactory.getLogger(PushNotificationService.class);
 

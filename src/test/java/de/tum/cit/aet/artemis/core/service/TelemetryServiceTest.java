@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.service.telemetry.TelemetrySendingService;
 import de.tum.cit.aet.artemis.core.service.telemetry.TelemetryService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,7 +44,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private MockRestServiceServer mockServer;
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = JsonObjectMapper.get();
 
     private TelemetryService telemetryServiceSpy;
 

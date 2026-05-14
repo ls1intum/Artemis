@@ -1,14 +1,14 @@
 <!-- expanded posts -->
 @if (course) {
-    <div class="h-100">
+    <div [class]="embedded() ? 'd-flex flex-column h-100' : 'h-100'">
         @if (!collapsed) {
-            <div class="postings-container expanded-discussion">
-                <div class="draggable-left">
+            <div [class]="embedded() ? 'd-flex flex-column flex-grow-1 overflow-hidden' : 'postings-container expanded-discussion'">
+                <div class="draggable-left" [hidden]="embedded()">
                     <fa-icon [icon]="faGripLinesVertical" />
                 </div>
-                <div class="card">
+                <div [class]="embedded() ? 'd-flex flex-column flex-grow-1 overflow-hidden' : 'card'">
                     <!-- header -->
-                    <div class="card-header" [ngbTooltip]="'artemisApp.metis.communication.hide' | artemisTranslate" (click)="collapsed = true">
+                    <div class="card-header" [ngbTooltip]="'artemisApp.metis.communication.hide' | artemisTranslate" (click)="collapsed = true" [hidden]="embedded()">
                         <div class="row flex-grow-1">
                             <div class="col">
                                 <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.metis.communication.label"></h5>
@@ -22,7 +22,7 @@
                     @if (noChannelAvailable) {
                         <div class="card-body" jhiTranslate="artemisApp.metis.channel.noChannel"></div>
                     } @else {
-                        <div class="card-body pt-0">
+                        <div [class]="embedded() ? 'd-flex flex-column flex-grow-1 overflow-hidden pt-0 container' : 'card-body pt-0'">
                             @if (currentPost !== undefined) {
                                 <div class="my-2">
                                     <fa-icon [icon]="faArrowLeft" (click)="resetCurrentPost()" class="back-button me-2 clickable" />
@@ -32,18 +32,7 @@
                             } @else {
                                 <div class="row ps-0">
                                     <!-- search bar -->
-                                    <div class="input-group px-0 my-2">
-                                        <input
-                                            id="search"
-                                            name="searchText"
-                                            [(ngModel)]="searchText"
-                                            class="form-control"
-                                            (keyup.enter)="onSelectContext()"
-                                            placeholder="{{ 'artemisApp.metis.discussionSection.searchBarDefault' | artemisTranslate }}"
-                                        />
-                                        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()" />
-                                        <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()" />
-                                    </div>
+                                    <jhi-search-filter class="px-0 my-2" (newSearchEvent)="onSearch($event)" />
                                 </div>
                                 <form [formGroup]="formGroup">
                                     <!-- filter and sort controls -->
@@ -125,7 +114,13 @@
                                     </div>
                                 </form>
                                 <div class="bold-line row mt-1 mb-2"></div>
-                                <div #itemsContainer class="items-container" infinite-scroll [scrollWindow]="false" (scrolledUp)="fetchNextPage()">
+                                <div
+                                    #itemsContainer
+                                    [class]="embedded() ? 'overflow-y-auto flex-grow-1' : 'items-container'"
+                                    infinite-scroll
+                                    [scrollWindow]="false"
+                                    (scrolledUp)="fetchNextPage()"
+                                >
                                     @for (post of posts; track post.id) {
                                         <jhi-posting-thread
                                             #postingThread

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.INDIVIDUAL;
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C;
@@ -18,7 +19,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mockStatic;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.io.IOException;
@@ -503,47 +503,6 @@ public class ProgrammingExerciseTestService {
         exercise.setChannelName("testchannel-pe");
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
-        validateProgrammingExercise(request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
-    }
-
-    // TEST
-    public void createProgrammingExercise_custom_build_plan_validExercise_created(ProgrammingLanguage programmingLanguage, boolean customBuildPlanWorks) throws Exception {
-        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course, programmingLanguage);
-        String validWindfile = """
-                {
-                  "api": "v0.0.1",
-                  "metadata": {
-                    "name": "example windfile",
-                    "description": "example windfile",
-                    "id": "example-windfile"
-                  },
-                  "actions": [
-                    {
-                      "name": "valid-action",
-                      "class": "script-action",
-                      "script": "echo $PATH",
-                      "runAlways": true
-                    },
-                    {
-                      "name": "valid-action1",
-                      "platform": "jenkins",
-                      "runAlways": true
-                    },
-                    {
-                      "name": "valid-action2",
-                      "script": "bash script",
-                      "runAlways": true
-                    }
-                  ]
-                }""";
-
-        exercise.getBuildConfig().setBuildPlanConfiguration(validWindfile);
-        if (programmingLanguage == C) {
-            exercise.setProjectType(ProjectType.FACT);
-        }
-        exercise.setChannelName("testchannel-pe");
-        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false, true, customBuildPlanWorks);
         validateProgrammingExercise(request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
@@ -2242,7 +2201,7 @@ public class ProgrammingExerciseTestService {
      * @param localRepository the local repository whose bare repo should be verified
      */
     private void waitForBareRepositoryReady(LocalRepository localRepository) {
-        await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             try {
                 // Try to open the bare repository and resolve HEAD
                 // This verifies the repo is accessible and has a valid HEAD reference

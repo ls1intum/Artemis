@@ -44,13 +44,14 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAccessService;
 import de.tum.cit.aet.artemis.core.service.course.CourseSearchService;
-import tech.jhipster.web.util.PaginationUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 
 /**
  * REST controller for managing access to courses and searching members in courses.
@@ -247,7 +248,7 @@ public class CourseAccessResource {
      * @return list of users with status 200 (OK)
      */
     @GetMapping("courses/{courseId}/tutors")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Set<User>> getTutorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);

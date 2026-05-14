@@ -1,4 +1,6 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
@@ -16,14 +18,16 @@ import dayjs from 'dayjs/esm';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 
 describe('HeaderParticipationPage', () => {
+    setupTestBed({ zoneless: true });
+
     let component: HeaderParticipationPageComponent;
 
     let exercise: ProgrammingExercise;
     let participation: StudentParticipation;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
                 HeaderParticipationPageComponent,
                 MockComponent(DifficultyBadgeComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
@@ -33,17 +37,15 @@ describe('HeaderParticipationPage', () => {
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [],
-        })
-            .compileComponents()
-            .then(() => {
-                const fixture = TestBed.createComponent(HeaderParticipationPageComponent);
-                component = fixture.componentInstance;
+        }).compileComponents();
 
-                exercise = new ProgrammingExercise(undefined, undefined);
-                component.exercise = exercise;
+        const fixture = TestBed.createComponent(HeaderParticipationPageComponent);
+        component = fixture.componentInstance;
 
-                participation = new StudentParticipation(ParticipationType.PROGRAMMING);
-            });
+        exercise = new ProgrammingExercise(undefined, undefined);
+        component.exercise = exercise;
+
+        participation = new StudentParticipation(ParticipationType.PROGRAMMING);
     });
 
     it('should set the status badge', () => {
@@ -62,10 +64,10 @@ describe('HeaderParticipationPage', () => {
     });
 
     it('should always publish the results for regular exercises', () => {
-        expect(component.resultsPublished).toBeTrue();
+        expect(component.resultsPublished).toBe(true);
 
         exercise.exerciseGroup = new ExerciseGroup();
-        expect(component.resultsPublished).toBeTrue();
+        expect(component.resultsPublished).toBe(true);
     });
 
     it('should only publish the results for exam exercises after the publishing date', () => {
@@ -76,13 +78,13 @@ describe('HeaderParticipationPage', () => {
         exercise.exerciseGroup = exerciseGroup;
 
         // no publishing date => do not publish
-        expect(component.resultsPublished).toBeFalse();
+        expect(component.resultsPublished).toBe(false);
 
         exam.publishResultsDate = dayjs().subtract(1, 'day');
-        expect(component.resultsPublished).toBeTrue();
+        expect(component.resultsPublished).toBe(true);
 
         exam.publishResultsDate = dayjs().add(1, 'day');
-        expect(component.resultsPublished).toBeFalse();
+        expect(component.resultsPublished).toBe(false);
     });
 
     it('should not apply changes if no exercise is set', () => {

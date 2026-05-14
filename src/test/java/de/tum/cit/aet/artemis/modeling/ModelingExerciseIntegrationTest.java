@@ -51,6 +51,8 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -129,7 +131,10 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private ConversationUtilService conversationUtilService;
 
     @Autowired
-    private AtlasMLRequestMockProvider atlasMLRequestMockProvider;
+    private Optional<AtlasMLRequestMockProvider> atlasMLRequestMockProvider;
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
 
     @Autowired(required = false)
     private de.tum.cit.aet.artemis.globalsearch.service.WeaviateService weaviateService;
@@ -911,7 +916,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedModelingExercise);
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(updatedModelingExercise.getGradingCriteria(), instruction -> instruction.getCredits() == 3)).isPresent();
         assertThat(updatedResults.getFirst().getScore()).isEqualTo(60);
-        assertThat(updatedResults.getFirst().getFeedbacks().getFirst().getCredits()).isEqualTo(3);
+        assertThat(updatedResults.getFirst().getFeedbacks().iterator().next().getCredits()).isEqualTo(3);
     }
 
     @Test
@@ -1071,20 +1076,27 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void atlasML_isCalledOnCreateUpdateAndDelete() throws Exception {
-        atlasMLRequestMockProvider.enableMockingOfRequests();
-        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
-        // Create
-        var modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        modelingExercise.setTitle("AtlasML Create");
-        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        var provider = atlasMLRequestMockProvider.orElseThrow(() -> new IllegalStateException("AtlasMLRequestMockProvider must be available for AtlasML tests"));
+        featureToggleService.enableFeature(Feature.AtlasML);
+        try {
+            provider.enableMockingOfRequests();
+            provider.mockSaveCompetenciesAny();
+            // Create
+            var modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            modelingExercise.setTitle("AtlasML Create");
+            request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
 
-        // Update
-        var created = modelingExerciseTestRepository.findByCourseIdWithCategories(classExercise.getCourseViaExerciseGroupOrCourseMember().getId()).getFirst();
-        created.setTitle("AtlasML Update");
-        request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(created), ModelingExercise.class, HttpStatus.OK);
+            // Update
+            var created = modelingExerciseTestRepository.findByCourseIdWithCategories(classExercise.getCourseViaExerciseGroupOrCourseMember().getId()).getFirst();
+            created.setTitle("AtlasML Update");
+            request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(created), ModelingExercise.class, HttpStatus.OK);
 
-        // Delete
-        request.delete("/api/modeling/modeling-exercises/" + created.getId(), HttpStatus.OK);
+            // Delete
+            request.delete("/api/modeling/modeling-exercises/" + created.getId(), HttpStatus.OK);
+        }
+        finally {
+            featureToggleService.disableFeature(Feature.AtlasML);
+        }
     }
 
     @Test
@@ -1191,7 +1203,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(modelingExerciseTestRepository.findById(importedModelingExercise.getId())).isPresent();
 
         var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().orElseThrow();
-        GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().getFirst().getGradingInstruction();
+        GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().iterator().next()
+                .getGradingInstruction();
         assertThat(importedFeedbackGradingInstruction).isNotNull();
 
         // Copy and original should have the same data but not the same ids.
@@ -1206,7 +1219,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         var importedModelingExerciseFromDb = modelingExerciseTestRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(importedModelingExercise.getId())
                 .orElseThrow();
         var importedFeedbackGradingInstructionFromDb = importedModelingExerciseFromDb.getExampleSubmissions().stream().findFirst().orElseThrow().getSubmission().getLatestResult()
-                .getFeedbacks().getFirst().getGradingInstruction();
+                .getFeedbacks().iterator().next().getGradingInstruction();
 
         assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());
 

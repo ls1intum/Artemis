@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.dto.GradeDTO;
+import de.tum.cit.aet.artemis.assessment.dto.GradeStepDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradeStepsDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradeStepRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
@@ -129,7 +131,8 @@ public class GradeStepResource {
         for (GradeStep gradeStep : gradeSteps) {
             gradeStep.setGradingScale(null);
         }
-        return new GradeStepsDTO(title, gradingScale.getGradeType(), gradeSteps, maxPoints, gradingScale.getPlagiarismGradeOrDefault(),
+        var newGradeSteps = gradeSteps.stream().map(GradeStepDTO::of).collect(Collectors.toSet());
+        return new GradeStepsDTO(title, gradingScale.getGradeType(), newGradeSteps, maxPoints, gradingScale.getPlagiarismGradeOrDefault(),
                 gradingScale.getNoParticipationGradeOrDefault(), gradingScale.getPresentationsNumber(), gradingScale.getPresentationsWeight());
     }
 
@@ -142,7 +145,7 @@ public class GradeStepResource {
      */
     @GetMapping("courses/{courseId}/grading-scale/grade-steps/{gradeStepId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradeStep> getGradeStepsByIdForCourse(@PathVariable Long courseId, @PathVariable Long gradeStepId) {
+    public ResponseEntity<GradeStepDTO> getGradeStepsByIdForCourse(@PathVariable Long courseId, @PathVariable Long gradeStepId) {
         // TODO: no client usages found, is it even used anymore?
 
         log.debug("REST request to get grade step {} for course: {}", gradeStepId, courseId);
@@ -150,7 +153,7 @@ public class GradeStepResource {
         gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var gradeStep = gradeStepRepository.findByIdElseThrow(gradeStepId);
-        return ResponseEntity.ok(gradeStep);
+        return ResponseEntity.ok(GradeStepDTO.of(gradeStep));
     }
 
     /**
@@ -163,7 +166,7 @@ public class GradeStepResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/grading-scale/grade-steps/{gradeStepId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradeStep> getGradeStepsByIdForExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long gradeStepId) {
+    public ResponseEntity<GradeStepDTO> getGradeStepsByIdForExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long gradeStepId) {
         // TODO: no client usages found, is it even used anymore?
 
         log.debug("REST request to get grade step {} for exam: {}", gradeStepId, examId);
@@ -171,7 +174,7 @@ public class GradeStepResource {
         gradingScaleRepository.findByExamIdOrElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var gradeStep = gradeStepRepository.findByIdElseThrow(gradeStepId);
-        return ResponseEntity.ok(gradeStep);
+        return ResponseEntity.ok(GradeStepDTO.of(gradeStep));
     }
 
     /**

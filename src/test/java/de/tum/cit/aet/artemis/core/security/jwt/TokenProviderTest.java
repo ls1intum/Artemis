@@ -15,13 +15,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.authentication.AuthenticationFactory;
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import tech.jhipster.config.JHipsterProperties;
 
 class TokenProviderTest {
 
@@ -37,7 +37,7 @@ class TokenProviderTest {
 
     @BeforeEach
     void setup() {
-        JHipsterProperties jHipsterProperties = new JHipsterProperties();
+        ArtemisProperties jHipsterProperties = new ArtemisProperties();
         String base64Secret = "fd54a45s65fds737b9aafcb3412e07ed99b267f33413274720ddbb7f6c5e64e9f14075f2d7ed041592f0b7657baf8";
         jHipsterProperties.getSecurity().getAuthentication().getJwt().setBase64Secret(base64Secret);
 
@@ -99,7 +99,7 @@ class TokenProviderTest {
     @Test
     void testKeyIsSetFromSecretWhenSecretIsNotEmpty() {
         final String secret = "NwskoUmKHZtzGRKJKVjsJF7BtQMMxNWi";
-        JHipsterProperties jHipsterProperties = new JHipsterProperties();
+        ArtemisProperties jHipsterProperties = new ArtemisProperties();
         jHipsterProperties.getSecurity().getAuthentication().getJwt().setSecret(secret);
 
         SecurityMetersService securityMetersService = new SecurityMetersService(new SimpleMeterRegistry());
@@ -114,7 +114,7 @@ class TokenProviderTest {
     @Test
     void testKeyIsSetFromBase64SecretWhenSecretIsEmpty() {
         final String base64Secret = "fd54a45s65fds737b9aafcb3412e07ed99b267f33413274720ddbb7f6c5e64e9f14075f2d7ed041592f0b7657baf8";
-        JHipsterProperties jHipsterProperties = new JHipsterProperties();
+        ArtemisProperties jHipsterProperties = new ArtemisProperties();
         jHipsterProperties.getSecurity().getAuthentication().getJwt().setBase64Secret(base64Secret);
 
         SecurityMetersService securityMetersService = new SecurityMetersService(new SimpleMeterRegistry());

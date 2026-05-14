@@ -5,13 +5,13 @@ import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialRegistrationsRegisterSearchBarComponent } from './tutorial-registrations-register-search-bar.component';
-import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
-interface TutorialGroupsServiceMock {
-    getUnregisteredStudentDTOs: ReturnType<typeof vi.fn>;
+interface TutorialGroupApiServiceMock {
+    searchUnregisteredStudents: ReturnType<typeof vi.fn>;
 }
 
 interface AlertServiceMock {
@@ -23,7 +23,7 @@ function assertNonNullable<T>(value: T): asserts value is NonNullable<T> {
     expect(value).not.toBeUndefined();
 }
 
-function createStudent(id: number): TutorialGroupRegisteredStudentDTO {
+function createStudent(id: number): TutorialGroupStudent {
     return {
         id,
         login: `student${id}`,
@@ -34,7 +34,7 @@ function createStudent(id: number): TutorialGroupRegisteredStudentDTO {
     };
 }
 
-function createPageOfStudents(): TutorialGroupRegisteredStudentDTO[] {
+function createPageOfStudents(): TutorialGroupStudent[] {
     return Array.from({ length: 25 }, (_, index) => createStudent(index + 1));
 }
 
@@ -51,11 +51,11 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     let component: TutorialRegistrationsRegisterSearchBarComponent;
     let fixture: ComponentFixture<TutorialRegistrationsRegisterSearchBarComponent>;
 
-    let tutorialGroupsServiceMock: TutorialGroupsServiceMock;
+    let tutorialGroupApiServiceMock: TutorialGroupApiServiceMock;
     let alertServiceMock: AlertServiceMock;
     let overlayContainer: OverlayContainer;
 
-    const firstStudent: TutorialGroupRegisteredStudentDTO = {
+    const firstStudent: TutorialGroupStudent = {
         id: 1,
         name: 'Ada Lovelace',
         login: 'ada',
@@ -64,7 +64,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
         profilePictureUrl: undefined,
     };
 
-    const secondStudent: TutorialGroupRegisteredStudentDTO = {
+    const secondStudent: TutorialGroupStudent = {
         id: 2,
         name: 'Alan Turing',
         login: 'alan',
@@ -74,8 +74,8 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     };
 
     beforeEach(async () => {
-        tutorialGroupsServiceMock = {
-            getUnregisteredStudentDTOs: vi.fn().mockReturnValue(of([])),
+        tutorialGroupApiServiceMock = {
+            searchUnregisteredStudents: vi.fn().mockReturnValue(of([])),
         };
 
         alertServiceMock = {
@@ -85,7 +85,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
         await TestBed.configureTestingModule({
             imports: [TutorialRegistrationsRegisterSearchBarComponent],
             providers: [
-                { provide: TutorialGroupsService, useValue: tutorialGroupsServiceMock },
+                { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -105,14 +105,14 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     });
 
     it('should load the first page when the search string becomes non-empty', async () => {
-        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValue(of([firstStudent, secondStudent]));
+        tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValue(of([firstStudent, secondStudent]));
 
         component.searchString.set(' ada ');
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(tutorialGroupsServiceMock.getUnregisteredStudentDTOs).toHaveBeenCalledOnce();
-        expect(tutorialGroupsServiceMock.getUnregisteredStudentDTOs).toHaveBeenCalledWith(7, 11, 'ada', 0, 25);
+        expect(tutorialGroupApiServiceMock.searchUnregisteredStudents).toHaveBeenCalledOnce();
+        expect(tutorialGroupApiServiceMock.searchUnregisteredStudents).toHaveBeenCalledWith(7, 11, 'ada', 0, 25);
         expect(component.suggestedStudents()).toEqual([firstStudent, secondStudent]);
         expect(component.nextSuggestedStudentsPageIndex()).toBe(1);
         expect(component.hasMorePages()).toBe(false);
@@ -121,14 +121,14 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     });
 
     it('should show an error alert when loading the first page fails', async () => {
-        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValue(throwError(() => new Error('first page failed')));
+        tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValue(throwError(() => new Error('first page failed')));
 
         component.searchString.set('ada');
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(tutorialGroupsServiceMock.getUnregisteredStudentDTOs).toHaveBeenCalledOnce();
-        expect(tutorialGroupsServiceMock.getUnregisteredStudentDTOs).toHaveBeenCalledWith(7, 11, 'ada', 0, 25);
+        expect(tutorialGroupApiServiceMock.searchUnregisteredStudents).toHaveBeenCalledOnce();
+        expect(tutorialGroupApiServiceMock.searchUnregisteredStudents).toHaveBeenCalledWith(7, 11, 'ada', 0, 25);
         expect(alertServiceMock.addErrorAlert).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupRegistrations.registerSearchBar.fetchSuggestionsError');
         expect(component.suggestedStudents()).toEqual([]);
         expect(component.nextSuggestedStudentsPageIndex()).toBe(0);
@@ -139,7 +139,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
 
     it('should load the next page when the suggestions viewport is scrolled near the bottom', async () => {
         const firstPageStudents = createPageOfStudents();
-        const nextPageStudent: TutorialGroupRegisteredStudentDTO = {
+        const nextPageStudent: TutorialGroupStudent = {
             id: 99,
             login: 'grace',
             name: 'Grace Hopper',
@@ -148,7 +148,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
             profilePictureUrl: undefined,
         };
 
-        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValueOnce(of(firstPageStudents)).mockReturnValueOnce(of([nextPageStudent]));
+        tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValueOnce(of(firstPageStudents)).mockReturnValueOnce(of([nextPageStudent]));
 
         const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
         input.dispatchEvent(new FocusEvent('focusin'));
@@ -163,8 +163,8 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(tutorialGroupsServiceMock.getUnregisteredStudentDTOs).toHaveBeenCalledTimes(2);
-        expect(tutorialGroupsServiceMock.getUnregisteredStudentDTOs).toHaveBeenNthCalledWith(2, 7, 11, 'ada', 1, 25);
+        expect(tutorialGroupApiServiceMock.searchUnregisteredStudents).toHaveBeenCalledTimes(2);
+        expect(tutorialGroupApiServiceMock.searchUnregisteredStudents).toHaveBeenNthCalledWith(2, 7, 11, 'ada', 1, 25);
         expect(component.suggestedStudents()).toEqual([...firstPageStudents, nextPageStudent]);
         expect(component.nextSuggestedStudentsPageIndex()).toBe(2);
         expect(component.hasMorePages()).toBe(false);
@@ -175,7 +175,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     it('should show an error alert when next page loading fails', async () => {
         const firstPageStudents = createPageOfStudents();
 
-        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValueOnce(of(firstPageStudents)).mockReturnValueOnce(throwError(() => new Error('next page failed')));
+        tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValueOnce(of(firstPageStudents)).mockReturnValueOnce(throwError(() => new Error('next page failed')));
 
         const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
         input.dispatchEvent(new FocusEvent('focusin'));
@@ -190,8 +190,8 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(tutorialGroupsServiceMock.getUnregisteredStudentDTOs).toHaveBeenCalledTimes(2);
-        expect(tutorialGroupsServiceMock.getUnregisteredStudentDTOs).toHaveBeenNthCalledWith(2, 7, 11, 'ada', 1, 25);
+        expect(tutorialGroupApiServiceMock.searchUnregisteredStudents).toHaveBeenCalledTimes(2);
+        expect(tutorialGroupApiServiceMock.searchUnregisteredStudents).toHaveBeenNthCalledWith(2, 7, 11, 'ada', 1, 25);
         expect(alertServiceMock.addErrorAlert).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupRegistrations.registerSearchBar.fetchSuggestionsError');
         expect(component.suggestedStudents()).toEqual(firstPageStudents);
         expect(component.nextSuggestedStudentsPageIndex()).toBe(1);
@@ -201,7 +201,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     });
 
     it('should reset suggestion state when the search string is empty', async () => {
-        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValue(of([firstStudent, secondStudent]));
+        tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValue(of([firstStudent, secondStudent]));
 
         const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
         input.dispatchEvent(new FocusEvent('focusin'));
@@ -220,7 +220,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     });
 
     it('should close the panel on focus out and reopen it on focus in when suggestions exist', async () => {
-        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValue(of([firstStudent, secondStudent]));
+        tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValue(of([firstStudent, secondStudent]));
 
         const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
 
@@ -257,7 +257,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     });
 
     it('should update the highlight with arrow keys and emit the selected student on enter after loading suggestions', async () => {
-        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValue(of([firstStudent, secondStudent]));
+        tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValue(of([firstStudent, secondStudent]));
         const emitSpy = vi.spyOn(component.onStudentSelected, 'emit');
         const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
 
@@ -298,7 +298,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     });
 
     it('should select the first suggestion when arrow down is pressed without an active selection', async () => {
-        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValue(of([firstStudent, secondStudent]));
+        tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValue(of([firstStudent, secondStudent]));
         const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
 
         input.dispatchEvent(new FocusEvent('focusin'));
@@ -317,7 +317,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     });
 
     it('should keep the selection undefined when arrow up is pressed without an active selection', async () => {
-        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValue(of([firstStudent, secondStudent]));
+        tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValue(of([firstStudent, secondStudent]));
         const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
 
         input.dispatchEvent(new FocusEvent('focusin'));

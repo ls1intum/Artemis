@@ -2,7 +2,6 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { Dialog } from 'primeng/dialog';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
-import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialRegistrationsRegisterSearchBarComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-search-bar/tutorial-registrations-register-search-bar.component';
 import {
     TutorialRegistrationsStudentsTableComponent,
@@ -11,10 +10,11 @@ import {
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ButtonDirective } from 'primeng/button';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-modal',
@@ -32,7 +32,7 @@ import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage
 export class TutorialRegistrationsRegisterModalComponent {
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
-    private tutorialGroupsService = inject(TutorialGroupsService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
     private tutorialGroupRegisteredStudentsService = inject(TutorialGroupRegisteredStudentsService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
@@ -50,7 +50,7 @@ export class TutorialRegistrationsRegisterModalComponent {
     isOpen = signal(false);
     isLoading = signal(false);
     header = computed<string>(() => this.computeHeader());
-    selectedStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
+    selectedStudents = signal<TutorialGroupStudent[]>([]);
     registerAllButtonDisabled = computed(() => this.selectedStudents().length === 0 || this.isLoading());
 
     open() {
@@ -62,7 +62,7 @@ export class TutorialRegistrationsRegisterModalComponent {
         this.isOpen.set(false);
     }
 
-    selectStudent(student: TutorialGroupRegisteredStudentDTO) {
+    selectStudent(student: TutorialGroupStudent) {
         if (this.selectedStudents().every((otherStudent) => otherStudent.id !== student.id)) {
             this.selectedStudents.update((students) => [...students, student]);
         }
@@ -70,8 +70,8 @@ export class TutorialRegistrationsRegisterModalComponent {
 
     registerAll() {
         this.isLoading.set(true);
-        this.tutorialGroupsService
-            .registerMultipleStudentsViaLogin(
+        this.tutorialGroupApiService
+            .batchRegisterStudents(
                 this.courseId(),
                 this.tutorialGroupId(),
                 this.selectedStudents().map((student) => student.login),

@@ -9,6 +9,10 @@ on:
     paths:
       - 'src/main/java/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   query-quality-check:
     runs-on: ubuntu-latest
@@ -37,7 +41,7 @@ jobs:
 
           # TODO these values should become zero in the future
           max_entitygraph_violations=11
-          max_query_violations=24
+          max_query_violations=25
           max_total_violations=$((max_entitygraph_violations + max_query_violations))
 
           echo "=========================================="

@@ -6,12 +6,12 @@ on:
     workflows: ["Build"]
     types: [completed]
 
+# Single-line concurrency group to avoid YAML block-scalar quirks and keep the
+# group key reliably comparable across runs. head_branch is set on branch /
+# default-branch pushes (groups all E2E for that branch into one slot); head_sha
+# is the fallback for events with no branch.
 concurrency:
-  group: |
-    ${{
-      github.event.workflow_run.head_branch && format('e2e-{0}', github.event.workflow_run.head_branch)
-      || format('e2e-{0}', github.event.workflow_run.head_sha)
-    }}
+  group: e2e-${{ github.event.workflow_run.head_branch || github.event.workflow_run.head_sha }}
   cancel-in-progress: true
 
 env:
@@ -21,11 +21,48 @@ env:
   STATUSES_REQUEST_URL: "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.workflow_run.head_sha }}"
   # This is the URL to the workflow run in the GitHub Actions UI.
   TARGET_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+  PLAYWRIGHT_REPORT_SERVER_URL: ${{ vars.PLAYWRIGHT_REPORT_SERVER_URL }}
+  PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
+  PLAYWRIGHT_REPORT_BRANCH: ${{ github.event.workflow_run.head_branch }}
+  PLAYWRIGHT_REPORT_COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+  PLAYWRIGHT_REPORT_TRIGGERED_BY: ${{ github.event.workflow_run.event }}
 
 jobs:
+  # Guard against workflow_run queue stacking. Each Build retry fires a new
+  # workflow_run event that queues another E2E run for the same SHA; built-in
+  # concurrency cancel-in-progress does not reliably dedupe queued runs that
+  # sit waiting for the [self-hosted, e2e-test] pool. This job runs on
+  # ubuntu-latest (instant pickup) and uses styfle/cancel-workflow-action to
+  # cancel older same-SHA runs of this workflow, and self-cancels if a newer
+  # run already exists. Cross-SHA cancellation is the built-in `concurrency`
+  # block's responsibility (it works reliably when the next run starts
+  # immediately).
+  cancel-superseded:
+    name: Cancel superseded E2E runs
+    # Skip on Build failures — those workflow_run events would produce skipped
+    # E2E runs anyway, because all dependent jobs are if-gated on
+    # conclusion == 'success'. No queue stacking comes from failed Builds.
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      actions: write
+    steps:
+      - name: Cancel older E2E runs for this SHA
+        uses: styfle/cancel-workflow-action@0.13.1
+        with:
+          # all_but_latest: cancels every queued or in-progress run of this
+          # workflow except the absolute newest, including self if a newer run
+          # exists. ignore_sha defaults to false → only same-SHA runs are
+          # cancelled (we don't want to cancel a PR's E2E because of an
+          # unrelated develop push).
+          all_but_latest: true
+          access_token: ${{ github.token }}
+
   # Job to determine which tests are relevant based on changed files (only for PRs)
   determine-tests:
     name: Determine Relevant Tests
+    needs: cancel-superseded
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     outputs:
@@ -79,8 +116,9 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_PHASE: phase1
+      PLAYWRIGHT_REPORT_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
     outputs:
-      phase1_status: ${{ job.status }}
       reporter_failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
     steps:
       # workflow_run events do not create check runs, so we set a status manually
@@ -173,20 +211,35 @@ jobs:
         if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
         uses: actions/github-script@v8
         continue-on-error: true
+        env:
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+          INPUT_RELEVANT_TESTS: ${{ needs.determine-tests.outputs.relevant_tests }}
+          INPUT_REMAINING_TESTS: ${{ needs.determine-tests.outputs.remaining_tests }}
+          INPUT_DETAILS: ${{ steps.format-results.outputs.details }}
+          INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
+          INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
+          INPUT_INFRA_NOTE: ${{ steps.format-results.outputs.infra-note }}
         with:
           script: |
+            const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
+
             const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
             if (!prNumber) return;
             const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
 
-            const relevantTests = `${{ needs.determine-tests.outputs.relevant_tests }}`;
-            const remainingTests = `${{ needs.determine-tests.outputs.remaining_tests }}`;
+            const relevantTests = process.env.INPUT_RELEVANT_TESTS || '';
+            const remainingTests = process.env.INPUT_REMAINING_TESTS || '';
             const emoji = '${{ steps.format-results.outputs.status-emoji }}';
             const status = '${{ steps.format-results.outputs.status-text }}';
-            const details = `${{ steps.format-results.outputs.details }}`;
-            const failuresSection = `${{ steps.format-results.outputs.failures-section }}`;
-            const reporterNote = `${{ steps.format-results.outputs.reporter-note }}`;
-            const infraNote = `${{ steps.format-results.outputs.infra-note }}`;
+            const details = process.env.INPUT_DETAILS || '';
+            const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
+            const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
+            const infraNote = process.env.INPUT_INFRA_NOTE || '';
+
+            // Fetch flakiness scores for failed tests
+            const failedTests = parseFailedTests('phase1-test-results/results.xml');
+            const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
+            const flakinessTable = buildFlakinessTable(flakinessResults);
 
             let body = `## End-to-End Test Results\n\n`;
             body += `| Phase | Status | Details |\n`;
@@ -200,13 +253,18 @@ jobs:
             body += failuresSection;
             body += reporterNote;
             body += infraNote;
+            body += flakinessTable;
             body += `\n\n**Test Strategy:** Two-phase execution\n`;
             body += `- **Phase 1:** \`${relevantTests}\`\n`;
             body += `- **Phase 2:** \`${remainingTests || 'None'}\`\n`;
             // <!-- OVERALL --> is a placeholder that the report-results job replaces
             // with Phase 2 notes (if any) and the final overall status line.
             body += `<!-- OVERALL -->\n\n`;
-            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+              body += ` · 📊 [Test Report Phase 1](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
+            }
+            body += `\n`;
             body += `<!-- E2E Test Results -->`;
 
             if (existingCommentId) {
@@ -253,6 +311,8 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_PHASE: phase2
+      PLAYWRIGHT_REPORT_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
     steps:
       - name: Update status to Phase 2
         run: |
@@ -344,24 +404,37 @@ jobs:
         if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
         uses: actions/github-script@v8
         continue-on-error: true
+        env:
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+          INPUT_DETAILS: ${{ steps.format-results.outputs.details }}
+          INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
+          INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
+          INPUT_INFRA_NOTE: ${{ steps.format-results.outputs.infra-note }}
         with:
           script: |
+            const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
+
             const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
             if (!prNumber) return;
             const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
 
             const emoji = '${{ steps.format-results.outputs.status-emoji }}';
             const status = '${{ steps.format-results.outputs.status-text }}';
-            const details = `${{ steps.format-results.outputs.details }}`;
-            const failuresSection = `${{ steps.format-results.outputs.failures-section }}`;
-            const reporterNote = `${{ steps.format-results.outputs.reporter-note }}`;
-            const infraNote = `${{ steps.format-results.outputs.infra-note }}`;
+            const details = process.env.INPUT_DETAILS || '';
+            const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
+            const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
+            const infraNote = process.env.INPUT_INFRA_NOTE || '';
 
             const phase2Row = `| **Phase 2** (Remaining) | ${emoji} ${status} | ${details} |`;
 
+            // Fetch flakiness scores for Phase 2 failed tests
+            const failedTests = parseFailedTests('phase2-test-results/results.xml');
+            const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
+            const flakinessTable = buildFlakinessTable(flakinessResults);
+
             // Pass Phase 2 notes as output so the report-results job can insert them
             // alongside the overall status when it replaces <!-- OVERALL -->.
-            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote);
+            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote + flakinessTable);
 
             if (existingCommentId) {
               let body = (await github.rest.issues.getComment({
@@ -374,6 +447,14 @@ jobs:
               // is left untouched for the report-results job to handle.
               body = body.replace(/<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s, phase2Row);
 
+              // Append Phase 2 report link to the footer (idempotent).
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                const phase2ReportUrl = `${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase2`;
+                if (!body.includes(phase2ReportUrl)) {
+                  body = body.replace('\n<!-- E2E Test Results -->', ` · 📊 [Test Report Phase 2](${phase2ReportUrl})\n<!-- E2E Test Results -->`);
+                }
+              }
+
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -383,15 +464,19 @@ jobs:
               console.log(`Updated comment ${existingCommentId} with Phase 2 results`);
             } else {
               // Fallback: create new comment if Phase 1 comment not found.
-              // Notes are omitted here — the report-results job will insert them
-              // when it replaces <!-- OVERALL --> with the final status.
+              // Failures and flakiness are omitted here — the report-results job will
+              // insert them via phase2_notes when it replaces <!-- OVERALL -->.
               let body = `## End-to-End Test Results\n\n`;
               body += `| Phase | Status | Details |\n`;
               body += `|-------|--------|---------|\n`;
               body += `| **Phase 1** (Relevant) | ✅ Passed | *(completed in previous step)* |\n`;
               body += `${phase2Row}\n`;
               body += `<!-- OVERALL -->\n\n`;
-              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                body += ` · 📊 [Test Report Phase 2](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase2)`;
+              }
+              body += `\n`;
               body += `<!-- E2E Test Results -->`;
 
               await github.rest.issues.createComment({
@@ -426,6 +511,8 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_PHASE: all
+      PLAYWRIGHT_REPORT_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
     steps:
       - name: Create pending status
         run: |
@@ -525,18 +612,31 @@ jobs:
         if: success() || failure()
         uses: actions/github-script@v8
         continue-on-error: true
+        env:
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+          INPUT_DETAILS: ${{ steps.format-results.outputs.details }}
+          INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
+          INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
+          INPUT_INFRA_NOTE: ${{ steps.format-results.outputs.infra-note }}
         with:
           script: |
+            const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
+
             const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
             if (!prNumber) return;
             const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
 
             const emoji = '${{ steps.format-results.outputs.status-emoji }}';
             const status = '${{ steps.format-results.outputs.status-text }}';
-            const details = `${{ steps.format-results.outputs.details }}`;
-            const failuresSection = `${{ steps.format-results.outputs.failures-section }}`;
-            const reporterNote = `${{ steps.format-results.outputs.reporter-note }}`;
-            const infraNote = `${{ steps.format-results.outputs.infra-note }}`;
+            const details = process.env.INPUT_DETAILS || '';
+            const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
+            const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
+            const infraNote = process.env.INPUT_INFRA_NOTE || '';
+
+            // Fetch flakiness scores for failed tests
+            const failedTests = parseFailedTests('all-test-results/results.xml');
+            const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
+            const flakinessTable = buildFlakinessTable(flakinessResults);
 
             let body = `## End-to-End Test Results\n\n`;
             body += `| Phase | Status | Details |\n`;
@@ -545,9 +645,14 @@ jobs:
             body += failuresSection;
             body += reporterNote;
             body += infraNote;
+            body += flakinessTable;
             body += `\n\n**Test Strategy:** Running all tests (configuration or infrastructure changes detected)\n`;
             body += `<!-- OVERALL -->\n\n`;
-            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+              body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-all)`;
+            }
+            body += `\n`;
             body += `<!-- E2E Test Results -->`;
 
             if (existingCommentId) {
@@ -569,6 +674,7 @@ jobs:
   # Run all tests for non-PR events (push to develop, main, release branches)
   run-e2e-all-non-pr:
     name: Run All E2E Tests (Non-PR)
+    needs: cancel-superseded
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'pull_request'
     runs-on: [self-hosted, e2e-test]
     timeout-minutes: 120
@@ -583,6 +689,7 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_PHASE: all
     steps:
       - name: Create pending status
         run: |
@@ -729,20 +836,22 @@ jobs:
         if: always() && github.event.workflow_run.event == 'pull_request'
         uses: actions/github-script@v8
         continue-on-error: true
+        env:
+          INPUT_PHASE2_NOTES: ${{ needs.run-e2e-remaining.outputs.phase2_notes || '' }}
         with:
           script: |
             const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
             if (!prNumber) return;
             const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
 
-            const status = `${{ steps.overall-status.outputs.status }}`;
-            const description = `${{ steps.overall-status.outputs.description }}`;
+            const status = '${{ steps.overall-status.outputs.status }}';
+            const description = '${{ steps.overall-status.outputs.description }}';
             const overallEmoji = status === 'success' ? '✅' : '❌';
             const overallLine = `\n**Overall: ${overallEmoji} ${description}**`;
 
             const phase1Result = '${{ needs.run-e2e-relevant.result }}';
             const phase2Result = '${{ needs.run-e2e-remaining.result }}';
-            const phase2Notes = `${{ needs.run-e2e-remaining.outputs.phase2_notes || '' }}`;
+            const phase2Notes = process.env.INPUT_PHASE2_NOTES || '';
 
             if (existingCommentId) {
               let body = (await github.rest.issues.getComment({
@@ -781,7 +890,11 @@ jobs:
               const marker = '<!-- E2E Test Results -->';
               let body = `## End-to-End Test Results\n\n`;
               body += `**Overall: ${overallEmoji} ${description}**\n\n`;
-              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                body += ` · 📊 [Test Report Phase 1](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
+              }
+              body += `\n`;
               body += marker;
 
               await github.rest.issues.createComment({

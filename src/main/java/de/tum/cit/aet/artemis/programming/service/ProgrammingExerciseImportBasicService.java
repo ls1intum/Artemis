@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -154,6 +155,10 @@ public class ProgrammingExerciseImportBasicService {
             // exercise and want to reuse it from the existing exercise
             newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
         }
+        if (!BuildPlanPhasesDTO.isInPhasesFormatOrNull(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())
+                && newProgrammingExercise.getBuildConfig().getBuildScript() == null) {
+            newProgrammingExercise.getBuildConfig().setBuildScript(originalProgrammingExercise.getBuildConfig().getBuildScript());
+        }
 
         // Hints, tasks, test cases and static code analysis categories
         newProgrammingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(newProgrammingExercise.getBuildConfig()));
@@ -209,7 +214,7 @@ public class ProgrammingExerciseImportBasicService {
         programmingExerciseTaskService.updateTestIds(importedExercise, newTestCaseIdByOldId);
 
         // Copy or create SCA categories
-        if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled()))) {
+        if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled()) && Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
             importStaticCodeAnalysisCategories(originalProgrammingExercise, importedExercise);
         }
         else if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
