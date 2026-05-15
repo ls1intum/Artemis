@@ -143,11 +143,7 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     }
 
     private updateCourseShortName() {
-        const programmingExercise = this.programmingExercise();
-        if (!programmingExercise) {
-            return;
-        }
-        this.courseShortName = getCourseFromExercise(programmingExercise)?.shortName;
+        this.courseShortName = getCourseFromExercise(this.programmingExercise())?.shortName;
     }
 
     private addLeadingSlash(path?: string): string | undefined {

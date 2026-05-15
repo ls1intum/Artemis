@@ -53,9 +53,6 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     constructor() {
         effect(() => {
             const participation = this.participation();
-            if (!participation) {
-                return;
-            }
             if (participation.id === this.previousParticipationId) {
                 return;
             }

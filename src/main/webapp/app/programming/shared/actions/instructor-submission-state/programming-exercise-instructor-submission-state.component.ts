@@ -59,7 +59,7 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     constructor() {
         effect(() => {
             const exercise = this.exercise();
-            const exerciseId = exercise?.id;
+            const exerciseId = exercise.id;
             if (exerciseId !== undefined && exerciseId !== this.lastSubscribedExerciseId) {
                 this.lastSubscribedExerciseId = exerciseId;
                 this.submissionStateSubscription?.unsubscribe();

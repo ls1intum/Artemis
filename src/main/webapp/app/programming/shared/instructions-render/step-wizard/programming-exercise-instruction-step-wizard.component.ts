@@ -36,6 +36,8 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
     readonly tasks = input.required<TaskArray>();
 
     readonly steps = computed<StepWizardStep[]>(() => {
+        // Although `tasks` is declared as `input.required<TaskArray>()`, the parent template binds a
+        // plain (potentially-undefined) class field on first render, so we keep the runtime guard.
         const tasks = this.tasks();
         const latestResult = this.latestResult();
         if (!tasks) {
@@ -68,6 +70,9 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
         } = this.instructionService.testStatusForTask(tests, latestResult);
         const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'lg' });
         const componentInstance = modalRef.componentInstance as FeedbackComponent;
+        // The exercise/participation inputs are non-required and may be undefined when the parent
+        // is mid-init. FeedbackComponent tolerates that (its corresponding fields are also optional);
+        // the `!` here matches the legacy ngOnChanges contract.
         componentInstance.exercise = this.exercise()!;
         componentInstance.result = latestResult;
         componentInstance.participation = this.participation()!;
