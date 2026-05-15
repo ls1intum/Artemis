@@ -256,17 +256,43 @@
                                     </div>
                                 }
                                 @if (message.sender === IrisSender.CTXSWAP) {
+                                    @let contextSwitch = getContextSwitchInfo(message);
                                     <div class="context-switch-divider" role="separator">
                                         <span class="divider-line"></span>
-                                        <span class="divider-label">
-                                            <fa-icon [icon]="faArrowsRotate" />
-                                            <span jhiTranslate="artemisApp.iris.contextSelection.divider"></span>
-                                            @for (content of message.content; track content.id ?? $index) {
-                                                @if (content.type === IrisMessageContentType.TEXT) {
-                                                    <span>{{ (content | as: IrisTextMessageContent).textContent }}</span>
+                                        @if (contextSwitch.transition === 'removed') {
+                                            <span class="divider-label">
+                                                <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicCleared"></span>
+                                            </span>
+                                        } @else if (contextSwitch.entityRoute) {
+                                            <button
+                                                type="button"
+                                                class="divider-label divider-label-clickable"
+                                                [routerLink]="contextSwitch.entityRoute"
+                                                [queryParamsHandling]="'preserve'"
+                                            >
+                                                @if (contextSwitch.transition === 'changed') {
+                                                    <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicSwitched"></span>
+                                                } @else {
+                                                    <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicSet"></span>
                                                 }
-                                            }
-                                        </span>
+                                                @if (contextSwitch.entityIcon) {
+                                                    <fa-icon [icon]="contextSwitch.entityIcon" />
+                                                }
+                                                <span>{{ contextSwitch.name }}</span>
+                                            </button>
+                                        } @else {
+                                            <span class="divider-label">
+                                                @if (contextSwitch.transition === 'changed') {
+                                                    <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicSwitched"></span>
+                                                } @else {
+                                                    <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicSet"></span>
+                                                }
+                                                @if (contextSwitch.entityIcon) {
+                                                    <fa-icon [icon]="contextSwitch.entityIcon" />
+                                                }
+                                                <span>{{ contextSwitch.name }}</span>
+                                            </span>
+                                        }
                                         <span class="divider-line"></span>
                                     </div>
                                 }

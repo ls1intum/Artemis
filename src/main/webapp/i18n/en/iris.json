@@ -183,7 +183,10 @@
                 "courseGroup": "Course",
                 "lecturesGroup": "Lectures",
                 "exercisesGroup": "Exercises",
-                "divider": "Context changed to"
+                "chatTopicSet": "Chat topic set:",
+                "chatTopicCleared": "Chat topic cleared",
+                "chatTopicSwitched": "Chat topic switched:",
+                "addContextTooltip": "Select lecture or exercise"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",

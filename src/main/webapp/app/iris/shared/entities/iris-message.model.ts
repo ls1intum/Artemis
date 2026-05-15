@@ -45,7 +45,7 @@ export class IrisArtifactMessage implements BaseEntity {
 
 export class IrisContextSwitchMessage implements BaseEntity {
     id?: number;
-    content: IrisTextMessageContent[];
+    content: IrisMessageContent[];
     sentAt?: dayjs.Dayjs;
     sender: IrisSender.CTXSWAP;
     accessedMemories?: never;
