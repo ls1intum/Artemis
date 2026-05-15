@@ -31,6 +31,7 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -39,6 +40,26 @@ import { MockModule } from 'ng-mocks';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+
+/**
+ * Typed view onto the private/internal fields of {@link ProgrammingExerciseInstructionComponent}
+ * the tests exercise. Centralising these reach-ins replaces dozens of `@ts-ignore` lines and
+ * gives editor autocomplete on the asserted shapes. If any field is renamed in the component,
+ * TypeScript surfaces the mismatch here rather than via runtime test failures.
+ */
+type InstructionInternals = ProgrammingExerciseInstructionComponent & {
+    participationSubscription?: Subscription;
+    generateHtmlSubscription?: Subscription;
+    problemStatement: string | undefined;
+    lastSeenProblemStatement: string | undefined;
+    lastRenderedProblemStatement: string | undefined;
+    isInitial: boolean;
+    isLoading: boolean;
+    tasks: TaskArray;
+    setupMarkdownSubscriptions: () => void;
+};
+
+const internals = (c: ProgrammingExerciseInstructionComponent): InstructionInternals => c as InstructionInternals;
 
 describe('ProgrammingExerciseInstructionComponent', () => {
     setupTestBed({ zoneless: true });
@@ -114,8 +135,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('participation', participation);
-        // @ts-ignore
-        comp.participationSubscription = oldSubscription;
+        internals(comp).participationSubscription = oldSubscription;
 
         // ngOnInit fires processInputChanges on the first detectChanges.
         fixture.changeDetectorRef.detectChanges();
@@ -123,10 +143,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(getTestCasesSpy).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true, exercise.id);
-        // @ts-ignore
-        expect(comp.participationSubscription).not.toEqual(oldSubscription);
+        expect(internals(comp).participationSubscription).not.toEqual(oldSubscription);
         await new Promise((resolve) => setTimeout(resolve, 200));
-        expect((comp as any).isInitial).toBe(true);
+        expect(internals(comp).isInitial).toBe(true);
     });
 
     it('should properly assign and cleanup generateHtmlSubscription when generateHtmlEvents is provided', async () => {
@@ -147,16 +166,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('participation', participation);
         fixture.componentRef.setInput('generateHtmlEvents', generateHtmlEvents);
-        // @ts-ignore
-        comp.generateHtmlSubscription = oldSubscription;
+        internals(comp).generateHtmlSubscription = oldSubscription;
 
         // ngOnInit handles the initial processInputChanges call.
         fixture.changeDetectorRef.detectChanges();
 
-        // @ts-ignore - the generateHtmlSubscription should be reassigned, not left as the old one
-        expect(comp.generateHtmlSubscription).not.toEqual(oldSubscription);
-        // @ts-ignore - verify it's actually a subscription
-        expect(comp.generateHtmlSubscription).toBeInstanceOf(Subscription);
+        // The generateHtmlSubscription should be reassigned, not left as the old one.
+        expect(internals(comp).generateHtmlSubscription).not.toEqual(oldSubscription);
+        // Verify it's actually a subscription.
+        expect(internals(comp).generateHtmlSubscription).toBeInstanceOf(Subscription);
         await new Promise((resolve) => setTimeout(resolve, 200));
     });
 
@@ -175,21 +193,20 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const noInstructionsAvailableSpy = vi.spyOn(comp.onNoInstructionsAvailable, 'emit');
         fixture.componentRef.setInput('participation', participation);
         fixture.componentRef.setInput('exercise', exercise);
-        (comp as any).isInitial = true;
-        (comp as any).isLoading = false;
+        internals(comp).isInitial = true;
+        internals(comp).isLoading = false;
 
         // ngOnInit fires processInputChanges automatically.
         fixture.detectChanges();
-        // @ts-ignore
-        expect(comp.problemStatement).toBeUndefined();
+        expect(internals(comp).problemStatement).toBeUndefined();
         // Component now processes empty problem statements to show empty state
         expect(loadInitialResultStub).toHaveBeenCalledOnce();
         expect(comp.latestResult).toBe(result);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         // No longer emits onNoInstructionsAvailable - shows empty state instead
         expect(noInstructionsAvailableSpy).not.toHaveBeenCalled();
-        expect((comp as any).isInitial).toBe(false);
-        expect((comp as any).isLoading).toBe(false);
+        expect(internals(comp).isInitial).toBe(false);
+        expect(internals(comp).isLoading).toBe(false);
         fixture.changeDetectorRef.detectChanges();
         expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBeNull();
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBeNull();
@@ -213,9 +230,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
         const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
         fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: oldProblemStatement });
-        (comp as any).isInitial = false;
+        internals(comp).isInitial = false;
         // Prime the seen problem statement so the next change is detected as a real edit.
-        (comp as any).lastSeenProblemStatement = oldProblemStatement;
+        internals(comp).lastSeenProblemStatement = oldProblemStatement;
         fixture.componentRef.setInput('exercise', { ...comp.exercise(), problemStatement: newProblemStatement });
         fixture.detectChanges();
         // Wait for debounce (150ms) to complete
@@ -240,8 +257,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
         const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
-        (comp as any).isInitial = false;
-        (comp as any).lastSeenProblemStatement = undefined;
+        internals(comp).isInitial = false;
+        internals(comp).lastSeenProblemStatement = undefined;
         fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: newProblemStatement });
         fixture.detectChanges();
         // Wait for debounce (150ms) to complete
@@ -266,8 +283,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         getLatestResultWithFeedbacks.mockReturnValue(throwError(() => new Error('fatal error')));
         fixture.componentRef.setInput('participation', participation);
         fixture.componentRef.setInput('exercise', exercise);
-        (comp as any).isInitial = true;
-        (comp as any).isLoading = false;
+        internals(comp).isInitial = true;
+        internals(comp).isLoading = false;
 
         // ngOnInit fires processInputChanges automatically.
         fixture.detectChanges();
@@ -277,8 +294,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         // result should have been fetched with the submission as this is required to show details for it
         expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
-        expect((comp as any).isInitial).toBe(false);
-        expect((comp as any).isLoading).toBe(false);
+        expect(internals(comp).isInitial).toBe(false);
+        expect(internals(comp).isLoading).toBe(false);
     });
 
     // TODO check if this is an issue with the client itself here
@@ -298,23 +315,21 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             studentAssignedTeamIdComputed: false,
         };
 
-        // @ts-ignore
-        comp.problemStatement = exercise.problemStatement!;
+        internals(comp).problemStatement = exercise.problemStatement!;
         fixture.componentRef.setInput('exercise', exercise);
         comp.latestResult = result;
-        // @ts-ignore
-        comp.setupMarkdownSubscriptions();
+        internals(comp).setupMarkdownSubscriptions();
 
         comp.updateMarkdown();
 
-        expect((comp as any).tasks).toHaveLength(2);
-        expect((comp as any).tasks[0]).toEqual({
+        expect(internals(comp).tasks).toHaveLength(2);
+        expect(internals(comp).tasks[0]).toEqual({
             id: 0,
             completeString: '[task][Implement Bubble Sort](<testid>1</testid>)',
             taskName: 'Implement Bubble Sort',
             testIds: [1],
         });
-        expect((comp as any).tasks[1]).toEqual({
+        expect(internals(comp).tasks[1]).toEqual({
             id: 1,
             completeString: '[task][Implement Merge Sort](<testid>2</testid>)',
             taskName: 'Implement Merge Sort',
@@ -378,23 +393,21 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             studentAssignedTeamIdComputed: false,
         };
 
-        // @ts-ignore
-        comp.problemStatement = exercise.problemStatement!;
+        internals(comp).problemStatement = exercise.problemStatement!;
         fixture.componentRef.setInput('exercise', exercise);
         comp.latestResult = result;
-        // @ts-ignore
-        comp.setupMarkdownSubscriptions();
+        internals(comp).setupMarkdownSubscriptions();
 
         comp.updateMarkdown();
 
-        expect((comp as any).tasks).toHaveLength(2);
-        expect((comp as any).tasks[0]).toEqual({
+        expect(internals(comp).tasks).toHaveLength(2);
+        expect(internals(comp).tasks[0]).toEqual({
             id: 0,
             completeString: '[task][Bubble Sort](<testid>1</testid>)',
             taskName: 'Bubble Sort',
             testIds: [1],
         });
-        expect((comp as any).tasks[1]).toEqual({
+        expect(internals(comp).tasks[1]).toEqual({
             id: 1,
             completeString: '[task][Merge Sort]()',
             taskName: 'Merge Sort',
@@ -454,12 +467,10 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             studentAssignedTeamIdComputed: false,
         };
 
-        // @ts-ignore
-        comp.problemStatement = exercise.problemStatement!;
+        internals(comp).problemStatement = exercise.problemStatement!;
         fixture.componentRef.setInput('exercise', exercise);
         comp.latestResult = result;
-        // @ts-ignore
-        comp.setupMarkdownSubscriptions();
+        internals(comp).setupMarkdownSubscriptions();
 
         const plantUMLExtension = TestBed.inject(ProgrammingExercisePlantUmlExtensionWrapper);
         const injectSpy = vi.spyOn(plantUMLExtension as any, 'loadAndInjectPlantUml');
@@ -478,12 +489,11 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const problemStatement = 'lorem ipsum';
         const updatedProblemStatement = 'new lorem ipsum';
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
-        // @ts-ignore
-        comp.problemStatement = problemStatement;
+        internals(comp).problemStatement = problemStatement;
         fixture.componentRef.setInput('exercise', { problemStatement: updatedProblemStatement } as ProgrammingExercise);
         comp.renderUpdatedProblemStatement();
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
-        expect(comp.exercise()!.problemStatement).toEqual(updatedProblemStatement);
+        expect(comp.exercise().problemStatement).toEqual(updatedProblemStatement);
     });
 
     it('should update the markdown on a theme change', () => {
@@ -494,7 +504,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
 
-        (comp as any).isInitial = false;
+        internals(comp).isInitial = false;
         themeService.applyThemePreference(Theme.DARK);
         fixture.changeDetectorRef.detectChanges();
 
@@ -596,8 +606,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         ]) {
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('participation', { id: exercise.id! + 100 });
-            // @ts-ignore - accessing private method for test setup
-            comp.setupMarkdownSubscriptions();
+            internals(comp).setupMarkdownSubscriptions();
         }
 
         instanceA.comp.updateMarkdown();
@@ -642,8 +651,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         ]) {
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('participation', { id: exercise.id! + 100 });
-            // @ts-ignore
-            comp.setupMarkdownSubscriptions();
+            internals(comp).setupMarkdownSubscriptions();
         }
 
         instanceA.comp.updateMarkdown();
@@ -682,8 +690,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         ]) {
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('participation', { id: exercise.id! + 100 });
-            // @ts-ignore
-            comp.setupMarkdownSubscriptions();
+            internals(comp).setupMarkdownSubscriptions();
         }
 
         instanceA.comp.updateMarkdown();
@@ -699,8 +706,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
 
         injectSpy.mockClear();
 
-        // @ts-ignore
-        instanceA.comp.lastRenderedProblemStatement = undefined;
+        internals(instanceA.comp).lastRenderedProblemStatement = undefined;
         instanceA.comp.updateMarkdown();
         await new Promise((resolve) => setTimeout(resolve, 10));
 
@@ -720,8 +726,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
 
         instance.fixture.componentRef.setInput('exercise', exercise);
         instance.fixture.componentRef.setInput('participation', { id: 142 });
-        // @ts-ignore
-        instance.comp.setupMarkdownSubscriptions();
+        internals(instance.comp).setupMarkdownSubscriptions();
 
         instance.comp.updateMarkdown();
         await new Promise((resolve) => setTimeout(resolve, 10));

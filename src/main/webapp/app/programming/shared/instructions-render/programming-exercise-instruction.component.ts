@@ -69,10 +69,11 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private themeService = inject(ThemeService);
     private cdr = inject(ChangeDetectorRef);
 
-    // All parent templates always bind exercise/participation/personalParticipation, but tests
-    // exercise un-set states; keep `undefined!` defaults so the read type stays non-nullable.
-    readonly exercise = input<ProgrammingExercise>(undefined!);
-    public readonly participation = input<Participation>(undefined!);
+    // Honest typing: parent templates always bind these in production, but the component itself
+    // tolerates unset states (ngOnInit gates on `exercise()`; processInputChanges guards on
+    // `participation()`), and tests exercise those branches — so the read type stays nullable.
+    readonly exercise = input<ProgrammingExercise | undefined>(undefined);
+    public readonly participation = input<Participation | undefined>(undefined);
     readonly generateHtmlEvents = input<Observable<void>>();
     readonly personalParticipation = input.required<boolean>();
 
@@ -208,7 +209,9 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                                 this.updateMarkdown();
                             });
                         }
-                        this.setupResultWebsocket();
+                        if (this.participation() && this.exercise()) {
+                            this.setupResultWebsocket();
+                        }
                     }
                 }),
                 switchMap((participationHasChanged: boolean) => {
@@ -283,7 +286,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             this.participationSubscription.unsubscribe();
         }
         this.participationSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation().id!, this.personalParticipation(), this.exercise().id!)
+            .subscribeForLatestResultOfParticipation(this.participation()!.id!, this.personalParticipation(), this.exercise()!.id!)
             .pipe(filter((result) => !!result))
             .subscribe((result: Result) => {
                 this.latestResult = result;
@@ -342,8 +345,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
      * This method is used for initially loading the results so that the instructions can be rendered.
      */
     loadInitialResult(): Observable<Result | undefined> {
-        const results = getAllResultsOfAllSubmissions(this.participation().submissions);
         const participation = this.participation();
+        const results = getAllResultsOfAllSubmissions(participation?.submissions);
         if (participation?.id && results.length) {
             // Get the result with the highest id (most recent result)
             const latestResult = findLatestResult(results);
@@ -364,7 +367,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
      * If there is no result, return undefined.
      */
     loadLatestResult(): Observable<Result | undefined> {
-        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation().id!).pipe(
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation()!.id!).pipe(
             catchError(() => of(undefined)),
             mergeMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
         );
@@ -377,7 +380,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         const currentParticipation = this.participation();
-        return this.resultService.getFeedbackDetailsForResult(currentParticipation.id!, result).pipe(
+        return this.resultService.getFeedbackDetailsForResult(currentParticipation!.id!, result).pipe(
             map((res) => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
@@ -406,7 +409,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             this.scheduleContentInjection(true);
         } else if (this.exercise()?.problemStatement?.trim()) {
             this.injectableContentForMarkdownCallbacks = [];
-            const renderedProblemStatement = htmlForMarkdown(this.exercise().problemStatement!, this.markdownExtensions);
+            const renderedProblemStatement = htmlForMarkdown(this.exercise()!.problemStatement!, this.markdownExtensions);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
             this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks);
@@ -481,14 +484,14 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 // Insert anchor divs into the text so that injectable elements can be inserted into them.
                 // Without class="d-flex" the injected components height would be 0.
                 // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
-                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-${this.exercise().id}-task-${id.toString()} d-flex">&#8203;</div>`),
+                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-${this.exercise()?.id}-task-${id.toString()} d-flex">&#8203;</div>`),
             problemStatementHtml,
         );
     }
 
     private injectTasksIntoDocument = () => {
         this.tasks.forEach(({ id, taskName, testIds }) => {
-            const taskHtmlContainers = document.getElementsByClassName(`pe-${this.exercise().id}-task-${id}`);
+            const taskHtmlContainers = document.getElementsByClassName(`pe-${this.exercise()?.id}-task-${id}`);
 
             for (let i = 0; i < taskHtmlContainers.length; i++) {
                 const taskHtmlContainer = taskHtmlContainers[i];
