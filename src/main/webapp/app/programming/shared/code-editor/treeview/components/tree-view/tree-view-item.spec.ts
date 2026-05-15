@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 
 describe('TreeviewItem', () => {
+    setupTestBed({ zoneless: true });
+
     it('should throw error if TreeItem param is null of undefined', () => {
         const error = new Error('Item must be defined');
         // @ts-ignore

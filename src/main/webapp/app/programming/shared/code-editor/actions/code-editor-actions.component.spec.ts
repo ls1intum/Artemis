@@ -544,12 +544,14 @@ describe('CodeEditorActionsComponent', () => {
     // + manual *Change output to restore the legacy setter's emit-on-parent-change semantics.
     it('should emit commitStateChange when commitState input is updated by the parent', () => {
         const commitStateChangeSpy = vi.spyOn(comp.commitStateChange, 'emit');
+        // Legacy `@Input set commitState` emitted on the first distinct value too (initial was
+        // undefined, so any non-undefined initial assignment passed the `value !== _value` check).
         fixture.componentRef.setInput('commitState', CommitState.UNCOMMITTED_CHANGES);
         fixture.detectChanges();
-        // Initialization (first input flow-in) should be suppressed by the sentinel — matches legacy
-        // setter's dedup of identical values and avoids gratuitous emits on construct.
-        expect(commitStateChangeSpy).not.toHaveBeenCalled();
+        expect(commitStateChangeSpy).toHaveBeenCalledWith(CommitState.UNCOMMITTED_CHANGES);
+        expect(comp.internalCommitState()).toEqual(CommitState.UNCOMMITTED_CHANGES);
 
+        commitStateChangeSpy.mockClear();
         fixture.componentRef.setInput('commitState', CommitState.COMMITTING);
         fixture.detectChanges();
         expect(commitStateChangeSpy).toHaveBeenCalledWith(CommitState.COMMITTING);
@@ -564,10 +566,12 @@ describe('CodeEditorActionsComponent', () => {
 
     it('should emit editorStateChange when editorState input is updated by the parent', () => {
         const editorStateChangeSpy = vi.spyOn(comp.editorStateChange, 'emit');
+        // Same legacy semantic — emit on first distinct value.
         fixture.componentRef.setInput('editorState', EditorState.CLEAN);
         fixture.detectChanges();
-        expect(editorStateChangeSpy).not.toHaveBeenCalled();
+        expect(editorStateChangeSpy).toHaveBeenCalledWith(EditorState.CLEAN);
 
+        editorStateChangeSpy.mockClear();
         fixture.componentRef.setInput('editorState', EditorState.UNSAVED_CHANGES);
         fixture.detectChanges();
         expect(editorStateChangeSpy).toHaveBeenCalledWith(EditorState.UNSAVED_CHANGES);

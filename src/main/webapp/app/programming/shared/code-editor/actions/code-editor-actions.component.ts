@@ -112,16 +112,11 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
      */
     private previousEditorState: EditorState | undefined;
 
-    // Sentinels used to suppress the initial *Change emit when the input first flows in,
-    // matching the legacy @Input setter's `if (value !== this._value)` dedup.
-    private editorStateSeen = false;
-    private commitStateSeen = false;
-
     constructor() {
-        // Sync editorState input → internalEditorState; manually emit editorStateChange on every
-        // actual change. Ignore undefined incoming values so internal mutations are not stomped when
-        // the parent never binds the input (matches legacy `if (value !== this._value)` setter dedup,
-        // where identical undefined writes were no-ops).
+        // Sync editorState input → internalEditorState and emit editorStateChange on every distinct
+        // change, matching the legacy `@Input set editorState` semantics (the setter emitted on the
+        // first defined value AND on every subsequent value !== _editorState). Undefined incoming
+        // values are ignored so internal mutations are not stomped when the parent never binds.
         effect(() => {
             const incoming = this.editorState();
             if (incoming === undefined) {
@@ -129,18 +124,14 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             }
             const current = untracked(() => this.internalEditorState());
             if (incoming === current) {
-                this.editorStateSeen = true;
                 return;
             }
             this.internalEditorState.set(incoming);
-            if (this.editorStateSeen) {
-                this.editorStateChange.emit(incoming);
-            }
-            this.editorStateSeen = true;
+            this.editorStateChange.emit(incoming);
         });
 
-        // Sync commitState input → internalCommitState; manually emit commitStateChange on every
-        // actual change.
+        // Sync commitState input → internalCommitState and emit commitStateChange on every distinct
+        // change. Same legacy semantics as editorState.
         effect(() => {
             const incoming = this.commitState();
             if (incoming === undefined) {
@@ -148,14 +139,10 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             }
             const current = untracked(() => this.internalCommitState());
             if (incoming === current) {
-                this.commitStateSeen = true;
                 return;
             }
             this.internalCommitState.set(incoming);
-            if (this.commitStateSeen) {
-                this.commitStateChange.emit(incoming);
-            }
-            this.commitStateSeen = true;
+            this.commitStateChange.emit(incoming);
         });
 
         // Reproduce legacy ngOnChanges cascade: when internalEditorState transitions SAVING -> X

@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import {
     createBuildPlanUrl,
@@ -16,6 +17,8 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import dayjs from 'dayjs/esm';
 
 describe('ProgrammingExerciseUtils', () => {
+    setupTestBed({ zoneless: true });
+
     it('createBuildPlanUrl fills in buildPlanId and projectKey', () => {
         const template = '/job/{projectKey}/job/{buildPlanId}';
         const buildPlanId = 'BPID';
