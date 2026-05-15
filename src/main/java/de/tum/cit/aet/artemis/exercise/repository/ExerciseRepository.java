@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeStudentGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseWithExerciseGroupIdDTO;
 
 /**
  * Spring Data JPA repository for the Exercise entity.
@@ -823,4 +824,14 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.id = :exerciseId
             """)
     Optional<ExerciseDeletionSummaryDTO> findDeletionSummaryByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Returns pairs of (exerciseId, exerciseGroupId) for exam exercises matching the given IDs.
+     * Used by global search to build the course-management routing URL for exam exercise results.
+     *
+     * @param ids the exercise IDs to look up
+     * @return a list of DTOs containing exerciseId and exerciseGroupId
+     */
+    @Query("SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseWithExerciseGroupIdDTO(e.id, e.exerciseGroup.id) FROM Exercise e WHERE e.id IN :ids AND e.exerciseGroup IS NOT NULL")
+    List<ExerciseWithExerciseGroupIdDTO> findExerciseAndGroupIdsByExerciseIds(@Param("ids") Collection<Long> ids);
 }
