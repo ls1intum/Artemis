@@ -77,9 +77,17 @@ export class Commands {
         if (!showsNavbar) {
             return;
         }
+        // Use a word-boundary regex rather than `toContainText(username)`. Plain substring
+        // matching silently passes on the exact race this helper exists to catch: in the
+        // instructor→studentOne transition the navbar still showing `artemis_test_user_16`
+        // contains `artemis_test_user_1` as a prefix, so the substring assertion would pass
+        // against the stale identity. `\b` after the user index (digit/underscore are word
+        // chars) anchors the match to the full token.
+        const escaped = credentials.username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const expectedUser = new RegExp(`\\b${escaped}\\b`);
         const containsExpectedUser = async () => {
             try {
-                await expect(accountMenu).toContainText(credentials.username, { timeout: 15000 });
+                await expect(accountMenu).toContainText(expectedUser, { timeout: 15000 });
                 return true;
             } catch {
                 return false;
@@ -92,7 +100,7 @@ export class Commands {
         // AccountService cache. Hard-reload to rebuild against the now-current cookie.
         await page.reload();
         await page.waitForLoadState('load');
-        await expect(accountMenu).toContainText(credentials.username, { timeout: 30000 });
+        await expect(accountMenu).toContainText(expectedUser, { timeout: 30000 });
     };
 
     static logout = async (page: Page): Promise<void> => {
