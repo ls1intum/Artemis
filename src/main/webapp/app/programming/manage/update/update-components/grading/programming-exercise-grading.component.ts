@@ -98,7 +98,7 @@ export class ProgrammingExerciseGradingComponent implements AfterContentInit, On
 
         this.formValidSignal.set(newFormValidValue);
         this.formValid = newFormValidValue;
-        this.formEmpty = this.lifecycleComponent?.formEmpty ?? false;
+        this.formEmpty = this.lifecycleComponent?.formEmpty() ?? false;
         this.formValidChanges.next(this.formValid);
     }
 
