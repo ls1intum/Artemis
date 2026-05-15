@@ -21,9 +21,9 @@ export class ProgrammingExerciseStudentRepoDownloadComponent {
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
 
-    readonly exerciseId = input<number>(undefined!);
+    readonly exerciseId = input<number>();
 
-    readonly participationId = input<number>(undefined!);
+    readonly participationId = input<number>();
 
     readonly buttonSize = input<ButtonSize>(ButtonSize.SMALL);
 

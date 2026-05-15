@@ -21,12 +21,12 @@ export class CommitsInfoRowComponent {
     readonly previousSubmissionHash = input<string>();
     readonly exerciseProjectKey = input<string>();
     readonly isRepositoryView = input(false);
-    readonly rowNumber = input<number>(undefined!);
-    readonly isExpanded = input<boolean>(undefined!);
-    readonly pushNumber = input<number>(undefined!);
-    readonly firstCommit = input<boolean>(undefined!);
-    readonly groupCommitCount = input<number>(undefined!);
-    readonly groupCommitIndex = input<number>(undefined!);
+    readonly rowNumber = input<number>();
+    readonly isExpanded = input.required<boolean>();
+    readonly pushNumber = input.required<number>();
+    readonly firstCommit = input.required<boolean>();
+    readonly groupCommitCount = input.required<number>();
+    readonly groupCommitIndex = input.required<number>();
     readonly toggleExpandEvent = output<void>();
 
     onToggleExpand() {

@@ -9,7 +9,7 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 })
 export class ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent {
     readonly checkoutDirectories = input<BuildPlanCheckoutDirectoriesDTO>();
-    readonly auxiliaryRepositories = input<AuxiliaryRepository[]>(undefined!);
+    readonly auxiliaryRepositories = input.required<AuxiliaryRepository[]>();
 
     ROOT_DIRECTORY_PATH = '/';
 }

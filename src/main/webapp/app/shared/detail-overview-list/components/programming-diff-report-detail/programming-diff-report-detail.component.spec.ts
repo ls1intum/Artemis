@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ProgrammingDiffReportDetailComponent } from 'app/shared/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
@@ -11,6 +13,8 @@ import { ProgrammingDiffReportDetail } from 'app/shared/detail-overview-list/det
 import { DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 
 describe('ProgrammingDiffReportDetailComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ProgrammingDiffReportDetailComponent;
     let fixture: ComponentFixture<ProgrammingDiffReportDetailComponent>;
     let dialogService: DialogService;
@@ -18,7 +22,7 @@ describe('ProgrammingDiffReportDetailComponent', () => {
 
     beforeEach(async () => {
         mockDialogRef = {
-            close: jest.fn(),
+            close: vi.fn(),
         } as unknown as DynamicDialogRef;
 
         await TestBed.configureTestingModule({
@@ -36,8 +40,12 @@ describe('ProgrammingDiffReportDetailComponent', () => {
         component = fixture.componentInstance;
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should open git diff dialog when repository diff information exists', () => {
-        const dialogSpy = jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+        const dialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
         fixture.componentRef.setInput('detail', {
             type: DetailType.ProgrammingDiffReport,
             data: {
@@ -55,13 +63,13 @@ describe('ProgrammingDiffReportDetailComponent', () => {
         component.showGitDiff();
 
         expect(dialogSpy).toHaveBeenCalled();
-        const passedConfig = dialogSpy.mock.calls[0][1];
+        const passedConfig = dialogSpy.mock.calls[0][1] as { data?: { repositoryDiffInformation?: unknown; diffForTemplateAndSolution?: boolean } } | undefined;
         expect(passedConfig?.data?.repositoryDiffInformation).toBeDefined();
-        expect(passedConfig?.data?.diffForTemplateAndSolution).toBeTrue();
+        expect(passedConfig?.data?.diffForTemplateAndSolution).toBe(true);
     });
 
     it('should not open git diff dialog when repository diff information is missing', () => {
-        const dialogSpy = jest.spyOn(dialogService, 'open');
+        const dialogSpy = vi.spyOn(dialogService, 'open');
         fixture.componentRef.setInput('detail', {
             type: DetailType.ProgrammingDiffReport,
             data: {

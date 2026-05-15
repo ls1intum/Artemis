@@ -49,7 +49,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
     TooltipPlacement = TooltipPlacement;
-    readonly exercise = input<ProgrammingExercise>(undefined!);
+    readonly exercise = input.required<ProgrammingExercise>();
     readonly disabled = input(false);
     readonly btnSize = input(ButtonSize.MEDIUM);
     readonly shouldToggle = input(false);

@@ -31,7 +31,7 @@ export class ProgrammingExerciseInstructorExerciseDownloadComponent {
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
 
-    readonly exerciseId = input<number>(undefined!);
+    readonly exerciseId = input<number>();
 
     // Icons
     faDownload = faDownload;

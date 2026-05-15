@@ -35,7 +35,7 @@ export class ProgrammingExerciseReEvaluateButtonComponent {
 
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
-    readonly exercise = input<ProgrammingExercise>(undefined!);
+    readonly exercise = input.required<ProgrammingExercise>();
     readonly disabled = input(false);
 
     isReEvaluationRunning = false;

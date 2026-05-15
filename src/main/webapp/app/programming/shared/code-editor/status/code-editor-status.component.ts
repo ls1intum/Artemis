@@ -16,8 +16,8 @@ export class CodeEditorStatusComponent {
     CommitState = CommitState;
     EditorState = EditorState;
 
-    readonly editorState = input<EditorState>(undefined!);
-    readonly commitState = input<CommitState>(undefined!);
+    readonly editorState = input<EditorState>();
+    readonly commitState = input<CommitState>();
 
     // Icons
     faCircleNotch = faCircleNotch;

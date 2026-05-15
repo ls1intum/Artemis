@@ -83,6 +83,7 @@ export default defineConfig({
             'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.spec.ts', // include filter-dropdown component tests
             'src/main/webapp/app/shared/search-filter/**/*.spec.ts', // include search-filter component tests
             'src/main/webapp/app/programming/shared/**/*.spec.ts', // include programming shared tests
+            'src/main/webapp/app/shared/detail-overview-list/components/programming-diff-report-detail/**/*.spec.ts', // include programming diff report detail tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -145,6 +146,7 @@ export default defineConfig({
                 'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.ts', // include filter-dropdown component for code coverage
                 'src/main/webapp/app/shared/search-filter/**/*.ts', // include search-filter component for code coverage
                 'src/main/webapp/app/programming/shared/**/*.ts', // include programming shared for code coverage
+                'src/main/webapp/app/shared/detail-overview-list/components/programming-diff-report-detail/**/*.ts', // include programming diff report detail for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code

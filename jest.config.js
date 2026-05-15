@@ -140,6 +140,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/exercise/shared/filter-dropdown/**', // filter-dropdown component uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/search-filter/**', // search-filter component uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/**', // programming shared uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/detail-overview-list/components/programming-diff-report-detail/**', // programming diff report detail uses Vitest (see vitest.config.ts)
         '<rootDir>/src/main/webapp/**/*.ts',
     ],
     coveragePathIgnorePatterns: [
@@ -190,6 +191,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exercise/shared/filter-dropdown/', // filter-dropdown component uses Vitest
         '<rootDir>/src/main/webapp/app/shared/search-filter/', // search-filter uses Vitest
         '<rootDir>/src/main/webapp/app/programming/shared/', // programming shared uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/detail-overview-list/components/programming-diff-report-detail/', // programming diff report detail uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
@@ -280,6 +282,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exercise/shared/filter-dropdown/', // filter-dropdown component (Vitest)
         '<rootDir>/src/main/webapp/app/shared/search-filter/', // search-filter (Vitest)
         '<rootDir>/src/main/webapp/app/programming/shared/', // programming shared uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/detail-overview-list/components/programming-diff-report-detail/', // programming diff report detail uses Vitest
     ],
     testTimeout: 3000,
     testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts', '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'],

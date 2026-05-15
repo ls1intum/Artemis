@@ -10,8 +10,8 @@ import { NgTemplateOutlet } from '@angular/common';
     imports: [NgTemplateOutlet],
 })
 export class TreeViewItemComponent<T> {
-    readonly template = input<TemplateRef<TreeViewItemTemplateContext<T>>>(undefined!);
-    readonly item = input<TreeViewItem<T>>(undefined!);
+    readonly template = input<TemplateRef<TreeViewItemTemplateContext<T>>>();
+    readonly item = input<TreeViewItem<T>>();
     readonly checkedChange = output<boolean>();
 
     onCollapseExpand = () => {

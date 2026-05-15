@@ -35,7 +35,7 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     TooltipPlacement = TooltipPlacement;
     ProgrammingSubmissionState = ProgrammingSubmissionState;
 
-    readonly exercise = input<ProgrammingExercise>(undefined!);
+    readonly exercise = input.required<ProgrammingExercise>();
     readonly shouldToggle = input(false);
     readonly toggleBreakpoint = input<'md' | 'xl'>('xl');
 

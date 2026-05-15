@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
@@ -53,6 +53,10 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
         });
 
         extension = TestBed.inject(ProgrammingExercisePlantUmlExtensionWrapper);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     /**

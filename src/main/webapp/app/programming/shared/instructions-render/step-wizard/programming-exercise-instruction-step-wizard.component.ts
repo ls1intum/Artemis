@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
@@ -23,45 +23,35 @@ interface StepWizardStep {
     imports: [TranslateDirective, NgbTooltip, FaIconComponent],
 })
 export class ProgrammingExerciseInstructionStepWizardComponent {
-    // NgbModal is retained here intentionally: the only modal opened is FeedbackComponent, which is
-    // a shared component still implemented against NgbActiveModal. Migrating FeedbackComponent to
-    // PrimeNG DialogService would expand this PR's scope across multiple unrelated modules.
-    // See the cluster-6 scope boundary note for the rationale.
+    // FeedbackComponent (the only modal opened here) still uses NgbActiveModal; migrating it is
+    // out of scope.
     private modalService = inject(NgbModal);
     private instructionService = inject(ProgrammingExerciseInstructionService);
 
     TestCaseState = TestCaseState;
 
-    readonly exercise = input<Exercise>(undefined!);
-    readonly participation = input<Participation>(undefined!);
+    readonly exercise = input<Exercise>();
+    readonly participation = input<Participation>();
     readonly latestResult = input<Result>();
-    readonly tasks = input<TaskArray>(undefined!);
+    readonly tasks = input.required<TaskArray>();
 
-    // Internal signal so the template re-renders when the derived steps change. Recomputed by an
-    // effect that tracks both `tasks` and `latestResult` — preserving the legacy ngOnChanges
-    // "(tasks && changes.tasks) || (tasks && changes.latestResult)" gate.
-    readonly steps = signal<StepWizardStep[]>([]);
+    readonly steps = computed<StepWizardStep[]>(() => {
+        const tasks = this.tasks();
+        const latestResult = this.latestResult();
+        if (!tasks) {
+            return [];
+        }
+        return tasks.map(({ taskName, testIds }) => ({
+            done: this.instructionService.testStatusForTask(testIds, latestResult).testCaseState,
+            title: taskName,
+            testIds,
+        }));
+    });
 
     // Icons
     faTimes = faTimes;
     faCheck = faCheck;
     faCircle = faCircle;
-
-    constructor() {
-        effect(() => {
-            const tasks = this.tasks();
-            const latestResult = this.latestResult();
-            if (tasks) {
-                this.steps.set(
-                    tasks.map(({ taskName, testIds }) => ({
-                        done: this.instructionService.testStatusForTask(testIds, latestResult).testCaseState,
-                        title: taskName,
-                        testIds,
-                    })),
-                );
-            }
-        });
-    }
 
     /**
      * Opens the FeedbackComponent as popup; displays test results
@@ -78,9 +68,9 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
         } = this.instructionService.testStatusForTask(tests, latestResult);
         const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'lg' });
         const componentInstance = modalRef.componentInstance as FeedbackComponent;
-        componentInstance.exercise = this.exercise();
+        componentInstance.exercise = this.exercise()!;
         componentInstance.result = latestResult;
-        componentInstance.participation = this.participation();
+        componentInstance.participation = this.participation()!;
         componentInstance.feedbackFilter = tests;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;
         componentInstance.taskName = taskName;

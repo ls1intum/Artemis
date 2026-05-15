@@ -25,15 +25,14 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 export class ProgrammingExerciseTestScheduleDatePickerComponent implements ControlValueAccessor {
     readonly dateInput = viewChild.required<NgModel>('dateInput');
 
-    // selectedDate is intentionally kept as a writable mutable field rather than a signal-input.
-    // ControlValueAccessor.writeValue() and resetDate() write to it, the host component reads it back
-    // via the QueryList, and the template binds it via [ngModel]="selectedDate" two-way semantics.
+    // Writable mutable field rather than a signal: ControlValueAccessor.writeValue() and the
+    // template [ngModel]="selectedDate" two-way binding need to mutate this directly.
     selectedDate?: Date;
 
     readonly startAt = input<dayjs.Dayjs>();
     readonly min = input<dayjs.Dayjs>();
     readonly max = input<dayjs.Dayjs>();
-    readonly label = input<string>(undefined!);
+    readonly label = input.required<string>();
     readonly tooltipText = input<string>();
     readonly readOnly = input<boolean>(false);
     readonly onDateReset = output();

@@ -23,9 +23,9 @@ export class ProgrammingExerciseInstructorRepoDownloadComponent {
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
 
-    readonly exerciseId = input<number>(undefined!);
-    readonly repositoryType = input<RepositoryType>(undefined!);
-    readonly auxiliaryRepositoryId = input<number>(undefined!);
+    readonly exerciseId = input<number>();
+    readonly repositoryType = input<RepositoryType>();
+    readonly auxiliaryRepositoryId = input<number>();
     readonly buttonSize = input(ButtonSize.SMALL);
     readonly title = input('artemisApp.programmingExercise.export.downloadRepo');
 

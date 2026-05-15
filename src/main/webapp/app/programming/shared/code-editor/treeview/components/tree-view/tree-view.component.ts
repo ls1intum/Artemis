@@ -11,8 +11,8 @@ import { TreeViewItemComponent } from 'app/programming/shared/code-editor/treevi
     imports: [FormsModule, TreeViewItemComponent],
 })
 export class TreeViewComponent<T> {
-    readonly itemTemplate = input<TemplateRef<TreeViewItemTemplateContext<T>>>(undefined!);
-    readonly items = input<TreeViewItem<T>[]>(undefined!);
+    readonly itemTemplate = input.required<TemplateRef<TreeViewItemTemplateContext<T>>>();
+    readonly items = input.required<TreeViewItem<T>[]>();
     readonly maxHeight = input(500);
     readonly filterChange = output<string>();
 }

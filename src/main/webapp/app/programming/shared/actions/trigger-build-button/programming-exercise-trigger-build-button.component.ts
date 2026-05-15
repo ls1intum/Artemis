@@ -28,8 +28,8 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     private submissionService = inject(ProgrammingSubmissionService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
 
-    readonly exercise = input<ProgrammingExercise>(undefined!);
-    readonly participation = input<Participation>(undefined!);
+    readonly exercise = input.required<ProgrammingExercise>();
+    readonly participation = input.required<Participation>();
     readonly btnSize = input(ButtonSize.SMALL);
     readonly title = input('');
 
@@ -51,7 +51,6 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     private previousParticipationId: number | undefined;
 
     constructor() {
-        // React when the participation input changes (or its id changes) — replaces ngOnChanges/hasParticipationChanged.
         effect(() => {
             const participation = this.participation();
             if (!participation) {

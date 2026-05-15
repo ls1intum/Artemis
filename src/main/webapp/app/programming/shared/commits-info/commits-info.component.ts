@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { CommitInfo, ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import dayjs from 'dayjs/esm';
@@ -25,50 +25,21 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
 
     private commitsInfoSubscription: Subscription;
     protected readonly isGroupsExpanded = signal(true);
-    protected readonly groupedCommits = signal<{ key: string; commits: CommitInfo[]; date: string }[]>([]);
-    /**
-     * Locally-managed commits state. Defaults to the input value; updated when fetched via the service.
-     */
-    protected readonly internalCommits = signal<CommitInfo[] | undefined>(undefined);
 
-    ngOnInit(): void {
-        const initialCommits = this.commits();
-        if (!initialCommits) {
-            const participationId = this.participationId();
-            if (participationId) {
-                this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(participationId).subscribe((commits) => {
-                    if (commits) {
-                        this.internalCommits.set(commits);
-                    }
-                    this.groupCommits();
-                });
-            }
-        } else {
-            this.internalCommits.set(initialCommits);
-            this.groupCommits();
-        }
-    }
+    // Commits fetched by the service when no `commits` input is provided. The computed below
+    // prefers the fetched value once present, so the template stays reactive to either source.
+    private readonly fetchedCommits = signal<CommitInfo[] | undefined>(undefined);
 
-    ngOnDestroy(): void {
-        this.commitsInfoSubscription?.unsubscribe();
-    }
-
-    /**
-     * Groups commits together that were pushed in one batch.
-     * As we don't have a direct indicator whether commits were pushed together,
-     * we infer groups based on the presence of a 'result' on a commit.
-     */
-    private groupCommits() {
-        const commits = this.internalCommits();
+    protected readonly groupedCommits = computed<{ key: string; commits: CommitInfo[]; date: string }[]>(() => {
+        const commits = this.fetchedCommits() ?? this.commits();
         if (!commits) {
-            return;
+            return [];
         }
 
         const commitGroups: { key: string; commits: CommitInfo[]; date: string }[] = [];
         let tempGroup: CommitInfo[] = [];
 
         const sorted = [...commits].sort((a, b) => (dayjs(b.timestamp).isAfter(dayjs(a.timestamp)) ? -1 : 1));
-        this.internalCommits.set(sorted);
 
         for (let i = 0; i < sorted.length; i++) {
             const commit = sorted[i];
@@ -93,7 +64,26 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
             });
         }
 
-        this.groupedCommits.set(commitGroups.reverse());
+        return commitGroups.reverse();
+    });
+
+    ngOnInit(): void {
+        if (this.commits()) {
+            return;
+        }
+        const participationId = this.participationId();
+        if (!participationId) {
+            return;
+        }
+        this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(participationId).subscribe((commits) => {
+            if (commits) {
+                this.fetchedCommits.set(commits);
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.commitsInfoSubscription?.unsubscribe();
     }
 
     protected toggleAllExpanded() {

@@ -18,23 +18,19 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 })
 export class ProgrammingExerciseInstructionTaskStatusComponent {
     private programmingExerciseInstructionService = inject(ProgrammingExerciseInstructionService);
-    // NgbModal is retained: the only modal opened is FeedbackComponent (shared, uses NgbActiveModal).
-    // Migrating FeedbackComponent to PrimeNG DialogService is out of scope for this PR — see the
-    // cluster-6 scope boundary note.
+    // FeedbackComponent (the only modal opened here) still uses NgbActiveModal; migrating it is
+    // out of scope.
     private modalService = inject(NgbModal);
 
     TestCaseState = TestCaseState;
     translationBasePath = 'artemisApp.editor.testStatusLabels.';
 
-    readonly taskName = input<string>(undefined!);
+    readonly taskName = input.required<string>();
     readonly testIds = input<number[]>([]);
-    readonly exercise = input<Exercise>(undefined!);
+    readonly exercise = input.required<Exercise>();
     readonly latestResult = input<Result | undefined>(undefined);
-    readonly participation = input<Participation>(undefined!);
+    readonly participation = input.required<Participation>();
 
-    // Derived state, kept reactive via computed() so all dependencies (testIds + latestResult)
-    // are tracked. The legacy testIds setter performed this calculation imperatively whenever
-    // any of these inputs changed; an effect mirrors that into a single computed value.
     private readonly testStatus = computed(() => this.programmingExerciseInstructionService.testStatusForTask(this.testIds() ?? [], this.latestResult()));
     readonly testCaseState = computed(() => this.testStatus().testCaseState);
     readonly successfulTests = computed(() => this.testStatus().detailed.successfulTests);
@@ -48,8 +44,8 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     farTimesCircle = faTimesCircle;
 
     constructor() {
-        // Touch reactive state so it stays subscribed even if the template doesn't reference it
-        // every render — preserves the legacy setter's "eager compute" semantics.
+        // Keep testStatus and hasMessage eagerly subscribed so dependent computeds stay live
+        // even when the template doesn't read them on every change.
         effect(() => {
             this.testStatus();
             this.hasMessage();

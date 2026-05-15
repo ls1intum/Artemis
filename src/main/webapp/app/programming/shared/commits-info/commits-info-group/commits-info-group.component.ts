@@ -9,22 +9,20 @@ import { NgStyle } from '@angular/common';
     imports: [CommitsInfoRowComponent, NgStyle],
 })
 export class CommitsInfoGroupComponent {
-    readonly commits = input<CommitInfo[]>(undefined!);
+    readonly commits = input.required<CommitInfo[]>();
     readonly currentSubmissionHash = input<string>();
     readonly previousSubmissionHash = input<string>();
     readonly exerciseProjectKey = input<string>();
     readonly isRepositoryView = input(false);
-    readonly groupIndex = input<number>(undefined!);
-    readonly groupCount = input<number>(undefined!);
-    readonly pushNumber = input<number>(undefined!);
+    readonly groupIndex = input.required<number>();
+    readonly groupCount = input.required<number>();
+    readonly pushNumber = input.required<number>();
     readonly isGroupExpanded = input<boolean>(false);
 
     protected readonly isExpanded = signal(false);
 
     constructor() {
-        // Mirror the legacy accessor setter behaviour: whenever the parent input changes,
-        // align the local toggle state with it. Tracking only the input prevents the effect
-        // from being re-triggered by local toggles.
+        // Reset local toggle state whenever the parent's expand-all state changes.
         effect(() => {
             const value = this.isGroupExpanded();
             this.isExpanded.set(value);
