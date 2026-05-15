@@ -63,7 +63,6 @@ import {
     isJsonContent,
     isMcqContent,
     isMcqSetContent,
-    isTextContent,
 } from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisMcqQuestionComponent } from 'app/iris/overview/mcq-question/iris-mcq-question.component';
 import { IrisMcqCarouselComponent } from 'app/iris/overview/mcq-question/iris-mcq-carousel.component';
@@ -213,12 +212,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     );
     readonly relatedEntityLinkButtonLabel = computed<string | undefined>(() => this.computeRelatedEntityLinkButtonLabel(this.chatService.committedContext()?.mode));
 
-    /**
-     * Reads the transition kind, entity icon, navigation route, and entity name from a CTXSWAP
-     * marker. The marker carries `{ transition, entityMode, entityId, name }` as
-     * IrisJsonMessageContent; legacy markers (plain text content) are rendered as "added" with no
-     * route since the entity id is not recoverable.
-     */
     protected getContextSwitchInfo(message: IrisMessage): {
         transition: 'added' | 'removed' | 'changed';
         entityIcon: IconProp | undefined;
@@ -226,20 +219,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         name: string;
     } {
         const jsonContent = message.content?.find((c) => isJsonContent(c)) as IrisJsonMessageContent | undefined;
-        if (jsonContent) {
-            const transition = jsonContent.attributes?.['transition'] as 'added' | 'removed' | 'changed' | undefined;
-            const entityMode = jsonContent.attributes?.['entityMode'] as string | undefined;
-            const entityId = jsonContent.attributes?.['entityId'] as number | undefined;
-            const name = (jsonContent.attributes?.['name'] as string | undefined) ?? '';
-            return {
-                transition: transition ?? 'added',
-                entityIcon: this.iconForEntityMode(entityMode),
-                entityRoute: this.computeRelatedEntityRoute(entityMode as ChatServiceMode | undefined, entityId),
-                name,
-            };
-        }
-        const textContent = message.content?.find((c) => isTextContent(c)) as IrisTextMessageContent | undefined;
-        return { transition: 'added', entityIcon: undefined, entityRoute: undefined, name: textContent?.textContent ?? '' };
+        const transition = jsonContent?.attributes?.['transition'] as 'added' | 'removed' | 'changed' | undefined;
+        const entityMode = jsonContent?.attributes?.['entityMode'] as string | undefined;
+        const entityId = jsonContent?.attributes?.['entityId'] as number | undefined;
+        const name = (jsonContent?.attributes?.['name'] as string | undefined) ?? '';
+        return {
+            transition: transition ?? 'added',
+            entityIcon: this.iconForEntityMode(entityMode),
+            entityRoute: this.computeRelatedEntityRoute(entityMode as ChatServiceMode | undefined, entityId),
+            name,
+        };
     }
 
     private iconForEntityMode(entityMode: string | undefined): IconProp | undefined {

@@ -111,8 +111,8 @@ export class ContextSelectionComponent {
     });
 
     readonly activeChip = computed<ContextOption | undefined>(() => {
-        const mode = this.currentMode();
-        const entityId = this.currentEntityId();
+        const mode = this.chatService.displayContext()?.mode;
+        const entityId = this.chatService.displayContext()?.entityId;
         if (mode === undefined || entityId === undefined || mode === ChatServiceMode.COURSE) {
             return undefined;
         }
