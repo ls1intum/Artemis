@@ -334,4 +334,32 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
             },
         });
     });
+
+    it('should refresh checkout directories when only the programmingExerciseBuildConfig input changes', () => {
+        // The parent updates checkout paths by replacing only programmingExercise().buildConfig and pushing
+        // it through the separate programmingExerciseBuildConfig input, while keeping the exercise object
+        // stable. The migrated effect must still observe that input change.
+        fixture.componentRef.setInput('isCreateOrEdit', true);
+        fixture.detectChanges(); // initial pass
+
+        // Mutate buildConfig on the stable exercise reference and push only the buildConfig input.
+        const exercise = component.programmingExercise();
+        exercise.buildConfig!.assignmentCheckoutPath = 'assignment';
+        exercise.buildConfig!.solutionCheckoutPath = 'solution';
+        exercise.buildConfig!.testCheckoutPath = 'tests';
+        fixture.componentRef.setInput('programmingExerciseBuildConfig', exercise.buildConfig);
+        fixture.detectChanges();
+
+        expect(component.checkoutDirectories()).toEqual({
+            solutionBuildPlanCheckoutDirectories: {
+                solutionCheckoutDirectory: '/assignment',
+                testCheckoutDirectory: '/tests',
+            },
+            submissionBuildPlanCheckoutDirectories: {
+                exerciseCheckoutDirectory: '/assignment',
+                solutionCheckoutDirectory: '/solution',
+                testCheckoutDirectory: '/tests',
+            },
+        });
+    });
 });

@@ -39,7 +39,11 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     isLocalCIEnabled = true;
 
     constructor() {
-        // Mirrors the legacy ngOnChanges: react to programmingLanguage / checkoutSolutionRepository / programmingExercise changes.
+        // Mirrors the legacy ngOnChanges: react to programmingLanguage / checkoutSolutionRepository /
+        // programmingExercise / programmingExerciseBuildConfig changes. The parent updates checkout paths
+        // by replacing only `programmingExercise().buildConfig` and pushing it through the separate
+        // `programmingExerciseBuildConfig` input while keeping the exercise object stable — so the effect
+        // must track that input too, or buildConfig-only edits would not refresh the preview.
         let initialized = false;
         let lastProgrammingLanguage: ProgrammingLanguage | undefined;
         let lastCheckoutSolutionRepository: boolean | undefined;
@@ -47,6 +51,8 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
             const currentProgrammingLanguage = this.programmingLanguage();
             const currentCheckoutSolutionRepository = this.checkoutSolutionRepository();
             const currentProgrammingExercise = this.programmingExercise();
+            // Track the buildConfig signal too — buildConfig-only updates must trigger this effect.
+            this.programmingExerciseBuildConfig();
 
             const isProgrammingLanguageUpdated = initialized && currentProgrammingLanguage !== lastProgrammingLanguage;
             const isCheckoutSolutionRepositoryUpdated = initialized && currentCheckoutSolutionRepository !== lastCheckoutSolutionRepository;
