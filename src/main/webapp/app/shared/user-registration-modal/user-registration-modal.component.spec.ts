@@ -82,6 +82,14 @@ describe('UserRegistrationModalComponent', () => {
     });
 
     describe('onSearch', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
         it('should reset state when term is empty', () => {
             component.hasSearched.set(true);
             component.searchResults.set([makeUser(1)]);
@@ -100,11 +108,35 @@ describe('UserRegistrationModalComponent', () => {
             expect(component.hasSearched()).toBe(false);
         });
 
-        it('should trim the term, set hasSearched and isLoading for non-empty input', () => {
+        it('should trim the term and not trigger search before debounce fires', () => {
             component.onSearch('  alice  ');
+
             expect(component.searchTerm()).toBe('alice');
+            expect(component.hasSearched()).toBe(false);
+            expect(component.isLoading()).toBe(false);
+        });
+
+        it('should set hasSearched and isLoading after the debounce delay', () => {
+            component.onSearch('  alice  ');
+
+            vi.advanceTimersByTime(300);
+
             expect(component.hasSearched()).toBe(true);
             expect(component.isLoading()).toBe(true);
+        });
+
+        it('should debounce rapid calls and only trigger once for the last term', () => {
+            component.onSearch('a');
+            component.onSearch('al');
+            component.onSearch('ali');
+            component.onSearch('alice');
+
+            vi.advanceTimersByTime(299);
+            expect(component.isLoading()).toBe(false);
+
+            vi.advanceTimersByTime(1);
+            expect(component.isLoading()).toBe(true);
+            expect(component.searchTerm()).toBe('alice');
         });
     });
 

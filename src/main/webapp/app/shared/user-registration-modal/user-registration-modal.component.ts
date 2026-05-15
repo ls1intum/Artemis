@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewEncapsulation, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, TemplateRef, ViewEncapsulation, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { Observable } from 'rxjs';
 import { SharedModule } from 'primeng/api';
 import { Dialog } from 'primeng/dialog';
@@ -35,9 +35,17 @@ import { UserForRegistration, UserSearchResult } from 'app/shared/user-registrat
     encapsulation: ViewEncapsulation.None,
 })
 export class UserRegistrationModalComponent {
+    private static readonly SEARCH_DEBOUNCE_MS = 300;
+
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     private readonly alertService = inject(AlertService);
+
+    private debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+    constructor() {
+        inject(DestroyRef).onDestroy(() => clearTimeout(this.debounceTimer));
+    }
 
     readonly titleKey = input.required<string>();
     readonly searchFn = input.required<(searchTerm: string, page: number, size: number) => Observable<UserSearchResult>>();
@@ -113,6 +121,7 @@ export class UserRegistrationModalComponent {
     onSearch(searchTerm: string): void {
         const trimmed = searchTerm.trim();
         this.searchTerm.set(trimmed);
+        clearTimeout(this.debounceTimer);
 
         if (!trimmed) {
             this.hasSearched.set(false);
@@ -121,9 +130,11 @@ export class UserRegistrationModalComponent {
             return;
         }
 
-        this.isLoading.set(true);
-        this.hasSearched.set(true);
-        this.tableViewRef()?.reload();
+        this.debounceTimer = setTimeout(() => {
+            this.isLoading.set(true);
+            this.hasSearched.set(true);
+            this.tableViewRef()?.reload();
+        }, UserRegistrationModalComponent.SEARCH_DEBOUNCE_MS);
     }
 
     onTableLazyLoad(event: TableLazyLoadEvent): void {
