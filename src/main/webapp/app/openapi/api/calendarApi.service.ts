@@ -16,6 +16,8 @@ import { HttpClient,
 import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
+// @ts-ignore
+import { CalendarEvent } from '../model/calendarEvent';
 
 // @ts-ignore
 import { BASE_PATH }                     from '../variables';
@@ -192,9 +194,9 @@ export class CalendarApiService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public getCalendarEventsOverlappingMonths(courseId: number, monthKeys: Array<string>, timeZone: string, language: 'ENGLISH' | 'GERMAN', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<{ [key: string]: Array<any>; }>;
-    public getCalendarEventsOverlappingMonths(courseId: number, monthKeys: Array<string>, timeZone: string, language: 'ENGLISH' | 'GERMAN', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<{ [key: string]: Array<any>; }>>;
-    public getCalendarEventsOverlappingMonths(courseId: number, monthKeys: Array<string>, timeZone: string, language: 'ENGLISH' | 'GERMAN', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<{ [key: string]: Array<any>; }>>;
+    public getCalendarEventsOverlappingMonths(courseId: number, monthKeys: Array<string>, timeZone: string, language: 'ENGLISH' | 'GERMAN', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<{ [key: string]: Array<CalendarEvent>; }>;
+    public getCalendarEventsOverlappingMonths(courseId: number, monthKeys: Array<string>, timeZone: string, language: 'ENGLISH' | 'GERMAN', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<{ [key: string]: Array<CalendarEvent>; }>>;
+    public getCalendarEventsOverlappingMonths(courseId: number, monthKeys: Array<string>, timeZone: string, language: 'ENGLISH' | 'GERMAN', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<{ [key: string]: Array<CalendarEvent>; }>>;
     public getCalendarEventsOverlappingMonths(courseId: number, monthKeys: Array<string>, timeZone: string, language: 'ENGLISH' | 'GERMAN', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling getCalendarEventsOverlappingMonths.');
@@ -265,7 +267,7 @@ export class CalendarApiService extends BaseService {
 
         let localVarPath = `/api/core/calendar/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/calendar-events`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<{ [key: string]: Array<any>; }>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<{ [key: string]: Array<CalendarEvent>; }>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 params: localVarQueryParameters.toHttpParams(),
