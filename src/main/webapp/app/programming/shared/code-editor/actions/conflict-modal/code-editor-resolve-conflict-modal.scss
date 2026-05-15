@@ -1,10 +1,6 @@
 @import '../../../../../../../../../node_modules/bootstrap/scss/bootstrap';
 @import '../../../../../../content/scss/artemis-variables';
 
-.conflict-modal__header {
-    @extend .modal-header;
-}
-
 .conflict-modal {
     &__body {
         @extend .modal-body;

@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
-import { outputToObservable } from '@angular/core/rxjs-interop';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
-import { BehaviorSubject, Subject, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import {
@@ -197,8 +196,8 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.monacoEditor.commitState()).toBe(CommitState.CLEAN);
 
         // actions
-        expect(container.actions.internalCommitState()).toBe(CommitState.CLEAN);
-        expect(container.actions.internalEditorState()).toBe(EditorState.CLEAN);
+        expect(container.actions.commitState()).toBe(CommitState.CLEAN);
+        expect(container.actions.editorState()).toBe(EditorState.CLEAN);
         expect(container.actions.isBuilding()).toBeFalse();
 
         // status
@@ -274,8 +273,8 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.monacoEditor.commitState()).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
 
         // actions
-        expect(container.actions.internalCommitState()).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
-        expect(container.actions.internalEditorState()).toBe(EditorState.CLEAN);
+        expect(container.actions.commitState()).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
+        expect(container.actions.editorState()).toBe(EditorState.CLEAN);
         expect(container.actions.isBuilding()).toBeFalse();
 
         // status
@@ -333,7 +332,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.unsavedFiles).toEqual({ [selectedFile]: newFileContent });
         expect(container.fileBrowser.unsavedFiles()).toEqual([selectedFile]);
         expect(container.editorState).toBe(EditorState.UNSAVED_CHANGES);
-        expect(container.actions.internalEditorState()).toBe(EditorState.UNSAVED_CHANGES);
+        expect(container.actions.editorState()).toBe(EditorState.UNSAVED_CHANGES);
     });
 
     it('should save files and remove unsaved status of saved files afterwards', async () => {
@@ -363,7 +362,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.editorState).toBe(EditorState.CLEAN);
         expect(container.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
         expect(container.fileBrowser.unsavedFiles()).toHaveLength(0);
-        expect(container.actions.internalEditorState()).toBe(EditorState.CLEAN);
+        expect(container.actions.editorState()).toBe(EditorState.CLEAN);
     });
 
     it('should remove the unsaved changes flag in all components if the unsaved file is deleted', () => {
@@ -375,24 +374,21 @@ describe('CodeEditorContainerIntegration', () => {
         container.unsavedFiles = unsavedChanges;
 
         containerFixture.changeDetectorRef.detectChanges();
-        // Push the latest state into the child synchronously (legacy ngOnChanges setter behavior).
-        // Signal-input propagation through the template binding fires the actions component's
-        // mirror effect post-CD as a microtask, which doesn't settle before the next assertion in
-        // this Jest zone-based test. Using the public setX helpers drives editor/commit state
-        // synchronously. unsavedFiles is a signal input — propagation happens via the container's
-        // [unsavedFiles] template binding during detectChanges above.
-        container.actions.setEditorState(container.editorState);
-        container.actions.setCommitState(container.commitState);
+        // Mirror the container's plain field into the child model. Direct container field writes
+        // (no child event) don't go through OnPush's mark-dirty flow in this Jest zone-based test,
+        // so the [(editorState)] / [(commitState)] template bindings don't push synchronously.
+        container.actions.editorState.set(container.editorState);
+        container.actions.commitState.set(container.commitState);
         containerFixture.changeDetectorRef.detectChanges();
 
         expect(container.unsavedFiles).toEqual(unsavedChanges);
-        expect(container.actions.internalEditorState()).toBe(EditorState.UNSAVED_CHANGES);
+        expect(container.actions.editorState()).toBe(EditorState.UNSAVED_CHANGES);
 
         container.fileBrowser.onFileDeleted(new DeleteFileChange(FileType.FILE, 'file'));
         containerFixture.changeDetectorRef.detectChanges();
         expect(container.unsavedFiles).toStrictEqual({});
         expect(container.fileBrowser.repositoryFiles).toEqual(expectedFilesAfterDelete);
-        expect(container.actions.internalEditorState()).toBe(EditorState.CLEAN);
+        expect(container.actions.editorState()).toBe(EditorState.CLEAN);
     });
 
     it('should wait for build result after submission if no unsaved changes exist', () => {
@@ -405,12 +401,12 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.unsavedFiles).toStrictEqual({});
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
         containerFixture.changeDetectorRef.detectChanges();
-        // Drive the migrated child state synchronously — see note in earlier test.
-        container.actions.setCommitState(container.commitState);
+        // See sibling test note: direct container field writes don't propagate via OnPush here.
+        container.actions.commitState.set(container.commitState);
         containerFixture.changeDetectorRef.detectChanges();
 
         // commit
-        expect(container.actions.internalCommitState()).toBe(container.commitState);
+        expect(container.actions.commitState()).toBe(container.commitState);
         commitStub.mockReturnValue(of(undefined));
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
@@ -450,10 +446,9 @@ describe('CodeEditorContainerIntegration', () => {
         container.editorState = EditorState.UNSAVED_CHANGES;
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
         containerFixture.changeDetectorRef.detectChanges();
-        // Drive the migrated child state synchronously — see note in earlier test. unsavedFiles
-        // is a signal input; it propagates via the container's [unsavedFiles] template binding.
-        container.actions.setEditorState(container.editorState);
-        container.actions.setCommitState(container.commitState);
+        // See sibling test note: direct container field writes don't propagate via OnPush here.
+        container.actions.editorState.set(container.editorState);
+        container.actions.commitState.set(container.commitState);
         containerFixture.changeDetectorRef.detectChanges();
 
         // trying to commit
@@ -479,9 +474,11 @@ describe('CodeEditorContainerIntegration', () => {
             participationId: successfulResult!.submission.participation!.id!,
         });
 
-        // Commit state should change asynchronously
+        // Commit state changes asynchronously via the actions component's deferred setTimeout
+        // cascade (SAVING -> CLEAN with COMMITTING in flight). Allow the macrotask to settle.
         containerFixture.changeDetectorRef.detectChanges();
-        await firstValueFrom(outputToObservable(container.actions.commitStateChange));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        containerFixture.changeDetectorRef.detectChanges();
 
         // waiting for build result
         expect(container.commitState).toBe(CommitState.CLEAN);

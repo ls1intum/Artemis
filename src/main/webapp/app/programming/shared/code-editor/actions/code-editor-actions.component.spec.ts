@@ -80,6 +80,9 @@ describe('CodeEditorActionsComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(CodeEditorActionsComponent);
         comp = fixture.componentInstance;
+        // unsavedFiles is now `input.required<>()`. Set a sensible empty default so tests that don't
+        // explicitly bind it don't trigger a required-input validation error on first read.
+        fixture.componentRef.setInput('unsavedFiles', {});
         codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
         updateFilesStub = vi.spyOn(codeEditorRepositoryFileService, 'updateFiles');
         codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
@@ -122,8 +125,8 @@ describe('CodeEditorActionsComponent', () => {
             for this state combination: EditorState.${combination[0]} / CommitState.${combination[1]} / ${combination[2] ? 'is building' : 'is not building'}
         `, () => {
             const [editorState, commitState, isBuilding] = combination;
-            comp.internalEditorState.set(editorState);
-            comp.internalCommitState.set(commitState);
+            comp.editorState.set(editorState);
+            comp.commitState.set(commitState);
             comp.isBuilding.set(isBuilding);
             fixture.detectChanges();
             const commitButton = fixture.debugElement.query(By.css('#submit_button'));
@@ -135,8 +138,8 @@ describe('CodeEditorActionsComponent', () => {
     });
 
     it('should NOT update ui when building', () => {
-        comp.internalEditorState.set(EditorState.UNSAVED_CHANGES);
-        comp.internalCommitState.set(CommitState.COMMITTING);
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
+        comp.commitState.set(CommitState.COMMITTING);
         fixture.detectChanges();
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
         const commitButtonFeedbackBeforeStartBuild = commitButton.nativeElement.innerHTML;
@@ -151,7 +154,7 @@ describe('CodeEditorActionsComponent', () => {
         const savedFilesResult: { [fileName: string]: null } = { fileName: null };
         const onSavedFilesSpy = vi.spyOn(comp.onSavedFiles, 'emit');
         const saveObservable = new Subject<typeof savedFilesResult>();
-        comp.internalEditorState.set(EditorState.UNSAVED_CHANGES);
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
         comp.isBuilding.set(false);
         fixture.componentRef.setInput('unsavedFiles', unsavedFiles);
         fixture.detectChanges();
@@ -161,13 +164,13 @@ describe('CodeEditorActionsComponent', () => {
         comp.onSave();
 
         // wait for save result
-        expect(comp.internalEditorState()).toEqual(EditorState.SAVING);
+        expect(comp.editorState()).toEqual(EditorState.SAVING);
 
         fixture.detectChanges();
 
         // receive result for save
         saveObservable.next(savedFilesResult);
-        expect(comp.internalEditorState()).toEqual(EditorState.SAVING);
+        expect(comp.editorState()).toEqual(EditorState.SAVING);
         expect(updateFilesStub).toHaveBeenNthCalledWith(1, [{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false);
         expect(onSavedFilesSpy).toHaveBeenCalledWith(savedFilesResult);
 
@@ -179,7 +182,7 @@ describe('CodeEditorActionsComponent', () => {
         const errorResponse = { error: 'fatalError' };
         const onErrorSpy = vi.spyOn(comp.onError, 'emit');
         const saveObservable = new Subject<typeof errorResponse>();
-        comp.internalEditorState.set(EditorState.UNSAVED_CHANGES);
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
         comp.isBuilding.set(false);
         fixture.componentRef.setInput('unsavedFiles', unsavedFiles);
         fixture.detectChanges();
@@ -190,21 +193,21 @@ describe('CodeEditorActionsComponent', () => {
 
         // waiting for save result
         expect(updateFilesStub).toHaveBeenNthCalledWith(1, [{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false);
-        expect(comp.internalEditorState()).toEqual(EditorState.SAVING);
+        expect(comp.editorState()).toEqual(EditorState.SAVING);
 
         fixture.detectChanges();
 
         // receive error for save
         saveObservable.error(errorResponse);
         expect(onErrorSpy).toHaveBeenCalledWith('saveFailed');
-        expect(comp.internalEditorState()).toEqual(EditorState.UNSAVED_CHANGES);
+        expect(comp.editorState()).toEqual(EditorState.UNSAVED_CHANGES);
         fixture.detectChanges();
     });
 
     it('should commit if no unsaved changes exist and update its state on response', () => {
         const commitObservable = new Subject<null>();
-        comp.internalCommitState.set(CommitState.UNCOMMITTED_CHANGES);
-        comp.internalEditorState.set(EditorState.CLEAN);
+        comp.commitState.set(CommitState.UNCOMMITTED_CHANGES);
+        comp.editorState.set(EditorState.CLEAN);
         comp.isBuilding.set(false);
         fixture.componentRef.setInput('unsavedFiles', {});
         fixture.detectChanges();
@@ -218,7 +221,7 @@ describe('CodeEditorActionsComponent', () => {
         commitButton.nativeElement.click();
         expect(commitStub).toHaveBeenNthCalledWith(1);
         expect(comp.isBuilding()).toBe(false);
-        expect(comp.internalCommitState()).toEqual(CommitState.COMMITTING);
+        expect(comp.commitState()).toEqual(CommitState.COMMITTING);
 
         fixture.detectChanges();
         expect(commitButton.nativeElement.disabled).toBe(true);
@@ -226,7 +229,7 @@ describe('CodeEditorActionsComponent', () => {
         // commit result mockReturnValue
         commitObservable.next(null);
         expect(comp.isBuilding()).toBe(true);
-        expect(comp.internalCommitState()).toEqual(CommitState.CLEAN);
+        expect(comp.commitState()).toEqual(CommitState.CLEAN);
 
         fixture.detectChanges();
         expect(commitButton.nativeElement.disabled).toBe(false);
@@ -235,8 +238,8 @@ describe('CodeEditorActionsComponent', () => {
     it('should commit if no unsaved changes exist and emit an error on error response', () => {
         const commitObservable = new Subject<void>();
         const onErrorSpy = vi.spyOn(comp.onError, 'emit');
-        comp.internalCommitState.set(CommitState.UNCOMMITTED_CHANGES);
-        comp.internalEditorState.set(EditorState.CLEAN);
+        comp.commitState.set(CommitState.UNCOMMITTED_CHANGES);
+        comp.editorState.set(EditorState.CLEAN);
         comp.isBuilding.set(false);
         fixture.componentRef.setInput('unsavedFiles', {});
         fixture.detectChanges();
@@ -250,7 +253,7 @@ describe('CodeEditorActionsComponent', () => {
         commitButton.nativeElement.click();
         expect(commitStub).toHaveBeenNthCalledWith(1);
         expect(comp.isBuilding()).toBe(false);
-        expect(comp.internalCommitState()).toEqual(CommitState.COMMITTING);
+        expect(comp.commitState()).toEqual(CommitState.COMMITTING);
 
         fixture.detectChanges();
         expect(commitButton.nativeElement.disabled).toBe(true);
@@ -258,7 +261,7 @@ describe('CodeEditorActionsComponent', () => {
         // commit result mockReturnValue an error
         commitObservable.error('error!');
         expect(comp.isBuilding()).toBe(false);
-        expect(comp.internalCommitState()).toEqual(CommitState.UNCOMMITTED_CHANGES);
+        expect(comp.commitState()).toEqual(CommitState.UNCOMMITTED_CHANGES);
         expect(onErrorSpy).toHaveBeenNthCalledWith(1, 'submitFailed');
 
         fixture.detectChanges();
@@ -268,7 +271,7 @@ describe('CodeEditorActionsComponent', () => {
     it('should emit different error messages on different error responses', () => {
         let commitObservable = new Subject<void>();
         const onErrorSpy = vi.spyOn(comp.onError, 'emit');
-        comp.internalCommitState.set(CommitState.UNCOMMITTED_CHANGES);
+        comp.commitState.set(CommitState.UNCOMMITTED_CHANGES);
         fixture.detectChanges();
 
         commitStub.mockReturnValue(commitObservable);
@@ -297,8 +300,8 @@ describe('CodeEditorActionsComponent', () => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
         const saveObservable = new Subject<null>();
         const saveChangedFilesStub = vi.spyOn(comp, 'saveChangedFiles');
-        comp.internalCommitState.set(CommitState.UNCOMMITTED_CHANGES);
-        comp.internalEditorState.set(EditorState.UNSAVED_CHANGES);
+        comp.commitState.set(CommitState.UNCOMMITTED_CHANGES);
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
         comp.isBuilding.set(false);
 
         fixture.componentRef.setInput('unsavedFiles', unsavedFiles);
@@ -314,24 +317,24 @@ describe('CodeEditorActionsComponent', () => {
 
         expect(commitStub).not.toHaveBeenCalled();
         expect(saveChangedFilesStub).toHaveBeenCalledOnce();
-        expect(comp.internalCommitState()).toEqual(CommitState.COMMITTING);
+        expect(comp.commitState()).toEqual(CommitState.COMMITTING);
 
         // save + commit completed
         saveObservable.next(null);
-        expect(comp.internalCommitState()).toEqual(CommitState.COMMITTING);
+        expect(comp.commitState()).toEqual(CommitState.COMMITTING);
 
         // Simulate that all files were saved — editorState transitions SAVING -> CLEAN.
         // The migrated component watches this transition via an effect (replacing the
         // legacy ngOnChanges flow) and reacts via a setTimeout(0) macrotask, so allow
         // the macrotask to settle before asserting.
-        comp.internalEditorState.set(EditorState.SAVING);
+        comp.editorState.set(EditorState.SAVING);
         fixture.detectChanges();
-        comp.internalEditorState.set(EditorState.CLEAN);
+        comp.editorState.set(EditorState.CLEAN);
         fixture.detectChanges();
         await new Promise((resolve) => setTimeout(resolve, 0));
 
         expect(comp.isBuilding()).toBe(true);
-        expect(comp.internalCommitState()).toEqual(CommitState.CLEAN);
+        expect(comp.commitState()).toEqual(CommitState.CLEAN);
 
         fixture.detectChanges();
         expect(commitButton.nativeElement.disabled).toBe(false);
@@ -344,7 +347,7 @@ describe('CodeEditorActionsComponent', () => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
         const savedFilesResult: { [fileName: string]: null } = { fileName: null };
         const saveObservable = new Subject<typeof savedFilesResult>();
-        comp.internalEditorState.set(EditorState.UNSAVED_CHANGES);
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
         comp.isBuilding.set(false);
         fixture.componentRef.setInput('unsavedFiles', unsavedFiles);
         fixture.componentRef.setInput('disableAutoSave', disableAutoSave);
@@ -359,12 +362,12 @@ describe('CodeEditorActionsComponent', () => {
         // receive result for save
         if (disableAutoSave) {
             expect(saveChangedFilesSpy).not.toHaveBeenCalled();
-            expect(comp.internalEditorState()).toEqual(EditorState.UNSAVED_CHANGES);
+            expect(comp.editorState()).toEqual(EditorState.UNSAVED_CHANGES);
         } else {
             expect(saveChangedFilesSpy).toHaveBeenCalledOnce();
             expect(saveChangedFilesSpy).toHaveBeenCalledWith();
             saveObservable.next(savedFilesResult);
-            expect(comp.internalEditorState()).toEqual(EditorState.SAVING);
+            expect(comp.editorState()).toEqual(EditorState.SAVING);
         }
 
         vi.useRealTimers();
@@ -376,7 +379,7 @@ describe('CodeEditorActionsComponent', () => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
         const savedFilesResult: { [fileName: string]: null } = { fileName: null };
         const saveObservable = new Subject<typeof savedFilesResult>();
-        comp.internalEditorState.set(EditorState.UNSAVED_CHANGES);
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
         comp.isBuilding.set(false);
         fixture.componentRef.setInput('unsavedFiles', unsavedFiles);
         fixture.detectChanges();
@@ -389,14 +392,14 @@ describe('CodeEditorActionsComponent', () => {
         fixture.detectChanges();
         fixture.destroy();
 
-        expect(comp.internalEditorState()).toEqual(EditorState.SAVING);
+        expect(comp.editorState()).toEqual(EditorState.SAVING);
     });
 
     it('should open refresh confirmation modal and execute refresh on confirmation', () => {
         const onClose = new Subject<boolean | undefined>();
-        const openStub = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
+        const openStub = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose, close: vi.fn() } as any);
         const executeRefreshStub = vi.spyOn(comp, 'executeRefresh').mockImplementation(() => undefined);
-        comp.internalEditorState.set(EditorState.UNSAVED_CHANGES);
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
 
         comp.onRefresh();
         onClose.next(true);
@@ -407,9 +410,9 @@ describe('CodeEditorActionsComponent', () => {
 
     it('should not execute refresh if the refresh confirmation modal is dismissed', () => {
         const onClose = new Subject<boolean | undefined>();
-        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose, close: vi.fn() } as any);
         const executeRefreshStub = vi.spyOn(comp, 'executeRefresh').mockImplementation(() => undefined);
-        comp.internalEditorState.set(EditorState.UNSAVED_CHANGES);
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
 
         comp.onRefresh();
         onClose.next(undefined);
@@ -420,7 +423,7 @@ describe('CodeEditorActionsComponent', () => {
     it('should execute refresh directly when editor is clean', () => {
         const openStub = vi.spyOn(dialogService, 'open');
         const executeRefreshStub = vi.spyOn(comp, 'executeRefresh').mockImplementation(() => undefined);
-        comp.internalEditorState.set(EditorState.CLEAN);
+        comp.editorState.set(EditorState.CLEAN);
 
         comp.onRefresh();
 
@@ -434,12 +437,12 @@ describe('CodeEditorActionsComponent', () => {
         pullStub.mockReturnValue(pullObservable);
 
         comp.executeRefresh();
-        expect(comp.internalEditorState()).toEqual(EditorState.REFRESHING);
+        expect(comp.editorState()).toEqual(EditorState.REFRESHING);
 
         pullObservable.next();
 
         expect(refreshFilesEmitStub).toHaveBeenCalledOnce();
-        expect(comp.internalEditorState()).toEqual(EditorState.CLEAN);
+        expect(comp.editorState()).toEqual(EditorState.CLEAN);
     });
 
     it('should emit internet-disconnected refresh error on pull failure', () => {
@@ -450,7 +453,7 @@ describe('CodeEditorActionsComponent', () => {
         comp.executeRefresh();
         pullObservable.error(new ConnectionError());
 
-        expect(comp.internalEditorState()).toEqual(EditorState.UNSAVED_CHANGES);
+        expect(comp.editorState()).toEqual(EditorState.UNSAVED_CHANGES);
         expect(onErrorStub).toHaveBeenCalledWith('refreshFailedInternetDisconnected');
     });
 
@@ -462,14 +465,14 @@ describe('CodeEditorActionsComponent', () => {
         comp.executeRefresh();
         pullObservable.error(new Error('something'));
 
-        expect(comp.internalEditorState()).toEqual(EditorState.UNSAVED_CHANGES);
+        expect(comp.editorState()).toEqual(EditorState.UNSAVED_CHANGES);
         expect(onErrorStub).toHaveBeenCalledWith('refreshFailed');
     });
 
     it('should reset repository and refresh after modal confirmation', () => {
         const onClose = new Subject<boolean | undefined>();
         const resetObservable = new Subject<void>();
-        const openStub = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
+        const openStub = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose, close: vi.fn() } as any);
         const executeRefreshStub = vi.spyOn(comp, 'executeRefresh').mockImplementation(() => undefined);
         const notifyConflictStateStub = vi.spyOn(conflictStateService, 'notifyConflictState');
         resetRepositoryStub.mockReturnValue(resetObservable);
@@ -486,7 +489,7 @@ describe('CodeEditorActionsComponent', () => {
 
     it('should not reset repository when the modal is dismissed', () => {
         const onClose = new Subject<boolean | undefined>();
-        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose, close: vi.fn() } as any);
 
         comp.resetRepository();
         onClose.next(undefined);
@@ -498,7 +501,7 @@ describe('CodeEditorActionsComponent', () => {
         const onClose = new Subject<boolean | undefined>();
         const resetObservable = new Subject<void>();
         const onErrorStub = vi.spyOn(comp.onError, 'emit');
-        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose, close: vi.fn() } as any);
         resetRepositoryStub.mockReturnValue(resetObservable);
 
         comp.resetRepository();
@@ -508,73 +511,26 @@ describe('CodeEditorActionsComponent', () => {
         expect(onErrorStub).toHaveBeenCalledWith('resetFailed');
     });
 
-    // Regression for BLOCKER 1 (cluster 8 codex review):
-    // The legacy ngOnChanges read this.commitState INSIDE setTimeout, so a commit-state change between
-    // scheduling and firing was respected. The first migration pass read commitState BEFORE scheduling,
-    // which would have caused the deferred branch to fire even after commitState had already moved out of
-    // COMMITTING — corrupting commitState to UNCOMMITTED_CHANGES/CLEAN despite the parent no longer
-    // expecting a transition. This test drives editorState SAVING -> CLEAN with commitState briefly
-    // COMMITTING, then immediately moves commitState to UNDEFINED before the setTimeout fires, and
-    // asserts that commitState is NOT clobbered.
+    // Guard: when editorState transitions SAVING -> CLEAN while commitState is COMMITTING, the deferred
+    // cascade finalizes the commit. The commitState guard is re-evaluated INSIDE the setTimeout, so a
+    // concurrent move out of COMMITTING is respected and commitState is NOT clobbered.
     it('should re-read commitState inside the deferred cascade so a concurrent move out of COMMITTING is respected', async () => {
-        comp.internalCommitState.set(CommitState.COMMITTING);
-        comp.internalEditorState.set(EditorState.SAVING);
+        comp.commitState.set(CommitState.COMMITTING);
+        comp.editorState.set(EditorState.SAVING);
         fixture.detectChanges();
 
         // editorState transitions SAVING -> CLEAN (e.g. saveChangedFiles completed). This schedules a
         // setTimeout that will finalize the commit. Before the macrotask fires, the parent moves
         // commitState to UNDEFINED (e.g. file-browser raised a CHECKOUT_CONFLICT / reset).
-        comp.internalEditorState.set(EditorState.CLEAN);
+        comp.editorState.set(EditorState.CLEAN);
         fixture.detectChanges();
-        comp.internalCommitState.set(CommitState.UNDEFINED);
+        comp.commitState.set(CommitState.UNDEFINED);
         fixture.detectChanges();
 
         await new Promise((resolve) => setTimeout(resolve, 0));
 
         // The deferred branch must guard on the CURRENT commitState, not the value at scheduling time.
         // Therefore commitState stays UNDEFINED — NOT clobbered to CLEAN.
-        expect(comp.internalCommitState()).toEqual(CommitState.UNDEFINED);
-    });
-
-    // Regression for BLOCKER 2 (cluster 8 codex review):
-    // model<>() does not emit *Change for parent-driven input updates. The container relies on a
-    // (commitStateChange) handler firing when commitState flows in from elsewhere (e.g. file-browser
-    // raising a CHECKOUT_CONFLICT that updates the container's commitState field, which then flows
-    // down to this component via [(commitState)]). We replaced model<>() with input + writable signal
-    // + manual *Change output to restore the legacy setter's emit-on-parent-change semantics.
-    it('should emit commitStateChange when commitState input is updated by the parent', () => {
-        const commitStateChangeSpy = vi.spyOn(comp.commitStateChange, 'emit');
-        // Legacy `@Input set commitState` emitted on the first distinct value too (initial was
-        // undefined, so any non-undefined initial assignment passed the `value !== _value` check).
-        fixture.componentRef.setInput('commitState', CommitState.UNCOMMITTED_CHANGES);
-        fixture.detectChanges();
-        expect(commitStateChangeSpy).toHaveBeenCalledWith(CommitState.UNCOMMITTED_CHANGES);
-        expect(comp.internalCommitState()).toEqual(CommitState.UNCOMMITTED_CHANGES);
-
-        commitStateChangeSpy.mockClear();
-        fixture.componentRef.setInput('commitState', CommitState.COMMITTING);
-        fixture.detectChanges();
-        expect(commitStateChangeSpy).toHaveBeenCalledWith(CommitState.COMMITTING);
-        expect(comp.internalCommitState()).toEqual(CommitState.COMMITTING);
-
-        // Re-applying the same value should not emit again.
-        commitStateChangeSpy.mockClear();
-        fixture.componentRef.setInput('commitState', CommitState.COMMITTING);
-        fixture.detectChanges();
-        expect(commitStateChangeSpy).not.toHaveBeenCalled();
-    });
-
-    it('should emit editorStateChange when editorState input is updated by the parent', () => {
-        const editorStateChangeSpy = vi.spyOn(comp.editorStateChange, 'emit');
-        // Same legacy semantic — emit on first distinct value.
-        fixture.componentRef.setInput('editorState', EditorState.CLEAN);
-        fixture.detectChanges();
-        expect(editorStateChangeSpy).toHaveBeenCalledWith(EditorState.CLEAN);
-
-        editorStateChangeSpy.mockClear();
-        fixture.componentRef.setInput('editorState', EditorState.UNSAVED_CHANGES);
-        fixture.detectChanges();
-        expect(editorStateChangeSpy).toHaveBeenCalledWith(EditorState.UNSAVED_CHANGES);
-        expect(comp.internalEditorState()).toEqual(EditorState.UNSAVED_CHANGES);
+        expect(comp.commitState()).toEqual(CommitState.UNDEFINED);
     });
 });
