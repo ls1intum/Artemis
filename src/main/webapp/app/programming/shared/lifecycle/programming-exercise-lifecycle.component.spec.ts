@@ -275,8 +275,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         newExercise.releaseDate = now.add(20, 'days');
         newExercise.startDate = now.add(21, 'days');
         fixture.componentRef.setInput('exercise', newExercise);
-
-        comp.applyExerciseDateCascade(newExercise);
+        fixture.detectChanges(); // runs ngOnInit + initial date cascade
 
         expect(alertSpy).toHaveBeenCalledTimes(3);
         let nthCall = 0;
@@ -287,7 +286,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         const newerExercise = { ...newExercise };
         newerExercise.dueDate = now.add(40, 'days');
         fixture.componentRef.setInput('exercise', newerExercise);
-        comp.applyExerciseDateCascade(newerExercise);
+        fixture.detectChanges(); // flushes the effect for the new exercise reference
 
         expect(alertSpy).toHaveBeenCalledTimes(nthCall + 1);
         expect(alertSpy).toHaveBeenNthCalledWith(nthCall + 1, 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');

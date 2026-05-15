@@ -38,31 +38,28 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
 
     isLocalCIEnabled = true;
 
+    private initialized = false;
+    private previousProgrammingLanguage: ProgrammingLanguage | undefined;
+    private previousCheckoutSolutionRepository: boolean | undefined;
+
     constructor() {
-        // Mirrors the legacy ngOnChanges: react to programmingLanguage / checkoutSolutionRepository /
-        // programmingExercise / programmingExerciseBuildConfig changes. The parent updates checkout paths
-        // by replacing only `programmingExercise().buildConfig` and pushing it through the separate
-        // `programmingExerciseBuildConfig` input while keeping the exercise object stable — so the effect
-        // must track that input too, or buildConfig-only edits would not refresh the preview.
-        let initialized = false;
-        let lastProgrammingLanguage: ProgrammingLanguage | undefined;
-        let lastCheckoutSolutionRepository: boolean | undefined;
+        // React to programmingLanguage / checkoutSolutionRepository / programmingExercise changes.
+        // The parent may push buildConfig-only updates through the separate `programmingExerciseBuildConfig`
+        // input while keeping the exercise object stable; reading that signal here keeps it tracked.
         effect(() => {
             const currentProgrammingLanguage = this.programmingLanguage();
             const currentCheckoutSolutionRepository = this.checkoutSolutionRepository();
             const currentProgrammingExercise = this.programmingExercise();
-            // Track the buildConfig signal too — buildConfig-only updates must trigger this effect.
-            this.programmingExerciseBuildConfig();
+            this.programmingExerciseBuildConfig(); // track buildConfig-only updates
 
-            const isProgrammingLanguageUpdated = initialized && currentProgrammingLanguage !== lastProgrammingLanguage;
-            const isCheckoutSolutionRepositoryUpdated = initialized && currentCheckoutSolutionRepository !== lastCheckoutSolutionRepository;
-            lastProgrammingLanguage = currentProgrammingLanguage;
-            lastCheckoutSolutionRepository = currentCheckoutSolutionRepository;
-
-            if (!initialized) {
-                initialized = true;
+            if (!this.initialized) {
                 return;
             }
+
+            const isProgrammingLanguageUpdated = currentProgrammingLanguage !== this.previousProgrammingLanguage;
+            const isCheckoutSolutionRepositoryUpdated = currentCheckoutSolutionRepository !== this.previousCheckoutSolutionRepository;
+            this.previousProgrammingLanguage = currentProgrammingLanguage;
+            this.previousCheckoutSolutionRepository = currentCheckoutSolutionRepository;
 
             untracked(() => {
                 if (this.isLocalCIEnabled && (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated)) {
@@ -72,8 +69,7 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
                     this.updateCheckoutDirectories();
                 }
 
-                const isBuildConfigChanged = this.isBuildConfigAvailable(currentProgrammingExercise.buildConfig);
-                if (this.isCreateOrEdit() && isBuildConfigChanged) {
+                if (this.isCreateOrEdit() && this.isBuildConfigAvailable(currentProgrammingExercise.buildConfig)) {
                     this.checkoutDirectories.set(this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories()));
                 }
             });
@@ -86,13 +82,13 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         if (this.isLocalCIEnabled) {
             this.updateCheckoutDirectories();
         }
-        // Initial buildConfig-derived population: mirrors the legacy ngOnChanges first-call behavior,
-        // which the effect() above intentionally skips. When isCreateOrEdit is true and buildConfig already
-        // carries checkout paths at init time, populate checkoutDirectories synchronously so the template
-        // does not have to wait for an async service response or a later tracked input change.
+        // Initial buildConfig-derived population (legacy ngOnChanges first-pass behaviour).
         if (this.isCreateOrEdit() && this.isBuildConfigAvailable(this.programmingExercise().buildConfig)) {
             this.checkoutDirectories.set(this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories()));
         }
+        this.previousProgrammingLanguage = this.programmingLanguage();
+        this.previousCheckoutSolutionRepository = this.checkoutSolutionRepository();
+        this.initialized = true;
     }
 
     ngOnDestroy() {

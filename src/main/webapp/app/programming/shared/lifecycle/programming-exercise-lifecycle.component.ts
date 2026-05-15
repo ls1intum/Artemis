@@ -51,10 +51,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     protected readonly faUserCheck = faUserCheck;
     protected readonly faUserSlash = faUserSlash;
 
-    // Signal inputs — read directly via `()` so templates and code see the current value
-    // immediately on the same change-detection pass (effect-mirrored plain fields produced a
-    // one-tick stale render under zoneless / OnPush).
-    readonly exercise = input<ProgrammingExercise>(undefined!);
+    readonly exercise = input.required<ProgrammingExercise>();
     readonly isExamMode = input<boolean>(false);
     readonly readOnly = input<boolean>(false);
     readonly importOptions = input<ImportOptions | undefined>(undefined);
@@ -74,43 +71,24 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     isImport = false;
     private urlSubscription: Subscription;
 
-    private effectInitialized = false;
-    private lastSeenExercise?: ProgrammingExercise;
+    private previousExerciseRef?: ProgrammingExercise;
 
     constructor() {
-        // Tracks ALL four parent-controlled inputs so a change to any of them re-runs the effect —
-        // matching the legacy ngOnChanges semantics for `exercise`. On the very first run we only
-        // seed `lastSeenExercise`; ngOnInit handles synchronous initialization. On subsequent runs,
-        // when the exercise reference changes, we run the date cascade. Reading the other inputs
-        // here keeps them as tracked dependencies so a parent change re-runs CD downstream.
+        // Re-run the date cascade whenever the parent swaps in a new `exercise` reference.
+        // ngOnInit handles the first pass synchronously; this effect handles subsequent updates.
         effect(() => {
             const newExercise = this.exercise();
-            // Track the other inputs so the effect re-runs when they change (no side effects needed
-            // because templates and code read them directly via () now).
-            this.isExamMode();
-            this.readOnly();
-            this.importOptions();
-
-            if (!this.effectInitialized) {
-                this.lastSeenExercise = newExercise;
-                this.effectInitialized = true;
+            if (newExercise === this.previousExerciseRef) {
                 return;
             }
-
-            if (newExercise !== this.lastSeenExercise) {
-                this.lastSeenExercise = newExercise;
-                if (newExercise) {
-                    this.applyExerciseDateCascade(newExercise);
-                }
+            this.previousExerciseRef = newExercise;
+            if (newExercise) {
+                this.applyExerciseDateCascade(newExercise);
             }
         });
     }
 
-    /**
-     * Runs the same cascading date-error correction the legacy ngOnChanges did for the exercise input.
-     * Public so tests can simulate "input changed" without going through the signal-input pipeline.
-     */
-    applyExerciseDateCascade(newExercise: ProgrammingExercise) {
+    private applyExerciseDateCascade(newExercise: ProgrammingExercise) {
         if (this.exerciseService.hasDueDateError(newExercise)) {
             // Checking for due date errors and ordering the calls to avoid updating exampleSolutionPublicationDate twice.
             this.updateReleaseDate(newExercise.releaseDate);
@@ -122,11 +100,8 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     }
 
     /**
-     * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC.
-     * Also applies the date-cascade for the initial exercise: legacy ngOnChanges ran on every
-     * input change including the initial one, which corrected invalid initial date ordering
-     * before the first template render. The constructor effect intentionally skips its first
-     * synchronous emission, so the cascade must run here for the initial input pass.
+     * If the programming exercise does not have an id, set the assessmentType to AUTOMATIC and
+     * apply the initial date cascade (legacy ngOnChanges fired on the first input pass too).
      */
     ngOnInit(): void {
         this.updateIsImportBasedOnUrl();
@@ -136,6 +111,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
         if (exercise) {
+            this.previousExerciseRef = exercise;
             this.applyExerciseDateCascade(exercise);
         }
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
@@ -158,10 +134,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     ngAfterViewInit() {
         this.setupDateFieldSubscriptions();
-        // viewChildren() returns a signal, so re-subscribe whenever the picker list changes.
-        // The legacy code did this by subscribing to QueryList.changes; with signal queries we
-        // express the same intent with an effect that tracks the signal. Created with an explicit
-        // injector so it's tied to this component's lifetime even from ngAfterViewInit.
+        // Re-subscribe whenever the signal-based picker list changes (replaces legacy QueryList.changes).
         effect(
             () => {
                 this.datePickerComponents();
