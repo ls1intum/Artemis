@@ -103,6 +103,11 @@
             flattenDiscriminatorAllOfBackReferences(prunedSpecificationMap)
 
             outputFile.text = yamlParser.dump(prunedSpecificationMap)
+            // SnakeYAML's dump() converts double-quoted strings to single quotes.
+            // The version line must use double quotes for update_version.sh --check.
+            outputFile.text = outputFile.text.replaceFirst(
+                /(?m)^(  version: )'([^']+)'$/, '$1"$2"'
+            )
             println "✔ Pruned specification written to ${outputFile}"
         }
     }
