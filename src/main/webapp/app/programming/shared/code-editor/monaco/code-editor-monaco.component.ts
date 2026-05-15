@@ -160,13 +160,16 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     private suppressNextDirtySignal = new Set<string>();
     private dirtySignalSuppressedDuringInitialSync = new Set<string>();
 
-    private previousEditorState?: EditorState;
-    private previousCommitState?: CommitState;
-    private previousSelectedFile?: string;
-    private previousFeedbacksRef?: Feedback[];
-    // The `feedbacks` input defaults to `[]`. Without this guard the first effect run would fire
-    // the feedbacks branch for every parent that does not bind the input — distorting widget render.
-    private hasObservedFeedbacksInput = false;
+    // Consolidated snapshot of previous tracked-input values for the cascade effect.
+    // `hasObservedFeedbacksInput` guards against the `feedbacks` default `[]` reference firing
+    // the feedbacks branch on first run for parents that do not bind the input.
+    private previousInputs: {
+        editorState?: EditorState;
+        commitState?: CommitState;
+        selectedFile?: string;
+        feedbacks?: Feedback[];
+        hasObservedFeedbacksInput: boolean;
+    } = { hasObservedFeedbacksInput: false };
 
     constructor() {
         effect(() => {
@@ -175,28 +178,23 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             const selectedFile = this.selectedFile();
             const feedbacks = this.feedbacks();
 
-            let prevEditorState: EditorState | undefined;
-            let prevCommitState: CommitState | undefined;
-            let prevSelectedFile: string | undefined;
-            let prevFeedbacks: Feedback[] | undefined;
-            let hadObservedFeedbacks = false;
+            let prev: typeof this.previousInputs;
             untracked(() => {
-                prevEditorState = this.previousEditorState;
-                prevCommitState = this.previousCommitState;
-                prevSelectedFile = this.previousSelectedFile;
-                prevFeedbacks = this.previousFeedbacksRef;
-                hadObservedFeedbacks = this.hasObservedFeedbacksInput;
-                this.previousEditorState = editorState;
-                this.previousCommitState = commitState;
-                this.previousSelectedFile = selectedFile;
-                this.previousFeedbacksRef = feedbacks;
-                this.hasObservedFeedbacksInput = true;
+                prev = this.previousInputs;
+                this.previousInputs = {
+                    editorState,
+                    commitState,
+                    selectedFile,
+                    feedbacks,
+                    hasObservedFeedbacksInput: true,
+                };
             });
 
-            const selectedFileChanged = selectedFile !== prevSelectedFile;
-            const feedbacksChanged = hadObservedFeedbacks && feedbacks !== prevFeedbacks;
-            const editorWasRefreshed = prevEditorState === EditorState.REFRESHING && editorState === EditorState.CLEAN;
-            const editorWasReset = prevCommitState !== undefined && prevCommitState !== CommitState.UNDEFINED && commitState === CommitState.UNDEFINED;
+            const selectedFileChanged = selectedFile !== prev!.selectedFile;
+            const feedbacksChanged = prev!.hasObservedFeedbacksInput && feedbacks !== prev!.feedbacks;
+            const editorWasRefreshed = prev!.editorState === EditorState.REFRESHING && editorState === EditorState.CLEAN;
+            const editorWasReset = prev!.commitState !== undefined && prev!.commitState !== CommitState.UNDEFINED && commitState === CommitState.UNDEFINED;
+            const prevSelectedFile = prev!.selectedFile;
 
             untracked(() => {
                 void this.handleInputChangeCascade({

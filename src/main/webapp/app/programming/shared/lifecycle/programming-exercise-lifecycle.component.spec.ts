@@ -368,7 +368,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.ngAfterViewInit();
         valueChanges.next(true);
         await new Promise((resolve) => setTimeout(resolve, 10));
-        expect(comp.formValid).toBe(true);
-        expect(comp.formEmpty).toBe(true);
+        expect(comp.formValid()).toBe(true);
+        expect(comp.formEmpty()).toBe(true);
     });
 });

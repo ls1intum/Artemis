@@ -82,7 +82,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
 
         fixture.componentRef.setInput('programmingLanguage', ProgrammingLanguage.C);
         fixture.componentRef.setInput('programmingExercise', { id: 1, shortName: 'shortName', buildConfig: new ProgrammingExerciseBuildConfig() } as ProgrammingExercise);
-        component.isLocalCIEnabled = true;
+        component.isLocalCIEnabled.set(true);
 
         vi.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage').mockImplementation(
             (programmingLanguage: ProgrammingLanguage, checkoutSolution: boolean) => {
@@ -129,7 +129,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
 
     it('should NOT send request if localCI is NOT used', () => {
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [] } as unknown as ProfileInfo);
-        component.isLocalCIEnabled = false;
+        component.isLocalCIEnabled.set(false);
         const spy = vi.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
 
         fixture.changeDetectorRef.detectChanges();
@@ -147,7 +147,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     });
 
     it('should NOT display checkoutDirectory preview if localCI is NOT used', () => {
-        component.isLocalCIEnabled = false;
+        component.isLocalCIEnabled.set(false);
         fixture.changeDetectorRef.detectChanges();
         const submissionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN);
         const solutionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SOLUTION_BUILD_PLAN);
@@ -278,7 +278,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     it('should derive checkoutDirectories from buildConfig on initial detectChanges when isCreateOrEdit is true', () => {
         // localCI disabled so only the synchronous ngOnInit derivation populates the signal here.
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [] } as unknown as ProfileInfo);
-        component.isLocalCIEnabled = false;
+        component.isLocalCIEnabled.set(false);
 
         const buildConfig = new ProgrammingExerciseBuildConfig();
         buildConfig.assignmentCheckoutPath = 'assignment';

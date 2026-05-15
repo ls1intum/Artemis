@@ -50,7 +50,7 @@
             </ul>
         </div>
     </div>
-    @if (!isLocalCIEnabled) {
+    @if (!isLocalCIEnabled()) {
         <div class="col-auto rounded pt-1 pb-1 preview-box">
             <div>
                 <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.buildPlans"></span>
@@ -106,7 +106,7 @@
 <ng-template #repositoryBadge let-helpIconText="helpIconText" let-trailingRepoSlug="trailingRepoSlug" let-isBuildPlan="isBuildPlan" let-isAuxRepo="isAuxRepo">
     <li>
         <code [class]="'text-white badge label-preview ' + (isBuildPlan ? ' text-uppercase' : 'text-lowercase') + (isAuxRepo ? ' bg-success' : ' bg-primary')">
-            {{ courseShortName }}{{ programmingExercise().shortName }}{{ trailingRepoSlug }}
+            {{ courseShortName() }}{{ programmingExercise().shortName }}{{ trailingRepoSlug }}
         </code>
         @if (helpIconText) {
             <jhi-help-icon [text]="helpIconText" />

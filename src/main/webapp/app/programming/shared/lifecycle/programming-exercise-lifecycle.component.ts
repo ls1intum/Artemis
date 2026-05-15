@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Injector, OnDestroy, OnInit, Signal, effect, inject, input, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, Signal, effect, inject, input, signal, viewChildren } from '@angular/core';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
@@ -43,7 +43,6 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     private exerciseService = inject(ExerciseService);
     private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
-    private injector = inject(Injector);
 
     protected readonly assessmentType = AssessmentType;
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -55,25 +54,26 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     readonly isExamMode = input<boolean>(false);
     readonly readOnly = input<boolean>(false);
     readonly importOptions = input<ImportOptions | undefined>(undefined);
-    isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
+    readonly isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
 
     readonly datePickerComponents: Signal<readonly ProgrammingExerciseTestScheduleDatePickerComponent[]> = viewChildren(ProgrammingExerciseTestScheduleDatePickerComponent);
 
-    formValid: boolean;
-    formEmpty: boolean;
+    readonly formValid = signal<boolean>(false);
+    readonly formEmpty = signal<boolean>(false);
     formValidChanges = new Subject<boolean>();
 
     inputfieldSubscriptions: (Subscription | undefined)[] = [];
     datePickerChildrenSubscription?: Subscription;
 
-    isAthenaEnabled: boolean;
+    readonly isAthenaEnabled = signal<boolean>(false);
 
-    isImport = false;
+    readonly isImport = signal<boolean>(false);
     private urlSubscription: Subscription;
 
     private previousExerciseRef?: ProgrammingExercise;
 
     constructor() {
+        // Re-cascade exercise dates whenever the input reference changes (side-effecting; mutates exercise).
         effect(() => {
             const newExercise = this.exercise();
             if (newExercise === this.previousExerciseRef) {
@@ -81,6 +81,14 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             }
             this.previousExerciseRef = newExercise;
             this.applyExerciseDateCascade(newExercise);
+        });
+
+        // Re-wire date picker subscriptions whenever the viewChildren list mutates.
+        // Constructor effects can read viewChildren signals; the initial snapshot is empty,
+        // and the effect re-fires once children render.
+        effect(() => {
+            this.datePickerComponents();
+            this.setupDateFieldSubscriptions();
         });
     }
 
@@ -100,10 +108,10 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         this.updateIsImportBasedOnUrl();
 
         const exercise = this.exercise();
-        if (!exercise.id && !this.isImport) {
+        if (!exercise.id && !this.isImport()) {
             exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
-        this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        this.isAthenaEnabled.set(this.profileService.isProfileActive(PROFILE_ATHENA));
     }
 
     private updateIsImportBasedOnUrl() {
@@ -117,19 +125,14 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
                 }),
             )
             .subscribe(() => {
-                this.isImport = isImportFromExistingExercise || isImportFromFile;
+                this.isImport.set(isImportFromExistingExercise || isImportFromFile);
             });
     }
 
     ngAfterViewInit() {
+        // Kept for compatibility — spec invokes it directly. The constructor effect handles the
+        // production lifecycle, including re-wiring when the viewChildren list mutates.
         this.setupDateFieldSubscriptions();
-        effect(
-            () => {
-                this.datePickerComponents();
-                this.setupDateFieldSubscriptions();
-            },
-            { injector: this.injector },
-        );
     }
 
     ngOnDestroy() {
@@ -140,14 +143,16 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     calculateFormStatus() {
         const datePickers = this.datePickerComponents();
-        this.formValid = every(datePickers, (picker) => picker?.dateInput()?.valid ?? true);
-        this.formEmpty = !every(datePickers, (picker) => {
+        const isValid = every(datePickers, (picker) => picker?.dateInput()?.valid ?? true);
+        const isEmpty = !every(datePickers, (picker) => {
             if (picker instanceof ProgrammingExerciseTestScheduleDatePickerComponent) {
                 return picker.selectedDate;
             }
             return false;
         });
-        this.formValidChanges.next(this.formValid);
+        this.formValid.set(isValid);
+        this.formEmpty.set(isEmpty);
+        this.formValidChanges.next(isValid);
     }
 
     setupDateFieldSubscriptions() {

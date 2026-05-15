@@ -58,7 +58,7 @@
                     tooltipText="artemisApp.programmingExercise.timeline.afterDueDateTooltip"
                 />
             }
-            @if ((isEditFieldDisplayedRecord()?.assessmentDueDate || !isEditFieldDisplayedRecord()) && (isExamMode() || isImport || exercise().dueDate)) {
+            @if ((isEditFieldDisplayedRecord()?.assessmentDueDate || !isEditFieldDisplayedRecord()) && (isExamMode() || isImport() || exercise().dueDate)) {
                 <div>
                     <div class="test-schedule-date px-1">
                         <div class="test-schedule-date-title test-schedule-date-title-small-button">
@@ -103,7 +103,7 @@
                 <div>
                     <jhi-programming-exercise-test-schedule-date-picker
                         [(ngModel)]="exercise().exampleSolutionPublicationDate"
-                        [readOnly]="readOnly() || isImport"
+                        [readOnly]="readOnly() || isImport()"
                         [startAt]="exercise().dueDate ?? exercise().startDate ?? exercise().releaseDate"
                         [min]="
                             (exercise().includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED ? exercise().dueDate : undefined) ??
@@ -113,7 +113,7 @@
                         class="test-schedule-date px-1"
                         label="artemisApp.exercise.exampleSolutionPublicationDate"
                         [tooltipText]="
-                            isImport
+                            isImport()
                                 ? 'artemisApp.programmingExercise.timeline.exampleSolutionPublicationDateTooltipOnImport'
                                 : 'artemisApp.programmingExercise.timeline.exampleSolutionPublicationDateTooltip'
                         "
@@ -151,7 +151,7 @@
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentTooltip'" />
             </div>
         }
-        @if (isExamMode() && isImport && importOptions(); as importOptions) {
+        @if (isExamMode() && isImport() && importOptions(); as importOptions) {
             <div class="form-check">
                 <input
                     type="checkbox"
@@ -180,7 +180,7 @@
                     id="allowFeedbackRequests"
                     (change)="toggleFeedbackRequests()"
                 />
-                @if (isAthenaEnabled) {
+                @if (isAthenaEnabled()) {
                     <label
                         [ngStyle]="exercise().assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
                         class="form-control-label"

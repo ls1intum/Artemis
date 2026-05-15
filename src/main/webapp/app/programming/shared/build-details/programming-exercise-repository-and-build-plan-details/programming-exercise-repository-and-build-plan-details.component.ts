@@ -33,13 +33,13 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     readonly submissionBuildPlanEvent = output<BuildPlanCheckoutDirectoriesDTO>();
 
     checkoutDirectorySubscription?: Subscription;
-    courseShortName?: string;
+    readonly courseShortName = signal<string | undefined>(undefined);
     readonly checkoutDirectories = signal<CheckoutDirectoriesDto | undefined>(undefined);
 
-    isLocalCIEnabled = true;
+    readonly isLocalCIEnabled = signal<boolean>(true);
 
-    private previousProgrammingLanguage?: ProgrammingLanguage;
-    private previousCheckoutSolutionRepository?: boolean;
+    // Single snapshot of the previous tracked-input values; consolidates the previousX fields.
+    private previousInputs: { programmingLanguage?: ProgrammingLanguage; checkoutSolutionRepository?: boolean } = {};
 
     constructor() {
         effect(() => {
@@ -50,13 +50,12 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
             this.programmingExerciseBuildConfig();
             const currentProgrammingExercise = this.programmingExercise();
 
-            const programmingLanguageChanged = currentProgrammingLanguage !== this.previousProgrammingLanguage;
-            const checkoutSolutionRepositoryChanged = currentCheckoutSolutionRepository !== this.previousCheckoutSolutionRepository;
-            this.previousProgrammingLanguage = currentProgrammingLanguage;
-            this.previousCheckoutSolutionRepository = currentCheckoutSolutionRepository;
+            const programmingLanguageChanged = currentProgrammingLanguage !== this.previousInputs.programmingLanguage;
+            const checkoutSolutionRepositoryChanged = currentCheckoutSolutionRepository !== this.previousInputs.checkoutSolutionRepository;
+            this.previousInputs = { programmingLanguage: currentProgrammingLanguage, checkoutSolutionRepository: currentCheckoutSolutionRepository };
 
             untracked(() => {
-                if (this.isLocalCIEnabled && (programmingLanguageChanged || checkoutSolutionRepositoryChanged)) {
+                if (this.isLocalCIEnabled() && (programmingLanguageChanged || checkoutSolutionRepositoryChanged)) {
                     if (this.isCreateOrEdit() && !this.isEditMode()) {
                         this.resetProgrammingExerciseBuildCheckoutPaths();
                     }
@@ -71,17 +70,19 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     }
 
     ngOnInit() {
-        this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.isLocalCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
         this.updateCourseShortName();
-        if (this.isLocalCIEnabled) {
+        if (this.isLocalCIEnabled()) {
             this.updateCheckoutDirectories();
         }
         if (this.isCreateOrEdit() && this.isBuildConfigAvailable(this.programmingExercise().buildConfig)) {
             this.checkoutDirectories.set(this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories()));
         }
-        // Prime previous-value fields before the effect's first tick so it sees no spurious change.
-        this.previousProgrammingLanguage = this.programmingLanguage();
-        this.previousCheckoutSolutionRepository = this.checkoutSolutionRepository();
+        // Prime previous-input snapshot before the effect's first tick so it sees no spurious change.
+        this.previousInputs = {
+            programmingLanguage: this.programmingLanguage(),
+            checkoutSolutionRepository: this.checkoutSolutionRepository(),
+        };
     }
 
     ngOnDestroy() {
@@ -140,7 +141,7 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     }
 
     private updateCourseShortName() {
-        this.courseShortName = getCourseFromExercise(this.programmingExercise())?.shortName;
+        this.courseShortName.set(getCourseFromExercise(this.programmingExercise())?.shortName);
     }
 
     private addLeadingSlash(path?: string): string | undefined {

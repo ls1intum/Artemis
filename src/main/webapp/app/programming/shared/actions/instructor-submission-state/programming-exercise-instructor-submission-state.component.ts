@@ -1,6 +1,6 @@
-import { Component, OnInit, effect, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, effect, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, map, tap } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
@@ -28,6 +28,7 @@ import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmi
 })
 export class ProgrammingExerciseInstructorSubmissionStateComponent implements OnInit {
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private destroyRef = inject(DestroyRef);
 
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
@@ -46,9 +47,6 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
 
     readonly resultEtaInMs = signal<number | undefined>(undefined);
 
-    submissionStateSubscription: Subscription;
-    resultEtaSubscription: Subscription;
-
     private lastSubscribedExerciseId: number | undefined;
 
     // Icons
@@ -62,8 +60,7 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
             const exerciseId = exercise.id;
             if (exerciseId !== undefined && exerciseId !== this.lastSubscribedExerciseId) {
                 this.lastSubscribedExerciseId = exerciseId;
-                this.submissionStateSubscription?.unsubscribe();
-                this.submissionStateSubscription = this.programmingSubmissionService
+                this.programmingSubmissionService
                     .getSubmissionStateOfExercise(exerciseId)
                     .pipe(
                         map(this.sumSubmissionStates),
@@ -74,6 +71,7 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
                             this.hasFailedSubmissions.set((buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0) > 0);
                             this.hasBuildingSubmissions.set((buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] ?? 0) > 0);
                         }),
+                        takeUntilDestroyed(this.destroyRef),
                     )
                     .subscribe();
             }
@@ -81,7 +79,10 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     }
 
     ngOnInit(): void {
-        this.resultEtaSubscription = this.programmingSubmissionService.getResultEtaInMs().subscribe((resultEta) => this.resultEtaInMs.set(resultEta));
+        this.programmingSubmissionService
+            .getResultEtaInMs()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((resultEta) => this.resultEtaInMs.set(resultEta));
     }
 
     /**
