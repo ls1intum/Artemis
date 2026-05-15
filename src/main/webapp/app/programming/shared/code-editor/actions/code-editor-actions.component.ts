@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, OnInit, effect, inject, input, model, output, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -51,9 +51,34 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }>(undefined!);
     readonly disableActions = input(false);
     readonly disableAutoSave = input(false);
-    readonly editorState = model<EditorState>(undefined!);
-    readonly commitState = model<CommitState>(undefined!);
     readonly participation = input<Participation>();
+
+    // editorState / commitState use input + writable signal + manual *Change output instead of model<>().
+    // Rationale (see PR review for cluster 8): model<>() only emits *Change on child-initiated writes; it does
+    // NOT emit when the parent updates the bound value. Legacy code used an @Input setter that emitted on
+    // every distinct change — including parent-driven ones. The container relies on this:
+    //
+    //   file-browser → commitStateChange → container.commitState (plain field)
+    //                                    → flows to actions via [(commitState)] → (commitStateChange)
+    //                                    → container.onCommitStateChange.emit(...)
+    //
+    // With model<>() the final emit never fires for parent-driven updates, breaking external consumers of
+    // the container's onCommitStateChange. We therefore keep an internal writable signal (so the template
+    // and internal logic continue to call .set()/() exactly as before) and synthesize the *Change output
+    // via an effect that emits on every distinct change, with a sentinel to suppress the initialization emit
+    // — matching the legacy setter's behavior of only emitting when the value actually changed.
+    // Aliases are required here: the public binding key MUST remain `commitState` / `editorState`
+    // (the container template uses `[(commitState)]` / `[(editorState)]`), while the internal
+    // member must be a separately-named writable signal so callers (and the template) can do
+    // `commitState()` and `commitState.set(...)` without colliding with the input getter.
+    // eslint-disable-next-line @angular-eslint/no-input-rename
+    readonly editorStateInput = input<EditorState>(undefined!, { alias: 'editorState' });
+    // eslint-disable-next-line @angular-eslint/no-input-rename
+    readonly commitStateInput = input<CommitState>(undefined!, { alias: 'commitState' });
+    readonly editorState = signal<EditorState>(undefined!);
+    readonly commitState = signal<CommitState>(undefined!);
+    readonly editorStateChange = output<EditorState>();
+    readonly commitStateChange = output<CommitState>();
 
     readonly isBuildingChange = output<boolean>();
     readonly onSavedFiles = output<{
@@ -91,24 +116,103 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
      */
     private previousEditorState: EditorState | undefined;
 
+    // Sentinels used to suppress the initial *Change emit when the input first flows in,
+    // matching the legacy @Input setter's `if (value !== this._value)` dedup.
+    private editorStateSeen = false;
+    private commitStateSeen = false;
+
     constructor() {
+        // Sync editorState input → internal signal; manually emit editorStateChange on every actual change.
+        // Ignore undefined incoming values so internal mutations are not stomped when the parent
+        // never binds the input (matches legacy `if (value !== this._value)` setter dedup, where
+        // identical undefined writes were no-ops).
+        effect(() => {
+            const incoming = this.editorStateInput();
+            if (incoming === undefined) {
+                return;
+            }
+            const current = untracked(() => this.editorState());
+            if (incoming === current) {
+                this.editorStateSeen = true;
+                return;
+            }
+            this.editorState.set(incoming);
+            if (this.editorStateSeen) {
+                this.editorStateChange.emit(incoming);
+            }
+            this.editorStateSeen = true;
+        });
+
+        // Sync commitState input → internal signal; manually emit commitStateChange on every actual change.
+        effect(() => {
+            const incoming = this.commitStateInput();
+            if (incoming === undefined) {
+                return;
+            }
+            const current = untracked(() => this.commitState());
+            if (incoming === current) {
+                this.commitStateSeen = true;
+                return;
+            }
+            this.commitState.set(incoming);
+            if (this.commitStateSeen) {
+                this.commitStateChange.emit(incoming);
+            }
+            this.commitStateSeen = true;
+        });
+
+        // Reproduce legacy ngOnChanges cascade: when editorState transitions SAVING -> X while
+        // commitState is COMMITTING, finalize the commit (CLEAN if editor is now CLEAN, otherwise
+        // revert to UNCOMMITTED_CHANGES). The commitState guard is evaluated INSIDE the setTimeout
+        // so that a commitState change between scheduling and firing is respected — matching
+        // legacy behavior where the read happened at fire time.
         effect(() => {
             const current = this.editorState();
             // Snapshot the previous value before updating it for the next run.
             const previous = untracked(() => this.previousEditorState);
             this.previousEditorState = current;
-            if (previous === EditorState.SAVING && untracked(() => this.commitState()) === CommitState.COMMITTING) {
-                // Use a microtask so we don't write to a model() inside its own change
-                // detection pass.
+            if (previous === EditorState.SAVING) {
+                // Defer with setTimeout(..., 0) (macrotask) so we don't write to the
+                // commitState signal inside the editorState effect's own change-detection pass,
+                // and so the commitState guard reflects the value at fire time, not schedule time.
                 setTimeout(() => {
+                    if (untracked(() => this.commitState()) !== CommitState.COMMITTING) {
+                        return;
+                    }
                     if (current === EditorState.CLEAN) {
-                        this.commitState.set(CommitState.CLEAN);
+                        this.setCommitState(CommitState.CLEAN);
                     } else {
-                        this.commitState.set(CommitState.UNCOMMITTED_CHANGES);
+                        this.setCommitState(CommitState.UNCOMMITTED_CHANGES);
                     }
                 }, 0);
             }
         });
+    }
+
+    /**
+     * Writes commitState and emits commitStateChange. Use this for all internal mutations
+     * so the parent's (commitStateChange) handler fires — model<>() was replaced precisely
+     * because it didn't emit on parent-driven updates; we manage both directions explicitly.
+     */
+    private setCommitState(next: CommitState): void {
+        const current = untracked(() => this.commitState());
+        if (current === next) {
+            return;
+        }
+        this.commitState.set(next);
+        this.commitStateChange.emit(next);
+    }
+
+    /**
+     * Writes editorState and emits editorStateChange. See setCommitState.
+     */
+    private setEditorState(next: EditorState): void {
+        const current = untracked(() => this.editorState());
+        if (current === next) {
+            return;
+        }
+        this.editorState.set(next);
+        this.editorStateChange.emit(next);
     }
 
     ngOnInit(): void {
@@ -129,12 +233,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             if (this.commitState() === CommitState.CONFLICT && gitConflictState === GitConflictState.OK) {
                 // Case a: Conflict was resolved.
                 setTimeout(() => {
-                    this.commitState.set(CommitState.UNDEFINED);
+                    this.setCommitState(CommitState.UNDEFINED);
                 }, 0);
             } else if (this.commitState() !== CommitState.CONFLICT && gitConflictState === GitConflictState.CHECKOUT_CONFLICT) {
                 // Case b: Conflict has occurred.
                 setTimeout(() => {
-                    this.commitState.set(CommitState.CONFLICT);
+                    this.setCommitState(CommitState.CONFLICT);
                 }, 0);
             }
         });
@@ -198,14 +302,14 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     executeRefresh() {
-        this.editorState.set(EditorState.REFRESHING);
+        this.setEditorState(EditorState.REFRESHING);
         this.repositoryService.pull().subscribe({
             next: () => {
                 this.onRefreshFiles.emit();
-                this.editorState.set(EditorState.CLEAN);
+                this.setEditorState(EditorState.CLEAN);
             },
             error: (error: Error) => {
-                this.editorState.set(EditorState.UNSAVED_CHANGES);
+                this.setEditorState(EditorState.UNSAVED_CHANGES);
                 if (error.message === ConnectionError.message) {
                     this.onError.emit('refreshFailed' + error.message);
                 } else {
@@ -228,14 +332,14 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     saveChangedFiles(andCommit = false): Observable<any> {
         const unsavedFilesValue = this.unsavedFiles();
         if (!_isEmpty(unsavedFilesValue)) {
-            this.editorState.set(EditorState.SAVING);
+            this.setEditorState(EditorState.SAVING);
             const unsavedFiles = Object.entries(unsavedFilesValue).map(([fileName, fileContent]) => ({ fileName, fileContent }));
             return this.repositoryFileService.updateFiles(unsavedFiles, andCommit).pipe(
                 tap((fileSubmission: FileSubmission) => {
                     this.onSavedFiles.emit(fileSubmission);
                 }),
                 catchError((error: Error) => {
-                    this.editorState.set(EditorState.UNSAVED_CHANGES);
+                    this.setEditorState(EditorState.UNSAVED_CHANGES);
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('saveFailed' + error.message);
                     } else {
@@ -261,7 +365,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         // If there are unsaved changes, save them before trying to commit again.
         of(undefined)
             .pipe(
-                tap(() => this.commitState.set(CommitState.COMMITTING)),
+                tap(() => this.setCommitState(CommitState.COMMITTING)),
                 switchMap(() => {
                     if (!_isEmpty(this.unsavedFiles())) {
                         return this.saveChangedFiles(true);
@@ -271,7 +375,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 }),
                 tap(() => {
                     if (this.editorState() === EditorState.CLEAN) {
-                        this.commitState.set(CommitState.CLEAN);
+                        this.setCommitState(CommitState.CLEAN);
                     }
                     // We just assume that after the commit a build happens if the repo is buildable.
                     if (this.buildable()) {
@@ -285,7 +389,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 error: (error: HttpErrorResponse) => {
-                    this.commitState.set(CommitState.UNCOMMITTED_CHANGES);
+                    this.setCommitState(CommitState.UNCOMMITTED_CHANGES);
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('submitFailed' + error.message);
                     } else {

@@ -507,4 +507,70 @@ describe('CodeEditorActionsComponent', () => {
 
         expect(onErrorStub).toHaveBeenCalledWith('resetFailed');
     });
+
+    // Regression for BLOCKER 1 (cluster 8 codex review):
+    // The legacy ngOnChanges read this.commitState INSIDE setTimeout, so a commit-state change between
+    // scheduling and firing was respected. The first migration pass read commitState BEFORE scheduling,
+    // which would have caused the deferred branch to fire even after commitState had already moved out of
+    // COMMITTING — corrupting commitState to UNCOMMITTED_CHANGES/CLEAN despite the parent no longer
+    // expecting a transition. This test drives editorState SAVING -> CLEAN with commitState briefly
+    // COMMITTING, then immediately moves commitState to UNDEFINED before the setTimeout fires, and
+    // asserts that commitState is NOT clobbered.
+    it('should re-read commitState inside the deferred cascade so a concurrent move out of COMMITTING is respected', async () => {
+        comp.commitState.set(CommitState.COMMITTING);
+        comp.editorState.set(EditorState.SAVING);
+        fixture.detectChanges();
+
+        // editorState transitions SAVING -> CLEAN (e.g. saveChangedFiles completed). This schedules a
+        // setTimeout that will finalize the commit. Before the macrotask fires, the parent moves
+        // commitState to UNDEFINED (e.g. file-browser raised a CHECKOUT_CONFLICT / reset).
+        comp.editorState.set(EditorState.CLEAN);
+        fixture.detectChanges();
+        comp.commitState.set(CommitState.UNDEFINED);
+        fixture.detectChanges();
+
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        // The deferred branch must guard on the CURRENT commitState, not the value at scheduling time.
+        // Therefore commitState stays UNDEFINED — NOT clobbered to CLEAN.
+        expect(comp.commitState()).toEqual(CommitState.UNDEFINED);
+    });
+
+    // Regression for BLOCKER 2 (cluster 8 codex review):
+    // model<>() does not emit *Change for parent-driven input updates. The container relies on a
+    // (commitStateChange) handler firing when commitState flows in from elsewhere (e.g. file-browser
+    // raising a CHECKOUT_CONFLICT that updates the container's commitState field, which then flows
+    // down to this component via [(commitState)]). We replaced model<>() with input + writable signal
+    // + manual *Change output to restore the legacy setter's emit-on-parent-change semantics.
+    it('should emit commitStateChange when commitState input is updated by the parent', () => {
+        const commitStateChangeSpy = vi.spyOn(comp.commitStateChange, 'emit');
+        fixture.componentRef.setInput('commitState', CommitState.UNCOMMITTED_CHANGES);
+        fixture.detectChanges();
+        // Initialization (first input flow-in) should be suppressed by the sentinel — matches legacy
+        // setter's dedup of identical values and avoids gratuitous emits on construct.
+        expect(commitStateChangeSpy).not.toHaveBeenCalled();
+
+        fixture.componentRef.setInput('commitState', CommitState.COMMITTING);
+        fixture.detectChanges();
+        expect(commitStateChangeSpy).toHaveBeenCalledWith(CommitState.COMMITTING);
+        expect(comp.commitState()).toEqual(CommitState.COMMITTING);
+
+        // Re-applying the same value should not emit again.
+        commitStateChangeSpy.mockClear();
+        fixture.componentRef.setInput('commitState', CommitState.COMMITTING);
+        fixture.detectChanges();
+        expect(commitStateChangeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should emit editorStateChange when editorState input is updated by the parent', () => {
+        const editorStateChangeSpy = vi.spyOn(comp.editorStateChange, 'emit');
+        fixture.componentRef.setInput('editorState', EditorState.CLEAN);
+        fixture.detectChanges();
+        expect(editorStateChangeSpy).not.toHaveBeenCalled();
+
+        fixture.componentRef.setInput('editorState', EditorState.UNSAVED_CHANGES);
+        fixture.detectChanges();
+        expect(editorStateChangeSpy).toHaveBeenCalledWith(EditorState.UNSAVED_CHANGES);
+        expect(comp.editorState()).toEqual(EditorState.UNSAVED_CHANGES);
+    });
 });
