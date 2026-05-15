@@ -139,9 +139,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         return this._commitState;
     }
     set commitState(next: CommitState) {
-        if (this._commitState === next) {
-            return;
-        }
         this._commitState = next;
         this.onCommitStateChange.emit(next);
     }
