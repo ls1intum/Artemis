@@ -86,6 +86,7 @@
     },
     "devDependencies": {
         "@analogjs/vite-plugin-angular": "2.5.1",
+        "@cyclonedx/cdxgen": "12.4.0",
         "@analogjs/vitest-angular": "2.5.1",
         "@angular-builders/jest": "21.0.3",
         "@angular-devkit/build-angular": "21.2.11",
@@ -191,7 +192,7 @@
         "update": "ncu -i --format group",
         "webapp:build": "pnpm run clean-www && pnpm run prebuild -- --develop && ng build --configuration development",
         "webapp:prod": "pnpm run clean-www && pnpm run prebuild && cross-env NG_BUILD_OPTIMIZE_CHUNKS=1 ng build --configuration production",
-        "sbom:generate-full": "pnpm dlx @cyclonedx/cdxgen@12 --type pnpm --output build/reports/client-sbom-full.json --spec-version 1.6 --no-babel --no-recurse",
+        "sbom:generate-full": "cross-env FETCH_LICENSE=false pnpm exec cdxgen --type pnpm --output build/reports/client-sbom-full.json --spec-version 1.6 --no-babel --no-recurse --profile generic",
         "sbom:filter-shipped": "node supporting_scripts/sbom-filter-by-bundle.mjs build/reports/client-sbom-full.json build/reports/client-sbom.json build/resources/main/static",
         "sbom:generate": "pnpm run sbom:generate-full && pnpm run sbom:filter-shipped"
     }
