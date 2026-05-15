@@ -21,18 +21,18 @@ export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends Pr
 
     constructor() {
         super();
-        this.showForSuccessfulSubmissions = true;
+        this.showForSuccessfulSubmissions.set(true);
         this.personalParticipation = false;
     }
 
     triggerBuild = (event: any) => {
         // The button might be placed in other elements that have a click listener, so catch the click here.
         event.stopPropagation();
-        if (this.participationHasLatestSubmissionWithoutResult) {
+        if (this.participationHasLatestSubmissionWithoutResult()) {
             super.triggerFailed().subscribe();
             return;
         }
-        if (!this.lastResultIsManual) {
+        if (!this.lastResultIsManual()) {
             super.triggerWithType(SubmissionType.INSTRUCTOR).subscribe();
             return;
         }

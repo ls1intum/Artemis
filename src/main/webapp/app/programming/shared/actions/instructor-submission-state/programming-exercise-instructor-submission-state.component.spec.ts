@@ -29,6 +29,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     setupTestBed({ zoneless: true });
@@ -74,6 +76,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -273,20 +276,18 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         // Wait for a second as the view is updated with a debounce.
         await vi.advanceTimersByTimeAsync(500);
 
-        // The trigger-all-button keeps `isTriggeringBuildAll` as a plain field (cluster 3 will signal-ify it).
-        // We disable the dev-only post-check (checkNoChanges) so subscriptions firing during change detection
-        // don't trip ExpressionChangedAfterItHasBeenCheckedError in this transitional state.
-        fixture.detectChanges(false);
+        fixture.detectChanges();
 
         expect(getTriggerAllButton().disabled).toBe(false);
 
-        const triggerAllDebugEl = debugElement.query(By.directive(ProgrammingExerciseTriggerAllButtonComponent));
-        const triggerAllComp = triggerAllDebugEl.componentInstance as ProgrammingExerciseTriggerAllButtonComponent;
-
         getBuildRunStateSubject.next(BuildRunState.RUNNING);
-        expect(triggerAllComp.isTriggeringBuildAll).toBe(true);
+        fixture.detectChanges();
+
+        expect(getTriggerAllButton().disabled).toBe(true);
 
         getBuildRunStateSubject.next(BuildRunState.COMPLETED);
-        expect(triggerAllComp.isTriggeringBuildAll).toBe(false);
+        fixture.detectChanges();
+
+        expect(getTriggerAllButton().disabled).toBe(false);
     });
 });

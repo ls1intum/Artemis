@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -19,6 +21,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExercise Instructor Trigger Build Component', () => {
+    setupTestBed({ zoneless: true });
+
     const course = { id: 123 } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
     programmingExercise.id = 456;
@@ -48,24 +52,24 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
         submissionService = TestBed.inject(ProgrammingSubmissionService);
         modalService = TestBed.inject(NgbModal);
 
-        comp.exercise = programmingExercise;
-        comp.participation = participation;
-        comp.lastResultIsManual = true;
+        fixture.componentRef.setInput('exercise', programmingExercise);
+        fixture.componentRef.setInput('participation', participation);
+        comp.lastResultIsManual.set(true);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should trigger build', fakeAsync(() => {
+    it('should trigger build', async () => {
         const mockReturnValue = {
             result: Promise.resolve(),
             componentInstance: {},
         } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-        jest.spyOn(submissionService, 'triggerBuild').mockReturnValue(of());
+        vi.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+        vi.spyOn(submissionService, 'triggerBuild').mockReturnValue(of());
 
-        comp.triggerBuild({ stopPropagation: jest.fn() });
+        comp.triggerBuild({ stopPropagation: vi.fn() });
 
         expect(modalService.open).toHaveBeenCalledOnce();
         expect(modalService.open).toHaveBeenCalledWith(ConfirmAutofocusModalComponent, {
@@ -73,9 +77,11 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
             keyboard: true,
         });
 
-        flushMicrotasks();
+        // Allow the modal's `result` promise to resolve so the trigger callback runs.
+        await Promise.resolve();
+        await Promise.resolve();
 
         expect(submissionService.triggerBuild).toHaveBeenCalledOnce();
         expect(submissionService.triggerBuild).toHaveBeenCalledWith(participation.id, SubmissionType.INSTRUCTOR);
-    }));
+    });
 });

@@ -27,7 +27,7 @@ export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends Progr
     triggerBuild = (event: any) => {
         // The button might be placed in other elements that have a click listener, so catch the click here.
         event.stopPropagation();
-        const triggerAction = this.participationHasLatestSubmissionWithoutResult ? super.triggerFailed(this.triggerLastGraded()) : super.triggerWithType(SubmissionType.MANUAL);
+        const triggerAction = this.participationHasLatestSubmissionWithoutResult() ? super.triggerFailed(this.triggerLastGraded()) : super.triggerWithType(SubmissionType.MANUAL);
         triggerAction
             .pipe(
                 catchError(() => {

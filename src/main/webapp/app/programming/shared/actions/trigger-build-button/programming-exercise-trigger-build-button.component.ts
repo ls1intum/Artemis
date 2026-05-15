@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, SimpleChanges, inject, input } from '@angular/core';
+import { Component, OnDestroy, effect, inject, input, signal } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { head, orderBy } from 'lodash-es';
@@ -10,7 +10,6 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
-import { hasParticipationChanged } from 'app/exercise/participation/participation.utils';
 import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exercise.utils';
 import { isManualResult } from 'app/exercise/result/result.utils';
 
@@ -22,7 +21,7 @@ import { isManualResult } from 'app/exercise/result/result.utils';
 @Component({
     template: '',
 })
-export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
+export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnDestroy {
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
 
@@ -34,14 +33,14 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     readonly btnSize = input(ButtonSize.SMALL);
     readonly title = input('');
 
-    participationBuildCanBeTriggered: boolean;
+    readonly participationBuildCanBeTriggered = signal(false);
     // This only works correctly when the provided participation includes its latest result.
-    lastResultIsManual: boolean;
-    participationHasLatestSubmissionWithoutResult: boolean;
-    isRetrievingBuildStatus: boolean;
-    isBuilding: boolean;
+    readonly lastResultIsManual = signal(false);
+    readonly participationHasLatestSubmissionWithoutResult = signal(false);
+    readonly isRetrievingBuildStatus = signal(false);
+    readonly isBuilding = signal(false);
     // If true, the trigger button is also displayed for successful submissions.
-    showForSuccessfulSubmissions = false;
+    readonly showForSuccessfulSubmissions = signal(false);
 
     private submissionSubscription: Subscription;
     private resultSubscription: Subscription;
@@ -49,31 +48,38 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     // True if the student triggers. false if an instructor triggers it
     protected personalParticipation: boolean;
 
-    /**
-     * Check if the participation has changed, if so set up the websocket connections.
-     *
-     * @param changes
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        if (hasParticipationChanged(changes)) {
+    private previousParticipationId: number | undefined;
+
+    constructor() {
+        // React when the participation input changes (or its id changes) — replaces ngOnChanges/hasParticipationChanged.
+        effect(() => {
+            const participation = this.participation();
+            if (!participation) {
+                return;
+            }
+            if (participation.id === this.previousParticipationId) {
+                return;
+            }
+            this.previousParticipationId = participation.id;
+
             // The identification of manual results is only relevant when the due date was passed, otherwise they could be overridden anyway.
             if (hasDueDatePassed(this.exercise())) {
                 // If the last result was manual, the instructor might not want to override it with a new automatic result.
-                const allResults = this.participation().submissions?.flatMap((submission) => submission.results ?? []) || [];
+                const allResults = participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const newestResult = allResults.length ? head(orderBy(allResults, ['id'], ['desc'])) : undefined;
-                this.lastResultIsManual = !!newestResult && isManualResult(newestResult);
+                this.lastResultIsManual.set(!!newestResult && isManualResult(newestResult));
             }
             // We can trigger the build only if the participation is active (has build plan), if the build plan was archived (new build plan will be created)
             // or the due date is over.
-            const participation = this.participation();
-            this.participationBuildCanBeTriggered =
+            const canBeTriggered =
                 !!participation.initializationState &&
                 [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED].includes(participation.initializationState);
-            if (this.participationBuildCanBeTriggered) {
+            this.participationBuildCanBeTriggered.set(canBeTriggered);
+            if (canBeTriggered) {
                 this.setupSubmissionSubscription();
                 this.setupResultSubscription();
             }
-        }
+        });
     }
 
     ngOnDestroy(): void {
@@ -99,15 +105,15 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
                 tap(({ submissionState }) => {
                     switch (submissionState) {
                         case ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION:
-                            this.isBuilding = false;
-                            this.participationHasLatestSubmissionWithoutResult = false;
+                            this.isBuilding.set(false);
+                            this.participationHasLatestSubmissionWithoutResult.set(false);
                             break;
                         case ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION:
-                            this.isBuilding = true;
+                            this.isBuilding.set(true);
                             break;
                         case ProgrammingSubmissionState.HAS_FAILED_SUBMISSION:
-                            this.participationHasLatestSubmissionWithoutResult = true;
-                            this.isBuilding = false;
+                            this.participationHasLatestSubmissionWithoutResult.set(true);
+                            this.isBuilding.set(false);
                             break;
                     }
                 }),
@@ -128,7 +134,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             .pipe(
                 filter((result) => !!result),
                 tap((result: Result) => {
-                    this.lastResultIsManual = !!result && isManualResult(result);
+                    this.lastResultIsManual.set(!!result && isManualResult(result));
                 }),
             )
             .subscribe();
@@ -137,12 +143,12 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     abstract triggerBuild(submissionType: SubmissionType): void;
 
     triggerWithType(submissionType: SubmissionType) {
-        this.isRetrievingBuildStatus = true;
-        return this.submissionService.triggerBuild(this.participation().id!, submissionType).pipe(tap(() => (this.isRetrievingBuildStatus = false)));
+        this.isRetrievingBuildStatus.set(true);
+        return this.submissionService.triggerBuild(this.participation().id!, submissionType).pipe(tap(() => this.isRetrievingBuildStatus.set(false)));
     }
 
     triggerFailed(lastGraded = false) {
-        this.isRetrievingBuildStatus = true;
-        return this.submissionService.triggerFailedBuild(this.participation().id!, lastGraded).pipe(tap(() => (this.isRetrievingBuildStatus = false)));
+        this.isRetrievingBuildStatus.set(true);
+        return this.submissionService.triggerFailedBuild(this.participation().id!, lastGraded).pipe(tap(() => this.isRetrievingBuildStatus.set(false)));
     }
 }

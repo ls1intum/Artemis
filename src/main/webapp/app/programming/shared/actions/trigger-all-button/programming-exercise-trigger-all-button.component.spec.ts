@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -5,14 +7,15 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import {
     ProgrammingExerciseInstructorTriggerAllDialogComponent,
     ProgrammingExerciseTriggerAllButtonComponent,
 } from 'app/programming/shared/actions/trigger-all-button/programming-exercise-trigger-all-button.component';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
-import { of } from 'rxjs';
+import { BuildRunState, ProgrammingBuildRunService } from 'app/programming/shared/services/programming-build-run.service';
+import { Subject, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -21,6 +24,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExercise Trigger All Button Component', () => {
+    setupTestBed({ zoneless: true });
+
     const course = { id: 123 } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
     programmingExercise.id = 456;
@@ -29,12 +34,12 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
     let comp: ProgrammingExerciseTriggerAllButtonComponent;
     let fixture: ComponentFixture<ProgrammingExerciseTriggerAllButtonComponent>;
     let submissionService: ProgrammingSubmissionService;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useClass: MockDialogService },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
@@ -48,33 +53,59 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
         fixture = TestBed.createComponent(ProgrammingExerciseTriggerAllButtonComponent);
         comp = fixture.componentInstance;
         submissionService = TestBed.inject(ProgrammingSubmissionService);
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
+        const buildRunService = TestBed.inject(ProgrammingBuildRunService);
+        vi.spyOn(buildRunService, 'getBuildRunUpdates').mockReturnValue(new Subject<BuildRunState>());
 
-        comp.exercise = programmingExercise;
+        fixture.componentRef.setInput('exercise', programmingExercise);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should trigger builds for all participants on confirmation', () => {
-        const mockReturnValue = {
-            result: Promise.resolve(),
-            componentInstance: {},
-        } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-        jest.spyOn(submissionService, 'triggerInstructorBuildForAllParticipationsOfExercise').mockReturnValue(of());
+        const onClose = new Subject<boolean | undefined>();
+        const mockDialogRef = { onClose } as any;
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+        const triggerSpy = vi.spyOn(submissionService, 'triggerInstructorBuildForAllParticipationsOfExercise').mockReturnValue(of());
 
+        fixture.detectChanges();
         const button = fixture.debugElement.nativeElement.querySelector('#trigger-all-button button');
         button.click();
 
-        expect(modalService.open).toHaveBeenCalledOnce();
-        expect(modalService.open).toHaveBeenCalledWith(ProgrammingExerciseInstructorTriggerAllDialogComponent, {
-            size: 'lg',
-            backdrop: 'static',
+        expect(openSpy).toHaveBeenCalledOnce();
+        const [dialogComponent, options] = openSpy.mock.calls[0];
+        expect(dialogComponent).toBe(ProgrammingExerciseInstructorTriggerAllDialogComponent);
+        expect(options).toMatchObject({
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: { exerciseId: programmingExercise.id, dueDatePassed: false },
         });
 
-        expect(submissionService.triggerInstructorBuildForAllParticipationsOfExercise).toHaveBeenCalledOnce();
-        expect(submissionService.triggerInstructorBuildForAllParticipationsOfExercise).toHaveBeenCalledWith(programmingExercise.id);
+        // Simulate the user confirming the dialog.
+        onClose.next(true);
+
+        expect(triggerSpy).toHaveBeenCalledOnce();
+        expect(triggerSpy).toHaveBeenCalledWith(programmingExercise.id);
+    });
+
+    it('should not trigger any build if the dialog is dismissed', () => {
+        const onClose = new Subject<boolean | undefined>();
+        const mockDialogRef = { onClose } as any;
+        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+        const triggerSpy = vi.spyOn(submissionService, 'triggerInstructorBuildForAllParticipationsOfExercise').mockReturnValue(of());
+
+        fixture.detectChanges();
+        const button = fixture.debugElement.nativeElement.querySelector('#trigger-all-button button');
+        button.click();
+
+        // Dismiss (undefined) — must NOT trigger the build.
+        onClose.next(undefined);
+
+        expect(triggerSpy).not.toHaveBeenCalled();
     });
 });
