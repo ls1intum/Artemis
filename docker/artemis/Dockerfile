@@ -25,9 +25,10 @@ ARG WAR_FILE_STAGE="builder"
 FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25-jdk AS builder
 
 # Install Bun (the project's package manager + script runner).
-# Pin the version to match `packageManager` in package.json; bump both together.
+# Pin the Bun version to match `packageManager` in package.json; bump both together.
 # python3/build-essential were previously installed defensively for native deps;
 # no current Artemis dep needs them. If a future dep does, this RUN fails loudly.
+# hadolint ignore=DL3008
 RUN apt-get update \
   && apt-get install -y --no-install-recommends curl unzip ca-certificates \
   && curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.14" \
