@@ -52,6 +52,11 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
     private readonly initialLoadCount = 5;
     readonly loadedTitles = signal<Set<string>>(new Set());
     /**
+     * Per-title tracking of the "diff ready" state reported by the child `GitDiffFileComponent`s.
+     * Stored as a signal so we never mutate the `repositoryDiffInformation` input data.
+     */
+    readonly diffReadyTitles = signal<ReadonlySet<string>>(new Set<string>());
+    /**
      * Per-title overrides for the collapsed state, populated when the user toggles a panel manually.
      * Stored as a signal so template bindings stay reactive without mutating the input data.
      */
@@ -163,7 +168,19 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
         const index = diffInformation.findIndex((info) => info.title === title);
 
         if (index !== -1) {
-            diffInformation[index].diffReady = ready;
+            if (ready) {
+                this.diffReadyTitles.update((set) => {
+                    const next = new Set(set);
+                    next.add(title);
+                    return next;
+                });
+            } else {
+                this.diffReadyTitles.update((set) => {
+                    const next = new Set(set);
+                    next.delete(title);
+                    return next;
+                });
+            }
         } else {
             captureException(`Received diff ready event for unknown title: ${title}`);
         }
@@ -195,11 +212,12 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
 
     private updateAllDiffsReady() {
         const loaded = this.loadedTitles();
+        const ready = this.diffReadyTitles();
         const diffInformation = this.repositoryDiffInformation().diffInformations;
 
         // Check if all LOADED diffs are ready (don't consider unloaded ones)
         const loadedDiffs = diffInformation.filter((info) => loaded.has(info.title));
-        const allLoadedReady = loadedDiffs.length > 0 && loadedDiffs.every((info) => info.diffReady);
+        const allLoadedReady = loadedDiffs.length > 0 && loadedDiffs.every((info) => ready.has(info.title));
         this.allDiffsReady.set(allLoadedReady);
 
         // Set initialDiffsReady once the first batch is ready (never set back to false)

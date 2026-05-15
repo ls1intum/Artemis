@@ -159,26 +159,32 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
 
     it('should record for each path whether the diff is ready', () => {
         fixture.detectChanges();
+        const [first, second, third] = mockDiffInformation.diffInformations;
         // Initialization
         expect(comp.allDiffsReady()).toBe(false);
-        expect(comp.repositoryDiffInformation().diffInformations[0].diffReady).toBe(false);
-        expect(comp.repositoryDiffInformation().diffInformations[1].diffReady).toBe(false);
+        expect(comp.diffReadyTitles().has(first.title)).toBe(false);
+        expect(comp.diffReadyTitles().has(second.title)).toBe(false);
         // First file ready
-        comp.onDiffReady(mockDiffInformation.diffInformations[0].modifiedPath, true);
+        comp.onDiffReady(first.modifiedPath, true);
         expect(comp.allDiffsReady()).toBe(false);
-        expect(comp.repositoryDiffInformation().diffInformations[0].diffReady).toBe(true);
-        expect(comp.repositoryDiffInformation().diffInformations[1].diffReady).toBe(false);
+        expect(comp.diffReadyTitles().has(first.title)).toBe(true);
+        expect(comp.diffReadyTitles().has(second.title)).toBe(false);
         // Second file ready
-        comp.onDiffReady(mockDiffInformation.diffInformations[1].modifiedPath, true);
+        comp.onDiffReady(second.modifiedPath, true);
         expect(comp.allDiffsReady()).toBe(false);
-        expect(comp.repositoryDiffInformation().diffInformations[0].diffReady).toBe(true);
-        expect(comp.repositoryDiffInformation().diffInformations[1].diffReady).toBe(true);
+        expect(comp.diffReadyTitles().has(first.title)).toBe(true);
+        expect(comp.diffReadyTitles().has(second.title)).toBe(true);
         // Third file ready
-        comp.onDiffReady(mockDiffInformation.diffInformations[2].modifiedPath, true);
+        comp.onDiffReady(third.modifiedPath, true);
         expect(comp.allDiffsReady()).toBe(true);
-        expect(comp.repositoryDiffInformation().diffInformations[0].diffReady).toBe(true);
-        expect(comp.repositoryDiffInformation().diffInformations[1].diffReady).toBe(true);
-        expect(comp.repositoryDiffInformation().diffInformations[2].diffReady).toBe(true);
+        expect(comp.diffReadyTitles().has(first.title)).toBe(true);
+        expect(comp.diffReadyTitles().has(second.title)).toBe(true);
+        expect(comp.diffReadyTitles().has(third.title)).toBe(true);
+        // Flipping back to not-ready should remove the title from the set without mutating the input.
+        comp.onDiffReady(third.modifiedPath, false);
+        expect(comp.diffReadyTitles().has(third.title)).toBe(false);
+        expect(comp.allDiffsReady()).toBe(false);
+        expect(comp.repositoryDiffInformation().diffInformations[2].diffReady).toBe(false);
     });
 
     it('should correctly identify renamed files', () => {
