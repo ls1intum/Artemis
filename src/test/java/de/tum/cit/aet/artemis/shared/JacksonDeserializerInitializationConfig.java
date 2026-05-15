@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.shared;
 
+import java.util.List;
+
 import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.TestConfiguration;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -126,9 +129,11 @@ public class JacksonDeserializerInitializationConfig {
     }
 
     private void initializePost() {
+        // Tests typically deserialize List<Post> from REST responses, so initialize the deserializer
+        // for the List-of-Post chain (Jackson caches container-of-T separately from T).
         try {
             String sampleJson = """
-                    {
+                    [{
                         "id": 1,
                         "content": "Test message",
                         "reactions": [{
@@ -139,9 +144,10 @@ public class JacksonDeserializerInitializationConfig {
                                 "login": "testuser"
                             }
                         }]
-                    }
+                    }]
                     """;
-            objectMapper.readValue(sampleJson, Post.class);
+            objectMapper.readValue(sampleJson, new TypeReference<List<Post>>() {
+            });
         }
         catch (Exception e) {
             log.warn("Failed to pre-initialize Post deserializer: {}", e.getMessage());
@@ -149,9 +155,10 @@ public class JacksonDeserializerInitializationConfig {
     }
 
     private void initializeTutorialGroup() {
+        // Tests typically deserialize List<TutorialGroup> from REST responses.
         try {
             String sampleJson = """
-                    {
+                    [{
                         "id": 1,
                         "title": "Test Tutorial Group",
                         "registrations": [{
@@ -161,9 +168,10 @@ public class JacksonDeserializerInitializationConfig {
                                 "login": "teststudent"
                             }
                         }]
-                    }
+                    }]
                     """;
-            objectMapper.readValue(sampleJson, TutorialGroup.class);
+            objectMapper.readValue(sampleJson, new TypeReference<List<TutorialGroup>>() {
+            });
         }
         catch (Exception e) {
             log.warn("Failed to pre-initialize TutorialGroup deserializer: {}", e.getMessage());
