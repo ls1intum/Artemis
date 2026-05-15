@@ -280,7 +280,8 @@ public class CourseScoreCalculationService {
 
         return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
                 scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD), scoresPerExerciseType.get(ExerciseType.QUIZ),
-                participationResults, userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()),
+                scoresPerExerciseType.get(ExerciseType.PROOF), participationResults,
+                userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()),
                 includeIrisEnabledInCourse ? irisSettingsApi.map(api -> api.isIrisEnabledForCourse(course.getId())).orElse(false) : null);
     }
 

@@ -57,7 +57,10 @@ export const isModelingOrTextOrFileUpload = (participation: Participation) => {
         return false;
     }
     const exercise = getExercise(participation);
-    return exercise && (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD);
+    return (
+        exercise &&
+        (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD || exercise.type === ExerciseType.PROOF)
+    );
 };
 /**
  * Checks if given participation has results.

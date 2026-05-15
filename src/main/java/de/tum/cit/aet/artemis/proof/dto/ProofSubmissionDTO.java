@@ -73,8 +73,7 @@ public record ProofSubmissionDTO(Long id, Boolean submitted, ZonedDateTime submi
 
         public static ProofParticipationDTO of(StudentParticipation participation) {
             ProofExerciseDTO exerciseDTO = null;
-            if (Hibernate.isInitialized(participation.getExercise()) && participation.getExercise() instanceof ProofExercise pe
-                    && Hibernate.isInitialized(pe.getCategories())) {
+            if (Hibernate.isInitialized(participation.getExercise()) && participation.getExercise() instanceof ProofExercise pe && Hibernate.isInitialized(pe.getCategories())) {
                 exerciseDTO = ProofExerciseDTO.of(pe);
             }
             String login = participation.getStudent().map(u -> u.getLogin()).orElse(null);

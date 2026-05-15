@@ -10,7 +10,7 @@ import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-butt
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_PROOF, MODULE_FEATURE_TEXT } from 'app/app.constants';
 
 interface ExerciseModalRow {
     type: ExerciseType;
@@ -56,6 +56,10 @@ export class AddExercisePopoverComponent {
             type: ExerciseType.FILE_UPLOAD,
             translationKey: 'global.menu.entities.exerciseTypes.fileUpload',
         },
+        {
+            type: ExerciseType.PROOF,
+            translationKey: 'global.menu.entities.exerciseTypes.proof',
+        },
     ];
 
     protected readonly exerciseTypes = computed(() => {
@@ -67,6 +71,8 @@ export class AddExercisePopoverComponent {
                     return this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING);
                 case ExerciseType.FILE_UPLOAD:
                     return this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD);
+                case ExerciseType.PROOF:
+                    return this.profileService.isModuleFeatureActive(MODULE_FEATURE_PROOF);
                 default:
                     return true;
             }

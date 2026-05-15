@@ -131,7 +131,14 @@ export class ResultHistoryDropdownComponent {
             return;
         }
 
-        const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
+        let exerciseTypePath: string;
+        if (exercise.type === ExerciseType.TEXT) {
+            exerciseTypePath = 'text-exercises';
+        } else if (exercise.type === ExerciseType.PROOF) {
+            exerciseTypePath = 'proof-exercises';
+        } else {
+            exerciseTypePath = 'modeling-exercises';
+        }
         this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, exercise.id, 'participate', participation.id]);
     }
 
@@ -250,7 +257,14 @@ export class ResultHistoryDropdownComponent {
         }
 
         const submissionId = result.submission?.id;
-        const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
+        let exerciseTypePath: string;
+        if (exercise.type === ExerciseType.TEXT) {
+            exerciseTypePath = 'text-exercises';
+        } else if (exercise.type === ExerciseType.PROOF) {
+            exerciseTypePath = 'proof-exercises';
+        } else {
+            exerciseTypePath = 'modeling-exercises';
+        }
         this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, exercise.id, 'participate', participation.id, 'submission', submissionId, 'result', result.id]);
     }
 

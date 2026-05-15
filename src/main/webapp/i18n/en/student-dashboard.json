@@ -253,6 +253,7 @@
                 "modelingPointLabel": "Modeling Points",
                 "textPointLabel": "Text Points",
                 "fileUploadPointLabel": "File upload Points",
+                "proofPointLabel": "Proof Points",
                 "presentationPointsLabel": "Presentation Points",
                 "missingPointsLabel": "Missing Points",
                 "achievedPointsLabel": "Achieved Points",
@@ -308,6 +309,7 @@
                 "modelingEditor": "Modeling Editor",
                 "fileUploadEditor": "File Upload",
                 "quizEditor": "Quiz",
+                "proofEditor": "Proof Editor",
                 "iris": "Iris",
                 "noResults": "You have no results yet",
                 "instructorActions": {

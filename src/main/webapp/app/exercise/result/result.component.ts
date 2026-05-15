@@ -287,11 +287,18 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      */
     showDetails(result: Result) {
         const exerciseService = this.exerciseCacheService ?? this.exerciseService;
-        if (this.exercise?.type === ExerciseType.TEXT || this.exercise?.type === ExerciseType.MODELING) {
+        if (this.exercise?.type === ExerciseType.TEXT || this.exercise?.type === ExerciseType.MODELING || this.exercise?.type === ExerciseType.PROOF) {
             const courseId = getCourseFromExercise(this.exercise)?.id;
             const submissionId = result.submission?.id;
 
-            const exerciseTypePath = this.exercise?.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
+            let exerciseTypePath: string;
+            if (this.exercise?.type === ExerciseType.TEXT) {
+                exerciseTypePath = 'text-exercises';
+            } else if (this.exercise?.type === ExerciseType.PROOF) {
+                exerciseTypePath = 'proof-exercises';
+            } else {
+                exerciseTypePath = 'modeling-exercises';
+            }
 
             this.router.navigate([
                 '/courses',

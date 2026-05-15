@@ -8,8 +8,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.proof.config.ProofEnabled;
 import de.tum.cit.aet.artemis.proof.domain.DerivationStep;
 import de.tum.cit.aet.artemis.proof.domain.MathNode;
 import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
@@ -24,6 +27,8 @@ import de.tum.cit.aet.artemis.proof.domain.RewriteRule;
  * position within the slot. For example, an {@code add} node has slots {@code left} and {@code right};
  * the flat list is {@code [left[0], right[0]]} (alphabetical slot order).
  */
+@Conditional(ProofEnabled.class)
+@Lazy
 @Service
 public class ProofGradingService {
 

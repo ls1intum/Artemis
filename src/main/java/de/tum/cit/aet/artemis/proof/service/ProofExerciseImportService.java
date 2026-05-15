@@ -9,6 +9,8 @@ import java.util.Set;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -20,9 +22,12 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
+import de.tum.cit.aet.artemis.proof.config.ProofEnabled;
 import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
 import de.tum.cit.aet.artemis.proof.repository.ProofExerciseRepository;
 
+@Conditional(ProofEnabled.class)
+@Lazy
 @Service
 public class ProofExerciseImportService extends ExerciseImportService {
 

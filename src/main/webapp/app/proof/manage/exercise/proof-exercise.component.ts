@@ -22,17 +22,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 @Component({
     selector: 'jhi-proof-exercise',
     templateUrl: './proof-exercise.component.html',
-    imports: [
-        SortDirective,
-        FormsModule,
-        SortByDirective,
-        TranslateDirective,
-        FaIconComponent,
-        RouterLink,
-        ExerciseCategoriesComponent,
-        ArtemisDatePipe,
-        DeleteButtonDirective,
-    ],
+    imports: [SortDirective, FormsModule, SortByDirective, TranslateDirective, FaIconComponent, RouterLink, ExerciseCategoriesComponent, ArtemisDatePipe, DeleteButtonDirective],
 })
 export class ProofExerciseComponent extends ExerciseComponent {
     protected proofExerciseService = inject(ProofExerciseService);

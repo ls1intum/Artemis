@@ -11,7 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
-import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { MODULE_FEATURE_PROOF, MODULE_FEATURE_TEXT } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-exam-exercise-import',
@@ -51,11 +51,13 @@ export class ExamExerciseImportComponent implements OnInit {
     faFont = faFont;
 
     textExerciseEnabled = false;
+    proofExerciseEnabled = false;
 
     getExerciseIcon = getIcon;
 
     ngOnInit(): void {
         this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
+        this.proofExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PROOF);
 
         this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();
         // If the exam is imported into the same course, the title + shortName of Programming Exercises must be changed
@@ -332,6 +334,6 @@ export class ExamExerciseImportComponent implements OnInit {
     }
 
     protected isExerciseTypeEnabled(type: ExerciseType | undefined): boolean {
-        return !(type === ExerciseType.TEXT && !this.textExerciseEnabled);
+        return !(type === ExerciseType.TEXT && !this.textExerciseEnabled) && !(type === ExerciseType.PROOF && !this.proofExerciseEnabled);
     }
 }

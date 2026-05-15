@@ -39,7 +39,6 @@ public class ProofExerciseFactory {
     public static ProofExercise generateProofExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         var exercise = (ProofExercise) ExerciseFactory.populateExercise(new ProofExercise(), releaseDate, dueDate, assessmentDueDate, course);
         exercise.setDescription("Prove that 0 + x = x");
-        exercise.setPredefinedCheckboxState(true);
         exercise.setExampleSolution("Apply add_zero_left at the root.");
         exercise.setSourceExpression(sampleSource());
         exercise.setTargetExpression(sampleTarget());
@@ -48,8 +47,6 @@ public class ProofExerciseFactory {
 
     public static ProofSubmission generateProofSubmission(boolean submitted) {
         var submission = new ProofSubmission();
-        submission.setText("My proof text");
-        submission.setStudentCheckboxState(true);
         submission.setSubmitted(submitted);
         submission.setSubmissionDate(ZonedDateTime.now());
         return submission;
@@ -64,17 +61,17 @@ public class ProofExerciseFactory {
     }
 
     public static ProofExerciseDTO generateProofExerciseDTO(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
-        return new ProofExerciseDTO(null, "Proof Exercise", null, "Prove that 0 + x = x.", "Prove that 0 + x = x", true, "Apply add_zero_left.", null, null, 10.0, 0.0,
+        return new ProofExerciseDTO(null, "Proof Exercise", null, "Prove that 0 + x = x.", "Prove that 0 + x = x", "Apply add_zero_left.", null, null, 10.0, 0.0,
                 IncludedInOverallScore.INCLUDED_COMPLETELY, false, false, false, false, null, null, releaseDate, null, dueDate, assessmentDueDate, null, course.getId(), null,
-                sampleSource(), sampleTarget());
+                sampleSource(), sampleTarget(), false, true, false, false, null);
     }
 
     public static ProofSubmissionDTO generateProofSubmissionDTO(boolean submitted) {
-        return new ProofSubmissionDTO(null, "My proof text", true, submitted, null, null, null, null);
+        return new ProofSubmissionDTO(null, submitted, null, null, null, null);
     }
 
     public static ProofSubmissionDTO generateProofSubmissionDTOWithStep(boolean submitted) {
         var stepDTO = new ProofSubmissionDTO.DerivationStepDTO(null, 0, "add_zero_left", List.of(), MathNodes.var("x"));
-        return new ProofSubmissionDTO(null, null, null, submitted, null, null, null, List.of(stepDTO));
+        return new ProofSubmissionDTO(null, submitted, null, null, null, List.of(stepDTO));
     }
 }

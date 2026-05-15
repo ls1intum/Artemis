@@ -54,7 +54,6 @@ class ProofExerciseIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(result).isNotNull();
         assertThat(result.id()).isNotNull();
         assertThat(result.description()).isEqualTo(newExercise.description());
-        assertThat(result.predefinedCheckboxState()).isEqualTo(newExercise.predefinedCheckboxState());
         assertThat(result.sourceExpression()).isNotNull();
         assertThat(result.targetExpression()).isNotNull();
     }

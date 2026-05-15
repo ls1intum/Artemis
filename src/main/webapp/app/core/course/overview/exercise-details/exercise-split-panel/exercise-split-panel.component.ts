@@ -154,7 +154,14 @@ export class ExerciseSplitPanelComponent {
 
     readonly usesRouterOutlet = computed(() => {
         const type = this.exercise().type;
-        return type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.FILE_UPLOAD || type === ExerciseType.QUIZ || type === ExerciseType.PROOF || this.showCodeEditor();
+        return (
+            type === ExerciseType.TEXT ||
+            type === ExerciseType.MODELING ||
+            type === ExerciseType.FILE_UPLOAD ||
+            type === ExerciseType.QUIZ ||
+            type === ExerciseType.PROOF ||
+            this.showCodeEditor()
+        );
     });
 
     readonly showComplaintView = computed(() => {

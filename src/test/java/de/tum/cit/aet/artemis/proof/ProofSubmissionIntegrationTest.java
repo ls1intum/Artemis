@@ -57,8 +57,8 @@ class ProofSubmissionIntegrationTest extends AbstractSpringIntegrationIndependen
 
         assertThat(result).isNotNull();
         assertThat(result.id()).isNotNull();
-        assertThat(result.text()).isEqualTo(submissionDTO.text());
         assertThat(result.submitted()).isFalse();
+        assertThat(result.steps()).isNullOrEmpty();
         assertThat(result.results()).isNullOrEmpty();
     }
 
@@ -67,7 +67,7 @@ class ProofSubmissionIntegrationTest extends AbstractSpringIntegrationIndependen
     void submitProofSubmission_withValidStep_scores100() throws Exception {
         // apply add_zero_left at root: 0 + x → x (exercise source=0+x, target=x)
         var stepDTO = new ProofSubmissionDTO.DerivationStepDTO(null, 0, "add_zero_left", List.of(), MathNodes.var("x"));
-        ProofSubmissionDTO submissionDTO = new ProofSubmissionDTO(null, null, null, true, null, null, null, List.of(stepDTO));
+        ProofSubmissionDTO submissionDTO = new ProofSubmissionDTO(null, true, null, null, null, List.of(stepDTO));
 
         ProofSubmissionDTO result = request.postWithResponseBody("/api/proof/exercises/" + exercise.getId() + "/proof-submissions", submissionDTO, ProofSubmissionDTO.class,
                 HttpStatus.OK);
@@ -82,7 +82,7 @@ class ProofSubmissionIntegrationTest extends AbstractSpringIntegrationIndependen
     void submitProofSubmission_withWrongStep_scores0() throws Exception {
         // wrong rule applied: result doesn't match target
         var stepDTO = new ProofSubmissionDTO.DerivationStepDTO(null, 0, "add_zero_right", List.of(), MathNodes.var("x"));
-        ProofSubmissionDTO submissionDTO = new ProofSubmissionDTO(null, null, null, true, null, null, null, List.of(stepDTO));
+        ProofSubmissionDTO submissionDTO = new ProofSubmissionDTO(null, true, null, null, null, List.of(stepDTO));
 
         ProofSubmissionDTO result = request.postWithResponseBody("/api/proof/exercises/" + exercise.getId() + "/proof-submissions", submissionDTO, ProofSubmissionDTO.class,
                 HttpStatus.OK);
@@ -100,7 +100,7 @@ class ProofSubmissionIntegrationTest extends AbstractSpringIntegrationIndependen
         exercise.setTargetExpression(MathNodes.var("x"));
         proofExerciseUtilService.saveExercise(exercise);
 
-        ProofSubmissionDTO submissionDTO = new ProofSubmissionDTO(null, null, null, true, null, null, null, null);
+        ProofSubmissionDTO submissionDTO = new ProofSubmissionDTO(null, true, null, null, null, null);
 
         ProofSubmissionDTO result = request.postWithResponseBody("/api/proof/exercises/" + exercise.getId() + "/proof-submissions", submissionDTO, ProofSubmissionDTO.class,
                 HttpStatus.OK);
@@ -117,7 +117,7 @@ class ProofSubmissionIntegrationTest extends AbstractSpringIntegrationIndependen
         ProofSubmissionDTO result = request.get("/api/proof/participations/" + saved.getParticipation().getId() + "/proof-editor", HttpStatus.OK, ProofSubmissionDTO.class);
 
         assertThat(result).isNotNull();
-        assertThat(result.text()).isEqualTo(saved.getText());
+        assertThat(result.id()).isEqualTo(saved.getId());
     }
 
     @Test
@@ -127,7 +127,7 @@ class ProofSubmissionIntegrationTest extends AbstractSpringIntegrationIndependen
 
         assertThat(result).isNotNull();
         assertThat(result.id()).isNull();
-        assertThat(result.text()).isNullOrEmpty();
+        assertThat(result.steps()).isNullOrEmpty();
     }
 
     @Test

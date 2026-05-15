@@ -2,12 +2,15 @@ package de.tum.cit.aet.artemis.proof.web;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,15 +27,19 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
+import de.tum.cit.aet.artemis.proof.config.ProofEnabled;
 import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
 import de.tum.cit.aet.artemis.proof.dto.ProofExerciseDTO;
 import de.tum.cit.aet.artemis.proof.repository.ProofExerciseRepository;
 import de.tum.cit.aet.artemis.proof.service.ProofExerciseImportService;
 
+@Conditional(ProofEnabled.class)
 @RestController
 @RequestMapping("api/proof/")
 public class ProofExerciseResource {
@@ -50,10 +57,17 @@ public class ProofExerciseResource {
 
     private final CourseRepository courseRepository;
 
-    public ProofExerciseResource(ProofExerciseRepository proofExerciseRepository, ProofExerciseImportService proofExerciseImportService, CourseRepository courseRepository) {
+    private final UserRepository userRepository;
+
+    private final ExerciseSpecificationService exerciseSpecificationService;
+
+    public ProofExerciseResource(ProofExerciseRepository proofExerciseRepository, ProofExerciseImportService proofExerciseImportService, CourseRepository courseRepository,
+            UserRepository userRepository, ExerciseSpecificationService exerciseSpecificationService) {
         this.proofExerciseRepository = proofExerciseRepository;
         this.proofExerciseImportService = proofExerciseImportService;
         this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
+        this.exerciseSpecificationService = exerciseSpecificationService;
     }
 
     @PostMapping("proof-exercises")
@@ -65,10 +79,7 @@ public class ProofExerciseResource {
         }
         ProofExercise exercise = new ProofExercise();
         proofExerciseDTO.applyToEntity(exercise);
-        if (proofExerciseDTO.courseId() != null) {
-            Course course = courseRepository.findByIdElseThrow(proofExerciseDTO.courseId());
-            exercise.setCourse(course);
-        }
+        applyCoursOrExerciseGroup(proofExerciseDTO, exercise);
         ProofExercise saved = proofExerciseRepository.findByIdWithCategories(proofExerciseRepository.save(exercise).getId()).orElseThrow();
         return ResponseEntity.created(new URI("/api/proof/proof-exercises/" + saved.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, saved.getTitle())).body(ProofExerciseDTO.of(saved));
@@ -83,6 +94,7 @@ public class ProofExerciseResource {
         }
         ProofExercise existing = proofExerciseRepository.findByIdWithCategories(proofExerciseDTO.id()).orElseThrow();
         proofExerciseDTO.applyToEntity(existing);
+        applyCoursOrExerciseGroup(proofExerciseDTO, existing);
         ProofExercise saved = proofExerciseRepository.findByIdWithCategories(proofExerciseRepository.save(existing).getId()).orElseThrow();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, saved.getId().toString())).body(ProofExerciseDTO.of(saved));
     }
@@ -97,10 +109,10 @@ public class ProofExerciseResource {
 
     @GetMapping("proof-exercises/{exerciseId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<ProofExercise> getProofExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<ProofExerciseDTO> getProofExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ProofExercise : {}", exerciseId);
         ProofExercise exercise = proofExerciseRepository.findByIdWithCategoriesAndCourse(exerciseId).orElseThrow();
-        return ResponseEntity.ok(exercise);
+        return ResponseEntity.ok(ProofExerciseDTO.of(exercise));
     }
 
     @DeleteMapping("proof-exercises/{exerciseId}")
@@ -124,8 +136,14 @@ public class ProofExerciseResource {
     public ResponseEntity<SearchResultPageDTO<ProofExerciseDTO>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         log.debug("REST request to get all ProofExercises on page");
+        if (!isCourseFilter && !isExamFilter) {
+            return ResponseEntity.ok(new SearchResultPageDTO<>(Collections.emptyList(), 0));
+        }
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.EXERCISE);
-        Page<ProofExercise> exercisePage = proofExerciseRepository.findAll(pageable);
+        Specification<ProofExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(search.getSearchTerm(), isCourseFilter, isExamFilter, user,
+                pageable);
+        Page<ProofExercise> exercisePage = proofExerciseRepository.findAll(specification, pageable);
         List<ProofExerciseDTO> dtos = exercisePage.getContent().stream().map(ProofExerciseDTO::of).toList();
         return ResponseEntity.ok(new SearchResultPageDTO<>(dtos, exercisePage.getTotalPages()));
     }
@@ -148,12 +166,26 @@ public class ProofExerciseResource {
         ProofExercise sourceExercise = proofExerciseRepository.findByIdWithCategories(sourceExerciseId).orElseThrow();
         ProofExercise target = new ProofExercise();
         importedExerciseDTO.applyToEntity(target);
-        if (importedExerciseDTO.courseId() != null) {
-            Course course = courseRepository.findByIdElseThrow(importedExerciseDTO.courseId());
-            target.setCourse(course);
-        }
+        applyCoursOrExerciseGroup(importedExerciseDTO, target);
         ProofExercise result = proofExerciseRepository.findByIdWithCategories(proofExerciseImportService.importProofExercise(sourceExercise, target).getId()).orElseThrow();
         return ResponseEntity.created(new URI("/api/proof/proof-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(ProofExerciseDTO.of(result));
+    }
+
+    private void applyCoursOrExerciseGroup(ProofExerciseDTO dto, ProofExercise exercise) {
+        if (dto.courseId() != null && dto.exerciseGroupId() != null) {
+            throw new BadRequestAlertException("A proof exercise cannot belong to both a course and an exercise group", ENTITY_NAME, "courseAndExerciseGroupSet");
+        }
+        if (dto.courseId() != null) {
+            Course course = courseRepository.findByIdElseThrow(dto.courseId());
+            exercise.setCourse(course);
+            exercise.setExerciseGroup(null);
+        }
+        else if (dto.exerciseGroupId() != null) {
+            var exerciseGroup = new de.tum.cit.aet.artemis.exam.domain.ExerciseGroup();
+            exerciseGroup.setId(dto.exerciseGroupId());
+            exercise.setExerciseGroup(exerciseGroup);
+            exercise.setCourse(null);
+        }
     }
 }

@@ -23,8 +23,7 @@ export function mathNodeToLatex(node: MathNode | undefined, lookup: RegistryLook
     const desc = lookup(node.type);
     const myPrec = desc?.precedence ?? -Infinity;
 
-    const needsParens =
-        parentPrecedence >= 0 && (myPrec === -Infinity || (isRightChild ? myPrec <= parentPrecedence : myPrec < parentPrecedence));
+    const needsParens = parentPrecedence >= 0 && (myPrec === -Infinity || (isRightChild ? myPrec <= parentPrecedence : myPrec < parentPrecedence));
 
     function renderChild(child: MathNode | undefined, slotKey: string): string {
         const prec = desc?.precedence ?? -1;

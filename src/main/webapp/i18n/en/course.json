@@ -514,6 +514,7 @@
             "modeling": "Modeling",
             "text": "Text",
             "file-upload": "File Upload",
+            "proof": "Proof",
             "chartLegend": {
                 "lowest": "Lowest performing third",
                 "average": "Average performing third",

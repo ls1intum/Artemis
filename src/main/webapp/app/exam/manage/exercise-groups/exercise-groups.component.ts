@@ -135,7 +135,7 @@ export class ExerciseGroupsComponent implements OnInit {
         this.textExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT));
         this.modelingExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING));
         this.fileUploadExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD));
-        this.fileUploadExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PROOF));
+        this.proofExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PROOF));
 
         if (!this.textExerciseEnabled()) {
             this.disabledExerciseTypes.push(ExerciseType.TEXT);
@@ -146,7 +146,7 @@ export class ExerciseGroupsComponent implements OnInit {
         if (!this.fileUploadExerciseEnabled()) {
             this.disabledExerciseTypes.push(ExerciseType.FILE_UPLOAD);
         }
-        if (!this.proofExerciseEnabled) {
+        if (!this.proofExerciseEnabled()) {
             this.disabledExerciseTypes.push(ExerciseType.PROOF);
         }
     }

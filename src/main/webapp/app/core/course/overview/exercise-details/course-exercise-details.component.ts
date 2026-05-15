@@ -482,7 +482,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             },
         });
 
-        if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
+        if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT || this.exercise!.type === ExerciseType.PROOF) {
             return;
         }
 
@@ -635,6 +635,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             exerciseTypePath = 'text-exercises';
         } else if (this.exercise.type === ExerciseType.MODELING) {
             exerciseTypePath = 'modeling-exercises';
+        } else if (this.exercise.type === ExerciseType.PROOF) {
+            exerciseTypePath = 'proof-exercises';
         } else {
             return;
         }

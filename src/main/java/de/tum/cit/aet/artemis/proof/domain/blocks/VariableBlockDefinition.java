@@ -2,13 +2,16 @@ package de.tum.cit.aet.artemis.proof.domain.blocks;
 
 import java.util.List;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.proof.config.ProofEnabled;
 import de.tum.cit.aet.artemis.proof.domain.Associativity;
 import de.tum.cit.aet.artemis.proof.domain.BlockDefinition;
 import de.tum.cit.aet.artemis.proof.domain.LayoutCategory;
 import de.tum.cit.aet.artemis.proof.domain.RewriteRule;
 
+@Conditional(ProofEnabled.class)
 @Component
 public class VariableBlockDefinition implements BlockDefinition {
 

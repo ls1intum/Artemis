@@ -83,7 +83,7 @@ export class ProofSubmissionAssessmentComponent implements OnInit {
     }
 
     get hasExampleDerivations(): boolean {
-        return !!(this.proofExercise?.exampleDerivations?.length);
+        return !!this.proofExercise?.exampleDerivations?.length;
     }
 
     isExampleComplete(derivation: DerivationStep[]): boolean {

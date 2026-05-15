@@ -514,6 +514,7 @@
             "modeling": "Modellierung",
             "text": "Text",
             "file-upload": "Dateiupload",
+            "proof": "Beweis",
             "chartLegend": {
                 "lowest": "Unteres Performance-Drittel",
                 "average": "Durchschnittliches Performance-Drittel",

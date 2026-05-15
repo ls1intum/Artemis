@@ -5,6 +5,5 @@ package de.tum.cit.aet.artemis.proof.domain;
  * LEFT-associative operators apply the stricter {@code <=} rule on their right child.
  */
 public enum Associativity {
-    LEFT,
-    NONE
+    LEFT, NONE
 }

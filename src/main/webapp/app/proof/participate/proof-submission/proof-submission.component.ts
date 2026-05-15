@@ -78,9 +78,7 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
 
         if (this.proofExercise?.onlyShowApplicableRules && this.selectedNodePath() !== undefined) {
             const applicable = this.applicableRuleIds();
-            result = result
-                .map((block) => ({ ...block, rules: (block.rules ?? []).filter((r) => applicable.has(r.id)) }))
-                .filter((block) => block.rules.length > 0);
+            result = result.map((block) => ({ ...block, rules: (block.rules ?? []).filter((r) => applicable.has(r.id)) })).filter((block) => block.rules.length > 0);
         }
 
         if (!raw) return result;

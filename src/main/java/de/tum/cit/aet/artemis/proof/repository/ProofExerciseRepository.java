@@ -1,27 +1,30 @@
 package de.tum.cit.aet.artemis.proof.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.proof.config.ProofEnabled;
 import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
 
 /**
  * Spring Data JPA repository for the ProofExercise entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ProofEnabled.class)
+@Lazy
 @Repository
-public interface ProofExerciseRepository extends JpaRepository<ProofExercise, Long> {
+public interface ProofExerciseRepository extends JpaRepository<ProofExercise, Long>, JpaSpecificationExecutor<ProofExercise> {
 
     @Query("SELECT e FROM ProofExercise e LEFT JOIN FETCH e.categories WHERE e.id = :id")
     Optional<ProofExercise> findByIdWithCategories(@Param("id") Long id);
@@ -33,6 +36,5 @@ public interface ProofExerciseRepository extends JpaRepository<ProofExercise, Lo
     List<ProofExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
     @EntityGraph(attributePaths = "categories")
-    @Override
-    Page<ProofExercise> findAll(Pageable pageable);
+    Page<ProofExercise> findAll(Specification<ProofExercise> spec, Pageable pageable);
 }

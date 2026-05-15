@@ -23,7 +23,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { MODULE_FEATURE_PROOF, MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
@@ -211,6 +211,8 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
         switch (exerciseType) {
             case ExerciseType.TEXT:
                 return activeModuleFeatures.includes(MODULE_FEATURE_TEXT);
+            case ExerciseType.PROOF:
+                return activeModuleFeatures.includes(MODULE_FEATURE_PROOF);
             // For now, all exercises are enabled by default
             default:
                 return true;

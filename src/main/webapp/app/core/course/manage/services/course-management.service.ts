@@ -283,6 +283,7 @@ export class CourseManagementService implements OnDestroy {
         scoresPerExerciseType.set(ExerciseType.QUIZ, courseForDashboardDTO.quizScores);
         scoresPerExerciseType.set(ExerciseType.TEXT, courseForDashboardDTO.textScores);
         scoresPerExerciseType.set(ExerciseType.FILE_UPLOAD, courseForDashboardDTO.fileUploadScores);
+        scoresPerExerciseType.set(ExerciseType.PROOF, courseForDashboardDTO.proofScores);
         this.scoresStorageService.setStoredScoresPerExerciseType(courseForDashboardDTO.course.id!, scoresPerExerciseType);
 
         // Save the participation results in the scores-storage.service.

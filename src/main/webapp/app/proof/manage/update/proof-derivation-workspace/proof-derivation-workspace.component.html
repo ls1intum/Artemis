@@ -78,10 +78,7 @@
                     </div>
                     @for (step of steps(); track step.stepIndex) {
                         <!-- Rule slot -->
-                        <div
-                            class="d-flex align-items-center gap-1 ps-2 py-1 border rounded small"
-                            style="font-size: 0.8em; border-style: dashed !important; pointer-events: none"
-                        >
+                        <div class="d-flex align-items-center gap-1 ps-2 py-1 border rounded small" style="font-size: 0.8em; border-style: dashed !important; pointer-events: none">
                             <span class="text-muted">by</span>
                             <span class="badge bg-secondary">{{ ruleNameFor(step.appliedRuleId) }}</span>
                         </div>
