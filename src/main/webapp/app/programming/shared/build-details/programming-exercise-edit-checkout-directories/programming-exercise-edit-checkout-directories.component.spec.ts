@@ -58,35 +58,35 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
     it('reset should set editable and input fields correctly', () => {
         fixture.componentRef.setInput('submissionBuildPlanCheckoutRepositories', submissionBuildPlanCheckoutRepositories);
         component.reset();
-        expect(component.isAssigmentRepositoryEditable).toBe(true);
-        expect(component.assignmentCheckoutPath).toBe('assignment');
-        expect(component.isTestRepositoryEditable).toBe(true);
-        expect(component.testCheckoutPath).toBe('tests');
-        expect(component.isSolutionRepositoryEditable).toBe(true);
-        expect(component.solutionCheckoutPath).toBe('solution');
+        expect(component.isAssigmentRepositoryEditable()).toBe(true);
+        expect(component.assignmentCheckoutPath()).toBe('assignment');
+        expect(component.isTestRepositoryEditable()).toBe(true);
+        expect(component.testCheckoutPath()).toBe('tests');
+        expect(component.isSolutionRepositoryEditable()).toBe(true);
+        expect(component.solutionCheckoutPath()).toBe('solution');
 
         fixture.componentRef.setInput('submissionBuildPlanCheckoutRepositories', {
             testCheckoutDirectory: '/',
         });
         component.reset();
-        expect(component.isAssigmentRepositoryEditable).toBe(false);
-        expect(component.assignmentCheckoutPath).toBe('');
-        expect(component.isTestRepositoryEditable).toBe(false);
-        expect(component.testCheckoutPath).toBe('/');
-        expect(component.isSolutionRepositoryEditable).toBe(false);
-        expect(component.solutionCheckoutPath).toBe('');
+        expect(component.isAssigmentRepositoryEditable()).toBe(false);
+        expect(component.assignmentCheckoutPath()).toBe('');
+        expect(component.isTestRepositoryEditable()).toBe(false);
+        expect(component.testCheckoutPath()).toBe('/');
+        expect(component.isSolutionRepositoryEditable()).toBe(false);
+        expect(component.solutionCheckoutPath()).toBe('');
     });
 
     it('should update fields correctly', () => {
         component.onAssigmentRepositoryCheckoutPathChange('assignment');
-        expect(component.assignmentCheckoutPath).toBe('assignment');
+        expect(component.assignmentCheckoutPath()).toBe('assignment');
         expect(component.formValid).toBe(true);
         component.onTestRepositoryCheckoutPathChange('tests');
         expect(component.formValid).toBe(true);
-        expect(component.testCheckoutPath).toBe('tests');
+        expect(component.testCheckoutPath()).toBe('tests');
         component.onSolutionRepositoryCheckoutPathChange('solution');
         expect(component.formValid).toBe(true);
-        expect(component.solutionCheckoutPath).toBe('solution');
+        expect(component.solutionCheckoutPath()).toBe('solution');
 
         component.onAssigmentRepositoryCheckoutPathChange('solution');
         expect(component.formValid).toBe(false);
@@ -110,9 +110,9 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
         fixture.componentRef.setInput('submissionBuildPlanCheckoutRepositories', submissionBuildPlanCheckoutRepositories);
         component.reset();
 
-        expect(component.assignmentCheckoutPath).toBe('assignment');
-        expect(component.testCheckoutPath).toBe('tests');
-        expect(component.solutionCheckoutPath).toBe('solution');
+        expect(component.assignmentCheckoutPath()).toBe('assignment');
+        expect(component.testCheckoutPath()).toBe('tests');
+        expect(component.solutionCheckoutPath()).toBe('solution');
     });
 
     it('should set values to their defaults if no buildConfig of submissionBuildPlan available', () => {
@@ -120,8 +120,8 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
         fixture.componentRef.setInput('submissionBuildPlanCheckoutRepositories', undefined);
         component.reset();
 
-        expect(component.assignmentCheckoutPath).toBe('');
-        expect(component.testCheckoutPath).toBe('/');
-        expect(component.solutionCheckoutPath).toBe('');
+        expect(component.assignmentCheckoutPath()).toBe('');
+        expect(component.testCheckoutPath()).toBe('/');
+        expect(component.solutionCheckoutPath()).toBe('');
     });
 });

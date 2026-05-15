@@ -1,4 +1,4 @@
-import { Component, effect, input, output, viewChild } from '@angular/core';
+import { Component, computed, input, linkedSignal, output, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities/build-plan-checkout-directories-dto';
@@ -22,13 +22,34 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
     testCheckoutPathEvent = output<string>();
     solutionCheckoutPathEvent = output<string>();
 
-    assignmentCheckoutPath: string;
-    testCheckoutPath: string;
-    solutionCheckoutPath: string;
+    // Editability is fully derived from the submissionBuildPlan input.
+    readonly isAssigmentRepositoryEditable = computed(() => this.isEditable(this.submissionBuildPlanCheckoutRepositories()?.exerciseCheckoutDirectory));
+    readonly isTestRepositoryEditable = computed(() => this.isEditable(this.submissionBuildPlanCheckoutRepositories()?.testCheckoutDirectory));
+    readonly isSolutionRepositoryEditable = computed(() => this.isEditable(this.submissionBuildPlanCheckoutRepositories()?.solutionCheckoutDirectory));
 
-    isAssigmentRepositoryEditable = false;
-    isTestRepositoryEditable = false;
-    isSolutionRepositoryEditable = false;
+    // Path values re-seed from the inputs whenever those change (replacing the legacy effect → reset()
+    // chain), while remaining writable for user edits via the ngModelChange handlers below.
+    readonly assignmentCheckoutPath = linkedSignal<string>(() => {
+        if (!this.isAssigmentRepositoryEditable()) {
+            return '';
+        }
+        const submissionBuildPlan = this.submissionBuildPlanCheckoutRepositories();
+        return this.programmingExercise().buildConfig?.assignmentCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.exerciseCheckoutDirectory) || '';
+    });
+    readonly testCheckoutPath = linkedSignal<string>(() => {
+        if (!this.isTestRepositoryEditable()) {
+            return '/';
+        }
+        const submissionBuildPlan = this.submissionBuildPlanCheckoutRepositories();
+        return this.programmingExercise().buildConfig?.testCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.testCheckoutDirectory) || '';
+    });
+    readonly solutionCheckoutPath = linkedSignal<string>(() => {
+        if (!this.isSolutionRepositoryEditable()) {
+            return '';
+        }
+        const submissionBuildPlan = this.submissionBuildPlanCheckoutRepositories();
+        return this.programmingExercise().buildConfig?.solutionCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.solutionCheckoutDirectory) || '';
+    });
 
     formValid = true;
     formValidChanges = new Subject();
@@ -37,63 +58,50 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
     field_testRepositoryCheckoutPath = viewChild<NgModel>('field_testRepositoryCheckoutPath');
     field_solutionRepositoryCheckoutPath = viewChild<NgModel>('field_solutionRepositoryCheckoutPath');
 
-    constructor() {
-        effect(() => {
-            this.reset();
-        });
-    }
-
+    /**
+     * Re-seed the path signals from current inputs. Useful for tests / explicit-reset callers;
+     * normal input changes flow automatically through the `linkedSignal` recomputations above.
+     */
     reset() {
+        // linkedSignal recomputes on input changes; clearing forces it to re-read.
+        // Re-assigning via .set with the computed value keeps behavior identical to the legacy reset.
         const submissionBuildPlan = this.submissionBuildPlanCheckoutRepositories();
-        this.isAssigmentRepositoryEditable =
-            !!submissionBuildPlan?.exerciseCheckoutDirectory &&
-            submissionBuildPlan?.exerciseCheckoutDirectory.trim() !== '' &&
-            submissionBuildPlan?.exerciseCheckoutDirectory !== '/';
-        if (this.isAssigmentRepositoryEditable) {
-            this.assignmentCheckoutPath =
-                this.programmingExercise().buildConfig?.assignmentCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.exerciseCheckoutDirectory) || '';
-        } else {
-            this.assignmentCheckoutPath = '';
-        }
-        this.isTestRepositoryEditable =
-            !!submissionBuildPlan?.testCheckoutDirectory && submissionBuildPlan?.testCheckoutDirectory.trim() !== '' && submissionBuildPlan?.testCheckoutDirectory !== '/';
-        if (this.isTestRepositoryEditable) {
-            this.testCheckoutPath = this.programmingExercise().buildConfig?.testCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.testCheckoutDirectory) || '';
-        } else {
-            this.testCheckoutPath = '/';
-        }
-        this.isSolutionRepositoryEditable =
-            !!submissionBuildPlan?.solutionCheckoutDirectory &&
-            submissionBuildPlan?.solutionCheckoutDirectory.trim() !== '' &&
-            submissionBuildPlan?.solutionCheckoutDirectory !== '/';
-        if (this.isSolutionRepositoryEditable) {
-            this.solutionCheckoutPath =
-                this.programmingExercise().buildConfig?.solutionCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.solutionCheckoutDirectory) || '';
-        } else {
-            this.solutionCheckoutPath = '';
-        }
+        const buildConfig = this.programmingExercise().buildConfig;
+        this.assignmentCheckoutPath.set(
+            this.isAssigmentRepositoryEditable() ? buildConfig?.assignmentCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.exerciseCheckoutDirectory) || '' : '',
+        );
+        this.testCheckoutPath.set(
+            this.isTestRepositoryEditable() ? buildConfig?.testCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.testCheckoutDirectory) || '' : '/',
+        );
+        this.solutionCheckoutPath.set(
+            this.isSolutionRepositoryEditable() ? buildConfig?.solutionCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.solutionCheckoutDirectory) || '' : '',
+        );
     }
 
     onAssigmentRepositoryCheckoutPathChange(event: string) {
-        this.assignmentCheckoutPath = event;
-        this.assignmentCheckoutPathEvent.emit(this.assignmentCheckoutPath);
+        this.assignmentCheckoutPath.set(event);
+        this.assignmentCheckoutPathEvent.emit(event);
         this.calculateFormValid();
     }
 
     onTestRepositoryCheckoutPathChange(event: string) {
-        this.testCheckoutPath = event;
-        this.testCheckoutPathEvent.emit(this.testCheckoutPath);
+        this.testCheckoutPath.set(event);
+        this.testCheckoutPathEvent.emit(event);
         this.calculateFormValid();
     }
 
     onSolutionRepositoryCheckoutPathChange(event: string) {
-        this.solutionCheckoutPath = event;
-        this.solutionCheckoutPathEvent.emit(this.solutionCheckoutPath);
+        this.solutionCheckoutPath.set(event);
+        this.solutionCheckoutPathEvent.emit(event);
         this.calculateFormValid();
     }
 
     private removeLeadingSlash(path?: string): string | undefined {
         return path?.replace(/^\//, '');
+    }
+
+    private isEditable(directory?: string): boolean {
+        return !!directory && directory.trim() !== '' && directory !== '/';
     }
 
     calculateFormValid(): void {
@@ -102,7 +110,7 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
             (!this.field_testRepositoryCheckoutPath() || this.field_testRepositoryCheckoutPath()?.valid) &&
             (!this.field_solutionRepositoryCheckoutPath() || this.field_solutionRepositoryCheckoutPath()?.valid),
         );
-        this.formValid = isFormValid && this.areValuesUnique([this.assignmentCheckoutPath, this.testCheckoutPath, this.solutionCheckoutPath]);
+        this.formValid = isFormValid && this.areValuesUnique([this.assignmentCheckoutPath(), this.testCheckoutPath(), this.solutionCheckoutPath()]);
         this.formValidChanges.next(this.formValid);
     }
 
