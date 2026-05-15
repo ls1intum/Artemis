@@ -87,7 +87,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
 
     private static final Duration BUILD_TIMEOUT = Duration.ofMinutes(5);
 
-    private static final int MAX_DIAGNOSTIC_LOG_LENGTH = 4000;
+    private static final int MAX_DIAGNOSTIC_LOG_LENGTH = 8000;
 
     private static final int MAX_BUILD_ATTEMPTS = 2;
 
@@ -235,9 +235,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
             }
             catch (AssertionError failure) {
                 lastFailure = failure;
-                if (attempt < MAX_BUILD_ATTEMPTS) {
-                    log.warn("Docker build attempt {} for project type {} did not match expectations; retrying. Failure: {}", attempt, projectType, failure.getMessage());
-                }
+                logBuildJobDiagnostics(buildJob, attempt, projectType, failure);
             }
         }
         throw lastFailure;
@@ -450,6 +448,24 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         return diagnostics.toString();
     }
 
+    private void logBuildJobDiagnostics(BuildJob buildJob, int attempt, ProjectType projectType, AssertionError failure) {
+        StringBuilder diag = new StringBuilder();
+        diag.append("Docker build attempt ").append(attempt).append(" for project type ").append(projectType).append(" did not match expectations.");
+        diag.append(System.lineSeparator()).append("Failure: ").append(failure.getMessage());
+        diag.append(System.lineSeparator()).append("Build job: id=").append(buildJob.getBuildJobId()).append(", status=").append(buildJob.getBuildStatus()).append(", dockerImage=")
+                .append(buildJob.getDockerImage());
+        if (buildJob.getBuildStartDate() != null && buildJob.getBuildCompletionDate() != null) {
+            diag.append(", duration=").append(Duration.between(buildJob.getBuildStartDate().toInstant(), buildJob.getBuildCompletionDate().toInstant()));
+        }
+        appendBuildLogFile(diag, buildJob);
+        if (attempt < MAX_BUILD_ATTEMPTS) {
+            log.warn("Build attempt {} failed, retrying. Full diagnostics:{}{}", attempt, System.lineSeparator(), diag);
+        }
+        else {
+            log.error("Build attempt {} failed (final attempt). Full diagnostics:{}{}", attempt, System.lineSeparator(), diag);
+        }
+    }
+
     private void appendBuildLogFile(StringBuilder diagnostics, BuildJob buildJob) {
         try {
             FileSystemResource logResource = buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(buildJob.getBuildJobId());
@@ -503,10 +519,8 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     private List<String> getGccTestCaseNames() {
         // TestCompileLeak and TestOutputLSan are excluded because LeakSanitizer requires the liblsan library
         // and the SYS_PTRACE capability, both of which are inconsistently available or restricted in CI Docker environments.
-        // TestOutputASan is excluded because AddressSanitizer's output test consistently times out on CI runners
-        // due to ASLR / sanitizer interactions in Docker containers.
-        // We only include the 5 core tests that are reliable across all platforms.
-        return List.of("TestCompile", "TestOutput", "TestCompileASan", "TestCompileUBSan", "TestOutputUBSan");
+        // We only include the 6 core tests that are reliable across all platforms.
+        return List.of("TestCompile", "TestOutput", "TestCompileASan", "TestOutputASan", "TestCompileUBSan", "TestOutputUBSan");
     }
 
     private String normalizeDockerArchitecture(String dockerArchitecture) {

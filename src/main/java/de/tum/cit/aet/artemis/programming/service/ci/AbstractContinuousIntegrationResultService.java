@@ -79,6 +79,9 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
             var successfulTestNames = job.successfulTests().stream().map(TestCaseBase::name).sorted().toList();
             log.debug("Build job for exercise {}: {} failed tests {}, {} successful tests {}", programmingExercise.getId(), failedTestNames.size(), failedTestNames,
                     successfulTestNames.size(), successfulTestNames);
+            // Log failure messages for each failed test to help diagnose flaky test failures (e.g., timeout vs wrong output)
+            job.failedTests().forEach(
+                    failedTest -> log.debug("Build job for exercise {}: failed test '{}' messages: {}", programmingExercise.getId(), failedTest.name(), failedTest.testMessages()));
 
             job.failedTests().forEach(failedTest -> result
                     .addFeedback(feedbackCreationService.createFeedbackFromTestCase(failedTest.name(), failedTest.testMessages(), false, programmingExercise, activeTestCases)));
