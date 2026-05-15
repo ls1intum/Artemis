@@ -195,14 +195,15 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
 
     onRefresh() {
         if (this.editorState() !== EditorState.CLEAN) {
-            this.refreshModalRef = this.dialogService.open(CodeEditorConfirmRefreshModalComponent, {
-                header: this.translateService.instant('artemisApp.editor.refresh.refreshExplanationShort'),
-                width: '50rem',
-                modal: true,
-                closable: true,
-                closeOnEscape: true,
-                dismissableMask: false,
-            });
+            this.refreshModalRef =
+                this.dialogService.open(CodeEditorConfirmRefreshModalComponent, {
+                    header: this.translateService.instant('artemisApp.editor.refresh.refreshExplanationShort'),
+                    width: '50rem',
+                    modal: true,
+                    closable: true,
+                    closeOnEscape: true,
+                    dismissableMask: false,
+                }) ?? undefined;
             this.refreshModalRef?.onClose.subscribe((confirmed: boolean | undefined) => {
                 if (confirmed) {
                     this.executeRefresh();
@@ -323,14 +324,15 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     resetRepository() {
-        this.conflictModalRef = this.dialogService.open(CodeEditorResolveConflictModalComponent, {
-            header: this.translateService.instant('artemisApp.editor.conflict.conflictExplanationShort'),
-            width: '50rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-        });
+        this.conflictModalRef =
+            this.dialogService.open(CodeEditorResolveConflictModalComponent, {
+                header: this.translateService.instant('artemisApp.editor.conflict.conflictExplanationShort'),
+                width: '50rem',
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: false,
+            }) ?? undefined;
         this.conflictModalRef?.onClose.subscribe((confirmed: boolean | undefined) => {
             if (!confirmed) {
                 return;
