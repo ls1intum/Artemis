@@ -402,8 +402,10 @@ public class ProgrammingExerciseGradingService {
             relevantTestCases = filterRelevantTestCasesForStudent(testCases, result);
         }
 
-        log.debug("Calculating score for exercise {} (isStudent={}): {} active test cases, {} relevant test cases (names: {})", exercise.getId(), isStudentParticipation,
-                testCases.size(), relevantTestCases.size(), relevantTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
+        if (log.isDebugEnabled()) {
+            log.debug("Calculating score for exercise {} (isStudent={}): {} active test cases, {} relevant test cases (names: {})", exercise.getId(), isStudentParticipation,
+                    testCases.size(), relevantTestCases.size(), relevantTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
+        }
 
         // We only apply submission policies if it is a student participation
         return calculateScoreForResult(testCases, relevantTestCases, result, exercise, isStudentParticipation);

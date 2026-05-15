@@ -206,7 +206,8 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
         var buildPlanPhasesDTO = new BuildPlanPhasesDTO(defaultPhases, defaultDockerImage);
         programmingExercise.getBuildConfig().setBuildPlanConfiguration(buildPlanPhasesDTO.toBuildPlanConfiguration());
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExerciseRepository.save(programmingExercise);
+        // Capture the managed entity returned by merge() to avoid stale detached entity issues
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
         staticCodeAnalysisService.createDefaultCategories(programmingExercise);
 

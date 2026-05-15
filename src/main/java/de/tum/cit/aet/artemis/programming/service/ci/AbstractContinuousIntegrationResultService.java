@@ -71,17 +71,20 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
     private void addTestCaseFeedbacksToResult(Result result, List<? extends BuildJobInterface> jobs, ProgrammingExercise programmingExercise) {
         var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
 
-        log.debug("Building result feedbacks for exercise {}: {} active test cases in DB (names: {})", programmingExercise.getId(), activeTestCases.size(),
-                activeTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
+        if (log.isDebugEnabled()) {
+            log.debug("Building result feedbacks for exercise {}: {} active test cases in DB (names: {})", programmingExercise.getId(), activeTestCases.size(),
+                    activeTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
+        }
 
         jobs.forEach(job -> {
-            var failedTestNames = job.failedTests().stream().map(TestCaseBase::name).sorted().toList();
-            var successfulTestNames = job.successfulTests().stream().map(TestCaseBase::name).sorted().toList();
-            log.debug("Build job for exercise {}: {} failed tests {}, {} successful tests {}", programmingExercise.getId(), failedTestNames.size(), failedTestNames,
-                    successfulTestNames.size(), successfulTestNames);
-            // Log failure messages for each failed test to help diagnose flaky test failures (e.g., timeout vs wrong output)
-            job.failedTests().forEach(
-                    failedTest -> log.debug("Build job for exercise {}: failed test '{}' messages: {}", programmingExercise.getId(), failedTest.name(), failedTest.testMessages()));
+            if (log.isDebugEnabled()) {
+                var failedTestNames = job.failedTests().stream().map(TestCaseBase::name).sorted().toList();
+                var successfulTestNames = job.successfulTests().stream().map(TestCaseBase::name).sorted().toList();
+                log.debug("Build job for exercise {}: {} failed tests {}, {} successful tests {}", programmingExercise.getId(), failedTestNames.size(), failedTestNames,
+                        successfulTestNames.size(), successfulTestNames);
+                job.failedTests().forEach(failedTest -> log.debug("Build job for exercise {}: failed test '{}' messages: {}", programmingExercise.getId(), failedTest.name(),
+                        failedTest.testMessages()));
+            }
 
             job.failedTests().forEach(failedTest -> result
                     .addFeedback(feedbackCreationService.createFeedbackFromTestCase(failedTest.name(), failedTest.testMessages(), false, programmingExercise, activeTestCases)));

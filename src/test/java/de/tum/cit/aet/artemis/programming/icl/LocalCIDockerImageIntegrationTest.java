@@ -83,6 +83,10 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
 
     private static final List<String> FACT_TEST_CASE_NAMES = List.of("Compile", "CodeStructure", "InputOutput");
 
+    // TestCompileLeak and TestOutputLSan are excluded because LeakSanitizer requires liblsan and the SYS_PTRACE capability,
+    // both inconsistently available or restricted in CI Docker environments.
+    private static final List<String> GCC_TEST_CASE_NAMES = List.of("TestCompile", "TestOutput", "TestCompileASan", "TestOutputASan", "TestCompileUBSan", "TestOutputUBSan");
+
     private static final Duration BUILD_JOB_CREATION_TIMEOUT = Duration.ofSeconds(60);
 
     private static final Duration BUILD_TIMEOUT = Duration.ofMinutes(5);
@@ -301,7 +305,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     private void replaceExerciseTestCases(ProjectType projectType) {
         List<String> testCaseNames = switch (projectType) {
             case FACT -> FACT_TEST_CASE_NAMES;
-            case GCC -> getGccTestCaseNames();
+            case GCC -> GCC_TEST_CASE_NAMES;
             default -> throw new IllegalArgumentException("Unsupported project type: " + projectType);
         };
 
@@ -337,6 +341,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         seedRepositoryFromTemplate(baseRepositories.solutionRepository(), Path.of("templates", "c", templateDirectory, "solution"), "solution");
         seedRepositoryFromTemplate(baseRepositories.testsRepository(), Path.of("templates", "c", templateDirectory, "test"), "tests");
 
+        // Capture the managed entity returned by merge() to avoid stale detached entity issues
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // Verify test cases were not disturbed by saving the exercise entity (orphanRemoval/cascade check)
@@ -511,16 +516,9 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     private int expectedSuccessfulTestCaseCount(ProjectType projectType) {
         return switch (projectType) {
             case FACT -> FACT_SUCCESSFUL_TEST_CASES;
-            case GCC -> getGccTestCaseNames().size();
+            case GCC -> GCC_TEST_CASE_NAMES.size();
             default -> throw new IllegalArgumentException("Unsupported project type: " + projectType);
         };
-    }
-
-    private List<String> getGccTestCaseNames() {
-        // TestCompileLeak and TestOutputLSan are excluded because LeakSanitizer requires the liblsan library
-        // and the SYS_PTRACE capability, both of which are inconsistently available or restricted in CI Docker environments.
-        // We only include the 6 core tests that are reliable across all platforms.
-        return List.of("TestCompile", "TestOutput", "TestCompileASan", "TestOutputASan", "TestCompileUBSan", "TestOutputUBSan");
     }
 
     private String normalizeDockerArchitecture(String dockerArchitecture) {
