@@ -41,8 +41,8 @@ WORKDIR /opt/artemis
 COPY gradlew gradlew.bat ./
 COPY build.gradle gradle.properties settings.gradle ./
 COPY gradle gradle/
-# copy bun manifest, lockfile, and any registry/Node settings
-COPY package.json bun.lock .npmrc ./
+# copy bun manifest + lockfile
+COPY package.json bun.lock ./
 # patches/ is referenced by `patchedDependencies` in package.json and must be
 # present at install time (Bun applies patches during resolution, not via a
 # postinstall hook like patch-package did).
