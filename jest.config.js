@@ -144,6 +144,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // build-plan-phases model uses Vitest (see vitest.config.ts)
         '<rootDir>/src/main/webapp/**/*.ts',
     ],
+    // Each entry below excludes a module that has been migrated to Vitest.
     coveragePathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/account/', // account module uses Vitest
         '<rootDir>/src/main/webapp/app/assessment/', // assessment module uses Vitest
