@@ -67,6 +67,8 @@ const internals = (c: CodeEditorMonacoComponent): MonacoInternals => c as unknow
 describe('CodeEditorMonacoComponent', () => {
     setupTestBed({ zoneless: true });
 
+    let originalResizeObserver: typeof ResizeObserver | undefined;
+
     let comp: CodeEditorMonacoComponent;
     let fixture: ComponentFixture<CodeEditorMonacoComponent>;
     let getInlineFeedbackNodeStub: ReturnType<typeof vi.spyOn>;
@@ -95,6 +97,7 @@ describe('CodeEditorMonacoComponent', () => {
     ];
 
     beforeEach(async () => {
+        originalResizeObserver = global.ResizeObserver;
         await TestBed.configureTestingModule({
             imports: [MonacoEditorComponent, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent), MockComponent(CodeEditorHeaderComponent)],
             providers: [
@@ -120,6 +123,7 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     afterEach(() => {
+        global.ResizeObserver = originalResizeObserver as typeof ResizeObserver;
         vi.restoreAllMocks();
     });
 
@@ -662,6 +666,7 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should add a new feedback widget', async () => {
+        vi.useFakeTimers();
         // Feedback is stored as 0-based line numbers, but the editor requires 1-based line numbers.
         const feedbackLineOneBased = 3;
         const feedbackLineZeroBased = feedbackLineOneBased - 1;
@@ -680,8 +685,9 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.detectChanges();
         // Simulate adding the element
         comp.addNewFeedback(feedbackLineOneBased);
-        await new Promise((r) => setTimeout(r, 20));
+        await vi.advanceTimersByTimeAsync(20);
         expect(comp.newFeedbackLines()).toContain(feedbackLineZeroBased);
+        vi.useRealTimers();
         rafSpy.mockRestore();
         cancelRafSpy.mockRestore();
     });

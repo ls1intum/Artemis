@@ -1,5 +1,5 @@
 import { Component, OnDestroy, effect, inject, input, signal } from '@angular/core';
-import { filter, tap } from 'rxjs/operators';
+import { filter, finalize, tap } from 'rxjs/operators';
 import { EMPTY, Subscription } from 'rxjs';
 import { head, orderBy } from 'lodash-es';
 import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -74,6 +74,11 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             if (canBeTriggered) {
                 this.setupSubmissionSubscription();
                 this.setupResultSubscription();
+            } else {
+                this.submissionSubscription?.unsubscribe();
+                this.resultSubscription?.unsubscribe();
+                this.isBuilding.set(false);
+                this.participationHasLatestSubmissionWithoutResult.set(false);
             }
         });
     }
@@ -154,7 +159,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             this.isRetrievingBuildStatus.set(false);
             return EMPTY;
         }
-        return this.submissionService.triggerBuild(participationId, submissionType).pipe(tap(() => this.isRetrievingBuildStatus.set(false)));
+        return this.submissionService.triggerBuild(participationId, submissionType).pipe(finalize(() => this.isRetrievingBuildStatus.set(false)));
     }
 
     triggerFailed(lastGraded = false) {
@@ -164,6 +169,6 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             this.isRetrievingBuildStatus.set(false);
             return EMPTY;
         }
-        return this.submissionService.triggerFailedBuild(participationId, lastGraded).pipe(tap(() => this.isRetrievingBuildStatus.set(false)));
+        return this.submissionService.triggerFailedBuild(participationId, lastGraded).pipe(finalize(() => this.isRetrievingBuildStatus.set(false)));
     }
 }
