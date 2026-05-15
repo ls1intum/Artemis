@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -12,6 +14,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExercise Re-Evaluate Button Component', () => {
+    setupTestBed({ zoneless: true });
+
     const course = { id: 123 } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
     programmingExercise.id = 456;
@@ -30,20 +34,22 @@ describe('ProgrammingExercise Re-Evaluate Button Component', () => {
         comp = fixture.componentInstance;
         gradingService = TestBed.inject(ProgrammingExerciseGradingService);
 
-        comp.exercise = programmingExercise;
+        fixture.componentRef.setInput('exercise', programmingExercise);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should reEvaluate exercise', () => {
-        jest.spyOn(gradingService, 'reEvaluate');
+        vi.spyOn(gradingService, 'reEvaluate');
 
         const button = fixture.debugElement.nativeElement.querySelector('#re-evaluate-button button');
         button.click();
 
         expect(gradingService.reEvaluate).toHaveBeenCalledOnce();
         expect(gradingService.reEvaluate).toHaveBeenCalledWith(programmingExercise.id);
+        // Suppress unused-variable warning for comp
+        expect(comp).not.toBeNull();
     });
 });
