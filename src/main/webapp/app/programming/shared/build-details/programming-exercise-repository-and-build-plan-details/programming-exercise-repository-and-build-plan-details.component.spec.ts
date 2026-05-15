@@ -279,6 +279,38 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
         expect(submissionPreviewElement.textContent).toContain('/assignment/src');
     });
 
+    it('should derive checkoutDirectories from buildConfig on initial detectChanges when isCreateOrEdit is true', () => {
+        // Reproduces the legacy ngOnChanges first-call behavior that the migrated effect() intentionally skips.
+        // Disable localCI so no async service response can populate the signal — only the synchronous init
+        // derivation can produce a non-empty value here.
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [] } as unknown as ProfileInfo);
+        component.isLocalCIEnabled = false;
+
+        const buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.assignmentCheckoutPath = 'assignment';
+        buildConfig.solutionCheckoutPath = 'solution';
+        buildConfig.testCheckoutPath = 'tests';
+        fixture.componentRef.setInput('isCreateOrEdit', true);
+        fixture.componentRef.setInput('programmingExercise', { id: 1, shortName: 'shortName', buildConfig } as ProgrammingExercise);
+
+        const serviceSpy = vi.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
+
+        fixture.detectChanges(); // first detectChanges — no later tracked input change, no async response
+
+        expect(serviceSpy).not.toHaveBeenCalled();
+        expect(component.checkoutDirectories()).toEqual({
+            solutionBuildPlanCheckoutDirectories: {
+                solutionCheckoutDirectory: '/assignment',
+                testCheckoutDirectory: '/tests',
+            },
+            submissionBuildPlanCheckoutDirectories: {
+                exerciseCheckoutDirectory: '/assignment',
+                solutionCheckoutDirectory: '/solution',
+                testCheckoutDirectory: '/tests',
+            },
+        });
+    });
+
     it('should update component when buildconfig was changed', () => {
         fixture.componentRef.setInput('isCreateOrEdit', true);
         fixture.detectChanges(); // initial pass

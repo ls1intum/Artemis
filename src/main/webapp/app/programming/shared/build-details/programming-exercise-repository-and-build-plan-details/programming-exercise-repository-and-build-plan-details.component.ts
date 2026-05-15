@@ -80,6 +80,13 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         if (this.isLocalCIEnabled) {
             this.updateCheckoutDirectories();
         }
+        // Initial buildConfig-derived population: mirrors the legacy ngOnChanges first-call behavior,
+        // which the effect() above intentionally skips. When isCreateOrEdit is true and buildConfig already
+        // carries checkout paths at init time, populate checkoutDirectories synchronously so the template
+        // does not have to wait for an async service response or a later tracked input change.
+        if (this.isCreateOrEdit() && this.isBuildConfigAvailable(this.programmingExercise().buildConfig)) {
+            this.checkoutDirectories.set(this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories()));
+        }
     }
 
     ngOnDestroy() {
