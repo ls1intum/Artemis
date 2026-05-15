@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -40,6 +38,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -106,7 +105,7 @@ public class ParticipationResource {
 
     private final SubmissionRepository submissionRepository;
 
-    private final boolean isAthenaEnabled;
+    private final ModuleFeatureService moduleFeatureService;
 
     private final FeedbackRequestService feedbackRequestService;
 
@@ -114,7 +113,7 @@ public class ParticipationResource {
             AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, TeamRepository teamRepository,
             FeatureToggleService featureToggleService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService, ParticipationAuthorizationService participationAuthorizationService,
-            Optional<StudentExamApi> studentExamApi, Environment environment, FeedbackRequestService feedbackRequestService) {
+            Optional<StudentExamApi> studentExamApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService) {
         this.participationService = participationService;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -128,7 +127,7 @@ public class ParticipationResource {
         this.exerciseDateService = exerciseDateService;
         this.participationAuthorizationService = participationAuthorizationService;
         this.studentExamApi = studentExamApi;
-        this.isAthenaEnabled = new ArtemisConfigHelper().isAthenaEnabled(environment);
+        this.moduleFeatureService = moduleFeatureService;
         this.feedbackRequestService = feedbackRequestService;
     }
 
@@ -210,7 +209,7 @@ public class ParticipationResource {
         if (exercise instanceof ProgrammingExercise && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
             throw new ServiceUnavailableAlertException("The feature for programming exercises is disabled", ENTITY_NAME, "dueDateOver.programmingExercisesDisabled");
         }
-        if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !isAthenaEnabled) {
+        if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !moduleFeatureService.isAthenaEnabled()) {
             throw new ServiceUnavailableAlertException("Practice mode for text and modeling exercises requires Athena to be enabled (artemis.athena.enabled=true)", ENTITY_NAME,
                     "dueDateOver.athenaNotEnabled");
         }
@@ -304,7 +303,7 @@ public class ParticipationResource {
             throw new ServiceUnavailableAlertException("The feature for programming exercises is disabled", ENTITY_NAME, "feedbackRequest.programmingExercisesDisabled");
         }
 
-        if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !isAthenaEnabled) {
+        if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !moduleFeatureService.isAthenaEnabled()) {
             throw new ServiceUnavailableAlertException("Feedback requests for text and modeling exercises require Athena to be enabled (artemis.athena.enabled=true)", ENTITY_NAME,
                     "feedbackRequest.athenaNotEnabled");
         }
