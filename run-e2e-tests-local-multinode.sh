@@ -298,7 +298,7 @@ services:
             cd /app/artemis/src/test/playwright &&
             chmod 777 /root &&
             rm -f test-reports/results*.xml &&
-            (command -v bun >/dev/null 2>&1 || curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.14") &&
+            (command -v bun >/dev/null 2>&1 || (apt-get update >/dev/null && apt-get install -y --no-install-recommends unzip ca-certificates >/dev/null && curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.14")) &&
             export PATH="/root/.bun/bin:$PATH" &&
             bun install --frozen-lockfile &&
             bun run playwright:setup &&
