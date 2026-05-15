@@ -8,8 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.TestConfiguration;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -22,19 +23,19 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
  * <p>
  * This configuration addresses flaky test failures caused by race conditions in Jackson's
  * deserializer cache population. When tests run concurrently and trigger deserialization
- * of complex entity types (like Organization with nested User objects) for the first time,
- * Jackson may encounter "No _valueDeserializer assigned" errors due to incomplete
- * deserializer initialization.
+ * of complex entity types for the first time, Jackson may encounter
+ * "No _valueDeserializer assigned" errors due to incomplete deserializer initialization
+ * — Jackson sets a {@code FailingDeserializer} placeholder during recursive construction
+ * to prevent infinite loops, and a parallel lookup that hits the placeholder before the
+ * real deserializer replaces it will fail.
  * <p>
- * By performing dummy deserializations at startup, we ensure the deserializer cache is
- * properly populated before any tests run, eliminating the race condition.
+ * We force eager deserializer construction at context startup so that the cache is fully
+ * populated before any tests run. {@link ObjectMapper#canDeserialize(JavaType)} triggers
+ * the same code path as a real deserialization without requiring a valid JSON sample, so
+ * it does not depend on the precise field structure of the entity (which can shift).
  * <p>
- * We focus on key "root" entities that:
- * <ul>
- * <li>Have complex bidirectional relationships with {@code @JsonIgnoreProperties}</li>
- * <li>Are commonly returned in REST responses with nested data</li>
- * <li>Contain many nested entity types (initializing them also initializes their children)</li>
- * </ul>
+ * We cover both the bare type and the {@code List<T>} chain because Jackson caches
+ * container-of-T deserializers separately from T.
  */
 @TestConfiguration
 public class JacksonDeserializerInitializationConfig {
@@ -51,154 +52,32 @@ public class JacksonDeserializerInitializationConfig {
     public void initializeDeserializers() {
         log.debug("Eagerly initializing Jackson deserializers for entity types");
 
-        // Initialize Organization with nested User and Course
-        initializeOrganization();
-
-        // Initialize Course with nested relationships (exercises, lectures, etc.)
-        initializeCourse();
-
-        // Initialize Exam with nested relationships (exercise groups, student exams, etc.)
-        initializeExam();
-
-        // Initialize Post (with Reaction -> User chain, required by MessageIntegrationTest et al.)
-        initializePost();
-
-        // Initialize TutorialGroup (with TutorialGroupRegistration -> User chain)
-        initializeTutorialGroup();
+        // Force eager deserializer construction for these entity types (and List<T>).
+        // The same cache is shared with the ObjectMapper Spring MVC uses for HTTP body handling.
+        primeDeserializer(Organization.class);
+        primeDeserializer(Course.class);
+        primeDeserializer(Exam.class);
+        primeDeserializer(Post.class);
+        primeDeserializer(TutorialGroup.class);
 
         log.debug("Successfully initialized Jackson deserializers");
     }
 
-    private void initializeOrganization() {
+    /**
+     * Force-construct the deserializers for both {@code T} and {@code List<T>}.
+     * Uses {@link ObjectMapper#canDeserialize(JavaType)} which fully resolves the
+     * deserializer chain (every nested property) without needing a JSON sample.
+     */
+    private void primeDeserializer(Class<?> entityType) {
         try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "name": "Test Organization",
-                        "shortName": "TO",
-                        "emailPattern": ".*@test.com",
-                        "users": [{
-                            "id": 1,
-                            "login": "testuser",
-                            "firstName": "Test",
-                            "lastName": "User",
-                            "email": "test@test.com",
-                            "activated": true
-                        }],
-                        "courses": [{
-                            "id": 1,
-                            "title": "Test Course",
-                            "shortName": "TC"
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Organization.class);
+            TypeFactory typeFactory = objectMapper.getTypeFactory();
+            JavaType bare = typeFactory.constructType(entityType);
+            JavaType listOf = typeFactory.constructCollectionType(List.class, entityType);
+            objectMapper.canDeserialize(bare);
+            objectMapper.canDeserialize(listOf);
         }
         catch (Exception e) {
-            log.warn("Failed to pre-initialize Organization deserializer: {}", e.getMessage());
-        }
-    }
-
-    private void initializeCourse() {
-        try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "title": "Test Course",
-                        "shortName": "TC",
-                        "exercises": [{
-                            "id": 1,
-                            "title": "Test Exercise",
-                            "type": "text"
-                        }],
-                        "lectures": [{
-                            "id": 1,
-                            "title": "Test Lecture"
-                        }],
-                        "organizations": [{
-                            "id": 1,
-                            "name": "Test Org"
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Course.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize Course deserializer: {}", e.getMessage());
-        }
-    }
-
-    private void initializePost() {
-        // Tests typically deserialize List<Post> from REST responses, so initialize the deserializer
-        // for the List-of-Post chain (Jackson caches container-of-T separately from T).
-        try {
-            String sampleJson = """
-                    [{
-                        "id": 1,
-                        "content": "Test message",
-                        "reactions": [{
-                            "id": 1,
-                            "emojiId": "smile",
-                            "user": {
-                                "id": 1,
-                                "login": "testuser"
-                            }
-                        }]
-                    }]
-                    """;
-            objectMapper.readValue(sampleJson, new TypeReference<List<Post>>() {
-            });
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize Post deserializer: {}", e.getMessage());
-        }
-    }
-
-    private void initializeTutorialGroup() {
-        // Tests typically deserialize List<TutorialGroup> from REST responses.
-        try {
-            String sampleJson = """
-                    [{
-                        "id": 1,
-                        "title": "Test Tutorial Group",
-                        "registrations": [{
-                            "id": 1,
-                            "student": {
-                                "id": 1,
-                                "login": "teststudent"
-                            }
-                        }]
-                    }]
-                    """;
-            objectMapper.readValue(sampleJson, new TypeReference<List<TutorialGroup>>() {
-            });
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize TutorialGroup deserializer: {}", e.getMessage());
-        }
-    }
-
-    private void initializeExam() {
-        try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "title": "Test Exam",
-                        "exerciseGroups": [{
-                            "id": 1,
-                            "title": "Test Group",
-                            "exercises": []
-                        }],
-                        "studentExams": [{
-                            "id": 1,
-                            "submitted": false
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Exam.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize Exam deserializer: {}", e.getMessage());
+            log.warn("Failed to pre-initialize {} deserializer: {}", entityType.getSimpleName(), e.getMessage());
         }
     }
 }
