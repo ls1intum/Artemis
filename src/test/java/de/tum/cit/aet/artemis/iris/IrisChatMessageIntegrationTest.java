@@ -545,7 +545,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             IrisMessage source = new IrisMessage();
             source.addContent(new IrisJsonMessageContent(JsonNodeFactory.instance.objectNode().put("k1", "v1").put("k2", "v2").put("k3", "v3")));
             List<IrisMessageContentDTO> contentDtos = source.getContent().stream().map(content -> new IrisMessageContentDTO("json", null, content.getContentAsString())).toList();
-            IrisMessageRequestDTO requestDto = new IrisMessageRequestDTO(contentDtos, 42, Map.of());
+            IrisMessageRequestDTO requestDto = new IrisMessageRequestDTO(contentDtos, 42, Map.of(), null);
 
             var response = request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
 
@@ -602,7 +602,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         private IrisMessageRequestDTO buildTextRequestDto(IrisChatSession session, Map<String, String> uncommittedFiles) {
             IrisMessage source = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
             List<IrisMessageContentDTO> contentDtos = source.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null)).toList();
-            return new IrisMessageRequestDTO(contentDtos, source.getMessageDifferentiator(), uncommittedFiles);
+            return new IrisMessageRequestDTO(contentDtos, source.getMessageDifferentiator(), uncommittedFiles, null);
         }
 
         private ProgrammingExerciseStudentParticipation provisionProgrammingRepositories(ProgrammingExercise exercise) throws GitAPIException, IOException, URISyntaxException {

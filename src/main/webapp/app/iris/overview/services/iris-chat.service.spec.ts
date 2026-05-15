@@ -154,7 +154,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything(), undefined);
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: undefined }));
         const messages = await firstValueFrom(service.currentMessages());
         expect(messages).toHaveLength(mockConversation.messages!.length + 1);
         expect(messages.last()).toEqual(createdMessage);
@@ -171,7 +171,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything(), undefined);
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: undefined }));
         const error = await firstValueFrom(service.currentError());
         expect(error).toEqual(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
     });
@@ -211,7 +211,7 @@ describe('IrisChatService', () => {
             expect(service.messages.getValue()).toEqual(mockConversation.messages);
         });
 
-        it('should forward pendingContext as third arg to createMessage when context differs from session', async () => {
+        it('should include pendingContext in the request DTO when context differs from session', async () => {
             vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
             vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
             vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
@@ -225,13 +225,13 @@ describe('IrisChatService', () => {
             service.switchContextOfCurrentSession(ChatServiceMode.LECTURE, pendingEntityId);
             await firstValueFrom(service.sendMessage('hi'));
 
-            expect(createMessageSpy).toHaveBeenCalledWith(id, expect.anything(), { mode: ChatServiceMode.LECTURE, entityId: pendingEntityId });
+            expect(createMessageSpy).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: { mode: ChatServiceMode.LECTURE, entityId: pendingEntityId } }));
             // After the send commits the switch, the override is cleared and committed is updated
             expect(service['_pendingOverride']()).toBeUndefined();
             expect(service['_committedContext']()).toEqual({ mode: ChatServiceMode.LECTURE, entityId: pendingEntityId });
         });
 
-        it('should not forward pendingContext when user reverts to session current context before sending', async () => {
+        it('should not include pendingContext when user reverts to session current context before sending', async () => {
             vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
             vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
             vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
@@ -247,7 +247,7 @@ describe('IrisChatService', () => {
 
             await firstValueFrom(service.sendMessage('hi'));
 
-            expect(createMessageSpy).toHaveBeenCalledWith(id, expect.anything(), undefined);
+            expect(createMessageSpy).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: undefined }));
         });
     });
 
@@ -308,7 +308,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything(), undefined);
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: undefined }));
         const error = await firstValueFrom(service.currentError());
         expect(error).toEqual(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED);
     });
@@ -324,7 +324,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything(), undefined);
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: undefined }));
         const error = await firstValueFrom(service.currentError());
         expect(error).toEqual(IrisErrorMessageKey.IRIS_DISABLED);
     });

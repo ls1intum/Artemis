@@ -262,7 +262,7 @@ export class IrisChatService implements OnDestroy {
      * Sends a message to the server and returns the created message.
      *
      * If the user has selected a different context via the dropdown since the last send
-     * ({@link _pendingOverride}), it is forwarded as query params so the server applies the
+     * ({@link _pendingOverride}), it is included in the request body so the server applies the
      * context switch atomically (CTXSWAP marker first, then the user message) in one round trip.
      *
      * @param message to be created
@@ -276,12 +276,12 @@ export class IrisChatService implements OnDestroy {
         // Trim messages (Spaces, newlines)
         message = message.trim();
 
-        const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles);
-
         const contextToCommit = this._pendingOverride();
+        const pendingContextDTO = contextToCommit ? { mode: contextToCommit.mode, entityId: contextToCommit.entityId } : undefined;
+        const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles, pendingContextDTO);
 
         const generation = this.stateGeneration;
-        return this.irisChatHttpService.createMessage(this.sessionId, requestDTO, contextToCommit).pipe(
+        return this.irisChatHttpService.createMessage(this.sessionId, requestDTO).pipe(
             tap((response: HttpResponse<IrisMessageResponseDTO>) => {
                 if (this.stateGeneration !== generation) return;
                 if (contextToCommit) {

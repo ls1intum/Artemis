@@ -10,7 +10,7 @@ import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { randomInt } from 'app/shared/util/utils';
-import { ChatServiceMode, SessionContext } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 
@@ -56,18 +56,14 @@ export class IrisChatHttpService {
     }
 
     /**
-     * creates a new message in a session
+     * creates a new message in a session.
+     * If the request DTO carries a {@code pendingContext}, the server applies the context switch atomically
+     * (CTXSWAP marker, then user message) before sending to Pyris.
      * @param sessionId of the session
-     * @param request  the message request DTO containing content and optional uncommitted files
-     * @param pendingContext optional pending context change (mode + entityId) to apply atomically before the message is saved.
-     *        Forwarded as query params; the server inserts a CTXSWAP marker before the user message.
+     * @param request   the message request DTO containing content, optional uncommitted files and optional pending context
      */
-    createMessage(sessionId: number, request: IrisMessageRequestDTO, pendingContext?: SessionContext): Response<IrisMessageResponseDTO> {
-        const options: { observe: 'response'; params?: { pendingMode: string; pendingEntityId: string } } = { observe: 'response' };
-        if (pendingContext) {
-            options.params = { pendingMode: pendingContext.mode, pendingEntityId: String(pendingContext.entityId) };
-        }
-        return this.httpClient.post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages`, request, options);
+    createMessage(sessionId: number, request: IrisMessageRequestDTO): Response<IrisMessageResponseDTO> {
+        return this.httpClient.post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages`, request, { observe: 'response' });
     }
 
     /**

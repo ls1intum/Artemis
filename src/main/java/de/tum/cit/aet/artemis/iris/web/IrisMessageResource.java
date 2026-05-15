@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -36,7 +35,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
@@ -106,37 +104,35 @@ public class IrisMessageResource {
     /**
      * POST sessions/{sessionId}/messages: Send a new message from the user to the LLM.
      * <p>
-     * Optionally accepts a pending context change ({@code pendingMode} + {@code pendingEntityId}). When both are
-     * provided and differ from the session's current mode/entity, the context switch is applied atomically before
-     * the user message is persisted: a {@link IrisMessageSender#CTXSWAP} marker is inserted into the chat history
-     * and pushed over the websocket so the client can render the divider in sequence with the user message.
+     * Optionally accepts a {@link IrisMessageRequestDTO#pendingContext()}. When provided and differing from the
+     * session's current mode/entity, the context switch is applied atomically before the user message is persisted:
+     * a {@link IrisMessageSender#CTXSWAP} marker is inserted into the chat history and pushed over the websocket so
+     * the client can render the divider in sequence with the user message.
      * <p>
      * The dropdown-only context change (without a follow-up send) is intentionally a client-local affair — only an
      * actual send commits it server-side, so users browsing the dropdown do not produce stray markers or DB writes.
      *
-     * @param sessionId       of the session
-     * @param pendingMode     optional new chat mode to apply before saving the message
-     * @param pendingEntityId optional new entity id (exerciseId / lectureId / courseId depending on mode)
-     * @param requestDTO      containing message content and optional uncommitted files
+     * @param sessionId  of the session
+     * @param requestDTO containing message content, optional uncommitted files and optional pending context
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status
      *         {@code 404 (Not Found)} if the session could not be found.
      */
     @PostMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<IrisMessageResponseDTO> createMessage(@PathVariable Long sessionId, @RequestParam(required = false) IrisChatMode pendingMode,
-            @RequestParam(required = false) Long pendingEntityId, @RequestBody IrisMessageRequestDTO requestDTO) throws URISyntaxException {
+    public ResponseEntity<IrisMessageResponseDTO> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessageRequestDTO requestDTO) throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
         irisSessionService.checkRateLimit(session, user);
 
-        if (pendingMode != null && pendingEntityId != null) {
+        var pendingContext = requestDTO.pendingContext();
+        if (pendingContext != null) {
             if (!(session instanceof IrisChatSession chatSession)) {
                 throw new BadRequestException("Pending context change is only supported for chat sessions");
             }
-            irisChatSessionService.applyContextChange(chatSession, pendingMode, pendingEntityId, user);
+            irisChatSessionService.applyContextChange(chatSession, pendingContext.mode(), pendingContext.entityId(), user);
         }
 
         IrisMessage message = new IrisMessage();

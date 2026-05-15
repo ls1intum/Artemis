@@ -14,9 +14,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param content               the message content
  * @param messageDifferentiator used to differentiate messages
  * @param uncommittedFiles      optional map of uncommitted file changes (path to content), defaults to empty map if null
+ * @param pendingContext        optional pending context change to apply atomically before the message is saved
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisMessageRequestDTO(@NonNull List<IrisMessageContentDTO> content, @Nullable Integer messageDifferentiator, @NonNull Map<String, String> uncommittedFiles) {
+public record IrisMessageRequestDTO(@NonNull List<IrisMessageContentDTO> content, @Nullable Integer messageDifferentiator, @NonNull Map<String, String> uncommittedFiles,
+        @Nullable IrisPendingContextDTO pendingContext) {
 
     /**
      * Compact constructor that normalizes null uncommittedFiles to an empty map.
