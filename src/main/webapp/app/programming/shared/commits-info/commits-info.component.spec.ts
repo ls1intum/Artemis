@@ -116,4 +116,23 @@ describe('CommitsInfoComponent', () => {
         component.ngOnInit();
         expect(programmingExerciseParticipationServiceSpy).not.toHaveBeenCalled();
     });
+
+    it('should populate groupedCommits from the commits input via internalCommits before any service fetch', () => {
+        // Exercise the full input -> internalCommits -> groupedCommits flow. This is the chain the
+        // template binds against (@for over groupedCommits()), so verifying these three signals
+        // together verifies that an input change reaches the rendered grouping.
+        fixture.componentRef.setInput('commits', [commitInfo1, commitInfo2, commitInfo3, commitInfo4, commitInfo5, commitInfo6]);
+        component.ngOnInit();
+
+        // Service must not be called because the input already provided commits.
+        expect(programmingExerciseParticipationServiceSpy).not.toHaveBeenCalled();
+        // Three groups expected: 'no-result' for the latest tail (commits 5 and 6), '2021-01-04-author'
+        // (commits 3 and 4, terminated by commit4.result), and '2021-01-02-author' (commits 1 and 2,
+        // terminated by commit2.result). Output is reversed so the newest group comes first.
+        expect((component as any).groupedCommits()).toEqual([
+            { key: 'no-result', commits: [commitInfo6, commitInfo5], date: '2021-01-06' },
+            { key: '2021-01-04-author', commits: [commitInfo4, commitInfo3], date: '2021-01-04' },
+            { key: '2021-01-02-author', commits: [commitInfo2, commitInfo1], date: '2021-01-02' },
+        ]);
+    });
 });
