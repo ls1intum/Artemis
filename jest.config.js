@@ -212,15 +212,13 @@ module.exports = {
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary', 'json-summary'],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
-    // Under pnpm's symlinked layout, dep files live at
-    //   node_modules/.pnpm/<pkg>@<ver>/node_modules/<pkg>/...
-    // Jest follows the symlinks to those real paths before checking transformIgnorePatterns,
-    // so the original npm-flat negative-lookahead pattern (`node_modules/(?!${esModules})`)
-    // was rejecting Angular/d3/swimlane ESM files inside .pnpm/ and producing
-    // `Unexpected token 'export'` SyntaxErrors. Authoring a pattern that captures
-    // both layouts proved brittle in the joined regex Jest constructs internally,
-    // so we transform every file in node_modules. Cost: longer cold runs (~10-15s
-    // overhead on a full suite) for guaranteed correctness with the symlink layout.
+    // Transform every file in node_modules. The historical justification was
+    // pnpm's symlinked `.pnpm/<pkg>@<ver>/node_modules/<pkg>/...` layout — Jest
+    // followed the symlinks to those real paths before checking
+    // transformIgnorePatterns, which made negative-lookahead patterns brittle.
+    // Under Bun's flat install the layout is `node_modules/<pkg>/...` and the
+    // legacy negative-lookahead form would work again, but we keep the
+    // transform-everything default for stability across the Vitest migration.
     transformIgnorePatterns: [],
     transform: {
         '^.+\\.(ts|js|mjs|html|svg)$': [

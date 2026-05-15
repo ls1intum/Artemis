@@ -36,15 +36,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v6
 
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v4
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
       with:
-        run_install: false
+        bun-version: 1.3.14
     - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
         node-version: '${{ env.node }}'
-        cache: 'pnpm'
 
     # Install Java
     - name: Setup Java
@@ -63,10 +62,10 @@ jobs:
 
     # Build Angular client separately so esbuild gets full system memory without
     # competing with the Gradle JVM (which reserves up to 4g).
-    - name: Install pnpm dependencies
-      run: pnpm install --frozen-lockfile
+    - name: Install JS dependencies
+      run: bun install --frozen-lockfile
     - name: Build Angular Client
-      run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false
+      run: bun run clean-www && bun run prebuild && bunx ng build --configuration production --optimization=false
     - name: Build Java
       run: ./gradlew -Pprod -Pwar bootWar -x webapp
 

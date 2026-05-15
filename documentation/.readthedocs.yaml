@@ -12,11 +12,12 @@ build:
   tools:
     nodejs: "22"
   commands:
-    # Activate the pnpm version pinned in documentation/package.json via Corepack
-    # (shipped with Node.js 22+) and install dependencies from the lockfile.
-    - cd documentation && corepack enable && pnpm install --frozen-lockfile
+    # Install Bun (the project's package manager + script runner) and install
+    # dependencies from the lockfile.
+    - curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.14"
+    - export PATH="$HOME/.bun/bin:$PATH" && cd documentation && bun install --frozen-lockfile
     # Build the Docusaurus site
-    - cd documentation && pnpm run build
+    - export PATH="$HOME/.bun/bin:$PATH" && cd documentation && bun run build
     # Copy built files to Read the Docs output directory
     - mkdir --parents $READTHEDOCS_OUTPUT/html/
     - cp --recursive documentation/build/* $READTHEDOCS_OUTPUT/html/

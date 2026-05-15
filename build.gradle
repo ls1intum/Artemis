@@ -18,7 +18,6 @@ plugins {
     id "com.diffplug.spotless" version "${spotless_plugin_version}"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.github.ben-manes.versions" version "0.54.0"
-    id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.5.3"
     id "com.gorylenko.gradle-git-properties" version "2.5.7"
     id "io.spring.dependency-management" version "1.1.7"
@@ -53,12 +52,7 @@ wrapper {
     gradleVersion = "9.5.0"
 }
 
-node {
-    download = true
-    version = "${node_version}"
-    pnpmVersion = "${pnpm_version}"
-}
-
+apply from: "gradle/bun.gradle"
 apply from: "gradle/liquibase.gradle"
 apply from: "gradle/spotless.gradle"
 apply from: "gradle/sbom.gradle"
@@ -617,12 +611,6 @@ tasks.withType(JavaCompile).configureEach {
 tasks.register("stage") {
     dependsOn "bootWar"
 }
-
-// Set the pnpm store directory (used in the Dockerfile for build-time caching).
-tasks.register("pnpmSetCacheDockerfile", PnpmTask) {
-    args = ["config", "set", "store-dir", "/opt/artemis/.pnpm-store"]
-}
-
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {

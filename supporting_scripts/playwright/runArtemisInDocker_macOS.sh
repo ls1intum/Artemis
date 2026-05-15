@@ -32,10 +32,7 @@ echo "Finished docker compose"
 
 cd "$artemis_path"
 
-echo "Installing Artemis pnpm dependencies and start Artemis client"
+echo "Installing Artemis JS dependencies and starting Artemis client"
 
-# Activate the pnpm version pinned via `packageManager` in package.json.
-corepack enable
-
-pnpm install --frozen-lockfile
-pnpm start
+bun install --frozen-lockfile
+bun start

@@ -89,7 +89,7 @@ rm -f ../src/test/playwright/test-reports/results*.xml
 # Create override file for local test execution.
 echo "Creating local test override..."
 if [ -n "$TEST_FILTER" ]; then
-    # With a filter, use a single pnpm exec command (--grep works across all projects)
+    # With a filter, use a single bunx command (--grep works across all projects)
     cat > playwright-local-override.yml << EOF
 # AUTO-GENERATED - DO NOT COMMIT
 services:
@@ -99,10 +99,11 @@ services:
             cd /app/artemis/src/test/playwright &&
             chmod 777 /root &&
             rm -f test-reports/results*.xml &&
-            corepack enable &&
-            pnpm install --frozen-lockfile &&
-            pnpm run playwright:setup &&
-            PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml pnpm exec playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
+            (command -v bun >/dev/null 2>&1 || curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.14") &&
+            export PATH="/root/.bun/bin:\$PATH" &&
+            bun install --frozen-lockfile &&
+            bun run playwright:setup &&
+            PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml bunx playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
             '
 EOF
     OVERRIDE_ARGS="-f playwright-local-override.yml"
@@ -227,7 +228,7 @@ if [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -eq 0 ] && [ $EXIT_CODE -eq 0 ]; then
     echo "All tests passed!"
 else
     echo "Tests failed! View HTML report:"
-    echo "  cd src/test/playwright && pnpm exec playwright show-report test-reports/monocart-report"
+    echo "  cd src/test/playwright && bunx playwright show-report test-reports/monocart-report"
 fi
 
 echo ""

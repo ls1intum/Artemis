@@ -72,7 +72,7 @@ Before running the setup script, start the Artemis server in a separate terminal
 ./gradlew bootRun -x webapp
 
 # Then in another terminal, start the Angular dev server:
-pnpm start
+bun start
 ```
 
 Wait for the server to fully start (you'll see "Started ArtemisApp" in the logs) before running the setup script.
@@ -81,22 +81,22 @@ Wait for the server to fully start (you'll see "Started ArtemisApp" in the logs)
 
 ```bash
 # Basic usage with defaults
-pnpm run setupCourse
+bun run setupCourse
 
 # With custom student count
-pnpm run setupCourse -- --student-count=10
+bun run setupCourse -- --student-count=10
 
 # Using an existing course
-pnpm run setupCourse -- --course-id=123
+bun run setupCourse -- --course-id=123
 
 # Skip participations (faster, just creates content)
-pnpm run setupCourse -- --skip-participations
+bun run setupCourse -- --skip-participations
 
 # Custom server
-pnpm run setupCourse -- --server-url=https://artemis.example.com
+bun run setupCourse -- --server-url=https://artemis.example.com
 
 # Full example
-pnpm run setupCourse -- \
+bun run setupCourse -- \
   --server-url=http://localhost:8080 \
   --admin-user=artemis_admin \
   --admin-password=artemis_admin \
@@ -125,7 +125,7 @@ export ARTEMIS_SERVER_URL=http://localhost:8080
 export ARTEMIS_ADMIN_USER=artemis_admin
 export ARTEMIS_ADMIN_PASSWORD=artemis_admin
 export ARTEMIS_STUDENT_PASSWORD=Password123!
-pnpm run setupCourse
+bun run setupCourse
 ```
 
 ## Output

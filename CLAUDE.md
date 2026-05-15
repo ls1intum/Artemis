@@ -10,7 +10,7 @@ Artemis is an interactive learning platform for programming exercises, quizzes, 
 
 - **Server**: Spring Boot 3.5 (Java 25), MySQL, Hibernate, Hazelcast
 - **Client**: Angular 21, TypeScript, SCSS
-- **Build**: Gradle 9.3, pnpm 11 / Node 24 (pnpm version pinned via the `packageManager` field in package.json; activate with `corepack enable`)
+- **Build**: Gradle 9.3, Bun 1.3 / Node 24 (Bun is the package manager + script runner; install via `curl -fsSL https://bun.sh/install | bash` or `brew install oven-sh/bun/bun`)
 - **Testing**: JUnit 6, Vitest (preferred; Jest is deprecated and being migrated to Vitest), Playwright
 
 ## Build & Development Commands
@@ -18,19 +18,18 @@ Artemis is an interactive learning platform for programming exercises, quizzes, 
 ### Server
 ```bash
 ./gradlew bootRun                    # Start dev server (includes Angular build)
-./gradlew bootRun -x webapp          # Server only (use with pnpm start)
+./gradlew bootRun -x webapp          # Server only (use with `bun start` in another terminal)
 ./gradlew -Pprod -Pwar clean bootWar # Production WAR artifact
 ```
 
 ### Client
 ```bash
-corepack enable                      # One-time: activate the pnpm version pinned in package.json
-pnpm install --frozen-lockfile       # Install dependencies (CI-style, asserts lockfile is authoritative)
-pnpm install                         # Install + allow lockfile updates (for dependency changes)
-pnpm start                           # Angular dev server with HMR (runs prebuild + ng serve)
-pnpm run webapp:build                # Development build
-pnpm run webapp:prod                 # Production build
-pnpm run build                       # Alternative production build
+bun install --frozen-lockfile        # Install dependencies (CI-style, asserts lockfile is authoritative)
+bun install                          # Install + allow lockfile updates (for dependency changes)
+bun start                            # Angular dev server with HMR (runs prebuild + ng serve)
+bun run webapp:build                 # Development build
+bun run webapp:prod                  # Production build
+bun run build                        # Alternative production build
 ```
 
 ### Build Output
@@ -43,11 +42,11 @@ pnpm run build                       # Alternative production build
 ./gradlew spotlessApply              # Fix Java formatting
 ./gradlew checkstyleMain             # Java linting
 ./gradlew modernizer                 # Check for legacy API usage
-pnpm run lint                        # ESLint
-pnpm run lint:fix                    # Fix ESLint issues
-pnpm run stylelint                   # SCSS linting
-pnpm run prettier:check              # Check formatting
-pnpm run prettier:write              # Fix formatting
+bun run lint                         # ESLint
+bun run lint:fix                     # Fix ESLint issues
+bun run stylelint                    # SCSS linting
+bun run prettier:check               # Check formatting
+bun run prettier:write               # Fix formatting
 ```
 
 ### Testing
@@ -58,17 +57,17 @@ pnpm run prettier:write              # Fix formatting
 ./gradlew test --tests ExamIntegrationTest.testGetExamScore       # Single test method
 
 # Client (Vitest - preferred for new tests)
-pnpm run vitest                      # Watch mode
-pnpm run vitest:run                  # Single run
-pnpm run vitest:coverage             # With coverage
-pnpm run vitest -- path/to/spec.ts   # Single Vitest file
+bun run vitest                       # Watch mode
+bun run vitest:run                   # Single run
+bun run vitest:coverage              # With coverage
+bun run vitest -- path/to/spec.ts    # Single Vitest file
 
 # Client (Jest - deprecated, being migrated to Vitest)
-pnpm test                            # Jest with coverage
-pnpm run test-diff                   # Test changed files vs origin/develop
-pnpm run test:ci                     # Full CI with module coverage check
+bun test                             # Jest with coverage
+bun run test-diff                    # Test changed files vs origin/develop
+bun run test:ci                      # Full CI with module coverage check
 # Single test:
-pnpm run test:one -- --test-path-pattern='src/main/webapp/app/path/to/spec\.ts$'
+bun run test:one -- --test-path-pattern='src/main/webapp/app/path/to/spec\.ts$'
 
 # E2E Tests (Playwright) — preferred way to run locally
 # The script auto-kills processes on ports 8080/9000/7921, starts Postgres, server, and client.
@@ -198,11 +197,11 @@ Organized by feature module:
 - **Server tests require Docker** — tests run against PostgreSQL via Testcontainers by default (both locally and in CI).
 - Keep tests deterministic; mock external services and WebSockets
 - CI enforces coverage thresholds per module
-- Use `pnpm run test-diff` for incremental client work
+- Use `bun run test-diff` for incremental client work
 - **Client tests: Prefer Vitest over Jest for new tests**
   - Jest is deprecated and being migrated to Vitest
   - Use `vi.spyOn()`, `vi.fn()`, `vi.clearAllMocks()` instead of Jest equivalents
-  - Run Vitest: `pnpm run vitest` (watch), `pnpm run vitest:run` (single run), `pnpm run vitest:coverage`
+  - Run Vitest: `bun run vitest` (watch), `bun run vitest:run` (single run), `bun run vitest:coverage`
 - Name server tests `*Test.java`; reuse module base classes when present
 - When comparing `ZonedDateTime` values in tests, use `toInstant()` for comparisons since PostgreSQL stores timestamps as UTC (timezone offset is not preserved through database round-trips)
 - **E2E tests: Use `./run-e2e-tests-local-fast.sh`** — this is the intended way to run Playwright E2E tests locally (for both developers and AI agents)
@@ -210,7 +209,7 @@ Organized by feature module:
   - Use `--filter "TestName"` to run specific tests; supports regex patterns (e.g., `--filter "Quiz|Exam"`)
   - After the first run, reuse running services with `--skip-server --skip-client --skip-db`
 - Add screenshots for UI changes in PRs
-- Verify linting before submitting: `pnpm run lint`, `./gradlew checkstyleMain -x webapp`
+- Verify linting before submitting: `bun run lint`, `./gradlew checkstyleMain -x webapp`
 
 ## Commit & PR Guidelines
 

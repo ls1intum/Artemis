@@ -42,7 +42,7 @@ run_playwright() {
     local test_type="$1"
     shift
 
-    NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=6144}" PLAYWRIGHT_TEST_TYPE="$test_type" pnpm exec playwright test "$@"
+    NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=6144}" PLAYWRIGHT_TEST_TYPE="$test_type" bunx playwright test "$@"
     local exit_code=$?
 
     if [ $exit_code -ne 0 ]; then
@@ -95,13 +95,13 @@ fi
 echo "--- Finalizing test reports ---"
 rm -f ./test-reports/results.xml
 if [ -f ./test-reports/results-parallel.xml ] && [ -f ./test-reports/results-multinode.xml ]; then
-    pnpm exec junit-merge ./test-reports/results-parallel.xml ./test-reports/results-multinode.xml -o ./test-reports/results.xml
+    bunx junit-merge ./test-reports/results-parallel.xml ./test-reports/results-multinode.xml -o ./test-reports/results.xml
 elif [ -f ./test-reports/results-parallel.xml ]; then
     mv ./test-reports/results-parallel.xml ./test-reports/results.xml
 elif [ -f ./test-reports/results-multinode.xml ]; then
     mv ./test-reports/results-multinode.xml ./test-reports/results.xml
 fi
-pnpm run merge-coverage-reports || true
+bun run merge-coverage-reports || true
 
 # Upload reports to E2E Reports Dashboard
 if [ -n "$PLAYWRIGHT_REPORT_SERVER_URL" ] && [ -n "$PLAYWRIGHT_REPORT_TOKEN" ]; then

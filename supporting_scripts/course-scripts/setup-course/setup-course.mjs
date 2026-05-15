@@ -17,7 +17,7 @@
  * It also has students participate and submit solutions, with automatic
  * assessment for programming/quiz and manual assessment for others.
  *
- * Usage: pnpm run setupCourse -- [options]
+ * Usage: bun run setupCourse -- [options]
  *   --server-url=<url>         Server URL (default: http://localhost:8080)
  *   --admin-user=<username>    Admin username (default: artemis_admin)
  *   --admin-password=<pass>    Admin password (default: artemis_admin)

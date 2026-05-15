@@ -12,7 +12,7 @@ This script generates a code coverage report for changed files in a PR by runnin
 ## Prerequisites
 
 - Node.js 24+ (same as project requirement)
-- For client tests: `pnpm install` completed (activate pnpm once via `corepack enable`)
+- For client tests: `bun install` completed (install Bun via `curl -fsSL https://bun.sh/install | bash` or `brew install oven-sh/bun/bun`)
 - For server tests: Java 25+ and Gradle
 
 ## Usage
@@ -21,7 +21,7 @@ This script generates a code coverage report for changed files in a PR by runnin
 
 ```bash
 # Run from project root
-pnpm run coverage:pr
+bun run coverage:pr
 
 # Or directly
 node supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs
@@ -43,25 +43,25 @@ node supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs
 
 ```bash
 # Default: compare against origin/develop, run all tests
-pnpm run coverage:pr
+bun run coverage:pr
 
 # Compare against a different branch
-pnpm run coverage:pr -- --base-branch origin/main
+bun run coverage:pr -- --base-branch origin/main
 
 # Only run client tests
-pnpm run coverage:pr -- --client-only
+bun run coverage:pr -- --client-only
 
 # Only run server tests
-pnpm run coverage:pr -- --server-only
+bun run coverage:pr -- --server-only
 
 # Skip tests and use existing coverage data (useful for debugging)
-pnpm run coverage:pr -- --skip-tests
+bun run coverage:pr -- --skip-tests
 
 # Print results instead of copying to clipboard
-pnpm run coverage:pr -- --print
+bun run coverage:pr -- --print
 
 # Verbose output for debugging
-pnpm run coverage:pr -- --verbose
+bun run coverage:pr -- --verbose
 ```
 
 ## How It Works
@@ -69,7 +69,7 @@ pnpm run coverage:pr -- --verbose
 1. **Detect changed files**: Uses `git diff` to find files changed compared to the base branch
 2. **Identify affected modules**: Extracts module names from file paths (e.g., `core`, `exam`, `programming`)
 3. **Run module tests**:
-   - Client: Runs `pnpm run prebuild && pnpm exec ng test --coverage --test-path-pattern=...` for affected modules
+   - Client: Runs `bun run prebuild && bunx ng test --coverage --test-path-pattern=...` for affected modules
    - Server: Runs `./gradlew test -DincludeModules=<modules> jacocoTestReport`
 4. **Parse coverage reports**:
    - Client: Reads `build/test-results/coverage-summary.json` (Jest output)
@@ -154,7 +154,7 @@ Use this script for quick local feedback. Use `generate_code_cov_table.py` when 
 
 - Run with `--verbose` to see test output
 - Try running tests manually to diagnose issues:
-  - Client: `pnpm run prebuild && pnpm exec ng test --coverage --test-path-pattern="src/main/webapp/app/<module>/"`
+  - Client: `bun run prebuild && bunx ng test --coverage --test-path-pattern="src/main/webapp/app/<module>/"`
   - Server: `./gradlew test -DincludeModules=<module>`
 
 ### Clipboard not working

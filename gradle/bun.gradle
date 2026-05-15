@@ -1,0 +1,34 @@
+// Bun bridge for Gradle.
+//
+// Replaces the historical `com.github.node-gradle.node` plugin (which only
+// understood npm/yarn/pnpm) with plain `Exec` tasks that shell out to a
+// pre-installed `bun` binary. Bun is the project's package manager and script
+// runner; see CONTRIBUTING.md for how to install it locally.
+//
+// Tasks defined here:
+//   bunInstall  - `bun install --frozen-lockfile`, used by every downstream
+//                 task that needs `node_modules/` populated. Cached on
+//                 `bun.lock` + `package.json` so unchanged trees are skipped.
+//
+// Helper:
+//   ext.bunCommand
+//       Path or name of the bun binary; override with `-PbunCommand=/path/to/bun`
+//       if `bun` is not on PATH (the Dockerfile uses this).
+
+ext.bunCommand = project.findProperty("bunCommand") ?: "bun"
+
+tasks.register("bunInstall", Exec) {
+    description = "Install JavaScript dependencies via Bun"
+    group = "build"
+
+    inputs.files("package.json", "bun.lock")
+        .withPropertyName("bun-manifests")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir("patches")
+        .withPropertyName("patches")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir("node_modules")
+        .withPropertyName("node-modules")
+
+    commandLine bunCommand, "install", "--frozen-lockfile"
+}

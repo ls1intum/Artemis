@@ -15,10 +15,10 @@ tasks.cyclonedxDirectBom {
 }
 
 // Task to generate client SBOM using @cyclonedx/cdxgen (universal CycloneDX generator).
-tasks.register("generateClientSbom", PnpmTask) {
-    dependsOn pnpmInstall
-    args = ["run", "sbom:generate"]
-    description = "Generate CycloneDX SBOM for client-side pnpm dependencies"
+tasks.register("generateClientSbom", Exec) {
+    dependsOn bunInstall
+    commandLine bunCommand, "run", "sbom:generate"
+    description = "Generate CycloneDX SBOM for client-side dependencies"
     group = "reporting"
 }
 

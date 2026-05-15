@@ -9,8 +9,8 @@
 #
 # What it does:
 #   - Locates the repository root based on this script's location.
-#   - Runs `pnpm install --frozen-lockfile` in the repo root.
-#   - Runs `pnpm install --frozen-lockfile` in src/test/playwright.
+#   - Runs `bun install --frozen-lockfile` in the repo root.
+#   - Runs `bun install --frozen-lockfile` in src/test/playwright.
 #   - Temporarily replaces the dotenv.config(...) line in
 #     src/test/playwright/playwright.config.ts to use ./playwright.env, verifies
 #     the patch, then reverts the change and keeps a backup copy.
@@ -18,7 +18,7 @@
 # Usage:
 #   Run this script from anywhere:
 #       supporting_scripts/playwright/prepareVSCodeForE2ETests.sh
-#   It will determine the repo root automatically. Requires bash, pnpm (via Corepack), and perl.
+#   It will determine the repo root automatically. Requires bash, bun, and perl.
 #
 set -euo pipefail
 
@@ -36,14 +36,11 @@ if [[ ! -f "$config_file" ]]; then
     exit 1
 fi
 
-# Activate the pnpm version pinned via `packageManager` in package.json.
-corepack enable
+echo "==> bun install --frozen-lockfile (repo root)"
+bun install --frozen-lockfile
 
-echo "==> pnpm install --frozen-lockfile (repo root)"
-pnpm install --frozen-lockfile
-
-echo "==> pnpm install --frozen-lockfile (src/test/playwright)"
-(cd "$repo_root/src/test/playwright" && pnpm install --frozen-lockfile)
+echo "==> bun install --frozen-lockfile (src/test/playwright)"
+(cd "$repo_root/src/test/playwright" && bun install --frozen-lockfile)
 
 backup_file="$(mktemp -t playwright.config.ts.XXXXXX)"
 cp "$config_file" "$backup_file"

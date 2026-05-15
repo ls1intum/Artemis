@@ -15,15 +15,15 @@ bootRun {
     jvmArgs = ["--add-opens=java.base/java.lang=ALL-UNNAMED"]
 }
 
-tasks.register("webapp_test", PnpmTask) {
-    dependsOn pnpmInstall
-    args = ["run", "webapp:test"]
+tasks.register("webapp_test", Exec) {
+    dependsOn bunInstall
+    commandLine bunCommand, "run", "webapp:test"
 }
 
-tasks.register("webapp", PnpmTask) {
-    dependsOn pnpmInstall
-    args = ["run", "webapp:prod"]
-    environment = [APP_VERSION: project.version]
+tasks.register("webapp", Exec) {
+    dependsOn bunInstall
+    commandLine bunCommand, "run", "webapp:prod"
+    environment APP_VERSION: project.version
 }
 
 processResources {

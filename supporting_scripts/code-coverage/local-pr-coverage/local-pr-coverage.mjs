@@ -187,7 +187,7 @@ for CI builds.
 
 Usage:
   node local-pr-coverage.mjs [options]
-  pnpm run coverage:pr [-- options]
+  bun run coverage:pr [-- options]
 
 Options:
   --base-branch <branch>       Base branch to compare against (default: origin/develop)
@@ -214,16 +214,16 @@ Examples:
   node local-pr-coverage.mjs
 
   # Test specific client modules only
-  pnpm run coverage:pr -- --client-modules core,shared --client-only
+  bun run coverage:pr -- --client-modules core,shared --client-only
 
   # Test specific server modules only
-  pnpm run coverage:pr -- --server-modules core,exam --server-only
+  bun run coverage:pr -- --server-modules core,exam --server-only
 
   # Mix: auto-detect client, specify server modules
-  pnpm run coverage:pr -- --server-modules core
+  bun run coverage:pr -- --server-modules core
 
   # Skip tests and use existing coverage data
-  pnpm run coverage:pr -- --skip-tests --client-modules core
+  bun run coverage:pr -- --skip-tests --client-modules core
 `);
 }
 
@@ -430,12 +430,12 @@ async function runClientTests(modules, options) {
     if (vitestModules.length > 0) {
         log(`Running Vitest for modules: ${vitestModules.join(', ')}`, options);
         try {
-            const pnpmCmd = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+            const bunCmd = process.platform === 'win32' ? 'bun.exe' : 'bun';
             // Build coverage include patterns for only the modules being tested
             // This prevents measuring coverage for unrelated modules
             const coverageIncludes = vitestModules.map(m => `src/main/webapp/app/${m}/**/*.ts`);
             const vitestArgs = [
-                'exec', 'vitest', 'run', '--coverage',
+                'x', 'vitest', 'run', '--coverage',
                 // Override coverage.include to only measure the modules being tested
                 ...coverageIncludes.map(pattern => `--coverage.include=${pattern}`),
                 // Disable global thresholds since we're only testing a subset
@@ -446,8 +446,8 @@ async function runClientTests(modules, options) {
                 // Filter test files to only run tests for these modules
                 ...vitestModules,
             ];
-            log(`Running: pnpm ${vitestArgs.join(' ')}`, options);
-            const vitestResult = spawnSync(pnpmCmd, vitestArgs, {
+            log(`Running: bun ${vitestArgs.join(' ')}`, options);
+            const vitestResult = spawnSync(bunCmd, vitestArgs, {
                 cwd: PROJECT_ROOT,
                 stdio: options.verbose ? 'inherit' : 'pipe',
                 encoding: 'utf-8',
@@ -491,9 +491,9 @@ async function runClientTests(modules, options) {
         // Run ng test with arguments array (no shell interpolation)
         // Disable coverage threshold since we're only running a subset of tests
         try {
-            const pnpmCmd = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
-            const testResult = spawnSync(pnpmCmd, [
-                'exec',
+            const bunCmd = process.platform === 'win32' ? 'bun.exe' : 'bun';
+            const testResult = spawnSync(bunCmd, [
+                'x',
                 'ng', 'test',
                 '--coverage',
                 '--log-heap-usage',

@@ -12,13 +12,6 @@ fi
 INPUT_PATH="$1"
 NUM_RUNS="${2:-10}" # Default to 10 runs
 
-# Activate the pnpm version pinned in package.json via Corepack. The `pnpm exec
-# playwright` calls below depend on `pnpm` being on PATH; Corepack ships with
-# Node 24 and the call is idempotent, so it is safe to run unconditionally.
-if command -v corepack >/dev/null 2>&1; then
-    corepack enable >/dev/null 2>&1 || true
-fi
-
 # Calculate headed runs (half of NUM_RUNS) and clamp to minimum 1
 HEADED_RUNS=$((NUM_RUNS / 2))
 if [ "$HEADED_RUNS" -lt 1 ]; then
@@ -79,7 +72,7 @@ echo ""
 # Run all tests with --repeat-each to avoid startup overhead on each iteration
 # --retries=0: Disable retries to detect true flakiness
 # --repeat-each=N: Run each test N times in a single execution
-OUTPUT=$(FORCE_COLOR=0 pnpm exec playwright test "$TEST_PATH" --reporter=list --retries=0 --repeat-each="$NUM_RUNS" 2>&1 | tee /dev/stderr)
+OUTPUT=$(FORCE_COLOR=0 bunx playwright test "$TEST_PATH" --reporter=list --retries=0 --repeat-each="$NUM_RUNS" 2>&1 | tee /dev/stderr)
 PIPELINE_STATUS=$?
 if [ "$PIPELINE_STATUS" -ne 0 ]; then
     echo "Playwright failed in headless mode (exit $PIPELINE_STATUS)" >&2
@@ -94,7 +87,7 @@ echo "========== HEADED MODE ($HEADED_RUNS runs) =========="
 echo ""
 
 # Run tests in headed mode
-OUTPUT=$(FORCE_COLOR=0 pnpm exec playwright test "$TEST_PATH" --reporter=list --retries=0 --repeat-each="$HEADED_RUNS" --headed 2>&1 | tee /dev/stderr)
+OUTPUT=$(FORCE_COLOR=0 bunx playwright test "$TEST_PATH" --reporter=list --retries=0 --repeat-each="$HEADED_RUNS" --headed 2>&1 | tee /dev/stderr)
 PIPELINE_STATUS=$?
 if [ "$PIPELINE_STATUS" -ne 0 ]; then
     echo "Playwright failed in headed mode (exit $PIPELINE_STATUS)" >&2

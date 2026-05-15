@@ -5,14 +5,15 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
 ## Installation
 
 ```bash
-corepack enable          # one-time: activate the pnpm version pinned in package.json
-pnpm install
+bun install
 ```
+
+Bun must be installed first — see [bun.sh/install](https://bun.sh/install) or run `brew install oven-sh/bun/bun` on macOS.
 
 ## Local Development
 
 ```bash
-pnpm start
+bun start
 ```
 
 This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
@@ -20,14 +21,14 @@ This command starts a local development server and opens up a browser window. Mo
 ## Build
 
 ```bash
-pnpm run build
+bun run build
 ```
 
 This command generates static content into the `build` directory and can be served using any static contents hosting service.
 
 To test the build locally, you can run:
 ```bash
-pnpm run serve
+bun run serve
 ```
 
 ## Deployment

@@ -169,18 +169,15 @@ command -v docker >/dev/null 2>&1 || MISSING="$MISSING docker"
 command -v java >/dev/null 2>&1   || MISSING="$MISSING java"
 command -v node >/dev/null 2>&1   || MISSING="$MISSING node"
 
-# Activate the pnpm version pinned in package.json via Corepack (shipped with
-# Node 24). Idempotent and quick; ensures `pnpm` is on PATH on fresh setups.
-if command -v corepack >/dev/null 2>&1; then
-    corepack enable >/dev/null 2>&1 || true
-fi
-command -v pnpm >/dev/null 2>&1   || MISSING="$MISSING pnpm"
+command -v bun >/dev/null 2>&1    || MISSING="$MISSING bun"
 
 if [ -n "$MISSING" ]; then
     echo -e "${RED}ERROR: Missing required commands:$MISSING${NC}"
-    if [[ "$MISSING" == *pnpm* ]]; then
-        echo -e "${RED}Activate the pnpm version pinned in package.json once via:${NC}"
-        echo -e "${RED}    corepack enable${NC}"
+    if [[ "$MISSING" == *bun* ]]; then
+        echo -e "${RED}Install Bun via:${NC}"
+        echo -e "${RED}    curl -fsSL https://bun.sh/install | bash${NC}"
+        echo -e "${RED}or (macOS):${NC}"
+        echo -e "${RED}    brew install oven-sh/bun/bun${NC}"
     fi
     exit 1
 fi
@@ -311,7 +308,7 @@ fi
 
 if [ "$SKIP_CLIENT" = false ]; then
     echo ""
-    echo -e "${BLUE}Step 2b: Starting client (pnpm start)...${NC}"
+    echo -e "${BLUE}Step 2b: Starting client (bun run start)...${NC}"
 
     # Kill stale client from previous run
     if [ -f "$LOCAL_DIR/client.pid" ]; then
@@ -326,9 +323,9 @@ if [ "$SKIP_CLIENT" = false ]; then
     check_port_available 9000 "Angular client"
 
     if [ "$DEBUG" = true ]; then
-        pnpm start > >(tee "$LOCAL_DIR/client.log") 2>&1 &
+        bun run start > >(tee "$LOCAL_DIR/client.log") 2>&1 &
     else
-        pnpm start > "$LOCAL_DIR/client.log" 2>&1 &
+        bun run start > "$LOCAL_DIR/client.log" 2>&1 &
     fi
     CLIENT_PID=$!
     echo "$CLIENT_PID" > "$LOCAL_DIR/client.pid"
@@ -415,7 +412,7 @@ export EXAM_DASHBOARD_TIMEOUT_MS="${EXAM_DASHBOARD_TIMEOUT_MS:-90000}"
 cd src/test/playwright
 
 # Install Chromium if needed
-pnpm run playwright:setup-local 2>/dev/null
+bun run playwright:setup-local 2>/dev/null
 
 # Clean stale reports and coverage cache
 rm -f test-reports/results*.xml
@@ -466,7 +463,7 @@ EXIT_CODE=0
 # --- Run all tests (fast + slow) in a single phase ---
 echo -e "${BLUE}Running all tests with $TEST_WORKERS workers...${NC}"
 export PLAYWRIGHT_TEST_TYPE="parallel"
-TEST_CMD=(pnpm exec playwright test "${BASE_ARGS[@]}" --project=fast-tests --project=slow-tests --workers="$TEST_WORKERS")
+TEST_CMD=(bunx playwright test "${BASE_ARGS[@]}" --project=fast-tests --project=slow-tests --workers="$TEST_WORKERS")
 echo "Running: ${TEST_CMD[*]}"
 echo ""
 
@@ -627,7 +624,7 @@ if [ $TOTAL_TESTS -gt 0 ]; then
 
         echo ""
         echo -e "${BLUE}View HTML report:${NC}"
-        echo "  cd src/test/playwright && pnpm exec playwright show-report test-reports/monocart-report"
+        echo "  cd src/test/playwright && bunx playwright show-report test-reports/monocart-report"
     fi
 else
     echo "  No JUnit test results found in $REPORT_DIR"

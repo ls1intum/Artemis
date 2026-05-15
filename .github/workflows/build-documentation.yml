@@ -24,25 +24,22 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          package_json_file: documentation/package.json
-          run_install: false
+          bun-version: 1.3.14
 
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-          cache: 'pnpm'
-          cache-dependency-path: documentation/pnpm-lock.yaml
 
       - name: Install dependencies
         working-directory: documentation
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Documentation Code Style
         working-directory: documentation
-        run: pnpm run lint
+        run: bun run lint
 
       - name: Build Docusaurus site
         working-directory: documentation
-        run: pnpm run build
+        run: bun run build

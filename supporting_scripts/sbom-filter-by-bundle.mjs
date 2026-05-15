@@ -5,9 +5,10 @@
  * tree-shaking in the production Angular bundle.
  *
  * The Angular esbuild source maps (and CSS maps) list every input file that
- * contributed to each shipped chunk, including the exact pnpm-store path of
- * every transitive dependency that was kept. We extract (name, version) tuples
- * from those paths and intersect with the components in the input SBOM,
+ * contributed to each shipped chunk. With Bun's flat install layout each
+ * `node_modules/<name>` path corresponds to a single installed version, which
+ * we read from `<path>/package.json` to recover the (name, version) tuple.
+ * We then intersect those tuples with the components in the input SBOM,
  * preserving the rich metadata (licenses, hashes, suppliers, purls) cdxgen
  * produced.
  *
@@ -19,7 +20,7 @@
  */
 
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 
 const [, , inputPath, outputPath, buildDir] = process.argv;
 if (!inputPath || !outputPath || !buildDir) {
@@ -27,13 +28,42 @@ if (!inputPath || !outputPath || !buildDir) {
     process.exit(2);
 }
 
-const PNPM_ID_RE = /\.pnpm\/([^/]+)\/node_modules\//;
+const PROJECT_ROOT = process.cwd();
 
-function parsePnpmId(eid) {
-    // `@angular+core@21.2.12_<peer hash>` -> { name: '@angular/core', version: '21.2.12' }
-    const m = eid.match(/^((?:@[^@+]+\+)?[^@+]+)@([^_(]+)/);
-    if (!m) return null;
-    return { name: m[1].replace('+', '/'), version: m[2] };
+// Match every `node_modules/<name>` segment in a source path (scoped or not).
+// Bun's flat layout means most paths have exactly one such segment, but nested
+// `node_modules/` is still possible when peer conflicts force a private copy —
+// we keep the *deepest* match in that case.
+const NODE_MODULES_RE = /node_modules\/((?:@[^/]+\/)?[^/]+)(?:\/|$)/g;
+
+function resolvePackageDir(src) {
+    let last = null;
+    NODE_MODULES_RE.lastIndex = 0;
+    let m;
+    while ((m = NODE_MODULES_RE.exec(src)) !== null) {
+        const prefix = src.slice(0, m.index + 'node_modules/'.length + m[1].length);
+        last = { name: m[1], dir: resolve(PROJECT_ROOT, prefix) };
+    }
+    return last;
+}
+
+const versionCache = new Map();
+function readPackageVersion(dir) {
+    if (versionCache.has(dir)) return versionCache.get(dir);
+    const manifest = join(dir, 'package.json');
+    if (!existsSync(manifest)) {
+        versionCache.set(dir, null);
+        return null;
+    }
+    try {
+        const pkg = JSON.parse(readFileSync(manifest, 'utf8'));
+        const entry = pkg.name && pkg.version ? { name: pkg.name, version: pkg.version } : null;
+        versionCache.set(dir, entry);
+        return entry;
+    } catch {
+        versionCache.set(dir, null);
+        return null;
+    }
 }
 
 function collectMaps(dir) {
@@ -70,13 +100,13 @@ function scanMaps(dir) {
             process.exit(1);
         }
         for (const src of sm.sources || []) {
-            if (!src.includes('/.pnpm/')) continue;
-            const m = src.match(PNPM_ID_RE);
-            if (!m) continue;
-            const parsed = parsePnpmId(m[1]);
-            if (!parsed) continue;
-            seenNames.add(parsed.name);
-            shipped.set(`${parsed.name}@${parsed.version}`, parsed);
+            if (!src.includes('node_modules/')) continue;
+            const resolved = resolvePackageDir(src);
+            if (!resolved) continue;
+            const pkg = readPackageVersion(resolved.dir);
+            if (!pkg) continue;
+            seenNames.add(pkg.name);
+            shipped.set(`${pkg.name}@${pkg.version}`, pkg);
         }
     }
     return { shipped, seenNames, mapCount: mapPaths.length };
@@ -86,11 +116,11 @@ function fullName(component) {
     return component.group ? `${component.group}/${component.name}` : component.name;
 }
 
-// URL- and tarball-installed packages render different version strings in the
-// pnpm source-map path vs. in cdxgen's component (e.g. cdxgen reports xlsx
-// version `xlsx-0.20.3.tgz` while the source map sees the full CDN URL). For
-// those we accept a unique-by-name match. For semver-shaped versions, version
-// drift means a stale build — failing loud is correct.
+// URL- and tarball-installed packages render different version strings in
+// `node_modules/<name>/package.json` vs. in cdxgen's component (e.g. cdxgen
+// reports xlsx version `xlsx-0.20.3.tgz` while package.json reports `0.20.3`).
+// For those we accept a unique-by-name match. For semver-shaped versions,
+// version drift means a stale build — failing loud is correct.
 function isOpaqueVersion(version) {
     return /^https?[+:]|^git[+:]|\.(tgz|tar\.gz)$|^[a-z]+\+\+\+/i.test(version);
 }

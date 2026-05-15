@@ -24,44 +24,48 @@ ARG WAR_FILE_STAGE="builder"
 #-----------------------------------------------------------------------------------------------------------------------
 FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25-jdk AS builder
 
-# python3/build-essential were previously installed defensively for npm deps that
-# trigger node-gyp; no current Artemis dep needs that. If a future dep does, the
-# pnpm step below fails loudly and these can be reinstated.
+# Install Bun (the project's package manager + script runner).
+# Pin the version to match `packageManager` in package.json; bump both together.
+# python3/build-essential were previously installed defensively for native deps;
+# no current Artemis dep needs them. If a future dep does, this RUN fails loudly.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends curl unzip ca-certificates \
+  && curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.14" \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+ENV PATH="/root/.bun/bin:${PATH}"
 
 WORKDIR /opt/artemis
 # copy gradle related files
 COPY gradlew gradlew.bat ./
 COPY build.gradle gradle.properties settings.gradle ./
 COPY gradle gradle/
-# copy pnpm related files and install node modules
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-# patches/ is referenced by pnpm.patchedDependencies in pnpm-workspace.yaml and must
-# be present at install time (pnpm applies patches during resolution, not via a
+# copy bun manifest, lockfile, and any registry/Node settings
+COPY package.json bun.lock .npmrc ./
+# patches/ is referenced by `patchedDependencies` in package.json and must be
+# present at install time (Bun applies patches during resolution, not via a
 # postinstall hook like patch-package did).
 COPY patches patches/
-# also copy this script which is required by postinstall lifecycle hook
+# also copy this script which is required by the project's postinstall hook
 COPY src/main/webapp/app/lecture/manage/pdf-preview/pdfjs_copy_worker_script.mjs ./src/main/webapp/app/lecture/manage/pdf-preview/
 
-# One Gradle invocation does both the cache config and the pnpm install. The
-# BuildKit pnpm-store cache mount below is reused on warm builds; pnpm's
-# content-addressable store makes the second build of an unchanged tree
-# essentially free.
+# Install JS dependencies. The BuildKit cache mount on Bun's content-addressable
+# install cache makes warm builds of an unchanged tree essentially free.
 RUN \
   --mount=type=cache,target=/root/.gradle/caches \
-  --mount=type=cache,target=/opt/artemis/.pnpm-store \
-  mkdir -p /opt/artemis/.pnpm-store \
-  && ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar pnpmSetCacheDockerfile pnpmInstall
+  --mount=type=cache,target=/root/.bun/install/cache \
+  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar bunInstall
 
 # so far just using the .dockerignore to define what isn't necessary here
 COPY . .
 
-# `-x pnpmInstall` skips re-running the install task — node_modules is already
+# `-x bunInstall` skips re-running the install task — node_modules is already
 # in place from the previous RUN.
 RUN \
   --mount=type=cache,target=/root/.gradle/caches \
-  --mount=type=cache,target=/opt/artemis/.pnpm-store \
+  --mount=type=cache,target=/root/.bun/install/cache \
   --mount=type=cache,target=/opt/artemis/.cache \
-  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar -x pnpmInstall
+  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar -x bunInstall
 
 #-----------------------------------------------------------------------------------------------------------------------
 # external build stage
