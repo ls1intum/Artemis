@@ -29,12 +29,20 @@
  *   --warmup=<n>               Warmup iterations (not measured) (default: 3)
  *   --setup-data               Create test data before benchmarking
  *   --course-id=<id>           Benchmark a specific course (for single-course endpoint)
+ *   --sql-analysis             SQL query analysis mode: run each endpoint once, capture
+ *                              server log, and count SQL queries per request.
+ *                              Requires --server-log=<path> to the Artemis console log file.
+ *   --server-log=<path>        Path to the server log file (used with --sql-analysis).
+ *                              Tip: start Artemis with  ./gradlew bootRun 2>&1 | tee server.log
+ *   --output=<path>            Write results to a file (append mode) for later comparison
+ *   --label=<name>             Label for this run (e.g. "develop" or "dsl-branch")
  *   --help                     Show help
  */
 
 // ---------------------------------------------------------------------------
 // Imports – reuse the HTTP client and auth helpers from the setup-course lib
 // ---------------------------------------------------------------------------
+import { readFileSync, appendFileSync } from 'node:fs';
 import { HttpClient } from '../course-scripts/setup-course/lib/http-client.mjs';
 import { authenticate } from '../course-scripts/setup-course/lib/auth.mjs';
 
@@ -69,6 +77,10 @@ Options:
   --warmup=<n>               Warmup iterations (not measured) (default: 3)
   --setup-data               Create test data before benchmarking
   --course-id=<id>           Benchmark a specific course (single-course endpoint)
+  --sql-analysis             SQL query analysis mode (requires --server-log)
+  --server-log=<path>        Path to server log file for SQL counting
+  --output=<path>            Append results to file for A/B comparison
+  --label=<name>             Label for this run (e.g. "develop", "dsl-branch")
   --help                     Show this help
 
 Environment Variables:
@@ -86,6 +98,16 @@ Examples:
 
   # Benchmark a specific course
   node benchmark-access-policies.mjs --course-id=42 --iterations=30
+
+  # SQL query analysis (A/B comparison workflow):
+  #   1. Start server:  ./gradlew bootRun 2>&1 | tee server.log
+  #   2. On develop branch:
+  node benchmark-access-policies.mjs --sql-analysis --server-log=server.log \\
+      --label=develop --output=benchmark-results.txt --course-id=1
+  #   3. Switch to DSL branch, restart server, then:
+  node benchmark-access-policies.mjs --sql-analysis --server-log=server.log \\
+      --label=dsl-branch --output=benchmark-results.txt --course-id=1
+  #   4. Compare: cat benchmark-results.txt
 `);
 }
 
@@ -107,6 +129,10 @@ const config = {
     warmup: parseInt(args['warmup'] || '3', 10),
     setupData: args['setup-data'] === 'true',
     courseId: args['course-id'] ? parseInt(args['course-id'], 10) : null,
+    sqlAnalysis: args['sql-analysis'] === 'true',
+    serverLog: args['server-log'] || null,
+    outputFile: args['output'] || null,
+    label: args['label'] || new Date().toISOString(),
 };
 
 // ---------------------------------------------------------------------------
@@ -334,6 +360,116 @@ async function runBenchmark(label, requestFn, warmup, iterations) {
 }
 
 // ---------------------------------------------------------------------------
+// SQL query analysis helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Read the server log file and return its current size (byte offset).
+ * We use this as a "bookmark" so we can later read only the lines appended
+ * after a request was made.
+ */
+function getLogFileSize(logPath) {
+    try {
+        const content = readFileSync(logPath, 'utf-8');
+        return content.length;
+    } catch (error) {
+        console.error(`Cannot read server log at ${logPath}: ${error.message}`);
+        process.exit(1);
+    }
+}
+
+/**
+ * Read lines appended to the log file after the given character offset.
+ */
+function readLogSince(logPath, offset) {
+    const content = readFileSync(logPath, 'utf-8');
+    return content.substring(offset);
+}
+
+/**
+ * Count SQL queries in a Hibernate show-sql log snippet.
+ *
+ * With format_sql=true, Hibernate outputs multi-line formatted SQL.
+ * Each statement starts with one of: select, insert, update, delete
+ * at the beginning of a line (after optional whitespace).
+ *
+ * With format_sql=false, each SQL statement is a single line starting
+ * with "Hibernate: select/insert/update/delete".
+ *
+ * We count both patterns.
+ */
+function countSqlQueries(logSnippet) {
+    const lines = logSnippet.split('\n');
+    let totalQueries = 0;
+    let selects = 0;
+    let inserts = 0;
+    let updates = 0;
+    let deletes = 0;
+    const uniqueQueries = new Set();
+
+    for (const line of lines) {
+        const trimmed = line.trim().toLowerCase();
+        // Match "Hibernate: select ..." or standalone "select ..." at start of formatted block
+        const isHibernateLine = trimmed.startsWith('hibernate:');
+        const sqlStart = isHibernateLine ? trimmed.substring('hibernate:'.length).trim() : trimmed;
+
+        let matched = false;
+        if (sqlStart.startsWith('select ') || sqlStart.startsWith('select\n')) {
+            selects++;
+            matched = true;
+        } else if (sqlStart.startsWith('insert ')) {
+            inserts++;
+            matched = true;
+        } else if (sqlStart.startsWith('update ')) {
+            updates++;
+            matched = true;
+        } else if (sqlStart.startsWith('delete ')) {
+            deletes++;
+            matched = true;
+        }
+
+        if (matched) {
+            totalQueries++;
+            // Normalize for uniqueness: take the first 200 chars of the SQL
+            uniqueQueries.add(sqlStart.substring(0, 200));
+        }
+    }
+
+    return { totalQueries, selects, inserts, updates, deletes, uniqueQueries: uniqueQueries.size };
+}
+
+/**
+ * Run a single request while capturing the server log, then count SQL queries.
+ */
+async function runWithSqlCapture(label, requestFn, logPath) {
+    // Record log position before the request
+    const offsetBefore = getLogFileSize(logPath);
+
+    // Make the request
+    const start = performance.now();
+    await requestFn();
+    const elapsed = performance.now() - start;
+
+    // Small delay to allow log flush
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Read the log lines generated during the request
+    const logSnippet = readLogSince(logPath, offsetBefore);
+    const sqlStats = countSqlQueries(logSnippet);
+
+    return { elapsed, sqlStats, logSnippet };
+}
+
+/**
+ * Append a result record to the output file (if configured).
+ * Format: one JSON object per line for easy post-processing.
+ */
+function appendResult(record) {
+    if (!config.outputFile) return;
+    appendFileSync(config.outputFile, JSON.stringify(record) + '\n', 'utf-8');
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -342,8 +478,21 @@ async function main() {
     console.log('Access Rights DSL — Performance Benchmark');
     console.log('='.repeat(60));
     console.log(`Server URL : ${config.serverUrl}`);
-    console.log(`Iterations : ${config.iterations} (+ ${config.warmup} warmup)`);
+    console.log(`Mode       : ${config.sqlAnalysis ? 'SQL Analysis' : 'Response Time'}`);
+    if (!config.sqlAnalysis) {
+        console.log(`Iterations : ${config.iterations} (+ ${config.warmup} warmup)`);
+    }
+    if (args['label']) {
+        console.log(`Label      : ${config.label}`);
+    }
     console.log();
+
+    // Validate SQL analysis prerequisites
+    if (config.sqlAnalysis && !config.serverLog) {
+        console.error('ERROR: --sql-analysis requires --server-log=<path>');
+        console.error('Start the server with:  ./gradlew bootRun 2>&1 | tee server.log');
+        process.exit(1);
+    }
 
     const adminClient = new HttpClient(config.serverUrl);
 
@@ -377,13 +526,20 @@ async function main() {
         courseId = benchData.courseIds[0];
     }
 
+    // -------------------------------------------------------------------
+    // SQL ANALYSIS MODE
+    // -------------------------------------------------------------------
+    if (config.sqlAnalysis) {
+        await runSqlAnalysisMode(studentClient, courseId);
+        return;
+    }
+
+    // -------------------------------------------------------------------
+    // RESPONSE TIME BENCHMARK MODE (default)
+    // -------------------------------------------------------------------
     console.log('\n' + '='.repeat(60));
-    console.log('BENCHMARK RESULTS');
+    console.log('RESPONSE TIME BENCHMARK');
     console.log('='.repeat(60));
-    console.log();
-    console.log('NOTE: Check server console for SQL query output (show-sql: true).');
-    console.log('Count the SQL queries between ">>> BENCHMARK START" and ">>> BENCHMARK END" markers');
-    console.log('in the server logs by searching for Hibernate query output.');
     console.log();
 
     // -----------------------------------------------------------------------
@@ -448,34 +604,134 @@ async function main() {
         console.log(`  Mean: ${formatMs(singleCourseStats.mean)} | Median: ${formatMs(singleCourseStats.median)} | P95: ${formatMs(singleCourseStats.p95)}`);
     }
 
+    // Write results to output file
+    appendResult({
+        label: config.label,
+        timestamp: new Date().toISOString(),
+        mode: 'response-time',
+        allCourses: allCoursesStats,
+        singleCourse: singleCourseStats,
+        config: { iterations: config.iterations, warmup: config.warmup, courseCount: config.courseCount },
+    });
+
+    console.log('\nBenchmark complete.');
+    if (config.outputFile) {
+        console.log(`Results appended to: ${config.outputFile}`);
+    }
+}
+
+/**
+ * SQL Analysis Mode: fires each endpoint exactly once (with a warmup request first),
+ * captures the server log window, and counts SQL queries.
+ */
+async function runSqlAnalysisMode(studentClient, courseId) {
     console.log('\n' + '='.repeat(60));
-    console.log('DATABASE QUERY ANALYSIS');
+    console.log('SQL QUERY ANALYSIS');
     console.log('='.repeat(60));
-    console.log(`
-To analyze the number of SQL queries per request:
+    console.log(`Server log : ${config.serverLog}`);
+    console.log(`Label      : ${config.label}`);
+    console.log();
+    console.log('Running one warmup request per endpoint, then one measured request.');
+    console.log('Make sure the server was started with show-sql: true');
+    console.log();
 
-1. Ensure your application-local.yml has:
-     spring:
-       jpa:
-         show-sql: true
-         properties:
-           hibernate:
-             format_sql: true
+    // --- Endpoint 1: All courses dashboard ---
+    console.log('-'.repeat(60));
+    console.log('Endpoint 1: GET /api/core/courses/for-dashboard');
+    console.log('-'.repeat(60));
 
-2. Run ONE request manually (e.g., with curl or this script with --iterations=1)
-   and count the SQL statements printed in the server console.
+    // Warmup (populates caches, establishes session — not measured)
+    await studentClient.get('/api/core/courses/for-dashboard');
 
-3. Key queries to look for:
-   - Course visibility query (policy-generated): SELECT ... FROM course WHERE ...
-     This is generated by PolicyBasedCourseSpecs from the CourseVisibilityPolicy DSL.
-   - Exercise loading queries: SELECT ... FROM exercise WHERE ...
-   - User/group resolution: SELECT ... FROM jhi_user ... groups ...
+    const allCoursesResult = await runWithSqlCapture(
+        'GET /api/core/courses/for-dashboard',
+        () => studentClient.get('/api/core/courses/for-dashboard'),
+        config.serverLog,
+    );
 
-4. Compare the generated SQL with the old hand-written JPQL queries to verify
-   they are equivalent in terms of the WHERE clause conditions.
-`);
+    printSqlAnalysis('GET /api/core/courses/for-dashboard', allCoursesResult);
 
-    console.log('Benchmark complete.');
+    // --- Endpoint 2: Single course dashboard ---
+    let singleCourseResult = null;
+    if (courseId) {
+        console.log('\n' + '-'.repeat(60));
+        console.log(`Endpoint 2: GET /api/core/courses/${courseId}/for-dashboard`);
+        console.log('-'.repeat(60));
+
+        // Warmup
+        await studentClient.get(`/api/core/courses/${courseId}/for-dashboard`);
+
+        singleCourseResult = await runWithSqlCapture(
+            `GET /api/core/courses/${courseId}/for-dashboard`,
+            () => studentClient.get(`/api/core/courses/${courseId}/for-dashboard`),
+            config.serverLog,
+        );
+
+        printSqlAnalysis(`GET /api/core/courses/${courseId}/for-dashboard`, singleCourseResult);
+    } else {
+        console.log('\n  Skipping single-course endpoint (no --course-id).');
+    }
+
+    // --- Summary ---
+    console.log('\n' + '='.repeat(60));
+    console.log('SQL ANALYSIS SUMMARY');
+    console.log('='.repeat(60));
+    console.log(`Label: ${config.label}`);
+    console.log();
+    console.log(`  GET /api/core/courses/for-dashboard`);
+    console.log(`    Response time : ${formatMs(allCoursesResult.elapsed)}`);
+    console.log(`    Total queries : ${allCoursesResult.sqlStats.totalQueries}`);
+    console.log(`    SELECTs       : ${allCoursesResult.sqlStats.selects}`);
+    console.log(`    Unique queries: ${allCoursesResult.sqlStats.uniqueQueries}`);
+
+    if (singleCourseResult) {
+        console.log();
+        console.log(`  GET /api/core/courses/${courseId}/for-dashboard`);
+        console.log(`    Response time : ${formatMs(singleCourseResult.elapsed)}`);
+        console.log(`    Total queries : ${singleCourseResult.sqlStats.totalQueries}`);
+        console.log(`    SELECTs       : ${singleCourseResult.sqlStats.selects}`);
+        console.log(`    Unique queries: ${singleCourseResult.sqlStats.uniqueQueries}`);
+    }
+
+    // Write results to output file
+    appendResult({
+        label: config.label,
+        timestamp: new Date().toISOString(),
+        mode: 'sql-analysis',
+        allCourses: {
+            responseTimeMs: allCoursesResult.elapsed,
+            ...allCoursesResult.sqlStats,
+        },
+        singleCourse: singleCourseResult ? {
+            responseTimeMs: singleCourseResult.elapsed,
+            ...singleCourseResult.sqlStats,
+        } : null,
+        courseId,
+    });
+
+    if (config.outputFile) {
+        console.log(`\nResults appended to: ${config.outputFile}`);
+    }
+    console.log('\nSQL analysis complete.');
+}
+
+function printSqlAnalysis(label, result) {
+    console.log(`\n  Response time: ${formatMs(result.elapsed)}`);
+    console.log(`  SQL queries executed:`);
+    console.log(`    Total   : ${result.sqlStats.totalQueries}`);
+    console.log(`    SELECTs : ${result.sqlStats.selects}`);
+    console.log(`    INSERTs : ${result.sqlStats.inserts}`);
+    console.log(`    UPDATEs : ${result.sqlStats.updates}`);
+    console.log(`    DELETEs : ${result.sqlStats.deletes}`);
+    console.log(`    Unique  : ${result.sqlStats.uniqueQueries}`);
+
+    if (result.sqlStats.totalQueries === 0) {
+        console.log();
+        console.log('  WARNING: No SQL queries detected. Possible causes:');
+        console.log('    - show-sql is not enabled in application-local.yml');
+        console.log('    - The server log file path is incorrect');
+        console.log('    - The log file is not being flushed fast enough (try adding a small delay)');
+    }
 }
 
 main().catch(error => {
