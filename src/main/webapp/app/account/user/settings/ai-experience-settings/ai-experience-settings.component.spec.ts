@@ -21,6 +21,7 @@ import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service'
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 describe('AiExperienceSettingsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -33,6 +34,13 @@ describe('AiExperienceSettingsComponent', () => {
     let accountService: AccountService;
     let alertService: AlertService;
     let llmModalService: LLMSelectionModalService;
+    let featureToggleService: FeatureToggleService;
+
+    const createComponent = (memirisEnabled = true) => {
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockImplementation((feature: FeatureToggle) => of(feature === FeatureToggle.Memiris ? memirisEnabled : true));
+        fixture = TestBed.createComponent(AiExperienceSettingsComponent);
+        component = fixture.componentInstance;
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -44,6 +52,7 @@ describe('AiExperienceSettingsComponent', () => {
                 MockProvider(TranslateService),
                 MockProvider(AlertService),
                 MockProvider(LLMSelectionModalService),
+                MockProvider(FeatureToggleService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: AccountService, useClass: MockAccountService },
@@ -56,14 +65,13 @@ describe('AiExperienceSettingsComponent', () => {
             })
             .compileComponents();
 
-        fixture = TestBed.createComponent(AiExperienceSettingsComponent);
-        component = fixture.componentInstance;
         irisChatHttpService = TestBed.inject(IrisChatHttpService);
         irisMemoriesHttpService = TestBed.inject(IrisMemoriesHttpService);
         irisChatService = TestBed.inject(IrisChatService);
         accountService = TestBed.inject(AccountService);
         alertService = TestBed.inject(AlertService);
         llmModalService = TestBed.inject(LLMSelectionModalService);
+        featureToggleService = TestBed.inject(FeatureToggleService);
     });
 
     afterEach(() => {
@@ -73,6 +81,7 @@ describe('AiExperienceSettingsComponent', () => {
     it('should create', () => {
         vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
         vi.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(0));
+        createComponent();
         fixture.detectChanges();
         expect(component).toBeTruthy();
     });
@@ -80,6 +89,7 @@ describe('AiExperienceSettingsComponent', () => {
     it('should load session and message counts on init', () => {
         const countSpy = vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 5, messages: 42 }));
         vi.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(0));
+        createComponent();
         fixture.detectChanges();
 
         expect(countSpy).toHaveBeenCalledOnce();
@@ -90,15 +100,45 @@ describe('AiExperienceSettingsComponent', () => {
     it('should load memory count on init', () => {
         vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
         const memorySpy = vi.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(7));
+        createComponent();
         fixture.detectChanges();
 
         expect(memorySpy).toHaveBeenCalledOnce();
         expect(component.memoryCount()).toBe(7);
     });
 
+    it('should not call memory endpoint when Memiris feature is disabled', () => {
+        vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 2, messages: 8 }));
+        const memorySpy = vi.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(7));
+        createComponent(false);
+        fixture.detectChanges();
+
+        expect(memorySpy).not.toHaveBeenCalled();
+        expect(component.memoryCount()).toBe(0);
+        expect(component.memirisEnabled()).toBe(false);
+    });
+
+    it('should skip memory deletion when Memiris feature is disabled', () => {
+        vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 3, messages: 10 }));
+        vi.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(0));
+        createComponent(false);
+        fixture.detectChanges();
+
+        const deleteChatSpy = vi.spyOn(irisChatHttpService, 'deleteAllSessions').mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
+        const deleteMemorySpy = vi.spyOn(irisMemoriesHttpService, 'deleteAllUserMemories').mockReturnValue(of(undefined));
+        const alertSpy = vi.spyOn(alertService, 'success');
+
+        component.deleteAllIrisInteractions();
+
+        expect(deleteChatSpy).toHaveBeenCalledOnce();
+        expect(deleteMemorySpy).not.toHaveBeenCalled();
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.userSettings.aiExperienceSettingsPage.deleteSuccess');
+    });
+
     it('should handle zero counts', () => {
         vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
         vi.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(0));
+        createComponent();
         fixture.detectChanges();
 
         expect(component.sessionCount()).toBe(0);
@@ -109,6 +149,7 @@ describe('AiExperienceSettingsComponent', () => {
     it('should delete all Iris interactions and memories successfully', () => {
         vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 3, messages: 10 }));
         vi.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(5));
+        createComponent();
         fixture.detectChanges();
 
         const deleteChatSpy = vi.spyOn(irisChatHttpService, 'deleteAllSessions').mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
@@ -128,6 +169,7 @@ describe('AiExperienceSettingsComponent', () => {
     it('should handle delete failure when chat deletion fails', () => {
         vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 3, messages: 10 }));
         vi.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(0));
+        createComponent();
         fixture.detectChanges();
 
         vi.spyOn(irisChatHttpService, 'deleteAllSessions').mockReturnValue(throwError(() => new Error('error')));
@@ -147,6 +189,7 @@ describe('AiExperienceSettingsComponent', () => {
     it('should reset only memories when chat deletion succeeds but memory deletion fails', () => {
         vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 3, messages: 10 }));
         vi.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(5));
+        createComponent();
         fixture.detectChanges();
 
         vi.spyOn(irisChatHttpService, 'deleteAllSessions').mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
@@ -167,6 +210,7 @@ describe('AiExperienceSettingsComponent', () => {
     it('should open selection modal and update on choice', async () => {
         vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
         vi.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(0));
+        createComponent();
         fixture.detectChanges();
 
         const openSpy = vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
@@ -183,6 +227,7 @@ describe('AiExperienceSettingsComponent', () => {
     it('should render delete button when sessions exist', () => {
         vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 3, messages: 10 }));
         vi.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(0));
+        createComponent();
         fixture.detectChanges();
 
         const deleteButton = fixture.debugElement.query(By.directive(DeleteButtonDirective));
@@ -192,6 +237,7 @@ describe('AiExperienceSettingsComponent', () => {
     it('should render delete button when memories exist', () => {
         vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
         vi.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(3));
+        createComponent();
         fixture.detectChanges();
 
         const deleteButton = fixture.debugElement.query(By.directive(DeleteButtonDirective));
@@ -201,6 +247,7 @@ describe('AiExperienceSettingsComponent', () => {
     it('should not render delete button when no data exists', () => {
         vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
         vi.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(0));
+        createComponent();
         fixture.detectChanges();
 
         const deleteButton = fixture.debugElement.query(By.directive(DeleteButtonDirective));
@@ -210,6 +257,7 @@ describe('AiExperienceSettingsComponent', () => {
     it('should not update when modal is dismissed', async () => {
         vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
         vi.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(0));
+        createComponent();
         fixture.detectChanges();
 
         vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);

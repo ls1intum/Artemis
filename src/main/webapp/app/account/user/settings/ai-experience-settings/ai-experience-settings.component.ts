@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
@@ -14,6 +15,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-ai-experience-settings',
@@ -27,6 +29,7 @@ export class AiExperienceSettingsComponent implements OnInit {
     private readonly irisMemoriesHttpService = inject(IrisMemoriesHttpService);
     private readonly alertService = inject(AlertService);
     private readonly llmModalService = inject(LLMSelectionModalService);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     protected readonly ActionType = ActionType;
     protected readonly LLMSelectionDecision = LLMSelectionDecision;
@@ -36,6 +39,7 @@ export class AiExperienceSettingsComponent implements OnInit {
     sessionCount = signal(0);
     messageCount = signal(0);
     memoryCount = signal(0);
+    memirisEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.Memiris), { requireSync: true });
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -56,10 +60,8 @@ export class AiExperienceSettingsComponent implements OnInit {
     }
 
     deleteAllIrisInteractions() {
-        forkJoin([
-            this.irisChatHttpService.deleteAllSessions().pipe(catchError(() => of('error'))),
-            this.irisMemoriesHttpService.deleteAllUserMemories().pipe(catchError(() => of('error'))),
-        ]).subscribe({
+        const deleteMemories$ = this.memirisEnabled() ? this.irisMemoriesHttpService.deleteAllUserMemories().pipe(catchError(() => of('error'))) : of(undefined);
+        forkJoin([this.irisChatHttpService.deleteAllSessions().pipe(catchError(() => of('error'))), deleteMemories$]).subscribe({
             next: ([sessionsResult, memoriesResult]) => {
                 const sessionsDeleted = sessionsResult !== 'error';
                 const memoriesDeleted = memoriesResult !== 'error';
@@ -103,6 +105,10 @@ export class AiExperienceSettingsComponent implements OnInit {
             },
         });
 
+        if (!this.memirisEnabled()) {
+            this.memoryCount.set(0);
+            return;
+        }
         this.irisMemoriesHttpService.getUserMemoryCount().subscribe({
             next: (count) => this.memoryCount.set(count),
             error: () => this.memoryCount.set(0),
