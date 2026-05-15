@@ -63,7 +63,7 @@ bun run vitest:coverage              # With coverage
 bun run vitest -- path/to/spec.ts    # Single Vitest file
 
 # Client (Jest - deprecated, being migrated to Vitest)
-bun test                             # Jest with coverage
+bun run test                         # Jest with coverage (`bun test` is Bun's built-in runner — different thing)
 bun run test-diff                    # Test changed files vs origin/develop
 bun run test:ci                      # Full CI with module coverage check
 # Single test:
