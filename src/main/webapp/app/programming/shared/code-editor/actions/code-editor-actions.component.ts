@@ -64,11 +64,11 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     //
     // With model<>() the final emit never fires for parent-driven updates, breaking external consumers of
     // the container's onCommitStateChange. We therefore keep an internal writable signal and synthesize
-    // the *Change output via an effect that emits on every distinct change, with a sentinel to suppress
-    // the initialization emit — matching the legacy setter's behavior of only emitting when the value
-    // actually changed. The internal signal MUST have a different property name from the input (Angular
-    // 21's two-way `[(editorState)]` binding metadata gets corrupted by a class member with the same name
-    // as the input binding key — a `transformFn undefined` lookup failure occurs at runtime).
+    // the *Change output via an effect that emits on every value-change — matching the legacy setter's
+    // `if (value !== _value) emit(value)` behavior, including the first defined value. The internal signal
+    // MUST have a different property name from the input (Angular 21's two-way `[(editorState)]` binding
+    // metadata gets corrupted by a class member with the same name as the input binding key — a
+    // `transformFn undefined` lookup failure occurs at runtime).
     readonly editorState = input<EditorState>(undefined!);
     readonly commitState = input<CommitState>(undefined!);
     readonly internalEditorState = signal<EditorState>(undefined!);
