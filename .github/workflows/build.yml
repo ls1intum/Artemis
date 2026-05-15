@@ -128,7 +128,8 @@ jobs:
         run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false
       - name: Build .war
         # Skip the webapp Gradle task since the Angular client was already built above.
-        run: ./gradlew -Pprod -Pwar bootWar -x webapp
+        # Enable Gradle build cache so CI can reuse task outputs across runs.
+        run: ./gradlew -Pprod -Pwar bootWar -x webapp --build-cache
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
