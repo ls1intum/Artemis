@@ -198,12 +198,15 @@ fi
 # Glob the WAR path AFTER the build step so a freshly produced artifact (or a renamed one after a
 # version bump) is picked up. Doing this before the build would store the literal pattern on a
 # clean checkout and the existence check below would fire even on a successful build.
-WAR_FILES=(build/libs/Artemis-*.war)
-if [ ! -e "${WAR_FILES[0]}" ]; then
+#
+# Pick the *most-recently-modified* WAR rather than the first lexicographic match. Otherwise an
+# older Artemis-N.N.war left over from a previous build will mask the fresh one (e.g. 9.1.3 sorts
+# before 9.2, so the alphabetical glob silently launches stale code).
+WAR_FILE="$(ls -t build/libs/Artemis-*.war 2>/dev/null | head -n 1)"
+if [ -z "$WAR_FILE" ] || [ ! -e "$WAR_FILE" ]; then
     echo -e "${RED}ERROR: No WAR found at build/libs/Artemis-*.war. Drop --skip-build to build it.${NC}"
     exit 1
 fi
-WAR_FILE="${WAR_FILES[0]}"
 
 # Sanity-check the Angular bundle is in the WAR (nginx serves it from there). Without -Pprod the
 # bootWar task may produce a JSP-less, asset-less artifact.
