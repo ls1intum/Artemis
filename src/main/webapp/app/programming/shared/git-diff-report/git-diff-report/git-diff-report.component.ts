@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, computed, effect, inject, input, signal, viewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, computed, effect, inject, input, signal, viewChildren } from '@angular/core';
 import { faAngleDown, faAngleUp, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
@@ -50,7 +50,30 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
     readonly initialDiffsReady = signal<boolean>(false); // Track if initial diffs are ready to show container
     readonly allowSplitView = signal<boolean>(true);
     private readonly initialLoadCount = 5;
-    private readonly loadedTitles = signal<Set<string>>(new Set());
+    readonly loadedTitles = signal<Set<string>>(new Set());
+    /**
+     * Per-title overrides for the collapsed state, populated when the user toggles a panel manually.
+     * Stored as a signal so template bindings stay reactive without mutating the input data.
+     */
+    readonly userCollapsedOverrides = signal<ReadonlyMap<string, boolean>>(new Map());
+    /**
+     * Resolves the visible collapsed state per title: user override (if any) takes precedence,
+     * otherwise the panel is collapsed iff the file has not been loaded yet.
+     */
+    readonly collapsedTitles = computed<ReadonlySet<string>>(() => {
+        const loaded = this.loadedTitles();
+        const overrides = this.userCollapsedOverrides();
+        const titles = this.repositoryDiffInformation().diffInformations.map((diff) => diff.title);
+        const collapsed = new Set<string>();
+        for (const title of titles) {
+            const override = overrides.get(title);
+            const isCollapsed = override !== undefined ? override : !loaded.has(title);
+            if (isCollapsed) {
+                collapsed.add(title);
+            }
+        }
+        return collapsed;
+    });
     private lastDiffInformation?: RepositoryDiffInformation;
     private intersectionObserver?: IntersectionObserver;
     private lazyObserverInitTimeoutId?: number;
@@ -60,11 +83,8 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
     readonly addedLineCount = computed(() => this.repositoryDiffInformation().totalLineChange.addedLineCount);
     readonly removedLineCount = computed(() => this.repositoryDiffInformation().totalLineChange.removedLineCount);
 
-    private readonly userCollapsed = new Map<string, boolean>();
-
     readonly diffPanelContainers = viewChildren<ElementRef<HTMLElement>>('diffPanelContainer');
 
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly hostElementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
     constructor() {
@@ -85,25 +105,6 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
             this.loadedTitles.set(updated);
             this.updateAllDiffsReady();
             this.observeDiffPanels();
-        });
-
-        // Update isCollapsed and loadContent properties when loadedTitles changes
-        effect(() => {
-            const loaded = this.loadedTitles();
-            const info = this.repositoryDiffInformation();
-
-            info.diffInformations.forEach((diff) => {
-                const isLoaded = loaded.has(diff.title);
-
-                diff.loadContent = isLoaded;
-
-                // Update isCollapsed based on user override or default
-                // Default: collapsed if not loaded, expanded if loaded
-                const override = this.userCollapsed.get(diff.title);
-                diff.isCollapsed = override !== undefined ? override : !isLoaded;
-            });
-
-            this.changeDetectorRef.markForCheck();
         });
 
         // Re-observe diff panels whenever the queried set of panel containers changes
@@ -189,16 +190,7 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
         updated.add(title);
         this.loadedTitles.set(updated);
 
-        const diffInfo = this.repositoryDiffInformation().diffInformations.find((info) => info.title === title);
-        if (diffInfo) {
-            diffInfo.loadContent = true;
-            const override = this.userCollapsed.get(title);
-            diffInfo.isCollapsed = override !== undefined ? override : false;
-        }
-
         this.updateAllDiffsReady();
-
-        this.changeDetectorRef.markForCheck();
     }
 
     private updateAllDiffsReady() {
@@ -233,14 +225,9 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
     onToggleClick(title: string, wasCollapsed: boolean) {
         // NgB will flip it after this click, so remember the new state.
         const newCollapsedState = !wasCollapsed;
-        this.userCollapsed.set(title, newCollapsedState);
-
-        const diffInfo = this.repositoryDiffInformation().diffInformations.find((diff) => diff.title === title);
-        if (diffInfo) {
-            diffInfo.isCollapsed = newCollapsedState;
-        }
-
-        this.changeDetectorRef.markForCheck();
+        const overrides = new Map(this.userCollapsedOverrides());
+        overrides.set(title, newCollapsedState);
+        this.userCollapsedOverrides.set(overrides);
 
         // If expanding (wasCollapsed = true), load content before expansion to prevent scroll jumps
         if (wasCollapsed) {

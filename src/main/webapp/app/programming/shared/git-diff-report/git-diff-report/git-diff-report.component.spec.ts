@@ -357,23 +357,21 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         expect(comp.participationId()).toBe(123);
     });
 
-    it('should return user override value when panel has been manually toggled', () => {
+    it('should expose collapsed state via the collapsedTitles computed signal', () => {
         fixture.detectChanges();
 
-        const diffInfo = mockDiffInformation.diffInformations[0];
-        const title = diffInfo.title;
+        const title = mockDiffInformation.diffInformations[0].title;
+
+        // Default for a loaded panel (index < initialLoadCount): expanded, so not in collapsedTitles.
+        expect(comp.collapsedTitles().has(title)).toBe(false);
 
         // User manually collapses the panel
-        comp['userCollapsed'].set(title, true);
-        diffInfo.isCollapsed = true;
-
-        expect(diffInfo.isCollapsed).toBe(true);
+        comp.onToggleClick(title, false);
+        expect(comp.collapsedTitles().has(title)).toBe(true);
 
         // User manually expands the panel
-        comp['userCollapsed'].set(title, false);
-        diffInfo.isCollapsed = false;
-
-        expect(diffInfo.isCollapsed).toBe(false);
+        comp.onToggleClick(title, true);
+        expect(comp.collapsedTitles().has(title)).toBe(false);
     });
 
     it('should track user collapse/expand actions', () => {
@@ -385,7 +383,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         // User expands a collapsed panel
         comp.onToggleClick(title, true);
 
-        expect(comp['userCollapsed'].get(title)).toBe(false);
+        expect(comp.userCollapsedOverrides().get(title)).toBe(false);
         expect(markContentSpy).toHaveBeenCalledWith(title);
 
         markContentSpy.mockClear();
@@ -393,7 +391,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         // User collapses an expanded panel
         comp.onToggleClick(title, false);
 
-        expect(comp['userCollapsed'].get(title)).toBe(true);
+        expect(comp.userCollapsedOverrides().get(title)).toBe(true);
         expect(markContentSpy).not.toHaveBeenCalled();
     });
 
@@ -463,13 +461,12 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         expect(sixthElement).toBeDefined();
         expect(observedElements).toContain(sixthElement);
 
-        const targetDiff = extendedDiffInformation.diffInformations.find((diff) => diff.title === 'Sixth.java');
-        expect(targetDiff?.loadContent).toBeFalsy();
+        expect(comp.loadedTitles().has('Sixth.java')).toBe(false);
 
         observerInstance.trigger([{ target: sixthElement as Element, isIntersecting: true }]);
 
         expect(observerInstance.unobserve).toHaveBeenCalledWith(sixthElement);
-        expect(targetDiff?.loadContent).toBe(true);
+        expect(comp.loadedTitles().has('Sixth.java')).toBe(true);
     });
 
     it('should skip observing panels without data titles', async () => {
@@ -556,14 +553,13 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         fixture.detectChanges();
 
         const sixthFile = 'Sixth.java';
-        const sixthDiffInfo = moreDiffInformation.diffInformations.find((diff) => diff.title === sixthFile);
 
         // Initially not loaded (sixth file is at index 5, beyond the initial load count of 5 which loads indices 0-4)
-        expect(sixthDiffInfo?.loadContent).toBeFalsy();
+        expect(comp.loadedTitles().has(sixthFile)).toBe(false);
 
         comp['markContentAsLoaded'](sixthFile);
 
-        expect(sixthDiffInfo?.loadContent).toBe(true);
+        expect(comp.loadedTitles().has(sixthFile)).toBe(true);
     });
 
     it('should not mark content as loaded twice', () => {
