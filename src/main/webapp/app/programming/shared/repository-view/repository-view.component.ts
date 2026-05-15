@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -48,7 +48,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private router = inject(Router);
 
-    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+    readonly codeEditorContainer = viewChild.required(CodeEditorContainerComponent);
 
     PROGRAMMING = ExerciseType.PROGRAMMING;
     protected readonly FeatureToggle = FeatureToggle;

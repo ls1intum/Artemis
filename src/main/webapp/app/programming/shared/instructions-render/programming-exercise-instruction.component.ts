@@ -5,16 +5,16 @@ import {
     Component,
     ComponentRef,
     EnvironmentInjector,
-    EventEmitter,
     Input,
     OnChanges,
     OnDestroy,
-    Output,
     SimpleChanges,
-    ViewChild,
     ViewContainerRef,
     createComponent,
     inject,
+    input,
+    output,
+    viewChild,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
@@ -71,15 +71,18 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private themeService = inject(ThemeService);
     private cdr = inject(ChangeDetectorRef);
 
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() public exercise: ProgrammingExercise;
-    @Input() public participation: Participation;
-    @Input() generateHtmlEvents: Observable<void>;
-    @Input() personalParticipation: boolean;
+    public readonly participation = input<Participation>(undefined!);
+    readonly generateHtmlEvents = input<Observable<void>>(undefined!);
+    readonly personalParticipation = input<boolean>(undefined!);
 
     // Emits an event if the instructions are not available via the problemStatement
-    @Output() public onNoInstructionsAvailable = new EventEmitter();
+    public readonly onNoInstructionsAvailable = output();
 
-    @ViewChild(ExamExerciseUpdateHighlighterComponent) examExerciseUpdateHighlighterComponent: ExamExerciseUpdateHighlighterComponent;
+    readonly examExerciseUpdateHighlighterComponent = viewChild.required(ExamExerciseUpdateHighlighterComponent);
 
     private problemStatement: string | undefined;
     private participationSubscription?: Subscription;
@@ -171,8 +174,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                         if (this.generateHtmlSubscription) {
                             this.generateHtmlSubscription.unsubscribe();
                         }
-                        if (this.generateHtmlEvents) {
-                            this.generateHtmlSubscription = this.generateHtmlEvents.subscribe(() => {
+                        const generateHtmlEvents = this.generateHtmlEvents();
+                        if (generateHtmlEvents) {
+                            this.generateHtmlSubscription = generateHtmlEvents.subscribe(() => {
                                 // Invalidate the render cache since we are explicitly asked to regenerate HTML
                                 this.lastRenderedProblemStatement = undefined;
                                 this.updateMarkdown();
@@ -183,7 +187,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 }),
                 switchMap((participationHasChanged: boolean) => {
                     // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
-                    if (!this.isLoading && this.exercise && this.participation && (this.isInitial || participationHasChanged)) {
+                    if (!this.isLoading && this.exercise && this.participation() && (this.isInitial || participationHasChanged)) {
                         this.isLoading = true;
                         return of(this.exercise.problemStatement).pipe(
                             tap((problemStatement) => {
@@ -245,7 +249,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.participationSubscription.unsubscribe();
         }
         this.participationSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id!, this.personalParticipation, this.exercise.id!)
+            .subscribeForLatestResultOfParticipation(this.participation().id!, this.personalParticipation(), this.exercise.id!)
             .pipe(filter((result) => !!result))
             .subscribe((result: Result) => {
                 this.latestResult = result;
@@ -303,15 +307,16 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * This method is used for initially loading the results so that the instructions can be rendered.
      */
     loadInitialResult(): Observable<Result | undefined> {
-        const results = getAllResultsOfAllSubmissions(this.participation.submissions);
-        if (this.participation?.id && results.length) {
+        const results = getAllResultsOfAllSubmissions(this.participation().submissions);
+        const participation = this.participation();
+        if (participation?.id && results.length) {
             // Get the result with the highest id (most recent result)
             const latestResult = findLatestResult(results);
             if (!latestResult) {
                 return of(undefined);
             }
             return latestResult.feedbacks ? of(latestResult) : this.loadAndAttachResultDetails(latestResult);
-        } else if (this.participation && this.participation.id) {
+        } else if (participation && participation.id) {
             // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
             return this.loadLatestResult();
         } else {
@@ -324,7 +329,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * If there is no result, return undefined.
      */
     loadLatestResult(): Observable<Result | undefined> {
-        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id!).pipe(
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation().id!).pipe(
             catchError(() => of(undefined)),
             mergeMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
         );
@@ -336,7 +341,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param result - result to which instructions will be attached.
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
-        const currentParticipation = this.participation;
+        const currentParticipation = this.participation();
         return this.resultService.getFeedbackDetailsForResult(currentParticipation.id!, result).pipe(
             map((res) => res && res.body),
             map((feedbacks: Feedback[]) => {
@@ -349,13 +354,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     private renderMarkdown(): void {
         // Highlight differences between previous and current markdown
+        const examExerciseUpdateHighlighterComponent = this.examExerciseUpdateHighlighterComponent();
         if (
-            this.examExerciseUpdateHighlighterComponent?.showHighlightedDifferences() &&
-            this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement &&
-            this.examExerciseUpdateHighlighterComponent.updatedProblemStatement
+            examExerciseUpdateHighlighterComponent?.showHighlightedDifferences() &&
+            examExerciseUpdateHighlighterComponent.outdatedProblemStatement &&
+            examExerciseUpdateHighlighterComponent.updatedProblemStatement
         ) {
-            const outdatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement, this.markdownExtensions);
-            const updatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions);
+            const outdatedMarkdown = htmlForMarkdown(examExerciseUpdateHighlighterComponent.outdatedProblemStatement, this.markdownExtensions);
+            const updatedMarkdown = htmlForMarkdown(examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions);
             const diffedMarkdown = diff(outdatedMarkdown, updatedMarkdown);
             const markdownWithoutTasks = this.prepareTasks(diffedMarkdown);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
@@ -465,7 +471,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             environmentInjector: this.injector,
         });
         componentRef.instance.exercise = this.exercise;
-        componentRef.instance.participation = this.participation;
+        componentRef.instance.participation = this.participation();
         componentRef.instance.taskName = taskName;
         componentRef.instance.latestResult = this.latestResult;
         componentRef.instance.testIds = testIds;

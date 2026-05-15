@@ -1,10 +1,10 @@
 @if (participationBuildCanBeTriggered && (showForSuccessfulSubmissions || participationHasLatestSubmissionWithoutResult)) {
     <jhi-button
-        [btnSize]="btnSize"
+        [btnSize]="btnSize()"
         [btnType]="participationHasLatestSubmissionWithoutResult ? ButtonType.ERROR : ButtonType.PRIMARY"
         [icon]="faRedo"
-        [title]="title"
-        [shouldToggle]="!!title"
+        [title]="title()"
+        [shouldToggle]="!!title()"
         [disabled]="isRetrievingBuildStatus"
         [isLoading]="isBuilding"
         (onClick)="triggerBuild($event)"

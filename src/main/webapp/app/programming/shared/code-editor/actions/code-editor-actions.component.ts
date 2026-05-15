@@ -1,19 +1,4 @@
-import {
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    EventEmitter,
-    Input,
-    NgZone,
-    OnChanges,
-    OnDestroy,
-    OnInit,
-    Output,
-    SimpleChanges,
-    inject,
-    input,
-    output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, output } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
@@ -58,25 +43,33 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     EditorState = EditorState;
     FeatureToggle = FeatureToggle;
 
-    @Input() buildable = true;
-    @Input() unsavedFiles: { [fileName: string]: string };
-    @Input() disableActions = false;
-    @Input() disableAutoSave = false;
+    readonly buildable = input(true);
+    readonly unsavedFiles = input<{
+        [fileName: string]: string;
+    }>(undefined!);
+    readonly disableActions = input(false);
+    readonly disableAutoSave = input(false);
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input() get editorState() {
         return this.editorStateValue;
     }
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input() get commitState() {
         return this.commitStateValue;
     }
     participation = input<Participation>();
 
-    @Output() commitStateChange = new EventEmitter<CommitState>();
-    @Output() editorStateChange = new EventEmitter<EditorState>();
-    @Output() isBuildingChange = new EventEmitter<boolean>();
-    @Output() onSavedFiles = new EventEmitter<{ [fileName: string]: string | undefined }>();
-    @Output() onRefreshFiles = new EventEmitter();
+    readonly commitStateChange = output<CommitState>();
+    readonly editorStateChange = output<EditorState>();
+    readonly isBuildingChange = output<boolean>();
+    readonly onSavedFiles = output<{
+        [fileName: string]: string | undefined;
+    }>();
+    readonly onRefreshFiles = output();
     readonly onCommit = output<void>();
-    @Output() onError = new EventEmitter<string>();
+    readonly onError = output<string>();
 
     private _isBuilding: boolean;
     editorStateValue: EditorState;
@@ -160,7 +153,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
             )
             .subscribe();
 
-        if (!this.disableAutoSave) {
+        if (!this.disableAutoSave()) {
             // Run interval outside Angular zone to prevent unnecessary change detection cycles
             this.ngZone.runOutsideAngular(() => {
                 this.autoSaveInterval = window.setInterval(() => {
@@ -249,9 +242,10 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
      * @desc Saves all files that have unsaved changes in the editor.
      */
     saveChangedFiles(andCommit = false): Observable<any> {
-        if (!_isEmpty(this.unsavedFiles)) {
+        const unsavedFilesValue = this.unsavedFiles();
+        if (!_isEmpty(unsavedFilesValue)) {
             this.editorState = EditorState.SAVING;
-            const unsavedFiles = Object.entries(this.unsavedFiles).map(([fileName, fileContent]) => ({ fileName, fileContent }));
+            const unsavedFiles = Object.entries(unsavedFilesValue).map(([fileName, fileContent]) => ({ fileName, fileContent }));
             return this.repositoryFileService.updateFiles(unsavedFiles, andCommit).pipe(
                 tap((fileSubmission: FileSubmission) => {
                     this.onSavedFiles.emit(fileSubmission);
@@ -285,7 +279,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
             .pipe(
                 tap(() => (this.commitState = CommitState.COMMITTING)),
                 switchMap(() => {
-                    if (!_isEmpty(this.unsavedFiles)) {
+                    if (!_isEmpty(this.unsavedFiles())) {
                         return this.saveChangedFiles(true);
                     } else {
                         return this.repositoryService.commit();
@@ -296,7 +290,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                         this.commitState = CommitState.CLEAN;
                     }
                     // We just assume that after the commit a build happens if the repo is buildable.
-                    if (this.buildable) {
+                    if (this.buildable()) {
                         // Note: this is not 100% clean, but not setting it here would complicate the state model.
                         this.isBuilding = true;
                     }

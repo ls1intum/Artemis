@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, Output, input } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, input, output } from '@angular/core';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
@@ -14,11 +14,15 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [NgStyle, FaIconComponent, TranslateDirective],
 })
 export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy {
-    @Output()
-    onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight?: number }>();
+    readonly onToggleCollapse = output<{
+        event: any;
+        horizontal: boolean;
+        interactable: Interactable;
+        resizableMinWidth?: number;
+        resizableMinHeight?: number;
+    }>();
 
-    @Input()
-    isAssessmentMode = true;
+    readonly isAssessmentMode = input(true);
 
     // make instructions monaco editor in the main editor not collapsible
     disableCollapse = input(false);

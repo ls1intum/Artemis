@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@angular/core';
+import { Component, OnChanges, OnDestroy, SimpleChanges, inject, input } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { head, orderBy } from 'lodash-es';
@@ -29,10 +29,10 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     private submissionService = inject(ProgrammingSubmissionService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
 
-    @Input() exercise: ProgrammingExercise;
-    @Input() participation: Participation;
-    @Input() btnSize = ButtonSize.SMALL;
-    @Input() title = '';
+    readonly exercise = input<ProgrammingExercise>(undefined!);
+    readonly participation = input<Participation>(undefined!);
+    readonly btnSize = input(ButtonSize.SMALL);
+    readonly title = input('');
 
     participationBuildCanBeTriggered: boolean;
     // This only works correctly when the provided participation includes its latest result.
@@ -57,17 +57,18 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     ngOnChanges(changes: SimpleChanges): void {
         if (hasParticipationChanged(changes)) {
             // The identification of manual results is only relevant when the due date was passed, otherwise they could be overridden anyway.
-            if (hasDueDatePassed(this.exercise)) {
+            if (hasDueDatePassed(this.exercise())) {
                 // If the last result was manual, the instructor might not want to override it with a new automatic result.
-                const allResults = this.participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
+                const allResults = this.participation().submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const newestResult = allResults.length ? head(orderBy(allResults, ['id'], ['desc'])) : undefined;
                 this.lastResultIsManual = !!newestResult && isManualResult(newestResult);
             }
             // We can trigger the build only if the participation is active (has build plan), if the build plan was archived (new build plan will be created)
             // or the due date is over.
+            const participation = this.participation();
             this.participationBuildCanBeTriggered =
-                !!this.participation.initializationState &&
-                [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED].includes(this.participation.initializationState);
+                !!participation.initializationState &&
+                [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED].includes(participation.initializationState);
             if (this.participationBuildCanBeTriggered) {
                 this.setupSubmissionSubscription();
                 this.setupResultSubscription();
@@ -93,7 +94,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             this.submissionSubscription.unsubscribe();
         }
         this.submissionSubscription = this.submissionService
-            .getLatestPendingSubmissionByParticipationId(this.participation.id!, this.exercise.id!, this.personalParticipation)
+            .getLatestPendingSubmissionByParticipationId(this.participation().id!, this.exercise().id!, this.personalParticipation)
             .pipe(
                 tap(({ submissionState }) => {
                     switch (submissionState) {
@@ -123,7 +124,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             this.resultSubscription.unsubscribe();
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id!, this.personalParticipation, this.exercise.id)
+            .subscribeForLatestResultOfParticipation(this.participation().id!, this.personalParticipation, this.exercise().id)
             .pipe(
                 filter((result) => !!result),
                 tap((result: Result) => {
@@ -137,11 +138,11 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
 
     triggerWithType(submissionType: SubmissionType) {
         this.isRetrievingBuildStatus = true;
-        return this.submissionService.triggerBuild(this.participation.id!, submissionType).pipe(tap(() => (this.isRetrievingBuildStatus = false)));
+        return this.submissionService.triggerBuild(this.participation().id!, submissionType).pipe(tap(() => (this.isRetrievingBuildStatus = false)));
     }
 
     triggerFailed(lastGraded = false) {
         this.isRetrievingBuildStatus = true;
-        return this.submissionService.triggerFailedBuild(this.participation.id!, lastGraded).pipe(tap(() => (this.isRetrievingBuildStatus = false)));
+        return this.submissionService.triggerFailedBuild(this.participation().id!, lastGraded).pipe(tap(() => (this.isRetrievingBuildStatus = false)));
     }
 }

@@ -78,6 +78,8 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
 
     private readonly userCollapsed = new Map<string, boolean>();
 
+    // TODO: Skipped for migration because:
+    //  There are references to this query that cannot be migrated automatically.
     @ViewChildren('diffPanelContainer')
     private diffPanelContainers?: QueryList<ElementRef<HTMLElement>>;
 

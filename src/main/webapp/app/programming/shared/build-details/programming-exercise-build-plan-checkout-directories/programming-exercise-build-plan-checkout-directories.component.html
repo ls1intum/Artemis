@@ -10,7 +10,7 @@
         <li [class.invisible]="!checkoutDirectories.testCheckoutDirectory">
             <code> {{ checkoutDirectories.testCheckoutDirectory }} </code>
         </li>
-        @for (auxiliaryRepository of auxiliaryRepositories; track auxiliaryRepository) {
+        @for (auxiliaryRepository of auxiliaryRepositories(); track auxiliaryRepository) {
             <li>
                 <code>{{ ROOT_DIRECTORY_PATH }}{{ auxiliaryRepository.checkoutDirectory }} </code>
             </li>

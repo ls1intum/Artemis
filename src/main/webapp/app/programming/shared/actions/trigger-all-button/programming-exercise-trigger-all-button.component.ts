@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, OnInit, inject, input, output } from '@angular/core';
 import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -22,16 +22,16 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
     template: `
         <jhi-button
             id="trigger-all-button"
-            [disabled]="disabled"
-            [btnSize]="btnSize"
+            [disabled]="disabled()"
+            [btnSize]="btnSize()"
             [btnType]="ButtonType.ERROR"
             [isLoading]="isTriggeringBuildAll"
             [tooltip]="'artemisApp.programmingExercise.resubmitAllTooltip'"
             [tooltipPlacement]="TooltipPlacement.BOTTOM"
             [icon]="faRedo"
             [title]="'artemisApp.programmingExercise.resubmitAll'"
-            [shouldToggle]="shouldToggle"
-            [toggleBreakpoint]="toggleBreakpoint"
+            [shouldToggle]="shouldToggle()"
+            [toggleBreakpoint]="toggleBreakpoint()"
             [featureToggle]="FeatureToggle.ProgrammingExercises"
             (onClick)="openTriggerAllModal()"
         />
@@ -47,13 +47,13 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
     TooltipPlacement = TooltipPlacement;
-    @Input() exercise: ProgrammingExercise;
-    @Input() disabled = false;
-    @Input() btnSize = ButtonSize.MEDIUM;
-    @Input() shouldToggle = false;
-    @Input() toggleBreakpoint: 'md' | 'xl' = 'xl';
+    readonly exercise = input<ProgrammingExercise>(undefined!);
+    readonly disabled = input(false);
+    readonly btnSize = input(ButtonSize.MEDIUM);
+    readonly shouldToggle = input(false);
+    readonly toggleBreakpoint = input<'md' | 'xl'>('xl');
 
-    @Output() onBuildTriggered = new EventEmitter();
+    readonly onBuildTriggered = output();
     isTriggeringBuildAll = false;
     // Icons
     faRedo = faRedo;
@@ -70,11 +70,11 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
      */
     openTriggerAllModal() {
         const modalRef = this.modalService.open(ProgrammingExerciseInstructorTriggerAllDialogComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exerciseId = this.exercise.id;
-        modalRef.componentInstance.dueDatePassed = hasDueDatePassed(this.exercise);
+        modalRef.componentInstance.exerciseId = this.exercise().id;
+        modalRef.componentInstance.dueDatePassed = hasDueDatePassed(this.exercise());
         modalRef.result.then(() => {
             this.submissionService
-                .triggerInstructorBuildForAllParticipationsOfExercise(this.exercise.id!)
+                .triggerInstructorBuildForAllParticipationsOfExercise(this.exercise().id!)
                 .pipe(catchError(() => of(undefined)))
                 .subscribe(() => {
                     this.onBuildTriggered.emit();
@@ -84,7 +84,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
 
     private subscribeBuildRunUpdates() {
         this.programmingBuildRunService
-            .getBuildRunUpdates(this.exercise.id!)
+            .getBuildRunUpdates(this.exercise().id!)
             .pipe(tap((buildRunState) => (this.isTriggeringBuildAll = buildRunState === BuildRunState.RUNNING)))
             .subscribe();
     }
@@ -101,7 +101,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
                 <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="cancel()"></button>
             </div>
             <div class="modal-body">
-                @if (dueDatePassed) {
+                @if (dueDatePassed()) {
                     <p class="text-danger font-weight-bold" jhiTranslate="artemisApp.programmingExercise.resubmitAllConfirmAfterDueDate">
                         The due date has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic
                         results would replace the manual results as the latest result for the participation.
@@ -127,8 +127,8 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
 export class ProgrammingExerciseInstructorTriggerAllDialogComponent {
     private activeModal = inject(NgbActiveModal);
 
-    @Input() exerciseId: number;
-    @Input() dueDatePassed: boolean;
+    readonly exerciseId = input<number>(undefined!);
+    readonly dueDatePassed = input<boolean>(undefined!);
 
     // Icons
     faBan = faBan;

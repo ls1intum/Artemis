@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -17,7 +17,7 @@ import { ProgrammingExerciseGradingService } from 'app/programming/manage/servic
         <jhi-button
             id="re-evaluate-button"
             class="ms-3"
-            [disabled]="disabled || isReEvaluationRunning"
+            [disabled]="disabled() || isReEvaluationRunning"
             [btnType]="ButtonType.ERROR"
             [isLoading]="isReEvaluationRunning"
             [tooltip]="'artemisApp.programmingExercise.reEvaluateTooltip'"
@@ -35,8 +35,8 @@ export class ProgrammingExerciseReEvaluateButtonComponent {
 
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
-    @Input() exercise: ProgrammingExercise;
-    @Input() disabled = false;
+    readonly exercise = input<ProgrammingExercise>(undefined!);
+    readonly disabled = input(false);
 
     isReEvaluationRunning = false;
 
@@ -48,7 +48,7 @@ export class ProgrammingExerciseReEvaluateButtonComponent {
      */
     triggerReEvaluate() {
         this.isReEvaluationRunning = true;
-        this.testCaseService.reEvaluate(this.exercise.id!).subscribe({
+        this.testCaseService.reEvaluate(this.exercise().id!).subscribe({
             next: (updatedResultsCount: number) => {
                 this.isReEvaluationRunning = false;
                 this.alertService.success(`artemisApp.programmingExercise.reEvaluateSuccessful`, { number: updatedResultsCount });

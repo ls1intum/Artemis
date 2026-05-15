@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
+import { Component, Input, forwardRef, input, output, viewChild } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { isDate } from 'app/shared/util/utils';
@@ -23,15 +23,23 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     imports: [TranslateDirective, HelpIconComponent, FormsModule, OwlDateTimeModule, FaIconComponent, ArtemisDatePipe],
 })
 export class ProgrammingExerciseTestScheduleDatePickerComponent implements ControlValueAccessor {
-    @ViewChild('dateInput', { static: false }) dateInput: NgModel;
+    readonly dateInput = viewChild.required<NgModel>('dateInput');
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() selectedDate?: Date;
-    @Input() startAt?: dayjs.Dayjs;
-    @Input() min?: dayjs.Dayjs;
-    @Input() max?: dayjs.Dayjs;
-    @Input() label: string;
+    readonly startAt = input<dayjs.Dayjs>();
+    readonly min = input<dayjs.Dayjs>();
+    readonly max = input<dayjs.Dayjs>();
+    readonly label = input<string>(undefined!);
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() tooltipText: string;
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() readOnly: boolean;
-    @Output() onDateReset = new EventEmitter();
+    readonly onDateReset = output();
 
     // Icons
     faCalendarMinus = faCalendarMinus;

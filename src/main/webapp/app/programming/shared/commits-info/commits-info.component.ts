@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { CommitInfo, ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import dayjs from 'dayjs/esm';
@@ -15,13 +15,15 @@ import { NgStyle } from '@angular/common';
 export class CommitsInfoComponent implements OnInit, OnDestroy {
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() commits?: CommitInfo[];
-    @Input() currentSubmissionHash?: string;
-    @Input() previousSubmissionHash?: string;
-    @Input() participationId?: number;
-    @Input() submissions?: ProgrammingSubmission[];
-    @Input() exerciseProjectKey?: string;
-    @Input() isRepositoryView = false;
+    readonly currentSubmissionHash = input<string>();
+    readonly previousSubmissionHash = input<string>();
+    readonly participationId = input<number>();
+    readonly submissions = input<ProgrammingSubmission[]>();
+    readonly exerciseProjectKey = input<string>();
+    readonly isRepositoryView = input(false);
 
     private commitsInfoSubscription: Subscription;
     protected isGroupsExpanded = true;
@@ -29,8 +31,9 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         if (!this.commits) {
-            if (this.participationId) {
-                this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId).subscribe((commits) => {
+            const participationId = this.participationId();
+            if (participationId) {
+                this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(participationId).subscribe((commits) => {
                     if (commits) {
                         this.commits = commits;
                     }

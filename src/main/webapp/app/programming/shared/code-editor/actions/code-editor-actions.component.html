@@ -17,7 +17,7 @@
             type="button"
             class="btn btn-danger navbar-btn me-3"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-            [overwriteDisabled]="disableActions"
+            [overwriteDisabled]="disableActions()"
             (click)="resetRepository()"
             [ngbTooltip]="'artemisApp.editor.conflict.resetRepository' | artemisTranslate"
         >
@@ -38,7 +38,7 @@
         type="button"
         class="btn btn-primary navbar-btn me-3"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-        [overwriteDisabled]="disableActions || editorState === EditorState.REFRESHING || editorState === EditorState.SAVING || commitState === CommitState.COMMITTING"
+        [overwriteDisabled]="disableActions() || editorState === EditorState.REFRESHING || editorState === EditorState.SAVING || commitState === CommitState.COMMITTING"
         (click)="onRefresh()"
         [ngbTooltip]="'artemisApp.editor.refresh.refreshFilesDescription' | artemisTranslate"
     >
@@ -58,7 +58,7 @@
         class="btn btn-success navbar-btn"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [overwriteDisabled]="
-            disableActions ||
+            disableActions() ||
             editorState === EditorState.REFRESHING ||
             editorState === EditorState.SAVING ||
             (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)

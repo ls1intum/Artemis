@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
+import { Component, Input, TemplateRef, input, output } from '@angular/core';
 import { TreeViewItem } from '../../models/tree-view-item';
 import { TreeViewItemTemplateContext } from '../../models/tree-view-item-template-context';
 import { NgTemplateOutlet } from '@angular/common';
@@ -10,9 +10,12 @@ import { NgTemplateOutlet } from '@angular/common';
     imports: [NgTemplateOutlet],
 })
 export class TreeViewItemComponent<T> {
-    @Input() template: TemplateRef<TreeViewItemTemplateContext<T>>;
+    readonly template = input<TemplateRef<TreeViewItemTemplateContext<T>>>(undefined!);
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() item: TreeViewItem<T>;
-    @Output() checkedChange = new EventEmitter<boolean>();
+    readonly checkedChange = output<boolean>();
 
     onCollapseExpand = () => {
         this.item.collapsed = !this.item.collapsed;

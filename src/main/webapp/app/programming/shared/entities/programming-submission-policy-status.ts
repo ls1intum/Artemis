@@ -24,8 +24,14 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [TranslateDirective],
 })
 export class ProgrammingSubmissionPolicyStatusComponent {
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input()
     exercise: ProgrammingExercise;
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input()
     submissionCount?: number;
     readonly SubmissionPolicyType = SubmissionPolicyType;

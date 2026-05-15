@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
@@ -11,7 +11,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
     selector: 'jhi-programming-exercise-instructor-exercise-download',
     template: `
         <jhi-button
-            [disabled]="!exerciseId"
+            [disabled]="!exerciseId()"
             [btnType]="ButtonType.INFO"
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
@@ -31,15 +31,15 @@ export class ProgrammingExerciseInstructorExerciseDownloadComponent {
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
 
-    @Input()
-    exerciseId: number;
+    readonly exerciseId = input<number>(undefined!);
 
     // Icons
     faDownload = faDownload;
 
     exportExercise() {
-        if (this.exerciseId) {
-            this.programmingExerciseService.exportInstructorExercise(this.exerciseId).subscribe({
+        const exerciseId = this.exerciseId();
+        if (exerciseId) {
+            this.programmingExerciseService.exportInstructorExercise(exerciseId).subscribe({
                 next: (response) => {
                     downloadZipFileFromResponse(response);
                     this.alertService.success('artemisApp.programmingExercise.export.successMessageExercise');

@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
@@ -21,25 +21,23 @@ export class ProgrammingExerciseStudentRepoDownloadComponent {
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
 
-    @Input()
-    exerciseId: number;
+    readonly exerciseId = input<number>(undefined!);
 
-    @Input()
-    participationId: number;
+    readonly participationId = input<number>(undefined!);
 
-    @Input()
-    buttonSize: ButtonSize = ButtonSize.SMALL;
+    readonly buttonSize = input<ButtonSize>(ButtonSize.SMALL);
 
-    @Input()
-    title = 'artemisApp.programmingExercise.export.downloadRepo';
+    readonly title = input('artemisApp.programmingExercise.export.downloadRepo');
 
     // Icons
     faDownload = faDownload;
 
     exportRepository() {
-        if (this.exerciseId && this.participationId) {
+        const exerciseId = this.exerciseId();
+        const participationId = this.participationId();
+        if (exerciseId && participationId) {
             this.programmingExerciseService
-                .exportStudentRepository(this.exerciseId, this.participationId)
+                .exportStudentRepository(exerciseId, participationId)
                 .pipe(take(1))
                 .subscribe((response) => {
                     downloadZipFileFromResponse(response);

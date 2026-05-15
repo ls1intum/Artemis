@@ -1,12 +1,12 @@
 <div class="test-schedule-date-content">
     <div class="mb-2 test-schedule-date-title">
-        <span [jhiTranslate]="label"></span>
+        <span [jhiTranslate]="label()"></span>
         @if (tooltipText) {
             <jhi-help-icon [text]="tooltipText" />
         }
     </div>
     <div class="invisible-date-time-picker">
-        <input #dateInput="ngModel" class="form-control" [ngModel]="selectedDate" [min]="min" [max]="max" (ngModelChange)="writeValue($event)" [owlDateTime]="dt" />
+        <input #dateInput="ngModel" class="form-control" [ngModel]="selectedDate" [min]="min()" [max]="max()" (ngModelChange)="writeValue($event)" [owlDateTime]="dt" />
     </div>
     @if (!selectedDate && readOnly) {
         <button type="button" class="btn btn-light btn-lifecycle" [class.btn-lifecycle--deactivated]="!selectedDate" [class.btn-lifecycle--disabled]="readOnly">
@@ -44,5 +44,5 @@
     @if (!selectedDate) {
         <div class="mt-2 text-danger" jhiTranslate="artemisApp.programmingExercise.timeline.notSet"></div>
     }
-    <owl-date-time [startAt]="startAt" #dt />
+    <owl-date-time [startAt]="startAt()" #dt />
 </div>

@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { Component, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
 import { debounceTime, map, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -36,9 +36,9 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     TooltipPlacement = TooltipPlacement;
     ProgrammingSubmissionState = ProgrammingSubmissionState;
 
-    @Input() exercise: ProgrammingExercise;
-    @Input() shouldToggle = false;
-    @Input() toggleBreakpoint: 'md' | 'xl' = 'xl';
+    readonly exercise = input<ProgrammingExercise>(undefined!);
+    readonly shouldToggle = input(false);
+    readonly toggleBreakpoint = input<'md' | 'xl'>('xl');
 
     hasFailedSubmissions = false;
     hasBuildingSubmissions = false;
@@ -67,7 +67,7 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     ngOnChanges(changes: SimpleChanges): void {
         if (hasExerciseChanged(changes)) {
             this.submissionStateSubscription = this.programmingSubmissionService
-                .getSubmissionStateOfExercise(this.exercise.id!)
+                .getSubmissionStateOfExercise(this.exercise().id!)
                 .pipe(
                     map(this.sumSubmissionStates),
                     // If we would update the UI with every small change, it would seem very hectic. So we always take the latest value after 1 second.
@@ -87,9 +87,9 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
      */
     triggerBuildOfFailedSubmissions() {
         this.isBuildingFailedSubmissions = true;
-        const failedSubmissionParticipations = this.programmingSubmissionService.getSubmissionCountByType(this.exercise.id!, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
+        const failedSubmissionParticipations = this.programmingSubmissionService.getSubmissionCountByType(this.exercise().id!, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
         this.programmingSubmissionService
-            .triggerInstructorBuildForParticipationsOfExercise(this.exercise.id!, failedSubmissionParticipations)
+            .triggerInstructorBuildForParticipationsOfExercise(this.exercise().id!, failedSubmissionParticipations)
             .subscribe(() => (this.isBuildingFailedSubmissions = false));
     }
 

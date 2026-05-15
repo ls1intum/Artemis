@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, output } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -24,13 +24,16 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private profileService = inject(ProfileService);
 
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() programmingExercise: ProgrammingExercise;
-    @Input() programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
-    @Input() programmingLanguage?: ProgrammingLanguage;
-    @Input() checkoutSolutionRepository = true;
-    @Input() isCreateOrEdit = false;
-    @Input() isEditMode = false;
-    @Output() submissionBuildPlanEvent = new EventEmitter<BuildPlanCheckoutDirectoriesDTO>();
+    readonly programmingExerciseBuildConfig = input<ProgrammingExerciseBuildConfig>();
+    readonly programmingLanguage = input<ProgrammingLanguage>();
+    readonly checkoutSolutionRepository = input(true);
+    readonly isCreateOrEdit = input(false);
+    readonly isEditMode = input(false);
+    readonly submissionBuildPlanEvent = output<BuildPlanCheckoutDirectoriesDTO>();
 
     checkoutDirectorySubscription?: Subscription;
     courseShortName?: string;
@@ -49,15 +52,16 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     ngOnChanges(changes: SimpleChanges) {
         const isProgrammingLanguageUpdated = changes.programmingLanguage?.currentValue !== changes.programmingLanguage?.previousValue;
         const isCheckoutSolutionRepositoryUpdated = changes.checkoutSolutionRepository?.currentValue !== changes.checkoutSolutionRepository?.previousValue;
+        const isCreateOrEdit = this.isCreateOrEdit();
         if (this.isLocalCIEnabled && (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated)) {
-            if (this.isCreateOrEdit && !this.isEditMode) {
+            if (isCreateOrEdit && !this.isEditMode()) {
                 this.resetProgrammingExerciseBuildCheckoutPaths();
             }
             this.updateCheckoutDirectories();
         }
 
         const isBuildConfigChanged = this.isBuildConfigAvailable(this.programmingExercise.buildConfig);
-        if (this.isCreateOrEdit && isBuildConfigChanged) {
+        if (isCreateOrEdit && isBuildConfigChanged) {
             this.checkoutDirectories = this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories);
         }
     }
@@ -67,7 +71,8 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     }
 
     private updateCheckoutDirectories() {
-        if (!this.programmingLanguage) {
+        const programmingLanguage = this.programmingLanguage();
+        if (!programmingLanguage) {
             return;
         }
 
@@ -75,9 +80,9 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
 
         const checkoutSolutionRepositoryDefault = true;
         this.checkoutDirectorySubscription = this.programmingExerciseService
-            .getCheckoutDirectoriesForProgrammingLanguage(this.programmingLanguage, this.checkoutSolutionRepository ?? checkoutSolutionRepositoryDefault)
+            .getCheckoutDirectoriesForProgrammingLanguage(programmingLanguage, this.checkoutSolutionRepository() ?? checkoutSolutionRepositoryDefault)
             .subscribe((checkoutDirectories) => {
-                if ((this.isCreateOrEdit && !this.isEditMode) || !this.isBuildConfigAvailable(this.programmingExercise.buildConfig)) {
+                if ((this.isCreateOrEdit() && !this.isEditMode()) || !this.isBuildConfigAvailable(this.programmingExercise.buildConfig)) {
                     this.checkoutDirectories = checkoutDirectories;
                     this.submissionBuildPlanEvent.emit(checkoutDirectories.submissionBuildPlanCheckoutDirectories!);
                 } else {

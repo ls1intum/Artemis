@@ -50,12 +50,25 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     protected readonly faUserCheck = faUserCheck;
     protected readonly faUserSlash = faUserSlash;
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() exercise: ProgrammingExercise;
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() isExamMode: boolean;
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() readOnly: boolean;
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() importOptions?: ImportOptions;
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
 
+    // TODO: Skipped for migration because:
+    //  There are references to this query that cannot be migrated automatically.
     @ViewChildren(ProgrammingExerciseTestScheduleDatePickerComponent) datePickerComponents: QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
 
     formValid: boolean;
@@ -124,7 +137,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     calculateFormStatus() {
         const datePickers = this.datePickerComponents.toArray();
-        this.formValid = every(datePickers, (picker) => picker?.dateInput?.valid ?? true);
+        this.formValid = every(datePickers, (picker) => picker?.dateInput()?.valid ?? true);
         this.formEmpty = !every(datePickers, (picker) => {
             if (picker instanceof ProgrammingExerciseTestScheduleDatePickerComponent) {
                 return picker.selectedDate;
@@ -138,7 +151,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         this.unsubscribeDateFieldSubscriptions();
         this.datePickerComponents
             .toArray()
-            .forEach((picker) => this.inputfieldSubscriptions.push(picker.dateInput?.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormStatus()))));
+            .forEach((picker) => this.inputfieldSubscriptions.push(picker.dateInput()?.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormStatus()))));
     }
 
     unsubscribeDateFieldSubscriptions() {

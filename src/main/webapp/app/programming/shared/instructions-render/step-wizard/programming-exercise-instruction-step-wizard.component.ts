@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, inject, input } from '@angular/core';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
@@ -22,10 +22,10 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
 
     TestCaseState = TestCaseState;
 
-    @Input() exercise: Exercise;
-    @Input() participation: Participation;
-    @Input() latestResult?: Result;
-    @Input() tasks: TaskArray;
+    readonly exercise = input<Exercise>(undefined!);
+    readonly participation = input<Participation>(undefined!);
+    readonly latestResult = input<Result>();
+    readonly tasks = input<TaskArray>(undefined!);
 
     steps: Array<{ done: TestCaseState; title: string; testIds: number[] }>;
 
@@ -39,9 +39,10 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
      * @param changes - change that is detected.
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if ((changes.tasks && this.tasks) || (this.tasks && changes.latestResult)) {
-            this.steps = this.tasks.map(({ taskName, testIds }) => ({
-                done: this.instructionService.testStatusForTask(testIds, this.latestResult).testCaseState,
+        const tasks = this.tasks();
+        if ((changes.tasks && tasks) || (tasks && changes.latestResult)) {
+            this.steps = tasks.map(({ taskName, testIds }) => ({
+                done: this.instructionService.testStatusForTask(testIds, this.latestResult()).testCaseState,
                 title: taskName,
                 testIds,
             }));
@@ -54,17 +55,18 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
      * @param taskName - the name of the selected task
      */
     public showDetailsForTests(tests: number[], taskName: string) {
-        if (!this.latestResult || !tests.length) {
+        const latestResult = this.latestResult();
+        if (!latestResult || !tests.length) {
             return;
         }
         const {
             detailed: { notExecutedTests },
-        } = this.instructionService.testStatusForTask(tests, this.latestResult);
+        } = this.instructionService.testStatusForTask(tests, latestResult);
         const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'lg' });
         const componentInstance = modalRef.componentInstance as FeedbackComponent;
-        componentInstance.exercise = this.exercise;
-        componentInstance.result = this.latestResult;
-        componentInstance.participation = this.participation;
+        componentInstance.exercise = this.exercise();
+        componentInstance.result = latestResult;
+        componentInstance.participation = this.participation();
         componentInstance.feedbackFilter = tests;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;
         componentInstance.taskName = taskName;

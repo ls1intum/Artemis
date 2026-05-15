@@ -23,17 +23,27 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     TestCaseState = TestCaseState;
     translationBasePath = 'artemisApp.editor.testStatusLabels.';
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() taskName: string;
 
     /**
      * array of test ids
      */
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input()
     get testIds() {
         return this.testIdsValue;
     }
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() exercise: Exercise;
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() latestResult?: Result;
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() participation: Participation;
 
     testIdsValue: number[];
