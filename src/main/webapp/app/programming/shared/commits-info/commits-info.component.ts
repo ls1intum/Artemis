@@ -37,7 +37,10 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
         const commitGroups: { key: string; commits: CommitInfo[]; date: string }[] = [];
         let tempGroup: CommitInfo[] = [];
 
-        const sorted = [...commits].sort((a, b) => (dayjs(b.timestamp).isAfter(dayjs(a.timestamp)) ? -1 : 1));
+        // Subtract valueOf() so equal timestamps return 0 (stable order) and the comparator is total.
+        // Ascending (oldest first) — the downstream grouping logic depends on this order; the
+        // newest-first display is produced by the trailing commitGroups.reverse().
+        const sorted = [...commits].sort((a, b) => dayjs(a.timestamp).valueOf() - dayjs(b.timestamp).valueOf());
 
         for (let i = 0; i < sorted.length; i++) {
             const commit = sorted[i];

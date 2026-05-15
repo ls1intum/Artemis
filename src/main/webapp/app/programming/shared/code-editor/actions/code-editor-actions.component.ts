@@ -94,12 +94,15 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             this.previousEditorState = current;
             if (previous === EditorState.SAVING) {
                 // setTimeout(0): defer the commitState write outside this effect's CD pass and
-                // re-read commitState at fire time so a concurrent change is respected.
+                // re-read editorState/commitState at fire time so a concurrent change is respected.
+                // If another edit flips editorState back to UNSAVED_CHANGES before the macrotask
+                // fires, we must NOT clobber it with CLEAN based on the stale snapshot.
                 setTimeout(() => {
                     if (untracked(() => this.commitState()) !== CommitState.COMMITTING) {
                         return;
                     }
-                    if (current === EditorState.CLEAN) {
+                    const editorStateAtFire = untracked(() => this.editorState());
+                    if (editorStateAtFire === EditorState.CLEAN) {
                         this.commitState.set(CommitState.CLEAN);
                     } else {
                         this.commitState.set(CommitState.UNCOMMITTED_CHANGES);

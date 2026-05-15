@@ -161,8 +161,12 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     }
 
     private resetProgrammingExerciseBuildCheckoutPaths() {
-        this.programmingExercise().buildConfig!.assignmentCheckoutPath = undefined;
-        this.programmingExercise().buildConfig!.testCheckoutPath = undefined;
-        this.programmingExercise().buildConfig!.solutionCheckoutPath = undefined;
+        const cfg = this.programmingExercise().buildConfig;
+        if (!cfg) {
+            return;
+        }
+        cfg.assignmentCheckoutPath = undefined;
+        cfg.testCheckoutPath = undefined;
+        cfg.solutionCheckoutPath = undefined;
     }
 }

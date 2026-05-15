@@ -117,6 +117,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
 
     private lastSeenParticipation?: Participation;
     private lastSeenProblemStatement?: string;
+    private lastSeenGenerateHtmlEvents?: Observable<void>;
 
     constructor() {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
@@ -142,17 +143,20 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         effect(() => {
             const participation = this.participation();
             this.exercise();
-            this.generateHtmlEvents();
+            const generateHtmlEvents = this.generateHtmlEvents();
 
             if (!initialized) {
                 initialized = true;
                 this.lastSeenParticipation = participation;
+                this.lastSeenGenerateHtmlEvents = generateHtmlEvents;
                 return;
             }
 
             const participationChanged = participation !== this.lastSeenParticipation;
+            const generateHtmlEventsChanged = generateHtmlEvents !== this.lastSeenGenerateHtmlEvents;
             this.lastSeenParticipation = participation;
-            this.processInputChanges({ participationChanged });
+            this.lastSeenGenerateHtmlEvents = generateHtmlEvents;
+            this.processInputChanges({ participationChanged, generateHtmlEventsChanged });
         });
     }
 
@@ -162,7 +166,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         }
     }
 
-    private processInputChanges({ participationChanged = true }: { participationChanged?: boolean } = {}) {
+    private processInputChanges({ participationChanged = true, generateHtmlEventsChanged = true }: { participationChanged?: boolean; generateHtmlEventsChanged?: boolean } = {}) {
         const exercise = this.exercise();
         if (exercise?.isAtLeastTutor) {
             if (this.testCasesSubscription) {
@@ -177,6 +181,22 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 )
                 .subscribe();
         }
+        // (Re-)subscribe to generateHtmlEvents whenever the input observable identity changes,
+        // not only when the participation changes — otherwise a parent-pushed replacement
+        // observable is silently ignored.
+        if (participationChanged || generateHtmlEventsChanged) {
+            if (this.generateHtmlSubscription) {
+                this.generateHtmlSubscription.unsubscribe();
+                this.generateHtmlSubscription = undefined!;
+            }
+            const generateHtmlEvents = this.generateHtmlEvents();
+            if (generateHtmlEvents) {
+                this.generateHtmlSubscription = generateHtmlEvents.subscribe(() => {
+                    this.lastRenderedProblemStatement = undefined;
+                    this.updateMarkdown();
+                });
+            }
+        }
         of(!!this.markdownExtensions)
             .pipe(
                 tap((markdownExtensionsInitialized: boolean) => !markdownExtensionsInitialized && this.setupMarkdownSubscriptions()),
@@ -184,15 +204,13 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 tap((participationHasChanged: boolean) => {
                     if (participationHasChanged) {
                         this.isInitial = true;
-                        if (this.generateHtmlSubscription) {
-                            this.generateHtmlSubscription.unsubscribe();
-                        }
-                        const generateHtmlEvents = this.generateHtmlEvents();
-                        if (generateHtmlEvents) {
-                            this.generateHtmlSubscription = generateHtmlEvents.subscribe(() => {
-                                this.lastRenderedProblemStatement = undefined;
-                                this.updateMarkdown();
-                            });
+                        // Always tear down the previous result websocket when the participation
+                        // changes — including when the new participation is undefined — otherwise
+                        // the stale subscription leaks and continues delivering results for the
+                        // previous participation.
+                        if (this.participationSubscription) {
+                            this.participationSubscription.unsubscribe();
+                            this.participationSubscription = undefined;
                         }
                         if (this.participation() && this.exercise()) {
                             this.setupResultWebsocket();

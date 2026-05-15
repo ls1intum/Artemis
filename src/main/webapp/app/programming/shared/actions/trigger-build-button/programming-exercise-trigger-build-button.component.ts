@@ -1,6 +1,6 @@
 import { Component, OnDestroy, effect, inject, input, signal } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
+import { EMPTY, Subscription } from 'rxjs';
 import { head, orderBy } from 'lodash-es';
 import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -92,11 +92,16 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
      * If there is a pending submission, isBuilding is set to true, otherwise to false.
      */
     setupSubmissionSubscription() {
+        const participationId = this.participation()?.id;
+        const exerciseId = this.exercise().id;
+        if (participationId === undefined || exerciseId === undefined) {
+            return;
+        }
         if (this.submissionSubscription) {
             this.submissionSubscription.unsubscribe();
         }
         this.submissionSubscription = this.submissionService
-            .getLatestPendingSubmissionByParticipationId(this.participation().id!, this.exercise().id!, this.personalParticipation)
+            .getLatestPendingSubmissionByParticipationId(participationId, exerciseId, this.personalParticipation)
             .pipe(
                 tap(({ submissionState }) => {
                     switch (submissionState) {
@@ -122,11 +127,15 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
      * The subscription is used to determine the type of the latest result.
      */
     setupResultSubscription() {
+        const participationId = this.participation()?.id;
+        if (participationId === undefined) {
+            return;
+        }
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation().id!, this.personalParticipation, this.exercise().id)
+            .subscribeForLatestResultOfParticipation(participationId, this.personalParticipation, this.exercise().id)
             .pipe(
                 filter((result) => !!result),
                 tap((result: Result) => {
@@ -140,11 +149,21 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
 
     triggerWithType(submissionType: SubmissionType) {
         this.isRetrievingBuildStatus.set(true);
-        return this.submissionService.triggerBuild(this.participation().id!, submissionType).pipe(tap(() => this.isRetrievingBuildStatus.set(false)));
+        const participationId = this.participation()?.id;
+        if (participationId === undefined) {
+            this.isRetrievingBuildStatus.set(false);
+            return EMPTY;
+        }
+        return this.submissionService.triggerBuild(participationId, submissionType).pipe(tap(() => this.isRetrievingBuildStatus.set(false)));
     }
 
     triggerFailed(lastGraded = false) {
         this.isRetrievingBuildStatus.set(true);
-        return this.submissionService.triggerFailedBuild(this.participation().id!, lastGraded).pipe(tap(() => this.isRetrievingBuildStatus.set(false)));
+        const participationId = this.participation()?.id;
+        if (participationId === undefined) {
+            this.isRetrievingBuildStatus.set(false);
+            return EMPTY;
+        }
+        return this.submissionService.triggerFailedBuild(participationId, lastGraded).pipe(tap(() => this.isRetrievingBuildStatus.set(false)));
     }
 }

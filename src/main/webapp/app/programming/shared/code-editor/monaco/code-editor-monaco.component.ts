@@ -155,6 +155,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     private reviewRenderScheduled = false;
     private reviewRenderAnimationFrameId?: number;
     private pendingReviewRenderFile?: string;
+    // Tracks the most-recently-requested file for the cascade so a slow load for an earlier file
+    // does not run follow-up work (feedback widgets, review widgets, etc.) against the now-current file.
+    private pendingLoadFileName?: string;
     private fileSyncReadySubscription?: Subscription;
     private fileSyncStateReplacedSubscription?: Subscription;
     private suppressNextDirtySignal = new Set<string>();
@@ -278,7 +281,15 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             if (prevSelectedFile && this.fileSession()[prevSelectedFile]) {
                 this.fileSession()[prevSelectedFile].scrollTop = this.editor().getScrollTop();
             }
+            // Record the file we're about to load so a slow response for an earlier file
+            // cannot trigger feedback / review-comment rendering against the now-current file.
+            this.pendingLoadFileName = selectedFile;
             await this.selectFileInEditor(selectedFile);
+            if (this.pendingLoadFileName !== selectedFile) {
+                // Another file load was requested while we were awaiting this one — drop all
+                // follow-up work; the newer cascade owns the editor state from here.
+                return;
+            }
             this.setBuildAnnotations(this.annotationsArray);
             this.newFeedbackLines.set([]);
             this.renderFeedbackWidgets();
@@ -289,6 +300,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             this.pendingReviewRenderFile = selectedFile;
             this.tryRenderPendingReviewCommentWidgets(selectedFile);
         } else if (selectedFileChanged && !selectedFile) {
+            this.pendingLoadFileName = undefined;
             this.selectedFileAwaitingInitialSync.set(false);
         }
 
