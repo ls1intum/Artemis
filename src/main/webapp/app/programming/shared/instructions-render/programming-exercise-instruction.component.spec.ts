@@ -208,18 +208,17 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const oldProblemStatement = 'lorem ipsum';
         const newProblemStatement = 'new lorem ipsum';
         // Seed participation before any change detection so the effect's initial seed pass
-        // already captures it — subsequent processInputChanges runs see no participation change.
+        // captures it — subsequent input-change effect runs see no participation change.
         fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
         const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
         fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: oldProblemStatement });
         comp.isInitial = false;
-        // Prime the seen problem statement so the next change is detected.
-        // @ts-ignore
-        comp.lastSeenProblemStatement = oldProblemStatement;
+        // Prime the seen problem statement so the next change is detected as a real edit.
+        (comp as any).lastSeenProblemStatement = oldProblemStatement;
         fixture.componentRef.setInput('exercise', { ...comp.exercise(), problemStatement: newProblemStatement });
-        comp.processInputChanges({ participationChanged: false });
+        fixture.detectChanges();
         // Wait for debounce (150ms) to complete
         await new Promise((resolve) => setTimeout(resolve, 200));
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
@@ -237,18 +236,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         };
         const newProblemStatement = 'new lorem ipsum';
         // Seed participation before any change detection so the effect's initial seed pass
-        // already captures it; processInputChanges with participationChanged=false then exercises
-        // the "exercise changed but participation didn't" path.
+        // captures it; the subsequent change exercises the "exercise changed, participation didn't" path.
         fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
         const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
-        fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: newProblemStatement });
         comp.isInitial = false;
-        // @ts-ignore
-        comp.lastSeenProblemStatement = undefined;
-        comp.processInputChanges({ participationChanged: false });
-        fixture.changeDetectorRef.detectChanges();
+        (comp as any).lastSeenProblemStatement = undefined;
+        fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: newProblemStatement });
+        fixture.detectChanges();
         // Wait for debounce (150ms) to complete
         await new Promise((resolve) => setTimeout(resolve, 200));
         expect(comp.markdownExtensions).toHaveLength(2);
@@ -492,10 +488,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should update the markdown on a theme change', () => {
-        // Establish a known starting theme so the subsequent change is guaranteed to be a real
-        // signal update. The constructor's `toObservable(currentTheme).pipe(skip(1), ...)` drops
-        // the initial subscription emission, so only this explicit second change should fire
-        // updateMarkdown via the theme observer.
+        // Establish a starting theme and flush the constructor effect's initial run (skipped
+        // because isInitial=true). After flipping isInitial=false, the next theme change is the
+        // first run that should call updateMarkdown.
         themeService.applyThemePreference(Theme.LIGHT);
         fixture.changeDetectorRef.detectChanges();
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');

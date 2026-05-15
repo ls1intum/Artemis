@@ -13,13 +13,14 @@ import {
     inject,
     input,
     output,
+    untracked,
     viewChild,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import type { PluginSimple } from 'markdown-it';
-import { catchError, debounceTime, filter, map, mergeMap, skip, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subject, Subscription, merge, of } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { ProgrammingExerciseTaskExtensionWrapper, taskRegex } from './extensions/programming-exercise-task.extension';
@@ -38,7 +39,7 @@ import diff from 'html-diff-ts';
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { escapeStringForUseInRegex } from 'app/shared/util/string-pure.utils';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProgrammingExerciseInstructionStepWizardComponent } from './step-wizard/programming-exercise-instruction-step-wizard.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -68,19 +69,17 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private themeService = inject(ThemeService);
     private cdr = inject(ChangeDetectorRef);
 
-    // Signal input — read via `this.exercise()` so templates and code see the current value
-    // immediately on the same change-detection pass (effect-mirrored plain fields produced a
-    // one-tick stale render under zoneless / OnPush).
+    // All parent templates always bind exercise/participation/personalParticipation, but tests
+    // exercise un-set states; keep `undefined!` defaults so the read type stays non-nullable.
     readonly exercise = input<ProgrammingExercise>(undefined!);
     public readonly participation = input<Participation>(undefined!);
-    readonly generateHtmlEvents = input<Observable<void>>(undefined!);
-    readonly personalParticipation = input<boolean>(undefined!);
+    readonly generateHtmlEvents = input<Observable<void>>();
+    readonly personalParticipation = input.required<boolean>();
 
     // Emits an event if the instructions are not available via the problemStatement
     public readonly onNoInstructionsAvailable = output();
 
-    // Optional: the highlighter only renders for exam exercises; non-exam exercises must not error
-    // when updateMarkdown reads this query (NG0951 under signal-required semantics).
+    // Optional viewChild: the highlighter only renders for exam exercises.
     readonly examExerciseUpdateHighlighterComponent = viewChild(ExamExerciseUpdateHighlighterComponent);
 
     private problemStatement: string | undefined;
@@ -119,78 +118,56 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     // Subject for debouncing problem statement changes to avoid excessive re-renders during rapid editing
     private problemStatementUpdateSubject = new Subject<void>();
 
-    // Tracks the previously observed participation so the effect can detect a "participation changed"
-    // edge in the same way the legacy ngOnChanges relied on SimpleChanges. Tracks the previous problem
-    // statement string so we can detect problemStatement-only changes (problemStatementHasChanged
-    // helper from the legacy code).
+    // Tracked between effect runs so we can detect a participation-identity change (drives
+    // websocket re-subscription) and a problem-statement edit (drives debounced re-render).
     private lastSeenParticipation?: Participation;
     private lastSeenProblemStatement?: string;
-    private lastSeenGenerateHtmlEvents?: Observable<void>;
-    private inputEffectInitialized = false;
 
     constructor() {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
 
-        // Use takeUntilDestroyed for automatic cleanup of class-level subscriptions. `skip(1)` drops
-        // the initial synchronous emission from `toObservable`: only actual subsequent theme changes
-        // should invalidate the render cache and trigger updateMarkdown. (Without the skip, the
-        // initial emission can race with ngOnInit's first processInputChanges call — once isInitial
-        // flips to false, the queued microtask emission would fire updateMarkdown a second time.)
-        toObservable(this.themeService.currentTheme)
-            .pipe(skip(1), takeUntilDestroyed())
-            .subscribe(() => {
-                if (!this.isInitial) {
-                    // Invalidate the render cache since the theme changed (PlantUML diagrams need re-rendering with new colors)
-                    this.lastRenderedProblemStatement = undefined;
-                    this.updateMarkdown();
-                }
-            });
+        // Re-render on theme changes (PlantUML diagrams embed theme-dependent colors). Skip the
+        // effect's initial synchronous run — only later theme changes should invalidate the cache.
+        let firstThemeRun = true;
+        effect(() => {
+            this.themeService.currentTheme();
+            if (firstThemeRun) {
+                firstThemeRun = false;
+                return;
+            }
+            if (this.isInitial) return;
+            this.lastRenderedProblemStatement = undefined;
+            untracked(() => this.updateMarkdown());
+        });
 
         this.problemStatementUpdateSubject.pipe(debounceTime(150), takeUntilDestroyed()).subscribe(() => {
             this.updateMarkdown();
         });
 
-        // Replaces legacy ngOnChanges. Tracks ALL parent-controlled inputs (exercise, participation,
-        // generateHtmlEvents, personalParticipation) plus exposes a public entry point
-        // (`processInputChanges`) so callers/tests that mutate the underlying state directly can
-        // still drive the cascade. The `inputEffectInitialized` guard avoids running the effect's
-        // first synchronous emission as a "change" — we only want to react to subsequent updates;
-        // ngOnInit-equivalent initialization is implicit (templates read the signal directly).
+        // Subsequent input changes after ngOnInit's first run. The initialized guard below mirrors
+        // ngOnChanges semantics: ngOnInit handles the first call, this effect handles every change
+        // after that.
+        let initialized = false;
         effect(() => {
-            const exercise = this.exercise();
             const participation = this.participation();
-            const generateHtmlEvents = this.generateHtmlEvents();
-            // Read personalParticipation to register it as a tracked dependency for completeness.
-            this.personalParticipation();
+            this.exercise();
+            this.generateHtmlEvents();
 
-            if (!this.inputEffectInitialized) {
+            if (!initialized) {
+                initialized = true;
                 this.lastSeenParticipation = participation;
-                this.lastSeenGenerateHtmlEvents = generateHtmlEvents;
-                this.lastSeenProblemStatement = exercise?.problemStatement;
-                this.inputEffectInitialized = true;
                 return;
             }
 
             const participationChanged = participation !== this.lastSeenParticipation;
-            const generateHtmlEventsChanged = generateHtmlEvents !== this.lastSeenGenerateHtmlEvents;
             this.lastSeenParticipation = participation;
-            this.lastSeenGenerateHtmlEvents = generateHtmlEvents;
-
-            this.processInputChanges({ participationChanged, generateHtmlEventsChanged });
+            this.processInputChanges({ participationChanged });
         });
     }
 
-    /**
-     * Mirrors the legacy ngOnChanges first-call: legacy components received an initial SimpleChanges
-     * for every input before the first render, so processInputChanges() ran (with everything-changed
-     * flags) to set up subscriptions / load data. The constructor effect intentionally skips its
-     * first synchronous emission to avoid double-firing, so the initial pass happens here.
-     *
-     * Guarded by `exercise()` so tests / scenarios that mount the component without inputs do not
-     * trigger result-websocket setup, etc., with undefined state — legacy ngOnChanges only ran when
-     * at least one input was bound.
-     */
     ngOnInit(): void {
+        // ngOnChanges first-call equivalent: only run when at least the exercise input is bound,
+        // so unit tests that mount the bare component don't trigger websocket / data loads.
         if (this.exercise()) {
             this.processInputChanges();
         }
@@ -200,13 +177,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     faSpinner = faSpinner;
     faFileAlt = faFileAlt;
 
-    /**
-     * Public entry point that mirrors the legacy ngOnChanges semantics. Tests and the few external
-     * callers (e.g. exam highlighter) that mutate `exercise` outside the signal-input pipeline can
-     * invoke this to re-trigger the cascade. The `changes` flags default to "everything changed"
-     * to preserve the legacy behavior of calling without arguments.
-     */
-    processInputChanges({ participationChanged = true, generateHtmlEventsChanged = true }: { participationChanged?: boolean; generateHtmlEventsChanged?: boolean } = {}) {
+    private processInputChanges({ participationChanged = true }: { participationChanged?: boolean } = {}) {
         const exercise = this.exercise();
         if (exercise?.isAtLeastTutor) {
             if (this.testCasesSubscription) {
@@ -288,8 +259,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 }),
             )
             .subscribe();
-        // Suppress "unused parameter" warnings until/unless we add per-flag branches.
-        void generateHtmlEventsChanged;
     }
 
     private problemStatementHasChangedFromLast(): boolean {
@@ -540,9 +509,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             hostElement: taskHtmlContainer,
             environmentInjector: this.injector,
         });
-        // Task-status inputs are signal-based — write them via setInput so Angular registers each
-        // value into the input signal pipeline. Plain property assignment would not work for signal
-        // inputs (cluster-6 migration).
         componentRef.setInput('exercise', this.exercise());
         componentRef.setInput('participation', this.participation());
         componentRef.setInput('taskName', taskName);
@@ -554,11 +520,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         // Note: detectChanges() is called in batch after all components are created
     }
 
-    /**
-     * Unsubscribes from all subscriptions.
-     * Note: themeChange and problemStatementUpdate subscriptions use takeUntilDestroyed()
-     * for automatic cleanup.
-     */
+    // Effects and problemStatementUpdateSubject clean themselves up via DestroyRef / takeUntilDestroyed;
+    // only manual rxjs subscriptions are unsubscribed below.
     ngOnDestroy() {
         // Destroy dynamically created task components
         this.destroyTaskComponents();
