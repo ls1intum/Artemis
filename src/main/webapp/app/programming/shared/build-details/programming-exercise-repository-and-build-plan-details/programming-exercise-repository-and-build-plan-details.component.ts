@@ -38,31 +38,27 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
 
     isLocalCIEnabled = true;
 
-    private initialized = false;
-    private previousProgrammingLanguage: ProgrammingLanguage | undefined;
-    private previousCheckoutSolutionRepository: boolean | undefined;
+    private previousProgrammingLanguage?: ProgrammingLanguage;
+    private previousCheckoutSolutionRepository?: boolean;
 
     constructor() {
-        // React to programmingLanguage / checkoutSolutionRepository / programmingExercise changes.
-        // The parent may push buildConfig-only updates through the separate `programmingExerciseBuildConfig`
-        // input while keeping the exercise object stable; reading that signal here keeps it tracked.
+        // ngOnInit handles the first pass synchronously; this effect handles subsequent updates by
+        // comparing each tracked input to its previously-seen value. The parent may push buildConfig-only
+        // updates through the separate `programmingExerciseBuildConfig` input while keeping the exercise
+        // object stable, so we read that signal here to keep it tracked.
         effect(() => {
             const currentProgrammingLanguage = this.programmingLanguage();
             const currentCheckoutSolutionRepository = this.checkoutSolutionRepository();
-            const currentProgrammingExercise = this.programmingExercise();
             this.programmingExerciseBuildConfig(); // track buildConfig-only updates
+            const currentProgrammingExercise = this.programmingExercise();
 
-            if (!this.initialized) {
-                return;
-            }
-
-            const isProgrammingLanguageUpdated = currentProgrammingLanguage !== this.previousProgrammingLanguage;
-            const isCheckoutSolutionRepositoryUpdated = currentCheckoutSolutionRepository !== this.previousCheckoutSolutionRepository;
+            const programmingLanguageChanged = currentProgrammingLanguage !== this.previousProgrammingLanguage;
+            const checkoutSolutionRepositoryChanged = currentCheckoutSolutionRepository !== this.previousCheckoutSolutionRepository;
             this.previousProgrammingLanguage = currentProgrammingLanguage;
             this.previousCheckoutSolutionRepository = currentCheckoutSolutionRepository;
 
             untracked(() => {
-                if (this.isLocalCIEnabled && (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated)) {
+                if (this.isLocalCIEnabled && (programmingLanguageChanged || checkoutSolutionRepositoryChanged)) {
                     if (this.isCreateOrEdit() && !this.isEditMode()) {
                         this.resetProgrammingExerciseBuildCheckoutPaths();
                     }
@@ -86,9 +82,9 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         if (this.isCreateOrEdit() && this.isBuildConfigAvailable(this.programmingExercise().buildConfig)) {
             this.checkoutDirectories.set(this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories()));
         }
+        // Prime the previous-value fields BEFORE the effect's first tick so that no-op tick sees no change.
         this.previousProgrammingLanguage = this.programmingLanguage();
         this.previousCheckoutSolutionRepository = this.checkoutSolutionRepository();
-        this.initialized = true;
     }
 
     ngOnDestroy() {
