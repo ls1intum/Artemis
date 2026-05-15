@@ -119,7 +119,7 @@ jobs:
         ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification 2>&1 | tee tests.log
     - name: Upload JUnit Test Results
       if: success() || failure()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: JUnit Test Results
         path: build/test-results/test/*.xml
@@ -189,7 +189,7 @@ jobs:
         path: build/test-results/test/*.xml
         numFailures: 99
     - name: Test Report
-      uses: dorny/test-reporter@v2
+      uses: dorny/test-reporter@v3
       if: success() || failure()    # run this step even if previous step failed
       with:
         name: Server Tests (PostgreSQL)
@@ -200,13 +200,13 @@ jobs:
       run: bash supporting_scripts/extract_number_of_server_starts.sh
     - name: Upload Server Test Coverage Report
       if: success() || failure()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: Coverage Report Server Tests
         path: build/reports/jacoco/aggregated/html
     - name: Upload JaCoCo XML Reports
       if: success() || failure()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: Server JaCoCo XML
         path: build/reports/jacoco/**/jacocoTestReport.xml
@@ -238,7 +238,7 @@ jobs:
       run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
       if: success() || failure()
     - name: Test Report
-      uses: dorny/test-reporter@v2
+      uses: dorny/test-reporter@v3
       if: success() || failure()    # run this step even if previous step failed
       with:
         name: Java Architecture Tests
@@ -257,7 +257,7 @@ jobs:
         - name: remove project-wide node options set in .npmrc just for this test
           run: sed -i '/^node-options=/d' .npmrc || true
         - name: Setup pnpm
-          uses: pnpm/action-setup@v4
+          uses: pnpm/action-setup@v6
           with:
               run_install: false
         - name: Setup Node.js
@@ -273,19 +273,19 @@ jobs:
           run: pnpm run test:ci
         - name: Upload Client Test Coverage Report
           if: success() || failure()
-          uses: actions/upload-artifact@v6
+          uses: actions/upload-artifact@v7
           with:
               name: Coverage Report Client Tests
               path: build/test-results/lcov-report/
         - name: Upload Vitest Coverage Report
           if: success() || failure()
-          uses: actions/upload-artifact@v6
+          uses: actions/upload-artifact@v7
           with:
               name: Vitest Coverage Report
               path: build/test-results/vitest/coverage/
         - name: Upload Client Coverage Summaries
           if: success() || failure()
-          uses: actions/upload-artifact@v6
+          uses: actions/upload-artifact@v7
           with:
               name: Client Coverage Summaries
               path: |
@@ -294,13 +294,13 @@ jobs:
               if-no-files-found: ignore
         - name: Upload JUnit Test Results
           if: success() || failure()
-          uses: actions/upload-artifact@v6
+          uses: actions/upload-artifact@v7
           with:
             name: Client JUnit Test Results
             path: junit.xml
         - name: Upload Vitest JUnit Test Results
           if: success() || failure()
-          uses: actions/upload-artifact@v6
+          uses: actions/upload-artifact@v7
           with:
             name: Vitest JUnit Test Results
             path: build/test-results/vitest/junit.xml
@@ -311,7 +311,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - name: Setup pnpm
-      uses: pnpm/action-setup@v4
+      uses: pnpm/action-setup@v6
       with:
         run_install: false
     - name: Setup Node.js
@@ -341,7 +341,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - name: Setup pnpm
-      uses: pnpm/action-setup@v4
+      uses: pnpm/action-setup@v6
       with:
         run_install: false
     - name: Setup Node.js
