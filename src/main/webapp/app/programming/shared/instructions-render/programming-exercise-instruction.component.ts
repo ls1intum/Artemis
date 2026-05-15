@@ -67,13 +67,10 @@ export class ProgrammingExerciseInstructionComponent implements OnDestroy {
     private themeService = inject(ThemeService);
     private cdr = inject(ChangeDetectorRef);
 
-    // `exercise` uses the parallel-writable-signal pattern (cluster-6 lesson): the parent binds
-    // [exercise]="..." which feeds `exerciseInput`, and code/tests that mutate `comp.exercise = ...`
-    // assign to a plain writable field. The constructor effect mirrors input -> field; the field
-    // is what the rest of the component reads and what the template references.
-    // eslint-disable-next-line @angular-eslint/no-input-rename
-    readonly exerciseInput = input<ProgrammingExercise>(undefined!, { alias: 'exercise' });
-    public exercise!: ProgrammingExercise;
+    // Signal input — read via `this.exercise()` so templates and code see the current value
+    // immediately on the same change-detection pass (effect-mirrored plain fields produced a
+    // one-tick stale render under zoneless / OnPush).
+    readonly exercise = input<ProgrammingExercise>(undefined!);
     public readonly participation = input<Participation>(undefined!);
     readonly generateHtmlEvents = input<Observable<void>>(undefined!);
     readonly personalParticipation = input<boolean>(undefined!);
@@ -128,7 +125,7 @@ export class ProgrammingExerciseInstructionComponent implements OnDestroy {
     private lastSeenParticipation?: Participation;
     private lastSeenProblemStatement?: string;
     private lastSeenGenerateHtmlEvents?: Observable<void>;
-    private lastSeenExerciseInput?: ProgrammingExercise;
+    private lastSeenExercise?: ProgrammingExercise;
     private inputEffectInitialized = false;
 
     constructor() {
@@ -151,39 +148,29 @@ export class ProgrammingExerciseInstructionComponent implements OnDestroy {
 
         // Replaces legacy ngOnChanges. Tracks ALL parent-controlled inputs (exercise, participation,
         // generateHtmlEvents, personalParticipation) plus exposes a public entry point
-        // (`processInputChanges`) so callers/tests that mutate `exercise` directly can still drive
-        // the cascade. The `inputEffectInitialized` guard avoids running the effect's first
-        // synchronous emission as a "change" — we only want to react to subsequent updates.
-        // The exerciseInput -> exercise mirror is only applied when the input actually changes,
-        // to avoid clobbering field writes by tests/callers (cluster-6 parallel-signal pattern).
+        // (`processInputChanges`) so callers/tests that mutate the underlying state directly can
+        // still drive the cascade. The `inputEffectInitialized` guard avoids running the effect's
+        // first synchronous emission as a "change" — we only want to react to subsequent updates;
+        // ngOnInit-equivalent initialization is implicit (templates read the signal directly).
         effect(() => {
-            const exerciseFromInput = this.exerciseInput();
+            const exercise = this.exercise();
             const participation = this.participation();
             const generateHtmlEvents = this.generateHtmlEvents();
             // Read personalParticipation to register it as a tracked dependency for completeness.
             this.personalParticipation();
 
             if (!this.inputEffectInitialized) {
-                if (exerciseFromInput) {
-                    this.exercise = exerciseFromInput;
-                }
-                this.lastSeenExerciseInput = exerciseFromInput;
+                this.lastSeenExercise = exercise;
                 this.lastSeenParticipation = participation;
                 this.lastSeenGenerateHtmlEvents = generateHtmlEvents;
-                this.lastSeenProblemStatement = this.exercise?.problemStatement;
+                this.lastSeenProblemStatement = exercise?.problemStatement;
                 this.inputEffectInitialized = true;
                 return;
             }
 
-            if (exerciseFromInput !== this.lastSeenExerciseInput) {
-                if (exerciseFromInput) {
-                    this.exercise = exerciseFromInput;
-                }
-                this.lastSeenExerciseInput = exerciseFromInput;
-            }
-
             const participationChanged = participation !== this.lastSeenParticipation;
             const generateHtmlEventsChanged = generateHtmlEvents !== this.lastSeenGenerateHtmlEvents;
+            this.lastSeenExercise = exercise;
             this.lastSeenParticipation = participation;
             this.lastSeenGenerateHtmlEvents = generateHtmlEvents;
 
@@ -202,12 +189,13 @@ export class ProgrammingExerciseInstructionComponent implements OnDestroy {
      * to preserve the legacy behavior of calling without arguments.
      */
     processInputChanges({ participationChanged = true, generateHtmlEventsChanged = true }: { participationChanged?: boolean; generateHtmlEventsChanged?: boolean } = {}) {
-        if (this.exercise?.isAtLeastTutor) {
+        const exercise = this.exercise();
+        if (exercise?.isAtLeastTutor) {
             if (this.testCasesSubscription) {
                 this.testCasesSubscription.unsubscribe();
             }
             this.testCasesSubscription = this.programmingExerciseGradingService
-                .getTestCases(this.exercise.id!)
+                .getTestCases(exercise.id!)
                 .pipe(
                     tap((testCases) => {
                         this.testCases = testCases;
@@ -239,15 +227,16 @@ export class ProgrammingExerciseInstructionComponent implements OnDestroy {
                     }
                 }),
                 switchMap((participationHasChanged: boolean) => {
+                    const currentExercise = this.exercise();
                     // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
-                    if (!this.isLoading && this.exercise && this.participation() && (this.isInitial || participationHasChanged)) {
+                    if (!this.isLoading && currentExercise && this.participation() && (this.isInitial || participationHasChanged)) {
                         this.isLoading = true;
-                        return of(this.exercise.problemStatement).pipe(
+                        return of(currentExercise.problemStatement).pipe(
                             tap((problemStatement) => {
                                 // Set to undefined for null/empty values to preserve empty-state sentinel
                                 // Otherwise set the actual string value
                                 this.problemStatement = problemStatement?.trim() || undefined;
-                                this.lastSeenProblemStatement = this.exercise.problemStatement;
+                                this.lastSeenProblemStatement = currentExercise.problemStatement;
                             }),
                             switchMap(() => this.loadInitialResult()),
                             tap((latestResult) => {
@@ -262,16 +251,16 @@ export class ProgrammingExerciseInstructionComponent implements OnDestroy {
                     } else if (this.problemStatementHasChangedFromLast() && !this.problemStatement) {
                         // Refreshes the state in the singleton task and uml extension service
                         this.latestResult = this.latestResultValue;
-                        this.problemStatement = this.exercise.problemStatement?.trim() || undefined;
-                        this.lastSeenProblemStatement = this.exercise.problemStatement;
+                        this.problemStatement = currentExercise?.problemStatement?.trim() || undefined;
+                        this.lastSeenProblemStatement = currentExercise?.problemStatement;
                         // Use debounced update to avoid excessive re-renders during rapid editing
                         this.problemStatementUpdateSubject.next();
                         return of(undefined);
-                    } else if (this.exercise && this.problemStatementHasChangedFromLast()) {
+                    } else if (currentExercise && this.problemStatementHasChangedFromLast()) {
                         // Refreshes the state in the singleton task and uml extension service
                         this.latestResult = this.latestResultValue;
-                        this.problemStatement = this.exercise.problemStatement?.trim() || undefined;
-                        this.lastSeenProblemStatement = this.exercise.problemStatement;
+                        this.problemStatement = currentExercise.problemStatement?.trim() || undefined;
+                        this.lastSeenProblemStatement = currentExercise.problemStatement;
                         // Use debounced update to avoid excessive re-renders during rapid editing
                         this.problemStatementUpdateSubject.next();
                         return of(undefined);
@@ -286,7 +275,7 @@ export class ProgrammingExerciseInstructionComponent implements OnDestroy {
     }
 
     private problemStatementHasChangedFromLast(): boolean {
-        return this.lastSeenProblemStatement !== this.exercise?.problemStatement;
+        return this.lastSeenProblemStatement !== this.exercise()?.problemStatement;
     }
 
     /**
@@ -311,7 +300,7 @@ export class ProgrammingExerciseInstructionComponent implements OnDestroy {
             this.participationSubscription.unsubscribe();
         }
         this.participationSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation().id!, this.personalParticipation(), this.exercise.id!)
+            .subscribeForLatestResultOfParticipation(this.participation().id!, this.personalParticipation(), this.exercise()!.id!)
             .pipe(filter((result) => !!result))
             .subscribe((result: Result) => {
                 this.latestResult = result;
@@ -326,8 +315,9 @@ export class ProgrammingExerciseInstructionComponent implements OnDestroy {
      * Render the markdown into html.
      */
     updateMarkdown() {
+        const exercise = this.exercise();
         // Skip re-render if problem statement hasn't changed (optimization for live preview)
-        const currentProblemStatement = this.exercise?.problemStatement?.trim();
+        const currentProblemStatement = exercise?.problemStatement?.trim();
         if (currentProblemStatement === this.lastRenderedProblemStatement && !this.isInitial) {
             return;
         }
@@ -338,7 +328,7 @@ export class ProgrammingExerciseInstructionComponent implements OnDestroy {
         this.taskIndex = 0;
         // Set the exercise ID so PlantUML container IDs are scoped per exercise.
         // This prevents cross-contamination when multiple exercises are on the same page (e.g. in exams).
-        this.programmingExercisePlantUmlWrapper.setExerciseId(this.exercise?.id);
+        this.programmingExercisePlantUmlWrapper.setExerciseId(exercise?.id);
         // make sure that always the correct result is set, before updating markdown
         // looks weird, but in setter of latestResult are setters of sub components invoked
         this.latestResult = this.latestResultValue;
@@ -431,9 +421,9 @@ export class ProgrammingExerciseInstructionComponent implements OnDestroy {
             this.cdr.markForCheck();
             // Differences between UMLs are ignored, and we only inject the current one (last callback)
             this.scheduleContentInjection(true);
-        } else if (this.exercise?.problemStatement?.trim()) {
+        } else if (this.exercise()?.problemStatement?.trim()) {
             this.injectableContentForMarkdownCallbacks = [];
-            const renderedProblemStatement = htmlForMarkdown(this.exercise.problemStatement, this.markdownExtensions);
+            const renderedProblemStatement = htmlForMarkdown(this.exercise()!.problemStatement!, this.markdownExtensions);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
             this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks);
@@ -508,14 +498,14 @@ export class ProgrammingExerciseInstructionComponent implements OnDestroy {
                 // Insert anchor divs into the text so that injectable elements can be inserted into them.
                 // Without class="d-flex" the injected components height would be 0.
                 // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
-                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-${this.exercise.id}-task-${id.toString()} d-flex">&#8203;</div>`),
+                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-${this.exercise()!.id}-task-${id.toString()} d-flex">&#8203;</div>`),
             problemStatementHtml,
         );
     }
 
     private injectTasksIntoDocument = () => {
         this.tasks.forEach(({ id, taskName, testIds }) => {
-            const taskHtmlContainers = document.getElementsByClassName(`pe-${this.exercise.id}-task-${id}`);
+            const taskHtmlContainers = document.getElementsByClassName(`pe-${this.exercise()!.id}-task-${id}`);
 
             for (let i = 0; i < taskHtmlContainers.length; i++) {
                 const taskHtmlContainer = taskHtmlContainers[i];
@@ -535,7 +525,7 @@ export class ProgrammingExerciseInstructionComponent implements OnDestroy {
         // Task-status inputs are signal-based — write them via setInput so Angular registers each
         // value into the input signal pipeline. Plain property assignment would not work for signal
         // inputs (cluster-6 migration).
-        componentRef.setInput('exercise', this.exercise);
+        componentRef.setInput('exercise', this.exercise());
         componentRef.setInput('participation', this.participation());
         componentRef.setInput('taskName', taskName);
         componentRef.setInput('latestResult', this.latestResult);

@@ -112,7 +112,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const oldSubscription = new Subscription();
         const getTestCasesSpy = vi.spyOn(programmingExerciseGradingService, 'getTestCases');
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('participation', participation);
         // @ts-ignore
         comp.participationSubscription = oldSubscription;
@@ -144,7 +144,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const generateHtmlEvents = of(undefined);
 
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('participation', participation);
         fixture.componentRef.setInput('generateHtmlEvents', generateHtmlEvents);
         // @ts-ignore
@@ -174,7 +174,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
         const noInstructionsAvailableSpy = vi.spyOn(comp.onNoInstructionsAvailable, 'emit');
         fixture.componentRef.setInput('participation', participation);
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         comp.isInitial = true;
         comp.isLoading = false;
 
@@ -212,12 +212,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
         const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
-        comp.exercise = { ...exercise, problemStatement: oldProblemStatement };
+        fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: oldProblemStatement });
         comp.isInitial = false;
         // Prime the seen problem statement so the next change is detected.
         // @ts-ignore
         comp.lastSeenProblemStatement = oldProblemStatement;
-        comp.exercise = { ...comp.exercise, problemStatement: newProblemStatement };
+        fixture.componentRef.setInput('exercise', { ...comp.exercise(), problemStatement: newProblemStatement });
         comp.processInputChanges({ participationChanged: false });
         // Wait for debounce (150ms) to complete
         await new Promise((resolve) => setTimeout(resolve, 200));
@@ -242,7 +242,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
         const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
-        comp.exercise = { ...exercise, problemStatement: newProblemStatement };
+        fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: newProblemStatement });
         comp.isInitial = false;
         // @ts-ignore
         comp.lastSeenProblemStatement = undefined;
@@ -269,7 +269,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
         getLatestResultWithFeedbacks.mockReturnValue(throwError(() => new Error('fatal error')));
         fixture.componentRef.setInput('participation', participation);
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         comp.isInitial = true;
         comp.isLoading = false;
 
@@ -304,7 +304,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         // @ts-ignore
         comp.problemStatement = exercise.problemStatement!;
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         comp.latestResult = result;
         // @ts-ignore
         comp.setupMarkdownSubscriptions();
@@ -384,7 +384,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         // @ts-ignore
         comp.problemStatement = exercise.problemStatement!;
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         comp.latestResult = result;
         // @ts-ignore
         comp.setupMarkdownSubscriptions();
@@ -460,7 +460,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         // @ts-ignore
         comp.problemStatement = exercise.problemStatement!;
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         comp.latestResult = result;
         // @ts-ignore
         comp.setupMarkdownSubscriptions();
@@ -484,10 +484,10 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
         // @ts-ignore
         comp.problemStatement = problemStatement;
-        comp.exercise = { problemStatement: updatedProblemStatement } as ProgrammingExercise;
+        fixture.componentRef.setInput('exercise', { problemStatement: updatedProblemStatement } as ProgrammingExercise);
         comp.renderUpdatedProblemStatement();
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
-        expect(comp.exercise.problemStatement).toEqual(updatedProblemStatement);
+        expect(comp.exercise()!.problemStatement).toEqual(updatedProblemStatement);
     });
 
     it('should update the markdown on a theme change', () => {
@@ -595,7 +595,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
             { ...instanceB, exercise: exerciseB },
             { ...instanceC, exercise: exerciseC },
         ]) {
-            comp.exercise = exercise;
+            fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('participation', { id: exercise.id! + 100 });
             // @ts-ignore - accessing private method for test setup
             comp.setupMarkdownSubscriptions();
@@ -641,7 +641,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
             { ...instanceA, exercise: exerciseA },
             { ...instanceB, exercise: exerciseB },
         ]) {
-            comp.exercise = exercise;
+            fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('participation', { id: exercise.id! + 100 });
             // @ts-ignore
             comp.setupMarkdownSubscriptions();
@@ -681,7 +681,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
             { ...instanceA, exercise: exerciseA },
             { ...instanceB, exercise: exerciseB },
         ]) {
-            comp.exercise = exercise;
+            fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('participation', { id: exercise.id! + 100 });
             // @ts-ignore
             comp.setupMarkdownSubscriptions();
@@ -719,7 +719,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         const instance = createComponentInstance();
         const exercise = createExercise(42, exerciseA_problemStatement);
 
-        instance.comp.exercise = exercise;
+        instance.fixture.componentRef.setInput('exercise', exercise);
         instance.fixture.componentRef.setInput('participation', { id: 142 });
         // @ts-ignore
         instance.comp.setupMarkdownSubscriptions();

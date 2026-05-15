@@ -88,158 +88,158 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should do nothing if the release date is set to null', () => {
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         comp.updateReleaseDate(undefined);
 
-        expect(comp.exercise.startDate).toEqual(startDate);
-        expect(comp.exercise.dueDate).toEqual(nextDueDate);
-        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exampleSolutionPublicationDate);
+        expect(comp.exercise()!.startDate).toEqual(startDate);
+        expect(comp.exercise()!.dueDate).toEqual(nextDueDate);
+        expect(comp.exercise()!.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
+        expect(comp.exercise()!.exampleSolutionPublicationDate).toEqual(exampleSolutionPublicationDate);
     });
 
     it('should only reset the due date if the release date is between the due date and the after due date', () => {
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         const newRelease = dayjs().add(6, 'days');
         comp.updateReleaseDate(newRelease);
 
-        expect(comp.exercise.startDate).toEqual(newRelease);
-        expect(comp.exercise.dueDate).toEqual(newRelease);
-        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exampleSolutionPublicationDate);
+        expect(comp.exercise()!.startDate).toEqual(newRelease);
+        expect(comp.exercise()!.dueDate).toEqual(newRelease);
+        expect(comp.exercise()!.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
+        expect(comp.exercise()!.exampleSolutionPublicationDate).toEqual(exampleSolutionPublicationDate);
     });
 
     it('should reset the due date, the after due date and the example solution publication date if the new release is after all dates', () => {
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         const newRelease = dayjs().add(10, 'days');
         comp.updateReleaseDate(newRelease);
 
-        expect(comp.exercise.releaseDate).toEqual(newRelease);
-        expect(comp.exercise.startDate).toEqual(newRelease);
-        expect(comp.exercise.dueDate).toEqual(newRelease);
-        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(newRelease);
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(newRelease);
+        expect(comp.exercise()!.releaseDate).toEqual(newRelease);
+        expect(comp.exercise()!.startDate).toEqual(newRelease);
+        expect(comp.exercise()!.dueDate).toEqual(newRelease);
+        expect(comp.exercise()!.buildAndTestStudentSubmissionsAfterDueDate).toEqual(newRelease);
+        expect(comp.exercise()!.exampleSolutionPublicationDate).toEqual(newRelease);
     });
 
     it('should only reset the due date if the start date is between the due date and the after due date', () => {
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         const newStart = dayjs().add(6, 'days');
         comp.updateStartDate(newStart);
 
-        expect(comp.exercise.dueDate).toEqual(newStart);
-        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exampleSolutionPublicationDate);
+        expect(comp.exercise()!.dueDate).toEqual(newStart);
+        expect(comp.exercise()!.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
+        expect(comp.exercise()!.exampleSolutionPublicationDate).toEqual(exampleSolutionPublicationDate);
     });
 
     it('should reset the due date, the after due date and the example solution publication date if the new start date is after all dates', () => {
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         const newStart = dayjs().add(10, 'days');
         comp.updateStartDate(newStart);
 
-        expect(comp.exercise.dueDate).toEqual(newStart);
-        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(newStart);
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(newStart);
+        expect(comp.exercise()!.dueDate).toEqual(newStart);
+        expect(comp.exercise()!.buildAndTestStudentSubmissionsAfterDueDate).toEqual(newStart);
+        expect(comp.exercise()!.exampleSolutionPublicationDate).toEqual(newStart);
     });
 
     it('should reset the example solution publication date if the new due date is later', () => {
         const newDueDate = dayjs().add(10, 'days');
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         exercise.dueDate = newDueDate;
         comp.updateExampleSolutionPublicationDate(newDueDate);
 
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(newDueDate);
+        expect(comp.exercise()!.exampleSolutionPublicationDate).toEqual(newDueDate);
     });
 
     it('should change the value for allowing complaints for exercise with automatic assessment after toggling', () => {
-        comp.exercise = exercise;
-        comp.exercise.allowComplaintsForAutomaticAssessments = false;
-        comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
+        fixture.componentRef.setInput('exercise', exercise);
+        comp.exercise()!.allowComplaintsForAutomaticAssessments = false;
+        comp.exercise()!.assessmentType = AssessmentType.AUTOMATIC;
         comp.toggleComplaintsType();
 
-        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBe(true);
+        expect(comp.exercise()!.allowComplaintsForAutomaticAssessments).toBe(true);
     });
 
     it('should change feedback request allowed after toggling', () => {
-        comp.exercise = { ...exercise, allowFeedbackRequests: false };
-        expect(comp.exercise.allowFeedbackRequests).toBe(false);
+        fixture.componentRef.setInput('exercise', { ...exercise, allowFeedbackRequests: false });
+        expect(comp.exercise()!.allowFeedbackRequests).toBe(false);
 
         comp.toggleFeedbackRequests();
 
-        expect(comp.exercise.allowFeedbackRequests).toBe(true);
+        expect(comp.exercise()!.allowFeedbackRequests).toBe(true);
     });
 
     it('should change assessment type from automatic to semi-automatic after toggling', () => {
-        comp.exercise = exercise;
-        comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
+        fixture.componentRef.setInput('exercise', exercise);
+        comp.exercise()!.assessmentType = AssessmentType.AUTOMATIC;
         comp.toggleAssessmentType();
 
-        expect(comp.exercise.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
-        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBe(false);
+        expect(comp.exercise()!.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
+        expect(comp.exercise()!.allowComplaintsForAutomaticAssessments).toBe(false);
     });
 
     it('should change assessment type from semi-automatic to automatic after toggling', () => {
-        comp.exercise = exercise;
-        comp.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        fixture.componentRef.setInput('exercise', exercise);
+        comp.exercise()!.assessmentType = AssessmentType.SEMI_AUTOMATIC;
         comp.toggleAssessmentType();
 
-        expect(comp.exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
-        expect(comp.exercise.assessmentDueDate).toBeUndefined();
+        expect(comp.exercise()!.assessmentType).toBe(AssessmentType.AUTOMATIC);
+        expect(comp.exercise()!.assessmentDueDate).toBeUndefined();
     });
 
     it('should disable feedback suggestions when changing the assessment type to automatic', () => {
-        comp.exercise = exercise;
-        comp.exercise.id = undefined;
+        fixture.componentRef.setInput('exercise', exercise);
+        comp.exercise()!.id = undefined;
         comp.ngOnInit();
 
-        expect(comp.exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
+        expect(comp.exercise()!.assessmentType).toBe(AssessmentType.AUTOMATIC);
 
-        comp.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        comp.exercise.feedbackSuggestionModule = 'programming_module';
+        comp.exercise()!.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        comp.exercise()!.feedbackSuggestionModule = 'programming_module';
         comp.toggleAssessmentType(); // toggle to AUTOMATIC
 
-        expect(comp.exercise.feedbackSuggestionModule).toBeUndefined();
+        expect(comp.exercise()!.feedbackSuggestionModule).toBeUndefined();
     });
 
     it('should change publication of tests for programming exercise with published solution', () => {
-        comp.exercise = { ...exercise, exampleSolutionPublicationDate: dayjs() };
-        expect(comp.exercise.releaseTestsWithExampleSolution).toBeFalsy();
+        fixture.componentRef.setInput('exercise', { ...exercise, exampleSolutionPublicationDate: dayjs() });
+        expect(comp.exercise()!.releaseTestsWithExampleSolution).toBeFalsy();
         comp.toggleReleaseTests();
-        expect(comp.exercise.releaseTestsWithExampleSolution).toBe(true);
+        expect(comp.exercise()!.releaseTestsWithExampleSolution).toBe(true);
     });
 
     it('should not cascade date changes when updateReleaseDate is called when readOnly is true', () => {
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         const oldRelease = dayjs().add(10, 'days');
         comp.updateReleaseDate(oldRelease);
 
-        expect(comp.exercise.releaseDate).toEqual(oldRelease);
-        expect(comp.exercise.dueDate).toEqual(oldRelease);
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(oldRelease);
+        expect(comp.exercise()!.releaseDate).toEqual(oldRelease);
+        expect(comp.exercise()!.dueDate).toEqual(oldRelease);
+        expect(comp.exercise()!.exampleSolutionPublicationDate).toEqual(oldRelease);
 
-        comp.readOnly = true;
+        fixture.componentRef.setInput('readOnly', true);
 
         const newRelease = dayjs().add(20, 'days');
         comp.updateReleaseDate(newRelease);
 
-        expect(comp.exercise.releaseDate).toEqual(newRelease);
-        expect(comp.exercise.dueDate).toEqual(oldRelease);
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(oldRelease);
+        expect(comp.exercise()!.releaseDate).toEqual(newRelease);
+        expect(comp.exercise()!.dueDate).toEqual(oldRelease);
+        expect(comp.exercise()!.exampleSolutionPublicationDate).toEqual(oldRelease);
     });
 
     it('should not cascade date changes when updateExampleSolutionPublicationDate is called when readOnly is true', () => {
         const oldDueDate = dayjs().add(10, 'days');
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         exercise.dueDate = oldDueDate;
         comp.updateExampleSolutionPublicationDate(oldDueDate);
 
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(oldDueDate);
+        expect(comp.exercise()!.exampleSolutionPublicationDate).toEqual(oldDueDate);
 
-        comp.readOnly = true;
+        fixture.componentRef.setInput('readOnly', true);
 
         const newDueDate = dayjs().add(20, 'days');
         exercise.dueDate = newDueDate;
         comp.updateExampleSolutionPublicationDate(newDueDate);
 
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(oldDueDate);
+        expect(comp.exercise()!.exampleSolutionPublicationDate).toEqual(oldDueDate);
     });
 
     it('should alert correct date when exampleSolutionPublicationDate is updated automatically', () => {
@@ -248,11 +248,11 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         const now = dayjs();
         exercise.dueDate = now.add(10, 'days');
         exercise.releaseDate = now.add(20, 'days');
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
 
         comp.updateExampleSolutionPublicationDate(exercise.releaseDate);
 
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exercise.releaseDate);
+        expect(comp.exercise()!.exampleSolutionPublicationDate).toEqual(exercise.releaseDate);
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenLastCalledWith('artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate');
 
@@ -260,7 +260,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         exercise.releaseDate = now.add(30, 'days');
         comp.updateExampleSolutionPublicationDate(exercise.dueDate);
 
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exercise.dueDate);
+        expect(comp.exercise()!.exampleSolutionPublicationDate).toEqual(exercise.dueDate);
         expect(alertSpy).toHaveBeenCalledTimes(2);
         expect(alertSpy).toHaveBeenLastCalledWith('artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
     });
@@ -274,7 +274,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         newExercise.dueDate = now.add(10, 'days');
         newExercise.releaseDate = now.add(20, 'days');
         newExercise.startDate = now.add(21, 'days');
-        comp.exercise = newExercise;
+        fixture.componentRef.setInput('exercise', newExercise);
 
         comp.applyExerciseDateCascade(newExercise);
 
@@ -286,7 +286,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
         const newerExercise = { ...newExercise };
         newerExercise.dueDate = now.add(40, 'days');
-        comp.exercise = newerExercise;
+        fixture.componentRef.setInput('exercise', newerExercise);
         comp.applyExerciseDateCascade(newerExercise);
 
         expect(alertSpy).toHaveBeenCalledTimes(nthCall + 1);
@@ -294,9 +294,9 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should enable checkbox for complaints on automatic assessments for automatically assessed exam exercises', () => {
-        comp.exercise = exercise;
-        comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
-        comp.isExamMode = true;
+        fixture.componentRef.setInput('exercise', exercise);
+        comp.exercise()!.assessmentType = AssessmentType.AUTOMATIC;
+        fixture.componentRef.setInput('isExamMode', true);
         exercise.dueDate = undefined;
         fixture.detectChanges();
         const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment');
@@ -304,9 +304,9 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it.each([true, false])('should disable checkbox for complaints on automatic assessments for exercises without automatic assessment', (examMode: boolean) => {
-        comp.exercise = exercise;
-        comp.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        comp.isExamMode = examMode;
+        fixture.componentRef.setInput('exercise', exercise);
+        comp.exercise()!.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        fixture.componentRef.setInput('isExamMode', examMode);
         if (!examMode) {
             exercise.course = new Course();
             exercise.course.complaintsEnabled = true;
@@ -317,9 +317,9 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should disable checkbox for complaints on automatic assessments for automatically assessed course exercises without due date', () => {
-        comp.exercise = exercise;
-        comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
-        comp.isExamMode = false;
+        fixture.componentRef.setInput('exercise', exercise);
+        comp.exercise()!.assessmentType = AssessmentType.AUTOMATIC;
+        fixture.componentRef.setInput('isExamMode', false);
         exercise.dueDate = undefined;
         exercise.course = new Course();
         exercise.course.complaintsEnabled = true;
@@ -329,14 +329,14 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it.each([true, false])('should enable checkbox to include tests in example solution', (examMode: boolean) => {
-        comp.exercise = exercise;
-        comp.isExamMode = examMode;
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('isExamMode', examMode);
         if (!examMode) {
             exercise.course = new Course();
             exercise.course.complaintsEnabled = true;
         } else {
-            comp.exercise.exampleSolutionPublicationDate = undefined;
-            comp.exercise.exerciseGroup = { exam: { exampleSolutionPublicationDate } };
+            comp.exercise()!.exampleSolutionPublicationDate = undefined;
+            comp.exercise()!.exerciseGroup = { exam: { exampleSolutionPublicationDate } };
         }
         fixture.detectChanges();
         const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution');
@@ -344,8 +344,8 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should disable checkbox to include tests in example solution without example solution publication date', () => {
-        comp.exercise = exercise;
-        comp.exercise.exampleSolutionPublicationDate = undefined;
+        fixture.componentRef.setInput('exercise', exercise);
+        comp.exercise()!.exampleSolutionPublicationDate = undefined;
         fixture.detectChanges();
         const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution');
         expectElementToBeDisabled(checkbox);
@@ -353,8 +353,8 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     it('should calculate form validation status', async () => {
         // Component template would read exercise.* during the implicit change-detection cycle in
-        // zoneless mode; seed the field so detectChanges doesn't throw.
-        comp.exercise = exercise;
+        // zoneless mode; seed the input so detectChanges doesn't throw.
+        fixture.componentRef.setInput('exercise', exercise);
         const valueChanges = new Subject<boolean>();
         const datePicker = {
             dateInput: () => ({

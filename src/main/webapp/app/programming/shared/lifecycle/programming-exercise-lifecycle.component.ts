@@ -51,21 +51,14 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     protected readonly faUserCheck = faUserCheck;
     protected readonly faUserSlash = faUserSlash;
 
-    // Signal-inputs receive parent bindings. They are aliased so plain writable mirror fields can
-    // be used by the template, by direct mutating helpers (e.g. updateReleaseDate), and by tests
-    // that assign comp.exercise = exercise directly. An effect syncs input -> mirror on change.
-    /* eslint-disable @angular-eslint/no-input-rename */
-    readonly exerciseInput = input<ProgrammingExercise>(undefined!, { alias: 'exercise' });
-    readonly isExamModeInput = input<boolean>(false, { alias: 'isExamMode' });
-    readonly readOnlyInput = input<boolean>(false, { alias: 'readOnly' });
-    readonly importOptionsInput = input<ImportOptions | undefined>(undefined, { alias: 'importOptions' });
-    /* eslint-enable @angular-eslint/no-input-rename */
+    // Signal inputs — read directly via `()` so templates and code see the current value
+    // immediately on the same change-detection pass (effect-mirrored plain fields produced a
+    // one-tick stale render under zoneless / OnPush).
+    readonly exercise = input<ProgrammingExercise>(undefined!);
+    readonly isExamMode = input<boolean>(false);
+    readonly readOnly = input<boolean>(false);
+    readonly importOptions = input<ImportOptions | undefined>(undefined);
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
-
-    exercise!: ProgrammingExercise;
-    isExamMode: boolean = undefined!;
-    readOnly: boolean = undefined!;
-    importOptions?: ImportOptions;
 
     readonly datePickerComponents: Signal<readonly ProgrammingExerciseTestScheduleDatePickerComponent[]> = viewChildren(ProgrammingExerciseTestScheduleDatePickerComponent);
 
@@ -82,52 +75,31 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     private urlSubscription: Subscription;
 
     private effectInitialized = false;
-    private lastSeenExerciseInput?: ProgrammingExercise;
-    private lastSeenIsExamModeInput?: boolean;
-    private lastSeenReadOnlyInput?: boolean;
-    private lastSeenImportOptionsInput?: ImportOptions;
+    private lastSeenExercise?: ProgrammingExercise;
 
     constructor() {
-        // Mirror signal-inputs into writable mirror fields, but only when the upstream input actually
-        // changes between effect runs. The mirror fields are also writable by tests / direct callers
-        // (e.g. comp.isExamMode = true), and an unconditional copy in the effect would clobber those.
-        //
         // Tracks ALL four parent-controlled inputs so a change to any of them re-runs the effect —
         // matching the legacy ngOnChanges semantics for `exercise`. On the very first run we only
-        // seed `lastSeen*` so subsequent runs can detect real input changes; we do NOT overwrite
-        // mirror fields on the first run, since ngOnInit (or test code that ran between
-        // `createComponent` and the first detect cycle) may already have populated them.
+        // seed `lastSeenExercise`; ngOnInit handles synchronous initialization. On subsequent runs,
+        // when the exercise reference changes, we run the date cascade. Reading the other inputs
+        // here keeps them as tracked dependencies so a parent change re-runs CD downstream.
         effect(() => {
-            const newExercise = this.exerciseInput();
-            const newIsExamMode = this.isExamModeInput();
-            const newReadOnly = this.readOnlyInput();
-            const newImportOptions = this.importOptionsInput();
+            const newExercise = this.exercise();
+            // Track the other inputs so the effect re-runs when they change (no side effects needed
+            // because templates and code read them directly via () now).
+            this.isExamMode();
+            this.readOnly();
+            this.importOptions();
 
             if (!this.effectInitialized) {
-                this.lastSeenExerciseInput = newExercise;
-                this.lastSeenIsExamModeInput = newIsExamMode;
-                this.lastSeenReadOnlyInput = newReadOnly;
-                this.lastSeenImportOptionsInput = newImportOptions;
+                this.lastSeenExercise = newExercise;
                 this.effectInitialized = true;
                 return;
             }
 
-            if (newIsExamMode !== this.lastSeenIsExamModeInput) {
-                this.isExamMode = newIsExamMode;
-                this.lastSeenIsExamModeInput = newIsExamMode;
-            }
-            if (newReadOnly !== this.lastSeenReadOnlyInput) {
-                this.readOnly = newReadOnly;
-                this.lastSeenReadOnlyInput = newReadOnly;
-            }
-            if (newImportOptions !== this.lastSeenImportOptionsInput) {
-                this.importOptions = newImportOptions;
-                this.lastSeenImportOptionsInput = newImportOptions;
-            }
-            if (newExercise !== this.lastSeenExerciseInput) {
-                this.lastSeenExerciseInput = newExercise;
+            if (newExercise !== this.lastSeenExercise) {
+                this.lastSeenExercise = newExercise;
                 if (newExercise) {
-                    this.exercise = newExercise;
                     this.applyExerciseDateCascade(newExercise);
                 }
             }
@@ -153,24 +125,11 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC
      */
     ngOnInit(): void {
-        // Seed mirror fields synchronously: the effect runs only after the first change detection cycle,
-        // but ngOnInit needs them immediately. If a test or caller has already assigned a mirror field
-        // (e.g. `comp.exercise = exercise`) we preserve that value; otherwise we copy from the signal-input.
-        this.exercise = this.exercise ?? this.exerciseInput();
-        if (this.isExamMode === undefined) {
-            this.isExamMode = this.isExamModeInput();
-        }
-        if (this.readOnly === undefined) {
-            this.readOnly = this.readOnlyInput();
-        }
-        if (this.importOptions === undefined) {
-            this.importOptions = this.importOptionsInput();
-        }
-
         this.updateIsImportBasedOnUrl();
 
-        if (this.exercise && !this.exercise.id && !this.isImport) {
-            this.exercise.assessmentType = AssessmentType.AUTOMATIC;
+        const exercise = this.exercise();
+        if (exercise && !exercise.id && !this.isImport) {
+            exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
     }
@@ -236,16 +195,18 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     }
 
     toggleSetTestCaseVisibilityToAfterDueDate() {
-        if (this.importOptions) {
-            this.importOptions.setTestCaseVisibilityToAfterDueDate = !this.importOptions.setTestCaseVisibilityToAfterDueDate;
+        const importOptions = this.importOptions();
+        if (importOptions) {
+            importOptions.setTestCaseVisibilityToAfterDueDate = !importOptions.setTestCaseVisibilityToAfterDueDate;
         }
     }
 
     toggleFeedbackRequests() {
-        this.exercise.allowFeedbackRequests = !this.exercise.allowFeedbackRequests;
-        if (this.exercise.allowFeedbackRequests) {
-            this.exercise.assessmentDueDate = undefined;
-            this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
+        const exercise = this.exercise()!;
+        exercise.allowFeedbackRequests = !exercise.allowFeedbackRequests;
+        if (exercise.allowFeedbackRequests) {
+            exercise.assessmentDueDate = undefined;
+            exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
         }
     }
 
@@ -255,15 +216,16 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      *
      */
     toggleAssessmentType() {
-        if (this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
-            this.exercise.assessmentType = AssessmentType.AUTOMATIC;
-            this.exercise.assessmentDueDate = undefined;
-            this.exercise.allowComplaintsForAutomaticAssessments = false;
-            this.exercise.feedbackSuggestionModule = undefined;
+        const exercise = this.exercise()!;
+        if (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
+            exercise.assessmentType = AssessmentType.AUTOMATIC;
+            exercise.assessmentDueDate = undefined;
+            exercise.allowComplaintsForAutomaticAssessments = false;
+            exercise.feedbackSuggestionModule = undefined;
         } else {
-            this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-            this.exercise.allowComplaintsForAutomaticAssessments = false;
-            this.exercise.allowFeedbackRequests = false;
+            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            exercise.allowComplaintsForAutomaticAssessments = false;
+            exercise.allowFeedbackRequests = false;
         }
     }
 
@@ -271,14 +233,16 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      * Toggles the value for allowing complaints for automatic assessment between true and false
      */
     toggleComplaintsType() {
-        this.exercise.allowComplaintsForAutomaticAssessments = !this.exercise.allowComplaintsForAutomaticAssessments;
+        const exercise = this.exercise()!;
+        exercise.allowComplaintsForAutomaticAssessments = !exercise.allowComplaintsForAutomaticAssessments;
     }
 
     /**
      * Toggles the value for allowing complaints for automatic assessment between true and false
      */
     toggleReleaseTests() {
-        this.exercise.releaseTestsWithExampleSolution = !this.exercise.releaseTestsWithExampleSolution;
+        const exercise = this.exercise()!;
+        exercise.releaseTestsWithExampleSolution = !exercise.releaseTestsWithExampleSolution;
     }
 
     /**
@@ -288,18 +252,19 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      * @param newReleaseDate The new release date
      */
     updateReleaseDate(newReleaseDate?: dayjs.Dayjs) {
-        this.exercise.releaseDate = newReleaseDate;
-        if (this.readOnly) {
+        const exercise = this.exercise()!;
+        exercise.releaseDate = newReleaseDate;
+        if (this.readOnly()) {
             // Changes from parent component are allowed but no cascading changes should be made in read-only mode.
             return;
         }
-        if (this.exerciseService.hasStartDateError(this.exercise)) {
+        if (this.exerciseService.hasStartDateError(exercise)) {
             this.updateStartDate(newReleaseDate);
             // Will handle due date and example solution
             return;
         }
-        const safeStartOrReleaseDate = this.exercise.startDate ?? newReleaseDate;
-        if (this.exerciseService.hasDueDateError(this.exercise) && safeStartOrReleaseDate) {
+        const safeStartOrReleaseDate = exercise.startDate ?? newReleaseDate;
+        if (this.exerciseService.hasDueDateError(exercise) && safeStartOrReleaseDate) {
             this.updateDueDate(safeStartOrReleaseDate);
         }
         this.updateExampleSolutionPublicationDate(safeStartOrReleaseDate);
@@ -312,12 +277,13 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      * @param newStartDate The new start date
      */
     updateStartDate(newStartDate?: dayjs.Dayjs) {
-        this.exercise.startDate = newStartDate;
-        if (this.readOnly) {
+        const exercise = this.exercise()!;
+        exercise.startDate = newStartDate;
+        if (this.readOnly()) {
             // Changes from parent component are allowed but no cascading changes should be made in read-only mode.
             return;
         }
-        if (this.exerciseService.hasDueDateError(this.exercise)) {
+        if (this.exerciseService.hasDueDateError(exercise)) {
             this.updateDueDate(newStartDate!);
         }
         this.updateExampleSolutionPublicationDate(newStartDate);
@@ -328,13 +294,14 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      * @param dueDate the new dueDate
      */
     private updateDueDate(dueDate: dayjs.Dayjs) {
+        const exercise = this.exercise()!;
         alert(this.translateService.instant('artemisApp.programmingExercise.timeline.alertNewDueDate'));
-        this.exercise.dueDate = dueDate;
+        exercise.dueDate = dueDate;
 
         // If the new due date is after the "After Due Date", then we have to set the "After Due Date" to the new due date
-        const afterDue = this.exercise.buildAndTestStudentSubmissionsAfterDueDate;
+        const afterDue = exercise.buildAndTestStudentSubmissionsAfterDueDate;
         if (afterDue && dueDate.isAfter(afterDue)) {
-            this.exercise.buildAndTestStudentSubmissionsAfterDueDate = dueDate;
+            exercise.buildAndTestStudentSubmissionsAfterDueDate = dueDate;
             alert(this.translateService.instant('artemisApp.programmingExercise.timeline.alertNewAfterDueDate'));
         }
     }
@@ -347,15 +314,16 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      * @param newReleaseOrDueDate the new exampleSolutionPublicationDate if it is after the current exampleSolutionPublicationDate
      */
     updateExampleSolutionPublicationDate(newReleaseOrDueDate?: dayjs.Dayjs) {
-        if (!this.readOnly && this.exerciseService.hasExampleSolutionPublicationDateError(this.exercise)) {
+        const exercise = this.exercise()!;
+        if (!this.readOnly() && this.exerciseService.hasExampleSolutionPublicationDateError(exercise)) {
             const message =
-                newReleaseOrDueDate && dayjs(newReleaseOrDueDate).isSame(this.exercise.dueDate)
+                newReleaseOrDueDate && dayjs(newReleaseOrDueDate).isSame(exercise.dueDate)
                     ? 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate'
                     : 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate';
             alert(this.translateService.instant(message));
-            this.exercise.exampleSolutionPublicationDate = newReleaseOrDueDate;
+            exercise.exampleSolutionPublicationDate = newReleaseOrDueDate;
             if (!newReleaseOrDueDate) {
-                this.exercise.releaseTestsWithExampleSolution = false;
+                exercise.releaseTestsWithExampleSolution = false;
             }
         }
     }
