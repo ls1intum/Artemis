@@ -228,9 +228,15 @@ behaviour is unchanged.
   - **Fallback only:** mode `0777` (world-writable) is the easiest last-resort workaround when an agent runs a mix
     of root and non-root build images, but be aware that it lets any local process on the build-agent host modify
     the cache — only acceptable on machines that run nothing besides the Artemis build agent.
-- The cache grows over time. A weekly cron such as `find <path> -atime +30 -type f -delete` keeps it bounded; verify
-  that the host's filesystem is not mounted with `noatime` before relying on access-time-based pruning, otherwise
-  switch to `-mtime`.
+- The cache grows over time. A weekly cron such as
+  `find <path> -atime +30 -type f -delete && find <path> -type d -empty -delete` keeps both the file footprint and
+  the empty-directory residue bounded. Verify that the host's filesystem is not mounted with `noatime` before
+  relying on access-time-based pruning, otherwise switch to `-mtime`.
+- Pair the prune with a disk-space alert on the cache filesystem. The exact mechanism depends on your monitoring
+  stack — for example, a Prometheus + node_exporter setup can fire when
+  `(node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.2` for the mount point, which leaves enough head
+  room to investigate before builds start failing. The cache is recoverable (it is just a download mirror), so
+  alerting at 80% used is plenty.
 
 ### Caveats
 
