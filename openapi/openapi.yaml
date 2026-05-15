@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: "9.2"
+  version: '9.2'
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 tags:
@@ -895,7 +895,42 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/GlobalSearchResult'}
-  /api/core/calendar/subscription-token:
+  /api/core/calendar/courses/{courseId}/calendar-events-ics:
+    get:
+      tags: [legacy-calendar]
+      operationId: getLegacyCalendarEventSubscriptionFile
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: token
+        in: query
+        required: true
+        schema: {type: string}
+      - name: filterOptions
+        in: query
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum: [LECTURES, TUTORIALS, EXAMS, EXERCISES]
+          uniqueItems: true
+      - name: language
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [ENGLISH, GERMAN]
+      responses:
+        '200':
+          description: OK
+          content:
+            text/calendar:
+              schema: {type: string}
+      deprecated: true
+  /api/calendar/subscription-token:
     get:
       tags: [calendar]
       operationId: getCalendarEventSubscriptionToken
@@ -903,9 +938,9 @@ paths:
         '200':
           description: OK
           content:
-            application/json:
+            text/plain:
               schema: {type: string}
-  /api/core/calendar/courses/{courseId}/calendar-events:
+  /api/calendar/courses/{courseId}/calendar-events:
     get:
       tags: [calendar]
       summary: Get calendar events grouped by month
@@ -938,8 +973,10 @@ paths:
             application/json:
               schema:
                 type: object
-                additionalProperties: {type: array}
-  /api/core/calendar/courses/{courseId}/calendar-events-ics:
+                additionalProperties:
+                  type: array
+                  items: {$ref: '#/components/schemas/CalendarEvent'}
+  /api/calendar/courses/{courseId}/calendar-events-ics:
     get:
       tags: [calendar]
       operationId: getCalendarEventSubscriptionFile
