@@ -188,7 +188,6 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
         fixture.componentRef.setInput('programmingLanguage', ProgrammingLanguage.OCAML);
         fixture.detectChanges();
 
-        // assertion to check if the effect was executed and updated the checkout directories
         expect(spy).toHaveBeenCalledWith(ProgrammingLanguage.OCAML, true);
         expect(component.checkoutDirectories()?.submissionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory).toBe('/solution'); // was null before with JAVA as programming language
 
@@ -207,7 +206,6 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
         fixture.componentRef.setInput('checkoutSolutionRepository', false);
         fixture.detectChanges();
 
-        // assertion to check if the effect was executed and updated the checkout directories
         expect(spy).toHaveBeenCalledWith(ProgrammingLanguage.OCAML, false);
         // solution checkout directory was /solution before with OCaml as programming language and solution checkout allowed
         expect(component.checkoutDirectories()?.submissionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory).toBeUndefined();
@@ -226,7 +224,6 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
         fixture.componentRef.setInput('checkoutSolutionRepository', false);
         fixture.detectChanges();
 
-        // assertion to check if the effect was executed and updated the checkout directories
         expect(spy).not.toHaveBeenCalledWith(ProgrammingLanguage.OCAML, false);
     });
 
@@ -248,7 +245,6 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
         fixture.componentRef.setInput('checkoutSolutionRepository', true);
         fixture.detectChanges();
 
-        // assertion to check the effect updated the checkout directories from build config
         expect(spy).not.toHaveBeenCalledWith(ProgrammingLanguage.OCAML, false);
         expect(component.checkoutDirectories()).toEqual({
             submissionBuildPlanCheckoutDirectories: {
@@ -280,9 +276,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     });
 
     it('should derive checkoutDirectories from buildConfig on initial detectChanges when isCreateOrEdit is true', () => {
-        // Reproduces the legacy ngOnChanges first-call behavior that the migrated effect() intentionally skips.
-        // Disable localCI so no async service response can populate the signal — only the synchronous init
-        // derivation can produce a non-empty value here.
+        // localCI disabled so only the synchronous ngOnInit derivation populates the signal here.
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [] } as unknown as ProfileInfo);
         component.isLocalCIEnabled = false;
 
@@ -336,9 +330,6 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     });
 
     it('should refresh checkout directories when only the programmingExerciseBuildConfig input changes', () => {
-        // The parent updates checkout paths by replacing only programmingExercise().buildConfig and pushing
-        // it through the separate programmingExerciseBuildConfig input, while keeping the exercise object
-        // stable. The migrated effect must still observe that input change.
         fixture.componentRef.setInput('isCreateOrEdit', true);
         fixture.detectChanges(); // initial pass
 

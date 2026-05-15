@@ -74,7 +74,6 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     private previousExerciseRef?: ProgrammingExercise;
 
     constructor() {
-        // Re-run the date cascade whenever the parent swaps in a new `exercise` reference.
         effect(() => {
             const newExercise = this.exercise();
             if (newExercise === this.previousExerciseRef) {
@@ -87,7 +86,8 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     private applyExerciseDateCascade(newExercise: ProgrammingExercise) {
         if (this.exerciseService.hasDueDateError(newExercise)) {
-            // Checking for due date errors and ordering the calls to avoid updating exampleSolutionPublicationDate twice.
+            // Order matters: with a due-date error, releaseDate is updated first to avoid
+            // exampleSolutionPublicationDate being written twice with stale intermediate values.
             this.updateReleaseDate(newExercise.releaseDate);
             this.updateExampleSolutionPublicationDate(newExercise.dueDate);
         } else {
@@ -96,10 +96,6 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         }
     }
 
-    /**
-     * If the programming exercise does not have an id, set the assessmentType to AUTOMATIC.
-     * The date cascade is applied by the constructor effect's first run.
-     */
     ngOnInit(): void {
         this.updateIsImportBasedOnUrl();
 
@@ -127,7 +123,6 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     ngAfterViewInit() {
         this.setupDateFieldSubscriptions();
-        // Re-subscribe whenever the picker list changes.
         effect(
             () => {
                 this.datePickerComponents();

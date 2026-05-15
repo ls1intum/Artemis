@@ -73,44 +73,28 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     submissionSubscription: Subscription;
     routeParamsSubscription: Subscription;
 
-    // autoTimerInterval in seconds
     autoSaveTimer = 0;
     autoSaveInterval: number;
 
-    // Refs to open PrimeNG dialogs so they can be closed in ngOnDestroy to avoid leaks.
     private refreshModalRef?: DynamicDialogRef;
     private conflictModalRef?: DynamicDialogRef;
 
-    // Icons
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
     faSync = faSync;
     farPlayCircle = faPlayCircle;
     faExternalLink = faExternalLink;
 
-    /**
-     * Tracks the previous editorState so we can reproduce the legacy ngOnChanges
-     * transition: when editorState transitions from SAVING to CLEAN while
-     * commitState is COMMITTING, the commit completes (CLEAN); otherwise the
-     * commit reverts to UNCOMMITTED_CHANGES.
-     */
     private previousEditorState: EditorState | undefined;
 
     constructor() {
-        // Reproduce legacy ngOnChanges cascade: when editorState transitions SAVING -> X
-        // while commitState is COMMITTING, finalize the commit (CLEAN if editor is now
-        // CLEAN, otherwise revert to UNCOMMITTED_CHANGES). The commitState guard is evaluated
-        // INSIDE the setTimeout so that a commitState change between scheduling and firing is
-        // respected — matching legacy behavior where the read happened at fire time.
         effect(() => {
             const current = this.editorState();
-            // Snapshot the previous value before updating it for the next run.
             const previous = untracked(() => this.previousEditorState);
             this.previousEditorState = current;
             if (previous === EditorState.SAVING) {
-                // Defer with setTimeout(..., 0) (macrotask) so we don't write to the
-                // commitState signal inside the editorState effect's own change-detection pass,
-                // and so the commitState guard reflects the value at fire time, not schedule time.
+                // setTimeout(0): defer the commitState write outside this effect's CD pass and
+                // re-read commitState at fire time so a concurrent change is respected.
                 setTimeout(() => {
                     if (untracked(() => this.commitState()) !== CommitState.COMMITTING) {
                         return;
@@ -138,15 +122,13 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         this.isInCourseManagement.set(this.router.url.includes('course-management'));
 
         this.conflictStateSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
-            // When the conflict is encountered when opening the code-editor, setting the commitState here could cause an uncheckedException.
-            // Schedule the state change for the next tick to ensure template is rendered.
+            // setTimeout(0): the conflict signal can arrive during initial code-editor render;
+            // writing commitState synchronously here throws ExpressionChangedAfterItHasBeenCheckedError.
             if (this.commitState() === CommitState.CONFLICT && gitConflictState === GitConflictState.OK) {
-                // Case a: Conflict was resolved.
                 setTimeout(() => {
                     this.commitState.set(CommitState.UNDEFINED);
                 }, 0);
             } else if (this.commitState() !== CommitState.CONFLICT && gitConflictState === GitConflictState.CHECKOUT_CONFLICT) {
-                // Case b: Conflict has occurred.
                 setTimeout(() => {
                     this.commitState.set(CommitState.CONFLICT);
                 }, 0);
@@ -162,13 +144,13 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             .subscribe();
 
         if (!this.disableAutoSave()) {
-            // Run interval outside Angular zone to prevent unnecessary change detection cycles
+            // Tick outside the Angular zone to avoid waking change detection every interval;
+            // re-enter only on the rare save tick.
             this.ngZone.runOutsideAngular(() => {
                 this.autoSaveInterval = window.setInterval(() => {
                     this.autoSaveTimer++;
                     if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
                         this.autoSaveTimer = 0;
-                        // Re-enter Angular zone only when we need to save
                         this.ngZone.run(() => this.onSave());
                     }
                 }, AUTOSAVE_CHECK_INTERVAL);
@@ -238,10 +220,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             .subscribe();
     }
 
-    /**
-     * @param andCommit whether the saved changed in the files should be committed or not
-     * @desc Saves all files that have unsaved changes in the editor.
-     */
     saveChangedFiles(andCommit = false): Observable<any> {
         const unsavedFilesValue = this.unsavedFiles();
         if (!_isEmpty(unsavedFilesValue)) {
@@ -265,17 +243,10 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         return of(undefined);
     }
 
-    /**
-     * @function commit
-     * @desc Commits the current repository files.
-     * If there are unsaved changes, save them first before trying to commit again.
-     */
     commit() {
-        // Avoid multiple commits at the same time.
         if (this.commitState() === CommitState.COMMITTING) {
             return;
         }
-        // If there are unsaved changes, save them before trying to commit again.
         of(undefined)
             .pipe(
                 tap(() => this.commitState.set(CommitState.COMMITTING)),
@@ -290,9 +261,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                     if (this.editorState() === EditorState.CLEAN) {
                         this.commitState.set(CommitState.CLEAN);
                     }
-                    // We just assume that after the commit a build happens if the repo is buildable.
+                    // Optimistic: assume a build follows the commit on a buildable repo.
                     if (this.buildable()) {
-                        // Note: this is not 100% clean, but not setting it here would complicate the state model.
                         this.isBuilding.set(true);
                     }
                 }),

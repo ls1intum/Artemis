@@ -42,14 +42,12 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     private previousCheckoutSolutionRepository?: boolean;
 
     constructor() {
-        // ngOnInit handles the first pass synchronously; this effect handles subsequent updates by
-        // comparing each tracked input to its previously-seen value. The parent may push buildConfig-only
-        // updates through the separate `programmingExerciseBuildConfig` input while keeping the exercise
-        // object stable, so we read that signal here to keep it tracked.
         effect(() => {
             const currentProgrammingLanguage = this.programmingLanguage();
             const currentCheckoutSolutionRepository = this.checkoutSolutionRepository();
-            this.programmingExerciseBuildConfig(); // track buildConfig-only updates
+            // Parent pushes buildConfig-only updates through this input while keeping the exercise
+            // reference stable; read it so the effect tracks that channel too.
+            this.programmingExerciseBuildConfig();
             const currentProgrammingExercise = this.programmingExercise();
 
             const programmingLanguageChanged = currentProgrammingLanguage !== this.previousProgrammingLanguage;
@@ -78,11 +76,10 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         if (this.isLocalCIEnabled) {
             this.updateCheckoutDirectories();
         }
-        // Initial buildConfig-derived population (legacy ngOnChanges first-pass behaviour).
         if (this.isCreateOrEdit() && this.isBuildConfigAvailable(this.programmingExercise().buildConfig)) {
             this.checkoutDirectories.set(this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories()));
         }
-        // Prime the previous-value fields BEFORE the effect's first tick so that no-op tick sees no change.
+        // Prime previous-value fields before the effect's first tick so it sees no spurious change.
         this.previousProgrammingLanguage = this.programmingLanguage();
         this.previousCheckoutSolutionRepository = this.checkoutSolutionRepository();
     }

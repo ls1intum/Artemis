@@ -138,12 +138,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     get commitState(): CommitState {
         return this._commitState;
     }
-    /**
-     * Assigning commitState directly emits onCommitStateChange so external consumers (parents
-     * binding to this output) see every container-driven update. This replaces the legacy
-     * round-trip through the actions component's two-way [(commitState)] binding, which used
-     * to bubble parent-driven updates back up via a (commitStateChange) handler.
-     */
     set commitState(next: CommitState) {
         if (this._commitState === next) {
             return;
@@ -378,7 +372,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * Keeps UNCOMMITTED_CHANGES if new edits appeared while the commit request was in flight.
      */
     onInlineFixCommitted(): void {
-        // Setter on commitState emits onCommitStateChange.
         this.commitState = _isEmpty(this.unsavedFiles) ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES;
         this.onCommit.emit();
     }

@@ -14,9 +14,9 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 })
 export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     private translateService = inject(TranslateService);
+    // ConfirmAutofocusModalComponent still uses NgbActiveModal; migration is out of scope.
     private modalService = inject(NgbModal);
 
-    // Icons
     faRedo = faRedo;
 
     constructor() {
@@ -26,7 +26,7 @@ export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends Pr
     }
 
     triggerBuild = (event: any) => {
-        // The button might be placed in other elements that have a click listener, so catch the click here.
+        // The button is often nested inside other click handlers; stop propagation so the parent action does not also fire.
         event.stopPropagation();
         if (this.participationHasLatestSubmissionWithoutResult()) {
             super.triggerFailed().subscribe();
@@ -36,7 +36,7 @@ export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends Pr
             super.triggerWithType(SubmissionType.INSTRUCTOR).subscribe();
             return;
         }
-        // The instructor needs to confirm overriding a manual result.
+        // Overriding a manual result requires explicit instructor confirmation.
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.title = 'artemisApp.programmingExercise.resubmitSingle';
         modalRef.componentInstance.text = this.translateService.instant('artemisApp.programmingExercise.resubmitConfirmManualResultOverride');

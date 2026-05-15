@@ -18,8 +18,7 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 })
 export class ProgrammingExerciseInstructionTaskStatusComponent {
     private programmingExerciseInstructionService = inject(ProgrammingExerciseInstructionService);
-    // FeedbackComponent (the only modal opened here) still uses NgbActiveModal; migrating it is
-    // out of scope.
+    // FeedbackComponent still uses NgbActiveModal; migration is out of scope.
     private modalService = inject(NgbModal);
 
     TestCaseState = TestCaseState;

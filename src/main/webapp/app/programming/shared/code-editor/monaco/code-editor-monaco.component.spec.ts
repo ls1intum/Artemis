@@ -129,8 +129,6 @@ describe('CodeEditorMonacoComponent', () => {
         const selectFileInEditorStub = vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
         fixture.componentRef.setInput('enableExerciseReviewComments', true);
         fixture.componentRef.setInput('selectedFile', 'file1.java');
-        // The constructor effect replaces the legacy ngOnChanges hook: setting a selectedFile
-        // signal input + detectChanges() must trigger selectFileInEditor + updateEditorInteractionMode.
         fixture.changeDetectorRef.detectChanges();
         await new Promise(process.nextTick);
 
@@ -610,8 +608,6 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.componentRef.setInput('isTutorAssessment', true);
         fixture.componentRef.setInput('selectedFile', 'file1.java');
         fixture.componentRef.setInput('feedbacks', exampleFeedbacks);
-        // Constructor effect fires from undefined -> 'file1.java' on first detectChanges,
-        // driving the same cascade the legacy ngOnChanges hook used to drive.
         fixture.changeDetectorRef.detectChanges();
         await new Promise(process.nextTick);
         await new Promise((r) => setTimeout(r, 0));

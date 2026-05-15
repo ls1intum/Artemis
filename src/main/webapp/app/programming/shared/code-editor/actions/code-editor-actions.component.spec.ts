@@ -326,10 +326,7 @@ describe('CodeEditorActionsComponent', () => {
         saveObservable.next(null);
         expect(comp.commitState()).toEqual(CommitState.COMMITTING);
 
-        // Simulate that all files were saved — editorState transitions SAVING -> CLEAN.
-        // The migrated component watches this transition via an effect (replacing the
-        // legacy ngOnChanges flow) and reacts via a setTimeout(0) macrotask, so allow
-        // the macrotask to settle before asserting.
+        // editorState SAVING -> CLEAN drives a setTimeout(0) commit completion; flush the macrotask.
         comp.editorState.set(EditorState.SAVING);
         fixture.detectChanges();
         comp.editorState.set(EditorState.CLEAN);

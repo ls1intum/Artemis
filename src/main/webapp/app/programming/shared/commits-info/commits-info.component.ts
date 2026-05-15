@@ -26,8 +26,6 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     private commitsInfoSubscription: Subscription;
     protected readonly isGroupsExpanded = signal(true);
 
-    // Commits fetched by the service when no `commits` input is provided. The computed below
-    // prefers the fetched value once present, so the template stays reactive to either source.
     private readonly fetchedCommits = signal<CommitInfo[] | undefined>(undefined);
 
     protected readonly groupedCommits = computed<{ key: string; commits: CommitInfo[]; date: string }[]>(() => {

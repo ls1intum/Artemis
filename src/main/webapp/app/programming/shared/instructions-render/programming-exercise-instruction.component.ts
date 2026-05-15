@@ -69,18 +69,13 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private themeService = inject(ThemeService);
     private cdr = inject(ChangeDetectorRef);
 
-    // Honest typing: parent templates always bind these in production, but the component itself
-    // tolerates unset states (ngOnInit gates on `exercise()`; processInputChanges guards on
-    // `participation()`), and tests exercise those branches — so the read type stays nullable.
     readonly exercise = input<ProgrammingExercise | undefined>(undefined);
     public readonly participation = input<Participation | undefined>(undefined);
     readonly generateHtmlEvents = input<Observable<void>>();
     readonly personalParticipation = input.required<boolean>();
 
-    // Emits an event if the instructions are not available via the problemStatement
     public readonly onNoInstructionsAvailable = output();
 
-    // Optional viewChild: the highlighter only renders for exam exercises.
     readonly examExerciseUpdateHighlighterComponent = viewChild(ExamExerciseUpdateHighlighterComponent);
 
     private problemStatement: string | undefined;
@@ -90,12 +85,10 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     protected isInitial = true;
     protected isLoading: boolean;
     latestResultValue?: Result;
-    // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
+    // Page-scoped so multiple problem statements (e.g. across exam exercise tabs) don't collide.
     private taskIndex = 0;
     protected tasks: TaskArray;
-    // Track dynamically created task components for proper cleanup
     private taskComponentRefs: ComponentRef<ProgrammingExerciseInstructionTaskStatusComponent>[] = [];
-    // Cache to skip re-rendering when content hasn't changed
     private lastRenderedProblemStatement?: string;
 
     get latestResult() {
@@ -116,18 +109,15 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private generateHtmlSubscription: Subscription;
     private testCases?: ProgrammingExerciseTestCase[];
 
-    // Subject for debouncing problem statement changes to avoid excessive re-renders during rapid editing
     private problemStatementUpdateSubject = new Subject<void>();
 
-    // Tracked between effect runs so we can detect a participation-identity change (drives
-    // websocket re-subscription) and a problem-statement edit (drives debounced re-render).
     private lastSeenParticipation?: Participation;
     private lastSeenProblemStatement?: string;
 
     constructor() {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
 
-        // Re-render on theme changes; skip the effect's initial synchronous run.
+        // Skip the initial synchronous run so ngOnInit owns the first render.
         let firstThemeRun = true;
         effect(() => {
             this.themeService.currentTheme();
@@ -144,7 +134,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             this.updateMarkdown();
         });
 
-        // Handle subsequent input changes; ngOnInit handles the first call.
         let initialized = false;
         effect(() => {
             const participation = this.participation();
@@ -164,13 +153,11 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     }
 
     ngOnInit(): void {
-        // Only run when the exercise input is bound; bare-mount unit tests skip data loads.
         if (this.exercise()) {
             this.processInputChanges();
         }
     }
 
-    // Icons
     faSpinner = faSpinner;
     faFileAlt = faFileAlt;
 
@@ -191,9 +178,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         }
         of(!!this.markdownExtensions)
             .pipe(
-                // Set up the markdown extensions if they are not set up yet so that tasks, UMLs, etc. can be parsed.
                 tap((markdownExtensionsInitialized: boolean) => !markdownExtensionsInitialized && this.setupMarkdownSubscriptions()),
-                // If the participation has changed, set up the websocket subscriptions.
                 map(() => participationChanged),
                 tap((participationHasChanged: boolean) => {
                     if (participationHasChanged) {
@@ -204,7 +189,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                         const generateHtmlEvents = this.generateHtmlEvents();
                         if (generateHtmlEvents) {
                             this.generateHtmlSubscription = generateHtmlEvents.subscribe(() => {
-                                // Invalidate the render cache since we are explicitly asked to regenerate HTML
                                 this.lastRenderedProblemStatement = undefined;
                                 this.updateMarkdown();
                             });
@@ -216,13 +200,10 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 }),
                 switchMap((participationHasChanged: boolean) => {
                     const currentExercise = this.exercise();
-                    // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
                     if (!this.isLoading && currentExercise && this.participation() && (this.isInitial || participationHasChanged)) {
                         this.isLoading = true;
                         return of(currentExercise.problemStatement).pipe(
                             tap((problemStatement) => {
-                                // Set to undefined for null/empty values to preserve empty-state sentinel
-                                // Otherwise set the actual string value
                                 this.problemStatement = problemStatement?.trim() || undefined;
                                 this.lastSeenProblemStatement = currentExercise.problemStatement;
                             }),
@@ -237,19 +218,16 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                             }),
                         );
                     } else if (this.problemStatementHasChangedFromLast() && !this.problemStatement) {
-                        // Refreshes the state in the singleton task and uml extension service
+                        // Re-assign latestResult to refresh singleton task/UML extension state.
                         this.latestResult = this.latestResultValue;
                         this.problemStatement = currentExercise?.problemStatement?.trim() || undefined;
                         this.lastSeenProblemStatement = currentExercise?.problemStatement;
-                        // Use debounced update to avoid excessive re-renders during rapid editing
                         this.problemStatementUpdateSubject.next();
                         return of(undefined);
                     } else if (currentExercise && this.problemStatementHasChangedFromLast()) {
-                        // Refreshes the state in the singleton task and uml extension service
                         this.latestResult = this.latestResultValue;
                         this.problemStatement = currentExercise.problemStatement?.trim() || undefined;
                         this.lastSeenProblemStatement = currentExercise.problemStatement;
-                        // Use debounced update to avoid excessive re-renders during rapid editing
                         this.problemStatementUpdateSubject.next();
                         return of(undefined);
                     } else {

@@ -23,8 +23,7 @@ interface StepWizardStep {
     imports: [TranslateDirective, NgbTooltip, FaIconComponent],
 })
 export class ProgrammingExerciseInstructionStepWizardComponent {
-    // FeedbackComponent (the only modal opened here) still uses NgbActiveModal; migrating it is
-    // out of scope.
+    // FeedbackComponent still uses NgbActiveModal; migration is out of scope.
     private modalService = inject(NgbModal);
     private instructionService = inject(ProgrammingExerciseInstructionService);
 
@@ -36,8 +35,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
     readonly tasks = input.required<TaskArray>();
 
     readonly steps = computed<StepWizardStep[]>(() => {
-        // Although `tasks` is declared as `input.required<TaskArray>()`, the parent template binds a
-        // plain (potentially-undefined) class field on first render, so we keep the runtime guard.
+        // Parent template binds a class field that can be undefined on first render despite `input.required`.
         const tasks = this.tasks();
         const latestResult = this.latestResult();
         if (!tasks) {
@@ -50,16 +48,10 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
         }));
     });
 
-    // Icons
     faTimes = faTimes;
     faCheck = faCheck;
     faCircle = faCircle;
 
-    /**
-     * Opens the FeedbackComponent as popup; displays test results
-     * @param {string[]} tests - Identifies the testcase
-     * @param taskName - the name of the selected task
-     */
     public showDetailsForTests(tests: number[], taskName: string) {
         const latestResult = this.latestResult();
         if (!latestResult || !tests.length) {
@@ -70,9 +62,6 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
         } = this.instructionService.testStatusForTask(tests, latestResult);
         const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'lg' });
         const componentInstance = modalRef.componentInstance as FeedbackComponent;
-        // The exercise/participation inputs are non-required and may be undefined when the parent
-        // is mid-init. FeedbackComponent tolerates that (its corresponding fields are also optional);
-        // the `!` here matches the legacy ngOnChanges contract.
         componentInstance.exercise = this.exercise()!;
         componentInstance.result = latestResult;
         componentInstance.participation = this.participation()!;

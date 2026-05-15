@@ -374,9 +374,8 @@ describe('CodeEditorContainerIntegration', () => {
         container.unsavedFiles = unsavedChanges;
 
         containerFixture.changeDetectorRef.detectChanges();
-        // Mirror the container's plain field into the child model. Direct container field writes
-        // (no child event) don't go through OnPush's mark-dirty flow in this Jest zone-based test,
-        // so the [(editorState)] / [(commitState)] template bindings don't push synchronously.
+        // Direct container-field writes don't push through OnPush in this zone-less test;
+        // mirror them onto the child models so the template bindings reflect synchronously.
         container.actions.editorState.set(container.editorState);
         container.actions.commitState.set(container.commitState);
         containerFixture.changeDetectorRef.detectChanges();
@@ -401,7 +400,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.unsavedFiles).toStrictEqual({});
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
         containerFixture.changeDetectorRef.detectChanges();
-        // See sibling test note: direct container field writes don't propagate via OnPush here.
+        // See sibling test: OnPush + zone-less harness requires mirroring container fields manually.
         container.actions.commitState.set(container.commitState);
         containerFixture.changeDetectorRef.detectChanges();
 
