@@ -110,9 +110,9 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
 @Component({
     template: `
         <form name="triggerAllForm" (ngSubmit)="confirmTrigger()">
-            <div class="modal-body">
+            <div class="p-3">
                 @if (dueDatePassed()) {
-                    <p class="text-danger font-weight-bold" jhiTranslate="artemisApp.programmingExercise.resubmitAllConfirmAfterDueDate">
+                    <p class="text-danger fw-bold" jhiTranslate="artemisApp.programmingExercise.resubmitAllConfirmAfterDueDate">
                         The due date has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic
                         results would replace the manual results as the latest result for the participation.
                     </p>
@@ -121,12 +121,9 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
                     WARNING: Triggering all participations again is a very expensive operation. This action will start a CI build for every participation in this exercise!
                 </p>
             </div>
-            <div class="modal-footer">
+            <div class="d-flex justify-content-end gap-2 p-3 border-top">
                 <button type="button" class="btn btn-secondary" (click)="cancel()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span></button>
-                <button type="submit" class="btn btn-danger">
-                    <fa-icon [icon]="faTimes" />&nbsp;
-                    <span jhiTranslate="entity.action.confirm">Confirm</span>
-                </button>
+                <button type="submit" class="btn btn-danger"><fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.confirm">Confirm</span></button>
             </div>
         </form>
     `,

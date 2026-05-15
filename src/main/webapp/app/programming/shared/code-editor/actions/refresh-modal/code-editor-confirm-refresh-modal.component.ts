@@ -9,7 +9,6 @@ import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-edi
 @Component({
     selector: 'jhi-code-editor-confirm-refresh-modal',
     templateUrl: './code-editor-confirm-refresh-modal.component.html',
-    styleUrls: ['../conflict-modal/code-editor-resolve-conflict-modal.scss'],
     providers: [CodeEditorRepositoryFileService],
     imports: [FormsModule, TranslateDirective, FaIconComponent],
 })

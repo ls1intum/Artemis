@@ -8,7 +8,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-code-editor-resolve-conflict-modal',
     templateUrl: './code-editor-resolve-conflict-modal.component.html',
-    styleUrls: ['./code-editor-resolve-conflict-modal.scss'],
     imports: [FormsModule, TranslateDirective, FaIconComponent],
 })
 export class CodeEditorResolveConflictModalComponent {
