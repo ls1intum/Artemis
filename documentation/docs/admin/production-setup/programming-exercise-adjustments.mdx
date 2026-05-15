@@ -190,6 +190,55 @@ repositories {
 ```
 
 
+## Caching via Per-Agent Bind Mounts {/* #caching-bind-mounts */}
+
+For self-hosted Integrated Code Lifecycle setups that hit Maven Central rate limits (HTTP 429) but do not want to
+operate a separate Sonatype Nexus instance, the build agent can bind-mount persistent Maven and Gradle dependency
+caches into every build container. Dependencies are then downloaded once per agent (cold miss) instead of once per
+submission, which typically drops outbound traffic to Maven Central by ~99% in steady state.
+
+This option is complementary to, not a replacement for, the [Sonatype Nexus approach](#caching-sonatype-nexus) — both
+can coexist if needed.
+
+### Configuration
+
+Set the following two optional keys in `application-buildagent.yml` on each build agent:
+
+```yaml
+artemis:
+    continuous-integration:
+        build-container-cache:
+            maven: /var/cache/artemis-buildagent/m2
+            gradle: /var/cache/artemis-buildagent/gradle
+```
+
+Either key can be set independently. When set, the corresponding host directory is bind-mounted into every build
+container at `/root/.m2` or `/root/.gradle` respectively, which is `$HOME/.m2` / `$HOME/.gradle` for the default
+root-based Java build images shipped with Artemis. When unset (the default), no bind mounts are added and the
+behaviour is unchanged.
+
+### Host directory requirements
+
+- The directories must exist before the build agent starts; the agent does not create them.
+- They must be writable by the build-container user. The official Java build images run as root, so mode `0777` on
+  the host is the simplest choice and also accommodates custom images that use a different non-root UID.
+- The cache grows over time. A weekly cron such as `find <path> -atime +30 -type f -delete` keeps it bounded; verify
+  that the host's filesystem is not mounted with `noatime` before relying on access-time-based pruning, otherwise
+  switch to `-mtime`.
+
+### Caveats
+
+- **Gradle file locks.** Gradle's `~/.gradle/caches` uses file locks; concurrent Gradle builds on the same agent will
+  briefly serialize during dependency resolution. Maven has no equivalent lock. If contention becomes a hotspot with
+  large `concurrent-build-size`, consider switching the Gradle cache to a read-only mount populated by a warm-up
+  build (`GRADLE_RO_DEP_CACHE`) — out of scope for the default configuration.
+- **First build per agent is still slow** because the cache is empty (cold-fill). Steady-state speedup applies from
+  the second build onwards.
+- **No isolation between submissions.** All builds on the same agent share the same on-disk cache. If you rely on
+  cache isolation for security-sensitive secret tests, prefer the [Docker volumes approach below](#caching-docker-volumes)
+  with read-only mounts for student submissions.
+
+
 ## Caching with Docker Volumes {/* #caching-docker-volumes */}
 
 With Docker volumes you can cache Maven dependencies.

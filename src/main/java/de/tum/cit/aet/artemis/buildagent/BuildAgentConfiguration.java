@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.buildagent;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -23,7 +24,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.AccessMode;
+import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -66,6 +70,12 @@ public class BuildAgentConfiguration {
 
     @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs:100}")
     int pauseAfterConsecutiveFailedJobs;
+
+    @Value("${artemis.continuous-integration.build-container-cache.maven:}")
+    private String mavenCacheHostPath;
+
+    @Value("${artemis.continuous-integration.build-container-cache.gradle:}")
+    private String gradleCacheHostPath;
 
     public BuildAgentConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -141,6 +151,29 @@ public class BuildAgentConfiguration {
 
         return HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap).withPidsLimit(pidsLimit)
                 .withAutoRemove(true);
+    }
+
+    /**
+     * Returns the host-to-container bind mounts that expose persistent Maven and Gradle dependency caches inside each
+     * build container. When configured, dependencies resolved by student submissions are downloaded once per agent
+     * (cold miss) instead of once per submission, which drops steady-state traffic to Maven Central by ~99% and
+     * avoids HTTP 429 throttling.
+     * <p>
+     * Both paths are optional and independently configurable. The container-side mount points ({@code /root/.m2} and
+     * {@code /root/.gradle}) match the default {@code $HOME} of the build images that currently run as root; the host
+     * paths must exist with permissions that allow the build-container user to read and write.
+     *
+     * @return the binds to attach (possibly empty if neither cache path is configured)
+     */
+    public List<Bind> buildContainerCacheBinds() {
+        List<Bind> binds = new ArrayList<>(2);
+        if (mavenCacheHostPath != null && !mavenCacheHostPath.isBlank()) {
+            binds.add(new Bind(mavenCacheHostPath, new Volume("/root/.m2"), AccessMode.rw));
+        }
+        if (gradleCacheHostPath != null && !gradleCacheHostPath.isBlank()) {
+            binds.add(new Bind(gradleCacheHostPath, new Volume("/root/.gradle"), AccessMode.rw));
+        }
+        return binds;
     }
 
     /**

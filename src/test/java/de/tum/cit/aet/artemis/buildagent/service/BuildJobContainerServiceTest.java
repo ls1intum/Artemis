@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -27,6 +28,7 @@ import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.ExecStartCmd;
 import com.github.dockerjava.api.command.InspectExecCmd;
 import com.github.dockerjava.api.command.InspectExecResponse;
+import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 
@@ -99,6 +101,15 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
         when(buildAgentConfiguration.getDockerClient().inspectExecCmd(anyString())).thenReturn(inspectExecCmd);
         when(inspectExecCmd.exec()).thenReturn(inspectExecResponse);
         when(inspectExecResponse.getExitCodeLong()).thenReturn(0L);
+    }
+
+    @AfterEach
+    void resetBuildContainerCachePaths() {
+        // The shared BuildAgentConfiguration spy bean is reused across tests in this class (and potentially others in
+        // the same Spring context). Reset the cache-host-path fields so they cannot leak binds into unrelated tests
+        // such as testInvalidValuesReturnsDefaultConfig, which asserts equality against a bind-free default HostConfig.
+        ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "");
+        ReflectionTestUtils.setField(buildAgentConfiguration, "gradleCacheHostPath", "");
     }
 
     private HostConfig captureHostConfig() {
@@ -200,5 +211,49 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
         // This guards against regression: previously, setup commands accidentally used detached mode.
         verify(execStartCmd, atLeastOnce()).withDetach(false);
         verify(execStartCmd, never()).withDetach(true);
+    }
+
+    @Test
+    void testCacheBindsAppliedWhenNoCustomFlags() {
+        ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "/var/cache/artemis-buildagent/m2");
+        ReflectionTestUtils.setField(buildAgentConfiguration, "gradleCacheHostPath", "/var/cache/artemis-buildagent/gradle");
+
+        var runConfig = new DockerRunConfig(List.of(), "", 0, 0, 0);
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
+
+        HostConfig hostConfig = captureHostConfig();
+        Bind[] binds = hostConfig.getBinds();
+        assertThat(binds).hasSize(2);
+        assertThat(binds[0].getPath()).isEqualTo("/var/cache/artemis-buildagent/m2");
+        assertThat(binds[0].getVolume().getPath()).isEqualTo("/root/.m2");
+        assertThat(binds[1].getPath()).isEqualTo("/var/cache/artemis-buildagent/gradle");
+        assertThat(binds[1].getVolume().getPath()).isEqualTo("/root/.gradle");
+    }
+
+    @Test
+    void testCacheBindsSurviveCustomFlagsHostConfig() {
+        // Triggers the copyAndAdjustHostConfig path. Without the bind-application logic in configureContainer,
+        // the freshly built HostConfig would drop the cache binds — this test guards against that regression.
+        ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "/var/cache/artemis-buildagent/m2");
+
+        var runConfig = new DockerRunConfig(List.of(), "my-network", 1, 1, 1);
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
+
+        HostConfig hostConfig = captureHostConfig();
+        Bind[] binds = hostConfig.getBinds();
+        assertThat(binds).hasSize(1);
+        assertThat(binds[0].getPath()).isEqualTo("/var/cache/artemis-buildagent/m2");
+        assertThat(binds[0].getVolume().getPath()).isEqualTo("/root/.m2");
+        // Sanity-check the custom-flags branch still applied its own settings.
+        assertThat(hostConfig.getNetworkMode()).isEqualTo("my-network");
+    }
+
+    @Test
+    void testNoCacheBindsWhenCachePathsUnset() {
+        var runConfig = new DockerRunConfig(List.of(), "", 0, 0, 0);
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
+
+        HostConfig hostConfig = captureHostConfig();
+        assertThat(hostConfig.getBinds()).isNullOrEmpty();
     }
 }

@@ -41,6 +41,7 @@ import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
+import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
@@ -211,6 +212,13 @@ public class BuildJobContainerService {
                     : defaultHostConfig.getMemorySwap();
 
             customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, network, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
+        }
+
+        // Attach persistent dependency-cache bind mounts (if configured) AFTER the custom-flags branch above so they
+        // survive the copyAndAdjustHostConfig path, which otherwise builds a fresh HostConfig and would lose them.
+        List<Bind> cacheBinds = buildAgentConfiguration.buildContainerCacheBinds();
+        if (!cacheBinds.isEmpty()) {
+            customHostConfig = customHostConfig.withBinds(cacheBinds.toArray(new Bind[0]));
         }
 
         log.debug("Set docker network to {}", customHostConfig.getNetworkMode());
