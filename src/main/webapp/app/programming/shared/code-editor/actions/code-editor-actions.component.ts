@@ -53,8 +53,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     readonly disableAutoSave = input(false);
     readonly participation = input<Participation>();
 
-    readonly editorState = model<EditorState>(undefined!);
-    readonly commitState = model<CommitState>(undefined!);
+    readonly editorState = model.required<EditorState>();
+    readonly commitState = model.required<CommitState>();
 
     readonly isBuildingChange = output<boolean>();
     readonly onSavedFiles = output<{

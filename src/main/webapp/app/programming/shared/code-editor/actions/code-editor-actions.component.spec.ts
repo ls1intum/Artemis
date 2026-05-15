@@ -80,9 +80,12 @@ describe('CodeEditorActionsComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(CodeEditorActionsComponent);
         comp = fixture.componentInstance;
-        // unsavedFiles is now `input.required<>()`. Set a sensible empty default so tests that don't
-        // explicitly bind it don't trigger a required-input validation error on first read.
+        // unsavedFiles is now `input.required<>()` and editorState/commitState are `model.required<>()`.
+        // Seed sensible defaults so tests that don't explicitly bind them don't trigger a
+        // required-input validation error on first read.
         fixture.componentRef.setInput('unsavedFiles', {});
+        fixture.componentRef.setInput('editorState', EditorState.CLEAN);
+        fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
         codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
         updateFilesStub = vi.spyOn(codeEditorRepositoryFileService, 'updateFiles');
         codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
