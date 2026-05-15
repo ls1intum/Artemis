@@ -36,9 +36,12 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
     test('Instructor enables learning paths via course settings', async ({ page }) => {
         // Arrange: course initially without learning paths enabled
         await page.goto(`/course-management/${course.id}`);
-        await page.waitForLoadState('domcontentloaded');
-
-        await page.getByRole('link', { name: 'Settings' }).click();
+        // domcontentloaded fires before Angular bootstraps the route component, so the Settings
+        // tab is not yet in the DOM. Wait for the course-detail tab strip to render before
+        // clicking, otherwise the click auto-wait runs the full 60s test timeout under load.
+        const settings = page.getByRole('link', { name: 'Settings' });
+        await settings.waitFor({ state: 'visible', timeout: 30_000 });
+        await settings.click();
 
         const lpCheckbox = page.locator('#field_learningPathsEnabled');
         await expect(lpCheckbox).toBeVisible({ timeout: 15000 });
@@ -58,9 +61,9 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
 
     test('Instructor disables learning paths via course settings', async ({ page }) => {
         await page.goto(`/course-management/${course.id}`);
-        await page.waitForLoadState('domcontentloaded');
-
-        await page.getByRole('link', { name: 'Settings' }).click();
+        const settings = page.getByRole('link', { name: 'Settings' });
+        await settings.waitFor({ state: 'visible', timeout: 30_000 });
+        await settings.click();
 
         // Toggle checkbox off and save
         const lpCheckbox = page.locator('#field_learningPathsEnabled');

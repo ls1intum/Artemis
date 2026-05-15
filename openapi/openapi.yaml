@@ -5,6 +5,9 @@ info:
   version: "9.2"
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
+tags:
+- {name: Global Search Resource, description: 'Weaviate-based semantic search across
+    exercises, lectures, lecture units, exams, FAQs, and public communication channels'}
 paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}:
     get:
@@ -845,6 +848,53 @@ paths:
           content:
             text/csv:
               schema: {type: string, format: binary}
+  /api/search:
+    get:
+      tags: [Global Search]
+      summary: Perform a unified semantic search across entity types
+      description: |-
+        Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels)
+        with a consistent response format. When courseId is not specified, the search is performed
+        globally across all courses the authenticated user has access to. Per-type access rules are
+        enforced server-side via compound Weaviate filters.
+      operationId: globalSearch
+      parameters:
+      - name: q
+        in: query
+        description: Search query; can be empty to retrieve recent items
+        required: true
+        schema: {type: string}
+      - name: types
+        in: query
+        description: Comma-separated entity type filter (exercise, lecture, lecture_unit,
+          exam, faq, channel) or 'all'; default 'all'
+        required: false
+        schema: {type: string}
+      - name: courseId
+        in: query
+        description: Course ID to restrict the search to a single course
+        required: false
+        schema: {type: integer, format: int64}
+      - name: limit
+        in: query
+        description: Maximum number of results (1–25, default 10)
+        required: false
+        schema: {type: integer, format: int32, default: 10}
+      responses:
+        '200':
+          description: Search results matching the query
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/GlobalSearchResult'}
+        '400':
+          description: Unsupported entity type requested
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/GlobalSearchResult'}
   /api/core/calendar/subscription-token:
     get:
       tags: [calendar]
@@ -888,9 +938,7 @@ paths:
             application/json:
               schema:
                 type: object
-                additionalProperties:
-                  type: array
-                  items: {$ref: '#/components/schemas/CalendarEvent'}
+                additionalProperties: {type: array}
   /api/core/calendar/courses/{courseId}/calendar-events-ics:
     get:
       tags: [calendar]
@@ -957,8 +1005,6 @@ components:
       required: [question, reasoning]
       type: object
       properties:
-        question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: The
-            refined quiz question}
         reasoning: {type: string, description: Brief explanation of what was changed
             during refinement, minLength: 1}
         type:
@@ -994,27 +1040,6 @@ components:
           additionalProperties: {type: string}
           description: Action-specific context parameters
       required: [actionType, problemStatementMarkdown]
-    GeneratedQuizQuestion:
-      type: object
-      description: One generated quiz question
-      properties:
-        type:
-          type: string
-          description: Question type
-          enum: [single-choice, multiple-choice, true-false]
-        title: {type: string, description: Question title, maxLength: 500, minLength: 1}
-        questionText: {type: string, description: Question text, maxLength: 10000,
-          minLength: 1}
-        options:
-          type: array
-          description: Answer options
-          items: {$ref: '#/components/schemas/GeneratedQuizAnswerOption'}
-          minItems: 1
-        hint: {type: string, description: Optional hint for the overall question,
-          maxLength: 2000, minLength: 0}
-        explanation: {type: string, description: Optional explanation for the overall
-            question, maxLength: 2000, minLength: 0}
-      required: [options, questionText, title, type]
     ChecklistAnalysisResponse:
       type: object
       description: Response containing the checklist analysis results
@@ -1117,8 +1142,6 @@ components:
       type: object
       description: Request to refine an existing quiz question using a user prompt
       properties:
-        question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: The
-            existing quiz question to refine}
         refinementPrompt: {type: string, description: User instructions describing
             how the question should be changed, maxLength: 2000, minLength: 1}
       required: [question, refinementPrompt]
@@ -1161,19 +1184,6 @@ components:
         completion: {type: integer, format: int64, description: Completion token length,
           example: 3753}
         total: {type: integer, format: int64, description: Total token length, example: 13957}
-    BuildPhase:
-      type: object
-      properties:
-        name: {type: string, minLength: 1, pattern: '^[A-Za-z_][A-Za-z0-9_]*$'}
-        script: {type: string}
-        condition:
-          type: string
-          enum: [ALWAYS, AFTER_DUE_DATE]
-        forceRun: {type: boolean}
-        resultPaths:
-          type: array
-          items: {type: string}
-      required: [name]
     ProblemStatementRewriteResponse:
       type: object
       description: Response containing rewritten problem statement
@@ -1214,19 +1224,6 @@ components:
           enum: [general, exercise, lecture, exam, feedbackDiscussion]
         subTypeReferenceId: {type: integer, format: int64}
         subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
-    CalendarEvent:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: [LECTURE, TUTORIAL, EXAM, QUIZ_EXERCISE, TEXT_EXERCISE, MODELING_EXERCISE,
-            PROGRAMMING_EXERCISE, FILE_UPLOAD_EXERCISE]
-        title: {type: string}
-        startDate: {type: string, format: date-time}
-        endDate: {type: string, format: date-time}
-        location: {type: string}
-        facilitator: {type: string}
-      required: [startDate, title, type]
     Student:
       type: object
       properties:
@@ -1334,13 +1331,6 @@ components:
       properties:
         faqText: {type: string, minLength: 1}
       required: [faqText]
-    BuildPlanPhases:
-      type: object
-      properties:
-        phases:
-          type: array
-          items: {$ref: '#/components/schemas/BuildPhase'}
-        dockerImage: {type: string}
     DifficultyAssessment:
       type: object
       properties:
@@ -1410,6 +1400,22 @@ components:
         difficulty: {type: integer, format: int32, description: Difficulty as a value
             from 0 to 100, maximum: 100, minimum: 0}
       required: [difficulty, language, numberOfQuestions, questionTypes, topic]
+    GlobalSearchResult:
+      type: object
+      description: Unified search result representing an entity found via global search
+      properties:
+        id: {type: string, description: Unique identifier of the entity}
+        type: {type: string, description: 'Entity type, e.g. ''exercise'', ''lecture'',
+            ''exam'''}
+        title: {type: string, description: Display title of the entity}
+        description: {type: string, description: Short description or body text excerpt}
+        badge: {type: string, description: 'Human-readable badge label, e.g. ''Programming'',
+            ''Quiz'', ''Lecture'''}
+        metadata:
+          type: object
+          additionalProperties: {}
+          description: Additional type-specific metadata such as courseId, dueDate,
+            or points
     CodeGenerationRequest:
       type: object
       properties:
@@ -1417,6 +1423,7 @@ components:
           type: string
           enum: [exercise, solution, tests, auxiliary, user]
         checkOnly: {type: boolean}
+        initialAutoGeneration: {type: boolean}
     QuizQuestionRefinementResponse:
       description: Discriminated response for a single quiz question refinement, either
         a success with the refined question or a failure with an error message
@@ -1451,12 +1458,8 @@ components:
       description: Request to refine multiple quiz questions at once using a single
         user prompt
       properties:
-        questions:
-          type: array
-          description: The quiz questions to refine
-          items: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
-          maxItems: 50
-          minItems: 1
+        questions: {type: array, description: The quiz questions to refine, maxItems: 50,
+          minItems: 1}
         refinementPrompt: {type: string, description: User instructions describing
             how all questions should be changed, maxLength: 2000, minLength: 1}
       required: [questions, refinementPrompt]
@@ -1480,11 +1483,7 @@ components:
       type: object
       description: Response containing generated quiz questions
       properties:
-        questions:
-          type: array
-          description: Generated quiz questions
-          items: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
-          minItems: 1
+        questions: {type: array, description: Generated quiz questions, minItems: 1}
       required: [questions]
     ProblemStatementGenerationRequest:
       type: object
@@ -1493,16 +1492,6 @@ components:
         userPrompt: {type: string, description: User prompt describing the problem
             statement requirements, maxLength: 1000, minLength: 1}
       required: [userPrompt]
-    GeneratedQuizAnswerOption:
-      type: object
-      description: One generated answer option
-      properties:
-        text: {type: string, description: Answer option text, maxLength: 2000, minLength: 1}
-        correct: {type: boolean, description: Whether this option is correct}
-        hint: {type: string, description: Optional hint, maxLength: 2000, minLength: 0}
-        explanation: {type: string, description: Optional explanation, maxLength: 2000,
-          minLength: 0}
-      required: [text]
     TutorialGroupFreePeriod:
       type: object
       properties:
@@ -1511,6 +1500,19 @@ components:
         end: {type: string}
         reason: {type: string}
       required: [end, start]
+    CalendarEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [LECTURE, TUTORIAL, EXAM, QUIZ_EXERCISE, TEXT_EXERCISE, MODELING_EXERCISE,
+            PROGRAMMING_EXERCISE, FILE_UPLOAD_EXERCISE]
+        title: {type: string}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        location: {type: string}
+        facilitator: {type: string}
+      required: [startDate, title, type]
     QualityIssue:
       type: object
       description: A quality issue found in the problem statement
