@@ -19,8 +19,6 @@ www/
 !.git
 # do not exclude .eslint files as they are required in the build process
 !.eslintrc
-# do not exclude .npmrc as it's required in the build process for setting the correct node options
-!.npmrc
 # exclude node_modules if installed locally
 node_modules
 # exclude build binaries except a pre-built .war file

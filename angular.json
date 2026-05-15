@@ -217,7 +217,7 @@
   },
   "cli": {
     "analytics": false,
-    "packageManager": "npm",
+    "packageManager": "bun",
     "cache": {
       "enabled": true,
       "path": "./build/angular/",

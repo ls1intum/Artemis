@@ -19,9 +19,9 @@ check_dep() {
   local DEP_NAME="$1"
   local CUR_VERSION="$2"
 
-  # Get the latest stable version from npm.
+  # Get the latest stable version from the npm registry.
   local LATEST_VERSION
-  LATEST_VERSION=$(npm show "$DEP_NAME" version 2>/dev/null)
+  LATEST_VERSION=$(bun pm view "$DEP_NAME" version 2>/dev/null)
   if [ -z "$LATEST_VERSION" ]; then
     # If no version is found, skip.
     return

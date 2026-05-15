@@ -18,9 +18,9 @@ The authoritative list of modules already migrated to Vitest is defined by the `
 
 **Running Vitest tests:**
 
-- Watch mode: `pnpm run vitest`
-- Single run: `pnpm run vitest:run`
-- With coverage: `pnpm run vitest:coverage`
+- Watch mode: `bun run vitest`
+- Single run: `bun run vitest:run`
+- With coverage: `bun run vitest:coverage`
 
 **Key differences from Jest (for migrating existing tests):**
 
@@ -32,11 +32,11 @@ The authoritative list of modules already migrated to Vitest is defined by the `
 
 Some existing tests still use [Jest](https://jestjs.io) and will be migrated incrementally.
 
-You can run all Jest tests by invoking `pnpm test` in the root directory of the Artemis project.
+You can run all Jest tests by invoking `bun run test` in the root directory of the Artemis project. (Note: `bun test` without `run` invokes Bun's built-in test runner, not the project's Jest scripts. Always use the explicit `run` prefix for the Artemis test scripts.)
 If you want to run individual tests, you can use the following commands:
 
-1. Run all tests in a file: `pnpm run test:one -- --test-path-pattern='src/main/webapp/app/fileupload/manage/assess/file-upload-assessment\.component\.spec\.ts$'`
-2. Run all tests in a module or folder: `pnpm run test:one -- --test-path-pattern='src/main/webapp/app/fileupload/.*$'`
+1. Run all tests in a file: `bun run test:one -- --test-path-pattern='src/main/webapp/app/fileupload/manage/assess/file-upload-assessment\.component\.spec\.ts$'`
+2. Run all tests in a module or folder: `bun run test:one -- --test-path-pattern='src/main/webapp/app/fileupload/.*$'`
 
 ## General Test Pattern
 
@@ -248,7 +248,7 @@ describe('SomeComponent', () => {
 ## Coverage & Quality
 
 * Ensure at least **80% line coverage**.
-    * Run `pnpm test` for coverage report.
+    * Run `bun run test` for coverage report.
     * Or [run the tests in IntelliJ IDEA with coverage activated](https://www.jetbrains.com/help/idea/running-test-with-coverage.html).
 
 * Prefer **user-interaction tests** instead of testing internal methods directly.

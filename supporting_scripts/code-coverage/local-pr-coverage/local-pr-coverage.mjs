@@ -403,8 +403,8 @@ async function runClientTests(modules, options) {
 
     // Run prebuild first (separate command, no shell interpolation)
     try {
-        const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-        const prebuildResult = spawnSync(npmCmd, ['run', 'prebuild'], {
+        const bunCmd = process.platform === 'win32' ? 'bun.exe' : 'bun';
+        const prebuildResult = spawnSync(bunCmd, ['run', 'prebuild'], {
             cwd: PROJECT_ROOT,
             stdio: options.verbose ? 'inherit' : 'pipe',
             encoding: 'utf-8',
