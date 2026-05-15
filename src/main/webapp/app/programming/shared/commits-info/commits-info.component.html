@@ -5,7 +5,7 @@
         <h5 jhiTranslate="artemisApp.programmingExercise.commitInfo.title"></h5>
     }
     <button class="btn btn-secondary me-2" (click)="toggleAllExpanded()">
-        @if (isGroupsExpanded) {
+        @if (isGroupsExpanded()) {
             <span jhiTranslate="artemisApp.programmingExercise.configureGrading.collapseAll"></span>
         } @else {
             <span jhiTranslate="artemisApp.programmingExercise.configureGrading.expandAll"></span>
@@ -27,7 +27,7 @@
             </tr>
         </thead>
         <tbody>
-            @for (commitGroup of groupedCommits; track commitGroup; let i = $index) {
+            @for (commitGroup of groupedCommits(); track commitGroup; let i = $index) {
                 <jhi-commits-info-group
                     [ngStyle]="{ display: 'contents' }"
                     [commits]="commitGroup.commits"
@@ -35,10 +35,10 @@
                     [previousSubmissionHash]="previousSubmissionHash()"
                     [exerciseProjectKey]="exerciseProjectKey()"
                     [isRepositoryView]="isRepositoryView()"
-                    [groupCount]="groupedCommits.length"
+                    [groupCount]="groupedCommits().length"
                     [groupIndex]="i"
                     [pushNumber]="i + 1"
-                    [isGroupExpanded]="isGroupsExpanded"
+                    [isGroupExpanded]="isGroupsExpanded()"
                 />
             }
         </tbody>

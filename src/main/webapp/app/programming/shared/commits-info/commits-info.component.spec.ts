@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
@@ -16,10 +18,12 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('CommitsInfoComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CommitsInfoComponent;
     let fixture: ComponentFixture<CommitsInfoComponent>;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
-    let programmingExerciseParticipationServiceSpy: jest.SpyInstance;
+    let programmingExerciseParticipationServiceSpy: ReturnType<typeof vi.spyOn>;
 
     const commitInfo1 = {
         hash: '123',
@@ -62,7 +66,7 @@ describe('CommitsInfoComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [CommitsInfoComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [CommitsInfoComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(ProgrammingExerciseParticipationService),
                 { provide: ProfileService, useClass: MockProfileService },
@@ -75,20 +79,20 @@ describe('CommitsInfoComponent', () => {
         component = fixture.componentInstance;
         fixture.detectChanges();
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
-        programmingExerciseParticipationServiceSpy = jest
+        programmingExerciseParticipationServiceSpy = vi
             .spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation')
             .mockReturnValue(of([commitInfo1, commitInfo2, commitInfo3, commitInfo4, commitInfo5, commitInfo6] as CommitInfo[]));
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should call participation service to retrieve commits onInit if no commits are passed as input, group commits by push, and sort the grouped commits descending by timestamp', () => {
-        component.participationId = 1;
+        fixture.componentRef.setInput('participationId', 1);
         component.ngOnInit();
         expect(programmingExerciseParticipationServiceSpy).toHaveBeenCalledExactlyOnceWith(1);
-        expect((component as any).groupedCommits).toEqual([
+        expect((component as any).groupedCommits()).toEqual([
             {
                 key: 'no-result',
                 commits: [commitInfo6, commitInfo5],
@@ -108,7 +112,7 @@ describe('CommitsInfoComponent', () => {
     });
 
     it('should do nothing onInit if commits are passed as input', () => {
-        component.commits = [{ hash: '123', author: 'author', timestamp: dayjs('2021-01-01'), message: 'commit message' }];
+        fixture.componentRef.setInput('commits', [{ hash: '123', author: 'author', timestamp: dayjs('2021-01-01'), message: 'commit message' }]);
         component.ngOnInit();
         expect(programmingExerciseParticipationServiceSpy).not.toHaveBeenCalled();
     });

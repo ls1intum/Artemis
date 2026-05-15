@@ -1,4 +1,4 @@
-import { Component, Input, input } from '@angular/core';
+import { Component, effect, input, signal } from '@angular/core';
 import type { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import { CommitsInfoRowComponent } from './commits-info-row/commits-info-row.component';
 import { NgStyle } from '@angular/common';
@@ -17,22 +17,25 @@ export class CommitsInfoGroupComponent {
     readonly groupIndex = input<number>(undefined!);
     readonly groupCount = input<number>(undefined!);
     readonly pushNumber = input<number>(undefined!);
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input()
-    set isGroupExpanded(value: boolean) {
-        if (this.isExpanded !== value) {
-            this.isExpanded = value;
-        }
+    readonly isGroupExpanded = input<boolean>(false);
+
+    protected readonly isExpanded = signal(false);
+
+    constructor() {
+        // Mirror the legacy accessor setter behaviour: whenever the parent input changes,
+        // align the local toggle state with it. Tracking only the input prevents the effect
+        // from being re-triggered by local toggles.
+        effect(() => {
+            const value = this.isGroupExpanded();
+            this.isExpanded.set(value);
+        });
     }
 
-    protected isExpanded = false;
-
     protected toggleExpand() {
-        this.isExpanded = !this.isExpanded;
+        this.isExpanded.update((expanded) => !expanded);
     }
 
     public getIsExpanded(): boolean {
-        return this.isExpanded;
+        return this.isExpanded();
     }
 }

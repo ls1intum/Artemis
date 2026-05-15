@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CommitsInfoGroupComponent } from 'app/programming/shared/commits-info/commits-info-group/commits-info-group.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -12,6 +14,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CommitsInfoGroupComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CommitsInfoGroupComponent;
     let fixture: ComponentFixture<CommitsInfoGroupComponent>;
 
@@ -30,42 +34,41 @@ describe('CommitsInfoGroupComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltipModule],
-            declarations: [CommitsInfoGroupComponent, CommitsInfoRowComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(TruncatePipe)],
+            imports: [NgbTooltipModule, CommitsInfoGroupComponent, CommitsInfoRowComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(TruncatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         });
         fixture = TestBed.createComponent(CommitsInfoGroupComponent);
         component = fixture.componentInstance;
-        component.commits = [commitInfo1, commitInfo2];
-        component.currentSubmissionHash = '456';
-        component.previousSubmissionHash = '123';
-        component.exerciseProjectKey = 'exerciseProjectKey';
-        component.isRepositoryView = false;
-        component.groupCount = 1;
-        component.groupIndex = 0;
-        component.pushNumber = 0;
+        fixture.componentRef.setInput('commits', [commitInfo1, commitInfo2]);
+        fixture.componentRef.setInput('currentSubmissionHash', '456');
+        fixture.componentRef.setInput('previousSubmissionHash', '123');
+        fixture.componentRef.setInput('exerciseProjectKey', 'exerciseProjectKey');
+        fixture.componentRef.setInput('isRepositoryView', false);
+        fixture.componentRef.setInput('groupCount', 1);
+        fixture.componentRef.setInput('groupIndex', 0);
+        fixture.componentRef.setInput('pushNumber', 0);
 
         fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should toggle isExpanded when clicking the expand button', () => {
         const compiled = fixture.nativeElement;
         let expandButton = compiled.querySelector('button');
 
-        expect(component.getIsExpanded()).toBeFalse();
+        expect(component.getIsExpanded()).toBe(false);
 
         expandButton.click();
         fixture.detectChanges();
-        expect(component.getIsExpanded()).toBeTrue();
+        expect(component.getIsExpanded()).toBe(true);
 
         expandButton = compiled.querySelector('button');
 
         expandButton.click();
         fixture.detectChanges();
-        expect(component.getIsExpanded()).toBeFalse();
+        expect(component.getIsExpanded()).toBe(false);
     });
 });

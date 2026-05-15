@@ -1,4 +1,4 @@
-import { Component, Input, input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import type { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { faAngleDown, faAngleLeft } from '@fortawesome/free-solid-svg-icons';
@@ -16,10 +16,7 @@ import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
     imports: [RouterLink, NgbTooltip, ResultComponent, FaIconComponent, TranslateDirective, ArtemisDatePipe, TruncatePipe],
 })
 export class CommitsInfoRowComponent {
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() commit: CommitInfo;
+    readonly commit = input.required<CommitInfo>();
     readonly currentSubmissionHash = input<string>();
     readonly previousSubmissionHash = input<string>();
     readonly exerciseProjectKey = input<string>();
@@ -33,7 +30,6 @@ export class CommitsInfoRowComponent {
     readonly toggleExpandEvent = output<void>();
 
     onToggleExpand() {
-        // TODO: The 'emit' function requires a mandatory void argument
         this.toggleExpandEvent.emit();
     }
 

@@ -1,4 +1,4 @@
-@if (!isExpanded) {
+@if (!isExpanded()) {
     <jhi-commits-info-row
         [ngStyle]="{ display: 'contents' }"
         [commit]="commits()[0]"
@@ -6,7 +6,7 @@
         [previousSubmissionHash]="previousSubmissionHash()"
         [exerciseProjectKey]="exerciseProjectKey()"
         [isRepositoryView]="isRepositoryView()"
-        [isExpanded]="isExpanded"
+        [isExpanded]="isExpanded()"
         (toggleExpandEvent)="toggleExpand()"
         [pushNumber]="pushNumber()"
         [firstCommit]="groupIndex() === groupCount() - 1 && 0 === commits().length - 1"
@@ -22,7 +22,7 @@
             [previousSubmissionHash]="previousSubmissionHash()"
             [exerciseProjectKey]="exerciseProjectKey()"
             [isRepositoryView]="isRepositoryView()"
-            [isExpanded]="isExpanded"
+            [isExpanded]="isExpanded()"
             (toggleExpandEvent)="toggleExpand()"
             [pushNumber]="pushNumber()"
             [firstCommit]="groupIndex() === groupCount() - 1 && i === commits().length - 1"

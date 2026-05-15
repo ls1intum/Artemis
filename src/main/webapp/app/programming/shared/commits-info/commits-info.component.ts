@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { CommitInfo, ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import dayjs from 'dayjs/esm';
@@ -15,9 +15,7 @@ import { NgStyle } from '@angular/common';
 export class CommitsInfoComponent implements OnInit, OnDestroy {
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
 
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() commits?: CommitInfo[];
+    readonly commits = input<CommitInfo[]>();
     readonly currentSubmissionHash = input<string>();
     readonly previousSubmissionHash = input<string>();
     readonly participationId = input<number>();
@@ -26,21 +24,27 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     readonly isRepositoryView = input(false);
 
     private commitsInfoSubscription: Subscription;
-    protected isGroupsExpanded = true;
-    protected groupedCommits: { key: string; commits: CommitInfo[]; date: string }[] = [];
+    protected readonly isGroupsExpanded = signal(true);
+    protected readonly groupedCommits = signal<{ key: string; commits: CommitInfo[]; date: string }[]>([]);
+    /**
+     * Locally-managed commits state. Defaults to the input value; updated when fetched via the service.
+     */
+    protected readonly internalCommits = signal<CommitInfo[] | undefined>(undefined);
 
     ngOnInit(): void {
-        if (!this.commits) {
+        const initialCommits = this.commits();
+        if (!initialCommits) {
             const participationId = this.participationId();
             if (participationId) {
                 this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(participationId).subscribe((commits) => {
                     if (commits) {
-                        this.commits = commits;
+                        this.internalCommits.set(commits);
                     }
                     this.groupCommits();
                 });
             }
         } else {
+            this.internalCommits.set(initialCommits);
             this.groupCommits();
         }
     }
@@ -55,17 +59,19 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
      * we infer groups based on the presence of a 'result' on a commit.
      */
     private groupCommits() {
-        if (!this.commits) {
+        const commits = this.internalCommits();
+        if (!commits) {
             return;
         }
 
         const commitGroups: { key: string; commits: CommitInfo[]; date: string }[] = [];
         let tempGroup: CommitInfo[] = [];
 
-        this.commits = this.commits?.sort((a, b) => (dayjs(b.timestamp).isAfter(dayjs(a.timestamp)) ? -1 : 1));
+        const sorted = [...commits].sort((a, b) => (dayjs(b.timestamp).isAfter(dayjs(a.timestamp)) ? -1 : 1));
+        this.internalCommits.set(sorted);
 
-        for (let i = 0; i < this.commits.length; i++) {
-            const commit = this.commits[i];
+        for (let i = 0; i < sorted.length; i++) {
+            const commit = sorted[i];
             tempGroup.push(commit);
 
             if (commit.result) {
@@ -87,10 +93,10 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
             });
         }
 
-        this.groupedCommits = commitGroups.reverse();
+        this.groupedCommits.set(commitGroups.reverse());
     }
 
     protected toggleAllExpanded() {
-        this.isGroupsExpanded = !this.isGroupsExpanded;
+        this.isGroupsExpanded.update((expanded) => !expanded);
     }
 }

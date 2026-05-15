@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
@@ -15,8 +17,12 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CommitHistoryComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CommitHistoryComponent;
     let fixture: ComponentFixture<CommitHistoryComponent>;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
@@ -99,13 +105,18 @@ describe('CommitHistoryComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [CommitHistoryComponent, MockComponent(CommitsInfoComponent)],
+            imports: [CommitHistoryComponent, MockComponent(CommitsInfoComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ key: 'ABC123' }) },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     function setupComponent() {
@@ -116,11 +127,11 @@ describe('CommitHistoryComponent', () => {
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
         activatedRoute.setParameters({ repositoryId: 2 });
-        jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(of(mockCommits));
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
+        vi.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(of(mockCommits));
 
         const mockExerciseResponse: HttpResponse<ProgrammingExercise> = new HttpResponse({ body: mockExerciseWithTemplateAndSolution });
-        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation').mockReturnValue(of(mockExerciseResponse));
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation').mockReturnValue(of(mockExerciseResponse));
 
         fixture.detectChanges();
     }
@@ -151,8 +162,8 @@ describe('CommitHistoryComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationSub?.closed).toBe(true);
     });
 
     it('should load student commits', () => {
@@ -170,9 +181,9 @@ describe('CommitHistoryComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationSub?.closed).toBe(true);
+        expect(component.commitsInfoSubscription?.closed).toBe(true);
     });
 
     it('should set student commit results', () => {
@@ -193,15 +204,15 @@ describe('CommitHistoryComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationSub?.closed).toBe(true);
+        expect(component.commitsInfoSubscription?.closed).toBe(true);
     });
 
     it('should load template participation and handle commits', () => {
         setupComponent();
         activatedRoute.setParameters({ repositoryType: 'TEMPLATE' });
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockTemplateCommits));
+        vi.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockTemplateCommits));
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -221,15 +232,15 @@ describe('CommitHistoryComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationSub?.closed).toBe(true);
+        expect(component.commitsInfoSubscription?.closed).toBe(true);
     });
 
     it('should load solution participation', () => {
         setupComponent();
         activatedRoute.setParameters({ repositoryType: 'SOLUTION' });
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockSolutionCommits));
+        vi.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockSolutionCommits));
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -249,19 +260,19 @@ describe('CommitHistoryComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationSub?.closed).toBe(true);
     });
 
     it('should load test participation', () => {
         setupComponent();
         activatedRoute.setParameters({ repositoryType: 'TESTS' });
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockTestCommits));
+        vi.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockTestCommits));
 
         // Trigger ngOnInit
         component.ngOnInit();
 
-        expect(component.isTestRepository).toBeTrue();
+        expect(component.isTestRepository).toBe(true);
 
         // Expectations
         expect(component.participation).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation);
@@ -274,14 +285,14 @@ describe('CommitHistoryComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationSub?.closed).toBe(true);
     });
 
     it('should load auxiliary repository commits', () => {
         setupComponent();
         activatedRoute.setParameters({ repositoryType: 'AUXILIARY', repositoryId: 5 });
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForAuxiliaryRepository').mockReturnValue(of(mockTestCommits));
+        vi.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForAuxiliaryRepository').mockReturnValue(of(mockTestCommits));
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -295,7 +306,7 @@ describe('CommitHistoryComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationSub?.closed).toBe(true);
     });
 });
