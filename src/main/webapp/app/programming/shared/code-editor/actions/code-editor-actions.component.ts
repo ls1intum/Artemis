@@ -282,7 +282,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                         this.onError.emit('submitFailed');
                     }
 
-                    if (error.error.detail) {
+                    if (error.error?.detail) {
                         const detailMessage = error.error.detail;
                         if (detailMessage.includes('submitBeforeStartDate')) {
                             this.onError.emit('submitBeforeStartDate');
