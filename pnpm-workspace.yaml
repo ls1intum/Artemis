@@ -1,0 +1,62 @@
+# pnpm 11+ moved install/resolution settings out of `.npmrc` (which it now
+# ignores for everything except registry/auth/Node settings like node-options)
+# and into this file. Settings here govern the install behaviour in this
+# project root.
+
+# No hoist shim: rely on pnpm's default isolated layout. Every package the
+# project imports is declared as a direct dependency in package.json; patches
+# go through pnpm.patchedDependencies (which works on the .pnpm symlink store
+# directly, without requiring transitive deps at top-level node_modules).
+
+# Auto-install peer dependencies (default in pnpm 10, opt-in in pnpm 11).
+# Without this, peer deps such as `@angular/animations` (required by
+# @swimlane/ngx-charts / @swimlane/ngx-graph) are not installed, and the
+# Angular esbuild bundle fails with "Could not resolve @angular/animations".
+autoInstallPeers: true
+
+# Treat the lockfile as authoritative; never silently update it during install.
+preferFrozenLockfile: true
+
+# Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
+enablePrePostScripts: true
+
+# Tell pnpm that Angular 21 is an acceptable peer for packages whose published
+# peerDependencies range still lists only "18.x || 19.x || 20.x".
+# We already pin every relevant @angular/* dep under @swimlane/* and ng-mocks
+# to ^21.2.0 via pnpm.overrides in package.json; this block just suppresses
+# the cosmetic peer-range warning that overrides do not silence on their own.
+# When @swimlane / ng-mocks publish releases that declare Angular 21 in their
+# peer range, this block (and the matching pnpm.overrides) can be removed.
+peerDependencyRules:
+    allowedVersions:
+        '@angular/animations': '21'
+        '@angular/cdk': '21'
+        '@angular/common': '21'
+        '@angular/compiler': '21'
+        '@angular/core': '21'
+        '@angular/forms': '21'
+        '@angular/platform-browser': '21'
+        '@angular/platform-browser-dynamic': '21'
+        '@angular/router': '21'
+
+# Patch files applied by pnpm to specific transitive dependencies during install
+# (the pnpm-native replacement for the old patch-package/postinstall flow).
+patchedDependencies:
+    '@angular-builders/jest@21.0.3': 'patches/@angular-builders+jest+21.0.3.patch'
+    '@eslint/eslintrc@3.3.5': 'patches/@eslint+eslintrc+3.3.5.patch'
+    '@swimlane/ngx-graph@11.0.0': 'patches/@swimlane+ngx-graph+11.0.0.patch'
+    'eslint@9.39.4': 'patches/eslint+9.39.4.patch'
+
+# Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
+# pnpm 11 blocks build scripts by default; these are needed for native bindings
+# (@swc/core, esbuild, @parcel/watcher, lmdb, msgpackr-extract, unrs-resolver),
+# polyfill setup (core-js), or our own dev-time hooks (husky).
+allowBuilds:
+    '@parcel/watcher': true
+    '@swc/core': true
+    core-js: true
+    esbuild: true
+    husky: true
+    lmdb: true
+    msgpackr-extract: true
+    unrs-resolver: true
