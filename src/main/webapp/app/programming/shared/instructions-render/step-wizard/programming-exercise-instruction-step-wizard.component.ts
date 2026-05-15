@@ -52,7 +52,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
     faCheck = faCheck;
     faCircle = faCircle;
 
-    public showDetailsForTests(tests: number[], taskName: string) {
+    showDetailsForTests(tests: number[], taskName: string) {
         const latestResult = this.latestResult();
         if (!latestResult || !tests.length) {
             return;

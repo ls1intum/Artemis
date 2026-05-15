@@ -55,9 +55,8 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('reset should set editable and input fields correctly', () => {
+    it('should re-seed editable and input fields when inputs change', () => {
         fixture.componentRef.setInput('submissionBuildPlanCheckoutRepositories', submissionBuildPlanCheckoutRepositories);
-        component.reset();
         expect(component.isAssigmentRepositoryEditable()).toBe(true);
         expect(component.assignmentCheckoutPath()).toBe('assignment');
         expect(component.isTestRepositoryEditable()).toBe(true);
@@ -68,7 +67,6 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
         fixture.componentRef.setInput('submissionBuildPlanCheckoutRepositories', {
             testCheckoutDirectory: '/',
         });
-        component.reset();
         expect(component.isAssigmentRepositoryEditable()).toBe(false);
         expect(component.assignmentCheckoutPath()).toBe('');
         expect(component.isTestRepositoryEditable()).toBe(false);
@@ -105,10 +103,9 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
         expect(component.areValuesUnique(stringArray)).toBe(true);
     });
 
-    it('should should reset values correctly when buildconfig is null', () => {
+    it('should re-seed values correctly when buildconfig is null', () => {
         fixture.componentRef.setInput('programmingExercise', new ProgrammingExercise(course, undefined));
         fixture.componentRef.setInput('submissionBuildPlanCheckoutRepositories', submissionBuildPlanCheckoutRepositories);
-        component.reset();
 
         expect(component.assignmentCheckoutPath()).toBe('assignment');
         expect(component.testCheckoutPath()).toBe('tests');
@@ -118,7 +115,6 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
     it('should set values to their defaults if no buildConfig of submissionBuildPlan available', () => {
         fixture.componentRef.setInput('programmingExercise', new ProgrammingExercise(course, undefined));
         fixture.componentRef.setInput('submissionBuildPlanCheckoutRepositories', undefined);
-        component.reset();
 
         expect(component.assignmentCheckoutPath()).toBe('');
         expect(component.testCheckoutPath()).toBe('/');

@@ -27,8 +27,8 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
     readonly isTestRepositoryEditable = computed(() => this.isEditable(this.submissionBuildPlanCheckoutRepositories()?.testCheckoutDirectory));
     readonly isSolutionRepositoryEditable = computed(() => this.isEditable(this.submissionBuildPlanCheckoutRepositories()?.solutionCheckoutDirectory));
 
-    // Path values re-seed from the inputs whenever those change (replacing the legacy effect → reset()
-    // chain), while remaining writable for user edits via the ngModelChange handlers below.
+    // Path values re-seed from the inputs whenever those change (replacing the legacy effect chain),
+    // while remaining writable for user edits via the ngModelChange handlers below.
     readonly assignmentCheckoutPath = linkedSignal<string>(() => {
         if (!this.isAssigmentRepositoryEditable()) {
             return '';
@@ -57,26 +57,6 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
     field_assignmentRepositoryCheckoutPath = viewChild<NgModel>('field_assignmentRepositoryCheckoutPath');
     field_testRepositoryCheckoutPath = viewChild<NgModel>('field_testRepositoryCheckoutPath');
     field_solutionRepositoryCheckoutPath = viewChild<NgModel>('field_solutionRepositoryCheckoutPath');
-
-    /**
-     * Re-seed the path signals from current inputs. Useful for tests / explicit-reset callers;
-     * normal input changes flow automatically through the `linkedSignal` recomputations above.
-     */
-    reset() {
-        // linkedSignal recomputes on input changes; clearing forces it to re-read.
-        // Re-assigning via .set with the computed value keeps behavior identical to the legacy reset.
-        const submissionBuildPlan = this.submissionBuildPlanCheckoutRepositories();
-        const buildConfig = this.programmingExercise().buildConfig;
-        this.assignmentCheckoutPath.set(
-            this.isAssigmentRepositoryEditable() ? buildConfig?.assignmentCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.exerciseCheckoutDirectory) || '' : '',
-        );
-        this.testCheckoutPath.set(
-            this.isTestRepositoryEditable() ? buildConfig?.testCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.testCheckoutDirectory) || '' : '/',
-        );
-        this.solutionCheckoutPath.set(
-            this.isSolutionRepositoryEditable() ? buildConfig?.solutionCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.solutionCheckoutDirectory) || '' : '',
-        );
-    }
 
     onAssigmentRepositoryCheckoutPathChange(event: string) {
         this.assignmentCheckoutPath.set(event);

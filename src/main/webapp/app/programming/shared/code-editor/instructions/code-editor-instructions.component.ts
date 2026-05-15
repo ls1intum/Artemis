@@ -15,7 +15,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 })
 export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy {
     readonly onToggleCollapse = output<{
-        event: any;
+        event: MouseEvent;
         horizontal: boolean;
         interactable: Interactable;
         resizableMinWidth?: number;
@@ -56,14 +56,12 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
 
     /**
      * Calls the parent (editorComponent) toggleCollapse method
-     * @param event - any event
+     * @param event - click event from the collapse header
      */
-    toggleEditorCollapse(event: any) {
+    toggleEditorCollapse(event: MouseEvent) {
         // make instructions monaco editor in the main editor not collapsible
         if (this.disableCollapse()) {
-            if (event?.stopPropagation) {
-                event.stopPropagation();
-            }
+            event?.stopPropagation();
             return;
         }
         this.collapsed = !this.collapsed;

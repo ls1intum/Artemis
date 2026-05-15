@@ -58,7 +58,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     /**
      * Opens the FeedbackComponent as popup. Displays test results.
      */
-    public showDetailsForTests() {
+    showDetailsForTests() {
         const latestResult = this.latestResult();
         if (!latestResult) {
             return;

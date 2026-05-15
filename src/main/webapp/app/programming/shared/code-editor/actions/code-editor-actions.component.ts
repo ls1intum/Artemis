@@ -60,7 +60,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     readonly onSavedFiles = output<{
         [fileName: string]: string | undefined;
     }>();
-    readonly onRefreshFiles = output();
+    readonly onRefreshFiles = output<void>();
     readonly onCommit = output<void>();
     readonly onError = output<string>();
 

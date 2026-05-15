@@ -70,13 +70,17 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private cdr = inject(ChangeDetectorRef);
 
     readonly exercise = input<ProgrammingExercise | undefined>(undefined);
-    public readonly participation = input<Participation | undefined>(undefined);
+    readonly participation = input<Participation | undefined>(undefined);
     readonly generateHtmlEvents = input<Observable<void>>();
     readonly personalParticipation = input.required<boolean>();
 
-    public readonly onNoInstructionsAvailable = output();
+    readonly onNoInstructionsAvailable = output();
 
     readonly examExerciseUpdateHighlighterComponent = viewChild(ExamExerciseUpdateHighlighterComponent);
+
+    // Icons
+    faSpinner = faSpinner;
+    faFileAlt = faFileAlt;
 
     private problemStatement: string | undefined;
     private participationSubscription?: Subscription;
@@ -157,9 +161,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             this.processInputChanges();
         }
     }
-
-    faSpinner = faSpinner;
-    faFileAlt = faFileAlt;
 
     private processInputChanges({ participationChanged = true }: { participationChanged?: boolean } = {}) {
         const exercise = this.exercise();

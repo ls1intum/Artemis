@@ -136,7 +136,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             .subscribe();
     }
 
-    abstract triggerBuild(submissionType: SubmissionType): void;
+    abstract triggerBuild(event: MouseEvent): void;
 
     triggerWithType(submissionType: SubmissionType) {
         this.isRetrievingBuildStatus.set(true);

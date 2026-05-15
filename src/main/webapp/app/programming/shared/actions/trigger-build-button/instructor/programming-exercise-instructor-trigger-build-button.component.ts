@@ -25,7 +25,7 @@ export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends Pr
         this.personalParticipation = false;
     }
 
-    triggerBuild = (event: any) => {
+    triggerBuild = (event: MouseEvent) => {
         // The button is often nested inside other click handlers; stop propagation so the parent action does not also fire.
         event.stopPropagation();
         if (this.participationHasLatestSubmissionWithoutResult()) {
