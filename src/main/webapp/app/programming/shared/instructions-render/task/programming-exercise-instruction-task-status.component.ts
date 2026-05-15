@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, computed, effect, inject, input } from '@angular/core';
 import { faCheckCircle, faCircleDot, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -18,73 +18,54 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 })
 export class ProgrammingExerciseInstructionTaskStatusComponent {
     private programmingExerciseInstructionService = inject(ProgrammingExerciseInstructionService);
+    // NgbModal is retained: the only modal opened is FeedbackComponent (shared, uses NgbActiveModal).
+    // Migrating FeedbackComponent to PrimeNG DialogService is out of scope for this PR — see the
+    // cluster-6 scope boundary note.
     private modalService = inject(NgbModal);
 
     TestCaseState = TestCaseState;
     translationBasePath = 'artemisApp.editor.testStatusLabels.';
 
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() taskName: string;
+    readonly taskName = input<string>(undefined!);
+    readonly testIds = input<number[]>([]);
+    readonly exercise = input<Exercise>(undefined!);
+    readonly latestResult = input<Result | undefined>(undefined);
+    readonly participation = input<Participation>(undefined!);
 
-    /**
-     * array of test ids
-     */
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input()
-    get testIds() {
-        return this.testIdsValue;
-    }
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() exercise: Exercise;
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() latestResult?: Result;
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() participation: Participation;
-
-    testIdsValue: number[];
-    testCaseState: TestCaseState;
-
-    /**
-     * Arrays of test case ids, grouped by their status in the given result.
-     */
-    successfulTests: number[];
-    notExecutedTests: number[];
-    failedTests: number[];
-
-    hasMessage: boolean;
+    // Derived state, kept reactive via computed() so all dependencies (testIds + latestResult)
+    // are tracked. The legacy testIds setter performed this calculation imperatively whenever
+    // any of these inputs changed; an effect mirrors that into a single computed value.
+    private readonly testStatus = computed(() => this.programmingExerciseInstructionService.testStatusForTask(this.testIds() ?? [], this.latestResult()));
+    readonly testCaseState = computed(() => this.testStatus().testCaseState);
+    readonly successfulTests = computed(() => this.testStatus().detailed.successfulTests);
+    readonly notExecutedTests = computed(() => this.testStatus().detailed.notExecutedTests);
+    readonly failedTests = computed(() => this.testStatus().detailed.failedTests);
+    readonly hasMessage = computed(() => this.computeHasTestMessage(this.testIds() ?? []));
 
     // Icons
     faCircleDot = faCircleDot;
     farCheckCircle = faCheckCircle;
     farTimesCircle = faTimesCircle;
 
-    set testIds(testIds: number[]) {
-        this.testIdsValue = testIds;
-        const {
-            testCaseState,
-            detailed: { successfulTests, notExecutedTests, failedTests },
-        } = this.programmingExerciseInstructionService.testStatusForTask(this.testIds, this.latestResult);
-        this.testCaseState = testCaseState;
-        this.successfulTests = successfulTests;
-        this.notExecutedTests = notExecutedTests;
-        this.failedTests = failedTests;
-        this.hasMessage = this.hasTestMessage(testIds);
+    constructor() {
+        // Touch reactive state so it stays subscribed even if the template doesn't reference it
+        // every render — preserves the legacy setter's "eager compute" semantics.
+        effect(() => {
+            this.testStatus();
+            this.hasMessage();
+        });
     }
 
     /**
      * Checks if any of the feedbacks have a detailText associated to them.
      * @param testIds the test case ids that should be checked for
      */
-    private hasTestMessage(testIds: number[]): boolean {
-        if (!this.latestResult?.feedbacks) {
+    private computeHasTestMessage(testIds: number[]): boolean {
+        const latestResult = this.latestResult();
+        if (!latestResult?.feedbacks) {
             return false;
         }
-        const feedbacks = this.latestResult.feedbacks;
+        const feedbacks = latestResult.feedbacks;
         return testIds.some((testId: number) => feedbacks.find((feedback) => feedback.testCase?.id === testId && feedback.detailText));
     }
 
@@ -92,17 +73,18 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
      * Opens the FeedbackComponent as popup. Displays test results.
      */
     public showDetailsForTests() {
-        if (!this.latestResult) {
+        const latestResult = this.latestResult();
+        if (!latestResult) {
             return;
         }
         const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'lg' });
         const componentInstance = modalRef.componentInstance as FeedbackComponent;
-        componentInstance.exercise = this.exercise;
-        componentInstance.result = this.latestResult;
-        componentInstance.participation = this.participation;
-        componentInstance.feedbackFilter = this.testIds;
+        componentInstance.exercise = this.exercise();
+        componentInstance.result = latestResult;
+        componentInstance.participation = this.participation();
+        componentInstance.feedbackFilter = this.testIds();
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;
-        componentInstance.taskName = this.taskName;
-        componentInstance.numberOfNotExecutedTests = this.notExecutedTests.length;
+        componentInstance.taskName = this.taskName();
+        componentInstance.numberOfNotExecutedTests = this.notExecutedTests().length;
     }
 }

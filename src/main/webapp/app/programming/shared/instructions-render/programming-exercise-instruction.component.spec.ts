@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -19,30 +21,28 @@ import {
     problemStatementWithIds,
 } from 'test/helpers/sample/problemStatement.json';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
-import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockModule } from 'ng-mocks';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
-import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseInstructionComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ProgrammingExerciseInstructionComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructionComponent>;
     let debugElement: DebugElement;
@@ -52,22 +52,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let modalService: NgbModal;
     let themeService: ThemeService;
 
-    let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
-    let openModalStub: jest.SpyInstance;
-    let getLatestResultWithFeedbacks: jest.SpyInstance;
+    let subscribeForLatestResultOfParticipationStub: ReturnType<typeof vi.spyOn>;
+    let openModalStub: ReturnType<typeof vi.spyOn>;
+    let getLatestResultWithFeedbacks: ReturnType<typeof vi.spyOn>;
 
     const modalRef = { componentInstance: {} };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
-            declarations: [
-                ProgrammingExerciseInstructionComponent,
-                ProgrammingExerciseInstructionStepWizardComponent,
-                ProgrammingExerciseInstructionTaskStatusComponent,
-                TranslatePipeMock,
-                SafeHtmlPipe,
-            ],
+            imports: [MockModule(NgbTooltipModule), ProgrammingExerciseInstructionComponent],
             providers: [
                 ProgrammingExerciseTaskExtensionWrapper,
                 ProgrammingExercisePlantUmlExtensionWrapper,
@@ -94,18 +87,18 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         modalService = TestBed.inject(NgbModal);
         themeService = TestBed.inject(ThemeService);
 
-        subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
-        openModalStub = jest.spyOn(modalService, 'open');
-        getLatestResultWithFeedbacks = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
+        subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+        openModalStub = vi.spyOn(modalService, 'open');
+        getLatestResultWithFeedbacks = vi.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
 
-        comp.personalParticipation = true;
+        fixture.componentRef.setInput('personalParticipation', true);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should on participation change clear old subscription for participation results set up new one', fakeAsync(() => {
+    it('should on participation change clear old subscription for participation results set up new one', async () => {
         const exercise: ProgrammingExercise = {
             id: 1,
             numberOfAssessmentsOfCorrectionRounds: [],
@@ -114,18 +107,17 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             isAtLeastTutor: true,
             problemStatement: 'lorem ipsum dolor sit amet',
         };
-        const oldParticipation: Participation = { id: 1 };
         const result: Result = { id: 1 };
         const participation: Participation = { id: 2, submissions: [{ results: [result] }] };
         const oldSubscription = new Subscription();
-        const getTestCasesSpy = jest.spyOn(programmingExerciseGradingService, 'getTestCases');
+        const getTestCasesSpy = vi.spyOn(programmingExerciseGradingService, 'getTestCases');
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
         comp.exercise = exercise;
-        comp.participation = participation;
+        fixture.componentRef.setInput('participation', participation);
         // @ts-ignore
         comp.participationSubscription = oldSubscription;
 
-        triggerChanges(comp, { property: 'participation', currentValue: participation, previousValue: oldParticipation, firstChange: false });
+        comp.processInputChanges({ participationChanged: true });
         fixture.changeDetectorRef.detectChanges();
 
         expect(getTestCasesSpy).toHaveBeenCalledOnce();
@@ -133,11 +125,11 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true, exercise.id);
         // @ts-ignore
         expect(comp.participationSubscription).not.toEqual(oldSubscription);
-        flush();
-        expect(comp.isInitial).toBeTrue();
-    }));
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        expect(comp.isInitial).toBe(true);
+    });
 
-    it('should properly assign and cleanup generateHtmlSubscription when generateHtmlEvents is provided', fakeAsync(() => {
+    it('should properly assign and cleanup generateHtmlSubscription when generateHtmlEvents is provided', async () => {
         const exercise: ProgrammingExercise = {
             id: 1,
             numberOfAssessmentsOfCorrectionRounds: [],
@@ -146,7 +138,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             isAtLeastTutor: true,
             problemStatement: 'lorem ipsum dolor sit amet',
         };
-        const oldParticipation: Participation = { id: 1 };
         const result: Result = { id: 1 };
         const participation: Participation = { id: 2, submissions: [{ results: [result] }] };
         const oldSubscription = new Subscription();
@@ -154,20 +145,20 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
         comp.exercise = exercise;
-        comp.participation = participation;
-        comp.generateHtmlEvents = generateHtmlEvents;
+        fixture.componentRef.setInput('participation', participation);
+        fixture.componentRef.setInput('generateHtmlEvents', generateHtmlEvents);
         // @ts-ignore
         comp.generateHtmlSubscription = oldSubscription;
 
-        triggerChanges(comp, { property: 'participation', currentValue: participation, previousValue: oldParticipation, firstChange: false });
+        comp.processInputChanges({ participationChanged: true });
         fixture.changeDetectorRef.detectChanges();
 
         // @ts-ignore - the generateHtmlSubscription should be reassigned, not left as the old one
         expect(comp.generateHtmlSubscription).not.toEqual(oldSubscription);
         // @ts-ignore - verify it's actually a subscription
         expect(comp.generateHtmlSubscription).toBeInstanceOf(Subscription);
-        flush();
-    }));
+        await new Promise((resolve) => setTimeout(resolve, 200));
+    });
 
     it('should process empty problem statement and show empty state', () => {
         const result: Result = { id: 1, feedbacks: [] };
@@ -179,16 +170,16 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: false,
         };
-        const loadInitialResultStub = jest.spyOn(comp, 'loadInitialResult').mockReturnValue(of(result));
-        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
-        const noInstructionsAvailableSpy = jest.spyOn(comp.onNoInstructionsAvailable, 'emit');
-        comp.participation = participation;
+        const loadInitialResultStub = vi.spyOn(comp, 'loadInitialResult').mockReturnValue(of(result));
+        const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
+        const noInstructionsAvailableSpy = vi.spyOn(comp.onNoInstructionsAvailable, 'emit');
+        fixture.componentRef.setInput('participation', participation);
         comp.exercise = exercise;
         comp.isInitial = true;
         comp.isLoading = false;
 
         fixture.detectChanges();
-        triggerChanges(comp);
+        comp.processInputChanges();
         // @ts-ignore
         expect(comp.problemStatement).toBeUndefined();
         // Component now processes empty problem statements to show empty state
@@ -197,14 +188,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         // No longer emits onNoInstructionsAvailable - shows empty state instead
         expect(noInstructionsAvailableSpy).not.toHaveBeenCalled();
-        expect(comp.isInitial).toBeFalse();
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.isInitial).toBe(false);
+        expect(comp.isLoading).toBe(false);
         fixture.changeDetectorRef.detectChanges();
         expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBeNull();
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBeNull();
     });
 
-    it('should NOT update markdown if the problemStatement is changed', fakeAsync(() => {
+    it('should NOT update markdown if the problemStatement is changed', async () => {
         const participation: Participation = { id: 2 };
         const exercise: ProgrammingExercise = {
             id: 3,
@@ -215,25 +206,26 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         };
         const oldProblemStatement = 'lorem ipsum';
         const newProblemStatement = 'new lorem ipsum';
-        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
-        const loadInitialResult = jest.spyOn(comp, 'loadInitialResult');
+        // Seed participation before any change detection so the effect's initial seed pass
+        // already captures it — subsequent processInputChanges runs see no participation change.
+        fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
-        comp.exercise = { ...exercise, problemStatement: newProblemStatement };
-        comp.participation = participation;
+        const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
+        const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
+        comp.exercise = { ...exercise, problemStatement: oldProblemStatement };
         comp.isInitial = false;
-        triggerChanges(comp, {
-            property: 'exercise',
-            previousValue: { ...exercise, problemStatement: oldProblemStatement },
-            currentValue: { ...comp.exercise, problemStatement: newProblemStatement },
-            firstChange: false,
-        });
+        // Prime the seen problem statement so the next change is detected.
+        // @ts-ignore
+        comp.lastSeenProblemStatement = oldProblemStatement;
+        comp.exercise = { ...comp.exercise, problemStatement: newProblemStatement };
+        comp.processInputChanges({ participationChanged: false });
         // Wait for debounce (150ms) to complete
-        tick(150);
+        await new Promise((resolve) => setTimeout(resolve, 200));
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(loadInitialResult).not.toHaveBeenCalled();
-    }));
+    });
 
-    it('should NOT update the markdown if there is no participation and the exercise has changed', fakeAsync(() => {
+    it('should NOT update the markdown if there is no participation and the exercise has changed', async () => {
         const participation: Participation = { id: 2 };
         const exercise: ProgrammingExercise = {
             id: 3,
@@ -243,20 +235,25 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             studentAssignedTeamIdComputed: false,
         };
         const newProblemStatement = 'new lorem ipsum';
-        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
-        const loadInitialResult = jest.spyOn(comp, 'loadInitialResult');
+        // Seed participation before any change detection so the effect's initial seed pass
+        // already captures it; processInputChanges with participationChanged=false then exercises
+        // the "exercise changed but participation didn't" path.
+        fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
+        const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
+        const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
         comp.exercise = { ...exercise, problemStatement: newProblemStatement };
-        comp.participation = participation;
         comp.isInitial = false;
-        triggerChanges(comp, { property: 'exercise', currentValue: { ...comp.exercise, problemStatement: newProblemStatement }, firstChange: false });
+        // @ts-ignore
+        comp.lastSeenProblemStatement = undefined;
+        comp.processInputChanges({ participationChanged: false });
         fixture.changeDetectorRef.detectChanges();
         // Wait for debounce (150ms) to complete
-        tick(150);
+        await new Promise((resolve) => setTimeout(resolve, 200));
         expect(comp.markdownExtensions).toHaveLength(2);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(loadInitialResult).not.toHaveBeenCalled();
-    }));
+    });
 
     it('should still render the instructions if fetching the latest result fails', () => {
         const participation: Participation = { id: 2 };
@@ -269,27 +266,27 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: false,
         };
-        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
+        const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
         getLatestResultWithFeedbacks.mockReturnValue(throwError(() => new Error('fatal error')));
-        comp.participation = participation;
+        fixture.componentRef.setInput('participation', participation);
         comp.exercise = exercise;
         comp.isInitial = true;
         comp.isLoading = false;
 
         fixture.detectChanges();
-        triggerChanges(comp);
+        comp.processInputChanges();
 
         expect(comp.markdownExtensions).toHaveLength(2);
         expect(getLatestResultWithFeedbacks).toHaveBeenCalledOnce();
         // result should have been fetched with the submission as this is required to show details for it
         expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
-        expect(comp.isInitial).toBeFalse();
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.isInitial).toBe(false);
+        expect(comp.isLoading).toBe(false);
     });
 
     // TODO check if this is an issue with the client itself here
-    it('should create the steps task icons for the tasks in problem statement markdown', fakeAsync(() => {
+    it('should create the steps task icons for the tasks in problem statement markdown', async () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
@@ -331,7 +328,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
-        tick();
+        await new Promise((resolve) => setTimeout(resolve, 10));
         fixture.changeDetectorRef.detectChanges();
         // TODO: make sure to exclude random numbers here that change after updates of dependencies
         const expectedHtml = problemStatementBubbleSortNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
@@ -342,7 +339,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(bubbleSortStep).not.toBeNull();
         expect(mergeSortStep).not.toBeNull();
 
-        openModalStub.mockReturnValue(modalRef);
+        openModalStub.mockReturnValue(modalRef as any);
 
         bubbleSortStep.nativeElement.click();
         verifyTask(1, {
@@ -367,9 +364,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 numberOfNotExecutedTests: 0,
             } as FeedbackComponent,
         } as any);
-    }));
+    });
 
-    it('should create the steps task icons for the tasks in problem statement markdown with no inserted tests', fakeAsync(() => {
+    it('should create the steps task icons for the tasks in problem statement markdown with no inserted tests', async () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
@@ -411,7 +408,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
-        tick();
+        await new Promise((resolve) => setTimeout(resolve, 10));
         fixture.changeDetectorRef.detectChanges();
 
         const expectedHtml = problemStatementEmptySecondTaskNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
@@ -423,7 +420,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(bubbleSortStep).not.toBeNull();
         expect(mergeSortStep).not.toBeNull();
 
-        openModalStub.mockReturnValue(modalRef);
+        openModalStub.mockReturnValue(modalRef as any);
 
         bubbleSortStep.nativeElement.click();
         verifyTask(1, {
@@ -440,9 +437,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         mergeSortStep.nativeElement.click();
         // Should not get called another time
         expect(openModalStub).toHaveBeenCalledOnce();
-    }));
+    });
 
-    it('should create the correct colors in problem statement plantuml diagram with inserted tests', fakeAsync(() => {
+    it('should create the correct colors in problem statement plantuml diagram with inserted tests', async () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
@@ -469,22 +466,22 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.setupMarkdownSubscriptions();
 
         const plantUMLExtension = TestBed.inject(ProgrammingExercisePlantUmlExtensionWrapper);
-        const injectSpy = jest.spyOn(plantUMLExtension as any, 'loadAndInjectPlantUml');
+        const injectSpy = vi.spyOn(plantUMLExtension as any, 'loadAndInjectPlantUml');
 
         comp.updateMarkdown();
 
         // Flush all pending timers (setTimeout in renderMarkdown)
-        flush();
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
         // first test should be green (successful), second red (failed)
         const expectedUML = '@startuml\nclass Policy {\n<color:green>+configure()</color>\n<color:red>+testWithParenthesis()</color>}\n@enduml';
         expect(injectSpy).toHaveBeenCalledWith(expectedUML, `plantUml-${exercise.id}-0`);
-    }));
+    });
 
     it('should update the markdown and set the correct problem statement if renderUpdatedProblemStatement is called', () => {
         const problemStatement = 'lorem ipsum';
         const updatedProblemStatement = 'new lorem ipsum';
-        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
+        const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
         // @ts-ignore
         comp.problemStatement = problemStatement;
         comp.exercise = { problemStatement: updatedProblemStatement } as ProgrammingExercise;
@@ -494,7 +491,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should update the markdown on a theme change', () => {
-        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
+        const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
 
         comp.isInitial = false;
         themeService.applyThemePreference(Theme.DARK);
@@ -520,20 +517,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
  * simultaneously in the DOM (hidden via [hidden], NOT destroyed). They all share
  * a single ProgrammingExercisePlantUmlExtensionWrapper singleton (providedIn: 'root').
  *
- * The bug (introduced by commit 756354018b, fixed by scoping IDs per exercise):
- * - resetIndex() was resetting plantUmlIndex to 0 before each render
- * - Multiple exercises generated the same container IDs (plantUml-0, plantUml-1, etc.)
- * - document.getElementById() returned the first match in DOM order (wrong exercise's container)
- * - Result: (1) diagram from wrong exercise shown, (2) diagram missing entirely
- *
- * The fix:
- * - Container IDs include the exercise ID: plantUml-{exerciseId}-{index}
- * - setExerciseId(exerciseId) sets the exercise scope before each render
- * - The per-diagram index comes from the array position (not mutable state)
- *
- * These tests simulate the exact exam scenario to prevent this regression.
+ * These tests simulate the exact exam scenario to prevent regressions of the
+ * per-exercise PlantUML container ID scoping fix.
  */
 describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation', () => {
+    setupTestBed({ zoneless: true });
+
     let plantUmlExtension: ProgrammingExercisePlantUmlExtensionWrapper;
 
     // Problem statements with multiple PlantUML diagrams, simulating real exam exercises
@@ -559,20 +548,13 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
     } {
         const fixture = TestBed.createComponent(ProgrammingExerciseInstructionComponent);
         const comp = fixture.componentInstance;
-        comp.personalParticipation = true;
+        fixture.componentRef.setInput('personalParticipation', true);
         return { comp, fixture };
     }
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
-            declarations: [
-                ProgrammingExerciseInstructionComponent,
-                ProgrammingExerciseInstructionStepWizardComponent,
-                ProgrammingExerciseInstructionTaskStatusComponent,
-                TranslatePipeMock,
-                SafeHtmlPipe,
-            ],
+            imports: [MockModule(NgbTooltipModule), ProgrammingExerciseInstructionComponent],
             providers: [
                 ProgrammingExerciseTaskExtensionWrapper,
                 ProgrammingExercisePlantUmlExtensionWrapper,
@@ -594,64 +576,42 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    /**
-     * Core exam scenario: 3 programming exercises, each with multiple PlantUML diagrams,
-     * all rendered by separate component instances sharing the same singleton extension.
-     *
-     * This is the EXACT scenario that caused the bug in production exams.
-     *
-     * Note on call counts: The singleton's injectableElementsFoundSubject broadcasts callbacks
-     * to ALL subscribed components. So when Exercise A renders, its injection callback also
-     * appears in Exercise B's and C's callback arrays. This means the total number of
-     * loadAndInjectPlantUml calls exceeds the "ideal" count because callbacks are executed
-     * redundantly by multiple components. With exercise-scoped IDs, this is harmless because
-     * each callback targets the correct container regardless of which component executes it.
-     * The critical invariant is that all targeted IDs are globally unique.
-     */
-    it('should produce globally unique PlantUML container IDs when multiple components render different exercises', fakeAsync(() => {
-        const injectSpy = jest.spyOn(plantUmlExtension as any, 'loadAndInjectPlantUml');
+    it('should produce globally unique PlantUML container IDs when multiple components render different exercises', async () => {
+        const injectSpy = vi.spyOn(plantUmlExtension as any, 'loadAndInjectPlantUml');
 
-        // Create 3 component instances (simulating 3 programming exercises in an exam)
         const instanceA = createComponentInstance();
         const instanceB = createComponentInstance();
         const instanceC = createComponentInstance();
 
-        // Set up exercises with different numbers of PlantUML diagrams
-        const exerciseA = createExercise(10, exerciseA_problemStatement); // 2 diagrams
-        const exerciseB = createExercise(20, exerciseB_problemStatement); // 1 diagram
-        const exerciseC = createExercise(30, exerciseC_problemStatement); // 3 diagrams
+        const exerciseA = createExercise(10, exerciseA_problemStatement);
+        const exerciseB = createExercise(20, exerciseB_problemStatement);
+        const exerciseC = createExercise(30, exerciseC_problemStatement);
 
-        // Configure each component (simulating what ngOnChanges does)
-        for (const { comp, exercise } of [
-            { comp: instanceA.comp, exercise: exerciseA },
-            { comp: instanceB.comp, exercise: exerciseB },
-            { comp: instanceC.comp, exercise: exerciseC },
+        for (const { fixture, comp, exercise } of [
+            { ...instanceA, exercise: exerciseA },
+            { ...instanceB, exercise: exerciseB },
+            { ...instanceC, exercise: exerciseC },
         ]) {
             comp.exercise = exercise;
-            comp.participation = { id: exercise.id! + 100 };
+            fixture.componentRef.setInput('participation', { id: exercise.id! + 100 });
             // @ts-ignore - accessing private method for test setup
             comp.setupMarkdownSubscriptions();
         }
 
-        // Render all 3 exercises sequentially (simulating student navigating through exam)
         instanceA.comp.updateMarkdown();
         instanceB.comp.updateMarkdown();
         instanceC.comp.updateMarkdown();
 
-        // Flush all pending timers (setTimeout in scheduleContentInjection)
-        flush();
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
-        // Extract all container IDs that were targeted by injection calls
         const targetedIds: string[] = injectSpy.mock.calls.map((call) => call[1] as string);
 
-        // CRITICAL: Exactly 6 unique IDs must be present (2 + 1 + 3 diagrams)
         const uniqueIds = new Set(targetedIds);
         expect(uniqueIds.size).toBe(6);
 
-        // Verify the exact expected IDs for each exercise are present
         expect(uniqueIds).toContain('plantUml-10-0');
         expect(uniqueIds).toContain('plantUml-10-1');
         expect(uniqueIds).toContain('plantUml-20-0');
@@ -659,72 +619,57 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         expect(uniqueIds).toContain('plantUml-30-1');
         expect(uniqueIds).toContain('plantUml-30-2');
 
-        // Verify no ID belongs to an unexpected exercise
         for (const id of uniqueIds) {
             expect(id).toMatch(/^plantUml-(10|20|30)-\d+$/);
         }
 
-        // Cleanup
         instanceA.comp.ngOnDestroy();
         instanceB.comp.ngOnDestroy();
         instanceC.comp.ngOnDestroy();
-    }));
+    });
 
-    /**
-     * Regression guard: exercises with the SAME number of diagrams.
-     * This is the case most likely to collide if exercise scoping is broken,
-     * because without scoping both exercises would generate plantUml-0, plantUml-1.
-     */
-    it('should NOT produce colliding IDs when two exercises have the same number of diagrams', fakeAsync(() => {
-        const injectSpy = jest.spyOn(plantUmlExtension as any, 'loadAndInjectPlantUml');
+    it('should NOT produce colliding IDs when two exercises have the same number of diagrams', async () => {
+        const injectSpy = vi.spyOn(plantUmlExtension as any, 'loadAndInjectPlantUml');
 
         const instanceA = createComponentInstance();
         const instanceB = createComponentInstance();
 
-        // Both exercises use the same problem statement (same number of diagrams)
-        const exerciseA = createExercise(10, exerciseA_problemStatement); // 2 diagrams
-        const exerciseB = createExercise(20, exerciseA_problemStatement); // same 2 diagrams
+        const exerciseA = createExercise(10, exerciseA_problemStatement);
+        const exerciseB = createExercise(20, exerciseA_problemStatement);
 
-        for (const { comp, exercise } of [
-            { comp: instanceA.comp, exercise: exerciseA },
-            { comp: instanceB.comp, exercise: exerciseB },
+        for (const { fixture, comp, exercise } of [
+            { ...instanceA, exercise: exerciseA },
+            { ...instanceB, exercise: exerciseB },
         ]) {
             comp.exercise = exercise;
-            comp.participation = { id: exercise.id! + 100 };
+            fixture.componentRef.setInput('participation', { id: exercise.id! + 100 });
             // @ts-ignore
             comp.setupMarkdownSubscriptions();
         }
 
         instanceA.comp.updateMarkdown();
         instanceB.comp.updateMarkdown();
-        flush();
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
         const targetedIds: string[] = injectSpy.mock.calls.map((call) => call[1] as string);
         const uniqueIds = new Set(targetedIds);
 
-        // Must have exactly 4 unique IDs (2 per exercise), despite both having same diagram count
         expect(uniqueIds.size).toBe(4);
 
-        // Exercise A got IDs with prefix 10, Exercise B with prefix 20
         const exercise10Ids = [...uniqueIds].filter((id) => id.startsWith('plantUml-10-'));
         const exercise20Ids = [...uniqueIds].filter((id) => id.startsWith('plantUml-20-'));
         expect(exercise10Ids).toHaveLength(2);
         expect(exercise20Ids).toHaveLength(2);
 
-        // No overlap between the two sets
         expect(exercise10Ids).toEqual(['plantUml-10-0', 'plantUml-10-1']);
         expect(exercise20Ids).toEqual(['plantUml-20-0', 'plantUml-20-1']);
 
         instanceA.comp.ngOnDestroy();
         instanceB.comp.ngOnDestroy();
-    }));
+    });
 
-    /**
-     * Verify that re-rendering an exercise produces the same IDs,
-     * so that the new SVGs correctly replace old ones in the DOM.
-     */
-    it('should produce stable IDs when re-rendering an exercise after rendering others', fakeAsync(() => {
-        const injectSpy = jest.spyOn(plantUmlExtension as any, 'loadAndInjectPlantUml');
+    it('should produce stable IDs when re-rendering an exercise after rendering others', async () => {
+        const injectSpy = vi.spyOn(plantUmlExtension as any, 'loadAndInjectPlantUml');
 
         const instanceA = createComponentInstance();
         const instanceB = createComponentInstance();
@@ -732,69 +677,58 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         const exerciseA = createExercise(10, exerciseA_problemStatement);
         const exerciseB = createExercise(20, exerciseB_problemStatement);
 
-        for (const { comp, exercise } of [
-            { comp: instanceA.comp, exercise: exerciseA },
-            { comp: instanceB.comp, exercise: exerciseB },
+        for (const { fixture, comp, exercise } of [
+            { ...instanceA, exercise: exerciseA },
+            { ...instanceB, exercise: exerciseB },
         ]) {
             comp.exercise = exercise;
-            comp.participation = { id: exercise.id! + 100 };
+            fixture.componentRef.setInput('participation', { id: exercise.id! + 100 });
             // @ts-ignore
             comp.setupMarkdownSubscriptions();
         }
 
-        // First render of exercise A
         instanceA.comp.updateMarkdown();
-        flush();
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
-        // Extract only exercise A's IDs from this render
-        const firstRenderIds = new Set(injectSpy.mock.calls.map((call) => call[1] as string).filter((id) => id.startsWith('plantUml-10-')));
+        const firstRenderIds = new Set(injectSpy.mock.calls.map((call) => call[1] as string).filter((id) => (id as string).startsWith('plantUml-10-')));
         expect(firstRenderIds).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
 
         injectSpy.mockClear();
 
-        // Render exercise B (different exercise in between)
         instanceB.comp.updateMarkdown();
-        flush();
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
         injectSpy.mockClear();
 
-        // Re-render exercise A (e.g. triggered by theme change)
-        // Invalidate cache to allow re-render
         // @ts-ignore
         instanceA.comp.lastRenderedProblemStatement = undefined;
         instanceA.comp.updateMarkdown();
-        flush();
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
-        // Extract only exercise A's IDs from the re-render
-        const secondRenderIds = new Set(injectSpy.mock.calls.map((call) => call[1] as string).filter((id) => id.startsWith('plantUml-10-')));
+        const secondRenderIds = new Set(injectSpy.mock.calls.map((call) => call[1] as string).filter((id) => (id as string).startsWith('plantUml-10-')));
 
-        // Same exercise must get the same IDs so new SVGs overwrite old DOM containers
         expect(secondRenderIds).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
 
         instanceA.comp.ngOnDestroy();
         instanceB.comp.ngOnDestroy();
-    }));
+    });
 
-    /**
-     * Verify that setExerciseId is called with the correct exercise ID.
-     * This is the critical contract between the component and the singleton extension.
-     */
-    it('should call setExerciseId with the exercise ID before each render', fakeAsync(() => {
-        const setExerciseIdSpy = jest.spyOn(plantUmlExtension, 'setExerciseId');
+    it('should call setExerciseId with the exercise ID before each render', async () => {
+        const setExerciseIdSpy = vi.spyOn(plantUmlExtension, 'setExerciseId');
 
         const instance = createComponentInstance();
         const exercise = createExercise(42, exerciseA_problemStatement);
 
         instance.comp.exercise = exercise;
-        instance.comp.participation = { id: 142 };
+        instance.fixture.componentRef.setInput('participation', { id: 142 });
         // @ts-ignore
         instance.comp.setupMarkdownSubscriptions();
 
         instance.comp.updateMarkdown();
-        flush();
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
         expect(setExerciseIdSpy).toHaveBeenCalledWith(42);
 
         instance.comp.ngOnDestroy();
-    }));
+    });
 });

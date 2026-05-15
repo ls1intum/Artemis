@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
@@ -6,7 +8,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
-import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { Task } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -14,7 +15,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
-    let comp: ProgrammingExerciseInstructionStepWizardComponent;
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ProgrammingExerciseInstructionStepWizardComponent>;
     let debugElement: DebugElement;
 
@@ -22,16 +24,12 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
-            declarations: [ProgrammingExerciseInstructionStepWizardComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [MockModule(NgbTooltipModule), ProgrammingExerciseInstructionStepWizardComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [ProgrammingExerciseInstructionService, { provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseInstructionStepWizardComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ProgrammingExerciseInstructionStepWizardComponent);
+        debugElement = fixture.debugElement;
     });
 
     afterEach(() => {});
@@ -49,10 +47,8 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
             { id: 1, completeString: '[task][Implement BubbleSort](1)', taskName: 'Implement BubbleSort', testIds: [1] },
             { id: 2, completeString: '[task][Implement MergeSort](2)', taskName: 'Implement MergeSort', testIds: [2] },
         ];
-        comp.latestResult = result;
-        comp.tasks = tasks;
-
-        triggerChanges(comp, { property: 'tasks', currentValue: tasks }, { property: 'latestResult', currentValue: result });
+        fixture.componentRef.setInput('latestResult', result);
+        fixture.componentRef.setInput('tasks', tasks);
         fixture.detectChanges();
 
         const steps = debugElement.queryAll(By.css(stepWizardStep));
@@ -70,10 +66,8 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
             completionDate: dayjs('2022-01-06T22:15:29.203+02:00'),
             feedbacks: [{ testCase: { testName: 'testBubbleSort' }, detailText: 'lorem ipsum' }],
         };
-        comp.latestResult = result;
-        comp.tasks = [];
-
-        triggerChanges(comp, { property: 'tasks', currentValue: [] }, { property: 'latestResult', currentValue: result });
+        fixture.componentRef.setInput('latestResult', result);
+        fixture.componentRef.setInput('tasks', []);
         fixture.detectChanges();
 
         const steps = debugElement.queryAll(By.css(stepWizardStep));

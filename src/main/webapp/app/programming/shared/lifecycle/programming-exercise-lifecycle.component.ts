@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input } from '@angular/core';
+import { AfterViewInit, Component, Injector, OnDestroy, OnInit, Signal, effect, inject, input, viewChildren } from '@angular/core';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
@@ -38,11 +38,12 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         ArtemisTranslatePipe,
     ],
 })
-export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnDestroy, OnInit, OnChanges {
+export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnDestroy, OnInit {
     private translateService = inject(TranslateService);
     private exerciseService = inject(ExerciseService);
     private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
+    private injector = inject(Injector);
 
     protected readonly assessmentType = AssessmentType;
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -50,26 +51,23 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     protected readonly faUserCheck = faUserCheck;
     protected readonly faUserSlash = faUserSlash;
 
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() exercise: ProgrammingExercise;
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() isExamMode: boolean;
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() readOnly: boolean;
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() importOptions?: ImportOptions;
+    // Signal-inputs receive parent bindings. They are aliased so plain writable mirror fields can
+    // be used by the template, by direct mutating helpers (e.g. updateReleaseDate), and by tests
+    // that assign comp.exercise = exercise directly. An effect syncs input -> mirror on change.
+    /* eslint-disable @angular-eslint/no-input-rename */
+    readonly exerciseInput = input<ProgrammingExercise>(undefined!, { alias: 'exercise' });
+    readonly isExamModeInput = input<boolean>(false, { alias: 'isExamMode' });
+    readonly readOnlyInput = input<boolean>(false, { alias: 'readOnly' });
+    readonly importOptionsInput = input<ImportOptions | undefined>(undefined, { alias: 'importOptions' });
+    /* eslint-enable @angular-eslint/no-input-rename */
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
 
-    // TODO: Skipped for migration because:
-    //  There are references to this query that cannot be migrated automatically.
-    @ViewChildren(ProgrammingExerciseTestScheduleDatePickerComponent) datePickerComponents: QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
+    exercise!: ProgrammingExercise;
+    isExamMode: boolean = undefined!;
+    readOnly: boolean = undefined!;
+    importOptions?: ImportOptions;
+
+    readonly datePickerComponents: Signal<readonly ProgrammingExerciseTestScheduleDatePickerComponent[]> = viewChildren(ProgrammingExerciseTestScheduleDatePickerComponent);
 
     formValid: boolean;
     formEmpty: boolean;
@@ -83,13 +81,95 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     isImport = false;
     private urlSubscription: Subscription;
 
+    private effectInitialized = false;
+    private lastSeenExerciseInput?: ProgrammingExercise;
+    private lastSeenIsExamModeInput?: boolean;
+    private lastSeenReadOnlyInput?: boolean;
+    private lastSeenImportOptionsInput?: ImportOptions;
+
+    constructor() {
+        // Mirror signal-inputs into writable mirror fields, but only when the upstream input actually
+        // changes between effect runs. The mirror fields are also writable by tests / direct callers
+        // (e.g. comp.isExamMode = true), and an unconditional copy in the effect would clobber those.
+        //
+        // Tracks ALL four parent-controlled inputs so a change to any of them re-runs the effect —
+        // matching the legacy ngOnChanges semantics for `exercise`. On the very first run we only
+        // seed `lastSeen*` so subsequent runs can detect real input changes; we do NOT overwrite
+        // mirror fields on the first run, since ngOnInit (or test code that ran between
+        // `createComponent` and the first detect cycle) may already have populated them.
+        effect(() => {
+            const newExercise = this.exerciseInput();
+            const newIsExamMode = this.isExamModeInput();
+            const newReadOnly = this.readOnlyInput();
+            const newImportOptions = this.importOptionsInput();
+
+            if (!this.effectInitialized) {
+                this.lastSeenExerciseInput = newExercise;
+                this.lastSeenIsExamModeInput = newIsExamMode;
+                this.lastSeenReadOnlyInput = newReadOnly;
+                this.lastSeenImportOptionsInput = newImportOptions;
+                this.effectInitialized = true;
+                return;
+            }
+
+            if (newIsExamMode !== this.lastSeenIsExamModeInput) {
+                this.isExamMode = newIsExamMode;
+                this.lastSeenIsExamModeInput = newIsExamMode;
+            }
+            if (newReadOnly !== this.lastSeenReadOnlyInput) {
+                this.readOnly = newReadOnly;
+                this.lastSeenReadOnlyInput = newReadOnly;
+            }
+            if (newImportOptions !== this.lastSeenImportOptionsInput) {
+                this.importOptions = newImportOptions;
+                this.lastSeenImportOptionsInput = newImportOptions;
+            }
+            if (newExercise !== this.lastSeenExerciseInput) {
+                this.lastSeenExerciseInput = newExercise;
+                if (newExercise) {
+                    this.exercise = newExercise;
+                    this.applyExerciseDateCascade(newExercise);
+                }
+            }
+        });
+    }
+
+    /**
+     * Runs the same cascading date-error correction the legacy ngOnChanges did for the exercise input.
+     * Public so tests can simulate "input changed" without going through the signal-input pipeline.
+     */
+    applyExerciseDateCascade(newExercise: ProgrammingExercise) {
+        if (this.exerciseService.hasDueDateError(newExercise)) {
+            // Checking for due date errors and ordering the calls to avoid updating exampleSolutionPublicationDate twice.
+            this.updateReleaseDate(newExercise.releaseDate);
+            this.updateExampleSolutionPublicationDate(newExercise.dueDate);
+        } else {
+            this.updateExampleSolutionPublicationDate(newExercise.dueDate);
+            this.updateReleaseDate(newExercise.releaseDate);
+        }
+    }
+
     /**
      * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC
      */
     ngOnInit(): void {
+        // Seed mirror fields synchronously: the effect runs only after the first change detection cycle,
+        // but ngOnInit needs them immediately. If a test or caller has already assigned a mirror field
+        // (e.g. `comp.exercise = exercise`) we preserve that value; otherwise we copy from the signal-input.
+        this.exercise = this.exercise ?? this.exerciseInput();
+        if (this.isExamMode === undefined) {
+            this.isExamMode = this.isExamModeInput();
+        }
+        if (this.readOnly === undefined) {
+            this.readOnly = this.readOnlyInput();
+        }
+        if (this.importOptions === undefined) {
+            this.importOptions = this.importOptionsInput();
+        }
+
         this.updateIsImportBasedOnUrl();
 
-        if (!this.exercise.id && !this.isImport) {
+        if (this.exercise && !this.exercise.id && !this.isImport) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
@@ -112,21 +192,17 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     ngAfterViewInit() {
         this.setupDateFieldSubscriptions();
-        this.datePickerChildrenSubscription = this.datePickerComponents.changes.subscribe(() => this.setupDateFieldSubscriptions());
-    }
-
-    ngOnChanges(simpleChanges: SimpleChanges) {
-        if (simpleChanges.exercise) {
-            const newExercise = simpleChanges.exercise.currentValue;
-            if (this.exerciseService.hasDueDateError(newExercise)) {
-                // Checking for due date errors and ordering the calls to avoid updating exampleSolutionPublicationDate twice.
-                this.updateReleaseDate(newExercise.releaseDate);
-                this.updateExampleSolutionPublicationDate(newExercise.dueDate);
-            } else {
-                this.updateExampleSolutionPublicationDate(newExercise.dueDate);
-                this.updateReleaseDate(newExercise.releaseDate);
-            }
-        }
+        // viewChildren() returns a signal, so re-subscribe whenever the picker list changes.
+        // The legacy code did this by subscribing to QueryList.changes; with signal queries we
+        // express the same intent with an effect that tracks the signal. Created with an explicit
+        // injector so it's tied to this component's lifetime even from ngAfterViewInit.
+        effect(
+            () => {
+                this.datePickerComponents();
+                this.setupDateFieldSubscriptions();
+            },
+            { injector: this.injector },
+        );
     }
 
     ngOnDestroy() {
@@ -136,7 +212,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     }
 
     calculateFormStatus() {
-        const datePickers = this.datePickerComponents.toArray();
+        const datePickers = this.datePickerComponents();
         this.formValid = every(datePickers, (picker) => picker?.dateInput()?.valid ?? true);
         this.formEmpty = !every(datePickers, (picker) => {
             if (picker instanceof ProgrammingExerciseTestScheduleDatePickerComponent) {
@@ -149,9 +225,8 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     setupDateFieldSubscriptions() {
         this.unsubscribeDateFieldSubscriptions();
-        this.datePickerComponents
-            .toArray()
-            .forEach((picker) => this.inputfieldSubscriptions.push(picker.dateInput()?.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormStatus()))));
+        const pickers = this.datePickerComponents();
+        pickers.forEach((picker) => this.inputfieldSubscriptions.push(picker.dateInput()?.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormStatus()))));
     }
 
     unsubscribeDateFieldSubscriptions() {

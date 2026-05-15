@@ -1,12 +1,20 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseLifecycleComponent } from 'app/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programming/shared/lifecycle/test-schedule-date-picker/programming-exercise-test-schedule-date-picker.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { QueryList, SimpleChange } from '@angular/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { expectElementToBeDisabled, expectElementToBeEnabled } from 'test/helpers/utils/general-test.utils';
+const expectElementToBeEnabled = (element: null | any) => {
+    expect(element).not.toBeNull();
+    expect(element.disabled).toBe(false);
+};
+const expectElementToBeDisabled = (element: null | any) => {
+    expect(element).not.toBeNull();
+    expect(element.disabled).toBe(true);
+};
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Subject, of } from 'rxjs';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
@@ -21,6 +29,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ProgrammingExerciseLifecycleComponent;
     let fixture: ComponentFixture<ProgrammingExerciseLifecycleComponent>;
 
@@ -74,7 +84,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should do nothing if the release date is set to null', () => {
@@ -145,16 +155,16 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
         comp.toggleComplaintsType();
 
-        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBeTrue();
+        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBe(true);
     });
 
     it('should change feedback request allowed after toggling', () => {
         comp.exercise = { ...exercise, allowFeedbackRequests: false };
-        expect(comp.exercise.allowFeedbackRequests).toBeFalse();
+        expect(comp.exercise.allowFeedbackRequests).toBe(false);
 
         comp.toggleFeedbackRequests();
 
-        expect(comp.exercise.allowFeedbackRequests).toBeTrue();
+        expect(comp.exercise.allowFeedbackRequests).toBe(true);
     });
 
     it('should change assessment type from automatic to semi-automatic after toggling', () => {
@@ -163,7 +173,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.toggleAssessmentType();
 
         expect(comp.exercise.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
-        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBeFalse();
+        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBe(false);
     });
 
     it('should change assessment type from semi-automatic to automatic after toggling', () => {
@@ -193,7 +203,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.exercise = { ...exercise, exampleSolutionPublicationDate: dayjs() };
         expect(comp.exercise.releaseTestsWithExampleSolution).toBeFalsy();
         comp.toggleReleaseTests();
-        expect(comp.exercise.releaseTestsWithExampleSolution).toBeTrue();
+        expect(comp.exercise.releaseTestsWithExampleSolution).toBe(true);
     });
 
     it('should not cascade date changes when updateReleaseDate is called when readOnly is true', () => {
@@ -233,7 +243,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should alert correct date when exampleSolutionPublicationDate is updated automatically', () => {
-        const alertSpy = jest.spyOn(window, 'alert');
+        const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
         const now = dayjs();
         exercise.dueDate = now.add(10, 'days');
@@ -256,7 +266,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should alert each distinct string only once', () => {
-        const alertSpy = jest.spyOn(window, 'alert');
+        const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
         const newExercise = { ...exercise, includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY };
 
@@ -266,7 +276,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         newExercise.startDate = now.add(21, 'days');
         comp.exercise = newExercise;
 
-        comp.ngOnChanges({ exercise: { currentValue: newExercise } as SimpleChange });
+        comp.applyExerciseDateCascade(newExercise);
 
         expect(alertSpy).toHaveBeenCalledTimes(3);
         let nthCall = 0;
@@ -277,7 +287,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         const newerExercise = { ...newExercise };
         newerExercise.dueDate = now.add(40, 'days');
         comp.exercise = newerExercise;
-        comp.ngOnChanges({ exercise: { currentValue: newerExercise } as SimpleChange });
+        comp.applyExerciseDateCascade(newerExercise);
 
         expect(alertSpy).toHaveBeenCalledTimes(nthCall + 1);
         expect(alertSpy).toHaveBeenNthCalledWith(nthCall + 1, 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
@@ -341,23 +351,25 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expectElementToBeDisabled(checkbox);
     });
 
-    it('should calculate form validation status', fakeAsync(() => {
+    it('should calculate form validation status', async () => {
+        // Component template would read exercise.* during the implicit change-detection cycle in
+        // zoneless mode; seed the field so detectChanges doesn't throw.
+        comp.exercise = exercise;
+        const valueChanges = new Subject<boolean>();
         const datePicker = {
-            dateInput: {
-                valueChanges: new Subject(),
+            dateInput: () => ({
+                valueChanges,
                 valid: true,
                 value: new Date(),
-            },
+            }),
         } as any as ProgrammingExerciseTestScheduleDatePickerComponent;
-        comp.datePickerComponents = {
-            changes: new Subject(),
-            toArray: () => [datePicker],
-        } as any as QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
+        // viewChildren() is now a signal; override the property directly with a fake signal that
+        // returns the in-test picker array. The component only reads via `this.datePickerComponents()`.
+        Object.defineProperty(comp, 'datePickerComponents', { value: () => [datePicker], writable: true });
         comp.ngAfterViewInit();
-        (comp.datePickerComponents.changes as Subject<any>).next({ toArray: () => [datePicker] });
-        (datePicker.dateInput.valueChanges as Subject<boolean>).next(true);
-        tick();
-        expect(comp.formValid).toBeTrue();
-        expect(comp.formEmpty).toBeTrue();
-    }));
+        valueChanges.next(true);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        expect(comp.formValid).toBe(true);
+        expect(comp.formEmpty).toBe(true);
+    });
 });

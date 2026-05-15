@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges, inject, input } from '@angular/core';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
@@ -10,13 +10,23 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
+interface StepWizardStep {
+    done: TestCaseState;
+    title: string;
+    testIds: number[];
+}
+
 @Component({
     selector: 'jhi-programming-exercise-instructions-step-wizard',
     templateUrl: './programming-exercise-instruction-step-wizard.component.html',
     styleUrls: ['./programming-exercise-instruction-step-wizard.scss'],
     imports: [TranslateDirective, NgbTooltip, FaIconComponent],
 })
-export class ProgrammingExerciseInstructionStepWizardComponent implements OnChanges {
+export class ProgrammingExerciseInstructionStepWizardComponent {
+    // NgbModal is retained here intentionally: the only modal opened is FeedbackComponent, which is
+    // a shared component still implemented against NgbActiveModal. Migrating FeedbackComponent to
+    // PrimeNG DialogService would expand this PR's scope across multiple unrelated modules.
+    // See the cluster-6 scope boundary note for the rationale.
     private modalService = inject(NgbModal);
     private instructionService = inject(ProgrammingExerciseInstructionService);
 
@@ -27,26 +37,30 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     readonly latestResult = input<Result>();
     readonly tasks = input<TaskArray>(undefined!);
 
-    steps: Array<{ done: TestCaseState; title: string; testIds: number[] }>;
+    // Internal signal so the template re-renders when the derived steps change. Recomputed by an
+    // effect that tracks both `tasks` and `latestResult` — preserving the legacy ngOnChanges
+    // "(tasks && changes.tasks) || (tasks && changes.latestResult)" gate.
+    readonly steps = signal<StepWizardStep[]>([]);
 
     // Icons
     faTimes = faTimes;
     faCheck = faCheck;
     faCircle = faCircle;
 
-    /**
-     * Life cycle hook called by Angular to indicate that changes are detected.
-     * @param changes - change that is detected.
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        const tasks = this.tasks();
-        if ((changes.tasks && tasks) || (tasks && changes.latestResult)) {
-            this.steps = tasks.map(({ taskName, testIds }) => ({
-                done: this.instructionService.testStatusForTask(testIds, this.latestResult()).testCaseState,
-                title: taskName,
-                testIds,
-            }));
-        }
+    constructor() {
+        effect(() => {
+            const tasks = this.tasks();
+            const latestResult = this.latestResult();
+            if (tasks) {
+                this.steps.set(
+                    tasks.map(({ taskName, testIds }) => ({
+                        done: this.instructionService.testStatusForTask(testIds, latestResult).testCaseState,
+                        title: taskName,
+                        testIds,
+                    })),
+                );
+            }
+        });
     }
 
     /**

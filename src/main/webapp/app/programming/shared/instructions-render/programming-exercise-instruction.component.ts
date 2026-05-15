@@ -5,12 +5,10 @@ import {
     Component,
     ComponentRef,
     EnvironmentInjector,
-    Input,
-    OnChanges,
     OnDestroy,
-    SimpleChanges,
     ViewContainerRef,
     createComponent,
+    effect,
     inject,
     input,
     output,
@@ -29,12 +27,10 @@ import { TaskArray } from 'app/programming/shared/instructions-render/task/progr
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ResultService } from 'app/exercise/result/result.service';
-import { problemStatementHasChanged } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { faFileAlt, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { hasParticipationChanged } from 'app/exercise/participation/participation.utils';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import diff from 'html-diff-ts';
@@ -56,7 +52,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [ProgrammingExerciseInstructionStepWizardComponent, ExamExerciseUpdateHighlighterComponent, FaIconComponent, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
+export class ProgrammingExerciseInstructionComponent implements OnDestroy {
     private viewContainerRef = inject(ViewContainerRef);
     private resultService = inject(ResultService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
@@ -71,10 +67,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private themeService = inject(ThemeService);
     private cdr = inject(ChangeDetectorRef);
 
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() public exercise: ProgrammingExercise;
+    // `exercise` uses the parallel-writable-signal pattern (cluster-6 lesson): the parent binds
+    // [exercise]="..." which feeds `exerciseInput`, and code/tests that mutate `comp.exercise = ...`
+    // assign to a plain writable field. The constructor effect mirrors input -> field; the field
+    // is what the rest of the component reads and what the template references.
+    // eslint-disable-next-line @angular-eslint/no-input-rename
+    readonly exerciseInput = input<ProgrammingExercise>(undefined!, { alias: 'exercise' });
+    public exercise!: ProgrammingExercise;
     public readonly participation = input<Participation>(undefined!);
     readonly generateHtmlEvents = input<Observable<void>>(undefined!);
     readonly personalParticipation = input<boolean>(undefined!);
@@ -82,7 +81,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     // Emits an event if the instructions are not available via the problemStatement
     public readonly onNoInstructionsAvailable = output();
 
-    readonly examExerciseUpdateHighlighterComponent = viewChild.required(ExamExerciseUpdateHighlighterComponent);
+    // Optional: the highlighter only renders for exam exercises; non-exam exercises must not error
+    // when updateMarkdown reads this query (NG0951 under signal-required semantics).
+    readonly examExerciseUpdateHighlighterComponent = viewChild(ExamExerciseUpdateHighlighterComponent);
 
     private problemStatement: string | undefined;
     private participationSubscription?: Subscription;
@@ -120,6 +121,16 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     // Subject for debouncing problem statement changes to avoid excessive re-renders during rapid editing
     private problemStatementUpdateSubject = new Subject<void>();
 
+    // Tracks the previously observed participation so the effect can detect a "participation changed"
+    // edge in the same way the legacy ngOnChanges relied on SimpleChanges. Tracks the previous problem
+    // statement string so we can detect problemStatement-only changes (problemStatementHasChanged
+    // helper from the legacy code).
+    private lastSeenParticipation?: Participation;
+    private lastSeenProblemStatement?: string;
+    private lastSeenGenerateHtmlEvents?: Observable<void>;
+    private lastSeenExerciseInput?: ProgrammingExercise;
+    private inputEffectInitialized = false;
+
     constructor() {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
 
@@ -137,6 +148,47 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.problemStatementUpdateSubject.pipe(debounceTime(150), takeUntilDestroyed()).subscribe(() => {
             this.updateMarkdown();
         });
+
+        // Replaces legacy ngOnChanges. Tracks ALL parent-controlled inputs (exercise, participation,
+        // generateHtmlEvents, personalParticipation) plus exposes a public entry point
+        // (`processInputChanges`) so callers/tests that mutate `exercise` directly can still drive
+        // the cascade. The `inputEffectInitialized` guard avoids running the effect's first
+        // synchronous emission as a "change" — we only want to react to subsequent updates.
+        // The exerciseInput -> exercise mirror is only applied when the input actually changes,
+        // to avoid clobbering field writes by tests/callers (cluster-6 parallel-signal pattern).
+        effect(() => {
+            const exerciseFromInput = this.exerciseInput();
+            const participation = this.participation();
+            const generateHtmlEvents = this.generateHtmlEvents();
+            // Read personalParticipation to register it as a tracked dependency for completeness.
+            this.personalParticipation();
+
+            if (!this.inputEffectInitialized) {
+                if (exerciseFromInput) {
+                    this.exercise = exerciseFromInput;
+                }
+                this.lastSeenExerciseInput = exerciseFromInput;
+                this.lastSeenParticipation = participation;
+                this.lastSeenGenerateHtmlEvents = generateHtmlEvents;
+                this.lastSeenProblemStatement = this.exercise?.problemStatement;
+                this.inputEffectInitialized = true;
+                return;
+            }
+
+            if (exerciseFromInput !== this.lastSeenExerciseInput) {
+                if (exerciseFromInput) {
+                    this.exercise = exerciseFromInput;
+                }
+                this.lastSeenExerciseInput = exerciseFromInput;
+            }
+
+            const participationChanged = participation !== this.lastSeenParticipation;
+            const generateHtmlEventsChanged = generateHtmlEvents !== this.lastSeenGenerateHtmlEvents;
+            this.lastSeenParticipation = participation;
+            this.lastSeenGenerateHtmlEvents = generateHtmlEvents;
+
+            this.processInputChanges({ participationChanged, generateHtmlEventsChanged });
+        });
     }
 
     // Icons
@@ -144,11 +196,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     faFileAlt = faFileAlt;
 
     /**
-     * If the participation changes, the participation's instructions need to be loaded and the
-     * subscription for the participation's result needs to be set up.
-     * @param changes
+     * Public entry point that mirrors the legacy ngOnChanges semantics. Tests and the few external
+     * callers (e.g. exam highlighter) that mutate `exercise` outside the signal-input pipeline can
+     * invoke this to re-trigger the cascade. The `changes` flags default to "everything changed"
+     * to preserve the legacy behavior of calling without arguments.
      */
-    ngOnChanges(changes: SimpleChanges) {
+    processInputChanges({ participationChanged = true, generateHtmlEventsChanged = true }: { participationChanged?: boolean; generateHtmlEventsChanged?: boolean } = {}) {
         if (this.exercise?.isAtLeastTutor) {
             if (this.testCasesSubscription) {
                 this.testCasesSubscription.unsubscribe();
@@ -167,7 +220,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 // Set up the markdown extensions if they are not set up yet so that tasks, UMLs, etc. can be parsed.
                 tap((markdownExtensionsInitialized: boolean) => !markdownExtensionsInitialized && this.setupMarkdownSubscriptions()),
                 // If the participation has changed, set up the websocket subscriptions.
-                map(() => hasParticipationChanged(changes)),
+                map(() => participationChanged),
                 tap((participationHasChanged: boolean) => {
                     if (participationHasChanged) {
                         this.isInitial = true;
@@ -194,6 +247,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                                 // Set to undefined for null/empty values to preserve empty-state sentinel
                                 // Otherwise set the actual string value
                                 this.problemStatement = problemStatement?.trim() || undefined;
+                                this.lastSeenProblemStatement = this.exercise.problemStatement;
                             }),
                             switchMap(() => this.loadInitialResult()),
                             tap((latestResult) => {
@@ -205,17 +259,19 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                                 this.isLoading = false;
                             }),
                         );
-                    } else if (problemStatementHasChanged(changes) && !this.problemStatement) {
+                    } else if (this.problemStatementHasChangedFromLast() && !this.problemStatement) {
                         // Refreshes the state in the singleton task and uml extension service
                         this.latestResult = this.latestResultValue;
                         this.problemStatement = this.exercise.problemStatement?.trim() || undefined;
+                        this.lastSeenProblemStatement = this.exercise.problemStatement;
                         // Use debounced update to avoid excessive re-renders during rapid editing
                         this.problemStatementUpdateSubject.next();
                         return of(undefined);
-                    } else if (this.exercise && problemStatementHasChanged(changes)) {
+                    } else if (this.exercise && this.problemStatementHasChangedFromLast()) {
                         // Refreshes the state in the singleton task and uml extension service
                         this.latestResult = this.latestResultValue;
                         this.problemStatement = this.exercise.problemStatement?.trim() || undefined;
+                        this.lastSeenProblemStatement = this.exercise.problemStatement;
                         // Use debounced update to avoid excessive re-renders during rapid editing
                         this.problemStatementUpdateSubject.next();
                         return of(undefined);
@@ -225,6 +281,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 }),
             )
             .subscribe();
+        // Suppress "unused parameter" warnings until/unless we add per-flag branches.
+        void generateHtmlEventsChanged;
+    }
+
+    private problemStatementHasChangedFromLast(): boolean {
+        return this.lastSeenProblemStatement !== this.exercise?.problemStatement;
     }
 
     /**
@@ -470,11 +532,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             hostElement: taskHtmlContainer,
             environmentInjector: this.injector,
         });
-        componentRef.instance.exercise = this.exercise;
-        componentRef.instance.participation = this.participation();
-        componentRef.instance.taskName = taskName;
-        componentRef.instance.latestResult = this.latestResult;
-        componentRef.instance.testIds = testIds;
+        // Task-status inputs are signal-based — write them via setInput so Angular registers each
+        // value into the input signal pipeline. Plain property assignment would not work for signal
+        // inputs (cluster-6 migration).
+        componentRef.setInput('exercise', this.exercise);
+        componentRef.setInput('participation', this.participation());
+        componentRef.setInput('taskName', taskName);
+        componentRef.setInput('latestResult', this.latestResult);
+        componentRef.setInput('testIds', testIds);
         // Track component ref for cleanup
         this.taskComponentRefs.push(componentRef);
         this.appRef.attachView(componentRef.hostView);

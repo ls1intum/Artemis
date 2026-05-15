@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
@@ -21,8 +23,19 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { MockComponent, MockDirective } from 'ng-mocks';
+import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ResultComponent } from 'app/exercise/result/result.component';
+import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
+import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/programming/shared/actions/student-repo-download/programming-exercise-student-repo-download.component';
+import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/instructor-repo-download/programming-exercise-instructor-repo-download.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('RepositoryViewComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: RepositoryViewComponent;
     let fixture: ComponentFixture<RepositoryViewComponent>;
     let mockDomainService: Partial<DomainService>;
@@ -32,11 +45,11 @@ describe('RepositoryViewComponent', () => {
 
     beforeEach(async () => {
         mockDomainService = {
-            setDomain: jest.fn(),
-            subscribeDomainChange: jest.fn().mockReturnValue(of([DomainType.PARTICIPATION, { id: 1 }])),
+            setDomain: vi.fn(),
+            subscribeDomainChange: vi.fn().mockReturnValue(of([DomainType.PARTICIPATION, { id: 1 }])),
         };
         // Mock the ResizeObserver, which is not available in the test environment
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
 
@@ -51,6 +64,32 @@ describe('RepositoryViewComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
+            .overrideComponent(RepositoryViewComponent, {
+                remove: {
+                    imports: [
+                        CodeEditorContainerComponent,
+                        ProgrammingExerciseInstructionComponent,
+                        ButtonComponent,
+                        ResultComponent,
+                        CodeButtonComponent,
+                        ProgrammingExerciseStudentRepoDownloadComponent,
+                        ProgrammingExerciseInstructorRepoDownloadComponent,
+                        TranslateDirective,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockComponent(CodeEditorContainerComponent),
+                        MockComponent(ProgrammingExerciseInstructionComponent),
+                        MockComponent(ButtonComponent),
+                        MockComponent(ResultComponent),
+                        MockComponent(CodeButtonComponent),
+                        MockComponent(ProgrammingExerciseStudentRepoDownloadComponent),
+                        MockComponent(ProgrammingExerciseInstructorRepoDownloadComponent),
+                        MockDirective(TranslateDirective),
+                    ],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(RepositoryViewComponent);
@@ -84,13 +123,13 @@ describe('RepositoryViewComponent', () => {
         const exerciseId = 1;
 
         activatedRoute.setParameters({ exerciseId: exerciseId, repositoryType: 'TEMPLATE' });
-        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
 
         // Trigger ngOnInit
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
@@ -104,8 +143,8 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.differentParticipationSub?.closed).toBeTrue();
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.differentParticipationSub?.closed).toBe(true);
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should load participation for SOLUTION repository type', () => {
@@ -121,13 +160,13 @@ describe('RepositoryViewComponent', () => {
         const exerciseId = 1;
 
         activatedRoute.setParameters({ exerciseId: exerciseId, repositoryType: 'SOLUTION' });
-        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
 
         // Trigger ngOnInit
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
@@ -141,8 +180,8 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.differentParticipationSub?.closed).toBeTrue();
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.differentParticipationSub?.closed).toBe(true);
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should load participation for TESTS repository type', () => {
@@ -157,13 +196,13 @@ describe('RepositoryViewComponent', () => {
         const exerciseId = 1;
 
         activatedRoute.setParameters({ exerciseId: exerciseId, repositoryType: 'TESTS' });
-        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
 
         // Trigger ngOnInit
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
@@ -177,8 +216,8 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.differentParticipationSub?.closed).toBeTrue();
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.differentParticipationSub?.closed).toBe(true);
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should load AUXILIARY repository type', () => {
@@ -196,13 +235,13 @@ describe('RepositoryViewComponent', () => {
         const auxiliaryRepositoryId = 5;
 
         activatedRoute.setParameters({ exerciseId: exerciseId, repositoryType: 'AUXILIARY', repositoryId: auxiliaryRepositoryId });
-        jest.spyOn(programmingExerciseService, 'findWithAuxiliaryRepository').mockReturnValue(of(mockExerciseResponse));
+        vi.spyOn(programmingExerciseService, 'findWithAuxiliaryRepository').mockReturnValue(of(mockExerciseResponse));
 
         // Trigger ngOnInit
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
@@ -215,7 +254,7 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should handle unknown repository type', () => {
@@ -233,23 +272,23 @@ describe('RepositoryViewComponent', () => {
         activatedRoute.setParameters({ exerciseId: exerciseId, repositoryType: 'UNKNOWN' });
 
         // Mock the service to return an error
-        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
 
         // Trigger ngOnInit
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect participationCouldNotBeFetched to be true
-        expect(component.participationCouldNotBeFetched).toBeTrue();
+        expect(component.participationCouldNotBeFetched).toBe(true);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.differentParticipationSub?.closed).toBeTrue();
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.differentParticipationSub?.closed).toBe(true);
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should load student participation', () => {
@@ -299,13 +338,13 @@ describe('RepositoryViewComponent', () => {
         const participationId = 2;
 
         activatedRoute.setParameters({ participationId: participationId });
-        jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(mockParticipation));
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(mockParticipation));
 
         // Trigger ngOnInit
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockParticipation.exercise);
@@ -319,8 +358,8 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.participationWithLatestResultSub?.closed).toBeTrue();
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationWithLatestResultSub?.closed).toBe(true);
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should handle error when loading participation', () => {
@@ -328,7 +367,7 @@ describe('RepositoryViewComponent', () => {
         activatedRoute.setParameters({ participationId: 8 });
 
         // Mock the service to return an error
-        jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(
             new Observable((subscriber) => {
                 subscriber.error('Error');
             }),
@@ -338,17 +377,17 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect participationCouldNotBeFetched to be true
-        expect(component.participationCouldNotBeFetched).toBeTrue();
+        expect(component.participationCouldNotBeFetched).toBe(true);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.participationWithLatestResultSub?.closed).toBeTrue();
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationWithLatestResultSub?.closed).toBe(true);
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should handle error when loading exercise', () => {
@@ -356,7 +395,7 @@ describe('RepositoryViewComponent', () => {
         // in order to call the mocked findWithTemplateAndSolutionParticipationAndLatestResults
         activatedRoute.setParameters({ exerciseId: 8, repositoryType: 'TEMPLATE' });
         // Mock the service to return an error
-        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
             new Observable((subscriber) => {
                 subscriber.error('Error');
             }),
@@ -366,15 +405,15 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect participationCouldNotBeFetched to be true
-        expect(component.participationCouldNotBeFetched).toBeTrue();
+        expect(component.participationCouldNotBeFetched).toBe(true);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
     });
 });
