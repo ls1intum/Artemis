@@ -16,6 +16,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { HttpResponse } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { PROFILE_SAML2 } from 'app/app.constants';
 
 describe('SettingsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -56,6 +57,7 @@ describe('SettingsComponent', () => {
         // Mock ProfileService to return registrationEnabled: true before component creation
         const profileService = TestBed.inject(ProfileService);
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ registrationEnabled: true } as any);
+        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
 
         const fixture = TestBed.createComponent(SettingsComponent);
         comp = fixture.componentInstance;
@@ -308,6 +310,80 @@ describe('SettingsComponent', () => {
 
         it('should default isRegistrationEnabled to false when profile has registrationEnabled undefined', () => {
             expect(compUndefined.isRegistrationEnabled).toBe(false);
+        });
+    });
+
+    describe('when SAML2 profile is active', () => {
+        let compSaml2: SettingsComponent;
+        let accountServiceSaml2: AccountService;
+
+        beforeEach(() => {
+            const profileService = TestBed.inject(ProfileService);
+            vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_SAML2);
+
+            const fixture = TestBed.createComponent(SettingsComponent);
+            compSaml2 = fixture.componentInstance;
+            accountServiceSaml2 = TestBed.inject(AccountService);
+        });
+
+        it('should set isSaml2Active to true', () => {
+            expect(compSaml2.isSaml2Active).toBe(true);
+        });
+
+        it('should disable firstName, lastName and email form controls after loading user', async () => {
+            const user: User = {
+                internal: true,
+                name: 'Jane Smith',
+                firstName: 'Jane',
+                lastName: 'Smith',
+                activated: true,
+                email: 'jane.smith@idp.example.com',
+                langKey: 'en',
+                login: 'jsmith',
+                authorities: [],
+                imageUrl: '',
+            };
+            vi.spyOn(accountServiceSaml2, 'identity').mockReturnValue(Promise.resolve(user));
+
+            compSaml2.ngOnInit();
+            await vi.waitFor(() => expect(compSaml2.currentUser()).toBeDefined());
+
+            expect(compSaml2.settingsForm.controls.firstName.disabled).toBe(true);
+            expect(compSaml2.settingsForm.controls.lastName.disabled).toBe(true);
+            expect(compSaml2.settingsForm.controls.email.disabled).toBe(true);
+        });
+
+        it('should not update firstName, lastName, or email when saving with SAML2 active', async () => {
+            const user: User = {
+                internal: true,
+                name: 'Jane Smith',
+                firstName: 'Jane',
+                lastName: 'Smith',
+                activated: true,
+                email: 'jane.smith@idp.example.com',
+                langKey: 'en',
+                login: 'jsmith',
+                authorities: [],
+                imageUrl: '',
+            };
+            vi.spyOn(accountServiceSaml2, 'identity').mockReturnValue(Promise.resolve(user));
+            vi.spyOn(accountServiceSaml2, 'save').mockReturnValue(of(new HttpResponse({ body: new User() })));
+            vi.spyOn(accountServiceSaml2, 'authenticate');
+
+            compSaml2.ngOnInit();
+            await vi.waitFor(() => expect(compSaml2.currentUser()).toBeDefined());
+
+            // Try to change first name via form — should be ignored
+            compSaml2.settingsForm.patchValue({ firstName: 'Hacker', lastName: 'Attack', email: 'hacked@evil.com', langKey: 'de' });
+            compSaml2.saveSettings();
+
+            const savedUser = compSaml2.currentUser();
+            // Name and email should remain unchanged
+            expect(savedUser?.firstName).toBe('Jane');
+            expect(savedUser?.lastName).toBe('Smith');
+            expect(savedUser?.email).toBe('jane.smith@idp.example.com');
+            // Only langKey should be updated
+            expect(savedUser?.langKey).toBe('de');
         });
     });
 });
