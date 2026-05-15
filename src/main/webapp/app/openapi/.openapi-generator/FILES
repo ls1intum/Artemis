@@ -1,6 +1,7 @@
 .gitignore
 api.base.service.ts
 api/calendarApi.service.ts
+api/globalSearchApi.service.ts
 api/hyperionCodeGenerationApi.service.ts
 api/hyperionFaqApi.service.ts
 api/hyperionProblemStatementApi.service.ts
@@ -29,8 +30,7 @@ model/createOrUpdateTutorialGroupRequest.ts
 model/createOrUpdateTutorialGroupSessionRequest.ts
 model/difficultyAssessment.ts
 model/examSeat.ts
-model/generatedQuizAnswerOption.ts
-model/generatedQuizQuestion.ts
+model/globalSearchResult.ts
 model/inferredCompetency.ts
 model/problemStatementGenerationRequest.ts
 model/problemStatementGenerationResponse.ts
