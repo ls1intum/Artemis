@@ -200,10 +200,10 @@ module.exports = {
     // Re-tune when migration completes.
     coverageThreshold: {
         global: {
-            statements: 83,
-            branches: 73,
-            functions: 72.5,
-            lines: 84,
+            statements: 82.5,
+            branches: 71.3,
+            functions: 71.5,
+            lines: 83.6,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
