@@ -34,8 +34,8 @@
                     "
                 />
 
-                @if (programmingExercise()?.auxiliaryRepositories?.length) {
-                    @for (auxiliaryRepository of programmingExercise()!.auxiliaryRepositories; track auxiliaryRepository) {
+                @if (programmingExercise().auxiliaryRepositories?.length) {
+                    @for (auxiliaryRepository of programmingExercise().auxiliaryRepositories; track auxiliaryRepository) {
                         <ng-container
                             *ngTemplateOutlet="
                                 repositoryBadge;
@@ -106,7 +106,7 @@
 <ng-template #repositoryBadge let-helpIconText="helpIconText" let-trailingRepoSlug="trailingRepoSlug" let-isBuildPlan="isBuildPlan" let-isAuxRepo="isAuxRepo">
     <li>
         <code [class]="'text-white badge label-preview ' + (isBuildPlan ? ' text-uppercase' : 'text-lowercase') + (isAuxRepo ? ' bg-success' : ' bg-primary')">
-            {{ courseShortName }}{{ programmingExercise()?.shortName }}{{ trailingRepoSlug }}
+            {{ courseShortName }}{{ programmingExercise().shortName }}{{ trailingRepoSlug }}
         </code>
         @if (helpIconText) {
             <jhi-help-icon [text]="helpIconText" />
