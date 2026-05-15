@@ -126,7 +126,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private lastSeenParticipation?: Participation;
     private lastSeenProblemStatement?: string;
     private lastSeenGenerateHtmlEvents?: Observable<void>;
-    private lastSeenExercise?: ProgrammingExercise;
     private inputEffectInitialized = false;
 
     constructor() {
@@ -165,7 +164,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             this.personalParticipation();
 
             if (!this.inputEffectInitialized) {
-                this.lastSeenExercise = exercise;
                 this.lastSeenParticipation = participation;
                 this.lastSeenGenerateHtmlEvents = generateHtmlEvents;
                 this.lastSeenProblemStatement = exercise?.problemStatement;
@@ -175,7 +173,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
 
             const participationChanged = participation !== this.lastSeenParticipation;
             const generateHtmlEventsChanged = generateHtmlEvents !== this.lastSeenGenerateHtmlEvents;
-            this.lastSeenExercise = exercise;
             this.lastSeenParticipation = participation;
             this.lastSeenGenerateHtmlEvents = generateHtmlEvents;
 

@@ -1,4 +1,7 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
+import { outputToObservable } from '@angular/core/rxjs-interop';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -98,6 +101,7 @@ describe('CodeEditorContainerIntegration', () => {
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -193,13 +197,13 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.monacoEditor.commitState()).toBe(CommitState.CLEAN);
 
         // actions
-        expect(container.actions.commitState).toBe(CommitState.CLEAN);
-        expect(container.actions.editorState).toBe(EditorState.CLEAN);
-        expect(container.actions.isBuilding).toBeFalse();
+        expect(container.actions.internalCommitState()).toBe(CommitState.CLEAN);
+        expect(container.actions.internalEditorState()).toBe(EditorState.CLEAN);
+        expect(container.actions.isBuilding()).toBeFalse();
 
         // status
-        expect(container.fileBrowser.status.commitState).toBe(CommitState.CLEAN);
-        expect(container.fileBrowser.status.editorState).toBe(EditorState.CLEAN);
+        expect(container.fileBrowser.status.commitState()).toBe(CommitState.CLEAN);
+        expect(container.fileBrowser.status.editorState()).toBe(EditorState.CLEAN);
 
         // build output
         expect(getBuildLogsStub).toHaveBeenCalledOnce();
@@ -270,13 +274,13 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.monacoEditor.commitState()).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
 
         // actions
-        expect(container.actions.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
-        expect(container.actions.editorState).toBe(EditorState.CLEAN);
-        expect(container.actions.isBuilding).toBeFalse();
+        expect(container.actions.internalCommitState()).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
+        expect(container.actions.internalEditorState()).toBe(EditorState.CLEAN);
+        expect(container.actions.isBuilding()).toBeFalse();
 
         // status
-        expect(container.fileBrowser.status.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
-        expect(container.fileBrowser.status.editorState).toBe(EditorState.CLEAN);
+        expect(container.fileBrowser.status.commitState()).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
+        expect(container.fileBrowser.status.editorState()).toBe(EditorState.CLEAN);
 
         // build output
         expect(getBuildLogsStub).toHaveBeenCalledOnce();
@@ -329,7 +333,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.unsavedFiles).toEqual({ [selectedFile]: newFileContent });
         expect(container.fileBrowser.unsavedFiles()).toEqual([selectedFile]);
         expect(container.editorState).toBe(EditorState.UNSAVED_CHANGES);
-        expect(container.actions.editorState).toBe(EditorState.UNSAVED_CHANGES);
+        expect(container.actions.internalEditorState()).toBe(EditorState.UNSAVED_CHANGES);
     });
 
     it('should save files and remove unsaved status of saved files afterwards', async () => {
@@ -359,7 +363,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.editorState).toBe(EditorState.CLEAN);
         expect(container.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
         expect(container.fileBrowser.unsavedFiles()).toHaveLength(0);
-        expect(container.actions.editorState).toBe(EditorState.CLEAN);
+        expect(container.actions.internalEditorState()).toBe(EditorState.CLEAN);
     });
 
     it('should remove the unsaved changes flag in all components if the unsaved file is deleted', () => {
@@ -371,20 +375,24 @@ describe('CodeEditorContainerIntegration', () => {
         container.unsavedFiles = unsavedChanges;
 
         containerFixture.changeDetectorRef.detectChanges();
-        // Ensure child component receives latest state despite OnPush change detection.
-        container.actions.editorState = container.editorState;
-        container.actions.unsavedFiles = container.unsavedFiles;
-        container.actions.commitState = container.commitState;
+        // Push the latest state into the child synchronously (legacy ngOnChanges setter behavior).
+        // Signal-input propagation through the template binding fires the actions component's
+        // mirror effect post-CD as a microtask, which doesn't settle before the next assertion in
+        // this Jest zone-based test. Using the public setX helpers drives editor/commit state
+        // synchronously. unsavedFiles is a signal input — propagation happens via the container's
+        // [unsavedFiles] template binding during detectChanges above.
+        container.actions.setEditorState(container.editorState);
+        container.actions.setCommitState(container.commitState);
         containerFixture.changeDetectorRef.detectChanges();
 
         expect(container.unsavedFiles).toEqual(unsavedChanges);
-        expect(container.actions.editorState).toBe(EditorState.UNSAVED_CHANGES);
+        expect(container.actions.internalEditorState()).toBe(EditorState.UNSAVED_CHANGES);
 
         container.fileBrowser.onFileDeleted(new DeleteFileChange(FileType.FILE, 'file'));
         containerFixture.changeDetectorRef.detectChanges();
         expect(container.unsavedFiles).toStrictEqual({});
         expect(container.fileBrowser.repositoryFiles).toEqual(expectedFilesAfterDelete);
-        expect(container.actions.editorState).toBe(EditorState.CLEAN);
+        expect(container.actions.internalEditorState()).toBe(EditorState.CLEAN);
     });
 
     it('should wait for build result after submission if no unsaved changes exist', () => {
@@ -397,12 +405,12 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.unsavedFiles).toStrictEqual({});
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
         containerFixture.changeDetectorRef.detectChanges();
-        // Ensure the child component input reflects the current state for OnPush change detection.
-        container.actions.commitState = container.commitState;
+        // Drive the migrated child state synchronously — see note in earlier test.
+        container.actions.setCommitState(container.commitState);
         containerFixture.changeDetectorRef.detectChanges();
 
         // commit
-        expect(container.actions.commitState).toBe(container.commitState);
+        expect(container.actions.internalCommitState()).toBe(container.commitState);
         commitStub.mockReturnValue(of(undefined));
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
@@ -442,10 +450,10 @@ describe('CodeEditorContainerIntegration', () => {
         container.editorState = EditorState.UNSAVED_CHANGES;
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
         containerFixture.changeDetectorRef.detectChanges();
-        // Propagate state to the actions component which uses OnPush change detection.
-        container.actions.unsavedFiles = container.unsavedFiles;
-        container.actions.editorState = container.editorState;
-        container.actions.commitState = container.commitState;
+        // Drive the migrated child state synchronously — see note in earlier test. unsavedFiles
+        // is a signal input; it propagates via the container's [unsavedFiles] template binding.
+        container.actions.setEditorState(container.editorState);
+        container.actions.setCommitState(container.commitState);
         containerFixture.changeDetectorRef.detectChanges();
 
         // trying to commit
@@ -456,11 +464,11 @@ describe('CodeEditorContainerIntegration', () => {
         expect(saveFilesStub).toHaveBeenCalledOnce();
         expect(saveFilesStub).toHaveBeenCalledWith([{ fileName: unsavedFile, fileContent: 'lorem ipsum' }], true);
         expect(container.editorState).toBe(EditorState.SAVING);
-        expect(container.fileBrowser.status.editorState).toBe(EditorState.SAVING);
+        expect(container.fileBrowser.status.editorState()).toBe(EditorState.SAVING);
         // committing
         expect(commitStub).not.toHaveBeenCalled();
         expect(container.commitState).toBe(CommitState.COMMITTING);
-        expect(container.fileBrowser.status.commitState).toBe(CommitState.COMMITTING);
+        expect(container.fileBrowser.status.commitState()).toBe(CommitState.COMMITTING);
         saveFilesSubject.next({ [unsavedFile]: undefined });
 
         expect(container.editorState).toBe(EditorState.CLEAN);
@@ -473,7 +481,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // Commit state should change asynchronously
         containerFixture.changeDetectorRef.detectChanges();
-        await firstValueFrom(container.actions.commitStateChange);
+        await firstValueFrom(outputToObservable(container.actions.commitStateChange));
 
         // waiting for build result
         expect(container.commitState).toBe(CommitState.CLEAN);

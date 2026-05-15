@@ -54,18 +54,19 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
             return;
         }
 
-        this.dialogRef = this.dialogService.open(GitDiffReportModalComponent, {
-            header: this.translateService.instant('artemisApp.programmingExercise.diffReport.title'),
-            width: '90vw',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            styleClass: GitDiffReportModalComponent.WINDOW_CLASS,
-            data: {
-                repositoryDiffInformation,
-                diffForTemplateAndSolution: true,
-            },
-        });
+        this.dialogRef =
+            this.dialogService.open(GitDiffReportModalComponent, {
+                header: this.translateService.instant('artemisApp.programmingExercise.diffReport.title'),
+                width: '90vw',
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: false,
+                styleClass: GitDiffReportModalComponent.WINDOW_CLASS,
+                data: {
+                    repositoryDiffInformation,
+                    diffForTemplateAndSolution: true,
+                },
+            }) ?? undefined;
     }
 }

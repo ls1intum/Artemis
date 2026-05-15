@@ -63,20 +63,16 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     //                                    → container.onCommitStateChange.emit(...)
     //
     // With model<>() the final emit never fires for parent-driven updates, breaking external consumers of
-    // the container's onCommitStateChange. We therefore keep an internal writable signal (so the template
-    // and internal logic continue to call .set()/() exactly as before) and synthesize the *Change output
-    // via an effect that emits on every distinct change, with a sentinel to suppress the initialization emit
-    // — matching the legacy setter's behavior of only emitting when the value actually changed.
-    // Aliases are required here: the public binding key MUST remain `commitState` / `editorState`
-    // (the container template uses `[(commitState)]` / `[(editorState)]`), while the internal
-    // member must be a separately-named writable signal so callers (and the template) can do
-    // `commitState()` and `commitState.set(...)` without colliding with the input getter.
-    // eslint-disable-next-line @angular-eslint/no-input-rename
-    readonly editorStateInput = input<EditorState>(undefined!, { alias: 'editorState' });
-    // eslint-disable-next-line @angular-eslint/no-input-rename
-    readonly commitStateInput = input<CommitState>(undefined!, { alias: 'commitState' });
-    readonly editorState = signal<EditorState>(undefined!);
-    readonly commitState = signal<CommitState>(undefined!);
+    // the container's onCommitStateChange. We therefore keep an internal writable signal and synthesize
+    // the *Change output via an effect that emits on every distinct change, with a sentinel to suppress
+    // the initialization emit — matching the legacy setter's behavior of only emitting when the value
+    // actually changed. The internal signal MUST have a different property name from the input (Angular
+    // 21's two-way `[(editorState)]` binding metadata gets corrupted by a class member with the same name
+    // as the input binding key — a `transformFn undefined` lookup failure occurs at runtime).
+    readonly editorState = input<EditorState>(undefined!);
+    readonly commitState = input<CommitState>(undefined!);
+    readonly internalEditorState = signal<EditorState>(undefined!);
+    readonly internalCommitState = signal<CommitState>(undefined!);
     readonly editorStateChange = output<EditorState>();
     readonly commitStateChange = output<CommitState>();
 
@@ -122,52 +118,53 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     private commitStateSeen = false;
 
     constructor() {
-        // Sync editorState input → internal signal; manually emit editorStateChange on every actual change.
-        // Ignore undefined incoming values so internal mutations are not stomped when the parent
-        // never binds the input (matches legacy `if (value !== this._value)` setter dedup, where
-        // identical undefined writes were no-ops).
+        // Sync editorState input → internalEditorState; manually emit editorStateChange on every
+        // actual change. Ignore undefined incoming values so internal mutations are not stomped when
+        // the parent never binds the input (matches legacy `if (value !== this._value)` setter dedup,
+        // where identical undefined writes were no-ops).
         effect(() => {
-            const incoming = this.editorStateInput();
+            const incoming = this.editorState();
             if (incoming === undefined) {
                 return;
             }
-            const current = untracked(() => this.editorState());
+            const current = untracked(() => this.internalEditorState());
             if (incoming === current) {
                 this.editorStateSeen = true;
                 return;
             }
-            this.editorState.set(incoming);
+            this.internalEditorState.set(incoming);
             if (this.editorStateSeen) {
                 this.editorStateChange.emit(incoming);
             }
             this.editorStateSeen = true;
         });
 
-        // Sync commitState input → internal signal; manually emit commitStateChange on every actual change.
+        // Sync commitState input → internalCommitState; manually emit commitStateChange on every
+        // actual change.
         effect(() => {
-            const incoming = this.commitStateInput();
+            const incoming = this.commitState();
             if (incoming === undefined) {
                 return;
             }
-            const current = untracked(() => this.commitState());
+            const current = untracked(() => this.internalCommitState());
             if (incoming === current) {
                 this.commitStateSeen = true;
                 return;
             }
-            this.commitState.set(incoming);
+            this.internalCommitState.set(incoming);
             if (this.commitStateSeen) {
                 this.commitStateChange.emit(incoming);
             }
             this.commitStateSeen = true;
         });
 
-        // Reproduce legacy ngOnChanges cascade: when editorState transitions SAVING -> X while
-        // commitState is COMMITTING, finalize the commit (CLEAN if editor is now CLEAN, otherwise
-        // revert to UNCOMMITTED_CHANGES). The commitState guard is evaluated INSIDE the setTimeout
-        // so that a commitState change between scheduling and firing is respected — matching
-        // legacy behavior where the read happened at fire time.
+        // Reproduce legacy ngOnChanges cascade: when internalEditorState transitions SAVING -> X
+        // while internalCommitState is COMMITTING, finalize the commit (CLEAN if editor is now
+        // CLEAN, otherwise revert to UNCOMMITTED_CHANGES). The commitState guard is evaluated
+        // INSIDE the setTimeout so that a commitState change between scheduling and firing is
+        // respected — matching legacy behavior where the read happened at fire time.
         effect(() => {
-            const current = this.editorState();
+            const current = this.internalEditorState();
             // Snapshot the previous value before updating it for the next run.
             const previous = untracked(() => this.previousEditorState);
             this.previousEditorState = current;
@@ -176,7 +173,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 // commitState signal inside the editorState effect's own change-detection pass,
                 // and so the commitState guard reflects the value at fire time, not schedule time.
                 setTimeout(() => {
-                    if (untracked(() => this.commitState()) !== CommitState.COMMITTING) {
+                    if (untracked(() => this.internalCommitState()) !== CommitState.COMMITTING) {
                         return;
                     }
                     if (current === EditorState.CLEAN) {
@@ -190,28 +187,32 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Writes commitState and emits commitStateChange. Use this for all internal mutations
+     * Writes internalCommitState and emits commitStateChange. Use this for all internal mutations
      * so the parent's (commitStateChange) handler fires — model<>() was replaced precisely
      * because it didn't emit on parent-driven updates; we manage both directions explicitly.
+     *
+     * Public so integration tests can drive parent→child state pushes synchronously without
+     * waiting for the signal-input effect microtask.
      */
-    private setCommitState(next: CommitState): void {
-        const current = untracked(() => this.commitState());
+    public setCommitState(next: CommitState): void {
+        const current = untracked(() => this.internalCommitState());
         if (current === next) {
             return;
         }
-        this.commitState.set(next);
+        this.internalCommitState.set(next);
         this.commitStateChange.emit(next);
     }
 
     /**
-     * Writes editorState and emits editorStateChange. See setCommitState.
+     * Writes internalEditorState and emits editorStateChange. See setCommitState. Public for the
+     * same integration-test reason.
      */
-    private setEditorState(next: EditorState): void {
-        const current = untracked(() => this.editorState());
+    public setEditorState(next: EditorState): void {
+        const current = untracked(() => this.internalEditorState());
         if (current === next) {
             return;
         }
-        this.editorState.set(next);
+        this.internalEditorState.set(next);
         this.editorStateChange.emit(next);
     }
 
@@ -230,12 +231,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         this.conflictStateSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
             // When the conflict is encountered when opening the code-editor, setting the commitState here could cause an uncheckedException.
             // Schedule the state change for the next tick to ensure template is rendered.
-            if (this.commitState() === CommitState.CONFLICT && gitConflictState === GitConflictState.OK) {
+            if (this.internalCommitState() === CommitState.CONFLICT && gitConflictState === GitConflictState.OK) {
                 // Case a: Conflict was resolved.
                 setTimeout(() => {
                     this.setCommitState(CommitState.UNDEFINED);
                 }, 0);
-            } else if (this.commitState() !== CommitState.CONFLICT && gitConflictState === GitConflictState.CHECKOUT_CONFLICT) {
+            } else if (this.internalCommitState() !== CommitState.CONFLICT && gitConflictState === GitConflictState.CHECKOUT_CONFLICT) {
                 // Case b: Conflict has occurred.
                 setTimeout(() => {
                     this.setCommitState(CommitState.CONFLICT);
@@ -282,7 +283,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     onRefresh() {
-        if (this.editorState() !== EditorState.CLEAN) {
+        if (this.internalEditorState() !== EditorState.CLEAN) {
             const ref = this.dialogService.open(CodeEditorConfirmRefreshModalComponent, {
                 header: this.translateService.instant('artemisApp.editor.refresh.refreshExplanationShort'),
                 width: '50rem',
@@ -359,7 +360,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
      */
     commit() {
         // Avoid multiple commits at the same time.
-        if (this.commitState() === CommitState.COMMITTING) {
+        if (this.internalCommitState() === CommitState.COMMITTING) {
             return;
         }
         // If there are unsaved changes, save them before trying to commit again.
@@ -374,7 +375,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                     }
                 }),
                 tap(() => {
-                    if (this.editorState() === EditorState.CLEAN) {
+                    if (this.internalEditorState() === EditorState.CLEAN) {
                         this.setCommitState(CommitState.CLEAN);
                     }
                     // We just assume that after the commit a build happens if the repo is buildable.
