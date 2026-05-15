@@ -155,7 +155,7 @@ jobs:
 
       - name: Setup pnpm
         if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@v4
         with:
           run_install: false
       - name: Setup Node.js

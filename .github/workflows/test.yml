@@ -257,7 +257,7 @@ jobs:
         - name: remove project-wide node options set in .npmrc just for this test
           run: sed -i '/^node-options=/d' .npmrc || true
         - name: Setup pnpm
-          uses: pnpm/action-setup@v6
+          uses: pnpm/action-setup@v4
           with:
               run_install: false
         - name: Setup Node.js
@@ -311,7 +311,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - name: Setup pnpm
-      uses: pnpm/action-setup@v6
+      uses: pnpm/action-setup@v4
       with:
         run_install: false
     - name: Setup Node.js
@@ -341,7 +341,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - name: Setup pnpm
-      uses: pnpm/action-setup@v6
+      uses: pnpm/action-setup@v4
       with:
         run_install: false
     - name: Setup Node.js
