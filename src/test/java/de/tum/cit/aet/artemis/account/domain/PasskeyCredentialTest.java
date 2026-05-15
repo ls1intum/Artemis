@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core;
+package de.tum.cit.aet.artemis.account.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -6,7 +6,6 @@ import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 
 class PasskeyCredentialTest {
