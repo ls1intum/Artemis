@@ -418,13 +418,6 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * @param user        the requesting user
      */
     public void applyContextChange(IrisChatSession session, IrisChatMode newMode, long newEntityId, User user) {
-        user.hasOptedIntoLLMUsageElseThrow();
-
-        if (!Objects.equals(session.getUserId(), user.getId())) {
-            throw new AccessForbiddenException("Iris Session", session.getId());
-        }
-
-        // Idempotent: nothing to do if context is unchanged
         if (session.getMode() == newMode && session.getEntityId() != null && session.getEntityId() == newEntityId) {
             return;
         }
