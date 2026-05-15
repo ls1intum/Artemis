@@ -31,7 +31,6 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
     programmingExercise.id = 456;
     programmingExercise.title = 'Exercise 1';
 
-    let comp: ProgrammingExerciseTriggerAllButtonComponent;
     let fixture: ComponentFixture<ProgrammingExerciseTriggerAllButtonComponent>;
     let submissionService: ProgrammingSubmissionService;
     let dialogService: DialogService;
@@ -51,7 +50,6 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseTriggerAllButtonComponent);
-        comp = fixture.componentInstance;
         submissionService = TestBed.inject(ProgrammingSubmissionService);
         dialogService = TestBed.inject(DialogService);
         const buildRunService = TestBed.inject(ProgrammingBuildRunService);

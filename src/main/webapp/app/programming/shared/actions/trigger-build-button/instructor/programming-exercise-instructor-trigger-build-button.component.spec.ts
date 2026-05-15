@@ -69,7 +69,7 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
         vi.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
         vi.spyOn(submissionService, 'triggerBuild').mockReturnValue(of());
 
-        comp.triggerBuild({ stopPropagation: vi.fn() });
+        comp.triggerBuild({ stopPropagation: vi.fn() } as unknown as MouseEvent);
 
         expect(modalService.open).toHaveBeenCalledOnce();
         expect(modalService.open).toHaveBeenCalledWith(ConfirmAutofocusModalComponent, {

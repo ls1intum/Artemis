@@ -35,7 +35,20 @@ import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-revie
  * tests exercise. Centralising these reach-ins gives editor autocomplete and surfaces renames
  * at compile time, replacing the previous `(comp as any).X` casts.
  */
-type MonacoInternals = CodeEditorMonacoComponent & {
+type MonacoInternals = Omit<
+    CodeEditorMonacoComponent,
+    | 'updateEditorInteractionMode'
+    | 'disposeAddFeedbackShortcut'
+    | 'setupAddFeedbackShortcut'
+    | 'renderFeedbackWidgets'
+    | 'renderReviewCommentWidgets'
+    | 'getThreadFilePath'
+    | 'getReviewThreadLine'
+    | 'getReviewCommentManager'
+    | 'persistInlineFixApplication'
+    | 'reviewCommentManager'
+    | 'exerciseReviewCommentService'
+> & {
     updateEditorInteractionMode(): void;
     disposeAddFeedbackShortcut(): void;
     setupAddFeedbackShortcut(): void;
@@ -49,7 +62,7 @@ type MonacoInternals = CodeEditorMonacoComponent & {
     exerciseReviewCommentService: ExerciseReviewCommentService;
 };
 
-const internals = (c: CodeEditorMonacoComponent): MonacoInternals => c as MonacoInternals;
+const internals = (c: CodeEditorMonacoComponent): MonacoInternals => c as unknown as MonacoInternals;
 
 describe('CodeEditorMonacoComponent', () => {
     setupTestBed({ zoneless: true });
@@ -208,7 +221,7 @@ describe('CodeEditorMonacoComponent', () => {
             renderWidgets: vi.fn(),
             updateHoverButton: vi.fn(),
             clearDrafts: vi.fn(),
-        };
+        } as unknown as ReviewCommentWidgetManager;
 
         fixture.componentRef.setInput('enableExerciseReviewComments', true);
         fixture.componentRef.setInput('selectedRepository', RepositoryType.TEMPLATE);
@@ -1053,7 +1066,7 @@ describe('CodeEditorMonacoComponent', () => {
             tryUpdateThreadInputs: vi.fn(),
             renderWidgets: vi.fn(),
             updateHoverButton: vi.fn(),
-        };
+        } as unknown as ReviewCommentWidgetManager;
 
         comp.clearReviewCommentDrafts();
 

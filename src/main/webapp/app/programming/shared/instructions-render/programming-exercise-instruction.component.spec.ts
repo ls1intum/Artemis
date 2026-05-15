@@ -47,7 +47,18 @@ import { provideHttpClient } from '@angular/common/http';
  * gives editor autocomplete on the asserted shapes. If any field is renamed in the component,
  * TypeScript surfaces the mismatch here rather than via runtime test failures.
  */
-type InstructionInternals = ProgrammingExerciseInstructionComponent & {
+type InstructionInternals = Omit<
+    ProgrammingExerciseInstructionComponent,
+    | 'participationSubscription'
+    | 'generateHtmlSubscription'
+    | 'problemStatement'
+    | 'lastSeenProblemStatement'
+    | 'lastRenderedProblemStatement'
+    | 'isInitial'
+    | 'isLoading'
+    | 'tasks'
+    | 'setupMarkdownSubscriptions'
+> & {
     participationSubscription?: Subscription;
     generateHtmlSubscription?: Subscription;
     problemStatement: string | undefined;
@@ -59,7 +70,7 @@ type InstructionInternals = ProgrammingExerciseInstructionComponent & {
     setupMarkdownSubscriptions: () => void;
 };
 
-const internals = (c: ProgrammingExerciseInstructionComponent): InstructionInternals => c as InstructionInternals;
+const internals = (c: ProgrammingExerciseInstructionComponent): InstructionInternals => c as unknown as InstructionInternals;
 
 describe('ProgrammingExerciseInstructionComponent', () => {
     setupTestBed({ zoneless: true });
@@ -519,7 +530,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.componentRef.setInput('exercise', { problemStatement: updatedProblemStatement } as ProgrammingExercise);
         comp.renderUpdatedProblemStatement();
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
-        expect(comp.exercise().problemStatement).toEqual(updatedProblemStatement);
+        expect(comp.exercise()?.problemStatement).toEqual(updatedProblemStatement);
     });
 
     it('should update the markdown on a theme change', () => {
