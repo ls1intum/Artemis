@@ -14,11 +14,11 @@ tasks.cyclonedxDirectBom {
     xmlOutput.unsetConvention()
 }
 
-// Task to generate client SBOM using @cyclonedx/cyclonedx-npm
-tasks.register("generateClientSbom", NpmTask) {
-    dependsOn "npm_install"
+// Task to generate client SBOM using @cyclonedx/cdxgen (universal CycloneDX generator).
+tasks.register("generateClientSbom", PnpmTask) {
+    dependsOn pnpmInstall
     args = ["run", "sbom:generate"]
-    description = "Generate CycloneDX SBOM for client-side npm dependencies"
+    description = "Generate CycloneDX SBOM for client-side pnpm dependencies"
     group = "reporting"
 }
 
