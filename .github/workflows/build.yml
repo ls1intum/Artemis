@@ -129,7 +129,7 @@ jobs:
       - name: Build .war
         # Skip the webapp Gradle task since the Angular client was already built above.
         # Enable Gradle build cache so CI can reuse task outputs across runs.
-        run: ./gradlew -Pprod -Pwar bootWar -x webapp --build-cache
+        run: ./gradlew -Pprod -Pwar bootWar -x webapp --build-cache --info
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
