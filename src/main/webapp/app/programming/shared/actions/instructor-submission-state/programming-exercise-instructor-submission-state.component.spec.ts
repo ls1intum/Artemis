@@ -254,8 +254,9 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         fixture.detectChanges();
 
-        // Now the request returns a response.
+        // Now the request returns a response and completes — finalize() resets the flag on completion (or error).
         triggerInstructorBuildForParticipationsOfExerciseSubject.next(undefined);
+        triggerInstructorBuildForParticipationsOfExerciseSubject.complete();
 
         fixture.detectChanges();
 

@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, effect, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceTime, map, tap } from 'rxjs/operators';
+import { debounceTime, finalize, map, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
@@ -47,34 +47,32 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
 
     readonly resultEtaInMs = signal<number | undefined>(undefined);
 
-    private lastSubscribedExerciseId: number | undefined;
-
     // Icons
     faClock = faClock;
     faCircleNotch = faCircleNotch;
     faRedo = faRedo;
 
     constructor() {
-        effect(() => {
-            const exercise = this.exercise();
-            const exerciseId = exercise.id;
-            if (exerciseId !== undefined && exerciseId !== this.lastSubscribedExerciseId) {
-                this.lastSubscribedExerciseId = exerciseId;
-                this.programmingSubmissionService
-                    .getSubmissionStateOfExercise(exerciseId)
-                    .pipe(
-                        map(this.sumSubmissionStates),
-                        // If we would update the UI with every small change, it would seem very hectic. So we always take the latest value after 1 second.
-                        debounceTime(500),
-                        tap((buildingSummary: { [submissionState: string]: number }) => {
-                            this.buildingSummary.set(buildingSummary);
-                            this.hasFailedSubmissions.set((buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0) > 0);
-                            this.hasBuildingSubmissions.set((buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] ?? 0) > 0);
-                        }),
-                        takeUntilDestroyed(this.destroyRef),
-                    )
-                    .subscribe();
+        effect((onCleanup) => {
+            const exerciseId = this.exercise().id;
+            if (exerciseId === undefined) {
+                return;
             }
+            const subscription = this.programmingSubmissionService
+                .getSubmissionStateOfExercise(exerciseId)
+                .pipe(
+                    map(this.sumSubmissionStates),
+                    // If we would update the UI with every small change, it would seem very hectic. So we always take the latest value after 1 second.
+                    debounceTime(500),
+                    tap((buildingSummary: { [submissionState: string]: number }) => {
+                        this.buildingSummary.set(buildingSummary);
+                        this.hasFailedSubmissions.set((buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0) > 0);
+                        this.hasBuildingSubmissions.set((buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] ?? 0) > 0);
+                    }),
+                    takeUntilDestroyed(this.destroyRef),
+                )
+                .subscribe();
+            onCleanup(() => subscription.unsubscribe());
         });
     }
 
@@ -93,7 +91,8 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
         const failedSubmissionParticipations = this.programmingSubmissionService.getSubmissionCountByType(this.exercise().id!, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
         this.programmingSubmissionService
             .triggerInstructorBuildForParticipationsOfExercise(this.exercise().id!, failedSubmissionParticipations)
-            .subscribe(() => this.isBuildingFailedSubmissions.set(false));
+            .pipe(finalize(() => this.isBuildingFailedSubmissions.set(false)))
+            .subscribe();
     }
 
     private sumSubmissionStates = (buildState: ExerciseSubmissionState) =>
