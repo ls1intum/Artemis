@@ -189,14 +189,20 @@ echo -e "${GREEN}Prerequisites OK${NC}"
 # =============================================================================
 # Step 1: Build the WAR (unless --skip-build)
 # =============================================================================
-# Parallelise the four long legs of a -Pprod WAR build that touch disjoint
-# output directories:
-#   pnpm run webapp:prod          -> build/resources/main/static/   (Angular bundle)
-#   pnpm run sbom:generate        -> build/reports/client-sbom*.json (cdxgen)
+# Parallelise the long legs of a -Pprod WAR build that touch disjoint output
+# directories:
+#   pnpm run webapp:prod              -> build/resources/main/static/   (Angular bundle)
+#   pnpm run sbom:generate-full       -> build/reports/client-sbom-full.json (cdxgen)
 #   ./gradlew compileJava cyclonedxBom
-#                                 -> build/classes/                  (.class files)
-#                                 -> build/reports/sbom/server-sbom.json
-# Then re-enter Gradle for the assembly step with -x on every leg above so
+#                                     -> build/classes/                  (.class files)
+#                                     -> build/reports/sbom/server-sbom.json
+# After all three finish we run `pnpm run sbom:filter-shipped` synchronously
+# because the filter step (sbom-filter-by-bundle.mjs) reads the webapp:prod
+# output dir for .js.map files — on a cold build cdxgen finishes well before
+# Angular, and `webapp:prod`'s `clean-www` would have just emptied the static
+# dir, causing the filter to exit 1. Splitting `sbom:generate` here keeps the
+# race-free ordering without losing the parallelism.
+# Then re-enter Gradle for the assembly step with -x on the legs above so
 # Gradle just runs processResources + copySbomsToResources + bootWar against
 # already-produced outputs. copySbomsToResources's doLast copies pre-existing
 # files, so skipping its dependencies doesn't break it.
@@ -215,9 +221,11 @@ if [ "$SKIP_BUILD" = false ]; then
     CLIENT_PID=$!
     echo -e "${YELLOW}  • client build started (pid $CLIENT_PID, log: $CLIENT_LOG)${NC}"
 
-    pnpm run sbom:generate >"$CLIENT_SBOM_LOG" 2>&1 &
+    # Only the generate-full half runs in parallel here. The filter step has a
+    # read-after-write dependency on webapp:prod and runs after the wait below.
+    pnpm run sbom:generate-full >"$CLIENT_SBOM_LOG" 2>&1 &
     CLIENT_SBOM_PID=$!
-    echo -e "${YELLOW}  • client SBOM started (pid $CLIENT_SBOM_PID, log: $CLIENT_SBOM_LOG)${NC}"
+    echo -e "${YELLOW}  • client SBOM (cdxgen) started (pid $CLIENT_SBOM_PID, log: $CLIENT_SBOM_LOG)${NC}"
 
     # compileJava and cyclonedxBom both live in the Java tooling graph and a
     # single Gradle invocation is the cheapest way to run them (avoids a
@@ -241,6 +249,12 @@ if [ "$SKIP_BUILD" = false ]; then
         done
         exit 1
     fi
+    # Now that the Angular bundle has been written, filter the cdxgen SBOM down
+    # to the shipped subset. This MUST run after $CLIENT_PID and $CLIENT_SBOM_PID
+    # have both completed: the filter reads .js.map files from
+    # build/resources/main/static (which `webapp:prod`'s clean-www empties at the
+    # start of its run, and cdxgen on a cold build can finish before Angular does).
+    pnpm run sbom:filter-shipped >>"$CLIENT_SBOM_LOG" 2>&1
     echo -e "${GREEN}  ✓ client + client-SBOM + server + server-SBOM built; assembling WAR...${NC}"
     # `-x compileJava` and `-x cyclonedxBom` would error during processResources
     # because their Provider outputs are wired into other tasks. Gradle's

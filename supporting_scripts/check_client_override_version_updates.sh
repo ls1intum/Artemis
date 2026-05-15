@@ -47,18 +47,29 @@ for k, v in overrides.items():
 
 check_dep() {
     local file=$1 raw_name=$2 cur=$3
-    # Strip 'parent>' prefix and semver-range qualifier ('@<3.4.0') so 'npm view' gets
-    # just the package name. Range-scoped overrides like 'dompurify@<3.4.3' resolve to
-    # the leaf 'dompurify'.
+    # Strip 'parent>' prefix, then optionally strip a version-range qualifier
+    # (e.g. 'dompurify@<3.4.3' -> 'dompurify'). Naively doing `${name%@*}` would
+    # also eat the leading scope marker on packages like '@angular/cdk', leaving
+    # an empty string and silently skipping the entry — so handle scoped packages
+    # separately: only strip when there is an additional '@' past the scope.
     local name="${raw_name##*>}"
-    name="${name%@*}"
+    if [[ "$name" == @* ]]; then
+        local rest="${name:1}"
+        if [[ "$rest" == *@* ]]; then
+            name="@${rest%@*}"
+        fi
+    else
+        name="${name%@*}"
+    fi
     [[ -z "$name" ]] && return
 
     local latest
     latest=$(npm view "$name" version 2>/dev/null) || return
     [[ -z "$latest" ]] && return
 
-    if [[ "$cur" =~ ^\^?([0-9]+)\.([0-9]+)\.([0-9]+)([.-].+)?$ ]]; then
+    # Caret-prefixed entries opt out of patch-level reporting (per the file
+    # header). Exact pins are reported on any version drift.
+    if [[ "$cur" =~ ^\^([0-9]+)\.([0-9]+)\.([0-9]+)([.-].+)?$ ]]; then
         local cur_major="${BASH_REMATCH[1]}" cur_minor="${BASH_REMATCH[2]}"
         local latest_major latest_minor
         latest_major=$(echo "$latest" | cut -d. -f1)
