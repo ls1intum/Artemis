@@ -58,9 +58,14 @@ artemis:
         # 429 rate-limit responses from Maven Central. Both keys are independent; either one can be set on its own.
         # The host directories must exist and be writable by the build-container user; the build image's $HOME is
         # assumed to be /root, which is the default for the official Java build images. Leave unset to disable.
+        #
+        # `read-only: true` mounts both caches read-only inside the container — required when student submissions
+        # must not be able to write the shared cache (cache-poisoning concern). The cache must then be populated
+        # out of band, e.g. by a trusted warm-up build the operator runs separately. Default false.
         # build-container-cache:
         #     maven: /var/cache/artemis-buildagent/m2
         #     gradle: /var/cache/artemis-buildagent/gradle
+        #     read-only: false
         proxies:
             use-system-proxy: false
             default:

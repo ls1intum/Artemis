@@ -77,6 +77,9 @@ public class BuildAgentConfiguration {
     @Value("${artemis.continuous-integration.build-container-cache.gradle:}")
     private String gradleCacheHostPath;
 
+    @Value("${artemis.continuous-integration.build-container-cache.read-only:false}")
+    private boolean buildContainerCacheReadOnly;
+
     public BuildAgentConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
@@ -162,16 +165,25 @@ public class BuildAgentConfiguration {
      * Both paths are optional and independently configurable. The container-side mount points ({@code /root/.m2} and
      * {@code /root/.gradle}) match the default {@code $HOME} of the build images that currently run as root; the host
      * paths must exist with permissions that allow the build-container user to read and write.
+     * <p>
+     * Setting {@code build-container-cache.read-only=true} switches both binds to {@link AccessMode#ro}. That is the
+     * safe choice for deployments where the cache must not be writable by untrusted student submissions — a malicious
+     * build could otherwise seed the shared cache with a manipulated artifact that a future build silently consumes.
+     * The read-only variant requires the host cache to be pre-populated out of band (e.g. via a trusted warm-up
+     * build the operator runs separately); an empty read-only cache is harmless but provides no speedup. The default
+     * remains read-write because the typical opt-in flow is "let the first submission warm the cache, all subsequent
+     * submissions reuse it," which only works with write access.
      *
      * @return the binds to attach (possibly empty if neither cache path is configured)
      */
     public List<Bind> buildContainerCacheBinds() {
         List<Bind> binds = new ArrayList<>(2);
+        AccessMode mode = buildContainerCacheReadOnly ? AccessMode.ro : AccessMode.rw;
         if (mavenCacheHostPath != null && !mavenCacheHostPath.isBlank()) {
-            binds.add(new Bind(mavenCacheHostPath, new Volume("/root/.m2"), AccessMode.rw));
+            binds.add(new Bind(mavenCacheHostPath, new Volume("/root/.m2"), mode));
         }
         if (gradleCacheHostPath != null && !gradleCacheHostPath.isBlank()) {
-            binds.add(new Bind(gradleCacheHostPath, new Volume("/root/.gradle"), AccessMode.rw));
+            binds.add(new Bind(gradleCacheHostPath, new Volume("/root/.gradle"), mode));
         }
         return binds;
     }

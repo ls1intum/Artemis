@@ -210,12 +210,24 @@ artemis:
         build-container-cache:
             maven: /var/cache/artemis-buildagent/m2
             gradle: /var/cache/artemis-buildagent/gradle
+            read-only: false   # set to true to mount both caches read-only (see below)
 ```
 
-Either key can be set independently. When set, the corresponding host directory is bind-mounted into every build
-container at `/root/.m2` or `/root/.gradle` respectively, which is `$HOME/.m2` / `$HOME/.gradle` for the default
-root-based Java build images shipped with Artemis. When unset (the default), no bind mounts are added and the
-behaviour is unchanged.
+Either path key can be set independently. When set, the corresponding host directory is bind-mounted into every
+build container at `/root/.m2` or `/root/.gradle` respectively, which is `$HOME/.m2` / `$HOME/.gradle` for the
+default root-based Java build images shipped with Artemis. When unset (the default), no bind mounts are added and
+the behaviour is unchanged.
+
+The optional `read-only` flag (default `false`) controls the bind access mode for both caches at once:
+
+- `read-only: false` — the build container can write to the cache. The first submission warms it; subsequent
+  submissions on the same agent reuse the entries. This is the fastest opt-in path but a security trade-off
+  applies (see the cache-poisoning caveat below).
+- `read-only: true` — both caches are mounted with `:ro`. Untrusted student submissions cannot mutate the shared
+  cache, so cache poisoning is structurally impossible. The trade-off is that the cache must be populated out of
+  band — typically by a trusted "warm-up" build the operator runs separately (`docker run --rm -v /var/cache/artemis-buildagent/m2:/root/.m2 ls1tum/artemis-maven-template:… mvn -f /path/to/seed-pom.xml dependency:resolve`)
+  or by occasionally flipping the flag back to `false` long enough to repopulate. An empty read-only cache is
+  harmless but provides no speedup.
 
 ### Host directory requirements
 
@@ -240,18 +252,22 @@ behaviour is unchanged.
 
 ### Caveats
 
-- **Cache poisoning between submissions (security trade-off).** A student submission that successfully resolves a
-  dependency writes the artifact into the shared host cache. Subsequent submissions — for the same student, a
-  different student, or a different exercise on the same agent — will consume the cached copy without re-validating
-  against Maven Central. A malicious build could deliberately seed the cache with a manipulated artifact under a
-  coordinate that a future submission declares, which would then be silently consumed by that build. The pre-baked
-  dependencies in the official Artemis build images (e.g. `ls1tum/artemis-maven-template`) cover the common case and
-  are not affected because they are baked into the image layer, not the bind-mounted cache. **Recommended deployment
-  pattern:** use bind-mount caching only on agents that run general programming exercises without secret tests, or
-  in combination with the network-restriction patterns described under [Security Considerations](#security-considerations-for-secret-tests).
-  For exam-grade isolation, the [Docker volumes approach below](#caching-docker-volumes) — which mounts the cache
-  read-only for student submissions and read-write only for the trusted solution warm-up — remains the stronger
-  option. A future iteration can add a per-submission read-only mode to this mechanism; tracked as follow-up.
+- **Cache poisoning between submissions (security trade-off).** When `read-only: false` is in effect, a student
+  submission that successfully resolves a dependency writes the artifact into the shared host cache. Subsequent
+  submissions — for the same student, a different student, or a different exercise on the same agent — will consume
+  the cached copy without re-validating against Maven Central. A malicious build could deliberately seed the cache
+  with a manipulated artifact under a coordinate that a future submission declares, which would then be silently
+  consumed by that build. The pre-baked dependencies in the official Artemis build images (e.g.
+  `ls1tum/artemis-maven-template`) cover the common case and are not affected because they are baked into the image
+  layer, not the bind-mounted cache. **Mitigations, in order of strength:**
+  1. Set `read-only: true` and populate the cache out of band via a trusted warm-up. Student submissions then
+     cannot mutate the shared cache at all, so the entire class of cache-poisoning attacks goes away.
+  2. Use the default `read-only: false` only on agents that run general programming exercises without secret
+     tests, or in combination with the network-restriction patterns described under
+     [Security Considerations](#security-considerations-for-secret-tests).
+  3. For exam-grade isolation, the [Docker volumes approach below](#caching-docker-volumes) — which mounts the
+     cache read-only for student submissions and read-write only for the trusted solution warm-up — gives the same
+     guarantee with per-submission granularity, at the cost of operating an extra Jenkins-style pipeline layer.
 - **Gradle file locks.** Gradle's `~/.gradle/caches` uses file locks; concurrent Gradle builds on the same agent will
   briefly serialize during dependency resolution. Maven has no equivalent lock. If contention becomes a hotspot with
   large `concurrent-build-size`, consider switching the Gradle cache to a read-only mount populated by a trusted

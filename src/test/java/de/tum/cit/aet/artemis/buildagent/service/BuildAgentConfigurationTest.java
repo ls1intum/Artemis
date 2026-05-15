@@ -91,4 +91,27 @@ class BuildAgentConfigurationTest {
         assertThat(binds).hasSize(1);
         assertThat(binds.get(0).getVolume().getPath()).isEqualTo("/root/.gradle");
     }
+
+    @Test
+    void testBuildContainerCacheBindsAreReadWriteByDefault() {
+        BuildAgentConfiguration config = new BuildAgentConfiguration(null);
+        ReflectionTestUtils.setField(config, "mavenCacheHostPath", "/var/cache/artemis-buildagent/m2");
+        ReflectionTestUtils.setField(config, "gradleCacheHostPath", "/var/cache/artemis-buildagent/gradle");
+
+        List<Bind> binds = config.buildContainerCacheBinds();
+
+        assertThat(binds).allSatisfy(b -> assertThat(b.getAccessMode()).isEqualTo(AccessMode.rw));
+    }
+
+    @Test
+    void testBuildContainerCacheBindsRespectReadOnlyFlag() {
+        BuildAgentConfiguration config = new BuildAgentConfiguration(null);
+        ReflectionTestUtils.setField(config, "mavenCacheHostPath", "/var/cache/artemis-buildagent/m2");
+        ReflectionTestUtils.setField(config, "gradleCacheHostPath", "/var/cache/artemis-buildagent/gradle");
+        ReflectionTestUtils.setField(config, "buildContainerCacheReadOnly", true);
+
+        List<Bind> binds = config.buildContainerCacheBinds();
+
+        assertThat(binds).allSatisfy(b -> assertThat(b.getAccessMode()).isEqualTo(AccessMode.ro));
+    }
 }
