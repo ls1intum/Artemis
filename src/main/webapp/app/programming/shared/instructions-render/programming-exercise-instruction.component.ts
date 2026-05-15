@@ -86,12 +86,12 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private participationSubscription?: Subscription;
     private testCasesSubscription?: Subscription;
 
-    public isInitial = true;
-    public isLoading: boolean;
+    protected isInitial = true;
+    protected isLoading: boolean;
     latestResultValue?: Result;
     // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
     private taskIndex = 0;
-    public tasks: TaskArray;
+    protected tasks: TaskArray;
     // Track dynamically created task components for proper cleanup
     private taskComponentRefs: ComponentRef<ProgrammingExerciseInstructionTaskStatusComponent>[] = [];
     // Cache to skip re-rendering when content hasn't changed
@@ -107,7 +107,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         this.programmingExercisePlantUmlWrapper.setTestCases(this.testCases);
     }
 
-    public renderedMarkdown: SafeHtml | undefined;
+    protected renderedMarkdown: SafeHtml | undefined;
     private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
     markdownExtensions: PluginSimple[];
@@ -126,8 +126,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     constructor() {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
 
-        // Re-render on theme changes (PlantUML diagrams embed theme-dependent colors). Skip the
-        // effect's initial synchronous run — only later theme changes should invalidate the cache.
+        // Re-render on theme changes; skip the effect's initial synchronous run.
         let firstThemeRun = true;
         effect(() => {
             this.themeService.currentTheme();
@@ -144,9 +143,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             this.updateMarkdown();
         });
 
-        // Subsequent input changes after ngOnInit's first run. The initialized guard below mirrors
-        // ngOnChanges semantics: ngOnInit handles the first call, this effect handles every change
-        // after that.
+        // Handle subsequent input changes; ngOnInit handles the first call.
         let initialized = false;
         effect(() => {
             const participation = this.participation();
@@ -166,8 +163,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     }
 
     ngOnInit(): void {
-        // ngOnChanges first-call equivalent: only run when at least the exercise input is bound,
-        // so unit tests that mount the bare component don't trigger websocket / data loads.
+        // Only run when the exercise input is bound; bare-mount unit tests skip data loads.
         if (this.exercise()) {
             this.processInputChanges();
         }
@@ -287,7 +283,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             this.participationSubscription.unsubscribe();
         }
         this.participationSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation().id!, this.personalParticipation(), this.exercise()!.id!)
+            .subscribeForLatestResultOfParticipation(this.participation().id!, this.personalParticipation(), this.exercise().id!)
             .pipe(filter((result) => !!result))
             .subscribe((result: Result) => {
                 this.latestResult = result;
@@ -410,7 +406,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             this.scheduleContentInjection(true);
         } else if (this.exercise()?.problemStatement?.trim()) {
             this.injectableContentForMarkdownCallbacks = [];
-            const renderedProblemStatement = htmlForMarkdown(this.exercise()!.problemStatement!, this.markdownExtensions);
+            const renderedProblemStatement = htmlForMarkdown(this.exercise().problemStatement!, this.markdownExtensions);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
             this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks);
@@ -485,14 +481,14 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 // Insert anchor divs into the text so that injectable elements can be inserted into them.
                 // Without class="d-flex" the injected components height would be 0.
                 // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
-                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-${this.exercise()!.id}-task-${id.toString()} d-flex">&#8203;</div>`),
+                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-${this.exercise().id}-task-${id.toString()} d-flex">&#8203;</div>`),
             problemStatementHtml,
         );
     }
 
     private injectTasksIntoDocument = () => {
         this.tasks.forEach(({ id, taskName, testIds }) => {
-            const taskHtmlContainers = document.getElementsByClassName(`pe-${this.exercise()!.id}-task-${id}`);
+            const taskHtmlContainers = document.getElementsByClassName(`pe-${this.exercise().id}-task-${id}`);
 
             for (let i = 0; i < taskHtmlContainers.length; i++) {
                 const taskHtmlContainer = taskHtmlContainers[i];

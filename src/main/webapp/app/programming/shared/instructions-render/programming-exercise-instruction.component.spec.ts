@@ -117,8 +117,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         // @ts-ignore
         comp.participationSubscription = oldSubscription;
 
-        // ngOnInit fires processInputChanges automatically on the first detectChanges, mirroring
-        // the legacy ngOnChanges first-call semantics.
+        // ngOnInit fires processInputChanges on the first detectChanges.
         fixture.changeDetectorRef.detectChanges();
 
         expect(getTestCasesSpy).toHaveBeenCalledOnce();
@@ -127,7 +126,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         // @ts-ignore
         expect(comp.participationSubscription).not.toEqual(oldSubscription);
         await new Promise((resolve) => setTimeout(resolve, 200));
-        expect(comp.isInitial).toBe(true);
+        expect((comp as any).isInitial).toBe(true);
     });
 
     it('should properly assign and cleanup generateHtmlSubscription when generateHtmlEvents is provided', async () => {
@@ -176,8 +175,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const noInstructionsAvailableSpy = vi.spyOn(comp.onNoInstructionsAvailable, 'emit');
         fixture.componentRef.setInput('participation', participation);
         fixture.componentRef.setInput('exercise', exercise);
-        comp.isInitial = true;
-        comp.isLoading = false;
+        (comp as any).isInitial = true;
+        (comp as any).isLoading = false;
 
         // ngOnInit fires processInputChanges automatically.
         fixture.detectChanges();
@@ -189,8 +188,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         // No longer emits onNoInstructionsAvailable - shows empty state instead
         expect(noInstructionsAvailableSpy).not.toHaveBeenCalled();
-        expect(comp.isInitial).toBe(false);
-        expect(comp.isLoading).toBe(false);
+        expect((comp as any).isInitial).toBe(false);
+        expect((comp as any).isLoading).toBe(false);
         fixture.changeDetectorRef.detectChanges();
         expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBeNull();
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBeNull();
@@ -214,7 +213,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
         const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
         fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: oldProblemStatement });
-        comp.isInitial = false;
+        (comp as any).isInitial = false;
         // Prime the seen problem statement so the next change is detected as a real edit.
         (comp as any).lastSeenProblemStatement = oldProblemStatement;
         fixture.componentRef.setInput('exercise', { ...comp.exercise(), problemStatement: newProblemStatement });
@@ -241,7 +240,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
         const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
-        comp.isInitial = false;
+        (comp as any).isInitial = false;
         (comp as any).lastSeenProblemStatement = undefined;
         fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: newProblemStatement });
         fixture.detectChanges();
@@ -267,8 +266,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         getLatestResultWithFeedbacks.mockReturnValue(throwError(() => new Error('fatal error')));
         fixture.componentRef.setInput('participation', participation);
         fixture.componentRef.setInput('exercise', exercise);
-        comp.isInitial = true;
-        comp.isLoading = false;
+        (comp as any).isInitial = true;
+        (comp as any).isLoading = false;
 
         // ngOnInit fires processInputChanges automatically.
         fixture.detectChanges();
@@ -278,8 +277,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         // result should have been fetched with the submission as this is required to show details for it
         expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
-        expect(comp.isInitial).toBe(false);
-        expect(comp.isLoading).toBe(false);
+        expect((comp as any).isInitial).toBe(false);
+        expect((comp as any).isLoading).toBe(false);
     });
 
     // TODO check if this is an issue with the client itself here
@@ -308,14 +307,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.updateMarkdown();
 
-        expect(comp.tasks).toHaveLength(2);
-        expect(comp.tasks[0]).toEqual({
+        expect((comp as any).tasks).toHaveLength(2);
+        expect((comp as any).tasks[0]).toEqual({
             id: 0,
             completeString: '[task][Implement Bubble Sort](<testid>1</testid>)',
             taskName: 'Implement Bubble Sort',
             testIds: [1],
         });
-        expect(comp.tasks[1]).toEqual({
+        expect((comp as any).tasks[1]).toEqual({
             id: 1,
             completeString: '[task][Implement Merge Sort](<testid>2</testid>)',
             taskName: 'Implement Merge Sort',
@@ -388,14 +387,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.updateMarkdown();
 
-        expect(comp.tasks).toHaveLength(2);
-        expect(comp.tasks[0]).toEqual({
+        expect((comp as any).tasks).toHaveLength(2);
+        expect((comp as any).tasks[0]).toEqual({
             id: 0,
             completeString: '[task][Bubble Sort](<testid>1</testid>)',
             taskName: 'Bubble Sort',
             testIds: [1],
         });
-        expect(comp.tasks[1]).toEqual({
+        expect((comp as any).tasks[1]).toEqual({
             id: 1,
             completeString: '[task][Merge Sort]()',
             taskName: 'Merge Sort',
@@ -495,7 +494,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
 
-        comp.isInitial = false;
+        (comp as any).isInitial = false;
         themeService.applyThemePreference(Theme.DARK);
         fixture.changeDetectorRef.detectChanges();
 

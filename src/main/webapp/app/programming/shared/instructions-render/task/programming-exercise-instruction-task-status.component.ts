@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { faCheckCircle, faCircleDot, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -42,15 +42,6 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     faCircleDot = faCircleDot;
     farCheckCircle = faCheckCircle;
     farTimesCircle = faTimesCircle;
-
-    constructor() {
-        // Keep testStatus and hasMessage eagerly subscribed so dependent computeds stay live
-        // even when the template doesn't read them on every change.
-        effect(() => {
-            this.testStatus();
-            this.hasMessage();
-        });
-    }
 
     /**
      * Checks if any of the feedbacks have a detailText associated to them.

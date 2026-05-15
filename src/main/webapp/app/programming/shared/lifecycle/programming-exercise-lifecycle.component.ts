@@ -75,16 +75,13 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     constructor() {
         // Re-run the date cascade whenever the parent swaps in a new `exercise` reference.
-        // ngOnInit handles the first pass synchronously; this effect handles subsequent updates.
         effect(() => {
             const newExercise = this.exercise();
             if (newExercise === this.previousExerciseRef) {
                 return;
             }
             this.previousExerciseRef = newExercise;
-            if (newExercise) {
-                this.applyExerciseDateCascade(newExercise);
-            }
+            this.applyExerciseDateCascade(newExercise);
         });
     }
 
@@ -100,19 +97,15 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     }
 
     /**
-     * If the programming exercise does not have an id, set the assessmentType to AUTOMATIC and
-     * apply the initial date cascade (legacy ngOnChanges fired on the first input pass too).
+     * If the programming exercise does not have an id, set the assessmentType to AUTOMATIC.
+     * The date cascade is applied by the constructor effect's first run.
      */
     ngOnInit(): void {
         this.updateIsImportBasedOnUrl();
 
         const exercise = this.exercise();
-        if (exercise && !exercise.id && !this.isImport) {
+        if (!exercise.id && !this.isImport) {
             exercise.assessmentType = AssessmentType.AUTOMATIC;
-        }
-        if (exercise) {
-            this.previousExerciseRef = exercise;
-            this.applyExerciseDateCascade(exercise);
         }
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
     }
@@ -134,7 +127,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     ngAfterViewInit() {
         this.setupDateFieldSubscriptions();
-        // Re-subscribe whenever the signal-based picker list changes (replaces legacy QueryList.changes).
+        // Re-subscribe whenever the picker list changes.
         effect(
             () => {
                 this.datePickerComponents();
@@ -182,7 +175,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     }
 
     toggleFeedbackRequests() {
-        const exercise = this.exercise()!;
+        const exercise = this.exercise();
         exercise.allowFeedbackRequests = !exercise.allowFeedbackRequests;
         if (exercise.allowFeedbackRequests) {
             exercise.assessmentDueDate = undefined;
@@ -196,7 +189,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      *
      */
     toggleAssessmentType() {
-        const exercise = this.exercise()!;
+        const exercise = this.exercise();
         if (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
             exercise.assessmentType = AssessmentType.AUTOMATIC;
             exercise.assessmentDueDate = undefined;
@@ -213,7 +206,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      * Toggles the value for allowing complaints for automatic assessment between true and false
      */
     toggleComplaintsType() {
-        const exercise = this.exercise()!;
+        const exercise = this.exercise();
         exercise.allowComplaintsForAutomaticAssessments = !exercise.allowComplaintsForAutomaticAssessments;
     }
 
@@ -221,7 +214,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      * Toggles the value for allowing complaints for automatic assessment between true and false
      */
     toggleReleaseTests() {
-        const exercise = this.exercise()!;
+        const exercise = this.exercise();
         exercise.releaseTestsWithExampleSolution = !exercise.releaseTestsWithExampleSolution;
     }
 
@@ -232,7 +225,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      * @param newReleaseDate The new release date
      */
     updateReleaseDate(newReleaseDate?: dayjs.Dayjs) {
-        const exercise = this.exercise()!;
+        const exercise = this.exercise();
         exercise.releaseDate = newReleaseDate;
         if (this.readOnly()) {
             // Changes from parent component are allowed but no cascading changes should be made in read-only mode.
@@ -257,7 +250,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      * @param newStartDate The new start date
      */
     updateStartDate(newStartDate?: dayjs.Dayjs) {
-        const exercise = this.exercise()!;
+        const exercise = this.exercise();
         exercise.startDate = newStartDate;
         if (this.readOnly()) {
             // Changes from parent component are allowed but no cascading changes should be made in read-only mode.
@@ -274,7 +267,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      * @param dueDate the new dueDate
      */
     private updateDueDate(dueDate: dayjs.Dayjs) {
-        const exercise = this.exercise()!;
+        const exercise = this.exercise();
         alert(this.translateService.instant('artemisApp.programmingExercise.timeline.alertNewDueDate'));
         exercise.dueDate = dueDate;
 
@@ -294,7 +287,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      * @param newReleaseOrDueDate the new exampleSolutionPublicationDate if it is after the current exampleSolutionPublicationDate
      */
     updateExampleSolutionPublicationDate(newReleaseOrDueDate?: dayjs.Dayjs) {
-        const exercise = this.exercise()!;
+        const exercise = this.exercise();
         if (!this.readOnly() && this.exerciseService.hasExampleSolutionPublicationDateError(exercise)) {
             const message =
                 newReleaseOrDueDate && dayjs(newReleaseOrDueDate).isSame(exercise.dueDate)
