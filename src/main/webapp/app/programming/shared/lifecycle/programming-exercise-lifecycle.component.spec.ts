@@ -52,6 +52,10 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     let exercise: ProgrammingExercise;
 
     beforeEach(() => {
+        // jsdom does not implement window.alert; production cascades call it directly. Stub globally
+        // so tests that exercise date-cascade methods don't emit unhandled "Not implemented" errors.
+        vi.spyOn(window, 'alert').mockImplementation(() => {});
+
         TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
             providers: [
