@@ -10,7 +10,6 @@ import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-obser
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
-import { SimpleChange } from '@angular/core';
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import {
@@ -125,15 +124,15 @@ describe('CodeEditorMonacoComponent', () => {
         expect(comp.editor().isReadOnly()).toBe(false);
     });
 
-    it('should re-apply interaction mode after file selection in ngOnChanges', async () => {
+    it('should re-apply interaction mode after file selection via input change cascade', async () => {
         const updateInteractionModeStub = vi.spyOn(comp as any, 'updateEditorInteractionMode');
         const selectFileInEditorStub = vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
         fixture.componentRef.setInput('enableExerciseReviewComments', true);
         fixture.componentRef.setInput('selectedFile', 'file1.java');
+        // The constructor effect replaces the legacy ngOnChanges hook: setting a selectedFile
+        // signal input + detectChanges() must trigger selectFileInEditor + updateEditorInteractionMode.
         fixture.changeDetectorRef.detectChanges();
-        updateInteractionModeStub.mockClear();
-
-        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1.java', false) });
+        await new Promise(process.nextTick);
 
         expect(selectFileInEditorStub).toHaveBeenCalledWith('file1.java');
         expect(updateInteractionModeStub).toHaveBeenCalled();
@@ -507,9 +506,17 @@ describe('CodeEditorMonacoComponent', () => {
         comp.fileSession.set({
             [fileToReload.fileName]: { code: 'some local undiscarded changes', cursor: { lineNumber: 0, column: 0 }, scrollTop: 0, loadingError: false },
         });
+        // Establish previousEditorState=REFRESHING before transitioning to CLEAN so the
+        // constructor effect detects the REFRESHING -> CLEAN transition (editorWasRefreshed).
+        fixture.componentRef.setInput('editorState', EditorState.REFRESHING);
+        fixture.changeDetectorRef.detectChanges();
+        await new Promise(process.nextTick);
+        editorResetStub.mockClear();
+
         fixture.componentRef.setInput('editorState', EditorState.CLEAN);
-        // Simulate a refresh of the editor.
-        await comp.ngOnChanges({ editorState: new SimpleChange(EditorState.REFRESHING, EditorState.CLEAN, false) });
+        fixture.changeDetectorRef.detectChanges();
+        await new Promise(process.nextTick);
+
         expect(comp.fileSession()).toEqual({
             [fileToReload.fileName]: { code: fileToReload.fileContent, cursor: { lineNumber: 0, column: 0 }, loadingError: false, scrollTop: 0 },
         });
@@ -603,8 +610,10 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.componentRef.setInput('isTutorAssessment', true);
         fixture.componentRef.setInput('selectedFile', 'file1.java');
         fixture.componentRef.setInput('feedbacks', exampleFeedbacks);
+        // Constructor effect fires from undefined -> 'file1.java' on first detectChanges,
+        // driving the same cascade the legacy ngOnChanges hook used to drive.
         fixture.changeDetectorRef.detectChanges();
-        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1', false) });
+        await new Promise(process.nextTick);
         await new Promise((r) => setTimeout(r, 0));
 
         expect(addLineWidgetStub.mock.calls.length).toBeGreaterThanOrEqual(2);

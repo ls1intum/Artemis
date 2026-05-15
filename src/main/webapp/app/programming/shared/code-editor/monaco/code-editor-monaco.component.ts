@@ -3,15 +3,14 @@ import {
     ChangeDetectorRef,
     Component,
     NgZone,
-    OnChanges,
     OnDestroy,
-    SimpleChanges,
     ViewContainerRef,
     ViewEncapsulation,
     computed,
     effect,
     inject,
     input,
+    linkedSignal,
     output,
     signal,
     untracked,
@@ -66,7 +65,7 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
     providers: [RepositoryFileService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
+export class CodeEditorMonacoComponent implements OnDestroy {
     static readonly CLASS_DIFF_LINE_HIGHLIGHT = 'monaco-diff-line-highlight';
     static readonly CLASS_FEEDBACK_HOVER_BUTTON = 'monaco-add-feedback-button';
     static readonly CLASS_REVIEW_COMMENT_HOVER_BUTTON = 'monaco-add-review-comment-button';
@@ -133,8 +132,8 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             this.selectedFileAwaitingInitialSync(),
     );
 
-    readonly feedbackInternal = signal<Feedback[]>([]);
-    readonly feedbackSuggestionsInternal = signal<Feedback[]>([]);
+    readonly feedbackInternal = linkedSignal<Feedback[]>(() => this.feedbacks());
+    readonly feedbackSuggestionsInternal = linkedSignal<Feedback[]>(() => this.feedbackSuggestions());
     private reviewCommentManager?: ReviewCommentWidgetManager;
 
     readonly feedbackForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
@@ -166,13 +165,83 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     private suppressNextDirtySignal = new Set<string>();
     private dirtySignalSuppressedDuringInitialSync = new Set<string>();
 
-    constructor() {
-        effect(() => {
-            this.feedbackInternal.set(this.feedbacks());
-        });
+    /**
+     * Tracking fields to reproduce the legacy ngOnChanges diff semantics in a signal effect.
+     * Angular 21 does NOT fire ngOnChanges for signal inputs, so the cascade that previously
+     * ran in ngOnChanges (editor refresh/reset, selected-file change, feedback re-render, layout)
+     * is now implemented as a constructor effect that diffs against these previous values.
+     * Per-branch first-run handling:
+     *  - editorWasRefreshed / editorWasReset require a real previous sentinel value; on the
+     *    first effect run prev* are undefined so neither fires.
+     *  - selectedFile branch fires on an undefined -> non-undefined transition (matches the
+     *    legacy `firstChange: true` behavior when [selectedFile] is bound).
+     *  - feedbacks branch is suppressed on the very first run (see hasObservedFeedbacksInput).
+     */
+    private previousEditorState?: EditorState;
+    private previousCommitState?: CommitState;
+    private previousSelectedFile?: string;
+    private previousFeedbacksRef?: Feedback[];
+    /**
+     * The `feedbacks` input has a default value of `[]`; Angular's legacy ngOnChanges did NOT
+     * produce a SimpleChange entry for unbound inputs on the first CD pass, so the
+     * `if (changes.feedbacks)` branch only ran when a parent actually bound `[feedbacks]`.
+     * The effect cannot distinguish "default" from "explicitly bound" — we approximate the
+     * legacy behavior by suppressing the feedback branch on the very first effect run.
+     */
+    private hasObservedFeedbacksInput = false;
 
+    constructor() {
+        // Effect replacement for the legacy ngOnChanges hook. Tracks the four inputs that
+        // drove the original cascade and reproduces each branch using previous-value diffs.
+        // Matches legacy ngOnChanges semantics: an initial transition from undefined to a real
+        // value counts as a change (legacy ngOnChanges always fired on the first CD pass with
+        // firstChange=true and a truthy SimpleChange entry per bound input).
         effect(() => {
-            this.feedbackSuggestionsInternal.set(this.feedbackSuggestions());
+            const editorState = this.editorState();
+            const commitState = this.commitState();
+            const selectedFile = this.selectedFile();
+            const feedbacks = this.feedbacks();
+
+            // Snapshot and update previous-value tracking inside untracked so writing to these
+            // fields does not register as a dependency or retrigger the effect.
+            let prevEditorState: EditorState | undefined;
+            let prevCommitState: CommitState | undefined;
+            let prevSelectedFile: string | undefined;
+            let prevFeedbacks: Feedback[] | undefined;
+            let hadObservedFeedbacks = false;
+            untracked(() => {
+                prevEditorState = this.previousEditorState;
+                prevCommitState = this.previousCommitState;
+                prevSelectedFile = this.previousSelectedFile;
+                prevFeedbacks = this.previousFeedbacksRef;
+                hadObservedFeedbacks = this.hasObservedFeedbacksInput;
+                this.previousEditorState = editorState;
+                this.previousCommitState = commitState;
+                this.previousSelectedFile = selectedFile;
+                this.previousFeedbacksRef = feedbacks;
+                this.hasObservedFeedbacksInput = true;
+            });
+
+            const selectedFileChanged = selectedFile !== prevSelectedFile;
+            // Suppress the very first feedbacks transition (undefined -> default []) because
+            // unbound inputs did not produce a SimpleChange entry in the legacy hook.
+            const feedbacksChanged = hadObservedFeedbacks && feedbacks !== prevFeedbacks;
+            // editorWasRefreshed/editorWasReset require an explicit previous EditorState/CommitState.
+            // On the very first effect run prevEditorState/prevCommitState are undefined, so these
+            // remain false — matching the legacy ngOnChanges branches that only triggered when
+            // SimpleChange.previousValue had the specific sentinel value.
+            const editorWasRefreshed = prevEditorState === EditorState.REFRESHING && editorState === EditorState.CLEAN;
+            const editorWasReset = prevCommitState !== undefined && prevCommitState !== CommitState.UNDEFINED && commitState === CommitState.UNDEFINED;
+
+            untracked(() => {
+                void this.handleInputChangeCascade({
+                    editorWasRefreshed,
+                    editorWasReset,
+                    selectedFileChanged,
+                    feedbacksChanged,
+                    prevSelectedFile,
+                });
+            });
         });
 
         effect(() => {
@@ -223,36 +292,51 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         });
     }
 
-    async ngOnChanges(changes: SimpleChanges): Promise<void> {
-        const editorWasRefreshed = changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState() === EditorState.CLEAN;
-        const editorWasReset = changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState() === CommitState.UNDEFINED;
+    /**
+     * Cascade previously implemented in ngOnChanges. Invoked from the constructor effect
+     * (and from the spec) whenever a tracked input changed. Receives the precomputed diff
+     * flags from the effect because they depend on `previous*` state owned by the effect.
+     */
+    private async handleInputChangeCascade({
+        editorWasRefreshed,
+        editorWasReset,
+        selectedFileChanged,
+        feedbacksChanged,
+        prevSelectedFile,
+    }: {
+        editorWasRefreshed: boolean;
+        editorWasReset: boolean;
+        selectedFileChanged: boolean;
+        feedbacksChanged: boolean;
+        prevSelectedFile: string | undefined;
+    }): Promise<void> {
+        const selectedFile = this.selectedFile();
         // Refreshing the editor resets any local files.
         if (editorWasRefreshed || editorWasReset) {
             this.fileSession.set({});
             this.editor().reset();
             this.onEditorLoaded.emit();
         }
-        if ((changes.selectedFile && this.selectedFile()) || (editorWasRefreshed && this.selectedFile())) {
-            const previousFileName: string | undefined = changes.selectedFile?.previousValue;
+        if ((selectedFileChanged && selectedFile) || (editorWasRefreshed && selectedFile)) {
             // we save the old scrollTop before switching to another file
-            if (previousFileName && this.fileSession()[previousFileName]) {
-                this.fileSession()[previousFileName].scrollTop = this.editor().getScrollTop();
+            if (prevSelectedFile && this.fileSession()[prevSelectedFile]) {
+                this.fileSession()[prevSelectedFile].scrollTop = this.editor().getScrollTop();
             }
-            await this.selectFileInEditor(this.selectedFile());
+            await this.selectFileInEditor(selectedFile);
             this.setBuildAnnotations(this.annotationsArray);
             this.newFeedbackLines.set([]);
             this.renderFeedbackWidgets();
             // changeModel() disposes line-decoration hover buttons; re-apply for the active mode.
             this.updateEditorInteractionMode();
             this.beginSelectedFileInitialSyncGuard();
-            this.onFileLoad.emit(this.selectedFile()!);
-            this.pendingReviewRenderFile = this.selectedFile()!;
-            this.tryRenderPendingReviewCommentWidgets(this.selectedFile()!);
-        } else if (changes.selectedFile && !this.selectedFile()) {
+            this.onFileLoad.emit(selectedFile);
+            this.pendingReviewRenderFile = selectedFile;
+            this.tryRenderPendingReviewCommentWidgets(selectedFile);
+        } else if (selectedFileChanged && !selectedFile) {
             this.selectedFileAwaitingInitialSync.set(false);
         }
 
-        if (changes.feedbacks) {
+        if (feedbacksChanged) {
             this.newFeedbackLines.set([]);
             this.renderFeedbackWidgets();
         }
