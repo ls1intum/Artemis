@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Subject, distinctUntilChanged, lastValueFrom, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
@@ -19,7 +21,7 @@ import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mo
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
-import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -28,7 +30,11 @@ import { SubmissionProcessingDTO } from 'app/programming/shared/entities/submiss
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
+type SpyInstance = ReturnType<typeof vi.spyOn>;
+
 describe('ProgrammingSubmissionService', () => {
+    setupTestBed({ zoneless: true });
+
     let websocketService: WebsocketService;
     let httpService: HttpClient;
     let participationWebsocketService: ParticipationWebsocketService;
@@ -36,11 +42,11 @@ describe('ProgrammingSubmissionService', () => {
     let submissionService: ProgrammingSubmissionService;
 
     let httpMock: HttpTestingController;
-    let httpGetStub: jest.SpyInstance;
-    let wsSubscribeStub: jest.SpyInstance;
-    let participationWsLatestResultStub: jest.SpyInstance;
-    let getLatestResultStub: jest.SpyInstance;
-    let notifyAllResultSubscribersStub: jest.SpyInstance;
+    let httpGetStub: SpyInstance;
+    let wsSubscribeStub: SpyInstance;
+    let participationWsLatestResultStub: SpyInstance;
+    let getLatestResultStub: SpyInstance;
+    let notifyAllResultSubscribersStub: SpyInstance;
 
     let wsSubmissionSubject: Subject<Submission | undefined>;
     let wsSubmissionProcessingSubject: Subject<SubmissionProcessingDTO | undefined>;
@@ -61,7 +67,7 @@ describe('ProgrammingSubmissionService', () => {
     let mockSubmissionProcessingDTO: SubmissionProcessingDTO;
     let mockSubmissionProcessingDTOOld: SubmissionProcessingDTO;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         currentSubmission = { id: 11, submissionDate: dayjs().subtract(20, 'seconds'), participation: { id: participationId } } as any;
         currentSubmission2 = { id: 12, submissionDate: dayjs().subtract(20, 'seconds'), participation: { id: participationId } } as any;
         result = { id: 31, submission: currentSubmission } as any;
@@ -84,7 +90,7 @@ describe('ProgrammingSubmissionService', () => {
             submissionDate: dayjs().subtract(40, 'seconds'),
         };
 
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -94,48 +100,44 @@ describe('ProgrammingSubmissionService', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                submissionService = TestBed.inject(ProgrammingSubmissionService);
-                websocketService = TestBed.inject(WebsocketService);
-                httpService = TestBed.inject(HttpClient);
-                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
-                participationService = TestBed.inject(ProgrammingExerciseParticipationService);
+        }).compileComponents();
 
-                httpMock = TestBed.inject(HttpTestingController);
-                httpGetStub = jest.spyOn(httpService, 'get');
-                wsSubmissionSubject = new Subject<Submission | undefined>();
-                wsSubmissionProcessingSubject = new Subject<SubmissionProcessingDTO | undefined>();
-                wsSubscribeStub = jest.spyOn(websocketService, 'subscribe').mockImplementation((topic: string) => {
-                    if (topic === submissionTopic) {
-                        return wsSubmissionSubject.asObservable();
-                    } else if (topic === submissionProcessingTopic) {
-                        return wsSubmissionProcessingSubject.asObservable();
-                    }
-                    return new Subject();
-                });
-                wsLatestResultSubject = new Subject<Result | undefined>();
-                participationWsLatestResultStub = jest
-                    .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
-                    .mockReturnValue(wsLatestResultSubject as any);
-                getLatestResultStub = jest.spyOn(participationService, 'getLatestResultWithFeedback');
-                notifyAllResultSubscribersStub = jest.spyOn(participationWebsocketService, 'notifyAllResultSubscribers');
-            });
+        submissionService = TestBed.inject(ProgrammingSubmissionService);
+        websocketService = TestBed.inject(WebsocketService);
+        httpService = TestBed.inject(HttpClient);
+        participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        participationService = TestBed.inject(ProgrammingExerciseParticipationService);
+
+        httpMock = TestBed.inject(HttpTestingController);
+        httpGetStub = vi.spyOn(httpService, 'get');
+        wsSubmissionSubject = new Subject<Submission | undefined>();
+        wsSubmissionProcessingSubject = new Subject<SubmissionProcessingDTO | undefined>();
+        wsSubscribeStub = vi.spyOn(websocketService, 'subscribe').mockImplementation((topic: string) => {
+            if (topic === submissionTopic) {
+                return wsSubmissionSubject.asObservable();
+            } else if (topic === submissionProcessingTopic) {
+                return wsSubmissionProcessingSubject.asObservable();
+            }
+            return new Subject();
+        });
+        wsLatestResultSubject = new Subject<Result | undefined>();
+        participationWsLatestResultStub = vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(wsLatestResultSubject as any);
+        getLatestResultStub = vi.spyOn(participationService, 'getLatestResultWithFeedback');
+        notifyAllResultSubscribersStub = vi.spyOn(participationWebsocketService, 'notifyAllResultSubscribers');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should return cached subject as Observable for provided participation if exists', () => {
         const cachedSubject = new BehaviorSubject(undefined);
         // @ts-ignore
-        const fetchLatestPendingSubmissionSpy = jest.spyOn(submissionService, 'fetchLatestPendingSubmissionByParticipationId');
+        const fetchLatestPendingSubmissionSpy = vi.spyOn(submissionService, 'fetchLatestPendingSubmissionByParticipationId');
         // @ts-ignore
-        const setupWebsocketSubscriptionSpy = jest.spyOn(submissionService, 'setupWebsocketSubscriptionForLatestPendingSubmission');
+        const setupWebsocketSubscriptionSpy = vi.spyOn(submissionService, 'setupWebsocketSubscriptionForLatestPendingSubmission');
         // @ts-ignore
-        const subscribeForNewResultSpy = jest.spyOn(submissionService, 'subscribeForNewResult');
+        const subscribeForNewResultSpy = vi.spyOn(submissionService, 'subscribeForNewResult');
         // @ts-ignore
         submissionService.submissionSubjects = { [participationId]: cachedSubject };
 
@@ -233,87 +235,97 @@ describe('ProgrammingSubmissionService', () => {
         ]);
     });
 
-    it('should emit the failed submission state when the result waiting timer runs out AND accept a late result', fakeAsync(() => {
-        // Set the timer to 10ms for testing purposes.
-        // @ts-ignore
-        submissionService.DEFAULT_EXPECTED_RESULT_ETA = 10;
-        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
-        httpGetStub.mockReturnValue(of(undefined));
-        submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
-        // We simulate that the latest result from the server does not belong the pending submission
-        getLatestResultStub = getLatestResultStub.mockReturnValue(of(result));
+    it('should emit the failed submission state when the result waiting timer runs out AND accept a late result', async () => {
+        vi.useFakeTimers();
+        try {
+            // Set the timer to 10ms for testing purposes.
+            // @ts-ignore
+            submissionService.DEFAULT_EXPECTED_RESULT_ETA = 10;
+            const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
+            httpGetStub.mockReturnValue(of(undefined));
+            submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
+            // We simulate that the latest result from the server does not belong the pending submission
+            getLatestResultStub = getLatestResultStub.mockReturnValue(of(result));
 
-        expect(returnedSubmissions).toEqual([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
-        wsSubmissionSubject.next(currentSubmission2);
-        expect(returnedSubmissions).toEqual([
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
-            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
-        ]);
+            expect(returnedSubmissions).toEqual([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
+            wsSubmissionSubject.next(currentSubmission2);
+            expect(returnedSubmissions).toEqual([
+                { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+                { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
+            ]);
 
-        tick(10);
+            await vi.advanceTimersByTimeAsync(10);
 
-        // Expect the fallback mechanism to kick in after the timeout
-        expect(getLatestResultStub).toHaveBeenCalledOnce();
-        expect(getLatestResultStub).toHaveBeenCalledWith(participationId);
+            // Expect the fallback mechanism to kick in after the timeout
+            expect(getLatestResultStub).toHaveBeenCalledOnce();
+            expect(getLatestResultStub).toHaveBeenCalledWith(participationId);
 
-        // HAS_FAILED_SUBMISSION is expected as the result provided by getLatestResult does not match the pending submission
-        expect(returnedSubmissions).toEqual([
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
-            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
-            { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: currentSubmission2, participationId },
-        ]);
+            // HAS_FAILED_SUBMISSION is expected as the result provided by getLatestResult does not match the pending submission
+            expect(returnedSubmissions).toEqual([
+                { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+                { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
+                { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: currentSubmission2, participationId },
+            ]);
 
-        // Now the result for the submission in - should be accepted even though technically too late!
-        wsLatestResultSubject.next(result2);
-        expect(returnedSubmissions).toEqual([
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
-            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
-            { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: currentSubmission2, participationId },
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
-        ]);
-    }));
+            // Now the result for the submission in - should be accepted even though technically too late!
+            wsLatestResultSubject.next(result2);
+            expect(returnedSubmissions).toEqual([
+                { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+                { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
+                { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: currentSubmission2, participationId },
+                { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            ]);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 
-    it('should emit has no pending submission if the fallback mechanism fetches the right result from the server', fakeAsync(() => {
-        // Set the timer to 10ms for testing purposes.
-        // @ts-ignore
-        submissionService.DEFAULT_EXPECTED_RESULT_ETA = 10;
-        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
-        httpGetStub.mockReturnValue(of(undefined));
-        submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
-        // We simulate that the latest result from the server matches the pending submission
-        getLatestResultStub = getLatestResultStub.mockReturnValue(of(result));
+    it('should emit has no pending submission if the fallback mechanism fetches the right result from the server', async () => {
+        vi.useFakeTimers();
+        try {
+            // Set the timer to 10ms for testing purposes.
+            // @ts-ignore
+            submissionService.DEFAULT_EXPECTED_RESULT_ETA = 10;
+            const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
+            httpGetStub.mockReturnValue(of(undefined));
+            submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
+            // We simulate that the latest result from the server matches the pending submission
+            getLatestResultStub = getLatestResultStub.mockReturnValue(of(result));
 
-        expect(returnedSubmissions).toEqual([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
-        wsSubmissionSubject.next(currentSubmission);
-        expect(returnedSubmissions).toEqual([
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
-            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
-        ]);
+            expect(returnedSubmissions).toEqual([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
+            wsSubmissionSubject.next(currentSubmission);
+            expect(returnedSubmissions).toEqual([
+                { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+                { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
+            ]);
 
-        tick(10);
+            await vi.advanceTimersByTimeAsync(10);
 
-        // Expect the fallback mechanism to kick in after the timeout
-        expect(getLatestResultStub).toHaveBeenCalledOnce();
-        expect(getLatestResultStub).toHaveBeenCalledWith(participationId);
-        expect(notifyAllResultSubscribersStub).toHaveBeenCalledOnce();
-        expect(notifyAllResultSubscribersStub).toHaveBeenCalledWith({ ...result });
-        wsLatestResultSubject.next(result);
+            // Expect the fallback mechanism to kick in after the timeout
+            expect(getLatestResultStub).toHaveBeenCalledOnce();
+            expect(getLatestResultStub).toHaveBeenCalledWith(participationId);
+            expect(notifyAllResultSubscribersStub).toHaveBeenCalledOnce();
+            expect(notifyAllResultSubscribersStub).toHaveBeenCalledWith({ ...result });
+            wsLatestResultSubject.next(result);
 
-        // HAS_NO_PENDING_SUBMISSION is expected as the result provided by getLatestResult matches the pending submission
-        expect(returnedSubmissions).toEqual([
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
-            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
-        ]);
+            // HAS_NO_PENDING_SUBMISSION is expected as the result provided by getLatestResult matches the pending submission
+            expect(returnedSubmissions).toEqual([
+                { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+                { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
+                { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            ]);
 
-        // If the "real" websocket connection triggers now for some reason, the submission state should not change
-        wsLatestResultSubject.next(result);
-        expect(returnedSubmissions).toEqual([
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
-            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
-        ]);
-    }));
+            // If the "real" websocket connection triggers now for some reason, the submission state should not change
+            wsLatestResultSubject.next(result);
+            expect(returnedSubmissions).toEqual([
+                { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+                { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
+                { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            ]);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 
     it('should fetch the latest pending submissions for all participations of an exercise if preloadLatestPendingSubmissionsForExercise is called', () => {
         const exerciseId = 3;
@@ -326,7 +338,7 @@ describe('ProgrammingSubmissionService', () => {
         const pendingSubmissions = { [participation1.id!]: currentSubmission, [participation2.id!]: currentSubmission2 };
 
         // @ts-ignore
-        const fetchLatestPendingSubmissionSpy = jest.spyOn(submissionService, 'fetchLatestPendingSubmissionByParticipationId');
+        const fetchLatestPendingSubmissionSpy = vi.spyOn(submissionService, 'fetchLatestPendingSubmissionByParticipationId');
 
         // This load the submissions for participation 1 and 2, but not for 3.
         lastValueFrom(submissionService.getSubmissionStateOfExercise(exerciseId));
@@ -362,7 +374,7 @@ describe('ProgrammingSubmissionService', () => {
         const exerciseId = 10;
         const submissionState: ExerciseSubmissionState = {};
         // @ts-ignore
-        const fetchLatestPendingSubmissionsByExerciseIdSpy = jest.spyOn(submissionService, 'fetchLatestPendingSubmissionsByExerciseId');
+        const fetchLatestPendingSubmissionsByExerciseIdSpy = vi.spyOn(submissionService, 'fetchLatestPendingSubmissionsByExerciseId');
         httpGetStub.mockReturnValue(of(submissionState));
 
         let receivedSubmissionState: ExerciseSubmissionState = {};
@@ -382,7 +394,7 @@ describe('ProgrammingSubmissionService', () => {
             2: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 2 },
         };
         // @ts-ignore
-        const fetchLatestPendingSubmissionsByExerciseIdSpy = jest.spyOn(submissionService, 'fetchLatestPendingSubmissionsByExerciseId');
+        const fetchLatestPendingSubmissionsByExerciseIdSpy = vi.spyOn(submissionService, 'fetchLatestPendingSubmissionsByExerciseId');
         httpGetStub.mockReturnValue(of(submissionState));
 
         let receivedSubmissionState: ExerciseSubmissionState = {};
@@ -406,7 +418,7 @@ describe('ProgrammingSubmissionService', () => {
             {},
         );
         // @ts-ignore
-        const fetchLatestPendingSubmissionsByExerciseIdSpy = jest.spyOn(submissionService, 'fetchLatestPendingSubmissionsByExerciseId');
+        const fetchLatestPendingSubmissionsByExerciseIdSpy = vi.spyOn(submissionService, 'fetchLatestPendingSubmissionsByExerciseId');
         httpGetStub.mockReturnValue(of(submissionState));
 
         let receivedSubmissionState: ExerciseSubmissionState = {};
@@ -432,11 +444,11 @@ describe('ProgrammingSubmissionService', () => {
         // Should not unsubscribe as participation 2 still uses the same topic
         submissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
         const submissionTopicSubscriptions = (submissionService as any).submissionTopicSubscriptions as Map<string, any>;
-        expect(submissionTopicSubscriptions.has(submissionTopic)).toBeTrue();
+        expect(submissionTopicSubscriptions.has(submissionTopic)).toBe(true);
 
         // Should now unsubscribe as last participation for topic was unsubscribed
         submissionService.unsubscribeForLatestSubmissionOfParticipation(2);
-        expect(submissionTopicSubscriptions.has(submissionTopic)).toBeFalse();
+        expect(submissionTopicSubscriptions.has(submissionTopic)).toBe(false);
     });
 
     it('should only unsubscribe if no other participations use the topic with localci', () => {
@@ -449,13 +461,13 @@ describe('ProgrammingSubmissionService', () => {
         submissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
         const submissionTopicSubscriptions = (submissionService as any).submissionTopicSubscriptions as Map<string, any>;
         const processingTopicSubscriptions = (submissionService as any).submissionProcessingTopicSubscriptions as Map<string, any>;
-        expect(submissionTopicSubscriptions.has(submissionTopic)).toBeTrue();
-        expect(processingTopicSubscriptions.has(submissionProcessingTopic)).toBeTrue();
+        expect(submissionTopicSubscriptions.has(submissionTopic)).toBe(true);
+        expect(processingTopicSubscriptions.has(submissionProcessingTopic)).toBe(true);
 
         // Should now unsubscribe as last participation for topic was unsubscribed
         submissionService.unsubscribeForLatestSubmissionOfParticipation(2);
-        expect(submissionTopicSubscriptions.has(submissionTopic)).toBeFalse();
-        expect(processingTopicSubscriptions.has(submissionProcessingTopic)).toBeFalse();
+        expect(submissionTopicSubscriptions.has(submissionTopic)).toBe(false);
+        expect(processingTopicSubscriptions.has(submissionProcessingTopic)).toBe(false);
     });
 
     it('should emit the newest submission when it was received through the websocket connection with localci', () => {
@@ -552,40 +564,43 @@ describe('ProgrammingSubmissionService', () => {
         ]);
     });
 
-    it('should change to building when queue timer ends', fakeAsync(() => {
-        // @ts-ignore
-        submissionService.currentExpectedQueueEstimate = 1000;
-        submissionService.isLocalCIEnabled = true;
-        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
-        // No latest pending submission found.
-        httpGetStub.mockReturnValue(of(undefined));
-        submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
-        expect(returnedSubmissions).toEqual([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
-        // New submission comes in.
-        currentProgrammingSubmission.submissionDate = dayjs();
-        wsSubmissionSubject.next(currentProgrammingSubmission);
-        expect(returnedSubmissions).toEqual([
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
-            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
-        ]);
+    it('should change to building when queue timer ends', async () => {
+        vi.useFakeTimers();
+        try {
+            // @ts-ignore
+            submissionService.currentExpectedQueueEstimate = 1000;
+            submissionService.isLocalCIEnabled = true;
+            const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
+            // No latest pending submission found.
+            httpGetStub.mockReturnValue(of(undefined));
+            submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
+            expect(returnedSubmissions).toEqual([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
+            // New submission comes in.
+            currentProgrammingSubmission.submissionDate = dayjs();
+            wsSubmissionSubject.next(currentProgrammingSubmission);
+            expect(returnedSubmissions).toEqual([
+                { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+                { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
+            ]);
 
-        tick(1000);
+            await vi.advanceTimersByTimeAsync(1000);
 
-        expect(returnedSubmissions).toEqual([
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
-            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
-            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentProgrammingSubmission, participationId },
-        ]);
+            expect(returnedSubmissions).toEqual([
+                { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+                { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
+                { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentProgrammingSubmission, participationId },
+            ]);
 
-        wsSubmissionProcessingSubject.next(mockSubmissionProcessingDTO);
-        expect(returnedSubmissions).toEqual([
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
-            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
-            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentProgrammingSubmission, participationId },
-        ]);
-
-        discardPeriodicTasks();
-    }));
+            wsSubmissionProcessingSubject.next(mockSubmissionProcessingDTO);
+            expect(returnedSubmissions).toEqual([
+                { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+                { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
+                { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentProgrammingSubmission, participationId },
+            ]);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 
     describe('authentication state changes', () => {
         let authState: BehaviorSubject<User | undefined>;
@@ -654,9 +669,9 @@ describe('ProgrammingSubmissionService', () => {
             expect(scoped.participationIdToExerciseId.size).toBe(0);
             // @ts-ignore
             expect(scoped.submissionTopicsSubscribed.size).toBe(0);
-            expect(completed).toBeTrue();
-            expect(exerciseBuildCompleted).toBeTrue();
-            expect(resultTimerCompleted).toBeTrue();
+            expect(completed).toBe(true);
+            expect(exerciseBuildCompleted).toBe(true);
+            expect(resultTimerCompleted).toBe(true);
         });
 
         it('should clear cached submission state when a different user logs in', () => {
