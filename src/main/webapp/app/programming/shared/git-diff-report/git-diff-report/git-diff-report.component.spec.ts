@@ -1,7 +1,17 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Mock @sentry/angular module — must be hoisted above imports.
+vi.mock('@sentry/angular', () => ({
+    captureException: vi.fn(),
+}));
+
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
+import { GitDiffFileComponent } from 'app/programming/shared/git-diff-report/git-diff-file/git-diff-file.component';
+import { GitDiffFilePanelTitleComponent } from 'app/programming/shared/git-diff-report/git-diff-file-panel-title/git-diff-file-panel-title.component';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -9,11 +19,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { FileStatus, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { captureException } from '@sentry/angular';
-
-// Mock @sentry/angular module
-jest.mock('@sentry/angular', () => ({
-    captureException: jest.fn(),
-}));
 
 class MockResizeObserver {
     observe() {}
@@ -30,11 +35,11 @@ class MockIntersectionObserver {
         MockIntersectionObserver.instances.push(this);
     }
 
-    observe = jest.fn((_element: Element) => {});
+    observe = vi.fn((_element: Element) => {});
 
-    unobserve = jest.fn((_element: Element) => {});
+    unobserve = vi.fn((_element: Element) => {});
 
-    disconnect = jest.fn(() => {});
+    disconnect = vi.fn(() => {});
 
     trigger(entries: Array<{ target: Element; isIntersecting: boolean }>) {
         const normalized = entries.map(
@@ -54,12 +59,14 @@ class MockIntersectionObserver {
 }
 
 describe('ProgrammingExerciseGitDiffReport Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: GitDiffReportComponent;
     let fixture: ComponentFixture<GitDiffReportComponent>;
 
     beforeAll(() => {
         global.ResizeObserver = MockResizeObserver;
-        global.IntersectionObserver = MockIntersectionObserver as any;
+        global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
     });
 
     const createDiffInformationEntry = (
@@ -80,92 +87,98 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         ...overrides,
     });
 
-    const mockDiffInformation = {
-        diffInformations: [
-            {
-                originalFileContent: 'testing line differences',
-                modifiedFileContent: 'testing line diff\nnew line',
-                originalPath: 'Example.java',
-                modifiedPath: 'Example.java',
-                diffReady: false,
-                fileStatus: 'unchanged',
-                lineChange: {
-                    addedLineCount: 2,
-                    removedLineCount: 1,
-                },
-                title: 'Example.java',
-            },
-            {
-                originalFileContent: 'public class Test {\n    private String name;\n}',
-                modifiedFileContent: 'public class Test {\n    private String name;\n    private int age;\n}',
-                originalPath: 'Test.java',
-                modifiedPath: 'Test.java',
-                diffReady: false,
-                fileStatus: 'unchanged',
-                lineChange: {
-                    addedLineCount: 1,
-                    removedLineCount: 0,
-                },
-                title: 'Test.java',
-            },
-            {
-                originalFileContent: '',
-                modifiedFileContent: 'public class NewFile {\n    public void doSomething() {\n        System.out.println("Hello");\n    }\n}',
-                originalPath: 'NewFile.java',
-                modifiedPath: 'NewFile.java',
-                diffReady: false,
-                fileStatus: 'created',
-                lineChange: {
-                    addedLineCount: 5,
-                    removedLineCount: 0,
-                },
-                title: 'NewFile.java',
-            },
-        ],
-        totalLineChange: {
-            addedLineCount: 8,
-            removedLineCount: 1,
-        },
-    } as unknown as RepositoryDiffInformation;
+    let mockDiffInformation: RepositoryDiffInformation;
 
     beforeEach(() => {
+        mockDiffInformation = {
+            diffInformations: [
+                {
+                    originalFileContent: 'testing line differences',
+                    modifiedFileContent: 'testing line diff\nnew line',
+                    originalPath: 'Example.java',
+                    modifiedPath: 'Example.java',
+                    diffReady: false,
+                    fileStatus: 'unchanged',
+                    lineChange: {
+                        addedLineCount: 2,
+                        removedLineCount: 1,
+                    },
+                    title: 'Example.java',
+                },
+                {
+                    originalFileContent: 'public class Test {\n    private String name;\n}',
+                    modifiedFileContent: 'public class Test {\n    private String name;\n    private int age;\n}',
+                    originalPath: 'Test.java',
+                    modifiedPath: 'Test.java',
+                    diffReady: false,
+                    fileStatus: 'unchanged',
+                    lineChange: {
+                        addedLineCount: 1,
+                        removedLineCount: 0,
+                    },
+                    title: 'Test.java',
+                },
+                {
+                    originalFileContent: '',
+                    modifiedFileContent: 'public class NewFile {\n    public void doSomething() {\n        System.out.println("Hello");\n    }\n}',
+                    originalPath: 'NewFile.java',
+                    modifiedPath: 'NewFile.java',
+                    diffReady: false,
+                    fileStatus: 'created',
+                    lineChange: {
+                        addedLineCount: 5,
+                        removedLineCount: 0,
+                    },
+                    title: 'NewFile.java',
+                },
+            ],
+            totalLineChange: {
+                addedLineCount: 8,
+                removedLineCount: 1,
+            },
+        } as unknown as RepositoryDiffInformation;
         MockIntersectionObserver.instances.length = 0;
         TestBed.configureTestingModule({
-            declarations: [GitDiffReportComponent, MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffLineStatComponent)],
+            imports: [GitDiffReportComponent, MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffLineStatComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
-        }).compileComponents();
+        })
+            .overrideComponent(GitDiffReportComponent, {
+                remove: { imports: [GitDiffFileComponent, GitDiffFilePanelTitleComponent] },
+                add: { imports: [MockComponent(GitDiffFileComponent), MockComponent(GitDiffFilePanelTitleComponent)] },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(GitDiffReportComponent);
         comp = fixture.componentInstance;
         fixture.componentRef.setInput('repositoryDiffInformation', mockDiffInformation);
     });
 
     afterEach(() => {
-        jest.useRealTimers();
-        jest.restoreAllMocks();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
     it('should record for each path whether the diff is ready', () => {
         fixture.detectChanges();
         // Initialization
-        expect(comp.allDiffsReady()).toBeFalse();
-        expect(comp.repositoryDiffInformation().diffInformations[0].diffReady).toBeFalse();
-        expect(comp.repositoryDiffInformation().diffInformations[1].diffReady).toBeFalse();
+        expect(comp.allDiffsReady()).toBe(false);
+        expect(comp.repositoryDiffInformation().diffInformations[0].diffReady).toBe(false);
+        expect(comp.repositoryDiffInformation().diffInformations[1].diffReady).toBe(false);
         // First file ready
         comp.onDiffReady(mockDiffInformation.diffInformations[0].modifiedPath, true);
-        expect(comp.allDiffsReady()).toBeFalse();
-        expect(comp.repositoryDiffInformation().diffInformations[0].diffReady).toBeTrue();
-        expect(comp.repositoryDiffInformation().diffInformations[1].diffReady).toBeFalse();
+        expect(comp.allDiffsReady()).toBe(false);
+        expect(comp.repositoryDiffInformation().diffInformations[0].diffReady).toBe(true);
+        expect(comp.repositoryDiffInformation().diffInformations[1].diffReady).toBe(false);
         // Second file ready
         comp.onDiffReady(mockDiffInformation.diffInformations[1].modifiedPath, true);
-        expect(comp.allDiffsReady()).toBeFalse();
-        expect(comp.repositoryDiffInformation().diffInformations[0].diffReady).toBeTrue();
-        expect(comp.repositoryDiffInformation().diffInformations[1].diffReady).toBeTrue();
+        expect(comp.allDiffsReady()).toBe(false);
+        expect(comp.repositoryDiffInformation().diffInformations[0].diffReady).toBe(true);
+        expect(comp.repositoryDiffInformation().diffInformations[1].diffReady).toBe(true);
         // Third file ready
         comp.onDiffReady(mockDiffInformation.diffInformations[2].modifiedPath, true);
-        expect(comp.allDiffsReady()).toBeTrue();
-        expect(comp.repositoryDiffInformation().diffInformations[0].diffReady).toBeTrue();
-        expect(comp.repositoryDiffInformation().diffInformations[1].diffReady).toBeTrue();
-        expect(comp.repositoryDiffInformation().diffInformations[2].diffReady).toBeTrue();
+        expect(comp.allDiffsReady()).toBe(true);
+        expect(comp.repositoryDiffInformation().diffInformations[0].diffReady).toBe(true);
+        expect(comp.repositoryDiffInformation().diffInformations[1].diffReady).toBe(true);
+        expect(comp.repositoryDiffInformation().diffInformations[2].diffReady).toBe(true);
     });
 
     it('should correctly identify renamed files', () => {
@@ -267,11 +280,11 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         expect(captureException).toHaveBeenCalledWith('Received diff ready event for unknown title: unknown-path.java');
 
         // Verify that allDiffsReady is still false since we have valid files that are not ready
-        expect(comp.allDiffsReady()).toBeFalse();
+        expect(comp.allDiffsReady()).toBe(false);
     });
 
     it('should test handleDiffReady method', () => {
-        const onDiffReadySpy = jest.spyOn(comp, 'onDiffReady');
+        const onDiffReadySpy = vi.spyOn(comp, 'onDiffReady');
 
         fixture.detectChanges();
 
@@ -302,7 +315,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         fixture.componentRef.setInput('repositoryDiffInformation', emptyDiffInformation);
         fixture.detectChanges();
 
-        expect(comp.nothingToDisplay()).toBeTrue();
+        expect(comp.nothingToDisplay()).toBe(true);
         expect(comp.addedLineCount()).toBe(0);
         expect(comp.removedLineCount()).toBe(0);
     });
@@ -338,9 +351,9 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         fixture.detectChanges();
 
         // Verify the inputs are set correctly
-        expect(comp.diffForTemplateAndSolution()).toBeFalse();
-        expect(comp.diffForTemplateAndEmptyRepository()).toBeTrue();
-        expect(comp.isRepositoryView()).toBeTrue();
+        expect(comp.diffForTemplateAndSolution()).toBe(false);
+        expect(comp.diffForTemplateAndEmptyRepository()).toBe(true);
+        expect(comp.isRepositoryView()).toBe(true);
         expect(comp.participationId()).toBe(123);
     });
 
@@ -354,25 +367,25 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         comp['userCollapsed'].set(title, true);
         diffInfo.isCollapsed = true;
 
-        expect(diffInfo.isCollapsed).toBeTrue();
+        expect(diffInfo.isCollapsed).toBe(true);
 
         // User manually expands the panel
         comp['userCollapsed'].set(title, false);
         diffInfo.isCollapsed = false;
 
-        expect(diffInfo.isCollapsed).toBeFalse();
+        expect(diffInfo.isCollapsed).toBe(false);
     });
 
     it('should track user collapse/expand actions', () => {
         fixture.detectChanges();
 
         const title = mockDiffInformation.diffInformations[0].title;
-        const markContentSpy = jest.spyOn(comp as any, 'markContentAsLoaded');
+        const markContentSpy = vi.spyOn(comp as unknown as { markContentAsLoaded: (title: string) => void }, 'markContentAsLoaded');
 
         // User expands a collapsed panel
         comp.onToggleClick(title, true);
 
-        expect(comp['userCollapsed'].get(title)).toBeFalse();
+        expect(comp['userCollapsed'].get(title)).toBe(false);
         expect(markContentSpy).toHaveBeenCalledWith(title);
 
         markContentSpy.mockClear();
@@ -380,7 +393,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         // User collapses an expanded panel
         comp.onToggleClick(title, false);
 
-        expect(comp['userCollapsed'].get(title)).toBeTrue();
+        expect(comp['userCollapsed'].get(title)).toBe(true);
         expect(markContentSpy).not.toHaveBeenCalled();
     });
 
@@ -411,16 +424,17 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         fixture.componentRef.setInput('repositoryDiffInformation', freshDiffInformation);
         fixture.detectChanges();
 
-        expect(comp.initialDiffsReady()).toBeFalse();
+        expect(comp.initialDiffsReady()).toBe(false);
 
         // Mark the diff as ready
         comp.onDiffReady('Example.java', true);
 
-        expect(comp.initialDiffsReady()).toBeTrue();
-        expect(comp.allDiffsReady()).toBeTrue();
+        expect(comp.initialDiffsReady()).toBe(true);
+        expect(comp.allDiffsReady()).toBe(true);
     });
 
-    it('should observe panels and load content when intersection occurs', fakeAsync(() => {
+    it('should observe panels and load content when intersection occurs', async () => {
+        vi.useFakeTimers();
         const extendedDiffInformation = {
             diffInformations: [
                 ...mockDiffInformation.diffInformations,
@@ -438,7 +452,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         fixture.componentRef.setInput('repositoryDiffInformation', extendedDiffInformation);
         fixture.detectChanges();
 
-        tick(1000);
+        await vi.advanceTimersByTimeAsync(1000);
         fixture.detectChanges();
 
         expect(MockIntersectionObserver.instances).toHaveLength(1);
@@ -455,10 +469,11 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         observerInstance.trigger([{ target: sixthElement as Element, isIntersecting: true }]);
 
         expect(observerInstance.unobserve).toHaveBeenCalledWith(sixthElement);
-        expect(targetDiff?.loadContent).toBeTrue();
-    }));
+        expect(targetDiff?.loadContent).toBe(true);
+    });
 
-    it('should skip observing panels without data titles', fakeAsync(() => {
+    it('should skip observing panels without data titles', async () => {
+        vi.useFakeTimers();
         const diffInformationWithEmptyTitle = {
             diffInformations: [
                 ...mockDiffInformation.diffInformations,
@@ -475,7 +490,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         fixture.componentRef.setInput('repositoryDiffInformation', diffInformationWithEmptyTitle);
         fixture.detectChanges();
 
-        tick(1000);
+        await vi.advanceTimersByTimeAsync(1000);
         fixture.detectChanges();
 
         expect(MockIntersectionObserver.instances).toHaveLength(1);
@@ -485,7 +500,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
 
         const observedElements = observerInstance.observe.mock.calls.map((call) => call[0]);
         expect(observedElements).not.toContain(blankElement);
-    }));
+    });
 
     it('should mark content as loaded and update allDiffsReady', () => {
         const moreDiffInformation = {
@@ -548,14 +563,14 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
 
         comp['markContentAsLoaded'](sixthFile);
 
-        expect(sixthDiffInfo?.loadContent).toBeTrue();
+        expect(sixthDiffInfo?.loadContent).toBe(true);
     });
 
     it('should not mark content as loaded twice', () => {
         fixture.detectChanges();
 
         const title = mockDiffInformation.diffInformations[0].title;
-        const updateSpy = jest.spyOn(comp as any, 'updateAllDiffsReady');
+        const updateSpy = vi.spyOn(comp as unknown as { updateAllDiffsReady: () => void }, 'updateAllDiffsReady');
 
         // Reset spy to start fresh
         updateSpy.mockClear();

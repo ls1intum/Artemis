@@ -1,3 +1,5 @@
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { GitDiffFileComponent } from 'app/programming/shared/git-diff-report/git-diff-file/git-diff-file.component';
@@ -7,6 +9,7 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { DiffInformation, FileStatus } from 'app/programming/shared/utils/diff.utils';
 import { TranslateModule, TranslateService, TranslateStore } from '@ngx-translate/core';
+import { MockComponent } from 'ng-mocks';
 
 const mockDiffInformations: DiffInformation[] = [
     {
@@ -72,13 +75,15 @@ const mockDiffInformations: DiffInformation[] = [
 ];
 
 describe('GitDiffFileComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: GitDiffFileComponent;
     let fixture: ComponentFixture<GitDiffFileComponent>;
 
     beforeAll(() => {
         try {
             TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
-        } catch (error) {
+        } catch {
             // The environment is already initialized when running through the Angular CLI test harness.
         }
     });
@@ -87,9 +92,14 @@ describe('GitDiffFileComponent', () => {
         TestBed.configureTestingModule({
             imports: [GitDiffFileComponent, TranslateModule.forRoot()],
             providers: [{ provide: ThemeService, useClass: MockThemeService }, TranslateStore],
-        }).compileComponents();
+        })
+            .overrideComponent(GitDiffFileComponent, {
+                remove: { imports: [MonacoDiffEditorComponent] },
+                add: { imports: [MockComponent(MonacoDiffEditorComponent)] },
+            })
+            .compileComponents();
         // Required because Monaco uses the ResizeObserver for the diff editor.
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
         fixture = TestBed.createComponent(GitDiffFileComponent);
@@ -116,12 +126,12 @@ describe('GitDiffFileComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it.each(mockDiffInformations)('should handle $fileStatus file correctly', (diffInfo: DiffInformation) => {
-        const setFileContentsStub = jest.fn();
-        jest.spyOn(comp, 'monacoDiffEditor').mockReturnValue({ setFileContents: setFileContentsStub } as unknown as MonacoDiffEditorComponent);
+        const setFileContentsStub = vi.fn();
+        vi.spyOn(comp, 'monacoDiffEditor').mockReturnValue({ setFileContents: setFileContentsStub } as unknown as MonacoDiffEditorComponent);
         fixture.componentRef.setInput('diffInformation', diffInfo);
         fixture.detectChanges();
 
@@ -132,8 +142,8 @@ describe('GitDiffFileComponent', () => {
     it('should display an informative message when a diff is too large', () => {
         const diffInfo = mockDiffInformations.find((info) => info.lineChange?.fileTooLarge) as DiffInformation;
         expect(diffInfo).toBeDefined();
-        const setFileContentsStub = jest.fn();
-        jest.spyOn(comp, 'monacoDiffEditor').mockReturnValue({ setFileContents: setFileContentsStub } as unknown as MonacoDiffEditorComponent);
+        const setFileContentsStub = vi.fn();
+        vi.spyOn(comp, 'monacoDiffEditor').mockReturnValue({ setFileContents: setFileContentsStub } as unknown as MonacoDiffEditorComponent);
 
         fixture.componentRef.setInput('diffInformation', diffInfo);
         fixture.detectChanges();

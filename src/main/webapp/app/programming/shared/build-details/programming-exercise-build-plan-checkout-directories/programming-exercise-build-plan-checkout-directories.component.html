@@ -1,4 +1,4 @@
-@if (checkoutDirectories) {
+@if (checkoutDirectories(); as checkoutDirectories) {
     <hr class="pt-0 pb-0 mt-1 mb-1" />
     <ul>
         <li [class.invisible]="!checkoutDirectories.exerciseCheckoutDirectory">

@@ -1,18 +1,4 @@
-import {
-    AfterViewInit,
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    ElementRef,
-    OnDestroy,
-    QueryList,
-    ViewChildren,
-    computed,
-    effect,
-    inject,
-    input,
-    signal,
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, computed, effect, inject, input, signal, viewChildren } from '@angular/core';
 import { faAngleDown, faAngleUp, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
@@ -24,7 +10,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule, NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-git-diff-report',
@@ -68,7 +53,6 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
     private readonly loadedTitles = signal<Set<string>>(new Set());
     private lastDiffInformation?: RepositoryDiffInformation;
     private intersectionObserver?: IntersectionObserver;
-    private diffPanelsChangesSub?: Subscription;
     private lazyObserverInitTimeoutId?: number;
 
     readonly leftCommit = computed(() => this.leftCommitHash()?.substring(0, 10));
@@ -78,10 +62,7 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
 
     private readonly userCollapsed = new Map<string, boolean>();
 
-    // TODO: Skipped for migration because:
-    //  There are references to this query that cannot be migrated automatically.
-    @ViewChildren('diffPanelContainer')
-    private diffPanelContainers?: QueryList<ElementRef<HTMLElement>>;
+    readonly diffPanelContainers = viewChildren<ElementRef<HTMLElement>>('diffPanelContainer');
 
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly hostElementRef = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -124,6 +105,13 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
 
             this.changeDetectorRef.markForCheck();
         });
+
+        // Re-observe diff panels whenever the queried set of panel containers changes
+        // (e.g. when the diff information input changes and new panels are rendered).
+        effect(() => {
+            this.diffPanelContainers();
+            this.observeDiffPanels();
+        });
     }
 
     ngAfterViewInit(): void {
@@ -151,13 +139,11 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
                 },
             );
             this.observeDiffPanels();
-            this.diffPanelsChangesSub = this.diffPanelContainers?.changes.subscribe(() => this.observeDiffPanels());
             this.lazyObserverInitTimeoutId = undefined;
         }, 1000);
     }
 
     ngOnDestroy(): void {
-        this.diffPanelsChangesSub?.unsubscribe();
         this.intersectionObserver?.disconnect();
         if (this.lazyObserverInitTimeoutId !== undefined) {
             clearTimeout(this.lazyObserverInitTimeoutId);
@@ -231,11 +217,11 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
     }
 
     private observeDiffPanels() {
-        if (!this.intersectionObserver || !this.diffPanelContainers) {
+        if (!this.intersectionObserver) {
             return;
         }
 
-        this.diffPanelContainers.forEach((panel) => {
+        this.diffPanelContainers().forEach((panel) => {
             const element = panel.nativeElement;
             if (!element.dataset['title']) {
                 return;
