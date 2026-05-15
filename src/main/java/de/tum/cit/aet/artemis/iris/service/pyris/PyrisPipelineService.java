@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -143,21 +144,24 @@ public class PyrisPipelineService {
      * @param variant      the variant of the pipeline
      * @param session      the chat session
      * @param eventVariant the event variant to trigger, if any
-     * @param dtoBuilder   a function that receives the base execution DTO and returns the fully constructed chat pipeline DTO
+     * @param dtoBuilder   a function that receives the base execution DTO, the persisted user and the feature-gated Pyris user DTO
      */
-    public void executeChatPipeline(String variant, IrisChatSession session, Optional<String> eventVariant,
-            Function<PyrisPipelineExecutionDTO, PyrisChatPipelineExecutionDTO> dtoBuilder) {
+    public void executeChatPipeline(String variant, IrisChatSession session, Optional<String> eventVariant, ChatPipelineDTOBuilder dtoBuilder) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
-        if (!featureToggleService.isFeatureEnabled(Feature.Memiris)) {
-            user.setMemirisEnabled(false);
-        }
+        var pyrisUser = toPyrisUserDTO(user);
         var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
         // @formatter:off
         executePipeline("chat", user.getSelectedLLMUsage(), variant, eventVariant,
             pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId),
-            dtoBuilder::apply,
+            executionDto -> dtoBuilder.apply(executionDto, user, pyrisUser),
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages));
         // @formatter:on
+    }
+
+    @FunctionalInterface
+    public interface ChatPipelineDTOBuilder {
+
+        PyrisChatPipelineExecutionDTO apply(PyrisPipelineExecutionDTO executionDto, User user, PyrisUserDTO pyrisUser);
     }
 
     /**
@@ -196,7 +200,7 @@ public class PyrisPipelineService {
                 new PyrisCourseDTO(course),
                 new PyrisPostDTO(post),
                 pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
-                new PyrisUserDTO(user),
+                toPyrisUserDTO(user),
                 executionDto.settings(),
                 executionDto.initialStages(),
                 textExerciseDTO,
@@ -207,6 +211,10 @@ public class PyrisPipelineService {
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
         );
         // @formatter:on
+    }
+
+    private PyrisUserDTO toPyrisUserDTO(User user) {
+        return new PyrisUserDTO(user, featureToggleService.isFeatureEnabled(Feature.Memiris) && user.isMemirisEnabled());
     }
 
     /**

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, untracked, viewChild } from '@angular/core';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.component';
 
@@ -37,7 +37,8 @@ export class LectureChatbotComponent {
         effect(() => {
             const lectureId = this.lectureId();
             if (lectureId !== undefined) {
-                this.chatService.switchTo(ChatServiceMode.LECTURE, lectureId);
+                // Use untracked to avoid re-running this effect when chatService state changes
+                untracked(() => this.chatService.switchTo(ChatServiceMode.LECTURE, lectureId));
             }
         });
     }

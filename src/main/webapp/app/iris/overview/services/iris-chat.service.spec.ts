@@ -62,8 +62,6 @@ describe('IrisChatService', () => {
     const waitForSessionId = () => firstValueFrom(service.currentSessionId().pipe(filter((value): value is number => value !== undefined)));
 
     const waitForSessionIdValue = (expectedId: number) => firstValueFrom(service.currentSessionId().pipe(filter((value): value is number => value === expectedId)));
-    const waitForCurrentChatMode = () => firstValueFrom(service.currentChatMode().pipe(filter((value): value is ChatServiceMode => value !== undefined)));
-    const waitForCurrentRelatedEntityId = () => firstValueFrom(service.currentRelatedEntityId().pipe(filter((value): value is number => value !== undefined)));
 
     beforeEach(() => {
         routerMock = { url: '' };
@@ -123,8 +121,8 @@ describe('IrisChatService', () => {
 
         service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, relatedEntityId);
 
-        expect(await waitForCurrentChatMode()).toBe(ChatServiceMode.PROGRAMMING_EXERCISE);
-        expect(await waitForCurrentRelatedEntityId()).toBe(relatedEntityId);
+        expect(service.displayContext()?.mode).toBe(ChatServiceMode.PROGRAMMING_EXERCISE);
+        expect(service.displayContext()?.entityId).toBe(relatedEntityId);
     });
 
     it('should initialize current chat context from mode field', async () => {
@@ -141,8 +139,8 @@ describe('IrisChatService', () => {
 
         service.switchTo(ChatServiceMode.LECTURE, relatedEntityId);
 
-        expect(await waitForCurrentChatMode()).toBe(ChatServiceMode.LECTURE);
-        expect(await waitForCurrentRelatedEntityId()).toBe(relatedEntityId);
+        expect(service.displayContext()?.mode).toBe(ChatServiceMode.LECTURE);
+        expect(service.displayContext()?.entityId).toBe(relatedEntityId);
     });
 
     it('should send a message', async () => {
@@ -156,7 +154,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything(), undefined);
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: undefined }));
         const messages = await firstValueFrom(service.currentMessages());
         expect(messages).toHaveLength(mockConversation.messages!.length + 1);
         expect(messages.last()).toEqual(createdMessage);
@@ -173,7 +171,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything(), undefined);
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: undefined }));
         const error = await firstValueFrom(service.currentError());
         expect(error).toEqual(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
     });
@@ -206,14 +204,14 @@ describe('IrisChatService', () => {
             expect(createMessageSpy).not.toHaveBeenCalled();
 
             // Dropdown reflects the new selection (committed-look)
-            expect(await firstValueFrom(service.currentChatMode())).toBe(ChatServiceMode.LECTURE);
-            expect(await firstValueFrom(service.currentRelatedEntityId())).toBe(newEntityId);
+            expect(service.displayContext()?.mode).toBe(ChatServiceMode.LECTURE);
+            expect(service.displayContext()?.entityId).toBe(newEntityId);
 
             // Messages and citations are untouched
             expect(service.messages.getValue()).toEqual(mockConversation.messages);
         });
 
-        it('should forward pendingContext as third arg to createMessage when context differs from session', async () => {
+        it('should include pendingContext in the request DTO when context differs from session', async () => {
             vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
             vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
             vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
@@ -227,13 +225,13 @@ describe('IrisChatService', () => {
             service.switchContextOfCurrentSession(ChatServiceMode.LECTURE, pendingEntityId);
             await firstValueFrom(service.sendMessage('hi'));
 
-            expect(createMessageSpy).toHaveBeenCalledWith(id, expect.anything(), { mode: ChatServiceMode.LECTURE, entityId: pendingEntityId });
-            // After the send commits the switch, no pending context remains
-            expect(service['pendingContext']).toBeUndefined();
-            expect(service['sessionContext']).toEqual({ mode: ChatServiceMode.LECTURE, entityId: pendingEntityId });
+            expect(createMessageSpy).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: { mode: ChatServiceMode.LECTURE, entityId: pendingEntityId } }));
+            // After the send commits the switch, the override is cleared and committed is updated
+            expect(service['_pendingOverride']()).toBeUndefined();
+            expect(service['_committedContext']()).toEqual({ mode: ChatServiceMode.LECTURE, entityId: pendingEntityId });
         });
 
-        it('should not forward pendingContext when user reverts to session current context before sending', async () => {
+        it('should not include pendingContext when user reverts to session current context before sending', async () => {
             vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
             vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
             vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
@@ -249,7 +247,7 @@ describe('IrisChatService', () => {
 
             await firstValueFrom(service.sendMessage('hi'));
 
-            expect(createMessageSpy).toHaveBeenCalledWith(id, expect.anything(), undefined);
+            expect(createMessageSpy).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: undefined }));
         });
     });
 
@@ -310,7 +308,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything(), undefined);
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: undefined }));
         const error = await firstValueFrom(service.currentError());
         expect(error).toEqual(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED);
     });
@@ -326,7 +324,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything(), undefined);
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: undefined }));
         const error = await firstValueFrom(service.currentError());
         expect(error).toEqual(IrisErrorMessageKey.IRIS_DISABLED);
     });
@@ -453,7 +451,7 @@ describe('IrisChatService', () => {
         it('should switch if LLM usage is not required for the mode', async () => {
             accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
             service['hasJustAcceptedLLMUsage'] = false;
-            service['sessionContext'] = { mode: ChatServiceMode.TUTOR_SUGGESTION, entityId: 1 };
+            service['_committedContext'].set({ mode: ChatServiceMode.TUTOR_SUGGESTION, entityId: 1 });
 
             const newSession = { id: 12, mode: ChatServiceMode.TUTOR_SUGGESTION, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
             const newSessionFull = { id: 12, mode: ChatServiceMode.TUTOR_SUGGESTION, creationDate: new Date(), entityId: 1, userId: 1 } as IrisSession;
@@ -477,7 +475,7 @@ describe('IrisChatService', () => {
         it('should switch if user has just accepted LLM usage', async () => {
             accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
             service['hasJustAcceptedLLMUsage'] = true;
-            service['sessionContext'] = { mode: ChatServiceMode.COURSE, entityId: 1 };
+            service['_committedContext'].set({ mode: ChatServiceMode.COURSE, entityId: 1 });
 
             const newSession = { id: 12, mode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
             const newSessionFull = { id: 12, mode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1, userId: 1 } as IrisSession;
@@ -714,7 +712,7 @@ describe('IrisChatService', () => {
             scopedService.messages.next([mockServerMessage]);
             scopedService.chatSessions.next([{ id: 1 } as IrisSessionDTO]);
             scopedService.latestStartedSession = { id: 1 } as IrisSessionDTO;
-            scopedService['sessionContext'] = { mode: ChatServiceMode.COURSE, entityId: 1 };
+            scopedService['_committedContext'].set({ mode: ChatServiceMode.COURSE, entityId: 1 });
             scopedService.hasJustAcceptedLLMUsage = true;
             scopedService.rateLimitInfo = { rateLimitTimeframeHours: 1 } as IrisRateLimitInformation;
 
@@ -724,7 +722,7 @@ describe('IrisChatService', () => {
             expect(scopedService.messages.getValue()).toEqual([]);
             expect(scopedService.chatSessions.getValue()).toEqual([]);
             expect(scopedService.latestStartedSession).toBeUndefined();
-            expect(scopedService['sessionContext']).toBeUndefined();
+            expect(scopedService['_committedContext']()).toBeUndefined();
             expect(scopedService.hasJustAcceptedLLMUsage).toBe(false);
             expect(scopedService.rateLimitInfo).toBeUndefined();
             // courseId is route-derived, not user-private — it is intentionally preserved so the next

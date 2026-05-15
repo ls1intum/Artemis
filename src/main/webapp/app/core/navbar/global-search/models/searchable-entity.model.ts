@@ -5,7 +5,7 @@ export interface SearchableEntity {
     title: string;
     description: string;
     icon: IconDefinition;
-    type: 'page' | 'feature' | 'course';
+    type: 'filter' | 'feature' | 'course';
     enabled: boolean;
     filterTag?: string;
 }

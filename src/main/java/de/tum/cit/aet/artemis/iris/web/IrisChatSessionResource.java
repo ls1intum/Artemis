@@ -198,7 +198,7 @@ public class IrisChatSessionResource {
     // -------------------------------------------------------------------------
 
     /**
-     * GET /api/iris/chat/sessions/count : Get the number of sessions and messages for the current user.
+     * GET /api/iris/chat/sessions/count : Get the number of Iris sessions and messages for the current user.
      *
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and body containing session and message counts
      */
@@ -206,13 +206,13 @@ public class IrisChatSessionResource {
     @EnforceAtLeastStudent
     public ResponseEntity<IrisChatSessionCountDTO> getSessionAndMessageCount() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        long sessionCount = irisChatSessionRepository.countByUserId(user.getId());
-        long messageCount = irisChatSessionRepository.countMessagesByUserId(user.getId());
+        long sessionCount = irisSessionRepository.countByUserId(user.getId());
+        long messageCount = irisSessionRepository.countMessagesByUserId(user.getId());
         return ResponseEntity.ok(new IrisChatSessionCountDTO(sessionCount, messageCount));
     }
 
     /**
-     * DELETE /api/iris/chat/sessions : Delete all Iris chat sessions for the current user.
+     * DELETE /api/iris/chat/sessions : Delete all Iris sessions for the current user.
      * Messages and their content are removed via cascade.
      *
      * @return the {@link ResponseEntity} with status {@code 204 (No Content)}
@@ -221,10 +221,10 @@ public class IrisChatSessionResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteAllSessionsForCurrentUser() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        long sessionCount = irisChatSessionRepository.countByUserId(user.getId());
-        long messageCount = irisChatSessionRepository.countMessagesByUserId(user.getId());
-        log.info("REST request to delete all Iris chat sessions for user id {} (sessions={}, messages={})", user.getId(), sessionCount, messageCount);
-        irisChatSessionRepository.deleteAllByUserId(user.getId());
+        long sessionCount = irisSessionRepository.countByUserId(user.getId());
+        long messageCount = irisSessionRepository.countMessagesByUserId(user.getId());
+        log.info("REST request to delete all Iris sessions for user id {} (sessions={}, messages={})", user.getId(), sessionCount, messageCount);
+        irisSessionRepository.deleteAllByUserId(user.getId());
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_ALL_IRIS_SESSIONS, "sessions=" + sessionCount, "messages=" + messageCount);
         auditEventRepository.add(auditEvent);
         return ResponseEntity.noContent().build();

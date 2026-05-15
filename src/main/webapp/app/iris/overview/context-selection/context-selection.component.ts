@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { faChalkboardUser, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -52,9 +51,10 @@ export class ContextSelectionComponent {
 
     readonly courseId = signal<number | undefined>(this.chatService.getCourseId());
 
-    private readonly currentMode = toSignal(this.chatService.currentChatMode(), { initialValue: undefined });
-    private readonly currentEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
-
+    readonly courseName = computed<string>(() => {
+        const courseId = this.courseId();
+        return courseId !== undefined ? (this.courseStorageService.getCourse(courseId)?.title ?? '') : '';
+    });
     readonly lectures = computed<Lecture[]>(() => {
         const courseId = this.courseId();
         return courseId !== undefined ? (this.courseStorageService.getCourse(courseId)?.lectures ?? []) : [];
@@ -67,10 +67,9 @@ export class ContextSelectionComponent {
     readonly supportedExercises = computed(() => this.exercises().filter((e) => e.type && e.type in EXERCISE_TYPE_TO_CHAT_MODE));
 
     readonly selectedValue = computed(() => {
-        const mode = this.currentMode();
-        const entityId = this.currentEntityId();
-        if (mode === undefined || entityId === undefined) return undefined;
-        return `${mode}:${entityId}`;
+        const ctx = this.chatService.displayContext();
+        if (ctx === undefined) return undefined;
+        return `${ctx.mode}:${ctx.entityId}`;
     });
 
     readonly allGroups = computed<ContextGroup[]>(() => {
@@ -127,7 +126,7 @@ export class ContextSelectionComponent {
             .flatMap((g) => g.items)
             .find((o) => o.value === value);
         if (option) {
-            this.chatService.switchContextOfCurrentSession(option.mode, option.entityId);
+            this.chatService.switchContextOfCurrentSession(option.mode, option.entityId, option.label);
         }
     }
 

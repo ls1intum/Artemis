@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
@@ -31,9 +31,10 @@ export enum ChatServiceMode {
     TUTOR_SUGGESTION = 'TUTOR_SUGGESTION',
 }
 
-interface SessionContext {
+export interface SessionContext {
     mode: ChatServiceMode;
     entityId: number;
+    entityName?: string;
 }
 
 /**
@@ -58,10 +59,16 @@ export class IrisChatService implements OnDestroy {
 
     private currentSessionIdSubject = new BehaviorSubject<number | undefined>(undefined);
     private currentSessionId$ = this.currentSessionIdSubject.asObservable();
-    private currentRelatedEntityIdSubject = new BehaviorSubject<number | undefined>(undefined);
-    private currentRelatedEntityId$ = this.currentRelatedEntityIdSubject.asObservable();
-    private currentChatModeSubject = new BehaviorSubject<ChatServiceMode | undefined>(undefined);
-    private currentChatMode$ = this.currentChatModeSubject.asObservable();
+    private readonly _committedContext = signal<SessionContext | undefined>(undefined);
+    readonly committedContext = this._committedContext.asReadonly();
+    /**
+     * Set only when the user has selected a different context via the dropdown but has not yet sent a
+     * message. Undefined means "no divergence from committed". The display context (dropdown, placeholder)
+     * is derived as {@link _pendingOverride} ?? {@link _committedContext}, so clearing this
+     * automatically reverts the UI to the committed state without any manual sync.
+     */
+    private readonly _pendingOverride = signal<SessionContext | undefined>(undefined);
+    readonly displayContext = computed(() => this._pendingOverride() ?? this._committedContext());
 
     public get sessionId(): number | undefined {
         return this.currentSessionIdSubject.value;
@@ -96,17 +103,6 @@ export class IrisChatService implements OnDestroy {
      * preventing them from repopulating cleared state with the previous user's data.
      */
     private stateGeneration = 0;
-
-    private sessionContext?: SessionContext;
-
-    /**
-     * Context the user has selected via the dropdown but not yet committed by sending a message.
-     * Cleared on every successful send (whether or not it was applied) and on session close/reset.
-     * The dropdown reflects this selection immediately (committed-look) via {@link currentChatModeSubject}
-     * and {@link currentRelatedEntityIdSubject}; the server only learns about it when the next
-     * {@link sendMessage} forwards it as query params.
-     */
-    private pendingContext?: SessionContext;
 
     private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
     public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
@@ -175,8 +171,8 @@ export class IrisChatService implements OnDestroy {
         this.acceptSubscription = undefined;
         // Reset every subject unconditionally.
         this.sessionId = undefined;
-        this.currentRelatedEntityIdSubject.next(undefined);
-        this.currentChatModeSubject.next(undefined);
+        this._committedContext.set(undefined);
+        this._pendingOverride.set(undefined);
         this.messages.next([]);
         this.stages.next([]);
         this.suggestions.next([]);
@@ -188,8 +184,6 @@ export class IrisChatService implements OnDestroy {
         this.shouldReopenChatSubject.next(false);
         // Plain fields.
         this.latestStartedSession = undefined;
-        this.sessionContext = undefined;
-        this.pendingContext = undefined;
         this.hasJustAcceptedLLMUsage = false;
         this.rateLimitInfo = undefined;
     }
@@ -248,7 +242,8 @@ export class IrisChatService implements OnDestroy {
     }
 
     protected start() {
-        const requiresAcceptance = this.sessionContext ? this.modeRequiresLLMAcceptance.get(this.sessionContext.mode) : true;
+        const sessionContext = this._committedContext();
+        const requiresAcceptance = sessionContext ? this.modeRequiresLLMAcceptance.get(sessionContext.mode) : true;
         if (
             requiresAcceptance === false ||
             this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.LOCAL_AI ||
@@ -265,9 +260,9 @@ export class IrisChatService implements OnDestroy {
 
     /**
      * Sends a message to the server and returns the created message.
-     * <p>
+     *
      * If the user has selected a different context via the dropdown since the last send
-     * ({@link pendingContext}), it is forwarded as query params so the server applies the
+     * ({@link _pendingOverride}), it is included in the request body so the server applies the
      * context switch atomically (CTXSWAP marker first, then the user message) in one round trip.
      *
      * @param message to be created
@@ -281,21 +276,29 @@ export class IrisChatService implements OnDestroy {
         // Trim messages (Spaces, newlines)
         message = message.trim();
 
-        const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles);
-
-        const contextToCommit =
-            this.pendingContext && (this.pendingContext.mode !== this.sessionContext?.mode || this.pendingContext.entityId !== this.sessionContext?.entityId)
-                ? this.pendingContext
-                : undefined;
+        const contextToCommit = this._pendingOverride();
+        const pendingContextDTO = contextToCommit ? { mode: contextToCommit.mode, entityId: contextToCommit.entityId } : undefined;
+        const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles, pendingContextDTO);
 
         const generation = this.stateGeneration;
-        return this.irisChatHttpService.createMessage(this.sessionId, requestDTO, contextToCommit).pipe(
+        return this.irisChatHttpService.createMessage(this.sessionId, requestDTO).pipe(
             tap((response: HttpResponse<IrisMessageResponseDTO>) => {
                 if (this.stateGeneration !== generation) return;
                 if (contextToCommit) {
-                    this.sessionContext = contextToCommit;
+                    this._committedContext.set(contextToCommit);
+                    // Reflect the committed context in the sidebar entry immediately — without this,
+                    // the related-entity icon/tooltip would stay stale until the next loadChatSessions().
+                    const sessionId = this.sessionId;
+                    const updatedSessions = this.chatSessions
+                        .getValue()
+                        .map((session) =>
+                            session.id === sessionId
+                                ? { ...session, mode: contextToCommit.mode, entityId: contextToCommit.entityId, entityName: contextToCommit.entityName ?? session.entityName }
+                                : session,
+                        );
+                    this.chatSessions.next(updatedSessions);
                 }
-                this.pendingContext = undefined;
+                this._pendingOverride.set(undefined);
                 this.suggestions.next([]);
                 this.replaceOrAddMessage(this.mapMessageDTO(response.body!));
             }),
@@ -480,7 +483,7 @@ export class IrisChatService implements OnDestroy {
 
         const currentSessions = this.chatSessions.getValue();
 
-        const entityId = newIrisSession.entityId ?? this.sessionContext?.entityId;
+        const entityId = newIrisSession.entityId ?? this._committedContext()?.entityId;
         const newIrisSessionDTO: IrisSessionDTO = {
             id: newIrisSession.id,
             creationDate: newIrisSession.creationDate,
@@ -504,12 +507,9 @@ export class IrisChatService implements OnDestroy {
      */
     private updateCurrentSessionContext(session: IrisSession | IrisSessionDTO): void {
         const chatMode = session.mode;
-        if (chatMode !== undefined) {
-            this.currentChatModeSubject.next(chatMode);
-        }
-        const entityId = session.entityId ?? this.sessionContext?.entityId;
-        if (entityId !== undefined) {
-            this.currentRelatedEntityIdSubject.next(entityId);
+        const entityId = session.entityId ?? this._committedContext()?.entityId;
+        if (chatMode !== undefined && entityId !== undefined) {
+            this._committedContext.set({ mode: chatMode, entityId });
         }
     }
 
@@ -610,15 +610,13 @@ export class IrisChatService implements OnDestroy {
             this.websocketSessionSubscription?.unsubscribe();
             this.websocketSessionSubscription = undefined;
             this.sessionId = undefined;
-            this.currentRelatedEntityIdSubject.next(undefined);
-            this.currentChatModeSubject.next(undefined);
+            this._pendingOverride.set(undefined);
             this.messages.next([]);
             this.stages.next([]);
             this.suggestions.next([]);
             this.citationInfo.next([]);
             this.numNewMessages.next(0);
             this.newIrisMessage.next(undefined);
-            this.pendingContext = undefined;
         }
         this.error.next(undefined);
     }
@@ -627,11 +625,12 @@ export class IrisChatService implements OnDestroy {
      * Retrieves the current session or creates a new one if it doesn't exist.
      */
     private getCurrentSessionOrCreate(): Observable<IrisSession> {
-        if (!this.sessionContext) {
+        const sessionContext = this._committedContext();
+        if (!sessionContext) {
             throw new Error('Session context not set');
         }
 
-        return this.irisChatHttpService.getCurrentSessionOrCreateIfNotExists(this.sessionContext.mode, this.sessionContext.entityId).pipe(
+        return this.irisChatHttpService.getCurrentSessionOrCreateIfNotExists(sessionContext.mode, sessionContext.entityId).pipe(
             map((response: HttpResponse<IrisSession>) => {
                 if (response.body) {
                     return response.body;
@@ -661,7 +660,7 @@ export class IrisChatService implements OnDestroy {
                 extra: {
                     currentUrl: this.router.url,
                     userId: this.accountService.userIdentity()?.id,
-                    sessionContext: this.sessionContext,
+                    sessionContext: this._committedContext(),
                 },
                 tags: {
                     category: 'Iris',
@@ -675,10 +674,11 @@ export class IrisChatService implements OnDestroy {
      * Creates a new session
      */
     private createNewSession(): Observable<IrisSession> {
-        if (!this.sessionContext) {
+        const sessionContext = this._committedContext();
+        if (!sessionContext) {
             throw new Error('Session context not set');
         }
-        return this.irisChatHttpService.createSession(this.sessionContext.mode, this.sessionContext.entityId).pipe(
+        return this.irisChatHttpService.createSession(sessionContext.mode, sessionContext.entityId).pipe(
             map((response: HttpResponse<IrisSession>) => {
                 if (response.body) {
                     return response.body;
@@ -692,43 +692,37 @@ export class IrisChatService implements OnDestroy {
 
     switchTo(mode: ChatServiceMode, id?: number): void {
         const newContext = id !== undefined ? { mode, entityId: id } : undefined;
-        const isDifferent = this.sessionContext?.mode !== newContext?.mode || this.sessionContext?.entityId !== newContext?.entityId;
-        this.sessionContext = newContext;
+        const current = this._committedContext();
+        const isDifferent = current?.mode !== newContext?.mode || current?.entityId !== newContext?.entityId;
+        this._committedContext.set(newContext);
         if (isDifferent) {
             this.closeAndStart();
         }
     }
 
     /**
-     * Records a dropdown context selection as a {@link pendingContext} without touching the server.
-     * <p>
-     * The dropdown reflects the new selection immediately (committed-look) by emitting on the chat-mode
-     * and related-entity-id subjects, but the database, the message history, and the websocket subscription
-     * stay untouched. The change is only committed when the user actually sends a message — see
-     * {@link sendMessage}, which forwards the pending context as query params and lets the server insert
-     * the CTXSWAP marker atomically.
-     * <p>
-     * If the user toggles back to the session's current context (or picks a different option and then
-     * the original one) before sending, the next send simply finds {@link pendingContext} matching
-     * {@link sessionContext} and skips the server-side switch — no stray markers.
+     * Records a dropdown context selection as a pending override without touching the server.
+     * The database, message history, and websocket subscription stay untouched until the next
+     * {@link sendMessage}, which forwards the override as query params so the server inserts the
+     * CTXSWAP marker atomically. If the user reverts to the committed context before sending,
+     * the override is cleared and no marker is written.
      */
-    public switchContextOfCurrentSession(mode: ChatServiceMode, entityId: number): void {
+    public switchContextOfCurrentSession(mode: ChatServiceMode, entityId: number, entityName?: string): void {
         if (!this.sessionId) {
             return;
         }
-        if (this.sessionContext?.mode === mode && this.sessionContext?.entityId === entityId) {
-            this.pendingContext = undefined;
+        const committed = this._committedContext();
+        if (committed?.mode === mode && committed?.entityId === entityId) {
+            this._pendingOverride.set(undefined);
         } else {
-            this.pendingContext = { mode, entityId };
+            this._pendingOverride.set({ mode, entityId, entityName });
         }
-        this.currentChatModeSubject.next(mode);
-        this.currentRelatedEntityIdSubject.next(entityId);
     }
 
     switchToNewSession(mode: ChatServiceMode, id?: number): void {
-        this.sessionContext = id !== undefined ? { mode, entityId: id } : undefined;
+        this._committedContext.set(id !== undefined ? { mode, entityId: id } : undefined);
         this.close();
-        if (this.sessionContext) {
+        if (this._committedContext()) {
             this.sessionLoadingSubscription?.unsubscribe();
             this.sessionLoadingSubscription = this.createNewSession().subscribe({
                 ...this.handleNewSession(),
@@ -745,14 +739,12 @@ export class IrisChatService implements OnDestroy {
         this.close();
 
         const courseId = this.getCourseId();
-        const entityId = session.entityId;
         const chatMode = session.mode;
-        this.sessionContext = chatMode && entityId ? { mode: chatMode, entityId } : undefined;
+        const entityId = session.entityId;
+        this._committedContext.set(chatMode && entityId ? { mode: chatMode, entityId } : undefined);
         if (courseId) {
             this.chatSessionByIdSubscription?.unsubscribe();
             this.chatSessionByIdSubscription = this.irisChatHttpService.getChatSessionById(courseId, session.id).subscribe((session) => {
-                this.currentChatModeSubject.next(chatMode);
-                this.currentRelatedEntityIdSubject.next(entityId);
                 this.handleNewSession().next(session);
             });
         } else {
@@ -761,7 +753,7 @@ export class IrisChatService implements OnDestroy {
                     currentUrl: this.router.url,
                     userId: this.accountService.userIdentity()?.id,
                     sessionId: this.sessionId,
-                    sessionContext: this.sessionContext,
+                    sessionContext: this._committedContext(),
                 },
                 tags: {
                     category: 'Iris',
@@ -772,21 +764,13 @@ export class IrisChatService implements OnDestroy {
 
     private closeAndStart() {
         this.close();
-        if (this.sessionContext) {
+        if (this._committedContext()) {
             this.start();
         }
     }
 
     public currentSessionId(): Observable<number | undefined> {
         return this.currentSessionId$;
-    }
-
-    public currentRelatedEntityId(): Observable<number | undefined> {
-        return this.currentRelatedEntityId$;
-    }
-
-    public currentChatMode(): Observable<ChatServiceMode | undefined> {
-        return this.currentChatMode$;
     }
 
     public currentMessages(): Observable<IrisMessage[]> {

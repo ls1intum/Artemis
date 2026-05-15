@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { BehaviorSubject } from 'rxjs';
+import { WritableSignal, signal } from '@angular/core';
 import { ContextSelectionComponent } from './context-selection.component';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode, IrisChatService, SessionContext } from 'app/iris/overview/services/iris-chat.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -20,14 +20,10 @@ describe('ContextSelectionComponent', () => {
 
     let chatServiceMock: {
         getCourseId: ReturnType<typeof vi.fn>;
-        currentChatMode: ReturnType<typeof vi.fn>;
-        currentRelatedEntityId: ReturnType<typeof vi.fn>;
+        displayContext: WritableSignal<SessionContext | undefined>;
         switchContextOfCurrentSession: ReturnType<typeof vi.fn>;
     };
     let courseStorageServiceMock: { getCourse: ReturnType<typeof vi.fn> };
-
-    let chatModeSubject: BehaviorSubject<ChatServiceMode | undefined>;
-    let entityIdSubject: BehaviorSubject<number | undefined>;
 
     const courseId = 42;
 
@@ -49,13 +45,9 @@ describe('ContextSelectionComponent', () => {
     }
 
     beforeEach(async () => {
-        chatModeSubject = new BehaviorSubject<ChatServiceMode | undefined>(ChatServiceMode.COURSE);
-        entityIdSubject = new BehaviorSubject<number | undefined>(courseId);
-
         chatServiceMock = {
             getCourseId: vi.fn().mockReturnValue(courseId),
-            currentChatMode: vi.fn().mockReturnValue(chatModeSubject.asObservable()),
-            currentRelatedEntityId: vi.fn().mockReturnValue(entityIdSubject.asObservable()),
+            displayContext: signal<SessionContext | undefined>({ mode: ChatServiceMode.COURSE, entityId: courseId }),
             switchContextOfCurrentSession: vi.fn(),
         };
 
@@ -84,6 +76,7 @@ describe('ContextSelectionComponent', () => {
     describe('data loading', () => {
         it('should read course data from cache', () => {
             expect(courseStorageServiceMock.getCourse).toHaveBeenCalledWith(courseId);
+            expect(component.courseName()).toBe('Test Course');
             expect(component.lectures()).toHaveLength(2);
             expect(component.exercises()).toHaveLength(3);
         });
@@ -93,6 +86,7 @@ describe('ContextSelectionComponent', () => {
             fixture = TestBed.createComponent(ContextSelectionComponent);
             component = fixture.componentInstance;
 
+            expect(component.courseName()).toBe('');
             expect(component.lectures()).toHaveLength(0);
             expect(component.exercises()).toHaveLength(0);
         });
@@ -102,6 +96,7 @@ describe('ContextSelectionComponent', () => {
             fixture = TestBed.createComponent(ContextSelectionComponent);
             component = fixture.componentInstance;
 
+            expect(component.courseName()).toBe('Empty Course');
             expect(component.lectures()).toHaveLength(0);
             expect(component.exercises()).toHaveLength(0);
         });
@@ -112,6 +107,7 @@ describe('ContextSelectionComponent', () => {
             fixture = TestBed.createComponent(ContextSelectionComponent);
             component = fixture.componentInstance;
 
+            expect(component.courseName()).toBe('');
             expect(component.lectures()).toHaveLength(0);
             expect(component.exercises()).toHaveLength(0);
         });
@@ -132,36 +128,28 @@ describe('ContextSelectionComponent', () => {
     });
 
     describe('selectedValue', () => {
-        it('should return mode:entityId string when mode and entityId are set', () => {
-            chatModeSubject.next(ChatServiceMode.LECTURE);
-            entityIdSubject.next(7);
-            fixture.detectChanges();
+        it('should return mode:entityId string when context is set', () => {
+            chatServiceMock.displayContext.set({ mode: ChatServiceMode.LECTURE, entityId: 7 });
 
             expect(component.selectedValue()).toBe(`${ChatServiceMode.LECTURE}:7`);
         });
 
-        it('should return undefined when mode is undefined', () => {
-            chatModeSubject.next(undefined);
-            entityIdSubject.next(7);
-            fixture.detectChanges();
-
-            expect(component.selectedValue()).toBeUndefined();
-        });
-
-        it('should return undefined when entityId is undefined', () => {
-            chatModeSubject.next(ChatServiceMode.COURSE);
-            entityIdSubject.next(undefined);
-            fixture.detectChanges();
+        it('should return undefined when context is undefined', () => {
+            chatServiceMock.displayContext.set(undefined);
 
             expect(component.selectedValue()).toBeUndefined();
         });
     });
 
     describe('allGroups', () => {
-        it('should not include a course group', () => {
+        it('should include a course group with the course name', () => {
             const groups = component.allGroups();
             const courseGroup = groups.find((g) => g.label === 'artemisApp.iris.contextSelection.courseGroup');
-            expect(courseGroup).toBeUndefined();
+            expect(courseGroup).toBeDefined();
+            expect(courseGroup!.items).toHaveLength(1);
+            expect(courseGroup!.items[0].label).toBe('Test Course');
+            expect(courseGroup!.items[0].mode).toBe(ChatServiceMode.COURSE);
+            expect(courseGroup!.items[0].entityId).toBe(courseId);
         });
 
         it('should include a lectures group', () => {
@@ -188,6 +176,16 @@ describe('ContextSelectionComponent', () => {
 
             expect(programmingItem?.mode).toBe(ChatServiceMode.PROGRAMMING_EXERCISE);
             expect(textItem?.mode).toBe(ChatServiceMode.TEXT_EXERCISE);
+        });
+
+        it('should not include course group when courseName is empty', () => {
+            courseStorageServiceMock.getCourse.mockReturnValue({ id: courseId, title: '', lectures: [], exercises: [] });
+            fixture = TestBed.createComponent(ContextSelectionComponent);
+            component = fixture.componentInstance;
+
+            const groups = component.allGroups();
+            const courseGroup = groups.find((g) => g.label === 'artemisApp.iris.contextSelection.courseGroup');
+            expect(courseGroup).toBeUndefined();
         });
 
         it('should not include lectures group when there are no lectures', () => {
@@ -224,82 +222,22 @@ describe('ContextSelectionComponent', () => {
     });
 
     describe('onSelectionChange', () => {
-        it('should call chatService.switchContextOfCurrentSession with the correct mode and entityId', () => {
+        it('should call chatService.switchContextOfCurrentSession with the correct mode, entityId and label', () => {
             const value = `${ChatServiceMode.TEXT_EXERCISE}:11`;
             component.onSelectionChange(value);
 
-            expect(chatServiceMock.switchContextOfCurrentSession).toHaveBeenCalledWith(ChatServiceMode.TEXT_EXERCISE, 11);
+            expect(chatServiceMock.switchContextOfCurrentSession).toHaveBeenCalledWith(ChatServiceMode.TEXT_EXERCISE, 11, 'Text Ex');
         });
 
         it('should call switchContextOfCurrentSession for a lecture option', () => {
             const value = `${ChatServiceMode.LECTURE}:1`;
             component.onSelectionChange(value);
 
-            expect(chatServiceMock.switchContextOfCurrentSession).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 1);
+            expect(chatServiceMock.switchContextOfCurrentSession).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 1, 'Lecture 1');
         });
 
         it('should not call switchContextOfCurrentSession when value does not match any option', () => {
             component.onSelectionChange('UNKNOWN_MODE:999');
-            expect(chatServiceMock.switchContextOfCurrentSession).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('activeChip', () => {
-        it('should return undefined when mode is COURSE', () => {
-            chatModeSubject.next(ChatServiceMode.COURSE);
-            entityIdSubject.next(courseId);
-            fixture.detectChanges();
-
-            expect(component.activeChip()).toBeUndefined();
-        });
-
-        it('should return undefined when mode or entityId is undefined', () => {
-            chatModeSubject.next(undefined);
-            entityIdSubject.next(undefined);
-            fixture.detectChanges();
-
-            expect(component.activeChip()).toBeUndefined();
-        });
-
-        it('should return the matching option for an active lecture context', () => {
-            chatModeSubject.next(ChatServiceMode.LECTURE);
-            entityIdSubject.next(1);
-            fixture.detectChanges();
-
-            const chip = component.activeChip();
-            expect(chip).toBeDefined();
-            expect(chip!.mode).toBe(ChatServiceMode.LECTURE);
-            expect(chip!.entityId).toBe(1);
-            expect(chip!.label).toBe('Lecture 1');
-        });
-
-        it('should return the matching option for an active exercise context', () => {
-            chatModeSubject.next(ChatServiceMode.PROGRAMMING_EXERCISE);
-            entityIdSubject.next(10);
-            fixture.detectChanges();
-
-            const chip = component.activeChip();
-            expect(chip).toBeDefined();
-            expect(chip!.mode).toBe(ChatServiceMode.PROGRAMMING_EXERCISE);
-            expect(chip!.entityId).toBe(10);
-            expect(chip!.label).toBe('Programming Ex');
-        });
-    });
-
-    describe('onChipRemove', () => {
-        it('should switch context back to the course', () => {
-            component.onChipRemove();
-
-            expect(chatServiceMock.switchContextOfCurrentSession).toHaveBeenCalledWith(ChatServiceMode.COURSE, courseId);
-        });
-
-        it('should do nothing when courseId is undefined', () => {
-            chatServiceMock.getCourseId.mockReturnValue(undefined);
-            fixture = TestBed.createComponent(ContextSelectionComponent);
-            component = fixture.componentInstance;
-
-            component.onChipRemove();
-
             expect(chatServiceMock.switchContextOfCurrentSession).not.toHaveBeenCalled();
         });
     });

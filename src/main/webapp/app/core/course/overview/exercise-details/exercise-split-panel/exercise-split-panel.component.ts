@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -188,7 +188,8 @@ export class ExerciseSplitPanelComponent {
             const exercise = this.exercise();
             const mode = ExerciseSplitPanelComponent.getChatMode(exercise.type!);
             if (this.showIris() && exercise.id && mode) {
-                this.chatService.switchTo(mode, exercise.id);
+                // Use untracked to avoid re-running this effect when chatService state changes
+                untracked(() => this.chatService.switchTo(mode, exercise.id!));
             }
         });
         effect(() => {
