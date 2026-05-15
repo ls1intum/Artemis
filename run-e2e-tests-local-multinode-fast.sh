@@ -189,43 +189,65 @@ echo -e "${GREEN}Prerequisites OK${NC}"
 # =============================================================================
 # Step 1: Build the WAR (unless --skip-build)
 # =============================================================================
-# Parallelise the two long legs of `bootWar`:
-#   - `pnpm run webapp:prod`  (Angular production bundle -> build/resources/main/static)
-#   - `./gradlew compileJava` (Java + Spotless + Checkstyle deps -> build/classes)
-# These write to disjoint directories, so they can run concurrently. After both
-# finish we re-enter Gradle to package the WAR with -x webapp (skip the pnpm task,
-# its outputs are already on disk) and -x compileJava is implicit because Gradle's
-# up-to-date check sees the classes are fresh. On an M5 Max this cuts the build
-# step from ~95s sequential to ~45s wall-clock.
+# Parallelise the four long legs of a -Pprod WAR build that touch disjoint
+# output directories:
+#   pnpm run webapp:prod          -> build/resources/main/static/   (Angular bundle)
+#   pnpm run sbom:generate        -> build/reports/client-sbom*.json (cdxgen)
+#   ./gradlew compileJava cyclonedxBom
+#                                 -> build/classes/                  (.class files)
+#                                 -> build/reports/sbom/server-sbom.json
+# Then re-enter Gradle for the assembly step with -x on every leg above so
+# Gradle just runs processResources + copySbomsToResources + bootWar against
+# already-produced outputs. copySbomsToResources's doLast copies pre-existing
+# files, so skipping its dependencies doesn't break it.
+# On an M5 Max this cuts the build step from ~3:37 sequential to ~1:30
+# wall-clock (the SBOM generation and Angular build now overlap with each other
+# and with compileJava instead of running back-to-back).
 if [ "$SKIP_BUILD" = false ]; then
     echo ""
-    echo -e "${BLUE}Step 1: Building WAR (parallel: pnpm webapp:prod + ./gradlew compileJava, then bootWar)...${NC}"
+    echo -e "${BLUE}Step 1: Building WAR (parallel: webapp + client-SBOM + (compileJava + server-SBOM), then bootWar)...${NC}"
     CLIENT_LOG="$LOCAL_DIR/build-client.log"
+    CLIENT_SBOM_LOG="$LOCAL_DIR/build-client-sbom.log"
     SERVER_LOG="$LOCAL_DIR/build-server.log"
-    : > "$CLIENT_LOG"; : > "$SERVER_LOG"
+    : > "$CLIENT_LOG"; : > "$CLIENT_SBOM_LOG"; : > "$SERVER_LOG"
 
     pnpm run webapp:prod >"$CLIENT_LOG" 2>&1 &
     CLIENT_PID=$!
     echo -e "${YELLOW}  • client build started (pid $CLIENT_PID, log: $CLIENT_LOG)${NC}"
 
-    ./gradlew -Pprod -Pwar compileJava -x webapp >"$SERVER_LOG" 2>&1 &
+    pnpm run sbom:generate >"$CLIENT_SBOM_LOG" 2>&1 &
+    CLIENT_SBOM_PID=$!
+    echo -e "${YELLOW}  • client SBOM started (pid $CLIENT_SBOM_PID, log: $CLIENT_SBOM_LOG)${NC}"
+
+    # compileJava and cyclonedxBom both live in the Java tooling graph and a
+    # single Gradle invocation is the cheapest way to run them (avoids a
+    # second daemon-init round-trip). They are configured independently of
+    # the pnpm tasks, so they run in parallel with the two pnpm legs above.
+    ./gradlew -Pprod -Pwar compileJava cyclonedxBom -x webapp >"$SERVER_LOG" 2>&1 &
     SERVER_PID=$!
-    echo -e "${YELLOW}  • server compile started (pid $SERVER_PID, log: $SERVER_LOG)${NC}"
+    echo -e "${YELLOW}  • server compile + SBOM started (pid $SERVER_PID, log: $SERVER_LOG)${NC}"
 
     set +e
-    wait "$CLIENT_PID"; CLIENT_RC=$?
-    wait "$SERVER_PID"; SERVER_RC=$?
+    wait "$CLIENT_PID";      CLIENT_RC=$?
+    wait "$CLIENT_SBOM_PID"; CLIENT_SBOM_RC=$?
+    wait "$SERVER_PID";      SERVER_RC=$?
     set -e
-    if [ "$CLIENT_RC" -ne 0 ] || [ "$SERVER_RC" -ne 0 ]; then
-        echo -e "${RED}Build failed (client rc=$CLIENT_RC, server rc=$SERVER_RC).${NC}"
-        echo -e "${RED}--- last 50 lines of client log ---${NC}"
-        tail -n 50 "$CLIENT_LOG" || true
-        echo -e "${RED}--- last 50 lines of server log ---${NC}"
-        tail -n 50 "$SERVER_LOG" || true
+    if [ "$CLIENT_RC" -ne 0 ] || [ "$CLIENT_SBOM_RC" -ne 0 ] || [ "$SERVER_RC" -ne 0 ]; then
+        echo -e "${RED}Build failed (client rc=$CLIENT_RC, client-sbom rc=$CLIENT_SBOM_RC, server rc=$SERVER_RC).${NC}"
+        for tag in "client" "client-sbom" "server"; do
+            log_var="${tag^^}_LOG"; log_var="${log_var//-/_}"
+            echo -e "${RED}--- last 50 lines of ${tag} log ---${NC}"
+            tail -n 50 "${!log_var:-$LOCAL_DIR/build-$tag.log}" 2>/dev/null || true
+        done
         exit 1
     fi
-    echo -e "${GREEN}  ✓ client + server built; assembling WAR...${NC}"
-    ./gradlew -Pprod -Pwar bootWar -x test -x webapp
+    echo -e "${GREEN}  ✓ client + client-SBOM + server + server-SBOM built; assembling WAR...${NC}"
+    # `-x compileJava` and `-x cyclonedxBom` would error during processResources
+    # because their Provider outputs are wired into other tasks. Gradle's
+    # up-to-date check makes them ~free on the second invocation anyway. The
+    # only task we need to exclude is generateClientSbom: it's a PnpmTask
+    # without an UP-TO-DATE check and would otherwise re-run cdxgen.
+    ./gradlew -Pprod -Pwar bootWar -x test -x webapp -x generateClientSbom
 else
     echo ""
     echo -e "${YELLOW}Step 1: Skipping WAR build (--skip-build)${NC}"
