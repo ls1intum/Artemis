@@ -220,23 +220,40 @@ behaviour is unchanged.
 ### Host directory requirements
 
 - The directories must exist before the build agent starts; the agent does not create them.
-- They must be writable by the build-container user. The official Java build images run as root, so mode `0777` on
-  the host is the simplest choice and also accommodates custom images that use a different non-root UID.
+- They must be writable by the build-container user. The recommended permissions depend on the build image:
+  - **Root-based images (Artemis defaults):** create the directories owned by `root:root` with mode `0755`. The
+    container's root user can read and write; no other host user can.
+  - **Custom non-root images:** `chown` the host directory to the UID/GID the container runs as, or set a POSIX
+    ACL granting that UID write access. Avoid world-writable permissions when a more precise grant works.
+  - **Fallback only:** mode `0777` (world-writable) is the easiest last-resort workaround when an agent runs a mix
+    of root and non-root build images, but be aware that it lets any local process on the build-agent host modify
+    the cache — only acceptable on machines that run nothing besides the Artemis build agent.
 - The cache grows over time. A weekly cron such as `find <path> -atime +30 -type f -delete` keeps it bounded; verify
   that the host's filesystem is not mounted with `noatime` before relying on access-time-based pruning, otherwise
   switch to `-mtime`.
 
 ### Caveats
 
+- **Cache poisoning between submissions (security trade-off).** A student submission that successfully resolves a
+  dependency writes the artifact into the shared host cache. Subsequent submissions — for the same student, a
+  different student, or a different exercise on the same agent — will consume the cached copy without re-validating
+  against Maven Central. A malicious build could deliberately seed the cache with a manipulated artifact under a
+  coordinate that a future submission declares, which would then be silently consumed by that build. The pre-baked
+  dependencies in the official Artemis build images (e.g. `ls1tum/artemis-maven-template`) cover the common case and
+  are not affected because they are baked into the image layer, not the bind-mounted cache. **Recommended deployment
+  pattern:** use bind-mount caching only on agents that run general programming exercises without secret tests, or
+  in combination with the network-restriction patterns described under [Security Considerations](#security-considerations-for-secret-tests).
+  For exam-grade isolation, the [Docker volumes approach below](#caching-docker-volumes) — which mounts the cache
+  read-only for student submissions and read-write only for the trusted solution warm-up — remains the stronger
+  option. A future iteration can add a per-submission read-only mode to this mechanism; tracked as follow-up.
 - **Gradle file locks.** Gradle's `~/.gradle/caches` uses file locks; concurrent Gradle builds on the same agent will
   briefly serialize during dependency resolution. Maven has no equivalent lock. If contention becomes a hotspot with
-  large `concurrent-build-size`, consider switching the Gradle cache to a read-only mount populated by a warm-up
-  build (`GRADLE_RO_DEP_CACHE`) — out of scope for the default configuration.
+  large `concurrent-build-size`, consider switching the Gradle cache to a read-only mount populated by a trusted
+  warm-up build via Gradle's `GRADLE_RO_DEP_CACHE` environment variable (Gradle ≥ 6.1; configures a read-only
+  fallback dependency cache that is not subject to file-lock contention) — out of scope for the default
+  configuration.
 - **First build per agent is still slow** because the cache is empty (cold-fill). Steady-state speedup applies from
   the second build onwards.
-- **No isolation between submissions.** All builds on the same agent share the same on-disk cache. If you rely on
-  cache isolation for security-sensitive secret tests, prefer the [Docker volumes approach below](#caching-docker-volumes)
-  with read-only mounts for student submissions.
 
 
 ## Caching with Docker Volumes {/* #caching-docker-volumes */}
