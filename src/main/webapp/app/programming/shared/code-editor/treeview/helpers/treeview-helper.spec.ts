@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { TreeItem, TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { findItem, findItemInList } from 'app/programming/shared/code-editor/treeview/helpers/tree-view-helper';
 

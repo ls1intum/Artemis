@@ -82,9 +82,7 @@ export default defineConfig({
             'src/main/webapp/app/exercise/exercise-scores/**/*.spec.ts', // include exercise-scores tests
             'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.spec.ts', // include filter-dropdown component tests
             'src/main/webapp/app/shared/search-filter/**/*.spec.ts', // include search-filter component tests
-            'src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // include build phases template service tests
-            'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
-            'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
+            'src/main/webapp/app/programming/shared/**/*.spec.ts', // include programming shared tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -146,9 +144,7 @@ export default defineConfig({
                 'src/main/webapp/app/exercise/exercise-scores/**/*.ts', // include exercise-scores for code coverage
                 'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.ts', // include filter-dropdown component for code coverage
                 'src/main/webapp/app/shared/search-filter/**/*.ts', // include search-filter component for code coverage
-                'src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // include build phases template service for code coverage
-                'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
-                'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
+                'src/main/webapp/app/programming/shared/**/*.ts', // include programming shared for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code
