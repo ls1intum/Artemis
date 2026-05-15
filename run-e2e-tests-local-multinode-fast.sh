@@ -198,15 +198,25 @@ else
     echo -e "${YELLOW}Step 1: Skipping WAR build (--skip-build)${NC}"
 fi
 
-# Glob the WAR path AFTER the build step so a freshly produced artifact (or a renamed one after a
-# version bump) is picked up. Doing this before the build would store the literal pattern on a
-# clean checkout and the existence check below would fire even on a successful build.
-WAR_FILES=(build/libs/Artemis-*.war)
-if [ ! -e "${WAR_FILES[0]}" ]; then
-    echo -e "${RED}ERROR: No WAR found at build/libs/Artemis-*.war. Drop --skip-build to build it.${NC}"
+# Resolve the WAR for the *current* build.gradle version rather than picking the first
+# lexicographic match from build/libs. We do not `gradle clean` in the fast path (that defeats
+# fast iteration), so stale artifacts from older releases stick around — and the new
+# `major.patch` scheme makes alphabetical ordering unsafe: e.g. `Artemis-9.1.2.war` sorts before
+# `Artemis-9.2.war`. A stale WAR built from pre-PR-#12695 sources still uses the old
+# `new Semver(currentVersionString)` migration code, which then dies on startup with
+# `SemverException: Invalid version (no patch version): 9.2` when the persisted DB carries a
+# two-part version. Resolve the WAR after the build so a freshly produced artifact is picked up.
+ARTEMIS_VERSION=$(grep -E '^[[:space:]]*version[[:space:]]*=' build.gradle | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+if [ -z "$ARTEMIS_VERSION" ]; then
+    echo -e "${RED}ERROR: Could not determine Artemis version from build.gradle${NC}"
     exit 1
 fi
-WAR_FILE="${WAR_FILES[0]}"
+WAR_FILE="build/libs/Artemis-${ARTEMIS_VERSION}.war"
+if [ ! -e "$WAR_FILE" ]; then
+    echo -e "${RED}ERROR: Expected WAR not found: $WAR_FILE${NC}"
+    echo "Drop --skip-build to build it, or delete stale build/libs/Artemis-*.war from prior versions."
+    exit 1
+fi
 
 # Sanity-check the Angular bundle is in the WAR (nginx serves it from there). Without -Pprod the
 # bootWar task may produce a JSP-less, asset-less artifact.
