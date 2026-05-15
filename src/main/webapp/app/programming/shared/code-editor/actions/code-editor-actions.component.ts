@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, OnInit, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash-es';
@@ -28,16 +30,16 @@ import { CodeEditorResolveConflictModalComponent } from 'app/programming/shared/
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FeatureToggleDirective, NgbTooltip, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
 })
-export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges {
-    private repositoryService = inject(CodeEditorRepositoryService);
-    private repositoryFileService = inject(CodeEditorRepositoryFileService);
-    private conflictService = inject(CodeEditorConflictStateService);
-    private modalService = inject(NgbModal);
-    private submissionService = inject(CodeEditorSubmissionService);
-    private route = inject(ActivatedRoute);
-    private router = inject(Router);
-    private changeDetectorRef = inject(ChangeDetectorRef);
-    private ngZone = inject(NgZone);
+export class CodeEditorActionsComponent implements OnInit, OnDestroy {
+    private readonly repositoryService = inject(CodeEditorRepositoryService);
+    private readonly repositoryFileService = inject(CodeEditorRepositoryFileService);
+    private readonly conflictService = inject(CodeEditorConflictStateService);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
+    private readonly submissionService = inject(CodeEditorSubmissionService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly router = inject(Router);
+    private readonly ngZone = inject(NgZone);
 
     CommitState = CommitState;
     EditorState = EditorState;
@@ -49,20 +51,10 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     }>(undefined!);
     readonly disableActions = input(false);
     readonly disableAutoSave = input(false);
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input() get editorState() {
-        return this.editorStateValue;
-    }
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input() get commitState() {
-        return this.commitStateValue;
-    }
-    participation = input<Participation>();
+    readonly editorState = model<EditorState>(undefined!);
+    readonly commitState = model<CommitState>(undefined!);
+    readonly participation = input<Participation>();
 
-    readonly commitStateChange = output<CommitState>();
-    readonly editorStateChange = output<EditorState>();
     readonly isBuildingChange = output<boolean>();
     readonly onSavedFiles = output<{
         [fileName: string]: string | undefined;
@@ -71,22 +63,10 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     readonly onCommit = output<void>();
     readonly onError = output<string>();
 
-    private _isBuilding: boolean;
-    editorStateValue: EditorState;
-    commitStateValue: CommitState;
-    isResolvingConflict = false;
-    routerLink: string;
-    repositoryLink: string[];
-    isInCourseManagement = false;
-
-    get isBuilding(): boolean {
-        return this._isBuilding;
-    }
-
-    set isBuilding(value: boolean) {
-        this._isBuilding = value;
-        this.changeDetectorRef.markForCheck();
-    }
+    readonly isBuilding = signal<boolean>(false);
+    readonly isResolvingConflict = signal<boolean>(false);
+    readonly repositoryLink = signal<string[]>([]);
+    readonly isInCourseManagement = signal<boolean>(false);
 
     conflictStateSubscription: Subscription;
     submissionSubscription: Subscription;
@@ -103,16 +83,32 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     farPlayCircle = faPlayCircle;
     faExternalLink = faExternalLink;
 
-    set commitState(commitState: CommitState) {
-        this.commitStateValue = commitState;
-        this.commitStateChange.emit(commitState);
-        this.changeDetectorRef.markForCheck();
-    }
+    /**
+     * Tracks the previous editorState so we can reproduce the legacy ngOnChanges
+     * transition: when editorState transitions from SAVING to CLEAN while
+     * commitState is COMMITTING, the commit completes (CLEAN); otherwise the
+     * commit reverts to UNCOMMITTED_CHANGES.
+     */
+    private previousEditorState: EditorState | undefined;
 
-    set editorState(editorState: EditorState) {
-        this.editorStateValue = editorState;
-        this.editorStateChange.emit(editorState);
-        this.changeDetectorRef.markForCheck();
+    constructor() {
+        effect(() => {
+            const current = this.editorState();
+            // Snapshot the previous value before updating it for the next run.
+            const previous = untracked(() => this.previousEditorState);
+            this.previousEditorState = current;
+            if (previous === EditorState.SAVING && untracked(() => this.commitState()) === CommitState.COMMITTING) {
+                // Use a microtask so we don't write to a model() inside its own change
+                // detection pass.
+                setTimeout(() => {
+                    if (current === EditorState.CLEAN) {
+                        this.commitState.set(CommitState.CLEAN);
+                    } else {
+                        this.commitState.set(CommitState.UNCOMMITTED_CHANGES);
+                    }
+                }, 0);
+            }
+        });
     }
 
     ngOnInit(): void {
@@ -123,23 +119,22 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
             const exerciseId = Number(params['exerciseId']);
             const examId = Number(params['examId']);
             const exerciseGroupId = Number(params['exerciseGroupId']);
-            this.repositoryLink = getLocalRepositoryLink(courseId, exerciseId, repositoryType, repositoryId, examId, exerciseGroupId);
-            this.changeDetectorRef.markForCheck();
+            this.repositoryLink.set(getLocalRepositoryLink(courseId, exerciseId, repositoryType, repositoryId, examId, exerciseGroupId));
         });
-        this.isInCourseManagement = this.router.url.includes('course-management');
+        this.isInCourseManagement.set(this.router.url.includes('course-management'));
 
         this.conflictStateSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
             // When the conflict is encountered when opening the code-editor, setting the commitState here could cause an uncheckedException.
             // Schedule the state change for the next tick to ensure template is rendered.
-            if (this.commitState === CommitState.CONFLICT && gitConflictState === GitConflictState.OK) {
+            if (this.commitState() === CommitState.CONFLICT && gitConflictState === GitConflictState.OK) {
                 // Case a: Conflict was resolved.
                 setTimeout(() => {
-                    this.commitState = CommitState.UNDEFINED;
+                    this.commitState.set(CommitState.UNDEFINED);
                 }, 0);
-            } else if (this.commitState !== CommitState.CONFLICT && gitConflictState === GitConflictState.CHECKOUT_CONFLICT) {
+            } else if (this.commitState() !== CommitState.CONFLICT && gitConflictState === GitConflictState.CHECKOUT_CONFLICT) {
                 // Case b: Conflict has occurred.
                 setTimeout(() => {
-                    this.commitState = CommitState.CONFLICT;
+                    this.commitState.set(CommitState.CONFLICT);
                 }, 0);
             }
         });
@@ -147,8 +142,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
             .getBuildingState()
             .pipe(
                 tap((isBuilding: boolean) => {
-                    this.isBuilding = isBuilding;
-                    // markForCheck is called in the setter
+                    this.isBuilding.set(isBuilding);
                 }),
             )
             .subscribe();
@@ -168,25 +162,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
         }
     }
 
-    /**
-     * After save and commit, we need to wait for the 'save' to settle, see the setter {@link CodeEditorContainerComponent#unsavedFilesValue}.
-     * This is because the user might have changed files while the commit was executing.
-     * In that case, we do not reset the commit state to CommitState.CLEAN.
-     * @param changes
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        setTimeout(() => {
-            if (changes.editorState && changes.editorState.previousValue === EditorState.SAVING && this.commitState === CommitState.COMMITTING) {
-                if (changes.editorState.currentValue === EditorState.CLEAN) {
-                    this.commitState = CommitState.CLEAN;
-                } else {
-                    this.commitState = CommitState.UNCOMMITTED_CHANGES;
-                }
-                // markForCheck is called in the setter
-            }
-        }, 0);
-    }
-
     ngOnDestroy(): void {
         clearInterval(this.autoSaveInterval);
         this.onSave();
@@ -203,10 +178,19 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     onRefresh() {
-        if (this.editorState !== EditorState.CLEAN) {
-            const modal = this.modalService.open(CodeEditorConfirmRefreshModalComponent, { keyboard: true, size: 'lg' });
-            modal.componentInstance.shouldRefresh.subscribe(() => {
-                this.executeRefresh();
+        if (this.editorState() !== EditorState.CLEAN) {
+            const ref = this.dialogService.open(CodeEditorConfirmRefreshModalComponent, {
+                header: this.translateService.instant('artemisApp.editor.refresh.refreshExplanationShort'),
+                width: '50rem',
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: false,
+            });
+            ref?.onClose.subscribe((confirmed: boolean | undefined) => {
+                if (confirmed) {
+                    this.executeRefresh();
+                }
             });
         } else {
             this.executeRefresh();
@@ -214,14 +198,14 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     executeRefresh() {
-        this.editorState = EditorState.REFRESHING;
+        this.editorState.set(EditorState.REFRESHING);
         this.repositoryService.pull().subscribe({
             next: () => {
                 this.onRefreshFiles.emit();
-                this.editorState = EditorState.CLEAN;
+                this.editorState.set(EditorState.CLEAN);
             },
             error: (error: Error) => {
-                this.editorState = EditorState.UNSAVED_CHANGES;
+                this.editorState.set(EditorState.UNSAVED_CHANGES);
                 if (error.message === ConnectionError.message) {
                     this.onError.emit('refreshFailed' + error.message);
                 } else {
@@ -244,14 +228,14 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     saveChangedFiles(andCommit = false): Observable<any> {
         const unsavedFilesValue = this.unsavedFiles();
         if (!_isEmpty(unsavedFilesValue)) {
-            this.editorState = EditorState.SAVING;
+            this.editorState.set(EditorState.SAVING);
             const unsavedFiles = Object.entries(unsavedFilesValue).map(([fileName, fileContent]) => ({ fileName, fileContent }));
             return this.repositoryFileService.updateFiles(unsavedFiles, andCommit).pipe(
                 tap((fileSubmission: FileSubmission) => {
                     this.onSavedFiles.emit(fileSubmission);
                 }),
                 catchError((error: Error) => {
-                    this.editorState = EditorState.UNSAVED_CHANGES;
+                    this.editorState.set(EditorState.UNSAVED_CHANGES);
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('saveFailed' + error.message);
                     } else {
@@ -271,13 +255,13 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
      */
     commit() {
         // Avoid multiple commits at the same time.
-        if (this.commitState === CommitState.COMMITTING) {
+        if (this.commitState() === CommitState.COMMITTING) {
             return;
         }
         // If there are unsaved changes, save them before trying to commit again.
         of(undefined)
             .pipe(
-                tap(() => (this.commitState = CommitState.COMMITTING)),
+                tap(() => this.commitState.set(CommitState.COMMITTING)),
                 switchMap(() => {
                     if (!_isEmpty(this.unsavedFiles())) {
                         return this.saveChangedFiles(true);
@@ -286,13 +270,13 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                     }
                 }),
                 tap(() => {
-                    if (this.editorState === EditorState.CLEAN) {
-                        this.commitState = CommitState.CLEAN;
+                    if (this.editorState() === EditorState.CLEAN) {
+                        this.commitState.set(CommitState.CLEAN);
                     }
                     // We just assume that after the commit a build happens if the repo is buildable.
                     if (this.buildable()) {
                         // Note: this is not 100% clean, but not setting it here would complicate the state model.
-                        this.isBuilding = true;
+                        this.isBuilding.set(true);
                     }
                 }),
                 tap(() => {
@@ -301,7 +285,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
             )
             .subscribe({
                 error: (error: HttpErrorResponse) => {
-                    this.commitState = CommitState.UNCOMMITTED_CHANGES;
+                    this.commitState.set(CommitState.UNCOMMITTED_CHANGES);
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('submitFailed' + error.message);
                     } else {
@@ -323,8 +307,18 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     resetRepository() {
-        const modal = this.modalService.open(CodeEditorResolveConflictModalComponent, { keyboard: true, size: 'lg' });
-        modal.componentInstance.shouldReset.subscribe(() => {
+        const ref = this.dialogService.open(CodeEditorResolveConflictModalComponent, {
+            header: this.translateService.instant('artemisApp.editor.conflict.conflictExplanationShort'),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+        });
+        ref?.onClose.subscribe((confirmed: boolean | undefined) => {
+            if (!confirmed) {
+                return;
+            }
             this.repositoryService.resetRepository().subscribe({
                 next: () => {
                     this.conflictService.notifyConflictState(GitConflictState.OK);
