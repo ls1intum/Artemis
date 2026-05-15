@@ -6,6 +6,7 @@ import {
     ComponentRef,
     EnvironmentInjector,
     OnDestroy,
+    OnInit,
     ViewContainerRef,
     createComponent,
     effect,
@@ -18,7 +19,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import type { PluginSimple } from 'markdown-it';
-import { catchError, debounceTime, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, filter, map, mergeMap, skip, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subject, Subscription, merge, of } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { ProgrammingExerciseTaskExtensionWrapper, taskRegex } from './extensions/programming-exercise-task.extension';
@@ -52,7 +53,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [ProgrammingExerciseInstructionStepWizardComponent, ExamExerciseUpdateHighlighterComponent, FaIconComponent, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProgrammingExerciseInstructionComponent implements OnDestroy {
+export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestroy {
     private viewContainerRef = inject(ViewContainerRef);
     private resultService = inject(ResultService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
@@ -131,9 +132,13 @@ export class ProgrammingExerciseInstructionComponent implements OnDestroy {
     constructor() {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
 
-        // Use takeUntilDestroyed for automatic cleanup of class-level subscriptions
+        // Use takeUntilDestroyed for automatic cleanup of class-level subscriptions. `skip(1)` drops
+        // the initial synchronous emission from `toObservable`: only actual subsequent theme changes
+        // should invalidate the render cache and trigger updateMarkdown. (Without the skip, the
+        // initial emission can race with ngOnInit's first processInputChanges call — once isInitial
+        // flips to false, the queued microtask emission would fire updateMarkdown a second time.)
         toObservable(this.themeService.currentTheme)
-            .pipe(takeUntilDestroyed())
+            .pipe(skip(1), takeUntilDestroyed())
             .subscribe(() => {
                 if (!this.isInitial) {
                     // Invalidate the render cache since the theme changed (PlantUML diagrams need re-rendering with new colors)
@@ -176,6 +181,22 @@ export class ProgrammingExerciseInstructionComponent implements OnDestroy {
 
             this.processInputChanges({ participationChanged, generateHtmlEventsChanged });
         });
+    }
+
+    /**
+     * Mirrors the legacy ngOnChanges first-call: legacy components received an initial SimpleChanges
+     * for every input before the first render, so processInputChanges() ran (with everything-changed
+     * flags) to set up subscriptions / load data. The constructor effect intentionally skips its
+     * first synchronous emission to avoid double-firing, so the initial pass happens here.
+     *
+     * Guarded by `exercise()` so tests / scenarios that mount the component without inputs do not
+     * trigger result-websocket setup, etc., with undefined state — legacy ngOnChanges only ran when
+     * at least one input was bound.
+     */
+    ngOnInit(): void {
+        if (this.exercise()) {
+            this.processInputChanges();
+        }
     }
 
     // Icons

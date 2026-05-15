@@ -117,7 +117,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         // @ts-ignore
         comp.participationSubscription = oldSubscription;
 
-        comp.processInputChanges({ participationChanged: true });
+        // ngOnInit fires processInputChanges automatically on the first detectChanges, mirroring
+        // the legacy ngOnChanges first-call semantics.
         fixture.changeDetectorRef.detectChanges();
 
         expect(getTestCasesSpy).toHaveBeenCalledOnce();
@@ -150,7 +151,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         // @ts-ignore
         comp.generateHtmlSubscription = oldSubscription;
 
-        comp.processInputChanges({ participationChanged: true });
+        // ngOnInit handles the initial processInputChanges call.
         fixture.changeDetectorRef.detectChanges();
 
         // @ts-ignore - the generateHtmlSubscription should be reassigned, not left as the old one
@@ -178,8 +179,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.isInitial = true;
         comp.isLoading = false;
 
+        // ngOnInit fires processInputChanges automatically.
         fixture.detectChanges();
-        comp.processInputChanges();
         // @ts-ignore
         expect(comp.problemStatement).toBeUndefined();
         // Component now processes empty problem statements to show empty state
@@ -273,8 +274,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.isInitial = true;
         comp.isLoading = false;
 
+        // ngOnInit fires processInputChanges automatically.
         fixture.detectChanges();
-        comp.processInputChanges();
 
         expect(comp.markdownExtensions).toHaveLength(2);
         expect(getLatestResultWithFeedbacks).toHaveBeenCalledOnce();
@@ -491,14 +492,18 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should update the markdown on a theme change', () => {
+        // Establish a known starting theme so the subsequent change is guaranteed to be a real
+        // signal update. The constructor's `toObservable(currentTheme).pipe(skip(1), ...)` drops
+        // the initial subscription emission, so only this explicit second change should fire
+        // updateMarkdown via the theme observer.
+        themeService.applyThemePreference(Theme.LIGHT);
+        fixture.changeDetectorRef.detectChanges();
         const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
 
         comp.isInitial = false;
         themeService.applyThemePreference(Theme.DARK);
-
         fixture.changeDetectorRef.detectChanges();
 
-        // toObservable triggers a effect in the background on initial detectChanges
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
     });
 

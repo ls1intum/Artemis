@@ -122,7 +122,11 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     }
 
     /**
-     * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC
+     * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC.
+     * Also applies the date-cascade for the initial exercise: legacy ngOnChanges ran on every
+     * input change including the initial one, which corrected invalid initial date ordering
+     * before the first template render. The constructor effect intentionally skips its first
+     * synchronous emission, so the cascade must run here for the initial input pass.
      */
     ngOnInit(): void {
         this.updateIsImportBasedOnUrl();
@@ -130,6 +134,9 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         const exercise = this.exercise();
         if (exercise && !exercise.id && !this.isImport) {
             exercise.assessmentType = AssessmentType.AUTOMATIC;
+        }
+        if (exercise) {
+            this.applyExerciseDateCascade(exercise);
         }
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
     }
