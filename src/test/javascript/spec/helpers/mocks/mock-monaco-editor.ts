@@ -19,6 +19,7 @@ const createMockModel = () => ({
     }),
     updateOptions: () => {},
     onDidChangeContent: () => ({ dispose: () => {} }),
+    getLanguageId: () => 'plaintext',
 });
 
 let editorIdCounter = 0;
@@ -39,6 +40,9 @@ const createMockEditor = () => {
         onDidBlurEditorWidget: () => ({ dispose: () => {} }),
         onKeyDown: () => ({ dispose: () => {} }),
         onKeyUp: () => ({ dispose: () => {} }),
+        onMouseMove: () => ({ dispose: () => {} }),
+        onMouseDown: () => ({ dispose: () => {} }),
+        onMouseLeave: () => ({ dispose: () => {} }),
         focus: () => {},
         layout: () => {},
         getPosition: () => ({ lineNumber: 1, column: 1 }),
@@ -69,6 +73,12 @@ const createMockEditor = () => {
         setScrollTop: () => {},
         setScrollPosition: () => {},
         onDidScrollChange: () => ({ dispose: () => {} }),
+        addGlyphMarginWidget: () => {},
+        removeGlyphMarginWidget: () => {},
+        addContentWidget: () => {},
+        removeContentWidget: () => {},
+        addOverlayWidget: () => {},
+        removeOverlayWidget: () => {},
         getId: () => editorId,
         getOption: (optionId: number) => {
             const optionValues: Record<number, unknown> = {
@@ -116,6 +126,16 @@ export const editor = {
 
     EndOfLineSequence: { LF: 0, CRLF: 1 },
     EndOfLinePreference: { TextDefined: 0, LF: 1, CRLF: 2 },
+
+    GlyphMarginLane: { Left: 1, Center: 2, Right: 3 },
+    TrackedRangeStickiness: {
+        AlwaysGrowsWhenTypingAtEdges: 0,
+        NeverGrowsWhenTypingAtEdges: 1,
+        GrowsOnlyWhenTypingBefore: 2,
+        GrowsOnlyWhenTypingAfter: 3,
+    },
+    ContentWidgetPositionPreference: { EXACT: 0, ABOVE: 1, BELOW: 2 },
+    OverlayWidgetPositionPreference: { TOP_RIGHT_CORNER: 0, BOTTOM_RIGHT_CORNER: 1, TOP_CENTER: 2 },
 
     EditorOption: {
         lineHeight: 75,

@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MockComponent } from 'ng-mocks';
@@ -28,11 +30,13 @@ import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/c
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 
 describe('CodeEditorMonacoComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CodeEditorMonacoComponent;
     let fixture: ComponentFixture<CodeEditorMonacoComponent>;
-    let getInlineFeedbackNodeStub: jest.SpyInstance;
+    let getInlineFeedbackNodeStub: ReturnType<typeof vi.spyOn>;
     let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
-    let loadFileFromRepositoryStub: jest.SpyInstance;
+    let loadFileFromRepositoryStub: ReturnType<typeof vi.spyOn>;
 
     const exampleFeedbacks: Feedback[] = [
         {
@@ -57,8 +61,7 @@ describe('CodeEditorMonacoComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MonacoEditorComponent],
-            declarations: [MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent), MockComponent(CodeEditorHeaderComponent)],
+            imports: [MonacoEditorComponent, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent), MockComponent(CodeEditorHeaderComponent)],
             providers: [
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
@@ -70,13 +73,11 @@ describe('CodeEditorMonacoComponent', () => {
         fixture = TestBed.createComponent(CodeEditorMonacoComponent);
         comp = fixture.componentInstance;
         codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
-        loadFileFromRepositoryStub = jest.spyOn(codeEditorRepositoryFileService, 'getFile');
+        loadFileFromRepositoryStub = vi.spyOn(codeEditorRepositoryFileService, 'getFile');
         // Provide a safe default so accidental file loads during change detection don't throw
         loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: '' }));
-        getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode').mockReturnValue(document.createElement('div'));
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
+        getInlineFeedbackNodeStub = vi.spyOn(comp, 'getInlineFeedbackNode').mockReturnValue(document.createElement('div'));
+        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
         fixture.componentRef.setInput('sessionId', 'test');
         fixture.componentRef.setInput('commitState', CommitState.CLEAN);
@@ -84,18 +85,18 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should hide the editor if no file is selected', () => {
         fixture.detectChanges();
         const element = document.getElementById('monaco-editor-test');
         expect(element).not.toBeNull();
-        expect(element!.hidden).toBeTrue();
+        expect(element!.hidden).toBe(true);
     });
 
     it('should not try to load a file if none is selected', async () => {
-        const editorChangeModelSpy = jest.spyOn(comp.editor(), 'changeModel');
+        const editorChangeModelSpy = vi.spyOn(comp.editor(), 'changeModel');
         fixture.detectChanges();
         await comp.selectFileInEditor(undefined);
         expect(editorChangeModelSpy).not.toHaveBeenCalled();
@@ -109,24 +110,24 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         const element = document.getElementById('monaco-editor-test');
         expect(element).not.toBeNull();
-        expect(element!.hidden).toBeTrue();
+        expect(element!.hidden).toBe(true);
     });
 
     it('should display the usable editor when a file is selected', () => {
         // Prevent loading the file
-        jest.spyOn(comp, 'selectFileInEditor').mockImplementation().mockResolvedValue(undefined);
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
         fixture.componentRef.setInput('selectedFile', 'file');
         fixture.componentRef.setInput('isTutorAssessment', false);
         fixture.changeDetectorRef.detectChanges();
         const element = document.getElementById('monaco-editor-test');
         expect(element).not.toBeNull();
-        expect(element!.hidden).toBeFalse();
-        expect(comp.editor().isReadOnly()).toBeFalse();
+        expect(element!.hidden).toBe(false);
+        expect(comp.editor().isReadOnly()).toBe(false);
     });
 
     it('should re-apply interaction mode after file selection in ngOnChanges', async () => {
-        const updateInteractionModeStub = jest.spyOn(comp as any, 'updateEditorInteractionMode');
-        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        const updateInteractionModeStub = vi.spyOn(comp as any, 'updateEditorInteractionMode');
+        const selectFileInEditorStub = vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
         fixture.componentRef.setInput('enableExerciseReviewComments', true);
         fixture.componentRef.setInput('selectedFile', 'file1.java');
         fixture.changeDetectorRef.detectChanges();
@@ -139,10 +140,10 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should configure review comment mode in updateEditorInteractionMode', () => {
-        const setupReviewCommentButtonStub = jest.spyOn(comp, 'setupAddReviewCommentButton').mockImplementation();
-        const setupAddFeedbackButtonStub = jest.spyOn(comp, 'setupAddFeedbackButton').mockImplementation();
-        const clearHoverButtonStub = jest.spyOn(comp.editor(), 'clearLineDecorationsHoverButton').mockImplementation();
-        const disposeFeedbackShortcutStub = jest.spyOn(comp as any, 'disposeAddFeedbackShortcut').mockImplementation();
+        const setupReviewCommentButtonStub = vi.spyOn(comp, 'setupAddReviewCommentButton').mockImplementation(() => {});
+        const setupAddFeedbackButtonStub = vi.spyOn(comp, 'setupAddFeedbackButton').mockImplementation(() => {});
+        const clearHoverButtonStub = vi.spyOn(comp.editor(), 'clearLineDecorationsHoverButton').mockImplementation(() => {});
+        const disposeFeedbackShortcutStub = vi.spyOn(comp as any, 'disposeAddFeedbackShortcut').mockImplementation(() => {});
 
         fixture.componentRef.setInput('selectedFile', 'file1.java');
         fixture.componentRef.setInput('isTutorAssessment', false);
@@ -160,9 +161,9 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should not configure review comment mode for assignment repository', () => {
-        const setupReviewCommentButtonStub = jest.spyOn(comp, 'setupAddReviewCommentButton').mockImplementation();
-        const clearHoverButtonStub = jest.spyOn(comp.editor(), 'clearLineDecorationsHoverButton').mockImplementation();
-        const disposeFeedbackShortcutStub = jest.spyOn(comp as any, 'disposeAddFeedbackShortcut').mockImplementation();
+        const setupReviewCommentButtonStub = vi.spyOn(comp, 'setupAddReviewCommentButton').mockImplementation(() => {});
+        const clearHoverButtonStub = vi.spyOn(comp.editor(), 'clearLineDecorationsHoverButton').mockImplementation(() => {});
+        const disposeFeedbackShortcutStub = vi.spyOn(comp as any, 'disposeAddFeedbackShortcut').mockImplementation(() => {});
 
         fixture.componentRef.setInput('selectedFile', 'file1.java');
         fixture.componentRef.setInput('isTutorAssessment', false);
@@ -179,14 +180,14 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should dispose review widgets when repository switches to assignment', () => {
-        const disposeAll = jest.fn();
+        const disposeAll = vi.fn();
         (comp as any).reviewCommentManager = {
             disposeAll,
-            updateDraftInputs: jest.fn(),
-            tryUpdateThreadInputs: jest.fn(),
-            renderWidgets: jest.fn(),
-            updateHoverButton: jest.fn(),
-            clearDrafts: jest.fn(),
+            updateDraftInputs: vi.fn(),
+            tryUpdateThreadInputs: vi.fn(),
+            renderWidgets: vi.fn(),
+            updateHoverButton: vi.fn(),
+            clearDrafts: vi.fn(),
         };
 
         fixture.componentRef.setInput('enableExerciseReviewComments', true);
@@ -215,10 +216,10 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should clear hover button when neither tutor feedback nor review mode is active', () => {
-        const setupReviewCommentButtonStub = jest.spyOn(comp, 'setupAddReviewCommentButton').mockImplementation();
-        const setupAddFeedbackButtonStub = jest.spyOn(comp, 'setupAddFeedbackButton').mockImplementation();
-        const clearHoverButtonStub = jest.spyOn(comp.editor(), 'clearLineDecorationsHoverButton').mockImplementation();
-        const disposeFeedbackShortcutStub = jest.spyOn(comp as any, 'disposeAddFeedbackShortcut').mockImplementation();
+        const setupReviewCommentButtonStub = vi.spyOn(comp, 'setupAddReviewCommentButton').mockImplementation(() => {});
+        const setupAddFeedbackButtonStub = vi.spyOn(comp, 'setupAddFeedbackButton').mockImplementation(() => {});
+        const clearHoverButtonStub = vi.spyOn(comp.editor(), 'clearLineDecorationsHoverButton').mockImplementation(() => {});
+        const disposeFeedbackShortcutStub = vi.spyOn(comp as any, 'disposeAddFeedbackShortcut').mockImplementation(() => {});
 
         fixture.componentRef.setInput('selectedFile', 'file1.java');
         fixture.componentRef.setInput('isTutorAssessment', false);
@@ -234,8 +235,8 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should clear feedback widgets before re-adding them', () => {
-        const disposeWidgetsByPrefixSpy = jest.spyOn(comp.editor(), 'disposeWidgetsByPrefix').mockImplementation();
-        const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
+        const disposeWidgetsByPrefixSpy = vi.spyOn(comp.editor(), 'disposeWidgetsByPrefix').mockImplementation(() => {});
+        const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
             cb(0);
             return 1 as any;
         });
@@ -270,7 +271,7 @@ describe('CodeEditorMonacoComponent', () => {
             [selectedFile]: { code: 'some unchanged code', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
         };
         const newCode = 'some new code';
-        const valueCallbackStub = jest.fn();
+        const valueCallbackStub = vi.fn();
         comp.onFileContentChange.subscribe(valueCallbackStub);
         fixture.detectChanges();
         comp.fileSession.set(fileSession);
@@ -286,18 +287,18 @@ describe('CodeEditorMonacoComponent', () => {
         const filePath = 'src/Main.java';
         const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
         const stateReplaced$ = new Subject<any>();
-        const isAwaitingInitialSync = jest.fn(() => true);
+        const isAwaitingInitialSync = vi.fn(() => true);
         const fileSyncServiceMock = {
-            isInitialized: jest.fn(() => true),
-            isFileOpen: jest.fn(() => true),
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
             isFileAwaitingInitialSync: isAwaitingInitialSync,
             initialSyncFinalized$: initialSyncFinalized$.asObservable(),
             stateReplaced$: stateReplaced$.asObservable(),
         } as any;
 
-        const onFileContentChangeSpy = jest.fn();
+        const onFileContentChangeSpy = vi.fn();
         comp.onFileContentChange.subscribe(onFileContentChangeSpy);
-        jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
         fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
         fixture.componentRef.setInput('selectedFile', filePath);
         fixture.detectChanges();
@@ -326,23 +327,23 @@ describe('CodeEditorMonacoComponent', () => {
         const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
         const stateReplaced$ = new Subject<any>();
         const fileSyncServiceMock = {
-            isInitialized: jest.fn(() => true),
-            isFileOpen: jest.fn(() => true),
-            isFileAwaitingInitialSync: jest.fn(() => true),
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: vi.fn(() => true),
             initialSyncFinalized$: initialSyncFinalized$.asObservable(),
             stateReplaced$: stateReplaced$.asObservable(),
         } as any;
 
-        jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
         fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
         fixture.componentRef.setInput('selectedFile', filePath);
         fixture.detectChanges();
         await new Promise(process.nextTick);
 
-        expect(comp.editorLocked()).toBeTrue();
+        expect(comp.editorLocked()).toBe(true);
 
         initialSyncFinalized$.next({ filePath, contentDivergedFromFallback: false, finalContent: 'server content' });
-        expect(comp.editorLocked()).toBeFalse();
+        expect(comp.editorLocked()).toBe(false);
     });
 
     it('should not lock editor when selecting a file whose initial sync already finished', async () => {
@@ -350,20 +351,20 @@ describe('CodeEditorMonacoComponent', () => {
         const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
         const stateReplaced$ = new Subject<any>();
         const fileSyncServiceMock = {
-            isInitialized: jest.fn(() => true),
-            isFileOpen: jest.fn(() => true),
-            isFileAwaitingInitialSync: jest.fn(() => false),
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: vi.fn(() => false),
             initialSyncFinalized$: initialSyncFinalized$.asObservable(),
             stateReplaced$: stateReplaced$.asObservable(),
         } as any;
 
-        jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
         fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
         fixture.componentRef.setInput('selectedFile', filePath);
         fixture.detectChanges();
         await new Promise(process.nextTick);
 
-        expect(comp.editorLocked()).toBeFalse();
+        expect(comp.editorLocked()).toBe(false);
     });
 
     it('should mark the file as dirty after initial sync if finalized content diverged from fallback', () => {
@@ -371,14 +372,14 @@ describe('CodeEditorMonacoComponent', () => {
         const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
         const stateReplaced$ = new Subject<any>();
         const fileSyncServiceMock = {
-            isInitialized: jest.fn(() => true),
-            isFileOpen: jest.fn(() => true),
-            isFileAwaitingInitialSync: jest.fn(() => false),
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: vi.fn(() => false),
             initialSyncFinalized$: initialSyncFinalized$.asObservable(),
             stateReplaced$: stateReplaced$.asObservable(),
         } as any;
 
-        const onFileContentChangeSpy = jest.fn();
+        const onFileContentChangeSpy = vi.fn();
         comp.onFileContentChange.subscribe(onFileContentChangeSpy);
 
         comp.fileSession.set({
@@ -398,14 +399,14 @@ describe('CodeEditorMonacoComponent', () => {
         const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
         const stateReplaced$ = new Subject<any>();
         const fileSyncServiceMock = {
-            isInitialized: jest.fn(() => true),
-            isFileOpen: jest.fn(() => true),
-            isFileAwaitingInitialSync: jest.fn(() => false),
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: vi.fn(() => false),
             initialSyncFinalized$: initialSyncFinalized$.asObservable(),
             stateReplaced$: stateReplaced$.asObservable(),
         } as any;
 
-        const onFileContentChangeSpy = jest.fn();
+        const onFileContentChangeSpy = vi.fn();
         comp.onFileContentChange.subscribe(onFileContentChangeSpy);
 
         comp.fileSession.set({
@@ -423,8 +424,8 @@ describe('CodeEditorMonacoComponent', () => {
         const fileToLoad = { fileName: 'file-to-load', fileContent: 'some code' };
         const loadedFileSubject = new BehaviorSubject(fileToLoad);
         loadFileFromRepositoryStub.mockReturnValue(loadedFileSubject);
-        const setPositionStub = jest.spyOn(comp.editor(), 'setPosition').mockImplementation();
-        const changeModelStub = jest.spyOn(comp.editor(), 'changeModel').mockImplementation();
+        const setPositionStub = vi.spyOn(comp.editor(), 'setPosition').mockImplementation(() => {});
+        const changeModelStub = vi.spyOn(comp.editor(), 'changeModel').mockImplementation(() => {});
         const presentFileName = 'present-file';
         const presentFileSession = {
             [presentFileName]: { code: 'code\ncode', cursor: { lineNumber: 1, column: 2 }, scrollTop: 0, loadingError: false },
@@ -461,7 +462,7 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should not load binaries into the editor', async () => {
-        const changeModelSpy = jest.spyOn(comp.editor(), 'changeModel');
+        const changeModelSpy = vi.spyOn(comp.editor(), 'changeModel');
         const fileName = 'file-to-load';
         comp.fileSession.set({
             [fileName]: { code: '\0\0\0\0 (binary content)', loadingError: false, cursor: { lineNumber: 0, column: 0 }, scrollTop: 0 },
@@ -470,7 +471,7 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.componentRef.setInput('selectedFile', fileName);
         await comp.selectFileInEditor(fileName);
         expect(changeModelSpy).not.toHaveBeenCalled();
-        expect(comp.binaryFileSelected()).toBeTrue();
+        expect(comp.binaryFileSelected()).toBe(true);
     });
 
     it.each([
@@ -478,7 +479,7 @@ describe('CodeEditorMonacoComponent', () => {
         [new Error(), 'loadingFailed'],
     ])('should emit the correct error and update the file session when loading a file fails', async (error: Error, errorCode: string) => {
         const fileToLoad = { fileName: 'file-to-load', fileContent: 'some code that will not be loaded' };
-        const errorCallbackStub = jest.fn();
+        const errorCallbackStub = vi.fn();
         const loadFileSubject = new Subject<typeof fileToLoad>();
         loadFileFromRepositoryStub.mockReturnValue(loadFileSubject);
         comp.fileSession.set({});
@@ -499,7 +500,7 @@ describe('CodeEditorMonacoComponent', () => {
 
     it('should discard local changes when the editor is refreshed', async () => {
         const fileToReload = { fileName: 'file-to-reload', fileContent: 'some remote code' };
-        const editorResetStub = jest.spyOn(comp.editor(), 'reset').mockImplementation();
+        const editorResetStub = vi.spyOn(comp.editor(), 'reset').mockImplementation(() => {});
         const reloadedFileSubject = new BehaviorSubject(fileToReload);
         loadFileFromRepositoryStub.mockReturnValue(reloadedFileSubject);
         fixture.componentRef.setInput('selectedFile', fileToReload.fileName);
@@ -516,7 +517,7 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should only load the currently selected file', async () => {
-        const changeModelSpy = jest.spyOn(comp.editor(), 'changeModel');
+        const changeModelSpy = vi.spyOn(comp.editor(), 'changeModel');
         // Occurs when the first file load takes a while, but the user has already selected another file.
         comp.fileSession.set({ ['file2']: { code: 'code2', cursor: { lineNumber: 0, column: 0 }, loadingError: false, scrollTop: 0 } });
         fixture.changeDetectorRef.detectChanges();
@@ -533,8 +534,8 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should use the code and cursor position of the selected file', async () => {
-        const setPositionStub = jest.spyOn(comp.editor(), 'setPosition').mockImplementation();
-        const changeModelStub = jest.spyOn(comp.editor(), 'changeModel').mockImplementation();
+        const setPositionStub = vi.spyOn(comp.editor(), 'setPosition').mockImplementation(() => {});
+        const changeModelStub = vi.spyOn(comp.editor(), 'changeModel').mockImplementation(() => {});
         fixture.detectChanges();
         const selectedFile = 'file1';
         const fileSession = {
@@ -548,8 +549,8 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should display build annotations for the current file', async () => {
-        const setAnnotationsStub = jest.spyOn(comp.editor(), 'setAnnotations').mockImplementation();
-        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        const setAnnotationsStub = vi.spyOn(comp.editor(), 'setAnnotations').mockImplementation(() => {});
+        const selectFileInEditorStub = vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
         const buildAnnotations: Annotation[] = [
             {
                 fileName: 'file1',
@@ -586,14 +587,14 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should display feedback when viewing a tutor assessment', async () => {
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-        const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
-        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
-        const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const addLineWidgetStub = vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation(() => {});
+        const selectFileInEditorStub = vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
             const handle = window.setTimeout(() => cb(0), 0);
             return handle;
         });
-        const cancelRafSpy = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation((id?: number) => {
+        const cancelRafSpy = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id?: number) => {
             if (id !== undefined) {
                 clearTimeout(id);
             }
@@ -617,40 +618,41 @@ describe('CodeEditorMonacoComponent', () => {
         cancelRafSpy.mockRestore();
     });
 
-    it('should add a new feedback widget', fakeAsync(() => {
+    it('should add a new feedback widget', async () => {
         // Feedback is stored as 0-based line numbers, but the editor requires 1-based line numbers.
         const feedbackLineOneBased = 3;
         const feedbackLineZeroBased = feedbackLineOneBased - 1;
-        const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
-            return window.setTimeout(() => cb(0));
+        const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
+            const handle = window.setTimeout(() => cb(0), 0);
+            return handle as unknown as number;
         });
-        const cancelRafSpy = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation((id?: number) => {
+        const cancelRafSpy = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id?: number) => {
             if (id !== undefined) {
                 clearTimeout(id);
             }
         });
-        jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
+        vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation((() => {}) as any);
         const element = document.createElement('div');
         getInlineFeedbackNodeStub.mockImplementationOnce(() => undefined).mockImplementation(() => element);
         fixture.detectChanges();
         // Simulate adding the element
         comp.addNewFeedback(feedbackLineOneBased);
-        tick(20);
+        await new Promise((r) => setTimeout(r, 20));
         expect(comp.newFeedbackLines()).toContain(feedbackLineZeroBased);
         rafSpy.mockRestore();
         cancelRafSpy.mockRestore();
-    }));
+    });
 
     const shouldOpenFeedbackUsingKeybindHelper = (isTutorAssessment: boolean, readOnlyManualFeedback: boolean): [any, any, any] => {
         const feedbackLineOneBased = 4;
-        const addNewFeedbackSpy = jest.spyOn(comp, 'addNewFeedback');
+        const addNewFeedbackSpy = vi.spyOn(comp, 'addNewFeedback');
         let capturedOnKeyDown: ((e: IKeyboardEvent) => void) | undefined;
 
-        jest.spyOn(comp.editor(), 'onKeyDown').mockImplementation((kd) => {
+        vi.spyOn(comp.editor(), 'onKeyDown').mockImplementation((kd) => {
             capturedOnKeyDown = kd;
-            return { dispose: jest.fn() } as any;
+            return { dispose: vi.fn() } as any;
         });
-        jest.spyOn(comp.editor(), 'getPosition').mockReturnValue({ lineNumber: feedbackLineOneBased, column: 0 });
+        vi.spyOn(comp.editor(), 'getPosition').mockReturnValue({ lineNumber: feedbackLineOneBased, column: 0 });
 
         fixture.componentRef.setInput('isTutorAssessment', isTutorAssessment);
         fixture.componentRef.setInput('readOnlyManualFeedback', readOnlyManualFeedback);
@@ -659,7 +661,7 @@ describe('CodeEditorMonacoComponent', () => {
         (comp as any).setupAddFeedbackShortcut();
 
         const browserEvent = new KeyboardEvent('keydown', { key: '+', code: 'NumpadAdd' });
-        const preventDefaultMock = jest.fn();
+        const preventDefaultMock = vi.fn();
         expect(capturedOnKeyDown).toBeDefined();
         capturedOnKeyDown!({ browserEvent, preventDefault: preventDefaultMock } as unknown as IKeyboardEvent);
 
@@ -688,7 +690,7 @@ describe('CodeEditorMonacoComponent', () => {
     it('should delete feedbacks and notify', () => {
         const feedbackToDelete = exampleFeedbacks[0];
         const remainingFeedbacks = exampleFeedbacks.slice(1);
-        const updateFeedbackCallbackStub = jest.fn();
+        const updateFeedbackCallbackStub = vi.fn();
         comp.onUpdateFeedback.subscribe(updateFeedbackCallbackStub);
         fixture.componentRef.setInput('feedbacks', [...exampleFeedbacks]);
         fixture.changeDetectorRef.detectChanges();
@@ -708,7 +710,7 @@ describe('CodeEditorMonacoComponent', () => {
     it('should update existing feedback and notify', () => {
         const feedbackToUpdate: Feedback = { ...exampleFeedbacks[0] };
         const remainingFeedbacks = exampleFeedbacks.slice(1);
-        const updateFeedbackCallbackStub = jest.fn();
+        const updateFeedbackCallbackStub = vi.fn();
         comp.onUpdateFeedback.subscribe(updateFeedbackCallbackStub);
         // Copy the original example feedback in to ensure changes here do not affect the component.
         fixture.componentRef.setInput('feedbacks', [...exampleFeedbacks]);
@@ -724,7 +726,7 @@ describe('CodeEditorMonacoComponent', () => {
         const feedbackToSave: Feedback = { ...exampleFeedbacks[0] };
         const remainingFeedbacks = exampleFeedbacks.slice(1);
         const newFeedbackLine = 1;
-        const updateFeedbackCallbackStub = jest.fn();
+        const updateFeedbackCallbackStub = vi.fn();
         comp.onUpdateFeedback.subscribe(updateFeedbackCallbackStub);
         comp.newFeedbackLines.set([newFeedbackLine]);
         fixture.componentRef.setInput('feedbacks', [...remainingFeedbacks]);
@@ -738,8 +740,8 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should correctly accept a feedback suggestion and notify', () => {
-        const updateFeedbackStub = jest.spyOn(comp, 'updateFeedback').mockImplementation();
-        const acceptSuggestionCallbackStub = jest.fn();
+        const updateFeedbackStub = vi.spyOn(comp, 'updateFeedback').mockImplementation(() => {});
+        const acceptSuggestionCallbackStub = vi.fn();
         const suggestionToAccept: Feedback = exampleFeedbacks[0];
         fixture.componentRef.setInput('feedbackSuggestions', [suggestionToAccept]);
         comp.onAcceptSuggestion.subscribe(acceptSuggestionCallbackStub);
@@ -751,7 +753,7 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should correctly discard a suggestion and notify', () => {
-        const discardSuggestionCallbackStub = jest.fn();
+        const discardSuggestionCallbackStub = vi.fn();
         const suggestionToDiscard = exampleFeedbacks[0];
         fixture.componentRef.setInput('feedbackSuggestions', [suggestionToDiscard]);
         comp.onDiscardSuggestion.subscribe(discardSuggestionCallbackStub);
@@ -812,14 +814,14 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should use the correct class to highlight lines', () => {
-        const highlightStub = jest.spyOn(comp.editor(), 'highlightLines').mockImplementation();
+        const highlightStub = vi.spyOn(comp.editor(), 'highlightLines').mockImplementation(() => {});
         fixture.detectChanges();
         comp.highlightLines(1, 2);
         expect(highlightStub).toHaveBeenCalledExactlyOnceWith(1, 2, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT);
     });
 
     it('should remember scroll position', async () => {
-        const setScrollTopStub = jest.spyOn(comp.editor(), 'setScrollTop');
+        const setScrollTopStub = vi.spyOn(comp.editor(), 'setScrollTop');
         const scrolledFile = 'file';
         const scrollTop = 42;
         const fileSession = {
@@ -836,17 +838,17 @@ describe('CodeEditorMonacoComponent', () => {
         const selectedFile = 'src/Foo.java';
         const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
         const stateReplaced$ = new Subject<any>();
-        const isFileAwaitingInitialSync = jest.fn(() => true);
+        const isFileAwaitingInitialSync = vi.fn(() => true);
         const fileSyncServiceMock = {
-            isInitialized: jest.fn(() => true),
-            isFileOpen: jest.fn(() => true),
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
             isFileAwaitingInitialSync,
             initialSyncFinalized$: initialSyncFinalized$.asObservable(),
             stateReplaced$: stateReplaced$.asObservable(),
         } as any;
 
-        const selectFileInEditorSpy = jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
-        const renderReviewCommentWidgetsSpy = jest.spyOn(comp as any, 'renderReviewCommentWidgets').mockImplementation();
+        const selectFileInEditorSpy = vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        const renderReviewCommentWidgetsSpy = vi.spyOn(comp as any, 'renderReviewCommentWidgets').mockImplementation(() => {});
 
         fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
         fixture.componentRef.setInput('enableExerciseReviewComments', true);
@@ -868,13 +870,13 @@ describe('CodeEditorMonacoComponent', () => {
         const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
         const stateReplaced$ = new Subject<any>();
         const fileSyncServiceMock = {
-            isInitialized: jest.fn(() => true),
-            isFileOpen: jest.fn(() => true),
-            isFileAwaitingInitialSync: jest.fn(() => false),
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: vi.fn(() => false),
             initialSyncFinalized$: initialSyncFinalized$.asObservable(),
             stateReplaced$: stateReplaced$.asObservable(),
         } as any;
-        const renderReviewCommentWidgetsSpy = jest.spyOn(comp as any, 'renderReviewCommentWidgets').mockImplementation();
+        const renderReviewCommentWidgetsSpy = vi.spyOn(comp as any, 'renderReviewCommentWidgets').mockImplementation(() => {});
 
         fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
         fixture.componentRef.setInput('enableExerciseReviewComments', true);
@@ -894,16 +896,16 @@ describe('CodeEditorMonacoComponent', () => {
         const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
         const stateReplaced$ = new Subject<any>();
         const fileSyncServiceMock = {
-            isInitialized: jest.fn(() => true),
-            isFileOpen: jest.fn(() => true),
-            isFileAwaitingInitialSync: jest.fn(() => false),
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: vi.fn(() => false),
             initialSyncFinalized$: initialSyncFinalized$.asObservable(),
             stateReplaced$: stateReplaced$.asObservable(),
         } as any;
 
-        const onFileContentChangeSpy = jest.fn();
+        const onFileContentChangeSpy = vi.fn();
         comp.onFileContentChange.subscribe(onFileContentChangeSpy);
-        jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
 
         comp.fileSession.set({
             [fileA]: { code: 'A0', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
@@ -938,8 +940,8 @@ describe('CodeEditorMonacoComponent', () => {
         const manager = (comp as any).getReviewCommentManager();
         const config = (manager as any).config;
 
-        expect(config.shouldShowHoverButton()).toBeTrue();
-        expect(config.canSubmit()).toBeTrue();
+        expect(config.shouldShowHoverButton()).toBe(true);
+        expect(config.canSubmit()).toBe(true);
         expect(config.getDraftFileName()).toBe('src/Foo.java');
 
         fixture.componentRef.setInput('selectedRepository', RepositoryType.ASSIGNMENT);
@@ -969,29 +971,29 @@ describe('CodeEditorMonacoComponent', () => {
         (comp as any).exerciseReviewCommentService.threads.set([thread]);
 
         expect(config.getThreads()).toEqual([thread]);
-        expect(config.filterThread(thread)).toBeTrue();
-        expect(config.filterThread({ ...thread, auxiliaryRepositoryId: 9 })).toBeFalse();
+        expect(config.filterThread(thread)).toBe(true);
+        expect(config.filterThread({ ...thread, auxiliaryRepositoryId: 9 })).toBe(false);
         expect(config.getThreadLine(thread)).toBe(8);
 
-        const onAddSpy = jest.spyOn(comp.onAddReviewComment, 'emit');
+        const onAddSpy = vi.spyOn(comp.onAddReviewComment, 'emit');
         config.onAdd({ lineNumber: 4, fileName: 'src/Foo.java' });
         expect(onAddSpy).toHaveBeenCalledExactlyOnceWith({ lineNumber: 4, fileName: 'src/Foo.java' });
 
-        expect(config.showLocationWarning()).toBeFalse();
+        expect(config.showLocationWarning()).toBe(false);
         fixture.componentRef.setInput('commitState', CommitState.UNCOMMITTED_CHANGES);
         fixture.changeDetectorRef.detectChanges();
-        expect(config.showLocationWarning()).toBeTrue();
-        expect(config.canSubmit()).toBeFalse();
+        expect(config.showLocationWarning()).toBe(true);
+        expect(config.canSubmit()).toBe(false);
     });
 
     it('should commit and mark inline fix as applied after successful code-editor apply', () => {
         fixture.componentRef.setInput('selectedFile', 'src/Foo.java');
         fixture.changeDetectorRef.detectChanges();
-        jest.spyOn(comp.editor(), 'getText').mockReturnValue('class Foo {}');
-        const updateFilesSpy = jest.spyOn(codeEditorRepositoryFileService, 'updateFiles').mockReturnValue(of({} as any));
-        const markAppliedSpy = jest.spyOn((comp as any).exerciseReviewCommentService, 'markInlineFixAppliedInContext').mockImplementation();
-        const onSavedFilesSpy = jest.fn();
-        const onInlineFixCommittedSpy = jest.fn();
+        vi.spyOn(comp.editor(), 'getText').mockReturnValue('class Foo {}');
+        const updateFilesSpy = vi.spyOn(codeEditorRepositoryFileService, 'updateFiles').mockReturnValue(of({} as any));
+        const markAppliedSpy = vi.spyOn((comp as any).exerciseReviewCommentService, 'markInlineFixAppliedInContext').mockImplementation(() => {});
+        const onSavedFilesSpy = vi.fn();
+        const onInlineFixCommittedSpy = vi.fn();
         comp.onSavedFiles.subscribe(onSavedFilesSpy);
         comp.onInlineFixCommitted.subscribe(onInlineFixCommittedSpy);
         const thread = {
@@ -1013,14 +1015,14 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should clear review comment drafts through the manager', () => {
-        const clearDrafts = jest.fn();
+        const clearDrafts = vi.fn();
         (comp as any).reviewCommentManager = {
             clearDrafts,
-            disposeAll: jest.fn(),
-            updateDraftInputs: jest.fn(),
-            tryUpdateThreadInputs: jest.fn(),
-            renderWidgets: jest.fn(),
-            updateHoverButton: jest.fn(),
+            disposeAll: vi.fn(),
+            updateDraftInputs: vi.fn(),
+            tryUpdateThreadInputs: vi.fn(),
+            renderWidgets: vi.fn(),
+            updateHoverButton: vi.fn(),
         };
 
         comp.clearReviewCommentDrafts();
