@@ -1,4 +1,4 @@
-import { Component, effect, input, signal } from '@angular/core';
+import { Component, input, linkedSignal } from '@angular/core';
 import type { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import { CommitsInfoRowComponent } from './commits-info-row/commits-info-row.component';
 import { NgStyle } from '@angular/common';
@@ -19,15 +19,10 @@ export class CommitsInfoGroupComponent {
     readonly pushNumber = input.required<number>();
     readonly isGroupExpanded = input<boolean>(false);
 
-    protected readonly isExpanded = signal(false);
-
-    constructor() {
-        // Reset local toggle state whenever the parent's expand-all state changes.
-        effect(() => {
-            const value = this.isGroupExpanded();
-            this.isExpanded.set(value);
-        });
-    }
+    // Local toggle state seeded from the parent's expand-all input. Re-seeds whenever the source
+    // changes (idiomatic Angular 21 alternative to an input→signal copy-effect), and remains
+    // independently writable via `.set()` / `.update()` for the per-row toggle.
+    protected readonly isExpanded = linkedSignal(() => this.isGroupExpanded());
 
     protected toggleExpand() {
         this.isExpanded.update((expanded) => !expanded);

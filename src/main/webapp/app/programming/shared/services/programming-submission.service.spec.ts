@@ -32,6 +32,31 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 
 type SpyInstance = ReturnType<typeof vi.spyOn>;
 
+/**
+ * Typed view onto the private/internal fields of {@link ProgrammingSubmissionService} that the
+ * tests exercise. Centralising these reach-ins in one declaration replaces dozens of `@ts-ignore`
+ * lines and gives editor autocomplete on the asserted shapes. The fields mirror the service's
+ * private state — if any of them are renamed in the service, TypeScript will surface the mismatch
+ * here rather than via runtime test failures with no compiler help.
+ */
+type SubmissionServicePrivates = {
+    submissionSubjects: { [participationId: number]: BehaviorSubject<ProgrammingSubmissionStateObj | undefined> };
+    exerciseBuildStateValue: { [exerciseId: number]: ExerciseSubmissionState };
+    exerciseBuildStateSubjects: Map<number, BehaviorSubject<ExerciseSubmissionState | undefined>>;
+    resultTimerSubjects: Map<number, Subject<undefined>>;
+    startedProcessingCache: Map<string, BuildTimingInfo>;
+    participationIdToExerciseId: Map<number, number>;
+    submissionTopicsSubscribed: Map<number, string>;
+    DEFAULT_EXPECTED_RESULT_ETA: number;
+    currentExpectedQueueEstimate: number;
+    fetchLatestPendingSubmissionByParticipationId: (participationId: number) => unknown;
+    setupWebsocketSubscriptionForLatestPendingSubmission: (participationId: number, exerciseId: number, personal: boolean) => unknown;
+    subscribeForNewResult: (participationId: number, exerciseId: number, personal: boolean) => unknown;
+    fetchLatestPendingSubmissionsByExerciseId: (exerciseId: number) => unknown;
+};
+
+const priv = (service: ProgrammingSubmissionService): SubmissionServicePrivates => service as unknown as SubmissionServicePrivates;
+
 describe('ProgrammingSubmissionService', () => {
     setupTestBed({ zoneless: true });
 
@@ -132,14 +157,10 @@ describe('ProgrammingSubmissionService', () => {
 
     it('should return cached subject as Observable for provided participation if exists', () => {
         const cachedSubject = new BehaviorSubject(undefined);
-        // @ts-ignore
-        const fetchLatestPendingSubmissionSpy = vi.spyOn(submissionService, 'fetchLatestPendingSubmissionByParticipationId');
-        // @ts-ignore
-        const setupWebsocketSubscriptionSpy = vi.spyOn(submissionService, 'setupWebsocketSubscriptionForLatestPendingSubmission');
-        // @ts-ignore
-        const subscribeForNewResultSpy = vi.spyOn(submissionService, 'subscribeForNewResult');
-        // @ts-ignore
-        submissionService.submissionSubjects = { [participationId]: cachedSubject };
+        const fetchLatestPendingSubmissionSpy = vi.spyOn(priv(submissionService), 'fetchLatestPendingSubmissionByParticipationId');
+        const setupWebsocketSubscriptionSpy = vi.spyOn(priv(submissionService), 'setupWebsocketSubscriptionForLatestPendingSubmission');
+        const subscribeForNewResultSpy = vi.spyOn(priv(submissionService), 'subscribeForNewResult');
+        priv(submissionService).submissionSubjects = { [participationId]: cachedSubject };
 
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true);
         expect(fetchLatestPendingSubmissionSpy).not.toHaveBeenCalled();
@@ -239,8 +260,7 @@ describe('ProgrammingSubmissionService', () => {
         vi.useFakeTimers();
         try {
             // Set the timer to 10ms for testing purposes.
-            // @ts-ignore
-            submissionService.DEFAULT_EXPECTED_RESULT_ETA = 10;
+            priv(submissionService).DEFAULT_EXPECTED_RESULT_ETA = 10;
             const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
             httpGetStub.mockReturnValue(of(undefined));
             submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
@@ -284,8 +304,7 @@ describe('ProgrammingSubmissionService', () => {
         vi.useFakeTimers();
         try {
             // Set the timer to 10ms for testing purposes.
-            // @ts-ignore
-            submissionService.DEFAULT_EXPECTED_RESULT_ETA = 10;
+            priv(submissionService).DEFAULT_EXPECTED_RESULT_ETA = 10;
             const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
             httpGetStub.mockReturnValue(of(undefined));
             submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
@@ -337,8 +356,7 @@ describe('ProgrammingSubmissionService', () => {
 
         const pendingSubmissions = { [participation1.id!]: currentSubmission, [participation2.id!]: currentSubmission2 };
 
-        // @ts-ignore
-        const fetchLatestPendingSubmissionSpy = vi.spyOn(submissionService, 'fetchLatestPendingSubmissionByParticipationId');
+        const fetchLatestPendingSubmissionSpy = vi.spyOn(priv(submissionService), 'fetchLatestPendingSubmissionByParticipationId');
 
         // This load the submissions for participation 1 and 2, but not for 3.
         lastValueFrom(submissionService.getSubmissionStateOfExercise(exerciseId));
@@ -373,8 +391,7 @@ describe('ProgrammingSubmissionService', () => {
     it('should not throw an error on getSubmissionStateOfExercise if state is an empty object', () => {
         const exerciseId = 10;
         const submissionState: ExerciseSubmissionState = {};
-        // @ts-ignore
-        const fetchLatestPendingSubmissionsByExerciseIdSpy = vi.spyOn(submissionService, 'fetchLatestPendingSubmissionsByExerciseId');
+        const fetchLatestPendingSubmissionsByExerciseIdSpy = vi.spyOn(priv(submissionService), 'fetchLatestPendingSubmissionsByExerciseId');
         httpGetStub.mockReturnValue(of(submissionState));
 
         let receivedSubmissionState: ExerciseSubmissionState = {};
@@ -393,8 +410,7 @@ describe('ProgrammingSubmissionService', () => {
             1: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: submissionState['1'], participationId: 1 },
             2: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 2 },
         };
-        // @ts-ignore
-        const fetchLatestPendingSubmissionsByExerciseIdSpy = vi.spyOn(submissionService, 'fetchLatestPendingSubmissionsByExerciseId');
+        const fetchLatestPendingSubmissionsByExerciseIdSpy = vi.spyOn(priv(submissionService), 'fetchLatestPendingSubmissionsByExerciseId');
         httpGetStub.mockReturnValue(of(submissionState));
 
         let receivedSubmissionState: ExerciseSubmissionState = {};
@@ -417,8 +433,7 @@ describe('ProgrammingSubmissionService', () => {
             }),
             {},
         );
-        // @ts-ignore
-        const fetchLatestPendingSubmissionsByExerciseIdSpy = vi.spyOn(submissionService, 'fetchLatestPendingSubmissionsByExerciseId');
+        const fetchLatestPendingSubmissionsByExerciseIdSpy = vi.spyOn(priv(submissionService), 'fetchLatestPendingSubmissionsByExerciseId');
         httpGetStub.mockReturnValue(of(submissionState));
 
         let receivedSubmissionState: ExerciseSubmissionState = {};
@@ -567,8 +582,7 @@ describe('ProgrammingSubmissionService', () => {
     it('should change to building when queue timer ends', async () => {
         vi.useFakeTimers();
         try {
-            // @ts-ignore
-            submissionService.currentExpectedQueueEstimate = 1000;
+            priv(submissionService).currentExpectedQueueEstimate = 1000;
             submissionService.isLocalCIEnabled = true;
             const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
             // No latest pending submission found.
@@ -631,20 +645,14 @@ describe('ProgrammingSubmissionService', () => {
             const subject = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
             const exerciseBuildSubject = new BehaviorSubject<ExerciseSubmissionState | undefined>(undefined);
             const resultTimerSubject = new Subject<undefined>();
-            // @ts-ignore - access private cache
-            scoped.submissionSubjects = { 1: subject };
-            // @ts-ignore
-            scoped.exerciseBuildStateValue = { 10: { 1: {} as ProgrammingSubmissionStateObj } };
-            // @ts-ignore
-            scoped.exerciseBuildStateSubjects.set(10, exerciseBuildSubject);
-            // @ts-ignore
-            scoped.resultTimerSubjects.set(1, resultTimerSubject);
-            // @ts-ignore
-            scoped.startedProcessingCache.set('hash', { buildStartDate: undefined, estimatedCompletionDate: undefined });
-            // @ts-ignore
-            scoped.participationIdToExerciseId.set(1, 10);
-            // @ts-ignore
-            scoped.submissionTopicsSubscribed.set(1, '/topic/foo');
+            const inner = priv(scoped);
+            inner.submissionSubjects = { 1: subject };
+            inner.exerciseBuildStateValue = { 10: { 1: {} as ProgrammingSubmissionStateObj } };
+            inner.exerciseBuildStateSubjects.set(10, exerciseBuildSubject);
+            inner.resultTimerSubjects.set(1, resultTimerSubject);
+            inner.startedProcessingCache.set('hash', { buildStartDate: undefined, estimatedCompletionDate: undefined });
+            inner.participationIdToExerciseId.set(1, 10);
+            inner.submissionTopicsSubscribed.set(1, '/topic/foo');
 
             let completed = false;
             subject.subscribe({ complete: () => (completed = true) });
@@ -655,48 +663,37 @@ describe('ProgrammingSubmissionService', () => {
 
             authState.next(undefined);
 
-            // @ts-ignore
-            expect(scoped.submissionSubjects).toEqual({});
-            // @ts-ignore
-            expect(scoped.exerciseBuildStateValue).toEqual({});
-            // @ts-ignore
-            expect(scoped.exerciseBuildStateSubjects.size).toBe(0);
-            // @ts-ignore
-            expect(scoped.resultTimerSubjects.size).toBe(0);
-            // @ts-ignore
-            expect(scoped.startedProcessingCache.size).toBe(0);
-            // @ts-ignore
-            expect(scoped.participationIdToExerciseId.size).toBe(0);
-            // @ts-ignore
-            expect(scoped.submissionTopicsSubscribed.size).toBe(0);
+            expect(inner.submissionSubjects).toEqual({});
+            expect(inner.exerciseBuildStateValue).toEqual({});
+            expect(inner.exerciseBuildStateSubjects.size).toBe(0);
+            expect(inner.resultTimerSubjects.size).toBe(0);
+            expect(inner.startedProcessingCache.size).toBe(0);
+            expect(inner.participationIdToExerciseId.size).toBe(0);
+            expect(inner.submissionTopicsSubscribed.size).toBe(0);
             expect(completed).toBe(true);
             expect(exerciseBuildCompleted).toBe(true);
             expect(resultTimerCompleted).toBe(true);
         });
 
         it('should clear cached submission state when a different user logs in', () => {
-            // @ts-ignore
-            scoped.submissionSubjects = { 1: new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined) };
-            // @ts-ignore
-            scoped.exerciseBuildStateValue = { 10: { 1: {} as ProgrammingSubmissionStateObj } };
+            const inner = priv(scoped);
+            inner.submissionSubjects = { 1: new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined) };
+            inner.exerciseBuildStateValue = { 10: { 1: {} as ProgrammingSubmissionStateObj } };
 
             authState.next({ id: 42 } as User);
 
-            // @ts-ignore
-            expect(scoped.submissionSubjects).toEqual({});
-            // @ts-ignore
-            expect(scoped.exerciseBuildStateValue).toEqual({});
+            expect(inner.submissionSubjects).toEqual({});
+            expect(inner.exerciseBuildStateValue).toEqual({});
         });
 
         it('should not clear submission state when the same user re-emits', () => {
             const subject = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
-            // @ts-ignore
-            scoped.submissionSubjects = { 1: subject };
+            const inner = priv(scoped);
+            inner.submissionSubjects = { 1: subject };
 
             authState.next({ id: 99 } as User);
 
-            // @ts-ignore
-            expect(scoped.submissionSubjects).toEqual({ 1: subject });
+            expect(inner.submissionSubjects).toEqual({ 1: subject });
         });
     });
 });
