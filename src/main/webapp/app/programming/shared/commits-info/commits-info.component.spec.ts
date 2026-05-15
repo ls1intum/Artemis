@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Signal } from '@angular/core';
 
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
@@ -16,6 +17,15 @@ import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+
+/**
+ * Typed view onto the protected `groupedCommits` computed signal so the spec can read it
+ * without a blanket `(component as any)` cast. The shape mirrors the component declaration.
+ */
+type CommitsInfoInternals = CommitsInfoComponent & {
+    groupedCommits: Signal<{ key: string; commits: CommitInfo[]; date: string }[]>;
+};
+const internals = (c: CommitsInfoComponent): CommitsInfoInternals => c as CommitsInfoInternals;
 
 describe('CommitsInfoComponent', () => {
     setupTestBed({ zoneless: true });
@@ -92,7 +102,7 @@ describe('CommitsInfoComponent', () => {
         fixture.componentRef.setInput('participationId', 1);
         component.ngOnInit();
         expect(programmingExerciseParticipationServiceSpy).toHaveBeenCalledExactlyOnceWith(1);
-        expect((component as any).groupedCommits()).toEqual([
+        expect(internals(component).groupedCommits()).toEqual([
             {
                 key: 'no-result',
                 commits: [commitInfo6, commitInfo5],
@@ -129,7 +139,7 @@ describe('CommitsInfoComponent', () => {
         // Three groups expected: 'no-result' for the latest tail (commits 5 and 6), '2021-01-04-author'
         // (commits 3 and 4, terminated by commit4.result), and '2021-01-02-author' (commits 1 and 2,
         // terminated by commit2.result). Output is reversed so the newest group comes first.
-        expect((component as any).groupedCommits()).toEqual([
+        expect(internals(component).groupedCommits()).toEqual([
             { key: 'no-result', commits: [commitInfo6, commitInfo5], date: '2021-01-06' },
             { key: '2021-01-04-author', commits: [commitInfo4, commitInfo3], date: '2021-01-04' },
             { key: '2021-01-02-author', commits: [commitInfo2, commitInfo1], date: '2021-01-02' },

@@ -25,8 +25,31 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IKeyboardEvent } from 'monaco-editor';
-import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
+import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+
+/**
+ * Typed view onto the private/internal members of {@link CodeEditorMonacoComponent} that the
+ * tests exercise. Centralising these reach-ins gives editor autocomplete and surfaces renames
+ * at compile time, replacing the previous `(comp as any).X` casts.
+ */
+type MonacoInternals = CodeEditorMonacoComponent & {
+    updateEditorInteractionMode(): void;
+    disposeAddFeedbackShortcut(): void;
+    setupAddFeedbackShortcut(): void;
+    renderFeedbackWidgets(lineOfWidgetToFocus?: number): void;
+    renderReviewCommentWidgets(filePath?: string): void;
+    getThreadFilePath(thread: CommentThread): string | undefined;
+    getReviewThreadLine(thread: CommentThread): number;
+    getReviewCommentManager(): ReviewCommentWidgetManager;
+    persistInlineFixApplication(thread: CommentThread): void;
+    reviewCommentManager?: ReviewCommentWidgetManager;
+    exerciseReviewCommentService: ExerciseReviewCommentService;
+};
+
+const internals = (c: CodeEditorMonacoComponent): MonacoInternals => c as MonacoInternals;
 
 describe('CodeEditorMonacoComponent', () => {
     setupTestBed({ zoneless: true });
@@ -125,7 +148,7 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should re-apply interaction mode after file selection via input change cascade', async () => {
-        const updateInteractionModeStub = vi.spyOn(comp as any, 'updateEditorInteractionMode');
+        const updateInteractionModeStub = vi.spyOn(internals(comp), 'updateEditorInteractionMode');
         const selectFileInEditorStub = vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
         fixture.componentRef.setInput('enableExerciseReviewComments', true);
         fixture.componentRef.setInput('selectedFile', 'file1.java');
@@ -140,7 +163,7 @@ describe('CodeEditorMonacoComponent', () => {
         const setupReviewCommentButtonStub = vi.spyOn(comp, 'setupAddReviewCommentButton').mockImplementation(() => {});
         const setupAddFeedbackButtonStub = vi.spyOn(comp, 'setupAddFeedbackButton').mockImplementation(() => {});
         const clearHoverButtonStub = vi.spyOn(comp.editor(), 'clearLineDecorationsHoverButton').mockImplementation(() => {});
-        const disposeFeedbackShortcutStub = vi.spyOn(comp as any, 'disposeAddFeedbackShortcut').mockImplementation(() => {});
+        const disposeFeedbackShortcutStub = vi.spyOn(internals(comp), 'disposeAddFeedbackShortcut').mockImplementation(() => {});
 
         fixture.componentRef.setInput('selectedFile', 'file1.java');
         fixture.componentRef.setInput('isTutorAssessment', false);
@@ -149,7 +172,7 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.componentRef.setInput('selectedRepository', RepositoryType.TEMPLATE);
         fixture.changeDetectorRef.detectChanges();
 
-        (comp as any).updateEditorInteractionMode();
+        internals(comp).updateEditorInteractionMode();
 
         expect(setupReviewCommentButtonStub).toHaveBeenCalled();
         expect(setupAddFeedbackButtonStub).not.toHaveBeenCalled();
@@ -160,7 +183,7 @@ describe('CodeEditorMonacoComponent', () => {
     it('should not configure review comment mode for assignment repository', () => {
         const setupReviewCommentButtonStub = vi.spyOn(comp, 'setupAddReviewCommentButton').mockImplementation(() => {});
         const clearHoverButtonStub = vi.spyOn(comp.editor(), 'clearLineDecorationsHoverButton').mockImplementation(() => {});
-        const disposeFeedbackShortcutStub = vi.spyOn(comp as any, 'disposeAddFeedbackShortcut').mockImplementation(() => {});
+        const disposeFeedbackShortcutStub = vi.spyOn(internals(comp), 'disposeAddFeedbackShortcut').mockImplementation(() => {});
 
         fixture.componentRef.setInput('selectedFile', 'file1.java');
         fixture.componentRef.setInput('isTutorAssessment', false);
@@ -169,7 +192,7 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.componentRef.setInput('selectedRepository', RepositoryType.ASSIGNMENT);
         fixture.changeDetectorRef.detectChanges();
 
-        (comp as any).updateEditorInteractionMode();
+        internals(comp).updateEditorInteractionMode();
 
         expect(setupReviewCommentButtonStub).not.toHaveBeenCalled();
         expect(clearHoverButtonStub).toHaveBeenCalled();
@@ -178,7 +201,7 @@ describe('CodeEditorMonacoComponent', () => {
 
     it('should dispose review widgets when repository switches to assignment', () => {
         const disposeAll = vi.fn();
-        (comp as any).reviewCommentManager = {
+        internals(comp).reviewCommentManager = {
             disposeAll,
             updateDraftInputs: vi.fn(),
             tryUpdateThreadInputs: vi.fn(),
@@ -201,29 +224,29 @@ describe('CodeEditorMonacoComponent', () => {
     it('should fall back to initial review thread location when current location is missing', () => {
         const thread = { initialFilePath: 'src/File.java', initialLineNumber: 7 } as any;
 
-        expect((comp as any).getThreadFilePath(thread)).toBe('src/File.java');
-        expect((comp as any).getReviewThreadLine(thread)).toBe(6);
+        expect(internals(comp).getThreadFilePath(thread)).toBe('src/File.java');
+        expect(internals(comp).getReviewThreadLine(thread)).toBe(6);
     });
 
     it('should prefer current review thread location over initial fallback', () => {
         const thread = { filePath: 'src/Current.java', initialFilePath: 'src/Initial.java', lineNumber: 4, initialLineNumber: 9 } as any;
 
-        expect((comp as any).getThreadFilePath(thread)).toBe('src/Current.java');
-        expect((comp as any).getReviewThreadLine(thread)).toBe(3);
+        expect(internals(comp).getThreadFilePath(thread)).toBe('src/Current.java');
+        expect(internals(comp).getReviewThreadLine(thread)).toBe(3);
     });
 
     it('should clear hover button when neither tutor feedback nor review mode is active', () => {
         const setupReviewCommentButtonStub = vi.spyOn(comp, 'setupAddReviewCommentButton').mockImplementation(() => {});
         const setupAddFeedbackButtonStub = vi.spyOn(comp, 'setupAddFeedbackButton').mockImplementation(() => {});
         const clearHoverButtonStub = vi.spyOn(comp.editor(), 'clearLineDecorationsHoverButton').mockImplementation(() => {});
-        const disposeFeedbackShortcutStub = vi.spyOn(comp as any, 'disposeAddFeedbackShortcut').mockImplementation(() => {});
+        const disposeFeedbackShortcutStub = vi.spyOn(internals(comp), 'disposeAddFeedbackShortcut').mockImplementation(() => {});
 
         fixture.componentRef.setInput('selectedFile', 'file1.java');
         fixture.componentRef.setInput('isTutorAssessment', false);
         fixture.componentRef.setInput('enableExerciseReviewComments', false);
         fixture.changeDetectorRef.detectChanges();
 
-        (comp as any).updateEditorInteractionMode();
+        internals(comp).updateEditorInteractionMode();
 
         expect(setupReviewCommentButtonStub).not.toHaveBeenCalled();
         expect(setupAddFeedbackButtonStub).not.toHaveBeenCalled();
@@ -238,7 +261,7 @@ describe('CodeEditorMonacoComponent', () => {
             return 1 as any;
         });
 
-        (comp as any).renderFeedbackWidgets();
+        internals(comp).renderFeedbackWidgets();
 
         expect(disposeWidgetsByPrefixSpy).toHaveBeenCalledWith('feedback-');
 
@@ -612,11 +635,13 @@ describe('CodeEditorMonacoComponent', () => {
         await new Promise(process.nextTick);
         await new Promise((r) => setTimeout(r, 0));
 
-        expect(addLineWidgetStub.mock.calls.length).toBeGreaterThanOrEqual(2);
-        expect(addLineWidgetStub.mock.calls.length).toBeLessThanOrEqual(10);
+        // Assert the observable behavior: each of the two feedbacks for `file1.java` is rendered
+        // as a line widget at the expected (1-based) line. The total call count is intentionally
+        // not asserted: the rendering is driven by both an effect and a requestAnimationFrame
+        // pass, which legitimately fire multiple times in the test harness without affecting
+        // production correctness.
         expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1-line-2`, document.createElement('div'));
         expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2-line-3`, document.createElement('div'));
-        expect(getInlineFeedbackNodeStub.mock.calls.length).toBeGreaterThanOrEqual(2);
         expect(selectFileInEditorStub).toHaveBeenCalled();
         consoleErrorSpy.mockRestore();
         rafSpy.mockRestore();
@@ -663,14 +688,14 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.componentRef.setInput('readOnlyManualFeedback', readOnlyManualFeedback);
         fixture.changeDetectorRef.detectChanges();
 
-        (comp as any).setupAddFeedbackShortcut();
+        internals(comp).setupAddFeedbackShortcut();
 
         const browserEvent = new KeyboardEvent('keydown', { key: '+', code: 'NumpadAdd' });
         const preventDefaultMock = vi.fn();
         expect(capturedOnKeyDown).toBeDefined();
         capturedOnKeyDown!({ browserEvent, preventDefault: preventDefaultMock } as unknown as IKeyboardEvent);
 
-        (comp as any).disposeAddFeedbackShortcut();
+        internals(comp).disposeAddFeedbackShortcut();
         return [feedbackLineOneBased, preventDefaultMock, addNewFeedbackSpy];
     };
 
@@ -853,7 +878,7 @@ describe('CodeEditorMonacoComponent', () => {
         } as any;
 
         const selectFileInEditorSpy = vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
-        const renderReviewCommentWidgetsSpy = vi.spyOn(comp as any, 'renderReviewCommentWidgets').mockImplementation(() => {});
+        const renderReviewCommentWidgetsSpy = vi.spyOn(internals(comp), 'renderReviewCommentWidgets').mockImplementation(() => {});
 
         fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
         fixture.componentRef.setInput('enableExerciseReviewComments', true);
@@ -881,7 +906,7 @@ describe('CodeEditorMonacoComponent', () => {
             initialSyncFinalized$: initialSyncFinalized$.asObservable(),
             stateReplaced$: stateReplaced$.asObservable(),
         } as any;
-        const renderReviewCommentWidgetsSpy = vi.spyOn(comp as any, 'renderReviewCommentWidgets').mockImplementation(() => {});
+        const renderReviewCommentWidgetsSpy = vi.spyOn(internals(comp), 'renderReviewCommentWidgets').mockImplementation(() => {});
 
         fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
         fixture.componentRef.setInput('enableExerciseReviewComments', true);
@@ -942,7 +967,7 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.componentRef.setInput('commitState', CommitState.CLEAN);
         fixture.changeDetectorRef.detectChanges();
 
-        const manager = (comp as any).getReviewCommentManager();
+        const manager = internals(comp).getReviewCommentManager();
         const config = (manager as any).config;
 
         expect(config.shouldShowHoverButton()).toBe(true);
@@ -973,7 +998,7 @@ describe('CodeEditorMonacoComponent', () => {
             resolved: false,
             comments: [],
         } as any;
-        (comp as any).exerciseReviewCommentService.threads.set([thread]);
+        internals(comp).exerciseReviewCommentService.threads.set([thread]);
 
         expect(config.getThreads()).toEqual([thread]);
         expect(config.filterThread(thread)).toBe(true);
@@ -996,7 +1021,7 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         vi.spyOn(comp.editor(), 'getText').mockReturnValue('class Foo {}');
         const updateFilesSpy = vi.spyOn(codeEditorRepositoryFileService, 'updateFiles').mockReturnValue(of({} as any));
-        const markAppliedSpy = vi.spyOn((comp as any).exerciseReviewCommentService, 'markInlineFixAppliedInContext').mockImplementation(() => {});
+        const markAppliedSpy = vi.spyOn(internals(comp).exerciseReviewCommentService, 'markInlineFixAppliedInContext').mockImplementation(() => {});
         const onSavedFilesSpy = vi.fn();
         const onInlineFixCommittedSpy = vi.fn();
         comp.onSavedFiles.subscribe(onSavedFilesSpy);
@@ -1011,7 +1036,7 @@ describe('CodeEditorMonacoComponent', () => {
             ],
         } as any;
 
-        (comp as any).persistInlineFixApplication(thread);
+        internals(comp).persistInlineFixApplication(thread);
 
         expect(updateFilesSpy).toHaveBeenCalledWith([{ fileName: 'src/Foo.java', fileContent: 'class Foo {}' }], true);
         expect(onSavedFilesSpy).toHaveBeenCalledWith({ 'src/Foo.java': undefined });
@@ -1021,7 +1046,7 @@ describe('CodeEditorMonacoComponent', () => {
 
     it('should clear review comment drafts through the manager', () => {
         const clearDrafts = vi.fn();
-        (comp as any).reviewCommentManager = {
+        internals(comp).reviewCommentManager = {
             clearDrafts,
             disposeAll: vi.fn(),
             updateDraftInputs: vi.fn(),

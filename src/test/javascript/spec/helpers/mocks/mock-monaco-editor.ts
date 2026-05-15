@@ -2,36 +2,50 @@
  * Mock for monaco-editor module resolution in Vitest.
  * Used via path alias in vitest.config.ts to prevent ESM resolution errors.
  */
-const createMockModel = () => ({
-    dispose: () => {},
-    getValue: () => '',
-    setValue: () => {},
-    setEOL: () => {},
-    getLineCount: () => 1,
-    getLineContent: () => '',
-    getValueInRange: () => '',
-    getFullModelRange: () => ({
-        startLineNumber: 1,
-        startColumn: 1,
-        endLineNumber: 1,
-        endColumn: 1,
-        getEndPosition: () => ({ lineNumber: 1, column: 1 }),
-    }),
-    updateOptions: () => {},
-    onDidChangeContent: () => ({ dispose: () => {} }),
-    getLanguageId: () => 'plaintext',
-});
+const createMockModel = (initialContent = '') => {
+    // Track model value so setValue/getValue round-trips work for tests that read content back.
+    let value = initialContent;
+    return {
+        dispose: () => {},
+        getValue: () => value,
+        setValue: (next: string) => {
+            value = next ?? '';
+        },
+        setEOL: () => {},
+        getLineCount: () => 1,
+        getLineContent: () => '',
+        getValueInRange: () => '',
+        getFullModelRange: () => ({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: 1,
+            endColumn: 1,
+            getEndPosition: () => ({ lineNumber: 1, column: 1 }),
+        }),
+        updateOptions: () => {},
+        onDidChangeContent: () => ({ dispose: () => {} }),
+        getLanguageId: () => 'plaintext',
+    };
+};
 
 let editorIdCounter = 0;
 
 const createMockEditor = () => {
     const editorId = `mock-editor-${++editorIdCounter}`;
+    // Track the editor's active model so getValue/setValue route through it. Production monaco
+    // routes value reads through the active model; mirroring this prevents tests that switch
+    // models via setModel(...) from reading stale per-editor state.
+    let activeModel: ReturnType<typeof createMockModel> = createMockModel();
     return {
         dispose: () => {},
-        getValue: () => '',
-        setValue: () => {},
-        getModel: () => createMockModel(),
-        setModel: () => {},
+        getValue: () => activeModel.getValue(),
+        setValue: (next: string) => activeModel.setValue(next),
+        getModel: () => activeModel,
+        setModel: (next: ReturnType<typeof createMockModel>) => {
+            if (next) {
+                activeModel = next;
+            }
+        },
         onDidChangeCursorPosition: () => ({ dispose: () => {} }),
         onDidChangeCursorSelection: () => ({ dispose: () => {} }),
         onDidChangeModelContent: () => ({ dispose: () => {} }),
@@ -108,8 +122,8 @@ export const editor = {
     create: createMockEditor,
 
     createModel: (content?: string, language?: string, uri?: { toString: () => string }) => {
-        const model = createMockModel();
-        // content/language are intentionally ignored in this lightweight mock
+        // Seed the model with its initial content so getValue() reflects production semantics.
+        const model = createMockModel(content);
         if (uri) {
             modelCache.set(uri.toString(), model);
         }

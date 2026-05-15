@@ -84,6 +84,7 @@ export default defineConfig({
             'src/main/webapp/app/shared/search-filter/**/*.spec.ts', // include search-filter component tests
             'src/main/webapp/app/programming/shared/**/*.spec.ts', // include programming shared tests
             'src/main/webapp/app/shared/detail-overview-list/components/programming-diff-report-detail/**/*.spec.ts', // include programming diff report detail tests
+            'src/test/javascript/spec/integration/code-editor/code-editor-container.integration.spec.ts', // migrated to Vitest
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,

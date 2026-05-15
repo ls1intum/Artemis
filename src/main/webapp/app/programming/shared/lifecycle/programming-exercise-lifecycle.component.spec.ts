@@ -27,6 +27,17 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { Signal } from '@angular/core';
+
+/**
+ * Typed view onto the `datePickerComponents` viewChildren signal. The component declares it as
+ * `readonly`, so overwriting via plain assignment requires a typed cast. Centralising the cast
+ * here replaces the previous `Object.defineProperty(comp, 'datePickerComponents', ...)` hack.
+ */
+type LifecycleInternals = ProgrammingExerciseLifecycleComponent & {
+    datePickerComponents: Signal<readonly ProgrammingExerciseTestScheduleDatePickerComponent[]>;
+};
+const internals = (c: ProgrammingExerciseLifecycleComponent): LifecycleInternals => c as LifecycleInternals;
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     setupTestBed({ zoneless: true });
@@ -362,9 +373,11 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                 value: new Date(),
             }),
         } as any as ProgrammingExerciseTestScheduleDatePickerComponent;
-        // viewChildren() is now a signal; override the property directly with a fake signal that
-        // returns the in-test picker array. The component only reads via `this.datePickerComponents()`.
-        Object.defineProperty(comp, 'datePickerComponents', { value: () => [datePicker], writable: true });
+        // viewChildren() is a signal accessor; swap it for a synchronous fake signal that returns
+        // the test picker. The component only reads the value via `this.datePickerComponents()`,
+        // so a plain function satisfies the Signal contract for this test. The typed internals
+        // seam replaces a previous Object.defineProperty workaround.
+        internals(comp).datePickerComponents = (() => [datePicker]) as unknown as Signal<readonly ProgrammingExerciseTestScheduleDatePickerComponent[]>;
         comp.ngAfterViewInit();
         valueChanges.next(true);
         await new Promise((resolve) => setTimeout(resolve, 10));

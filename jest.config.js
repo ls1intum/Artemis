@@ -283,6 +283,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/shared/search-filter/', // search-filter (Vitest)
         '<rootDir>/src/main/webapp/app/programming/shared/', // programming shared uses Vitest
         '<rootDir>/src/main/webapp/app/shared/detail-overview-list/components/programming-diff-report-detail/', // programming diff report detail uses Vitest
+        '<rootDir>/src/test/javascript/spec/integration/code-editor/code-editor-container.integration.spec.ts', // migrated to Vitest
     ],
     testTimeout: 3000,
     testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts', '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'],

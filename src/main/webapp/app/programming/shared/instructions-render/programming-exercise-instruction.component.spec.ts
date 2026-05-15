@@ -120,62 +120,76 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should on participation change clear old subscription for participation results set up new one', async () => {
-        const exercise: ProgrammingExercise = {
-            id: 1,
-            numberOfAssessmentsOfCorrectionRounds: [],
-            secondCorrectionEnabled: false,
-            studentAssignedTeamIdComputed: false,
-            isAtLeastTutor: true,
-            problemStatement: 'lorem ipsum dolor sit amet',
-        };
-        const result: Result = { id: 1 };
-        const participation: Participation = { id: 2, submissions: [{ results: [result] }] };
-        const oldSubscription = new Subscription();
-        const getTestCasesSpy = vi.spyOn(programmingExerciseGradingService, 'getTestCases');
-        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
-        fixture.componentRef.setInput('exercise', exercise);
-        fixture.componentRef.setInput('participation', participation);
-        internals(comp).participationSubscription = oldSubscription;
+        // Enable fake timers BEFORE the debounced action is scheduled so we can advance the
+        // 150 ms problemStatementUpdateSubject debounce (instruction component) deterministically.
+        vi.useFakeTimers();
+        try {
+            const exercise: ProgrammingExercise = {
+                id: 1,
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+                isAtLeastTutor: true,
+                problemStatement: 'lorem ipsum dolor sit amet',
+            };
+            const result: Result = { id: 1 };
+            const participation: Participation = { id: 2, submissions: [{ results: [result] }] };
+            const oldSubscription = new Subscription();
+            const getTestCasesSpy = vi.spyOn(programmingExerciseGradingService, 'getTestCases');
+            subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', participation);
+            internals(comp).participationSubscription = oldSubscription;
 
-        // ngOnInit fires processInputChanges on the first detectChanges.
-        fixture.changeDetectorRef.detectChanges();
+            // ngOnInit fires processInputChanges on the first detectChanges.
+            fixture.changeDetectorRef.detectChanges();
 
-        expect(getTestCasesSpy).toHaveBeenCalledOnce();
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true, exercise.id);
-        expect(internals(comp).participationSubscription).not.toEqual(oldSubscription);
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        expect(internals(comp).isInitial).toBe(true);
+            expect(getTestCasesSpy).toHaveBeenCalledOnce();
+            expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
+            expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true, exercise.id);
+            expect(internals(comp).participationSubscription).not.toEqual(oldSubscription);
+            await vi.advanceTimersByTimeAsync(160);
+            expect(internals(comp).isInitial).toBe(true);
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it('should properly assign and cleanup generateHtmlSubscription when generateHtmlEvents is provided', async () => {
-        const exercise: ProgrammingExercise = {
-            id: 1,
-            numberOfAssessmentsOfCorrectionRounds: [],
-            secondCorrectionEnabled: false,
-            studentAssignedTeamIdComputed: false,
-            isAtLeastTutor: true,
-            problemStatement: 'lorem ipsum dolor sit amet',
-        };
-        const result: Result = { id: 1 };
-        const participation: Participation = { id: 2, submissions: [{ results: [result] }] };
-        const oldSubscription = new Subscription();
-        const generateHtmlEvents = of(undefined);
+        // Enable fake timers BEFORE detectChanges so the 150 ms debounce can be advanced
+        // deterministically rather than relying on a real-time sleep.
+        vi.useFakeTimers();
+        try {
+            const exercise: ProgrammingExercise = {
+                id: 1,
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+                isAtLeastTutor: true,
+                problemStatement: 'lorem ipsum dolor sit amet',
+            };
+            const result: Result = { id: 1 };
+            const participation: Participation = { id: 2, submissions: [{ results: [result] }] };
+            const oldSubscription = new Subscription();
+            const generateHtmlEvents = of(undefined);
 
-        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
-        fixture.componentRef.setInput('exercise', exercise);
-        fixture.componentRef.setInput('participation', participation);
-        fixture.componentRef.setInput('generateHtmlEvents', generateHtmlEvents);
-        internals(comp).generateHtmlSubscription = oldSubscription;
+            subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', participation);
+            fixture.componentRef.setInput('generateHtmlEvents', generateHtmlEvents);
+            internals(comp).generateHtmlSubscription = oldSubscription;
 
-        // ngOnInit handles the initial processInputChanges call.
-        fixture.changeDetectorRef.detectChanges();
+            // ngOnInit handles the initial processInputChanges call.
+            fixture.changeDetectorRef.detectChanges();
 
-        // The generateHtmlSubscription should be reassigned, not left as the old one.
-        expect(internals(comp).generateHtmlSubscription).not.toEqual(oldSubscription);
-        // Verify it's actually a subscription.
-        expect(internals(comp).generateHtmlSubscription).toBeInstanceOf(Subscription);
-        await new Promise((resolve) => setTimeout(resolve, 200));
+            // The generateHtmlSubscription should be reassigned, not left as the old one.
+            expect(internals(comp).generateHtmlSubscription).not.toEqual(oldSubscription);
+            // Verify it's actually a subscription.
+            expect(internals(comp).generateHtmlSubscription).toBeInstanceOf(Subscription);
+            await vi.advanceTimersByTimeAsync(160);
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it('should process empty problem statement and show empty state', () => {
@@ -213,59 +227,71 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should NOT update markdown if the problemStatement is changed', async () => {
-        const participation: Participation = { id: 2 };
-        const exercise: ProgrammingExercise = {
-            id: 3,
-            course: { id: 4 },
-            numberOfAssessmentsOfCorrectionRounds: [],
-            secondCorrectionEnabled: false,
-            studentAssignedTeamIdComputed: false,
-        };
-        const oldProblemStatement = 'lorem ipsum';
-        const newProblemStatement = 'new lorem ipsum';
-        // Seed participation before any change detection so the effect's initial seed pass
-        // captures it — subsequent input-change effect runs see no participation change.
-        fixture.componentRef.setInput('participation', participation);
-        fixture.detectChanges();
-        const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
-        const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
-        fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: oldProblemStatement });
-        internals(comp).isInitial = false;
-        // Prime the seen problem statement so the next change is detected as a real edit.
-        internals(comp).lastSeenProblemStatement = oldProblemStatement;
-        fixture.componentRef.setInput('exercise', { ...comp.exercise(), problemStatement: newProblemStatement });
-        fixture.detectChanges();
-        // Wait for debounce (150ms) to complete
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        expect(updateMarkdownStub).toHaveBeenCalledOnce();
-        expect(loadInitialResult).not.toHaveBeenCalled();
+        // Fake timers up front so the 150 ms debounce can be advanced deterministically.
+        vi.useFakeTimers();
+        try {
+            const participation: Participation = { id: 2 };
+            const exercise: ProgrammingExercise = {
+                id: 3,
+                course: { id: 4 },
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+            };
+            const oldProblemStatement = 'lorem ipsum';
+            const newProblemStatement = 'new lorem ipsum';
+            // Seed participation before any change detection so the effect's initial seed pass
+            // captures it — subsequent input-change effect runs see no participation change.
+            fixture.componentRef.setInput('participation', participation);
+            fixture.detectChanges();
+            const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
+            const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
+            fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: oldProblemStatement });
+            internals(comp).isInitial = false;
+            // Prime the seen problem statement so the next change is detected as a real edit.
+            internals(comp).lastSeenProblemStatement = oldProblemStatement;
+            fixture.componentRef.setInput('exercise', { ...comp.exercise(), problemStatement: newProblemStatement });
+            fixture.detectChanges();
+            // Advance past the 150 ms debounce.
+            await vi.advanceTimersByTimeAsync(160);
+            expect(updateMarkdownStub).toHaveBeenCalledOnce();
+            expect(loadInitialResult).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it('should NOT update the markdown if there is no participation and the exercise has changed', async () => {
-        const participation: Participation = { id: 2 };
-        const exercise: ProgrammingExercise = {
-            id: 3,
-            course: { id: 4 },
-            numberOfAssessmentsOfCorrectionRounds: [],
-            secondCorrectionEnabled: false,
-            studentAssignedTeamIdComputed: false,
-        };
-        const newProblemStatement = 'new lorem ipsum';
-        // Seed participation before any change detection so the effect's initial seed pass
-        // captures it; the subsequent change exercises the "exercise changed, participation didn't" path.
-        fixture.componentRef.setInput('participation', participation);
-        fixture.detectChanges();
-        const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
-        const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
-        internals(comp).isInitial = false;
-        internals(comp).lastSeenProblemStatement = undefined;
-        fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: newProblemStatement });
-        fixture.detectChanges();
-        // Wait for debounce (150ms) to complete
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        expect(comp.markdownExtensions).toHaveLength(2);
-        expect(updateMarkdownStub).toHaveBeenCalledOnce();
-        expect(loadInitialResult).not.toHaveBeenCalled();
+        // Fake timers up front so the 150 ms debounce can be advanced deterministically.
+        vi.useFakeTimers();
+        try {
+            const participation: Participation = { id: 2 };
+            const exercise: ProgrammingExercise = {
+                id: 3,
+                course: { id: 4 },
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+            };
+            const newProblemStatement = 'new lorem ipsum';
+            // Seed participation before any change detection so the effect's initial seed pass
+            // captures it; the subsequent change exercises the "exercise changed, participation didn't" path.
+            fixture.componentRef.setInput('participation', participation);
+            fixture.detectChanges();
+            const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
+            const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
+            internals(comp).isInitial = false;
+            internals(comp).lastSeenProblemStatement = undefined;
+            fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: newProblemStatement });
+            fixture.detectChanges();
+            // Advance past the 150 ms debounce.
+            await vi.advanceTimersByTimeAsync(160);
+            expect(comp.markdownExtensions).toHaveLength(2);
+            expect(updateMarkdownStub).toHaveBeenCalledOnce();
+            expect(loadInitialResult).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it('should still render the instructions if fetching the latest result fails', () => {
