@@ -37,14 +37,21 @@ const PROJECT_ROOT = process.cwd();
 const NODE_MODULES_RE = /node_modules\/((?:@[^/]+\/)?[^/]+)(?:\/|$)/g;
 
 function resolvePackageDir(src) {
-    let last = null;
     NODE_MODULES_RE.lastIndex = 0;
+    let firstStart = -1;
+    let deepest = null;
     let m;
     while ((m = NODE_MODULES_RE.exec(src)) !== null) {
-        const prefix = src.slice(0, m.index + 'node_modules/'.length + m[1].length);
-        last = { name: m[1], dir: resolve(PROJECT_ROOT, prefix) };
+        if (firstStart === -1) firstStart = m.index;
+        deepest = { name: m[1], endIdx: m.index + 'node_modules/'.length + m[1].length };
     }
-    return last;
+    if (!deepest) return null;
+    // Source-map paths are relative to the map's location and frequently start
+    // with `../` segments. Strip that prefix and keep the full
+    // `node_modules/.../node_modules/<name>` chain so nested installs (Bun
+    // peer-conflict carve-outs) resolve to the correct on-disk directory.
+    const subpath = src.slice(firstStart, deepest.endIdx);
+    return { name: deepest.name, dir: resolve(PROJECT_ROOT, subpath) };
 }
 
 const versionCache = new Map();
