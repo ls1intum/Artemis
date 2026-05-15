@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -42,11 +42,17 @@ export class ProofBuilderComponent implements OnInit {
         isSelectedFn: (ri, p) => this.isSelectedNode(ri, p),
     }));
 
+    constructor() {
+        effect(() => {
+            const expr = this.expression();
+            const currentRoot = this.rootNodes()[0];
+            if (expr !== currentRoot) {
+                this.rootNodes.set(expr ? [expr] : []);
+            }
+        });
+    }
+
     ngOnInit(): void {
-        const init = this.expression();
-        if (init) {
-            this.rootNodes.set([init]);
-        }
         this.blockRegistryService.getBlockRegistry().subscribe({
             next: (blocks) => this.blocks.set(blocks),
         });

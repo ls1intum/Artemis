@@ -72,19 +72,36 @@ public class ProofGradingService {
             return source.equals(target) ? 100.0 : 0.0;
         }
 
+        int validSteps = 0;
         MathNode current = source;
         for (DerivationStep step : steps) {
             Optional<RewriteRule> ruleOpt = blockRegistry.findRuleById(step.getAppliedRuleId());
             if (ruleOpt.isEmpty()) {
-                return 0.0;
+                break;
             }
             Optional<MathNode> newTree = applyRule(current, step.getTargetNodePath(), ruleOpt.get());
             if (newTree.isEmpty() || !newTree.get().equals(step.getResultExpression())) {
-                return 0.0;
+                break;
             }
             current = step.getResultExpression();
+            validSteps++;
         }
-        return current.equals(target) ? 100.0 : 0.0;
+
+        if (current.equals(target)) {
+            return 100.0;
+        }
+
+        if (exercise.isPartialCreditEnabled()) {
+            var examples = exercise.getExampleDerivations();
+            if (examples != null && !examples.isEmpty()) {
+                int minExpectedSteps = examples.stream().mapToInt(List::size).min().orElse(0);
+                if (minExpectedSteps > 0 && validSteps > 0) {
+                    return Math.min((double) validSteps / minExpectedSteps * 100.0, 99.0);
+                }
+            }
+        }
+
+        return 0.0;
     }
 
     // ---- Tree navigation ----

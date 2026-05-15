@@ -44,6 +44,8 @@
             "allowVerificationHint": "Show the \"Verify Proof\" button so students can check their steps.",
             "onlyShowApplicableRules": "Only Show Applicable Rules",
             "onlyShowApplicableRulesHint": "Hide rules that cannot be applied at the currently selected node.",
+            "partialCreditEnabled": "Partial Credit",
+            "partialCreditEnabledHint": "Award proportional points for valid steps when the proof is incomplete. Requires at least one example derivation to determine the expected step count.",
             "manualStepClaimedRule": "Claimed rule:",
             "manualStepBuildResult": "Build the result expression:",
             "manualStepConfirm": "Confirm Step",

@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.proof.dto.ProofSubmissionDTO.DerivationStepDTO;
  * @param manualDerivation                       true if students write the result expression themselves (false = system auto-applies)
  * @param allowVerification                      whether students may trigger proof verification
  * @param onlyShowApplicableRules                whether the rule palette shows only rules applicable at the selected node
+ * @param partialCreditEnabled                   whether partial credit is awarded proportionally based on valid steps completed
  * @param exampleDerivations                     instructor-supplied example derivations (each is an ordered list of steps)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -53,7 +54,7 @@ public record ProofExerciseDTO(Long id, String title, String shortName, String p
         Boolean allowFeedbackRequests, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions,
         ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, Long courseId,
         Long exerciseGroupId, MathNode sourceExpression, MathNode targetExpression, Boolean manualDerivation, Boolean allowVerification, Boolean onlyShowApplicableRules,
-        List<List<DerivationStepDTO>> exampleDerivations) {
+        Boolean partialCreditEnabled, List<List<DerivationStepDTO>> exampleDerivations) {
 
     public static ProofExerciseDTO of(ProofExercise exercise) {
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
@@ -64,7 +65,7 @@ public record ProofExerciseDTO(Long id, String title, String shortName, String p
                 exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(),
                 exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), courseId,
                 exerciseGroupId, exercise.getSourceExpression(), exercise.getTargetExpression(), exercise.isManualDerivation(), exercise.isAllowVerification(),
-                exercise.isOnlyShowApplicableRules(), exercise.getExampleDerivations());
+                exercise.isOnlyShowApplicableRules(), exercise.isPartialCreditEnabled(), exercise.getExampleDerivations());
     }
 
     /**
@@ -100,6 +101,7 @@ public record ProofExerciseDTO(Long id, String title, String shortName, String p
         exercise.setManualDerivation(Boolean.TRUE.equals(manualDerivation));
         exercise.setAllowVerification(allowVerification == null || allowVerification);
         exercise.setOnlyShowApplicableRules(Boolean.TRUE.equals(onlyShowApplicableRules));
+        exercise.setPartialCreditEnabled(Boolean.TRUE.equals(partialCreditEnabled));
         exercise.setExampleDerivations(exampleDerivations);
     }
 }

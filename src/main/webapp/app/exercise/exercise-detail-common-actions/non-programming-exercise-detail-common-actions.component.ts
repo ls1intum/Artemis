@@ -5,6 +5,7 @@ import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-
 import { HttpErrorResponse } from '@angular/common/http';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
+import { ProofExerciseService } from 'app/proof/manage/service/proof-exercise.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Router, RouterLink } from '@angular/router';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -30,6 +31,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     private textExerciseService = inject(TextExerciseService);
     private fileUploadExerciseService = inject(FileUploadExerciseService);
     private modelingExerciseService = inject(ModelingExerciseService);
+    private proofExerciseService = inject(ProofExerciseService);
     private exerciseService = inject(ExerciseService);
     private profileService = inject(ProfileService);
     private eventManager = inject(EventManager);
@@ -129,6 +131,19 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                         this.eventManager.broadcast({
                             name: 'modelingExerciseListModification',
                             content: 'Deleted an modelingExercise',
+                        });
+                        this.dialogErrorSource.next('');
+                        this.navigateToOverview();
+                    },
+                    error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                });
+                break;
+            case ExerciseType.PROOF:
+                this.proofExerciseService.delete(exercise.id!).subscribe({
+                    next: () => {
+                        this.eventManager.broadcast({
+                            name: 'proofExerciseListModification',
+                            content: 'Deleted a proofExercise',
                         });
                         this.dialogErrorSource.next('');
                         this.navigateToOverview();

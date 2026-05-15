@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProofExercise } from 'app/proof/shared/entities/proof-exercise.model';
 import { ProofExerciseService } from '../service/proof-exercise.service';
@@ -9,10 +9,14 @@ import { CategorySelectorComponent } from 'app/shared/category-selector/category
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MathNode } from '../../shared/entities/math-node.model';
 import { DerivationStep } from '../../shared/entities/derivation-step.model';
 import { ProofBuilderComponent } from './proof-builder/proof-builder.component';
 import { ProofDerivationWorkspaceComponent } from './proof-derivation-workspace/proof-derivation-workspace.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 @Component({
     selector: 'jhi-proof-exercise-update',
@@ -24,6 +28,8 @@ import { ProofDerivationWorkspaceComponent } from './proof-derivation-workspace/
         DifficultyPickerComponent,
         IncludedInOverallScorePickerComponent,
         MarkdownEditorMonacoComponent,
+        FormDateTimePickerComponent,
+        ArtemisTranslatePipe,
         ProofBuilderComponent,
         ProofDerivationWorkspaceComponent,
     ],
@@ -31,13 +37,21 @@ import { ProofDerivationWorkspaceComponent } from './proof-derivation-workspace/
 export class ProofExerciseUpdateComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private proofExerciseService = inject(ProofExerciseService);
+    private exerciseService = inject(ExerciseService);
     private router = inject(Router);
+    // FIXME: dev-only — remove or gate behind a proper feature flag before merging to main
+    private profileService = inject(ProfileService);
 
     proofExercise: ProofExercise;
     isSaving: boolean;
     exerciseCategories = signal<ExerciseCategory[]>([]);
     existingCategories = signal<ExerciseCategory[]>([]);
     onlyShowApplicableRules = signal(false);
+
+    releaseDateField = viewChild<FormDateTimePickerComponent>('releaseDate');
+    startDateField = viewChild<FormDateTimePickerComponent>('startDate');
+    dueDateField = viewChild<FormDateTimePickerComponent>('dueDate');
+    assessmentDateField = viewChild<FormDateTimePickerComponent>('assessmentDueDate');
 
     ngOnInit() {
         this.isSaving = false;
@@ -52,6 +66,10 @@ export class ProofExerciseUpdateComponent implements OnInit {
 
     updateCategories(categories: ExerciseCategory[]) {
         this.proofExercise.categories = categories;
+    }
+
+    validateDate() {
+        this.exerciseService.validateDate(this.proofExercise);
     }
 
     onSourceExpressionChange(node: MathNode | undefined) {
@@ -78,6 +96,51 @@ export class ProofExerciseUpdateComponent implements OnInit {
         const updated = [...(this.proofExercise.exampleDerivations ?? [])];
         updated[index] = steps;
         this.proofExercise.exampleDerivations = updated;
+    }
+
+    // FIXME: dev-only helpers — remove or gate behind a proper feature flag before merging to main
+    get isDev(): boolean {
+        return this.profileService.isDevelopment();
+    }
+
+    isDragOver = signal(false);
+
+    exportJson(): void {
+        const json = JSON.stringify(this.proofExercise, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `proof-exercise-${this.proofExercise.id ?? 'new'}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    importJson(event: Event): void {
+        const file = (event.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+        this.readJsonFile(file);
+        (event.target as HTMLInputElement).value = '';
+    }
+
+    onFileDrop(event: DragEvent): void {
+        event.preventDefault();
+        this.isDragOver.set(false);
+        const file = event.dataTransfer?.files?.[0];
+        if (file) this.readJsonFile(file);
+    }
+
+    private readJsonFile(file: File): void {
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const parsed = JSON.parse(reader.result as string) as ProofExercise;
+                Object.assign(this.proofExercise, parsed);
+            } catch {
+                // malformed JSON — silently ignore in dev helper
+            }
+        };
+        reader.readAsText(file);
     }
 
     save() {

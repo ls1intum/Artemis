@@ -16,6 +16,56 @@
                 </div>
             </div>
 
+            @if (submissions.length > 0) {
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <h4 class="card-title mb-0">Submitted Proofs</h4>
+                                <span class="badge bg-secondary">{{ submissions.length }}</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Student</th>
+                                            <th>Submitted</th>
+                                            <th>Steps</th>
+                                            <th>Score</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (sub of submissions; track sub.id) {
+                                            <tr>
+                                                <td>{{ sub.participation?.studentName ?? sub.participation?.studentLogin ?? '—' }}</td>
+                                                <td>{{ sub.submissionDate | artemisDate }}</td>
+                                                <td>{{ sub.steps?.length ?? 0 }}</td>
+                                                <td>
+                                                    @if (sub.results && sub.results.length > 0) {
+                                                        {{ sub.results[sub.results.length - 1].score | number: '1.0-1' }}%
+                                                    } @else {
+                                                        <span class="text-muted">—</span>
+                                                    }
+                                                </td>
+                                                <td class="text-end">
+                                                    <a
+                                                        class="btn btn-sm btn-outline-primary"
+                                                        [routerLink]="['/course-management', course!.id, 'proof-exercises', proofExercise.id, 'submissions', sub.id, 'assessment']"
+                                                    >
+                                                        Assess
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
             @if (proofExercise.sourceExpression && proofExercise.targetExpression) {
                 <div class="row mt-3">
                     <div class="col-12">

@@ -398,19 +398,21 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
     // ── Undo / Verify ─────────────────────────────────────────────────────────
 
     undoLastStep() {
-        this.steps.update((s) => {
-            const updated = s.slice(0, -1);
-            const expr = updated.length > 0 ? updated[updated.length - 1].resultExpression : this.proofExercise?.sourceExpression;
-            this.currentExpression.set(expr);
-            return updated;
-        });
-        this.stepStatuses.update((s) => s.slice(0, -1));
-        this.stepErrors.update((s) => s.slice(0, -1));
-        this.ruleApplicationError.set(undefined);
+        this.truncateToStep(this.steps().length - 1);
+    }
+
+    truncateToStep(index: number): void {
+        this.steps.update((s) => s.slice(0, index));
+        this.stepStatuses.update((s) => s.slice(0, index));
+        this.stepErrors.update((s) => s.slice(0, index));
+        const remaining = this.steps();
+        const expr = remaining.length > 0 ? remaining[remaining.length - 1].resultExpression : this.proofExercise?.sourceExpression;
+        this.currentExpression.set(expr);
         this.selectedNodePath.set(undefined);
         this.selectedRuleId.set('');
         this.pendingManualStep.set(false);
         this.manualResultExpression.set(undefined);
+        this.ruleApplicationError.set(undefined);
         this.hasUnsavedChanges.set(true);
     }
 

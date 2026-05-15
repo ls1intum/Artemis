@@ -61,6 +61,77 @@
             </div>
 
             <div class="card p-3 mb-3">
+                <h4 class="card-title border-bottom pb-2" jhiTranslate="artemisApp.exercise.sections.grading">Scheduling</h4>
+                <div class="d-flex">
+                    <div class="form-group flex-grow-1">
+                        <jhi-date-time-picker
+                            #releaseDate
+                            class="form-element"
+                            id="pick-releaseDate"
+                            name="releaseDate"
+                            labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
+                            [(ngModel)]="proofExercise.releaseDate"
+                            (valueChange)="validateDate()"
+                            [error]="false"
+                        />
+                    </div>
+                    <div class="form-group flex-grow-1 ms-3">
+                        <jhi-date-time-picker
+                            #startDate
+                            class="form-element"
+                            id="pick-startDate"
+                            name="startDate"
+                            [startAt]="proofExercise.releaseDate"
+                            [min]="proofExercise.releaseDate"
+                            [error]="!!proofExercise.startDateError"
+                            labelName="{{ 'artemisApp.exercise.startDate' | artemisTranslate }}"
+                            (valueChange)="validateDate()"
+                            [(ngModel)]="proofExercise.startDate"
+                        />
+                        @if (proofExercise.startDateError) {
+                            <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.startDateError"></span>
+                        }
+                    </div>
+                </div>
+                <div class="d-flex">
+                    <div class="form-group flex-grow-1">
+                        <jhi-date-time-picker
+                            #dueDate
+                            class="form-element"
+                            id="pick-dueDate"
+                            name="dueDate"
+                            [startAt]="proofExercise.startDate"
+                            [min]="proofExercise.startDate"
+                            [error]="!!proofExercise.dueDateError"
+                            labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
+                            (valueChange)="validateDate()"
+                            [(ngModel)]="proofExercise.dueDate"
+                        />
+                        @if (proofExercise.dueDateError) {
+                            <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.dueDateError"></span>
+                        }
+                    </div>
+                    <div class="form-group flex-grow-1 ms-3">
+                        <jhi-date-time-picker
+                            #assessmentDueDate
+                            class="form-element"
+                            id="pick-assessmentDueDate"
+                            name="assessmentDueDate"
+                            [startAt]="proofExercise.dueDate"
+                            [min]="proofExercise.dueDate"
+                            [error]="!!proofExercise.assessmentDueDateError"
+                            labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
+                            (valueChange)="validateDate()"
+                            [(ngModel)]="proofExercise.assessmentDueDate"
+                        />
+                        @if (proofExercise.assessmentDueDateError) {
+                            <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.assessmentDueDateError"></span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-3 mb-3">
                 <h4 class="card-title border-bottom pb-2">Proof Configuration</h4>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.proofExercise.description" for="field_description"
@@ -107,6 +178,22 @@
                     >
                     <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.onlyShowApplicableRulesHint"
                         >Hide rules that cannot be applied at the currently selected node.</small
+                    >
+                </div>
+                <div class="form-check mt-2">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="field_partialCreditEnabled"
+                        name="partialCreditEnabled"
+                        [(ngModel)]="proofExercise.partialCreditEnabled"
+                    />
+                    <label class="form-check-label" for="field_partialCreditEnabled" jhiTranslate="artemisApp.proofExercise.partialCreditEnabled"
+                        >Partial Credit</label
+                    >
+                    <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.partialCreditEnabledHint"
+                        >Award proportional points for valid steps when the proof is incomplete. Requires at least one example derivation to determine the expected step
+                        count.</small
                     >
                 </div>
             </div>
@@ -182,6 +269,41 @@
                             />
                         </div>
                     }
+                </div>
+            }
+
+            <!-- FIXME: dev-only — remove or gate behind a proper feature flag before merging to main -->
+            @if (isDev) {
+                <div class="card p-3 mb-3 border-warning">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-warning text-dark">DEV</span>
+                        <small class="text-muted fw-semibold">JSON Import / Export</small>
+                    </div>
+                    <div class="d-flex gap-2 mb-3">
+                        <button type="button" class="btn btn-sm btn-outline-warning" (click)="exportJson()">⬇ Export JSON</button>
+                        <label class="btn btn-sm btn-outline-warning mb-0">
+                            ⬆ Import JSON
+                            <input type="file" accept=".json,application/json" class="d-none" (change)="importJson($event)" />
+                        </label>
+                    </div>
+                    <div
+                        class="rounded text-center py-4 px-3"
+                        style="border: 2px dashed; transition: background 0.15s, border-color 0.15s; cursor: default"
+                        [style.border-color]="isDragOver() ? '#f0ad4e' : '#adb5bd'"
+                        [style.background]="isDragOver() ? 'rgba(255, 193, 7, 0.08)' : 'transparent'"
+                        (dragover)="$event.preventDefault(); isDragOver.set(true)"
+                        (dragenter)="$event.preventDefault(); isDragOver.set(true)"
+                        (dragleave)="isDragOver.set(false)"
+                        (drop)="onFileDrop($event)"
+                    >
+                        <div class="text-muted small">
+                            @if (isDragOver()) {
+                                <span class="fw-semibold" style="color: #f0ad4e">Drop to import</span>
+                            } @else {
+                                <span>Drop a <code>.json</code> file here</span>
+                            }
+                        </div>
+                    </div>
                 </div>
             }
 

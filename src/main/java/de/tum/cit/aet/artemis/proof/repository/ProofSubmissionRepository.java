@@ -26,4 +26,18 @@ public interface ProofSubmissionRepository extends JpaRepository<ProofSubmission
 
     @Query("SELECT s FROM ProofSubmission s LEFT JOIN FETCH s.steps LEFT JOIN FETCH s.results WHERE s.id = :id")
     Optional<ProofSubmission> findByIdWithStepsAndResults(@Param("id") Long id);
+
+    @Query("SELECT s FROM ProofSubmission s LEFT JOIN FETCH s.steps LEFT JOIN FETCH s.results LEFT JOIN FETCH s.participation p LEFT JOIN FETCH p.exercise WHERE s.id = :id")
+    Optional<ProofSubmission> findByIdWithStepsResultsAndParticipation(@Param("id") Long id);
+
+    @Query("""
+            SELECT s FROM ProofSubmission s
+            LEFT JOIN FETCH s.results
+            LEFT JOIN FETCH s.steps
+            LEFT JOIN FETCH s.participation p
+            LEFT JOIN FETCH p.student
+            WHERE p.exercise.id = :exerciseId AND s.submitted = true
+            ORDER BY s.submissionDate DESC
+            """)
+    java.util.List<ProofSubmission> findSubmittedByExerciseId(@Param("exerciseId") Long exerciseId);
 }

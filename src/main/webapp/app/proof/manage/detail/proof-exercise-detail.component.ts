@@ -1,12 +1,14 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { Subscription } from 'rxjs';
 import { ProofExercise } from 'app/proof/shared/entities/proof-exercise.model';
+import { ProofSubmission } from 'app/proof/shared/entities/proof-submission.model';
 import { ProofExerciseService } from '../service/proof-exercise.service';
+import { ProofSubmissionService } from 'app/proof/participate/service/proof-submission.service';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
@@ -25,6 +27,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { MathNodeLatexPipe } from 'app/proof/shared/math-node-latex.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { DecimalPipe } from '@angular/common';
 
 @Component({
     selector: 'jhi-proof-exercise-detail',
@@ -36,6 +40,9 @@ import { MathNodeLatexPipe } from 'app/proof/shared/math-node-latex.pipe';
         ExerciseDetailStatisticsComponent,
         DetailOverviewListComponent,
         MathNodeLatexPipe,
+        RouterLink,
+        ArtemisDatePipe,
+        DecimalPipe,
     ],
 })
 export class ProofExerciseDetailComponent implements OnInit, OnDestroy {
@@ -43,6 +50,7 @@ export class ProofExerciseDetailComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);
     private artemisMarkdownService = inject(ArtemisMarkdownService);
     private proofExerciseService = inject(ProofExerciseService);
+    private proofSubmissionService = inject(ProofSubmissionService);
     private statisticsService = inject(StatisticsService);
 
     readonly ExerciseType = ExerciseType;
@@ -52,6 +60,7 @@ export class ProofExerciseDetailComponent implements OnInit, OnDestroy {
     isExamExercise: boolean;
     formattedProblemStatement: SafeHtml | null;
     formattedExampleSolution: SafeHtml | null;
+    submissions: ProofSubmission[] = [];
 
     doughnutStats: ExerciseManagementStatisticsDto;
     detailOverviewSections: DetailOverviewSection[];
@@ -77,6 +86,10 @@ export class ProofExerciseDetailComponent implements OnInit, OnDestroy {
 
         this.statisticsService.getExerciseStatistics(this.proofExercise.id!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
+        });
+
+        this.proofSubmissionService.getSubmittedSubmissions(this.proofExercise.id!).subscribe((submissions) => {
+            this.submissions = submissions;
         });
     }
 

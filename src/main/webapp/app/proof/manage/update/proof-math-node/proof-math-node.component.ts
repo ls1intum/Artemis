@@ -1,6 +1,7 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { ProofBlockRegistryService } from '../../service/proof-block-registry.service';
 import { MathNode } from '../../../shared/entities/math-node.model';
 
 export interface MathNodeContext {
@@ -24,6 +25,12 @@ export class MathNodeComponent {
     path = input<number[]>([]);
     rootIndex = input<number>(0);
     ctx = input.required<MathNodeContext>();
+
+    private registry = inject(ProofBlockRegistryService);
+
+    descriptor = computed(() => this.registry.descriptorFor(this.node().type));
+    layoutCategory = computed(() => this.descriptor()?.layoutCategory ?? 'UNKNOWN');
+    displaySymbol = computed(() => this.descriptor()?.displaySymbol ?? '?');
 
     isHovered = signal(false);
     isSelected = computed(() => this.ctx().isSelectedFn(this.rootIndex(), this.path()));
@@ -60,6 +67,16 @@ export class MathNodeComponent {
             }
         }
         return result;
+    }
+
+    needsParens(child: MathNode, slotKey: string): boolean {
+        const parentDesc = this.descriptor();
+        if (!parentDesc || parentDesc.associativity === 'NONE') return false;
+        const childDesc = this.registry.descriptorFor(child.type);
+        const parentPrec = parentDesc.precedence ?? 0;
+        const childPrec = childDesc?.precedence ?? -Infinity;
+        if (childPrec === -Infinity) return true;
+        return slotKey === 'right' ? childPrec <= parentPrec : childPrec < parentPrec;
     }
 
     handleClick(event: MouseEvent): void {

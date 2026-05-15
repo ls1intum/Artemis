@@ -12,6 +12,7 @@ export class ProofExercise extends Exercise {
     public manualDerivation?: boolean;
     public allowVerification?: boolean;
     public onlyShowApplicableRules?: boolean;
+    public partialCreditEnabled?: boolean;
     public exampleDerivations?: DerivationStep[][];
 
     constructor(course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {

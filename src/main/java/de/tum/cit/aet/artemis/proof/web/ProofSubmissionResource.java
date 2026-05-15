@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.proof.web;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -161,7 +163,49 @@ public class ProofSubmissionResource {
     @EnforceAtLeastTutor
     public ResponseEntity<ProofSubmissionDTO> getProofSubmissionForAssessment(@PathVariable Long submissionId) {
         log.debug("REST request to get ProofSubmission for assessment : {}", submissionId);
-        ProofSubmission submission = proofSubmissionRepository.findWithEagerParticipationExerciseResultsById(submissionId).orElseThrow();
+        ProofSubmission submission = proofSubmissionRepository.findByIdWithStepsResultsAndParticipation(submissionId).orElseThrow();
+        if (submission.getParticipation() != null && submission.getParticipation().getExercise() instanceof ProofExercise pe) {
+            ProofExercise exerciseWithCategories = proofExerciseRepository.findByIdWithCategories(pe.getId()).orElseThrow();
+            submission.getParticipation().setExercise(exerciseWithCategories);
+        }
+        return ResponseEntity.ok(ProofSubmissionDTO.of(submission));
+    }
+
+    @GetMapping("exercises/{exerciseId}/proof-submissions")
+    @EnforceAtLeastTutor
+    public ResponseEntity<List<ProofSubmissionDTO>> getSubmittedProofSubmissions(@PathVariable Long exerciseId) {
+        log.debug("REST request to get submitted ProofSubmissions for exercise : {}", exerciseId);
+        ProofExercise exercise = proofExerciseRepository.findByIdWithCategories(exerciseId).orElseThrow();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        List<ProofSubmissionDTO> dtos = proofSubmissionRepository.findSubmittedByExerciseId(exerciseId).stream().map(ProofSubmissionDTO::of).toList();
+        return ResponseEntity.ok(dtos);
+    }
+
+    @PutMapping("proof-submissions/{submissionId}/manual-result")
+    @EnforceAtLeastTutor
+    public ResponseEntity<ProofSubmissionDTO> saveManualResult(@PathVariable Long submissionId, @RequestBody double score) {
+        log.debug("REST request to save manual result for ProofSubmission : {}", submissionId);
+        ProofSubmission submission = proofSubmissionRepository.findByIdWithStepsResultsAndParticipation(submissionId).orElseThrow();
+        ProofExercise exercise = (ProofExercise) submission.getParticipation().getExercise();
+
+        Result result = submission.getLatestResult();
+        if (result == null || result.getAssessmentType() != AssessmentType.MANUAL) {
+            result = new Result();
+            result.setSubmission(submission);
+            result.setAssessmentType(AssessmentType.MANUAL);
+            result.setRated(true);
+            result.setExerciseId(exercise.getId());
+        }
+        result.setCompletionDate(ZonedDateTime.now());
+        result.setScore(score, exercise.getCourseViaExerciseGroupOrCourseMember());
+        resultRepository.save(result);
+        submission.addResult(result);
+
+        submission = proofSubmissionRepository.findByIdWithStepsResultsAndParticipation(submissionId).orElseThrow();
+        if (submission.getParticipation() != null && submission.getParticipation().getExercise() instanceof ProofExercise pe) {
+            ProofExercise exerciseWithCategories = proofExerciseRepository.findByIdWithCategories(pe.getId()).orElseThrow();
+            submission.getParticipation().setExercise(exerciseWithCategories);
+        }
         return ResponseEntity.ok(ProofSubmissionDTO.of(submission));
     }
 }

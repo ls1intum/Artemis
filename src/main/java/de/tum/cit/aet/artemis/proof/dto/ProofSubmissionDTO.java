@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.Hibernate;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -67,14 +69,17 @@ public record ProofSubmissionDTO(Long id, Boolean submitted, ZonedDateTime submi
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ProofParticipationDTO(Long id, ProofExerciseDTO exercise) {
+    public record ProofParticipationDTO(Long id, ProofExerciseDTO exercise, String studentLogin, String studentName) {
 
         public static ProofParticipationDTO of(StudentParticipation participation) {
             ProofExerciseDTO exerciseDTO = null;
-            if (participation.getExercise() instanceof ProofExercise pe) {
+            if (Hibernate.isInitialized(participation.getExercise()) && participation.getExercise() instanceof ProofExercise pe
+                    && Hibernate.isInitialized(pe.getCategories())) {
                 exerciseDTO = ProofExerciseDTO.of(pe);
             }
-            return new ProofParticipationDTO(participation.getId(), exerciseDTO);
+            String login = participation.getStudent().map(u -> u.getLogin()).orElse(null);
+            String name = participation.getStudent().map(u -> u.getName()).orElse(null);
+            return new ProofParticipationDTO(participation.getId(), exerciseDTO, login, name);
         }
     }
 

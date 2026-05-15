@@ -26,6 +26,9 @@ public interface ProofExerciseRepository extends JpaRepository<ProofExercise, Lo
     @Query("SELECT e FROM ProofExercise e LEFT JOIN FETCH e.categories WHERE e.id = :id")
     Optional<ProofExercise> findByIdWithCategories(@Param("id") Long id);
 
+    @Query("SELECT e FROM ProofExercise e LEFT JOIN FETCH e.categories LEFT JOIN FETCH e.course WHERE e.id = :id")
+    Optional<ProofExercise> findByIdWithCategoriesAndCourse(@Param("id") Long id);
+
     @Query("SELECT e FROM ProofExercise e LEFT JOIN FETCH e.categories WHERE e.course.id = :courseId")
     List<ProofExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 

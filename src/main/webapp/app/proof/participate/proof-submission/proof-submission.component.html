@@ -33,78 +33,73 @@
             </div>
         }
 
-        <div class="row g-3">
-            <!-- Left sidebar: problem statement + submission panel (stacked, natural height) -->
-            <div [class]="hasAstExpressions ? 'col-12 col-lg-4 d-flex flex-column gap-3' : 'col-12 d-flex flex-column gap-3'">
-                <!-- Problem statement card -->
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="card-title mb-0" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</h4>
-                    </div>
-                    <div class="card-body">
-                        @if (proofExercise.problemStatement) {
-                            <span [innerHTML]="proofExercise.problemStatement | htmlForMarkdown"></span>
-                        }
-                        @if (hasAstExpressions) {
-                            <div class="mt-3 p-3 rounded border bg-light">
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <span class="badge bg-secondary" jhiTranslate="artemisApp.proofExercise.sourceExpression">Source</span>
-                                    <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
-                                </div>
-                                <div class="text-center text-muted small mb-2">&#8595; prove &#8595;</div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-success" jhiTranslate="artemisApp.proofExercise.targetExpression">Target</span>
-                                    <span [innerHTML]="proofExercise.targetExpression | mathNodeLatex"></span>
-                                </div>
-                            </div>
-                        }
-                        @if (proofExercise.description) {
-                            <hr />
-                            <span [innerHTML]="proofExercise.description | htmlForMarkdown"></span>
-                        }
-                    </div>
+        <div class="d-flex flex-column gap-3">
+            <!-- Problem statement card -->
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</h4>
                 </div>
-
-                <!-- Submission card -->
-                @if (submission?.submitted) {
-                    <!-- Submitted state: prominent green banner -->
-                    <div class="card border-success">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center gap-3">
-                                <div
-                                    class="rounded-circle bg-success d-flex align-items-center justify-content-center flex-shrink-0"
-                                    style="width: 40px; height: 40px"
-                                >
-                                    <span class="text-white fw-bold fs-5">✓</span>
-                                </div>
-                                <div>
-                                    <strong class="text-success d-block" jhiTranslate="artemisApp.proofExercise.submittedTitle">Submitted</strong>
-                                    @if (submission?.submissionDate) {
-                                        <small class="text-muted">{{ submission.submissionDate!.toDate().toLocaleString() }}</small>
-                                    }
-                                </div>
+                <div class="card-body">
+                    @if (proofExercise.problemStatement) {
+                        <span [innerHTML]="proofExercise.problemStatement | htmlForMarkdown"></span>
+                    }
+                    @if (hasAstExpressions) {
+                        <div class="mt-3 rounded border overflow-hidden d-flex flex-column" style="font-size: 0.9em">
+                            <!-- Start row -->
+                            <div class="d-flex align-items-center gap-2 px-3 py-2" style="border-left: 3px solid #6c757d">
+                                <span class="text-muted fw-semibold text-uppercase" style="font-size: 0.68em; letter-spacing: 0.07em; min-width: 38px">Start</span>
+                                <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
                             </div>
-                            @if (result) {
-                                <hr class="my-3" />
-                                <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.score">Score</small>
-                                <p class="fs-4 mb-0">{{ result.score }}%</p>
+
+                            <!-- Current state row — visible only while in progress -->
+                            @if (steps().length > 0 && !isComplete()) {
+                                <div class="px-3 border-top d-flex align-items-center gap-1 text-muted" style="font-size: 0.72em; padding-top: 3px; padding-bottom: 3px; padding-left: calc(0.75rem + 3px) !important">
+                                    ↓ {{ steps().length }} step{{ steps().length !== 1 ? 's' : '' }}
+                                </div>
+                                <div class="d-flex align-items-center gap-2 px-3 py-2 border-top" style="border-left: 3px solid var(--bs-primary)">
+                                    <span class="text-primary fw-semibold text-uppercase" style="font-size: 0.68em; letter-spacing: 0.07em; min-width: 38px">Now</span>
+                                    <span class="fw-semibold" [innerHTML]="currentExpression() | mathNodeLatex"></span>
+                                </div>
                             }
+
+                            <!-- Connector to goal -->
+                            <div class="px-3 border-top d-flex align-items-center gap-1" style="font-size: 0.72em; padding-top: 3px; padding-bottom: 3px; padding-left: calc(0.75rem + 3px) !important">
+                                @if (isComplete()) {
+                                    <span class="text-success fw-semibold">✓ goal reached</span>
+                                } @else {
+                                    <span class="text-muted">↓ prove</span>
+                                }
+                            </div>
+
+                            <!-- Goal row -->
+                            <div
+                                class="d-flex align-items-center gap-2 px-3 py-2 border-top"
+                                [style.border-left]="isComplete() ? '3px solid var(--bs-success)' : '3px solid #6c757d'"
+                            >
+                                <span
+                                    class="fw-semibold text-uppercase"
+                                    [class.text-success]="isComplete()"
+                                    [class.text-muted]="!isComplete()"
+                                    style="font-size: 0.68em; letter-spacing: 0.07em; min-width: 38px"
+                                    >Goal</span
+                                >
+                                <span [innerHTML]="proofExercise.targetExpression | mathNodeLatex"></span>
+                                @if (isComplete()) {
+                                    <span class="ms-auto badge bg-success">✓</span>
+                                }
+                            </div>
                         </div>
-                    </div>
-                } @else {
-                    <!-- Not submitted: single primary action -->
-                    <div class="card">
-                        <div class="card-body d-flex flex-column gap-2">
-                            <jhi-exercise-submit-button [exercise]="proofExercise" [isLoading]="isSaving" [isSubmitted]="false" (onSubmit)="submit()" />
-                        </div>
-                    </div>
-                }
+                    }
+                    @if (proofExercise.description) {
+                        <hr />
+                        <span [innerHTML]="proofExercise.description | htmlForMarkdown"></span>
+                    }
+                </div>
             </div>
 
-            <!-- Right: derivation workspace (wider column) -->
+            <!-- Derivation workspace -->
             @if (hasAstExpressions) {
-                <div class="col-12 col-lg-8">
-                    <div class="card">
+                <div class="card">
                         <div class="card-header d-flex align-items-center justify-content-between">
                             <h4 class="card-title mb-0" jhiTranslate="artemisApp.proofExercise.derivation">Derivation</h4>
                             @if (steps().length > 0 && !submission?.submitted && canVerify) {
@@ -185,10 +180,11 @@
                                             <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
                                         </div>
                                         @for (step of steps(); track step.stepIndex; let i = $index) {
-                                            <!-- Rule application slot: clearly labels which rule bridges from the previous expression to the next -->
+                                            <!-- Rule application slot: clickable to re-derive from before this step -->
                                             <div
                                                 class="d-flex align-items-center gap-2 px-3 py-1 rounded border"
-                                                style="font-size: 0.78em; pointer-events: none; user-select: none"
+                                                style="font-size: 0.78em; user-select: none"
+                                                [style.cursor]="submission?.submitted ? 'default' : 'pointer'"
                                                 [class.border-secondary]="stepStatuses()[i] === 'pending'"
                                                 [class.bg-light]="stepStatuses()[i] === 'pending'"
                                                 [class.text-secondary]="stepStatuses()[i] === 'pending'"
@@ -196,6 +192,7 @@
                                                 [class.bg-success-subtle]="stepStatuses()[i] === 'valid'"
                                                 [class.border-danger]="stepStatuses()[i] === 'invalid'"
                                                 [class.bg-danger-subtle]="stepStatuses()[i] === 'invalid'"
+                                                (click)="!submission?.submitted && truncateToStep(i)"
                                             >
                                                 <span class="fst-italic opacity-75" jhiTranslate="artemisApp.proofExercise.by">by</span>
                                                 <span
@@ -205,6 +202,9 @@
                                                     [class.text-danger-emphasis]="stepStatuses()[i] === 'invalid'"
                                                     >{{ getRuleName(step.appliedRuleId) }}</span
                                                 >
+                                                @if (!submission?.submitted) {
+                                                    <span class="ms-auto opacity-50">✎</span>
+                                                }
                                             </div>
                                             <!-- Result expression for this step -->
                                             <div
@@ -310,6 +310,38 @@
                                 }
                             </div>
                         </div>
+                    </div>
+            }
+
+            <!-- Submission card -->
+            @if (submission?.submitted) {
+                <div class="card border-success">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center gap-3">
+                            <div
+                                class="rounded-circle bg-success d-flex align-items-center justify-content-center flex-shrink-0"
+                                style="width: 40px; height: 40px"
+                            >
+                                <span class="text-white fw-bold fs-5">✓</span>
+                            </div>
+                            <div>
+                                <strong class="text-success d-block" jhiTranslate="artemisApp.proofExercise.submittedTitle">Submitted</strong>
+                                @if (submission?.submissionDate) {
+                                    <small class="text-muted">{{ submission.submissionDate!.toDate().toLocaleString() }}</small>
+                                }
+                            </div>
+                        </div>
+                        @if (result) {
+                            <hr class="my-3" />
+                            <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.score">Score</small>
+                            <p class="fs-4 mb-0">{{ result.score }}%</p>
+                        }
+                    </div>
+                </div>
+            } @else {
+                <div class="card">
+                    <div class="card-body">
+                        <jhi-exercise-submit-button [exercise]="proofExercise" [isLoading]="isSaving" [isSubmitted]="false" (onSubmit)="submit()" />
                     </div>
                 </div>
             }

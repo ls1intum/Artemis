@@ -2,52 +2,27 @@
     [isLoading]="isLoading"
     [isTeamMode]="false"
     [isAssessor]="true"
-    [canOverride]="false"
+    [canOverride]="true"
+    [assessmentsAreValid]="manualScore !== undefined"
+    [saveBusy]="saveBusy"
     [exercise]="proofExercise"
     [submission]="submission"
     [result]="result"
     [hasAssessmentDueDatePassed]="true"
-    [exerciseDashboardLink]="['/course-management', (proofExercise?.course?.id || -1).toString(), 'assessment-dashboard', (proofExercise?.id || -1).toString()]"
+    [exerciseDashboardLink]="['/course-management', courseId.toString(), 'assessment-dashboard', (proofExercise?.id || -1).toString()]"
+    (save)="saveManualScore()"
 >
     @if (!isLoading) {
-        <div class="row g-3">
-            <!-- Left sidebar: problem statement + submission metadata (stacked, natural height) -->
-            <div [class]="hasAstExpressions ? 'col-12 col-lg-4 d-flex flex-column gap-3' : 'col-12 d-flex flex-column gap-3'">
-                <!-- Problem statement card -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</h5>
-                    </div>
-                    <div class="card-body">
-                        @if (proofExercise.problemStatement) {
-                            <div [innerHTML]="proofExercise.problemStatement | htmlForMarkdown"></div>
-                        }
-                        @if (hasAstExpressions) {
-                            <div class="mt-3 p-3 rounded border bg-light">
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <span class="badge bg-secondary" jhiTranslate="artemisApp.proofExercise.sourceExpression">Source</span>
-                                    <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
-                                </div>
-                                <div class="text-center text-muted small mb-2">&#8595; prove &#8595;</div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-success" jhiTranslate="artemisApp.proofExercise.targetExpression">Target</span>
-                                    <span [innerHTML]="proofExercise.targetExpression | mathNodeLatex"></span>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-
-                <!-- Submission metadata card -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0" jhiTranslate="artemisApp.proofExercise.submission">Submission</h5>
-                    </div>
-                    <div class="card-body d-flex flex-column gap-3">
-                        @if (participation?.student) {
+        <!-- Submission info + score action — full width at the top -->
+        <div class="card mb-3">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center gap-4 flex-wrap">
+                    <!-- Student + date + step count -->
+                    <div class="d-flex gap-4 flex-grow-1 flex-wrap">
+                        @if (submission?.participation?.studentName || submission?.participation?.studentLogin) {
                             <div>
                                 <small class="text-muted d-block">Student</small>
-                                <strong>{{ participation.student!.name ?? participation.student!.login }}</strong>
+                                <strong>{{ submission.participation!.studentName ?? submission.participation!.studentLogin }}</strong>
                             </div>
                         }
                         @if (submission?.submissionDate) {
@@ -57,25 +32,74 @@
                             </div>
                         }
                         <div>
-                            <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.stepsCount">Steps</small>
+                            <small class="text-muted d-block">Steps</small>
                             <strong>{{ submission?.steps?.length ?? 0 }}</strong>
                         </div>
                         @if (result) {
-                            <hr class="my-0" />
                             <div>
-                                <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.score">Score</small>
+                                <small class="text-muted d-block">Auto score</small>
+                                <strong [ngClass]="(result.score ?? 0) >= 50 ? 'text-success' : 'text-danger'">{{ result.score }}%</strong>
+                            </div>
+                        }
+                        @if (isProofComplete) {
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-success">&#10003; Proof Complete</span>
+                            </div>
+                        } @else if ((submission?.steps?.length ?? 0) > 0) {
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-warning text-dark">Incomplete</span>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Manual score input -->
+                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                        <label class="form-label small text-muted mb-0 text-nowrap" for="manualScore">Manual score</label>
+                        <div class="input-group input-group-sm" style="width: 120px">
+                            <input
+                                type="number"
+                                id="manualScore"
+                                class="form-control"
+                                min="0"
+                                max="100"
+                                [(ngModel)]="manualScore"
+                                placeholder="0–100"
+                            />
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <button class="btn btn-sm btn-warning text-nowrap" [disabled]="saveBusy || manualScore === undefined" (click)="saveManualScore()">
+                            @if (saveBusy) { Saving… } @else { Save Score }
+                        </button>
+                        @if (saveSuccess) {
+                            <span class="text-success small">&#10003; Saved</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="row g-3">
+            <!-- Problem statement (narrow) -->
+            <div class="col-12 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (proofExercise.problemStatement) {
+                            <div [innerHTML]="proofExercise.problemStatement | htmlForMarkdown"></div>
+                        }
+                        @if (hasAstExpressions) {
+                            <div class="mt-3 p-2 rounded border bg-light small">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge bg-secondary">Start</span>
+                                    <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
+                                </div>
+                                <div class="text-center text-muted">&#8595; prove &#8595;</div>
                                 <div class="d-flex align-items-center gap-2 mt-1">
-                                    <div
-                                        class="progress flex-grow-1"
-                                        style="height: 6px"
-                                        role="progressbar"
-                                        [attr.aria-valuenow]="result.score"
-                                        aria-valuemin="0"
-                                        aria-valuemax="100"
-                                    >
-                                        <div class="progress-bar" [ngClass]="(result.score ?? 0) >= 50 ? 'bg-success' : 'bg-danger'" [style.width.%]="result.score ?? 0"></div>
-                                    </div>
-                                    <strong class="fs-5">{{ result.score }}%</strong>
+                                    <span class="badge bg-success">Goal</span>
+                                    <span [innerHTML]="proofExercise.targetExpression | mathNodeLatex"></span>
                                 </div>
                             </div>
                         }
@@ -83,46 +107,84 @@
                 </div>
             </div>
 
-            <!-- Right: derivation trace (wider column, grows with content) -->
             @if (hasAstExpressions) {
-                <div class="col-12 col-lg-8">
-                    <div class="card" [ngClass]="{ 'border-success': isProofComplete, 'border-warning': !isProofComplete && (submission?.steps?.length ?? 0) > 0 }">
-                        <div class="card-header d-flex align-items-center justify-content-between">
-                            <h5 class="card-title mb-0" jhiTranslate="artemisApp.proofExercise.derivation">Derivation</h5>
-                            @if (isProofComplete) {
-                                <span class="badge bg-success">&#10003; Proof Complete</span>
-                            } @else if ((submission?.steps?.length ?? 0) > 0) {
-                                <span class="badge bg-warning text-dark">Incomplete</span>
-                            } @else {
-                                <span class="badge bg-secondary">No steps</span>
-                            }
+                <!-- Student's derivation -->
+                <div class="col-12 col-lg-5">
+                    <div class="card h-100" [ngClass]="{ 'border-success': isProofComplete, 'border-warning': !isProofComplete && (submission?.steps?.length ?? 0) > 0 }">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">Student's Proof</h6>
                         </div>
                         <div class="card-body">
                             @if ((submission?.steps?.length ?? 0) === 0) {
-                                <p class="text-muted fst-italic mb-0">No derivation steps submitted.</p>
+                                <p class="text-muted fst-italic mb-0 small">No derivation steps submitted.</p>
                             } @else {
-                                <!-- Step 0: source expression -->
                                 <div class="d-flex align-items-center gap-2 mb-1">
                                     <span class="badge bg-secondary flex-shrink-0">Start</span>
                                     <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
                                 </div>
                                 @for (step of submission.steps; track step.stepIndex; let last = $last) {
-                                    <!-- Arrow + rule label -->
                                     <div class="d-flex align-items-center gap-2 py-1 ps-1 text-muted">
                                         <span style="font-size: 1.1rem; line-height: 1">&#8595;</span>
                                         <span class="badge bg-light text-dark border">{{ getRuleName(step.appliedRuleId) }}</span>
                                     </div>
-                                    <!-- Result expression -->
-                                    <div class="d-flex align-items-center gap-2 mb-1 ps-3" [ngClass]="{ 'text-success': last && isProofComplete }">
+                                    <div class="d-flex align-items-center gap-2 mb-1 ps-3" [ngClass]="{ 'text-success fw-semibold': last && isProofComplete }">
                                         <span [innerHTML]="step.resultExpression | mathNodeLatex"></span>
                                         @if (last && isProofComplete) {
-                                            <span class="badge bg-success ms-1">Target</span>
+                                            <span class="badge bg-success ms-1">&#10003; Goal</span>
                                         }
                                     </div>
                                 }
                             }
                         </div>
                     </div>
+                </div>
+
+                <!-- Sample solutions -->
+                <div class="col-12 col-lg-4">
+                    @if (hasExampleDerivations) {
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">
+                                    Sample Solutions
+                                    <span class="badge bg-secondary ms-1">{{ proofExercise.exampleDerivations!.length }}</span>
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                @for (derivation of proofExercise.exampleDerivations; track $index; let i = $index) {
+                                    <div [class]="i > 0 ? 'border-top pt-3 mt-3' : ''">
+                                        <div class="fw-semibold small text-muted mb-2">
+                                            Solution {{ i + 1 }}
+                                            <span class="badge ms-1" [ngClass]="isExampleComplete(derivation) ? 'bg-success' : 'bg-warning text-dark'">
+                                                {{ derivation.length }} step{{ derivation.length !== 1 ? 's' : '' }}
+                                            </span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge bg-secondary flex-shrink-0">Start</span>
+                                            <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
+                                        </div>
+                                        @for (step of derivation; track step.stepIndex; let last = $last) {
+                                            <div class="d-flex align-items-center gap-2 py-1 ps-1 text-muted">
+                                                <span style="font-size: 1.1rem; line-height: 1">&#8595;</span>
+                                                <span class="badge bg-light text-dark border">{{ getRuleName(step.appliedRuleId) }}</span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 mb-1 ps-3" [ngClass]="{ 'text-success fw-semibold': last && isExampleComplete(derivation) }">
+                                                <span [innerHTML]="step.resultExpression | mathNodeLatex"></span>
+                                                @if (last && isExampleComplete(derivation)) {
+                                                    <span class="badge bg-success ms-1">&#10003; Goal</span>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    } @else {
+                        <div class="card h-100 border-dashed">
+                            <div class="card-body d-flex align-items-center justify-content-center text-muted small fst-italic">
+                                No sample solutions configured.
+                            </div>
+                        </div>
+                    }
                 </div>
             }
         </div>

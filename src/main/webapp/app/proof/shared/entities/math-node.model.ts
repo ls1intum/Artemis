@@ -4,49 +4,73 @@ export interface MathNode {
     slots?: Record<string, MathNode[]>;
 }
 
-export function mathNodeToLatex(node: MathNode | undefined): string {
+/** Callback to look up rendering metadata for a node type from the block registry. */
+export type RegistryLookup = (type: string) => { precedence?: number; associativity?: string; layoutCategory?: string; latexSymbol?: string } | undefined;
+
+/**
+ * Converts a {@link MathNode} AST to a LaTeX string.
+ *
+ * When a {@link RegistryLookup} is supplied (loaded from the block registry), the function
+ * performs precedence-based auto-parenthesization and drives binary-infix rendering generically
+ * from the descriptor's {@code latexSymbol}. Without a lookup, it falls back to the hardcoded
+ * switch for backward compatibility.
+ */
+export function mathNodeToLatex(node: MathNode | undefined, lookup: RegistryLookup = () => undefined, parentPrecedence = -1, isRightChild = false): string {
     if (!node) {
         return '{?}';
     }
+
+    const desc = lookup(node.type);
+    const myPrec = desc?.precedence ?? -Infinity;
+
+    const needsParens =
+        parentPrecedence >= 0 && (myPrec === -Infinity || (isRightChild ? myPrec <= parentPrecedence : myPrec < parentPrecedence));
+
+    function renderChild(child: MathNode | undefined, slotKey: string): string {
+        const prec = desc?.precedence ?? -1;
+        return mathNodeToLatex(child, lookup, prec, slotKey === 'right');
+    }
+
+    let inner: string;
     switch (node.type) {
         case 'number':
-            return node.value ?? '{?}';
         case 'variable':
-            return node.value ?? '{?}';
         case 'wildcard':
-            return node.value ?? '{?}';
-        case 'add': {
-            const left = mathNodeToLatex(node.slots?.['left']?.[0]);
-            const right = mathNodeToLatex(node.slots?.['right']?.[0]);
-            return `${left} + ${right}`;
-        }
-        case 'sub': {
-            const left = mathNodeToLatex(node.slots?.['left']?.[0]);
-            const right = mathNodeToLatex(node.slots?.['right']?.[0]);
-            return `${left} - ${right}`;
-        }
-        case 'mul': {
-            const left = mathNodeToLatex(node.slots?.['left']?.[0]);
-            const right = mathNodeToLatex(node.slots?.['right']?.[0]);
-            return `${left} \\cdot ${right}`;
-        }
+            inner = node.value ?? '{?}';
+            break;
         case 'fraction': {
-            const num = mathNodeToLatex(node.slots?.['numerator']?.[0]);
-            const den = mathNodeToLatex(node.slots?.['denominator']?.[0]);
-            return `\\frac{${num}}{${den}}`;
+            const num = mathNodeToLatex(node.slots?.['numerator']?.[0], lookup, -1);
+            const den = mathNodeToLatex(node.slots?.['denominator']?.[0], lookup, -1);
+            inner = `\\frac{${num}}{${den}}`;
+            break;
         }
-        case 'parentheses': {
-            const content = mathNodeToLatex(node.slots?.['content']?.[0]);
-            return `\\left(${content}\\right)`;
-        }
+        case 'parentheses':
+            inner = `\\left(${mathNodeToLatex(node.slots?.['content']?.[0], lookup, -1)}\\right)`;
+            break;
+        case 'add':
+        case 'sub':
+        case 'mul':
         case 'equality': {
-            const left = mathNodeToLatex(node.slots?.['left']?.[0]);
-            const right = mathNodeToLatex(node.slots?.['right']?.[0]);
-            return `${left} = ${right}`;
+            if (desc?.layoutCategory === 'BINARY_INFIX' && desc.latexSymbol) {
+                // Registry-driven: uses latexSymbol with precedence-based parens on children
+                inner = `${renderChild(node.slots?.['left']?.[0], 'left')} ${desc.latexSymbol} ${renderChild(node.slots?.['right']?.[0], 'right')}`;
+            } else {
+                // Fallback when registry not loaded: hardcoded symbols, no auto-parens
+                const sym = node.type === 'add' ? '+' : node.type === 'sub' ? '-' : node.type === 'mul' ? '\\cdot' : '=';
+                inner = `${mathNodeToLatex(node.slots?.['left']?.[0], lookup)} ${sym} ${mathNodeToLatex(node.slots?.['right']?.[0], lookup)}`;
+            }
+            break;
         }
         default:
-            return `{${node.type}}`;
+            // Handles future BINARY_INFIX node types added via the block registry
+            if (desc?.layoutCategory === 'BINARY_INFIX' && desc.latexSymbol) {
+                inner = `${renderChild(node.slots?.['left']?.[0], 'left')} ${desc.latexSymbol} ${renderChild(node.slots?.['right']?.[0], 'right')}`;
+            } else {
+                inner = `{${node.type}}`;
+            }
     }
+
+    return needsParens ? `\\left(${inner}\\right)` : inner;
 }
 
 /** Returns all child nodes in canonical order (slots sorted alphabetically, then in-order within slot). */

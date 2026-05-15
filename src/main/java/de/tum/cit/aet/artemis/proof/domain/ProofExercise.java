@@ -49,6 +49,9 @@ public class ProofExercise extends Exercise {
     @Column(table = "proof_exercise_details", name = "only_show_applicable_rules")
     private boolean onlyShowApplicableRules = false;
 
+    @Column(table = "proof_exercise_details", name = "partial_credit_enabled")
+    private boolean partialCreditEnabled = false;
+
     @Convert(converter = ExampleDerivationsConverter.class)
     @Column(table = "proof_exercise_details", name = "example_derivations", columnDefinition = "longtext")
     private List<List<DerivationStepDTO>> exampleDerivations = Collections.emptyList();
@@ -75,6 +78,14 @@ public class ProofExercise extends Exercise {
 
     public void setOnlyShowApplicableRules(boolean onlyShowApplicableRules) {
         this.onlyShowApplicableRules = onlyShowApplicableRules;
+    }
+
+    public boolean isPartialCreditEnabled() {
+        return partialCreditEnabled;
+    }
+
+    public void setPartialCreditEnabled(boolean partialCreditEnabled) {
+        this.partialCreditEnabled = partialCreditEnabled;
     }
 
     public MathNode getSourceExpression() {

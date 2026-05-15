@@ -97,10 +97,10 @@ public class ProofExerciseResource {
 
     @GetMapping("proof-exercises/{exerciseId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<ProofExerciseDTO> getProofExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<ProofExercise> getProofExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ProofExercise : {}", exerciseId);
-        ProofExercise exercise = proofExerciseRepository.findByIdWithCategories(exerciseId).orElseThrow();
-        return ResponseEntity.ok(ProofExerciseDTO.of(exercise));
+        ProofExercise exercise = proofExerciseRepository.findByIdWithCategoriesAndCourse(exerciseId).orElseThrow();
+        return ResponseEntity.ok(exercise);
     }
 
     @DeleteMapping("proof-exercises/{exerciseId}")

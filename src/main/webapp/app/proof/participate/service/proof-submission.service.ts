@@ -53,4 +53,16 @@ export class ProofSubmissionService {
             })
             .pipe(map((res: HttpResponse<ProofSubmission>) => res.body!));
     }
+
+    getSubmittedSubmissions(exerciseId: number): Observable<ProofSubmission[]> {
+        return this.http
+            .get<ProofSubmission[]>(`api/proof/exercises/${exerciseId}/proof-submissions`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<ProofSubmission[]>) => res.body ?? []));
+    }
+
+    saveManualResult(submissionId: number, score: number): Observable<ProofSubmission> {
+        return this.http
+            .put<ProofSubmission>(`api/proof/proof-submissions/${submissionId}/manual-result`, score, { observe: 'response' })
+            .pipe(map((res: HttpResponse<ProofSubmission>) => res.body!));
+    }
 }
