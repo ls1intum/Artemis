@@ -47,6 +47,7 @@ public class RateLimitConfigurationService {
             case AUTHENTICATION -> properties.getAuthenticationRequestsPerMinute() != null ? properties.getAuthenticationRequestsPerMinute() : type.getDefaultRpm();
             case PROBLEM_STATEMENT_RENDERING ->
                 properties.getProblemStatementRenderingRequestsPerMinute() != null ? properties.getProblemStatementRenderingRequestsPerMinute() : type.getDefaultRpm();
+            case AI_SEARCH_PIPELINE -> type.getDefaultRpm();
         };
     }
 }
