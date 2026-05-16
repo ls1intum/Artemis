@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -57,6 +58,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -120,6 +122,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.localci.AutomaticAfterDueDateService;
 
@@ -139,6 +142,8 @@ public class ExamResource {
     private final ChannelRepository channelRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -196,7 +201,8 @@ public class ExamResource {
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
             ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
-            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, final ProgrammingExerciseRepository programmingExerciseRepository) {
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, final ProgrammingExerciseRepository programmingExerciseRepository,
+            final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -221,6 +227,7 @@ public class ExamResource {
         this.examUserService = examUserService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -319,10 +326,13 @@ public class ExamResource {
 
         boolean scheduleRelevantExamSettingsChanged = visibleOrStartDateChanged || endDateChanged || workingTimeChange != 0 || gracePeriodChanged;
         if (scheduleRelevantExamSettingsChanged) {
-            automaticAfterDueDateService.ifPresent(service -> service.recomputeBuildAndTestDatesForExam(savedExam.getId(), originalLatestEndDate));
+            if (automaticAfterDueDateService.isPresent()) {
+                automaticAfterDueDateService.orElseThrow().updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(examWithExercises, originalLatestEndDate);
+            }
+            final Set<Long> programmingExerciseIds = examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                    .filter(ProgrammingExercise.class::isInstance).map(DomainObject::getId).collect(Collectors.toSet());
             // for all programming exercises in the exam, send their ids for scheduling
-            examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
-                    .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
+            programmingExerciseIds.forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
         }
 
         examService.syncExamExercisesMetadata(examWithExercises, visibleOrStartDateChanged, endDateChanged);
@@ -367,7 +377,7 @@ public class ExamResource {
         // 2. Re-calculate the working times of all student exams
         examService.updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
         if (automaticAfterDueDateService.isPresent()) {
-            automaticAfterDueDateService.orElseThrow().recomputeBuildAndTestDatesForExam(exam.getId(), originalLatestExamEndDateWithGrace)
+            automaticAfterDueDateService.orElseThrow().updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(exam, originalLatestExamEndDateWithGrace)
                     .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
         }
 

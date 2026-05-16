@@ -228,7 +228,7 @@ public class StudentExamResource {
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false);
             }
             if (automaticAfterDueDateService.isPresent()) {
-                automaticAfterDueDateService.orElseThrow().recomputeBuildAndTestDatesForExam(examId, originalLatestExamEndDateWithGrace)
+                automaticAfterDueDateService.orElseThrow().updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(exam, originalLatestExamEndDateWithGrace)
                         .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
             }
         }
