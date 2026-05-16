@@ -7,7 +7,7 @@ servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 tags:
 - {name: Global Search Resource, description: Weaviate-based semantic search across
-    all entity types}
+  courses, exercises, lectures, lecture units, exams, FAQs, and public communication channels including their messages}
 paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}:
     get:
