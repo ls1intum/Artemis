@@ -205,7 +205,7 @@ public class AdminOrganizationResource {
      */
     @GetMapping("organizations")
     public ResponseEntity<List<OrganizationDTO>> getOrganizations(@Valid SearchTermPageableSearchDTO<String> search, @RequestParam(defaultValue = "false") boolean withCounts) {
-        final Page<OrganizationDTO> page = organizationRepository.getAllOrganizations(search, withCounts);
+        final Page<OrganizationDTO> page = organizationService.getOrganizations(search, withCounts);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -221,7 +221,7 @@ public class AdminOrganizationResource {
     public ResponseEntity<List<OrganizationMemberDTO>> getOrganizationUsers(@PathVariable long organizationId, @Valid SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get users of organization : {}", organizationId);
         organizationRepository.findByIdElseThrow(organizationId);
-        Page<OrganizationMemberDTO> page = organizationRepository.getUsersByOrganizationId(organizationId, search);
+        Page<OrganizationMemberDTO> page = organizationService.getUsersByOrganizationId(organizationId, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -237,7 +237,7 @@ public class AdminOrganizationResource {
     public ResponseEntity<List<OrganizationCourseDTO>> getOrganizationCourses(@PathVariable long organizationId, @Valid SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get courses of organization : {}", organizationId);
         organizationRepository.findByIdElseThrow(organizationId);
-        Page<OrganizationCourseDTO> page = organizationRepository.getCoursesByOrganizationId(organizationId, search);
+        Page<OrganizationCourseDTO> page = organizationService.getCoursesByOrganizationId(organizationId, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

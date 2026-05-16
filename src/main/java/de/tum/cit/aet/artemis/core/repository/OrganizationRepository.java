@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -27,7 +28,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface OrganizationRepository extends ArtemisJpaRepository<Organization, Long>, JpaSpecificationExecutor<Organization>, CustomOrganizationRepository {
+public interface OrganizationRepository extends ArtemisJpaRepository<Organization, Long>, JpaSpecificationExecutor<Organization> {
 
     @Query("""
             SELECT organization
@@ -95,6 +96,36 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
             GROUP BY organization.id
             """)
     Long getNumberOfCoursesByOrganizationId(@Param("organizationId") long organizationId);
+
+    /**
+     * Returns the number of users for each organization in the given list, as [organizationId, userCount] pairs.
+     *
+     * @param ids the organization ids to query
+     * @return list of two-element arrays [organizationId, userCount]
+     */
+    @Query("""
+            SELECT o.id, COUNT(u.id)
+            FROM Organization o
+                LEFT JOIN o.users u
+            WHERE o.id IN :ids
+            GROUP BY o.id
+            """)
+    List<Object[]> getUserCountsByOrganizationIds(@Param("ids") List<Long> ids);
+
+    /**
+     * Returns the number of courses for each organization in the given list, as [organizationId, courseCount] pairs.
+     *
+     * @param ids the organization ids to query
+     * @return list of two-element arrays [organizationId, courseCount]
+     */
+    @Query("""
+            SELECT o.id, COUNT(c.id)
+            FROM Organization o
+                LEFT JOIN o.courses c
+            WHERE o.id IN :ids
+            GROUP BY o.id
+            """)
+    List<Object[]> getCourseCountsByOrganizationIds(@Param("ids") List<Long> ids);
 
     /**
      * Returns the title of the organization with the given id.

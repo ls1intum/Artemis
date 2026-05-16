@@ -1,157 +1,251 @@
 package de.tum.cit.aet.artemis.core.repository;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.From;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Course_;
+import de.tum.cit.aet.artemis.core.domain.DomainObject_;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.Organization_;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.domain.User_;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 
 /**
- * Specifications for filtering and querying Organization entities
+ * JPA Specifications for Organization-related queries.
+ * Contains filter and ordering specs for {@link Organization}, {@link User} (member queries), and {@link Course} (course queries).
  */
 public class OrganizationSpecs {
 
-    /**
-     * Builds a case-insensitive OR LIKE predicate across the given columns of an entity path.
-     *
-     * @param builder    the criteria builder
-     * @param from       the entity path (Root or Join) whose columns are searched
-     * @param searchTerm the (non-blank) search term
-     * @param columns    the column names to search across
-     * @return an OR predicate over all specified columns
-     */
-    private static Predicate buildSearchPredicate(CriteriaBuilder builder, From<?, ?> from, String searchTerm, String... columns) {
-        if (searchTerm == null || searchTerm.isBlank()) {
-            return builder.conjunction();
+    // --------------------------------------------------
+    // Helpers
+    // --------------------------------------------------
+
+    private static <T> Specification<T> noOp() {
+        return (root, query, cb) -> cb.conjunction();
+    }
+
+    private static String likePattern(@Nullable String term) {
+        if (term == null || term.isBlank()) {
+            return "%";
         }
-        String escaped = searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
-        String pattern = "%" + escaped + "%";
-        Predicate[] predicates = Arrays.stream(columns).map(column -> builder.like(builder.lower(from.get(column)), pattern, '\\')).toArray(Predicate[]::new);
-        return builder.or(predicates);
+        String escaped = term.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        return "%" + escaped + "%";
     }
 
-    /**
-     * Creates the specification to match the provided search term within the organization's name, short name, and email pattern attributes.
-     *
-     * @param searchTerm term to match
-     * @return specification used to chain database operations
-     */
-    @NonNull
-    public static Specification<Organization> getOrganizationSpecification(String searchTerm) {
-        return (root, query, builder) -> buildSearchPredicate(builder, root, searchTerm, Organization_.NAME, Organization_.SHORT_NAME, Organization_.EMAIL_PATTERN);
-    }
+    // --------------------------------------------------
+    // Organization filter and ordering specs (Specification<Organization>)
+    // --------------------------------------------------
 
     /**
-     * Builds the search predicate for a user join: matches login, first name, last name, or email.
-     * Call this from the data query where the join is already created for the SELECT projection.
+     * Searches organizations whose name, short name, or email pattern contains the given term.
      *
-     * @param builder    the criteria builder
-     * @param u          the join from Organization to User
-     * @param searchTerm the (non-blank) search term
-     * @return the OR predicate over user fields
+     * @param searchTerm the search term (null or blank matches all)
+     * @return specification filtering organizations by the search term
      */
     @NonNull
-    public static Predicate getMemberSearchPredicate(CriteriaBuilder builder, Join<Organization, User> u, String searchTerm) {
-        return buildSearchPredicate(builder, u, searchTerm, User_.LOGIN, User_.FIRST_NAME, User_.LAST_NAME, User_.EMAIL);
-    }
-
-    /**
-     * Builds the full WHERE predicate for a member query: filters by organization id and optionally by search term.
-     * Accepts the existing join so it can be reused without creating a duplicate join.
-     *
-     * @param builder        the criteria builder
-     * @param root           the Organization root
-     * @param u              the join from Organization to User (already created by the caller)
-     * @param organizationId the id of the organization to filter by
-     * @param searchTerm     the search term (may be blank, in which case only the org-id filter is applied)
-     * @return the combined predicate
-     */
-    @NonNull
-    public static Predicate getMemberPredicate(CriteriaBuilder builder, Root<Organization> root, Join<Organization, User> u, long organizationId, String searchTerm) {
-        Predicate orgFilter = builder.equal(root.get(Organization_.ID), organizationId);
+    public static Specification<Organization> searchOrganizations(@Nullable String searchTerm) {
         if (searchTerm == null || searchTerm.isBlank()) {
-            return orgFilter;
+            return noOp();
         }
-        return builder.and(orgFilter, getMemberSearchPredicate(builder, u, searchTerm));
+        String pattern = likePattern(searchTerm);
+        return (root, query, cb) -> cb.or(cb.like(cb.lower(root.get(Organization_.NAME)), pattern, '\\'), cb.like(cb.lower(root.get(Organization_.SHORT_NAME)), pattern, '\\'),
+                cb.like(cb.lower(root.get(Organization_.EMAIL_PATTERN)), pattern, '\\'));
     }
 
     /**
-     * Creates a specification that filters organizations by id and optionally filters their members by search term.
-     * Designed for use in count queries: the spec adds the join to users internally.
+     * Applies sorting for the organization list view as a {@code CriteriaQuery.orderBy()} side effect.
+     * When {@code withCounts} is {@code true} and the sort column is {@code numberOfUsers} or {@code numberOfCourses},
+     * correlated subqueries are used to order by the aggregated counts.
      *
-     * @param organizationId the id of the organization
-     * @param searchTerm     the search term (may be blank, in which case only the org-id filter is applied)
-     * @return specification over Organization with the required join and predicates
+     * @param sortedColumn the column to sort by
+     * @param sortOrder    ascending or descending
+     * @param withCounts   whether counts were requested (affects sort for count columns)
+     * @return specification that applies ordering as a side effect and returns {@code null} as predicate
      */
     @NonNull
-    public static Specification<Organization> getMemberSpecification(long organizationId, String searchTerm) {
-        return (root, query, builder) -> {
-            Join<Organization, User> u = root.join(Organization_.USERS, JoinType.INNER);
-            return getMemberPredicate(builder, root, u, organizationId, searchTerm);
+    public static Specification<Organization> orderedForOrganizations(@Nullable String sortedColumn, SortingOrder sortOrder, boolean withCounts) {
+        return (root, query, cb) -> {
+            if (query == null || sortedColumn == null || sortedColumn.isBlank()) {
+                return null;
+            }
+            List<Order> orders = new ArrayList<>();
+            boolean asc = sortOrder == SortingOrder.ASCENDING;
+
+            Expression<?> sortExpr = switch (sortedColumn) {
+                case "name" -> root.get(Organization_.NAME);
+                case "shortName" -> root.get(Organization_.SHORT_NAME);
+                case "emailPattern" -> root.get(Organization_.EMAIL_PATTERN);
+                case "numberOfUsers" -> {
+                    if (withCounts) {
+                        Subquery<Long> sub = query.subquery(Long.class);
+                        Root<Organization> subRoot = sub.from(Organization.class);
+                        Join<Organization, User> userJoin = subRoot.join(Organization_.USERS, JoinType.LEFT);
+                        sub.select(cb.count(userJoin.get(User_.ID)));
+                        sub.where(cb.equal(subRoot.get(Organization_.ID), root.get(Organization_.ID)));
+                        yield sub;
+                    }
+                    yield root.get(DomainObject_.ID);
+                }
+                case "numberOfCourses" -> {
+                    if (withCounts) {
+                        Subquery<Long> sub = query.subquery(Long.class);
+                        Root<Organization> subRoot = sub.from(Organization.class);
+                        Join<Organization, Course> courseJoin = subRoot.join(Organization_.COURSES, JoinType.LEFT);
+                        sub.select(cb.count(courseJoin.get(Course_.ID)));
+                        sub.where(cb.equal(subRoot.get(Organization_.ID), root.get(Organization_.ID)));
+                        yield sub;
+                    }
+                    yield root.get(DomainObject_.ID);
+                }
+                default -> root.get(DomainObject_.ID);
+            };
+
+            orders.add(asc ? cb.asc(sortExpr) : cb.desc(sortExpr));
+            orders.add(cb.asc(root.get(DomainObject_.ID)));
+            query.orderBy(orders);
+            return null;
+        };
+    }
+
+    // --------------------------------------------------
+    // Member (User) specs (Specification<User>)
+    // --------------------------------------------------
+
+    /**
+     * Matches users who are members of the given organization.
+     *
+     * @param organizationId the organization id
+     * @return specification filtering users to those belonging to the given organization
+     */
+    @NonNull
+    public static Specification<User> membersInOrganization(long organizationId) {
+        return (root, query, cb) -> {
+            Join<User, Organization> orgJoin = root.join(User_.ORGANIZATIONS, JoinType.INNER);
+            return cb.equal(orgJoin.get(Organization_.ID), organizationId);
         };
     }
 
     /**
-     * Builds the search predicate for a course join: matches title or short name.
-     * Call this from the data query where the join is already created for the SELECT projection.
+     * Searches members whose login, first name, last name, or email contains the given term.
      *
-     * @param builder    the criteria builder
-     * @param c          the join from Organization to Course
-     * @param searchTerm the (non-blank) search term
-     * @return the OR predicate over course fields
+     * @param searchTerm the search term (null or blank matches all)
+     * @return specification filtering members by the search term
      */
     @NonNull
-    public static Predicate getCourseSearchPredicate(CriteriaBuilder builder, Join<Organization, Course> c, String searchTerm) {
-        return buildSearchPredicate(builder, c, searchTerm, Course_.TITLE, Course_.SHORT_NAME);
-    }
-
-    /**
-     * Builds the full WHERE predicate for a course query: filters by organization id and optionally by search term.
-     * Accepts the existing join so it can be reused without creating a duplicate join.
-     *
-     * @param builder        the criteria builder
-     * @param root           the Organization root
-     * @param c              the join from Organization to Course (already created by the caller)
-     * @param organizationId the id of the organization to filter by
-     * @param searchTerm     the search term (may be blank, in which case only the organizationId filter is applied)
-     * @return the combined predicate
-     */
-    @NonNull
-    public static Predicate getCoursePredicate(CriteriaBuilder builder, Root<Organization> root, Join<Organization, Course> c, long organizationId, String searchTerm) {
-        Predicate orgFilter = builder.equal(root.get(Organization_.ID), organizationId);
+    public static Specification<User> searchMembers(@Nullable String searchTerm) {
         if (searchTerm == null || searchTerm.isBlank()) {
-            return orgFilter;
+            return noOp();
         }
-        return builder.and(orgFilter, getCourseSearchPredicate(builder, c, searchTerm));
+        String pattern = likePattern(searchTerm);
+        return (root, query, cb) -> cb.or(cb.like(cb.lower(root.get(User_.LOGIN)), pattern, '\\'), cb.like(cb.lower(root.get(User_.FIRST_NAME)), pattern, '\\'),
+                cb.like(cb.lower(root.get(User_.LAST_NAME)), pattern, '\\'), cb.like(cb.lower(root.get(User_.EMAIL)), pattern, '\\'));
     }
 
     /**
-     * Creates a specification that filters organizations by id and optionally filters their courses by search term.
-     * Designed for use in count queries: the spec adds the join to courses internally.
+     * Applies sorting for the member list view as a {@code CriteriaQuery.orderBy()} side effect.
      *
-     * @param organizationId the id of the organization
-     * @param searchTerm     the search term (may be blank, in which case only the organizationId filter is applied)
-     * @return specification over Organization with the required join and predicates
+     * @param sortedColumn the column to sort by (login, name, email)
+     * @param sortOrder    ascending or descending
+     * @return specification that applies ordering as a side effect and returns {@code null} as predicate
      */
     @NonNull
-    public static Specification<Organization> getCourseSpecification(long organizationId, String searchTerm) {
-        return (root, query, builder) -> {
-            Join<Organization, Course> c = root.join(Organization_.COURSES, JoinType.INNER);
-            return getCoursePredicate(builder, root, c, organizationId, searchTerm);
+    public static Specification<User> orderedForMembers(@Nullable String sortedColumn, SortingOrder sortOrder) {
+        return (root, query, cb) -> {
+            if (query == null || sortedColumn == null || sortedColumn.isBlank()) {
+                return null;
+            }
+            List<Order> orders = new ArrayList<>();
+            boolean asc = sortOrder == SortingOrder.ASCENDING;
+
+            Expression<String> nameExpr = cb.concat(cb.concat(cb.coalesce(root.get(User_.FIRST_NAME), ""), " "), cb.coalesce(root.get(User_.LAST_NAME), ""));
+
+            Expression<?> sortExpr = switch (sortedColumn) {
+                case "login" -> root.get(User_.LOGIN);
+                case "name" -> nameExpr;
+                case "email" -> root.get(User_.EMAIL);
+                default -> root.get(DomainObject_.ID);
+            };
+
+            orders.add(asc ? cb.asc(sortExpr) : cb.desc(sortExpr));
+            orders.add(cb.asc(root.get(DomainObject_.ID)));
+            query.orderBy(orders);
+            return null;
+        };
+    }
+
+    // --------------------------------------------------
+    // Course specs (Specification<Course>)
+    // --------------------------------------------------
+
+    /**
+     * Matches courses that belong to the given organization.
+     *
+     * @param organizationId the organization id
+     * @return specification filtering courses to those linked to the given organization
+     */
+    @NonNull
+    public static Specification<Course> coursesInOrganization(long organizationId) {
+        return (root, query, cb) -> {
+            Join<Course, Organization> orgJoin = root.join(Course_.ORGANIZATIONS, JoinType.INNER);
+            return cb.equal(orgJoin.get(Organization_.ID), organizationId);
+        };
+    }
+
+    /**
+     * Searches courses whose title or short name contains the given term.
+     *
+     * @param searchTerm the search term (null or blank matches all)
+     * @return specification filtering courses by the search term
+     */
+    @NonNull
+    public static Specification<Course> searchCourses(@Nullable String searchTerm) {
+        if (searchTerm == null || searchTerm.isBlank()) {
+            return noOp();
+        }
+        String pattern = likePattern(searchTerm);
+        return (root, query, cb) -> cb.or(cb.like(cb.lower(root.get(Course_.TITLE)), pattern, '\\'), cb.like(cb.lower(root.get(Course_.SHORT_NAME)), pattern, '\\'));
+    }
+
+    /**
+     * Applies sorting for the course list view as a {@code CriteriaQuery.orderBy()} side effect.
+     *
+     * @param sortedColumn the column to sort by (title, shortName)
+     * @param sortOrder    ascending or descending
+     * @return specification that applies ordering as a side effect and returns {@code null} as predicate
+     */
+    @NonNull
+    public static Specification<Course> orderedForCourses(@Nullable String sortedColumn, SortingOrder sortOrder) {
+        return (root, query, cb) -> {
+            if (query == null || sortedColumn == null || sortedColumn.isBlank()) {
+                return null;
+            }
+            List<Order> orders = new ArrayList<>();
+            boolean asc = sortOrder == SortingOrder.ASCENDING;
+
+            Expression<?> sortExpr = switch (sortedColumn) {
+                case "title" -> root.get(Course_.TITLE);
+                case "shortName" -> root.get(Course_.SHORT_NAME);
+                default -> root.get(DomainObject_.ID);
+            };
+
+            orders.add(asc ? cb.asc(sortExpr) : cb.desc(sortExpr));
+            orders.add(cb.asc(root.get(DomainObject_.ID)));
+            query.orderBy(orders);
+            return null;
         };
     }
 }
