@@ -78,7 +78,6 @@ public class ChannelService {
                 }
                 else {
                     service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
-                    // Posts from non-indexable channels (archived / no longer public) must also be removed
                     service.deleteAllPostsForChannelAsync(channel.getId());
                 }
             });
