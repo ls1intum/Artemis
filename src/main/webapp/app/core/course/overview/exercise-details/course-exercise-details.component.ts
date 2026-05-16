@@ -535,7 +535,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const athenaResultWithSubmission = changedParticipation.submissions
             ?.flatMap((submission) => (submission.results ?? []).map((result) => ({ result, submission })))
             .filter(({ result }) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true && !!result.completionDate)
-            .sort((a, b) => (a.result.id ?? 0) - (b.result.id ?? 0))
+            .sort((firstResultWithSubmission, secondResultWithSubmission) => (firstResultWithSubmission.result.id ?? 0) - (secondResultWithSubmission.result.id ?? 0))
             .last();
 
         const submissionId = athenaResultWithSubmission?.submission.id;
