@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -53,7 +54,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(irisEnabled) } },
                 { provide: Router, useValue: { navigate: vi.fn() } },
-                { provide: SearchOverlayService, useValue: { close: vi.fn() } },
+                { provide: SearchOverlayService, useValue: { close: vi.fn(), isOpen: signal(false) } },
             ],
         });
 
