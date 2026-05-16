@@ -12,10 +12,17 @@ export class ExerciseTeamsPage {
     }
 
     /**
-     * Clicks the "Create team" button.
+     * Clicks the "Create team" button and waits for the dialog to be fully rendered
+     * (heading + both typeahead inputs attached) before returning. Without this wait,
+     * a subsequent `enterTeamName` / `setTeamTutor` can race the dialog's component
+     * tree mount and the `NgbTypeahead` directive subscription is not yet wired up
+     * when keystrokes start flowing.
      */
     async createTeam() {
         await this.page.locator('button', { hasText: 'Create team' }).click();
+        await this.page.getByRole('dialog').waitFor({ state: 'visible', timeout: 30_000 });
+        await this.page.locator('#owner-search-input').waitFor({ state: 'attached', timeout: 30_000 });
+        await this.page.locator('#student-search-input').waitFor({ state: 'attached', timeout: 30_000 });
     }
 
     /**
@@ -71,9 +78,6 @@ export class ExerciseTeamsPage {
 
         try {
             await inputLocator.waitFor({ state: 'visible', timeout: 30_000 });
-            // Click first so the ngbTypeahead directive's focus subject fires; some keystroke patterns
-            // race the directive's subscription if the input is only programmatically populated.
-            await inputLocator.click();
 
             // The listbox timeout per attempt is large enough to absorb real-network latency
             // when the route mock is not installed (prefetch failed), but short enough that
@@ -83,12 +87,17 @@ export class ExerciseTeamsPage {
                 if (attempt > 0) {
                     await this.page.waitForTimeout(500);
                     await inputLocator.clear();
-                    await inputLocator.click();
                 }
-                // pressSequentially dispatches real keyboard events that the typeahead's text$
-                // stream reliably picks up, whereas fill() can race ngbTypeahead's internal
-                // subscription on the first paint of the dialog.
-                await inputLocator.pressSequentially(username, { delay: 80 });
+                // Click first so the ngbTypeahead directive's focus subject fires; clicks
+                // before typing also ensure the input owns keyboard focus so pressSequentially
+                // events land on it.
+                await inputLocator.click();
+                // The team-owner-search component now applies `debounceTime(200) + distinctUntilChanged`
+                // on its text$ stream (mirroring the sibling team-student-search). A single
+                // `fill` therefore fires one HTTP after the 200ms debounce window — much more
+                // deterministic than pressSequentially, which would otherwise produce a stream
+                // of input events that the debounce coalesces into a single trailing emit anyway.
+                await inputLocator.fill(username);
                 try {
                     await listbox.waitFor({ state: 'visible', timeout: listboxTimeoutMs });
                     const option = listbox.getByText(new RegExp(username, 'i')).first();
