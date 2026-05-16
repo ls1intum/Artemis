@@ -106,10 +106,13 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     @AfterEach
     void resetBuildContainerCachePaths() {
         // The shared BuildAgentConfiguration spy bean is reused across tests in this class (and potentially others in
-        // the same Spring context). Reset the cache-host-path fields so they cannot leak binds into unrelated tests
-        // such as testInvalidValuesReturnsDefaultConfig, which asserts equality against a bind-free default HostConfig.
+        // the same Spring context). Reset every cache-related field so they cannot leak binds (or the wrong access
+        // mode) into unrelated tests such as testInvalidValuesReturnsDefaultConfig, which asserts equality against a
+        // bind-free default HostConfig. The buildContainerCacheReadOnly reset is defensive — no test in this class
+        // currently sets it, but adding one later without this reset would silently cause cross-test leakage.
         ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "");
         ReflectionTestUtils.setField(buildAgentConfiguration, "gradleCacheHostPath", "");
+        ReflectionTestUtils.setField(buildAgentConfiguration, "buildContainerCacheReadOnly", false);
     }
 
     private HostConfig captureHostConfig() {
@@ -222,12 +225,15 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
         buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
 
         HostConfig hostConfig = captureHostConfig();
-        Bind[] binds = hostConfig.getBinds();
-        assertThat(binds).hasSize(2);
-        assertThat(binds[0].getPath()).isEqualTo("/var/cache/artemis-buildagent/m2");
-        assertThat(binds[0].getVolume().getPath()).isEqualTo("/root/.m2");
-        assertThat(binds[1].getPath()).isEqualTo("/var/cache/artemis-buildagent/gradle");
-        assertThat(binds[1].getVolume().getPath()).isEqualTo("/root/.gradle");
+        // Order-agnostic: assert both binds are present with the right path/volume pairing, but don't assume the
+        // implementation enumerates them in a specific order.
+        assertThat(hostConfig.getBinds()).hasSize(2).anySatisfy(bind -> {
+            assertThat(bind.getPath()).isEqualTo("/var/cache/artemis-buildagent/m2");
+            assertThat(bind.getVolume().getPath()).isEqualTo("/root/.m2");
+        }).anySatisfy(bind -> {
+            assertThat(bind.getPath()).isEqualTo("/var/cache/artemis-buildagent/gradle");
+            assertThat(bind.getVolume().getPath()).isEqualTo("/root/.gradle");
+        });
     }
 
     @Test
@@ -254,6 +260,8 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
         buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
 
         HostConfig hostConfig = captureHostConfig();
+        // docker-java's HostConfig.getBinds() returns new Bind[0] when nothing was set (never null), but assert
+        // isNullOrEmpty defensively in case that contract changes upstream.
         assertThat(hostConfig.getBinds()).isNullOrEmpty();
     }
 }

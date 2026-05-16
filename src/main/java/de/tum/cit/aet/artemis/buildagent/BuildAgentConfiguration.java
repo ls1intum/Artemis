@@ -169,10 +169,12 @@ public class BuildAgentConfiguration {
      * Setting {@code build-container-cache.read-only=true} switches both binds to {@link AccessMode#ro}. That is the
      * safe choice for deployments where the cache must not be writable by untrusted student submissions — a malicious
      * build could otherwise seed the shared cache with a manipulated artifact that a future build silently consumes.
-     * The read-only variant requires the host cache to be pre-populated out of band (e.g. via a trusted warm-up
-     * build the operator runs separately); an empty read-only cache is harmless but provides no speedup. The default
-     * remains read-write because the typical opt-in flow is "let the first submission warm the cache, all subsequent
-     * submissions reuse it," which only works with write access.
+     * The read-only variant <em>requires</em> the host cache to be fully populated out of band (e.g. via a trusted
+     * warm-up build the operator runs separately) <em>before</em> the flag is enabled. The read-only bind shadows
+     * whatever the image's home directory contained, and Maven / Gradle cannot write a freshly fetched artifact into
+     * a read-only local repository — so a missing transitive dependency aborts the build at dependency resolution
+     * rather than being re-downloaded. The default remains read-write because the typical opt-in flow is "let the
+     * first submission warm the cache, all subsequent submissions reuse it", which only works with write access.
      *
      * @return the binds to attach (possibly empty if neither cache path is configured)
      */

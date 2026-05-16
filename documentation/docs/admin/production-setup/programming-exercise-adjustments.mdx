@@ -215,8 +215,14 @@ artemis:
 
 Either path key can be set independently. When set, the corresponding host directory is bind-mounted into every
 build container at `/root/.m2` or `/root/.gradle` respectively, which is `$HOME/.m2` / `$HOME/.gradle` for the
-default root-based Java build images shipped with Artemis. When unset (the default), no bind mounts are added and
-the behaviour is unchanged.
+default root-based Java build images shipped with Artemis (`ls1tum/artemis-maven-template`, `ls1tum/artemis-gradle-template`,
+etc.). When unset (the default), no bind mounts are added and the behaviour is unchanged.
+
+> **Image compatibility:** the container-side mount points are hard-coded to `/root/.m2` and `/root/.gradle`. If you
+> override the default Artemis build image with one whose `$HOME` is not `/root` (e.g. the upstream Docker Hub
+> `gradle` image runs as user `gradle` with `$HOME=/home/gradle`), the bind mount lands somewhere the build tool
+> does not consult — the build succeeds but the cache is silently ineffective. Either keep the Artemis-shipped
+> images, build a derivative image that sets `$HOME=/root`, or open a follow-up for per-image mount paths.
 
 The optional `read-only` flag (default `false`) controls the bind access mode for both caches at once:
 
@@ -224,11 +230,32 @@ The optional `read-only` flag (default `false`) controls the bind access mode fo
   submissions on the same agent reuse the entries. This is the fastest opt-in path but a security trade-off
   applies (see the cache-poisoning caveat below).
 - `read-only: true` — both caches are mounted with `:ro`. Untrusted student submissions cannot mutate the shared
-  cache, so cache poisoning is structurally impossible. The trade-off is that the cache must be populated out of
-  band — typically by a trusted "warm-up" build the operator runs separately (`docker run --rm -v /var/cache/artemis-buildagent/m2:/root/.m2 ls1tum/artemis-maven-template:… mvn -f /path/to/seed-pom.xml dependency:resolve`)
-  or by occasionally flipping the flag back to `false` long enough to repopulate. An empty or partial read-only
-  cache will fail builds because Maven/Gradle cannot write fetched artifacts to a read-only local repository —
-  warm-up is required before enabling read-only.
+  cache, so cache poisoning is structurally impossible. **The cache must be fully populated before the flag is
+  enabled, otherwise builds will fail at dependency resolution.** The read-only bind shadows whatever was in the
+  image's `~/.m2` / `~/.gradle` layer (including the dependencies baked into `ls1tum/artemis-maven-template`), and
+  Maven / Gradle cannot write fetched artifacts into a read-only local repository — a missing transitive
+  dependency therefore aborts the build instead of being re-downloaded.
+  Populate the cache out of band, for example with a trusted warm-up that runs once per agent with the same
+  image the student builds use:
+
+  ```bash
+  # Maven (mount the seed pom and the cache, override the image entrypoint so we run mvn directly)
+  docker run --rm --entrypoint mvn \
+      -v /var/cache/artemis-buildagent/m2:/root/.m2 \
+      -v "$PWD/seed-pom.xml":/seed/pom.xml \
+      ls1tum/artemis-maven-template:java17-25 \
+      -f /seed/pom.xml dependency:resolve
+
+  # Gradle (uses a Gradle build that resolves the same dependency set)
+  docker run --rm \
+      -v /var/cache/artemis-buildagent/gradle:/root/.gradle \
+      -v "$PWD/seed-project":/seed -w /seed \
+      ls1tum/artemis-gradle-template:java17-25 \
+      gradle --no-daemon dependencies
+  ```
+
+  Re-run the warm-up whenever the dependency set the exercises declare changes. As an alternative, flip the
+  flag back to `false` long enough to let normal submissions repopulate, then flip it back.
 
 ### Host directory requirements
 
@@ -242,9 +269,10 @@ The optional `read-only` flag (default `false`) controls the bind access mode fo
     of root and non-root build images, but be aware that it lets any local process on the build-agent host modify
     the cache — only acceptable on machines that run nothing besides the Artemis build agent.
 - The cache grows over time. A weekly cron such as
-  `find <path> -atime +30 -type f -delete && find <path> -type d -empty -delete` keeps both the file footprint and
-  the empty-directory residue bounded. Verify that the host's filesystem is not mounted with `noatime` before
-  relying on access-time-based pruning, otherwise switch to `-mtime`.
+  `find <path> -atime +30 -type f -delete && find <path> -mindepth 1 -type d -empty -delete` keeps both the file
+  footprint and the empty-directory residue bounded. The default Linux mount option (`relatime`) updates `atime`
+  often enough that this predicate behaves intuitively; on `noatime` mounts switch to `-mtime` instead, but note
+  that `-mtime` reflects download time and will re-download an old-but-hot artefact after each prune.
 - Pair the prune with a disk-space alert on the cache filesystem. The exact mechanism depends on your monitoring
   stack — for example, a Prometheus + node_exporter setup can fire when
   `(node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.2` for the mount point, which leaves enough head

@@ -61,13 +61,16 @@ class BuildAgentConfigurationTest {
 
         List<Bind> binds = config.buildContainerCacheBinds();
 
-        assertThat(binds).hasSize(2);
-        assertThat(binds.get(0).getPath()).isEqualTo("/var/cache/artemis-buildagent/m2");
-        assertThat(binds.get(0).getVolume().getPath()).isEqualTo("/root/.m2");
-        assertThat(binds.get(0).getAccessMode()).isEqualTo(AccessMode.rw);
-        assertThat(binds.get(1).getPath()).isEqualTo("/var/cache/artemis-buildagent/gradle");
-        assertThat(binds.get(1).getVolume().getPath()).isEqualTo("/root/.gradle");
-        assertThat(binds.get(1).getAccessMode()).isEqualTo(AccessMode.rw);
+        // Order-agnostic: assert both binds are present with the right host/container path pairing and RW mode.
+        assertThat(binds).hasSize(2).anySatisfy(b -> {
+            assertThat(b.getPath()).isEqualTo("/var/cache/artemis-buildagent/m2");
+            assertThat(b.getVolume().getPath()).isEqualTo("/root/.m2");
+            assertThat(b.getAccessMode()).isEqualTo(AccessMode.rw);
+        }).anySatisfy(b -> {
+            assertThat(b.getPath()).isEqualTo("/var/cache/artemis-buildagent/gradle");
+            assertThat(b.getVolume().getPath()).isEqualTo("/root/.gradle");
+            assertThat(b.getAccessMode()).isEqualTo(AccessMode.rw);
+        });
     }
 
     @Test

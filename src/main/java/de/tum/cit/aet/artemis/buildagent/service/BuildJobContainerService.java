@@ -216,6 +216,9 @@ public class BuildJobContainerService {
 
         // Attach persistent dependency-cache bind mounts (if configured) AFTER the custom-flags branch above so they
         // survive the copyAndAdjustHostConfig path, which otherwise builds a fresh HostConfig and would lose them.
+        // Note: docker-java's withBinds mutates the receiver's binds field in place and returns this; that is safe
+        // here because buildAgentConfiguration.hostConfig() builds a fresh HostConfig on every invocation, so the
+        // mutation cannot leak across build jobs.
         List<Bind> cacheBinds = buildAgentConfiguration.buildContainerCacheBinds();
         if (!cacheBinds.isEmpty()) {
             customHostConfig = customHostConfig.withBinds(cacheBinds.toArray(new Bind[0]));
