@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockPipe } from 'ng-mocks';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { NEVER, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { provideRouter } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
