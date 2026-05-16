@@ -102,7 +102,7 @@ public class IrisMessageResource {
     }
 
     /**
-     * POST sessions/{sessionId}/messages: Send a new message from the user to the LLM.
+     * POST sessions/{sessionId}/messages: Send a new message from the user to the LLM
      *
      * @param sessionId  of the session
      * @param requestDTO containing message content, optional uncommitted files and optional pending context

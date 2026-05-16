@@ -329,6 +329,47 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     // -------------------------------------------------------------------------
 
     /**
+     * Resolved entity references for a chat context. Exactly one of {@code exercise} or {@code lecture}
+     * is populated for entity-bound modes; for COURSE_CHAT both are {@code null} and the course itself
+     * is the context. {@code course} is always set (the parent course for entity modes).
+     */
+    private record ResolvedContext(String entityName, Course course, Exercise exercise, Lecture lecture) {
+    }
+
+    /**
+     * Loads the target entity for {@code (mode, entityId)}, validates the mode against the entity type,
+     * checks the user's role on the parent course, and ensures Iris is enabled for that course.
+     * Shared by {@link #getCurrentSessionOrCreateIfNotExists}, {@link #createSession}, and
+     * {@link #applyContextChange} so the validate/authorize/enable chain stays in one place.
+     */
+    private ResolvedContext resolveAndAuthorize(IrisChatMode mode, long entityId, User user) {
+        return switch (mode) {
+            case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> {
+                var exercise = exerciseRepository.findByIdElseThrow(entityId);
+                validateExerciseMode(exercise, mode);
+                authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+                var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+                irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
+                yield new ResolvedContext(exercise.getTitle(), course, exercise, null);
+            }
+            case LECTURE_CHAT -> {
+                var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(entityId);
+                authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
+                var course = lecture.getCourse();
+                irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
+                yield new ResolvedContext(lecture.getTitle(), course, null, lecture);
+            }
+            case COURSE_CHAT -> {
+                var course = courseRepository.findByIdElseThrow(entityId);
+                authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+                irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
+                yield new ResolvedContext(course.getTitle(), course, null, null);
+            }
+            default -> throw new IllegalStateException("IrisChatSessionService.resolveAndAuthorize does not handle chat mode " + mode);
+        };
+    }
+
+    /**
      * Gets or creates the current Iris chat session for the given context.
      * The course is derived from the entity (exercise/lecture) or, for COURSE_CHAT, from the entityId itself.
      *
@@ -339,27 +380,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      */
     public IrisChatSession getCurrentSessionOrCreateIfNotExists(IrisChatMode mode, long entityId, User user) {
         user.hasOptedIntoLLMUsageElseThrow();
-
+        var resolved = resolveAndAuthorize(mode, entityId, user);
         return switch (mode) {
-            case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> {
-                var exercise = exerciseRepository.findByIdElseThrow(entityId);
-                validateExerciseMode(exercise, mode);
-                authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-                irisSettingsService.ensureEnabledForCourseOrElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember());
-                yield findOrCreateExerciseSession(exercise, user, mode);
-            }
-            case LECTURE_CHAT -> {
-                var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(entityId);
-                authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
-                irisSettingsService.ensureEnabledForCourseOrElseThrow(lecture.getCourse());
-                yield findOrCreateLectureSession(lecture, user);
-            }
-            case COURSE_CHAT -> {
-                var course = courseRepository.findByIdElseThrow(entityId);
-                authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-                irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
-                yield findOrCreateCourseSession(course, user);
-            }
+            case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> findOrCreateExerciseSession(resolved.exercise(), user, mode);
+            case LECTURE_CHAT -> findOrCreateLectureSession(resolved.lecture(), user);
+            case COURSE_CHAT -> findOrCreateCourseSession(resolved.course(), user);
             default -> throw new IllegalStateException("IrisChatSessionService.getCurrentSessionOrCreateIfNotExists does not handle chat mode " + mode);
         };
     }
@@ -375,27 +400,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      */
     public IrisChatSession createSession(IrisChatMode mode, long entityId, User user) {
         user.hasOptedIntoLLMUsageElseThrow();
-
+        var resolved = resolveAndAuthorize(mode, entityId, user);
         return switch (mode) {
-            case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> {
-                var exercise = exerciseRepository.findByIdElseThrow(entityId);
-                validateExerciseMode(exercise, mode);
-                authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-                irisSettingsService.ensureEnabledForCourseOrElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember());
-                yield createExerciseSessionInternal(exercise, user, mode);
-            }
-            case LECTURE_CHAT -> {
-                var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(entityId);
-                authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
-                irisSettingsService.ensureEnabledForCourseOrElseThrow(lecture.getCourse());
-                yield createLectureSessionInternal(lecture, user);
-            }
-            case COURSE_CHAT -> {
-                var course = courseRepository.findByIdElseThrow(entityId);
-                authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-                irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
-                yield createCourseSessionInternal(course, user);
-            }
+            case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> createExerciseSessionInternal(resolved.exercise(), user, mode);
+            case LECTURE_CHAT -> createLectureSessionInternal(resolved.lecture(), user);
+            case COURSE_CHAT -> createCourseSessionInternal(resolved.course(), user);
             default -> throw new IllegalStateException("IrisChatSessionService.createSession does not handle chat mode " + mode);
         };
     }
@@ -419,41 +428,19 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * @param user        the requesting user
      */
     public void applyContextChange(IrisChatSession session, IrisChatMode newMode, long newEntityId, User user) {
-        if (session.getMode() == newMode && session.getEntityId() != null && session.getEntityId() == newEntityId) {
+        if (session.getMode() == newMode && session.getEntityId() == newEntityId) {
             return;
         }
 
         long courseId = session.getCourseId();
 
-        // Validate + authorize the new context (reuses existing validators and role checks)
-        String newEntityName = switch (newMode) {
-            case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> {
-                var exercise = exerciseRepository.findByIdElseThrow(newEntityId);
-                validateExerciseMode(exercise, newMode);
-                if (exercise.isExamExercise()) {
-                    throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
-                }
-                authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-                irisSettingsService.ensureEnabledForCourseOrElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember());
-                yield exercise.getTitle();
-            }
-            case LECTURE_CHAT -> {
-                var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(newEntityId);
-                authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
-                irisSettingsService.ensureEnabledForCourseOrElseThrow(lecture.getCourse());
-                yield lecture.getTitle();
-            }
-            case COURSE_CHAT -> {
-                if (newEntityId != courseId) {
-                    throw new ConflictException("For COURSE_CHAT, entityId must equal courseId", "Iris", "irisCourseEntityMismatch");
-                }
-                var course = courseRepository.findByIdElseThrow(courseId);
-                authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-                irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
-                yield course.getTitle();
-            }
-            default -> throw new IllegalStateException("IrisChatSessionService.applyContextChange does not handle chat mode " + newMode);
-        };
+        var resolved = resolveAndAuthorize(newMode, newEntityId, user);
+
+        if (resolved.course().getId() != courseId) {
+            throw new ConflictException("New context must belong to the same course as the session", "Iris", "irisCourseMismatch");
+        }
+
+        String newEntityName = resolved.entityName();
 
         // Classify the transition so the client can pick the right label:
         // - "removed": back to COURSE_CHAT — label with the lecture/exercise being removed (the old one).
@@ -515,6 +502,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     }
 
     private void validateExerciseMode(Exercise exercise, IrisChatMode mode) {
+        if (exercise.isExamExercise()) {
+            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
+        }
         boolean isProgramming = exercise instanceof ProgrammingExercise;
         boolean isText = exercise instanceof TextExercise;
         if (mode == IrisChatMode.PROGRAMMING_EXERCISE_CHAT && !isProgramming) {
@@ -554,9 +544,6 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     }
 
     private IrisChatSession createExerciseSessionInternal(Exercise exercise, User user, IrisChatMode mode) {
-        if (exercise.isExamExercise()) {
-            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
-        }
         var session = new IrisChatSession(exercise, user, mode);
         session.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
         return irisChatSessionRepository.save(session);

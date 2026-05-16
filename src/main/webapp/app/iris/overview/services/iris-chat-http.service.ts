@@ -56,9 +56,7 @@ export class IrisChatHttpService {
     }
 
     /**
-     * creates a new message in a session.
-     * If the request DTO carries a {@code pendingContext}, the server applies the context switch atomically
-     * (CTXSWAP marker, then user message) before sending to Pyris.
+     * creates a new message in a session
      * @param sessionId of the session
      * @param request   the message request DTO containing content, optional uncommitted files and optional pending context
      */

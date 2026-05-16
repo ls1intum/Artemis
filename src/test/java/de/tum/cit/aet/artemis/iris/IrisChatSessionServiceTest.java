@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -362,6 +363,19 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
 
             assertThatExceptionOfType(ConflictException.class)
                     .isThrownBy(() -> irisChatSessionService.applyContextChange(session, IrisChatMode.TEXT_EXERCISE_CHAT, examExercise.getId(), user));
+        }
+
+        @Test
+        void throwsConflictWhenTargetEntityBelongsToDifferentCourse() {
+            User user = student1();
+            IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.COURSE_CHAT, user));
+
+            Course otherCourse = courseUtilService.createCourse();
+            Lecture otherLecture = lectureUtilService.createLecture(otherCourse);
+            activateIrisFor(otherCourse);
+
+            assertThatExceptionOfType(ConflictException.class)
+                    .isThrownBy(() -> irisChatSessionService.applyContextChange(session, IrisChatMode.LECTURE_CHAT, otherLecture.getId(), user));
         }
 
     }
