@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.AutomaticAfterDueDatePreviewRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 @Service
@@ -40,14 +39,11 @@ public class AutomaticAfterDueDateService {
 
     private final BuildPhasesTemplateService buildPhasesTemplateService;
 
-    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
     public AutomaticAfterDueDateService(ProgrammingExerciseRepository programmingExerciseRepository, Optional<ExamDateApi> examDateApi,
-            BuildPhasesTemplateService buildPhasesTemplateService, final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            BuildPhasesTemplateService buildPhasesTemplateService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examDateApi = examDateApi;
         this.buildPhasesTemplateService = buildPhasesTemplateService;
-        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     public ZonedDateTime computeRunAfterDueDate(ZonedDateTime newDueDate, boolean hasAfterDueDatePhase, Duration offset) {
@@ -65,10 +61,11 @@ public class AutomaticAfterDueDateService {
      * @param relevantData the relevant data needed for knowing what the due date will be set to
      * @return the computed date or null if the value would not be set
      */
-    public ZonedDateTime getAutomaticBuildAndTestDate(final AutomaticAfterDueDatePreviewRequestDTO relevantData) throws IOException {
+    public ZonedDateTime getAutomaticBuildAndTestDate(final AutomaticAfterDueDatePreviewRequestDTO relevantData, final ProgrammingExercise loadedProgrammingExercise,
+            final Exam loadedExam) throws IOException {
         final ZonedDateTime dueDate;
         if (relevantData.examId() != null && examDateApi.isPresent()) {
-            dueDate = examDateApi.orElseThrow().getLatestIndividualExamEndDate(relevantData.examId());
+            dueDate = getLatestExamEndDateWithGrace(loadedExam);
         }
         else {
             dueDate = relevantData.dueDate();
@@ -79,8 +76,7 @@ public class AutomaticAfterDueDateService {
             hasAfterDueDatePhase = relevantData.hasAfterDueDateBuildPhase();
         }
         else if (relevantData.programmingExerciseId() != null) {
-            final ProgrammingExerciseBuildConfig programmingExerciseBuildConfig = programmingExerciseBuildConfigRepository
-                    .findByProgrammingExerciseId(relevantData.programmingExerciseId()).orElseThrow();
+            final ProgrammingExerciseBuildConfig programmingExerciseBuildConfig = loadedProgrammingExercise.getBuildConfig();
             final Optional<BuildPlanPhasesDTO> buildPlanPhases = programmingExerciseBuildConfig.getBuildPlanPhases();
             final List<BuildPhaseDTO> phases = buildPlanPhases.map(BuildPlanPhasesDTO::phases).orElse(null);
             hasAfterDueDatePhase = hasAfterDueDatePhase(phases);
@@ -99,62 +95,16 @@ public class AutomaticAfterDueDateService {
             offset = null;
         }
         else if (relevantData.examId() == null) {
-            final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(relevantData.programmingExerciseId());
-            offset = programmingExercise.getDueDate() == null || programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null ? null
-                    : Duration.between(programmingExercise.getDueDate(), programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+            offset = loadedProgrammingExercise.getDueDate() == null || loadedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null ? null
+                    : Duration.between(loadedProgrammingExercise.getDueDate(), loadedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         }
         else {
-            final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(relevantData.programmingExerciseId());
-            offset = dueDate == null || programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null ? null
-                    : Duration.between(dueDate, programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+            // dueDate here must be the derived due date from the exam
+            offset = dueDate == null || loadedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null ? null
+                    : Duration.between(dueDate, loadedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         }
 
         return computeRunAfterDueDate(dueDate, hasAfterDueDatePhase, offset);
-    }
-
-    /**
-     * Computes the "Run Tests after Due Date" value for a programming exercise.
-     * This method is used when the client needs to see what the date will be set to
-     * if the update/create/import is applied.
-     *
-     * @param programmingExerciseId       the id of the programming exercise
-     * @param newDueDate                  the due date of the exercise
-     * @param changedBuildHasAfterDueDate whether a build phase that runs after the due date is set, if null its left uncustomized
-     * @param programmingLanguage         the programming language of the exercise
-     * @param projectType                 the project type of the exercise
-     * @param staticCodeAnalysisEnabled   whether static code analysis is enabled
-     * @param sequentialTestRuns          whether sequential test runs are enabled
-     * @param exam                        the exam if the exercise is an exam exercise
-     * @return the computed date or null if the value would not be set
-     */
-    public ZonedDateTime getAutomaticBuildAndTestDate(Long programmingExerciseId, ZonedDateTime newDueDate, Boolean changedBuildHasAfterDueDate,
-            ProgrammingLanguage programmingLanguage, ProjectType projectType, Boolean staticCodeAnalysisEnabled, Boolean sequentialTestRuns, Exam exam) {
-        boolean isExistingProgrammingExercise = programmingExerciseId != null;
-        boolean isInExam = exam != null;
-
-        boolean hasNewlySetNoAfterDueDate = Boolean.FALSE.equals(changedBuildHasAfterDueDate);
-        boolean hasNoNewDueDateAsStandalone = newDueDate == null && !isInExam;
-        if (hasNewlySetNoAfterDueDate || hasNoNewDueDateAsStandalone) {
-            return null;
-        }
-
-        if (isExistingProgrammingExercise) {
-            ProgrammingExercise exercise = programmingExerciseRepository.findForUpdateByIdElseThrow(programmingExerciseId);
-            return deriveBuildAndTestDate(exercise, changedBuildHasAfterDueDate, newDueDate, null);
-        }
-
-        boolean hasAfterDueDatePhaseAfterSave = Boolean.TRUE.equals(changedBuildHasAfterDueDate)
-                || hasAfterDueDateBuildPhaseInDefaultConfig(exam != null, programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRuns);
-        if (!hasAfterDueDatePhaseAfterSave) {
-            return null;
-        }
-
-        if (isInExam) {
-            ZonedDateTime examEndWithGrace = getLatestExamEndDateWithGrace(exam);
-            return toOffsetDate(examEndWithGrace, null);
-        }
-
-        return toOffsetDate(newDueDate, null);
     }
 
     /**

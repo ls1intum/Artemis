@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.AutomaticAfterDueDatePreviewRequestDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.localci.AutomaticAfterDueDateService;
@@ -67,17 +68,18 @@ public class AutomaticAfterDueDateResource {
         Long programmingExerciseId = requestDTO.programmingExerciseId();
         Long examId = requestDTO.examId();
 
+        ProgrammingExercise programmingExercise = null;
         if (programmingExerciseId != null) {
-            var programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
+            programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(programmingExerciseId);
             authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         }
+        Exam exam = null;
         if (examId != null) {
-            Exam exam = examRepositoryApi.orElseThrow(() -> new BadRequestAlertException("Exam support is not enabled", ENTITY_NAME, "examSupportNotEnabled"))
-                    .findByIdElseThrow(examId);
+            exam = examRepositoryApi.orElseThrow(() -> new BadRequestAlertException("Exam support is not enabled", ENTITY_NAME, "examSupportNotEnabled")).findByIdElseThrow(examId);
             examAccessApi.orElseThrow().checkCourseAndExamAccessForEditorElseThrow(exam.getCourse().getId(), exam.getId());
         }
 
-        ZonedDateTime previewDate = automaticAfterDueDateService.getAutomaticBuildAndTestDate(requestDTO);
+        ZonedDateTime previewDate = automaticAfterDueDateService.getAutomaticBuildAndTestDate(requestDTO, programmingExercise, exam);
         return ResponseEntity.ok(previewDate);
     }
 

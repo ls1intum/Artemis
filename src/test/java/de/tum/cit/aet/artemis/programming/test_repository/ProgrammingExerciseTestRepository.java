@@ -8,7 +8,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.hibernate.Hibernate;
-import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -17,7 +16,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -120,21 +118,6 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
         }
         return programmingExercise;
     }
-
-    /**
-     * Find a programming exercise by its id, with eagerly loaded build config.
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
-     */
-    @NonNull
-    default ProgrammingExercise findByIdWithBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithBuildConfigById(programmingExerciseId), programmingExerciseId);
-    }
-
-    @EntityGraph(type = LOAD, attributePaths = { "buildConfig" })
-    Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
 
     List<ProgrammingExercise> findAllByCourseId(long courseId);
 }

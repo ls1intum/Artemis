@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
+import de.tum.cit.aet.artemis.programming.dto.AutomaticAfterDueDatePreviewRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -164,13 +165,12 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
-    void getAutomaticBuildAndTestDate_existingCourseExercise_dueDateAndAfterDueDatePhase_returnsDerivedDate() throws JsonProcessingException {
+    void getAutomaticBuildAndTestDate_existingCourseExercise_dueDateAndAfterDueDatePhase_returnsDerivedDate() throws IOException {
         var exerciseId = 10L;
         var dueDate = ZonedDateTime.now().plusDays(2);
         var exercise = createCourseExercise(ZonedDateTime.now().plusDays(1), BuildPhaseCondition.AFTER_DUE_DATE);
-        when(programmingExerciseRepository.findForUpdateByIdElseThrow(exerciseId)).thenReturn(exercise);
 
-        var previewDate = service.getAutomaticBuildAndTestDate(exerciseId, dueDate, null, null, null, null, null, null);
+        var previewDate = service.getAutomaticBuildAndTestDate(new AutomaticAfterDueDatePreviewRequestDTO(exerciseId, null, dueDate, null, null, null, null, null), exercise, null);
 
         assertThat(previewDate).isEqualTo(dueDate.plusMinutes(15));
     }
@@ -181,7 +181,8 @@ class AutomaticAfterDueDateServiceTest {
         var defaultPhases = List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml")));
         when(buildPhasesTemplateService.getBuildPlanPhasesFor(ProgrammingLanguage.JAVA, Optional.of(ProjectType.PLAIN_MAVEN), true, false)).thenReturn(defaultPhases);
 
-        var previewDate = service.getAutomaticBuildAndTestDate(null, dueDate, null, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN, true, false, null);
+        var previewDate = service.getAutomaticBuildAndTestDate(
+                new AutomaticAfterDueDatePreviewRequestDTO(null, null, dueDate, null, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN, true, false), null, null);
 
         assertThat(previewDate).isEqualTo(dueDate.plusMinutes(15));
     }
@@ -191,6 +192,7 @@ class AutomaticAfterDueDateServiceTest {
         var dueDate = ZonedDateTime.now().plusDays(1);
         var latestExamEndDate = ZonedDateTime.now().plusDays(3);
         var exam = new Exam();
+        exam.setId(1L);
         exam.setGracePeriod(120);
         when(examDateApi.getLatestIndividualExamEndDate(exam)).thenReturn(latestExamEndDate);
         var templatePhases = List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/*.xml")));
@@ -198,7 +200,8 @@ class AutomaticAfterDueDateServiceTest {
         when(buildPhasesTemplateService.applyExamDefaults(anyList()))
                 .thenReturn(List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"))));
 
-        var previewDate = service.getAutomaticBuildAndTestDate(null, dueDate, null, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN, false, false, exam);
+        var previewDate = service.getAutomaticBuildAndTestDate(
+                new AutomaticAfterDueDatePreviewRequestDTO(null, exam.getId(), dueDate, null, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN, false, false), null, exam);
 
         assertThat(previewDate).isEqualTo(latestExamEndDate.plusSeconds(120).plusMinutes(15));
     }

@@ -103,6 +103,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = "buildConfig")
+    Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
+
     List<ProgrammingExercise> findAllByProjectKey(String projectKey);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories" })
@@ -1116,5 +1119,16 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     default ProgrammingExercise findWithTemplateParticipationAndLatestSubmissionByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithTemplateParticipationAndLatestSubmissionById(exerciseId), exerciseId);
+    }
+
+    /**
+     * Find a programming exercise by its id, including its build config, and throw an Exception if it cannot be found.
+     *
+     * @param exerciseId of the programming exercise.
+     * @return The programming exercise with the associated build config related to the given id.
+     * @throws EntityNotFoundException if the programming exercise with the given id cannot be found.
+     */
+    default ProgrammingExercise findByIdWithBuildConfigElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithBuildConfigById(exerciseId), exerciseId);
     }
 }
