@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
+import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
@@ -217,6 +218,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @MockitoSpyBean
     protected CompetencyProgressApi competencyProgressApi;
+
+    @MockitoSpyBean
+    protected PyrisFaqApi pyrisFaqApi;
 
     // we explicitly want a mock here, as we don't want to test the actual chat model calls and avoid any autoconfiguration or instantiation of Spring AI internals
     @MockitoBean
