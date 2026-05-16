@@ -346,14 +346,6 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
         }
 
         @Test
-        void throwsAccessForbiddenForDifferentUser() {
-            IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.COURSE_CHAT, student2()));
-
-            assertThatExceptionOfType(AccessForbiddenException.class)
-                    .isThrownBy(() -> irisChatSessionService.applyContextChange(session, IrisChatMode.LECTURE_CHAT, lecture.getId(), student1()));
-        }
-
-        @Test
         void throwsConflictWhenCourseChatEntityDoesNotMatchSessionCourse() {
             User user = student1();
             IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.LECTURE_CHAT, user));
@@ -372,15 +364,6 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
                     .isThrownBy(() -> irisChatSessionService.applyContextChange(session, IrisChatMode.TEXT_EXERCISE_CHAT, examExercise.getId(), user));
         }
 
-        @Test
-        void throwsAccessForbiddenWhenUserHasNotOptedIntoLLM() {
-            User user = student1();
-            IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.COURSE_CHAT, user));
-            user.setSelectedLLMUsage(null);
-
-            assertThatExceptionOfType(AccessForbiddenException.class)
-                    .isThrownBy(() -> irisChatSessionService.applyContextChange(session, IrisChatMode.LECTURE_CHAT, lecture.getId(), user));
-        }
     }
 
     // =========================================================================

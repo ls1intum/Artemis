@@ -121,6 +121,7 @@ public class LectureUtilService {
      */
     public Lecture createLecture(Course course) {
         Lecture lecture = new Lecture();
+        lecture.setTitle("Test Lecture");
         lecture.setDescription("Test Lecture");
         lecture.setCourse(course);
         lectureRepo.save(lecture);
