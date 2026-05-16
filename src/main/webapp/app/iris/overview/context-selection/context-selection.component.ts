@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, inject, input, signal } from '@angular/core';
 import { faChalkboardUser, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -39,6 +39,7 @@ const EXERCISE_TYPE_TO_CHAT_MODE: Record<string, ChatServiceMode> = {
     styleUrls: ['./context-selection.component.scss'],
     imports: [SelectModule, ChipModule, TooltipModule, FormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    encapsulation: ViewEncapsulation.None,
 })
 export class ContextSelectionComponent {
     private readonly courseStorageService = inject(CourseStorageService);
