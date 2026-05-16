@@ -33,7 +33,7 @@ jobs:
     steps:
       - name: Find PR number
         id: find-pr
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         continue-on-error: true
         env:
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
@@ -129,7 +129,7 @@ jobs:
 
       - name: Download server JaCoCo XML
         if: steps.changes.outputs.has_server_changes == 'true'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: Server JaCoCo XML
@@ -139,7 +139,7 @@ jobs:
 
       - name: Download client coverage summaries
         if: steps.changes.outputs.has_client_changes == 'true'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: Client Coverage Summaries
@@ -153,16 +153,21 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
+      - name: Setup pnpm
+        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
       - name: Setup Node.js
         if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
         uses: actions/setup-node@v6
         with:
           node-version: '${{ env.node }}'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install Dependencies
         if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
-        run: npm ci --no-audit --no-fund
+        run: pnpm install --frozen-lockfile
 
       - name: Generate coverage table
         id: coverage
@@ -188,8 +193,8 @@ jobs:
             ARGS+=(--server-modules "$SERVER_MODULES")
           fi
 
-          echo "Running: npm run coverage:pr -- ${ARGS[*]}"
-          if ! COVERAGE_OUTPUT=$(npm run coverage:pr -- "${ARGS[@]}" 2>&1); then
+          echo "Running: pnpm run coverage:pr -- ${ARGS[*]}"
+          if ! COVERAGE_OUTPUT=$(pnpm run coverage:pr -- "${ARGS[@]}" 2>&1); then
             echo "$COVERAGE_OUTPUT"
             echo "success=false" >> "$GITHUB_OUTPUT"
             exit 0
@@ -207,7 +212,7 @@ jobs:
 
       - name: Update PR description with coverage
         if: steps.find-pr.outputs.result != ''
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           PR_NUMBER: ${{ steps.find-pr.outputs.result }}
           PR_AUTHOR: ${{ steps.find-pr.outputs.author }}
@@ -252,7 +257,7 @@ jobs:
             const lines = [
               coverageSection,
               '<!-- Please add the test coverages for all changed files modified in this PR here. You can generate the coverage table using one of these options: -->',
-              '<!-- 1. Run `npm run coverage:pr` to generate coverage locally by running only the affected module tests (see supporting_scripts/code-coverage/local-pr-coverage/README.md) -->',
+              '<!-- 1. Run `pnpm run coverage:pr` to generate coverage locally by running only the affected module tests (see supporting_scripts/code-coverage/local-pr-coverage/README.md) -->',
               '<!-- 2. Use `supporting_scripts/code-coverage/generate_code_cov_table/generate_code_cov_table.py` to generate the table from CI artifacts (requires GitHub token, follow the README for setup) -->',
               '<!-- The line coverage must be above 90% for changed files, and you must use extensive and useful assertions for server tests and expect statements for client tests. -->',
               '<!-- Note: Confirm in the last column that you have implemented extensive assertions for server tests and expect statements for client tests. -->',

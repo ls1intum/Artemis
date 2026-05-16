@@ -157,7 +157,13 @@ MISSING=""
 command -v docker >/dev/null 2>&1  || MISSING="$MISSING docker"
 command -v java >/dev/null 2>&1    || MISSING="$MISSING java"
 command -v node >/dev/null 2>&1    || MISSING="$MISSING node"
-command -v npm >/dev/null 2>&1     || MISSING="$MISSING npm"
+
+# Activate the pnpm version pinned in package.json via Corepack (shipped with
+# Node 24). Idempotent; ensures `pnpm` is on PATH on fresh setups.
+if command -v corepack >/dev/null 2>&1; then
+    corepack enable >/dev/null 2>&1 || true
+fi
+command -v pnpm >/dev/null 2>&1    || MISSING="$MISSING pnpm"
 command -v unzip >/dev/null 2>&1   || MISSING="$MISSING unzip"
 command -v lsof >/dev/null 2>&1    || MISSING="$MISSING lsof"
 command -v pgrep >/dev/null 2>&1   || MISSING="$MISSING pgrep"
@@ -165,6 +171,10 @@ command -v python3 >/dev/null 2>&1 || MISSING="$MISSING python3"
 command -v curl >/dev/null 2>&1    || MISSING="$MISSING curl"
 if [ -n "$MISSING" ]; then
     echo -e "${RED}ERROR: Missing required commands:$MISSING${NC}"
+    if [[ "$MISSING" == *pnpm* ]]; then
+        echo -e "${RED}Activate the pnpm version pinned in package.json once via:${NC}"
+        echo -e "${RED}    corepack enable${NC}"
+    fi
     exit 1
 fi
 
@@ -179,24 +189,103 @@ echo -e "${GREEN}Prerequisites OK${NC}"
 # =============================================================================
 # Step 1: Build the WAR (unless --skip-build)
 # =============================================================================
+# Parallelise the long legs of a -Pprod WAR build that touch disjoint output
+# directories:
+#   pnpm run webapp:prod              -> build/resources/main/static/   (Angular bundle)
+#   pnpm run sbom:generate-full       -> build/reports/client-sbom-full.json (cdxgen)
+#   ./gradlew compileJava cyclonedxBom
+#                                     -> build/classes/                  (.class files)
+#                                     -> build/reports/sbom/server-sbom.json
+# After all three finish we run `pnpm run sbom:filter-shipped` synchronously
+# because the filter step (sbom-filter-by-bundle.mjs) reads the webapp:prod
+# output dir for .js.map files — on a cold build cdxgen finishes well before
+# Angular, and `webapp:prod`'s `clean-www` would have just emptied the static
+# dir, causing the filter to exit 1. Splitting `sbom:generate` here keeps the
+# race-free ordering without losing the parallelism.
+# Then re-enter Gradle for the assembly step with -x on the legs above so
+# Gradle just runs processResources + copySbomsToResources + bootWar against
+# already-produced outputs. copySbomsToResources's doLast copies pre-existing
+# files, so skipping its dependencies doesn't break it.
+# On an M5 Max this cuts the build step from ~3:37 sequential to ~1:30
+# wall-clock (the SBOM generation and Angular build now overlap with each other
+# and with compileJava instead of running back-to-back).
 if [ "$SKIP_BUILD" = false ]; then
     echo ""
-    echo -e "${BLUE}Step 1: Building WAR (./gradlew -Pprod -Pwar bootWar -x test)...${NC}"
-    ./gradlew -Pprod -Pwar bootWar -x test
+    echo -e "${BLUE}Step 1: Building WAR (parallel: webapp + client-SBOM + (compileJava + server-SBOM), then bootWar)...${NC}"
+    CLIENT_LOG="$LOCAL_DIR/build-client.log"
+    CLIENT_SBOM_LOG="$LOCAL_DIR/build-client-sbom.log"
+    SERVER_LOG="$LOCAL_DIR/build-server.log"
+    : > "$CLIENT_LOG"; : > "$CLIENT_SBOM_LOG"; : > "$SERVER_LOG"
+
+    pnpm run webapp:prod >"$CLIENT_LOG" 2>&1 &
+    CLIENT_PID=$!
+    echo -e "${YELLOW}  • client build started (pid $CLIENT_PID, log: $CLIENT_LOG)${NC}"
+
+    # Only the generate-full half runs in parallel here. The filter step has a
+    # read-after-write dependency on webapp:prod and runs after the wait below.
+    pnpm run sbom:generate-full >"$CLIENT_SBOM_LOG" 2>&1 &
+    CLIENT_SBOM_PID=$!
+    echo -e "${YELLOW}  • client SBOM (cdxgen) started (pid $CLIENT_SBOM_PID, log: $CLIENT_SBOM_LOG)${NC}"
+
+    # compileJava and cyclonedxBom both live in the Java tooling graph and a
+    # single Gradle invocation is the cheapest way to run them (avoids a
+    # second daemon-init round-trip). They are configured independently of
+    # the pnpm tasks, so they run in parallel with the two pnpm legs above.
+    ./gradlew -Pprod -Pwar compileJava cyclonedxBom -x webapp >"$SERVER_LOG" 2>&1 &
+    SERVER_PID=$!
+    echo -e "${YELLOW}  • server compile + SBOM started (pid $SERVER_PID, log: $SERVER_LOG)${NC}"
+
+    set +e
+    wait "$CLIENT_PID";      CLIENT_RC=$?
+    wait "$CLIENT_SBOM_PID"; CLIENT_SBOM_RC=$?
+    wait "$SERVER_PID";      SERVER_RC=$?
+    set -e
+    if [ "$CLIENT_RC" -ne 0 ] || [ "$CLIENT_SBOM_RC" -ne 0 ] || [ "$SERVER_RC" -ne 0 ]; then
+        echo -e "${RED}Build failed (client rc=$CLIENT_RC, client-sbom rc=$CLIENT_SBOM_RC, server rc=$SERVER_RC).${NC}"
+        for tag in "client" "client-sbom" "server"; do
+            log_var="${tag^^}_LOG"; log_var="${log_var//-/_}"
+            echo -e "${RED}--- last 50 lines of ${tag} log ---${NC}"
+            tail -n 50 "${!log_var:-$LOCAL_DIR/build-$tag.log}" 2>/dev/null || true
+        done
+        exit 1
+    fi
+    # Now that the Angular bundle has been written, filter the cdxgen SBOM down
+    # to the shipped subset. This MUST run after $CLIENT_PID and $CLIENT_SBOM_PID
+    # have both completed: the filter reads .js.map files from
+    # build/resources/main/static (which `webapp:prod`'s clean-www empties at the
+    # start of its run, and cdxgen on a cold build can finish before Angular does).
+    pnpm run sbom:filter-shipped >>"$CLIENT_SBOM_LOG" 2>&1
+    echo -e "${GREEN}  ✓ client + client-SBOM + server + server-SBOM built; assembling WAR...${NC}"
+    # `-x compileJava` and `-x cyclonedxBom` would error during processResources
+    # because their Provider outputs are wired into other tasks. Gradle's
+    # up-to-date check makes them ~free on the second invocation anyway. The
+    # only task we need to exclude is generateClientSbom: it's a PnpmTask
+    # without an UP-TO-DATE check and would otherwise re-run cdxgen.
+    ./gradlew -Pprod -Pwar bootWar -x test -x webapp -x generateClientSbom
 else
     echo ""
     echo -e "${YELLOW}Step 1: Skipping WAR build (--skip-build)${NC}"
 fi
 
-# Glob the WAR path AFTER the build step so a freshly produced artifact (or a renamed one after a
-# version bump) is picked up. Doing this before the build would store the literal pattern on a
-# clean checkout and the existence check below would fire even on a successful build.
-WAR_FILES=(build/libs/Artemis-*.war)
-if [ ! -e "${WAR_FILES[0]}" ]; then
-    echo -e "${RED}ERROR: No WAR found at build/libs/Artemis-*.war. Drop --skip-build to build it.${NC}"
+# Resolve the WAR for the *current* build.gradle version rather than picking the first
+# lexicographic match from build/libs. We do not `gradle clean` in the fast path (that defeats
+# fast iteration), so stale artifacts from older releases stick around — and the new
+# `major.patch` scheme makes alphabetical ordering unsafe: e.g. `Artemis-9.1.2.war` sorts before
+# `Artemis-9.2.war`. A stale WAR built from pre-PR-#12695 sources still uses the old
+# `new Semver(currentVersionString)` migration code, which then dies on startup with
+# `SemverException: Invalid version (no patch version): 9.2` when the persisted DB carries a
+# two-part version. Resolve the WAR after the build so a freshly produced artifact is picked up.
+ARTEMIS_VERSION=$(grep -E '^[[:space:]]*version[[:space:]]*=' build.gradle | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+if [ -z "$ARTEMIS_VERSION" ]; then
+    echo -e "${RED}ERROR: Could not determine Artemis version from build.gradle${NC}"
     exit 1
 fi
-WAR_FILE="${WAR_FILES[0]}"
+WAR_FILE="build/libs/Artemis-${ARTEMIS_VERSION}.war"
+if [ ! -e "$WAR_FILE" ]; then
+    echo -e "${RED}ERROR: Expected WAR not found: $WAR_FILE${NC}"
+    echo "Drop --skip-build to build it, or delete stale build/libs/Artemis-*.war from prior versions."
+    exit 1
+fi
 
 # Sanity-check the Angular bundle is in the WAR (nginx serves it from there). Without -Pprod the
 # bootWar task may produce a JSP-less, asset-less artifact.
@@ -473,7 +562,7 @@ export EXPECTED_CLUSTER_NODE_COUNT="2"
 export EXPECTED_MIN_BUILD_AGENTS="1"
 
 cd src/test/playwright
-npm run playwright:setup-local 2>/dev/null
+pnpm run playwright:setup-local 2>/dev/null
 
 rm -f test-reports/results*.xml
 rm -rf test-reports/monocart-report*/
@@ -488,7 +577,7 @@ TEST_START=$(date +%s)
 EXIT_CODE=0
 echo -e "${BLUE}Running fast/slow/multi-node tests with $TEST_WORKERS workers...${NC}"
 export PLAYWRIGHT_TEST_TYPE="parallel"
-TEST_CMD=(npx playwright test "${BASE_ARGS[@]}" \
+TEST_CMD=(pnpm exec playwright test "${BASE_ARGS[@]}" \
           --project=fast-tests --project=slow-tests --project=multi-node-tests \
           --workers="$TEST_WORKERS")
 echo "Running: ${TEST_CMD[*]}"
