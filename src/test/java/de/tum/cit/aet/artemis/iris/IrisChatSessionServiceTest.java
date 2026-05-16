@@ -351,8 +351,11 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             User user = student1();
             IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.LECTURE_CHAT, user));
 
+            Course otherCourse = courseUtilService.createCourse();
+            activateIrisFor(otherCourse);
+
             assertThatExceptionOfType(ConflictException.class)
-                    .isThrownBy(() -> irisChatSessionService.applyContextChange(session, IrisChatMode.COURSE_CHAT, NON_EXISTENT_ID, user));
+                    .isThrownBy(() -> irisChatSessionService.applyContextChange(session, IrisChatMode.COURSE_CHAT, otherCourse.getId(), user));
         }
 
         @Test
