@@ -276,7 +276,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         it('should call lectureSearchService.ask() after debounce when query is non-empty', () => {
             fixture.componentRef.setInput('searchQuery', 'angular signals');
             fixture.detectChanges();
-            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
 
             expect(mockAsk).toHaveBeenCalledWith('angular signals');
@@ -286,7 +286,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             mockAsk.mockClear();
             fixture.componentRef.setInput('searchQuery', '   ');
             fixture.detectChanges();
-            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
 
             expect(mockAsk).not.toHaveBeenCalled();
@@ -296,7 +296,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             mockAsk.mockClear();
             fixture.componentRef.setInput('searchQuery', 'signals');
             fixture.detectChanges();
-            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS - 1);
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300 - 1);
             fixture.detectChanges();
 
             expect(mockAsk).not.toHaveBeenCalled();
@@ -305,7 +305,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         it('should set irisThinking to true when a thinking update is received', () => {
             fixture.componentRef.setInput('searchQuery', 'what are signals?');
             fixture.detectChanges();
-            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
 
             askSubject.next({ runId: 'run-1', isThinking: true });
@@ -317,7 +317,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         it('should set irisResult with the answer when the final update is received', () => {
             fixture.componentRef.setInput('searchQuery', 'what are signals?');
             fixture.detectChanges();
-            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
 
             askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Signals are reactive.', sources: [] });
@@ -330,7 +330,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         it('should set irisResult to undefined if the final update has no answer', () => {
             fixture.componentRef.setInput('searchQuery', 'navigate somewhere');
             fixture.detectChanges();
-            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
 
             askSubject.next({ runId: 'run-1', isThinking: false });
@@ -343,7 +343,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             // First query resolves
             fixture.componentRef.setInput('searchQuery', 'query one');
             fixture.detectChanges();
-            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
 
             askSubject.next({ runId: 'run-1', isThinking: false, answer: 'First answer', sources: [] });
@@ -353,7 +353,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             // New query — tap() resets state once the debounce fires
             fixture.componentRef.setInput('searchQuery', 'query two');
             fixture.detectChanges();
-            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS); // tap() runs here
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300); // tap() runs here
             fixture.detectChanges();
 
             expect(component['irisResult']()).toBeUndefined();
@@ -363,7 +363,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         it('should ignore a final update whose runId does not match the thinking update', () => {
             fixture.componentRef.setInput('searchQuery', 'what are signals?');
             fixture.detectChanges();
-            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
 
             askSubject.next({ runId: 'run-1', isThinking: true });
@@ -379,7 +379,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         it('should accept a final update whose runId matches the thinking update', () => {
             fixture.componentRef.setInput('searchQuery', 'what are signals?');
             fixture.detectChanges();
-            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
 
             askSubject.next({ runId: 'run-1', isThinking: true });
