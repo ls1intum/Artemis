@@ -20,7 +20,6 @@ import com.github.dockerjava.api.DockerClient;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
@@ -29,6 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
@@ -201,10 +201,13 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
-        programmingExercise.getBuildConfig()
-                .setBuildPlanConfiguration(JsonObjectMapper.get().writeValueAsString(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise)));
+        var defaultPhases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
+        var defaultDockerImage = buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise);
+        var buildPlanPhasesDTO = new BuildPlanPhasesDTO(defaultPhases, defaultDockerImage);
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(buildPlanPhasesDTO.toBuildPlanConfiguration());
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExerciseRepository.save(programmingExercise);
+        // Capture the managed entity returned by merge() to avoid stale detached entity issues
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
         staticCodeAnalysisService.createDefaultCategories(programmingExercise);
 

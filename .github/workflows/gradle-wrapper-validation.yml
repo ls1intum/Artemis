@@ -22,6 +22,6 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v6
-            - uses: gradle/actions/wrapper-validation@v5
+            - uses: gradle/actions/wrapper-validation@v6
               with:
                   min-wrapper-count: 6 # 5 in the different gradle templates and 1 for the Artemis project itself

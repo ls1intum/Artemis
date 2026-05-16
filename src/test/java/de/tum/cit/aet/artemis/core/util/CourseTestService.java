@@ -153,7 +153,8 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
-import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
@@ -356,7 +357,7 @@ public class CourseTestService {
     private WeaviateService weaviateService;
 
     @Autowired(required = false)
-    private ExerciseWeaviateService exerciseWeaviateService;
+    private SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     @Autowired
     private Optional<TutorialGroupUtilService> tutorialGroupUtilService;
@@ -606,8 +607,8 @@ public class CourseTestService {
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 allExerciseIds.add(exercise.getId());
-                if (exerciseWeaviateService != null) {
-                    exerciseWeaviateService.upsertExerciseAsync(exercise);
+                if (searchableEntityWeaviateService != null) {
+                    searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(exercise));
                 }
             }
         }

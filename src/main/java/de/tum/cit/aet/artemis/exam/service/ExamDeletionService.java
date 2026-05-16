@@ -41,6 +41,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -89,12 +91,14 @@ public class ExamDeletionService {
 
     private final StudentExamService studentExamService;
 
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationDeletionService participationDeletionService, CacheManager cacheManager,
             UserRepository userRepository, ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository,
             GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository,
             ChannelService channelService, ExamLiveEventRepository examLiveEventRepository, ExamSessionRepository examSessionRepository, BuildJobRepository buildJobRepository,
             PostRepository postRepository, AnswerPostRepository answerPostRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExamUserRepository examUserRepository, final StudentExamService studentExamService) {
+            ExamUserRepository examUserRepository, final StudentExamService studentExamService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationDeletionService = participationDeletionService;
         this.cacheManager = cacheManager;
@@ -114,6 +118,7 @@ public class ExamDeletionService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examUserRepository = examUserRepository;
         this.studentExamService = studentExamService;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 
     /**
@@ -157,6 +162,9 @@ public class ExamDeletionService {
         }
 
         deleteGradingScaleOfExam(exam);
+
+        searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXAM, examId));
+
         // fetch the exam again to allow Hibernate to delete it properly
         exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         examRepository.delete(exam);
