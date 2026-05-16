@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { TeamOwnerSearchComponent } from 'app/exercise/team/team-owner-search/team-owner-search.component';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
@@ -39,7 +39,7 @@ describe('Team Owner Search Component', () => {
         expect(comp.inputDisplayValue).toBe(`${owner.name} (${owner.login})`);
     });
 
-    it('should search on input change and find a matching result', () => {
+    it('should search on input change and find a matching result', fakeAsync(() => {
         const searchFailedSpy = jest.spyOn(comp.searchFailed, 'emit');
         const searchingSpy = jest.spyOn(comp.searching, 'emit');
         const searchNoResultsSpy = jest.spyOn(comp.searchNoResults, 'emit');
@@ -54,6 +54,9 @@ describe('Team Owner Search Component', () => {
         let onSearchResult: User[] | undefined = undefined;
         comp.onSearch(of(searchText)).subscribe((result) => (onSearchResult = result));
 
+        // The text$ stream is debounced (200 ms) to coalesce rapid keystrokes.
+        tick(200);
+
         expect(searchFailedSpy).toHaveBeenCalledOnce();
         expect(searchFailedSpy).toHaveBeenCalledWith(false);
 
@@ -65,9 +68,9 @@ describe('Team Owner Search Component', () => {
         expect(searchNoResultsSpy).toHaveBeenCalledWith(undefined);
 
         expect(onSearchResult).toEqual([owner]);
-    });
+    }));
 
-    it('should search on input change and find no result', () => {
+    it('should search on input change and find no result', fakeAsync(() => {
         const searchFailedSpy = jest.spyOn(comp.searchFailed, 'emit');
         const searchingSpy = jest.spyOn(comp.searching, 'emit');
         const searchNoResultsSpy = jest.spyOn(comp.searchNoResults, 'emit');
@@ -82,6 +85,9 @@ describe('Team Owner Search Component', () => {
         let onSearchResult: User[] | undefined = undefined;
         comp.onSearch(of(searchText)).subscribe((result) => (onSearchResult = result));
 
+        // The text$ stream is debounced (200 ms) to coalesce rapid keystrokes.
+        tick(200);
+
         expect(searchFailedSpy).toHaveBeenCalledOnce();
         expect(searchFailedSpy).toHaveBeenCalledWith(false);
 
@@ -94,7 +100,7 @@ describe('Team Owner Search Component', () => {
         expect(searchNoResultsSpy).toHaveBeenNthCalledWith(2, searchText);
 
         expect(onSearchResult).toEqual([]);
-    });
+    }));
 
     it('should handle error when loading owner options', () => {
         const searchFailedSpy = jest.spyOn(comp.searchFailed, 'emit');

@@ -83,9 +83,13 @@ export class LectureManagementPage {
 
     /**
      * Navigates to the attachments page of a specified lecture by its identifier.
+     * Waits for the create-attachment button to confirm the page is hydrated before
+     * returning, matching the pattern used by `openUnitsPage` so callers (e.g.
+     * `openAttachmentUnitCreationPage`) do not race the SPA bootstrap.
      */
     async openAttachmentsPage(lectureId: number) {
         await this.gotoLectureSubPage(lectureId, 'attachments');
+        await this.page.locator('#add-attachment').waitFor({ state: 'visible', timeout: 30_000 });
     }
 
     /**

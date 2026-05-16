@@ -184,13 +184,18 @@ export class Commands {
      * Verifies that the Angular app has rendered the route component after a navigation
      * and reloads once if it has not. Idempotent — safe to call multiple times.
      *
-     * The check distinguishes between routes that should render a navbar and routes
-     * that legitimately do not (exam participation, problem-statement standalone, LTI).
-     * For no-navbar routes the helper returns immediately so it can be applied
-     * universally without slowing those tests down.
+     * Default behaviour (no `renderIndicator` argument): probes the navbar's
+     * `#account-menu` element and skips the check entirely on routes that legitimately
+     * suppress the navbar (exam-participation, problem-statement standalone, LTI, quiz
+     * live, exercise participate, exam conduction) so those tests pay zero overhead.
+     *
+     * When the caller passes an explicit `renderIndicator` — typically a selector
+     * specific to a no-navbar route — that indicator is awaited unconditionally; the
+     * no-navbar skip only applies to the default navbar probe.
      */
     static ensureRendered = async (page: Page, renderIndicator: string = '#account-menu'): Promise<void> => {
-        if (Commands.isNoNavbarRoute(page.url())) {
+        // Only skip on no-navbar routes when the caller is relying on the default navbar probe.
+        if (renderIndicator === '#account-menu' && Commands.isNoNavbarRoute(page.url())) {
             return;
         }
         const indicator = page.locator(renderIndicator);
