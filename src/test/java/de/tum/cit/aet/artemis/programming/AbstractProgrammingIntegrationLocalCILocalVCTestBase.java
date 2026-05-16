@@ -201,7 +201,8 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(JsonObjectMapper.get().writeValueAsString(aeolusTemplateService.getDefaultWindfileFor(programmingExercise)));
+        programmingExercise.getBuildConfig()
+                .setBuildPlanConfiguration(JsonObjectMapper.get().writeValueAsString(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise)));
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();

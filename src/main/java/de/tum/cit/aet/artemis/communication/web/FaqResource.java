@@ -72,7 +72,7 @@ public class FaqResource {
 
     private final FaqService faqService;
 
-    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository, FaqService faqService,
             Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
@@ -80,7 +80,7 @@ public class FaqResource {
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.faqService = faqService;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 
     /**
@@ -108,9 +108,7 @@ public class FaqResource {
         Faq savedFaq = faqRepository.save(faqToSave);
         FaqDTO dto = new FaqDTO(savedFaq);
         faqService.autoIngestFaqIntoPyris(savedFaq);
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(savedFaq));
-        }
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(savedFaq)));
         return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
     }
 
@@ -142,9 +140,7 @@ public class FaqResource {
         existingFaq.setCategories(updateFaqDTO.categories());
         Faq updatedFaq = faqRepository.save(existingFaq);
         faqService.autoIngestFaqIntoPyris(updatedFaq);
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(updatedFaq));
-        }
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(updatedFaq)));
         FaqDTO dto = new FaqDTO(updatedFaq);
         return ResponseEntity.ok().body(dto);
     }
@@ -187,9 +183,7 @@ public class FaqResource {
         }
         faqService.deleteFaqInPyris(existingFaq);
         faqRepository.deleteById(faqId);
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.FAQ, faqId);
-        }
+        searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.FAQ, faqId));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, faqId.toString())).build();
     }
 

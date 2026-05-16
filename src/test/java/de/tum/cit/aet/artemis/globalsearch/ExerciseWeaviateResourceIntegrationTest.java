@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
+import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
  * Integration tests for {@link de.tum.cit.aet.artemis.globalsearch.web.ExerciseWeaviateResource}
@@ -59,6 +61,11 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "exweaviateres";
+
+    // Deliberately unique, non-dictionary token so that BM25 tokenization never
+    // collides with titles created by other Weaviate test classes (e.g. "weaviate-wt-test").
+    // Must NOT contain "weaviate" or any other substring shared with other test data.
+    private static final String SEARCH_PREFIX = "Zvk9ExRes";
 
     @Autowired
     private SearchableEntityWeaviateService searchableEntityWeaviateService;
@@ -104,18 +111,23 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
     @BeforeEach
     void setUp() {
+        // Clean up stale entries from previous test runs to prevent duplicates accumulating
+        // in the shared Weaviate collection (which persists across @BeforeEach invocations).
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        collection.data.deleteMany(Filter.property(SearchableEntitySchema.Properties.TITLE).like(SEARCH_PREFIX + "*"));
+
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         // Create course with a released programming exercise
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         releasedExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        releasedExercise.setTitle("WeaviateSearchable Released Exercise");
+        releasedExercise.setTitle(SEARCH_PREFIX + " Released Exercise");
         releasedExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         exerciseRepository.save(releasedExercise);
 
         // Create an unreleased exercise in the same course (release date in the future)
         unreleasedExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
-        unreleasedExercise.setTitle("WeaviateSearchable Unreleased Exercise");
+        unreleasedExercise.setTitle(SEARCH_PREFIX + " Unreleased Exercise");
         unreleasedExercise.setReleaseDate(ZonedDateTime.now().plusDays(7));
         exerciseRepository.save(unreleasedExercise);
 
@@ -125,7 +137,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         var notStartedExerciseGroup = ExamFactory.generateExerciseGroup(true, notStartedExam);
         notStartedExerciseGroup = exerciseGroupRepository.save(notStartedExerciseGroup);
         notStartedExamExercise = TextExerciseFactory.generateTextExerciseForExam(notStartedExerciseGroup);
-        notStartedExamExercise.setTitle("WeaviateSearchable NotStarted Exam Exercise");
+        notStartedExamExercise.setTitle(SEARCH_PREFIX + " NotStarted Exam Exercise");
         notStartedExamExercise = exerciseRepository.save(notStartedExamExercise);
 
         // Create an exam exercise where the exam is ongoing (started but not ended)
@@ -134,7 +146,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         var ongoingExerciseGroup = ExamFactory.generateExerciseGroup(true, ongoingExam);
         ongoingExerciseGroup = exerciseGroupRepository.save(ongoingExerciseGroup);
         ongoingExamExercise = TextExerciseFactory.generateTextExerciseForExam(ongoingExerciseGroup);
-        ongoingExamExercise.setTitle("WeaviateSearchable Ongoing Exam Exercise");
+        ongoingExamExercise.setTitle(SEARCH_PREFIX + " Ongoing Exam Exercise");
         ongoingExamExercise = exerciseRepository.save(ongoingExamExercise);
 
         // Create an exam exercise where the exam has already ended
@@ -143,12 +155,12 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         var endedExerciseGroup = ExamFactory.generateExerciseGroup(true, endedExam);
         endedExerciseGroup = exerciseGroupRepository.save(endedExerciseGroup);
         endedExamExercise = TextExerciseFactory.generateTextExerciseForExam(endedExerciseGroup);
-        endedExamExercise.setTitle("WeaviateSearchable Ended Exam Exercise");
+        endedExamExercise.setTitle(SEARCH_PREFIX + " Ended Exam Exercise");
         endedExamExercise = exerciseRepository.save(endedExamExercise);
 
         // Create a lecture in the same course
         lecture = lectureUtilService.createLecture(course);
-        lecture.setTitle("WeaviateSearchable Test Lecture");
+        lecture.setTitle(SEARCH_PREFIX + " Test Lecture");
         lecture = lectureTestRepository.save(lecture);
 
         // Index all exercises and the lecture in Weaviate
@@ -159,7 +171,10 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(endedExamExercise));
         searchableEntityWeaviateService.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
 
-        // Wait for all entities to be indexed
+        // Wait for all entities to be indexed AND BM25-searchable.
+        // Existence checks (fetchObjects with filter) verify the data is stored,
+        // but the BM25 inverted index may lag behind — we must also verify that
+        // a keyword search returns the expected items before running test assertions.
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
             assertExerciseExistsInWeaviate(weaviateService, releasedExercise);
             assertExerciseExistsInWeaviate(weaviateService, unreleasedExercise);
@@ -167,6 +182,10 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             assertExerciseExistsInWeaviate(weaviateService, ongoingExamExercise);
             assertExerciseExistsInWeaviate(weaviateService, endedExamExercise);
             assertLectureExistsInWeaviate(weaviateService, lecture);
+
+            // Verify BM25 inverted index is ready by checking that a keyword search finds all 6 items
+            var bm25Results = collection.query.bm25(SEARCH_PREFIX, b -> b.limit(10).queryProperties(SearchableEntitySchema.Properties.TITLE));
+            assertThat(bm25Results.objects()).hasSizeGreaterThanOrEqualTo(6);
         });
     }
 
@@ -180,77 +199,77 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentCannotSeeNotStartedExamExercises() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).doesNotContain("WeaviateSearchable NotStarted Exam Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " NotStarted Exam Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentCanSeeStartedAndEndedExamExercisesButNotNotStartedOnes() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchable Ongoing Exam Exercise", "WeaviateSearchable Ended Exam Exercise");
-            assertThat(titles).doesNotContain("WeaviateSearchable NotStarted Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Ongoing Exam Exercise", SEARCH_PREFIX + " Ended Exam Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " NotStarted Exam Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentCannotSeeUnreleasedExercises() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchable Released Exercise");
-            assertThat(titles).doesNotContain("WeaviateSearchable Unreleased Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " Unreleased Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
         void testTutorCannotSeeNotEndedExamExercises() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).doesNotContain("WeaviateSearchable NotStarted Exam Exercise", "WeaviateSearchable Ongoing Exam Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " NotStarted Exam Exercise", SEARCH_PREFIX + " Ongoing Exam Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
         void testTutorCanSeeEndedExamExercises() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchable Ended Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Ended Exam Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
         void testTutorCanSeeUnreleasedExercises() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchable Unreleased Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Unreleased Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void testEditorCanSeeAllExercises() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchable Released Exercise", "WeaviateSearchable Unreleased Exercise", "WeaviateSearchable NotStarted Exam Exercise",
-                    "WeaviateSearchable Ongoing Exam Exercise", "WeaviateSearchable Ended Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise", SEARCH_PREFIX + " Unreleased Exercise", SEARCH_PREFIX + " NotStarted Exam Exercise",
+                    SEARCH_PREFIX + " Ongoing Exam Exercise", SEARCH_PREFIX + " Ended Exam Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testInstructorCanSeeAllExercises() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchable Released Exercise", "WeaviateSearchable Unreleased Exercise", "WeaviateSearchable NotStarted Exam Exercise",
-                    "WeaviateSearchable Ongoing Exam Exercise", "WeaviateSearchable Ended Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise", SEARCH_PREFIX + " Unreleased Exercise", SEARCH_PREFIX + " NotStarted Exam Exercise",
+                    SEARCH_PREFIX + " Ongoing Exam Exercise", SEARCH_PREFIX + " Ended Exam Exercise");
         }
     }
 
@@ -260,26 +279,24 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testGlobalSearchStudentFiltersCorrectly() throws Exception {
-            // Use a high limit because the Weaviate collection is shared across test classes and may contain exercises from other tests
-            var results = request.getList("/api/search?q=WeaviateSearchable&limit=100", HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX, HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchable Released Exercise", "WeaviateSearchable Ongoing Exam Exercise");
-            assertThat(titles).doesNotContain("WeaviateSearchable Unreleased Exercise", "WeaviateSearchable NotStarted Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise", SEARCH_PREFIX + " Ongoing Exam Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " Unreleased Exercise", SEARCH_PREFIX + " NotStarted Exam Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testGlobalSearchInstructorSeesAll() throws Exception {
-            // The endpoint caps limit to 25; assert common states from a broad query and verify unreleased visibility with a focused query.
-            var results = request.getList("/api/search?q=WeaviateSearchable&limit=100", HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX, HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchable Released Exercise", "WeaviateSearchable NotStarted Exam Exercise", "WeaviateSearchable Ongoing Exam Exercise",
-                    "WeaviateSearchable Ended Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise", SEARCH_PREFIX + " NotStarted Exam Exercise", SEARCH_PREFIX + " Ongoing Exam Exercise",
+                    SEARCH_PREFIX + " Ended Exam Exercise");
 
-            var unreleasedResults = request.getList("/api/search?q=WeaviateSearchable%20Unreleased&types=exercise&limit=100", HttpStatus.OK, GlobalSearchResultDTO.class);
-            assertThat(getResultTitles(unreleasedResults)).contains("WeaviateSearchable Unreleased Exercise");
+            var unreleasedResults = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Unreleased&types=exercise", HttpStatus.OK, GlobalSearchResultDTO.class);
+            assertThat(getResultTitles(unreleasedResults)).contains(SEARCH_PREFIX + " Unreleased Exercise");
         }
     }
 
@@ -289,30 +306,30 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentCannotSeeNotStartedExamOrUnreleasedExercises() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).doesNotContain("WeaviateSearchable NotStarted Exam Exercise", "WeaviateSearchable Unreleased Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " NotStarted Exam Exercise", SEARCH_PREFIX + " Unreleased Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentCanSeeStartedAndEndedExamExercisesButNotNotStartedOnes() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchable Ongoing Exam Exercise", "WeaviateSearchable Ended Exam Exercise");
-            assertThat(titles).doesNotContain("WeaviateSearchable NotStarted Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Ongoing Exam Exercise", SEARCH_PREFIX + " Ended Exam Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " NotStarted Exam Exercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void testEditorCanSeeAllExercises() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchable Released Exercise", "WeaviateSearchable Unreleased Exercise", "WeaviateSearchable NotStarted Exam Exercise",
-                    "WeaviateSearchable Ongoing Exam Exercise", "WeaviateSearchable Ended Exam Exercise");
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise", SEARCH_PREFIX + " Unreleased Exercise", SEARCH_PREFIX + " NotStarted Exam Exercise",
+                    SEARCH_PREFIX + " Ongoing Exam Exercise", SEARCH_PREFIX + " Ended Exam Exercise");
         }
 
         @Test
@@ -329,33 +346,33 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = "admin", roles = "ADMIN")
         void testAdminGlobalSearchWithTypeFilterReturnsOnlyRequestedType() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable&types=exercise&limit=100", HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exercise", HttpStatus.OK, GlobalSearchResultDTO.class);
             var types = results.stream().map(GlobalSearchResultDTO::type).toList();
 
             assertThat(types).isNotEmpty();
             assertThat(types).allMatch("exercise"::equals);
-            assertThat(getResultTitles(results)).doesNotContain("WeaviateSearchable Test Lecture");
+            assertThat(getResultTitles(results)).doesNotContain(SEARCH_PREFIX + " Test Lecture");
         }
 
         @Test
         @WithMockUser(username = "admin", roles = "ADMIN")
         void testAdminGlobalSearchWithLectureTypeFilterReturnsOnlyLectures() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable&types=lecture&limit=100", HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=lecture", HttpStatus.OK, GlobalSearchResultDTO.class);
             var types = results.stream().map(GlobalSearchResultDTO::type).toList();
 
             assertThat(types).isNotEmpty();
             assertThat(types).allMatch("lecture"::equals);
-            assertThat(getResultTitles(results)).contains("WeaviateSearchable Test Lecture");
-            assertThat(getResultTitles(results)).doesNotContain("WeaviateSearchable Released Exercise");
+            assertThat(getResultTitles(results)).contains(SEARCH_PREFIX + " Test Lecture");
+            assertThat(getResultTitles(results)).doesNotContain(SEARCH_PREFIX + " Released Exercise");
         }
 
         @Test
         @WithMockUser(username = "admin", roles = "ADMIN")
         void testAdminGlobalSearchWithoutTypeFilterReturnsAllTypes() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable&limit=100", HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX, HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchable Released Exercise", "WeaviateSearchable Test Lecture");
+            assertThat(titles).contains(SEARCH_PREFIX + " Released Exercise", SEARCH_PREFIX + " Test Lecture");
         }
     }
 
@@ -369,8 +386,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testInstructorReceivesIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
-            var endedExamResult = results.stream().filter(r -> "WeaviateSearchable Ended Exam Exercise".equals(r.title())).findFirst();
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var endedExamResult = results.stream().filter(r -> (SEARCH_PREFIX + " Ended Exam Exercise").equals(r.title())).findFirst();
 
             assertThat(endedExamResult).isPresent();
             assertThat(endedExamResult.get().metadata()).containsEntry("isAtLeastTutor", true);
@@ -379,8 +396,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
         void testTutorReceivesIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
-            var endedExamResult = results.stream().filter(r -> "WeaviateSearchable Ended Exam Exercise".equals(r.title())).findFirst();
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var endedExamResult = results.stream().filter(r -> (SEARCH_PREFIX + " Ended Exam Exercise").equals(r.title())).findFirst();
 
             assertThat(endedExamResult).isPresent();
             assertThat(endedExamResult.get().metadata()).containsEntry("isAtLeastTutor", true);
@@ -393,8 +410,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentDoesNotReceiveIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
-            var endedExamResult = results.stream().filter(r -> "WeaviateSearchable Ended Exam Exercise".equals(r.title())).findFirst();
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var endedExamResult = results.stream().filter(r -> (SEARCH_PREFIX + " Ended Exam Exercise").equals(r.title())).findFirst();
 
             assertThat(endedExamResult).isPresent();
             assertThat(endedExamResult.get().metadata()).doesNotContainKey("isAtLeastTutor");
@@ -407,8 +424,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testIsAtLeastTutorFlagAbsentOnRegularExercise() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable%20Released&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
-            var regularResult = results.stream().filter(r -> "WeaviateSearchable Released Exercise".equals(r.title())).findFirst();
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Released&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var regularResult = results.stream().filter(r -> (SEARCH_PREFIX + " Released Exercise").equals(r.title())).findFirst();
 
             assertThat(regularResult).isPresent();
             assertThat(regularResult.get().metadata()).doesNotContainKey("isAtLeastTutor");

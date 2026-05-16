@@ -36,7 +36,10 @@ export class StudentAssessmentPage {
     }
 
     async checkComplaintStatusText(text: string) {
-        await expect(this.getComplaintBadge().filter({ hasText: text })).toBeAttached();
+        // Default expect timeout is 10s; the student-side complaint badge appears only after the
+        // tutor's response propagates through the assessment async flow, which under parallel CI
+        // load can take longer than 10s. Wait up to 30s for the specific status text to render.
+        await expect(this.getComplaintBadge().filter({ hasText: text })).toBeAttached({ timeout: 30_000 });
     }
 
     async checkComplaintResponseText(text: string) {

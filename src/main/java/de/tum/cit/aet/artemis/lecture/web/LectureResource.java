@@ -109,7 +109,7 @@ public class LectureResource {
 
     private final ChannelRepository channelRepository;
 
-    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     private final YouTubeUrlService youTubeUrlService;
 
@@ -125,7 +125,7 @@ public class LectureResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.slideRepository = slideRepository;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.youTubeUrlService = youTubeUrlService;
     }
 
@@ -514,17 +514,17 @@ public class LectureResource {
     }
 
     private void indexLectureInWeaviate(Lecture lecture) {
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
+        searchableEntityWeaviateService.ifPresent(service -> {
+            service.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
             lecture.getLectureUnits().forEach(unit -> {
                 if (LectureUnitSearchableEntityDTO.isIndexable(unit)) {
-                    searchableEntityWeaviateService.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(unit));
+                    service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(unit));
                 }
                 else {
-                    searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unit.getId());
+                    service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unit.getId());
                 }
             });
-        }
+        });
     }
 
 }

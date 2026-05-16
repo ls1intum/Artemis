@@ -185,7 +185,7 @@ public class ExamResource {
 
     private final ExamUserService examUserService;
 
-    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
             ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
@@ -216,7 +216,7 @@ public class ExamResource {
         this.examLiveEventsService = examLiveEventsService;
         this.studentExamService = studentExamService;
         this.examUserService = examUserService;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 
     /**
@@ -247,9 +247,7 @@ public class ExamResource {
 
         Exam savedExam = examRepository.save(exam);
         channelService.createExamChannel(savedExam, Optional.ofNullable(examDTO.channelName()));
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(savedExam));
-        }
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(savedExam)));
         return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }
 
@@ -324,9 +322,7 @@ public class ExamResource {
             savedExam.setChannelName(examUpdateDTO.channelName());
         }
 
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(savedExam));
-        }
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(savedExam)));
 
         return ResponseEntity.ok(savedExam);
     }
@@ -366,9 +362,7 @@ public class ExamResource {
         // 3. Update Weaviate exercise metadata since the exam end date changed
         examService.syncExamExercisesMetadata(exam);
 
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(exam));
-        }
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(exam)));
 
         return ResponseEntity.ok(exam);
     }

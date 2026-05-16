@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -18,13 +19,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.programming.service.localci.BuildPhasesTemplateService;
 
 @Service
 @Lazy
@@ -37,7 +38,7 @@ public class ProgrammingExerciseBuildPlanService {
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
-    private final Optional<AeolusTemplateService> aeolusTemplateService;
+    private final Optional<BuildPhasesTemplateService> buildPhasesTemplateService;
 
     private final ProfileService profileService;
 
@@ -47,12 +48,12 @@ public class ProgrammingExerciseBuildPlanService {
 
     public ProgrammingExerciseBuildPlanService(Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
-            Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
+            Optional<BuildPhasesTemplateService> buildPhasesTemplateService, ProfileService profileService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
-        this.aeolusTemplateService = aeolusTemplateService;
+        this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.profileService = profileService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
@@ -86,45 +87,30 @@ public class ProgrammingExerciseBuildPlanService {
     }
 
     /**
-     * Ensures that the build plan configuration for a programming exercise is stored in the
-     * {@link BuildPlanPhasesDTO} format. This handles three cases:
-     * <ol>
-     * <li>No config exists ({@code null}): loads the default windfile template and converts it to phases format</li>
-     * <li>Config exists in legacy Windfile format: converts it to phases format</li>
-     * <li>Config already in phases format: no change needed</li>
-     * </ol>
+     * Adds the default build plan to a programming exercise.
      * This normalization is skipped for Jenkins, which uses its own Jenkinsfile-based approach.
      *
      * @param programmingExercise the programming exercise whose build config should be normalized
      * @throws JsonProcessingException when the build config cannot be serialized as JSON
      */
     public void addDefaultBuildPlanConfigForLocalCI(ProgrammingExercise programmingExercise) throws JsonProcessingException {
-        if (profileService.isJenkinsActive()) {
+        if (profileService.isJenkinsActive() || programmingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
             return;
         }
 
         var buildConfig = programmingExercise.getBuildConfig();
 
-        // already in phases format, nothing to do
-        if (buildConfig.getBuildPlanPhases().isPresent()) {
-            return;
-        }
+        // augment with default template or values
+        if (buildPhasesTemplateService.isPresent()) {
+            final List<BuildPhaseDTO> phases = buildPhasesTemplateService.orElseThrow().getDefaultBuildPlanPhasesFor(programmingExercise);
+            final String dockerImage = buildPhasesTemplateService.orElseThrow().getDefaultDockerImageFor(programmingExercise);
 
-        // existing config in Windfile format, convert to phases
-        Windfile windfile = buildConfig.getWindfile();
-
-        // no config at all, load default windfile template
-        if (windfile == null && buildConfig.getBuildPlanConfiguration() == null && aeolusTemplateService.isPresent()) {
-            windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
-        }
-
-        if (windfile != null) {
-            BuildPlanPhasesDTO phases = BuildPlanPhasesDTO.fromWindfile(windfile);
-            buildConfig.setBuildPlanConfiguration(phases.toBuildPlanConfiguration());
+            final BuildPlanPhasesDTO completePlan = new BuildPlanPhasesDTO(phases, dockerImage);
+            buildConfig.setBuildPlanConfiguration(completePlan.toBuildPlanConfiguration());
             programmingExerciseBuildConfigRepository.saveAndFlush(buildConfig);
         }
         else {
-            log.warn("No windfile for the settings of exercise {}", programmingExercise.getId());
+            log.warn("No build plan phases for the settings of exercise {}", programmingExercise.getId());
         }
     }
 

@@ -96,7 +96,7 @@ public class AttachmentVideoUnitResource {
 
     private final LectureUnitService lectureUnitService;
 
-    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     private final YouTubeUrlService youTubeUrlService;
 
@@ -116,7 +116,7 @@ public class AttachmentVideoUnitResource {
         this.fileService = fileService;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureUnitService = lectureUnitService;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.youTubeUrlService = youTubeUrlService;
     }
 
@@ -183,14 +183,14 @@ public class AttachmentVideoUnitResource {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment());
         }
 
-        if (searchableEntityWeaviateService != null) {
+        searchableEntityWeaviateService.ifPresent(service -> {
             if (LectureUnitSearchableEntityDTO.isIndexable(savedAttachmentVideoUnit)) {
-                searchableEntityWeaviateService.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(savedAttachmentVideoUnit));
+                service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(savedAttachmentVideoUnit));
             }
             else {
-                searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, savedAttachmentVideoUnit.getId());
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, savedAttachmentVideoUnit.getId());
             }
-        }
+        });
 
         return ResponseEntity.ok(savedAttachmentVideoUnit);
     }
@@ -245,14 +245,14 @@ public class AttachmentVideoUnitResource {
         attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
-        if (searchableEntityWeaviateService != null) {
+        searchableEntityWeaviateService.ifPresent(service -> {
             if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {
-                searchableEntityWeaviateService.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(persistedUnit));
+                service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(persistedUnit));
             }
             else {
-                searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, persistedUnit.getId());
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, persistedUnit.getId());
             }
-        }
+        });
 
         return ResponseEntity.created(new URI("/api/attachment-video-units/" + persistedUnit.getId())).body(persistedUnit);
     }
@@ -310,16 +310,14 @@ public class AttachmentVideoUnitResource {
             savedUnits.forEach(attachmentVideoUnitService::prepareAttachmentVideoUnitForClient);
 
             competencyProgressApi.ifPresent(api -> savedUnits.forEach(api::updateProgressByLearningObjectAsync));
-            if (searchableEntityWeaviateService != null) {
-                savedUnits.forEach(unit -> {
-                    if (LectureUnitSearchableEntityDTO.isIndexable(unit)) {
-                        searchableEntityWeaviateService.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(unit));
-                    }
-                    else {
-                        searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unit.getId());
-                    }
-                });
-            }
+            searchableEntityWeaviateService.ifPresent(service -> savedUnits.forEach(unit -> {
+                if (LectureUnitSearchableEntityDTO.isIndexable(unit)) {
+                    service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(unit));
+                }
+                else {
+                    service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unit.getId());
+                }
+            }));
             return ResponseEntity.ok().body(savedUnits);
         }
         catch (IOException e) {

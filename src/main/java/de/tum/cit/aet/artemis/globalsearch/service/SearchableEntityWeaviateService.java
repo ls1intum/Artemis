@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchabl
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
+import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
 import io.weaviate.client6.v1.api.collections.query.Filter;
@@ -469,10 +470,12 @@ public class SearchableEntityWeaviateService {
      * Shared upsert implementation: uses a deterministic UUID derived from {@code (type, entity_id)}
      * to replace an existing row or insert a new one.
      * <br>
-     * Because the UUID is stable across nodes, this avoids the check-then-insert race
-     * that would occur if we queried whether the element does already exist in Weaviate.
-     * If two nodes race on the same entity, the worst case is a last-writer-wins replace — no
-     * duplicates can be created because Weaviate enforces UUID uniqueness.
+     * The deterministic UUID prevents duplicate rows (Weaviate enforces UUID uniqueness), but
+     * the {@code exists()} + {@code insert()} sequence is subject to a TOCTOU race: two concurrent
+     * callers (e.g. {@code @Async} methods on different cluster nodes) can both observe
+     * {@code exists() == false} and then one {@code insert()} fails with "already exists".
+     * We handle this by catching {@link WeaviateApiException} and falling back to {@code replace()},
+     * consistent with the pattern used in {@code V0ToV1Migration} and {@code WeaviateMigrationService}.
      */
     private void upsertRow(String type, Long entityId, Map<String, Object> properties) {
         try {
@@ -482,7 +485,17 @@ public class SearchableEntityWeaviateService {
                 collection.data.replace(uuid, r -> r.properties(properties));
             }
             else {
-                collection.data.insert(properties, obj -> obj.uuid(uuid));
+                try {
+                    collection.data.insert(properties, obj -> obj.uuid(uuid));
+                }
+                catch (WeaviateApiException e) {
+                    if (e.getMessage() != null && e.getMessage().contains("already exists")) {
+                        collection.data.replace(uuid, r -> r.properties(properties));
+                    }
+                    else {
+                        throw e;
+                    }
+                }
             }
         }
         catch (IOException e) {
