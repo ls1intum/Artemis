@@ -48,7 +48,6 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAccessService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAdminService;
 import de.tum.cit.aet.artemis.core.service.course.CourseDeletionService;
-import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
 import de.tum.cit.aet.artemis.core.service.course.CourseOperationProgressService;
 import de.tum.cit.aet.artemis.core.service.course.CourseResetService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -92,8 +91,6 @@ public class AdminCourseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final CourseLoadService courseLoadService;
-
     private final UserRepository userRepository;
 
     private final CourseAdminService courseAdminService;
@@ -118,8 +115,7 @@ public class AdminCourseResource {
 
     public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
             FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseAccessService courseAccessService,
-            CourseLoadService courseLoadService, CourseResetService courseResetService, CourseOperationProgressService progressService,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            CourseResetService courseResetService, CourseOperationProgressService progressService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
@@ -129,7 +125,6 @@ public class AdminCourseResource {
         this.channelService = channelService;
         this.courseDeletionService = courseDeletionService;
         this.courseAccessService = courseAccessService;
-        this.courseLoadService = courseLoadService;
         this.courseResetService = courseResetService;
         this.progressService = progressService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService.orElse(null);
