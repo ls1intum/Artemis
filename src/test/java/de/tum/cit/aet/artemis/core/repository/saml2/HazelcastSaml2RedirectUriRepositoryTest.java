@@ -20,6 +20,8 @@ class HazelcastSaml2RedirectUriRepositoryTest extends AbstractSpringIntegrationL
     @AfterEach
     void cleanup() {
         repository.consumeAndRemove(TEST_NONCE);
+        repository.consumeAndRemove("nonce-1");
+        repository.consumeAndRemove("nonce-2");
     }
 
     @Test

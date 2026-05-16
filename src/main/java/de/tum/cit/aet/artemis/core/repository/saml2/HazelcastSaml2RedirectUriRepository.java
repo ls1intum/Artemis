@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.core.repository.saml2;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SAML2;
 
+import java.util.concurrent.TimeUnit;
+
 import jakarta.annotation.PostConstruct;
 
 import org.jspecify.annotations.Nullable;
@@ -12,7 +14,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
-import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
@@ -20,7 +21,8 @@ import com.hazelcast.map.IMap;
  * Hazelcast-backed store for SAML2 redirect URI nonces.
  * <p>
  * Stores validated redirect_uri values keyed by UUID nonce during the SAML2 authentication flow.
- * Nonces are one-time use (atomically consumed on lookup) and expire after 5 minutes via Hazelcast TTL.
+ * Nonces are one-time use (atomically consumed on lookup) and expire after 5 minutes via a
+ * per-entry Hazelcast TTL set on {@code put}.
  * <p>
  * This distributed store ensures the feature works in clustered Artemis deployments where
  * the SAML2 AuthnRequest and Response may be handled by different nodes.
@@ -38,34 +40,30 @@ public class HazelcastSaml2RedirectUriRepository {
 
     private final HazelcastInstance hazelcastInstance;
 
-    @Nullable
     private IMap<String, String> nonceMap;
 
     public HazelcastSaml2RedirectUriRepository(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
     }
 
+    /**
+     * Resolves the distributed nonce map. Hazelcast access must not happen in the constructor
+     * (see {@code ArchitectureTest.testNoHazelcastUsageInConstructors}), hence the {@code @PostConstruct}.
+     */
     @PostConstruct
     public void init() {
-        MapConfig mapConfig = hazelcastInstance.getConfig().getMapConfig(MAP_NAME);
-        mapConfig.setTimeToLiveSeconds(NONCE_TTL_SECONDS);
-    }
-
-    private IMap<String, String> getNonceMap() {
-        if (this.nonceMap == null) {
-            this.nonceMap = hazelcastInstance.getMap(MAP_NAME);
-        }
-        return this.nonceMap;
+        this.nonceMap = hazelcastInstance.getMap(MAP_NAME);
     }
 
     /**
-     * Stores a nonce to redirect_uri mapping.
+     * Stores a nonce to redirect_uri mapping with a per-entry TTL, so abandoned SAML2 flows
+     * expire automatically without an explicit cleanup.
      *
      * @param nonce       the UUID nonce (used as RelayState)
      * @param redirectUri the validated redirect URI
      */
     public void save(String nonce, String redirectUri) {
-        getNonceMap().put(nonce, redirectUri);
+        nonceMap.put(nonce, redirectUri, NONCE_TTL_SECONDS, TimeUnit.SECONDS);
         log.debug("Saved SAML2 redirect nonce: {}", nonce);
     }
 
@@ -78,7 +76,7 @@ public class HazelcastSaml2RedirectUriRepository {
      */
     @Nullable
     public String consumeAndRemove(String nonce) {
-        String redirectUri = getNonceMap().remove(nonce);
+        String redirectUri = nonceMap.remove(nonce);
         if (redirectUri != null) {
             log.debug("Consumed SAML2 redirect nonce: {}", nonce);
         }

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.security.saml2;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +29,7 @@ class SAML2RedirectUriValidatorTest {
 
     @Test
     void testRejectHttpScheme() {
-        assertThat(validator.validate("http://evil.com/steal")).isPresent();
+        assertThat(validator.validate("http://evil.com/steal")).hasValueSatisfying(reason -> assertThat(reason).contains("http/https"));
     }
 
     @Test
@@ -38,7 +39,7 @@ class SAML2RedirectUriValidatorTest {
 
     @Test
     void testRejectUnknownScheme() {
-        assertThat(validator.validate("evil-scheme://callback")).isPresent();
+        assertThat(validator.validate("evil-scheme://callback")).hasValueSatisfying(reason -> assertThat(reason).contains("allowlist"));
     }
 
     @Test
@@ -47,8 +48,13 @@ class SAML2RedirectUriValidatorTest {
     }
 
     @Test
+    void testRejectOpaqueUri() {
+        assertThat(validator.validate("vscode:callback?state=abc")).hasValueSatisfying(reason -> assertThat(reason).contains("hierarchical"));
+    }
+
+    @Test
     void testRejectFragment() {
-        assertThat(validator.validate("vscode://callback#fragment")).isPresent();
+        assertThat(validator.validate("vscode://callback#fragment")).hasValueSatisfying(reason -> assertThat(reason).contains("fragment"));
     }
 
     @Test
@@ -92,5 +98,28 @@ class SAML2RedirectUriValidatorTest {
         assertThat(emptyValidator.isFeatureEnabled()).isFalse();
 
         assertThat(validator.isFeatureEnabled()).isTrue();
+    }
+
+    @Test
+    void testRejectNull() {
+        assertThat(validator.validate(null)).isPresent();
+    }
+
+    @Test
+    void testRejectUserInfo() {
+        assertThat(validator.validate("vscode://user:pass@host/callback")).hasValueSatisfying(reason -> assertThat(reason).contains("user info"));
+    }
+
+    @Test
+    void testAcceptsUriAtMaxLength() {
+        String uri = "vscode://" + "a".repeat(SAML2RedirectUriValidator.MAX_URI_BYTES - "vscode://".length());
+        assertThat(uri.getBytes(StandardCharsets.UTF_8)).hasSize(SAML2RedirectUriValidator.MAX_URI_BYTES);
+        assertThat(validator.validate(uri)).isEmpty();
+    }
+
+    @Test
+    void testRejectsUriOneByteOverMaxLength() {
+        String uri = "vscode://" + "a".repeat(SAML2RedirectUriValidator.MAX_URI_BYTES - "vscode://".length() + 1);
+        assertThat(validator.validate(uri)).hasValueSatisfying(reason -> assertThat(reason).contains("maximum length"));
     }
 }

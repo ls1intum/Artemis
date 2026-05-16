@@ -8,6 +8,10 @@ public class AuditEventConstants {
 
     public static final String AUTHORIZATION_FAILURE = "AUTHORIZATION_FAILURE";
 
+    public static final String SAML2_EXTERNAL_REDIRECT_SUCCESS = "SAML2_EXTERNAL_REDIRECT_SUCCESS";
+
+    public static final String SAML2_EXTERNAL_REDIRECT_FAILURE = "SAML2_EXTERNAL_REDIRECT_FAILURE";
+
     /**
      * Utility class, should not be instantiated.
      */

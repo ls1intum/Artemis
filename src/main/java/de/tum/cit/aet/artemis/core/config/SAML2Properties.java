@@ -47,8 +47,6 @@ public class SAML2Properties {
 
     private List<String> allowedRedirectSchemes = List.of();
 
-    private boolean externalTokenRememberMe = false;
-
     /**
      * Validates SAML2 configuration properties on bean creation
      * EventListener cannot be used here, as the bean is lazy
@@ -234,24 +232,6 @@ public class SAML2Properties {
      */
     public void setAllowedRedirectSchemes(List<String> allowedRedirectSchemes) {
         this.allowedRedirectSchemes = allowedRedirectSchemes;
-    }
-
-    /**
-     * Gets whether external client tokens should use rememberMe (long-lived) validity.
-     *
-     * @return true if rememberMe validity should be used
-     */
-    public boolean isExternalTokenRememberMe() {
-        return externalTokenRememberMe;
-    }
-
-    /**
-     * Sets whether external client tokens should use rememberMe validity.
-     *
-     * @param externalTokenRememberMe true for long-lived tokens
-     */
-    public void setExternalTokenRememberMe(boolean externalTokenRememberMe) {
-        this.externalTokenRememberMe = externalTokenRememberMe;
     }
 
     /**

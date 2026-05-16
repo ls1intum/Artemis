@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +20,7 @@ import org.springframework.security.saml2.provider.service.authentication.Saml2A
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.repository.saml2.HazelcastSaml2RedirectUriRepository;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
@@ -30,6 +32,11 @@ import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
  * If a nonce is found in RelayState, the handler looks up the validated redirect_uri from
  * Hazelcast, mints a JWT, and redirects to the external client URI with the token.
  * If no nonce is present, it falls back to the default behavior (redirect to "/").
+ * <p>
+ * Accepted residual risk: the JWT is delivered as a query parameter on a custom-scheme URI.
+ * A malicious app registered for the same scheme on the user's machine could intercept it, and
+ * the JWT may appear in non-default reverse-proxy logs. The feature is therefore opt-in and
+ * disabled by default, and http/https schemes are always rejected. See the admin documentation.
  */
 public class SAML2ExternalClientAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
@@ -43,26 +50,26 @@ public class SAML2ExternalClientAuthenticationSuccessHandler extends SimpleUrlAu
 
     private final AuditEventRepository auditEventRepository;
 
-    private final boolean externalTokenRememberMe;
+    private final SAML2RedirectUriValidator redirectUriValidator;
 
     /**
      * Constructs the handler.
      *
-     * @param redirectUriRepository   Hazelcast nonce store
-     * @param saml2Service            SAML2 user handling service
-     * @param tokenProvider           JWT token provider
-     * @param auditEventRepository    audit event repository
-     * @param externalTokenRememberMe whether to use long-lived tokens for external clients
+     * @param redirectUriRepository Hazelcast nonce store
+     * @param saml2Service          SAML2 user handling service
+     * @param tokenProvider         JWT token provider
+     * @param auditEventRepository  audit event repository
+     * @param redirectUriValidator  validator used to re-check the stored redirect URI before use
      */
     public SAML2ExternalClientAuthenticationSuccessHandler(HazelcastSaml2RedirectUriRepository redirectUriRepository, SAML2Service saml2Service, TokenProvider tokenProvider,
-            AuditEventRepository auditEventRepository, boolean externalTokenRememberMe) {
+            AuditEventRepository auditEventRepository, SAML2RedirectUriValidator redirectUriValidator) {
         super("/");
         setAlwaysUseDefaultTargetUrl(true);
         this.redirectUriRepository = redirectUriRepository;
         this.saml2Service = saml2Service;
         this.tokenProvider = tokenProvider;
         this.auditEventRepository = auditEventRepository;
-        this.externalTokenRememberMe = externalTokenRememberMe;
+        this.redirectUriValidator = redirectUriValidator;
     }
 
     @Override
@@ -79,14 +86,26 @@ public class SAML2ExternalClientAuthenticationSuccessHandler extends SimpleUrlAu
         // External client flow: consume nonce from Hazelcast
         String redirectUri = redirectUriRepository.consumeAndRemove(relayState);
         if (redirectUri == null) {
-            log.warn("SAML2 redirect nonce not found or expired: {}", relayState);
+            log.warn("SAML2 redirect nonce not found or expired");
+            auditFailure(authentication, "invalid or expired redirect nonce");
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid or expired redirect nonce");
+            return;
+        }
+
+        // Defense-in-depth: re-validate the stored redirect_uri before any user processing or
+        // token creation, in case the allowlist changed while the nonce was stored.
+        Optional<String> rejection = redirectUriValidator.validate(redirectUri);
+        if (rejection.isPresent()) {
+            log.warn("SAML2 stored redirect_uri failed re-validation: {}", rejection.get());
+            auditFailure(authentication, "redirect_uri failed re-validation");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid redirect URI");
             return;
         }
 
         // Extract principal from Saml2Authentication
         if (!(authentication instanceof Saml2Authentication saml2Auth) || !(saml2Auth.getPrincipal() instanceof Saml2AuthenticatedPrincipal principal)) {
             log.error("SAML2 authentication success but principal is not Saml2AuthenticatedPrincipal");
+            auditFailure(authentication, "unexpected authentication type");
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unexpected authentication type");
             return;
         }
@@ -98,22 +117,36 @@ public class SAML2ExternalClientAuthenticationSuccessHandler extends SimpleUrlAu
         }
         catch (UserNotActivatedException e) {
             log.debug("SAML2 external redirect denied: user not activated");
+            auditFailure(authentication, "user not activated");
             response.sendError(HttpServletResponse.SC_FORBIDDEN, e.getMessage());
             return;
         }
 
-        // Generate JWT from the processed authentication (UsernamePasswordAuthenticationToken)
-        String jwt = tokenProvider.createToken(processedAuth, externalTokenRememberMe);
+        // Generate a normal (non-rememberMe) JWT from the processed authentication
+        String jwt = tokenProvider.createToken(processedAuth, false);
 
-        // Build redirect URI with JWT parameter
-        String targetUri = UriComponentsBuilder.fromUriString(redirectUri).queryParam("jwt", jwt).build().toUriString();
+        // Build redirect URI with JWT parameter, replacing any pre-existing jwt parameter
+        String targetUri = UriComponentsBuilder.fromUriString(redirectUri).replaceQueryParam("jwt", jwt).build().toUriString();
 
-        // Audit log (without JWT in URI)
+        // Audit log (scheme only, never the JWT). The URI passed re-validation above, so URI.create is safe.
         String scheme = URI.create(redirectUri).getScheme();
-        auditEventRepository.add(new AuditEvent(Instant.now(), processedAuth.getName(), "SAML2_EXTERNAL_REDIRECT_SUCCESS", Map.of("redirectScheme", scheme)));
+        auditEventRepository.add(new AuditEvent(Instant.now(), processedAuth.getName(), AuditEventConstants.SAML2_EXTERNAL_REDIRECT_SUCCESS, Map.of("redirectScheme", scheme)));
 
         log.info("SAML2 external redirect for user '{}' to scheme '{}'", processedAuth.getName(), scheme);
 
         response.sendRedirect(targetUri);
+    }
+
+    /**
+     * Writes a failure audit event. The reason is a fixed, non-sensitive string; the redirect URI
+     * itself is never included to avoid leaking attacker-controlled data into the audit log.
+     *
+     * @param authentication the (pre-processing) authentication, used for the principal name
+     * @param reason         a short, fixed reason describing the failure
+     */
+    private void auditFailure(Authentication authentication, String reason) {
+        String principalName = authentication != null ? authentication.getName() : null;
+        String username = principalName != null && !principalName.isBlank() ? principalName : "unknown";
+        auditEventRepository.add(new AuditEvent(Instant.now(), username, AuditEventConstants.SAML2_EXTERNAL_REDIRECT_FAILURE, Map.of("reason", reason)));
     }
 }

@@ -17,7 +17,7 @@ public class SAML2RedirectUriValidator {
 
     private static final Set<String> BLOCKED_SCHEMES = Set.of("http", "https");
 
-    private static final int MAX_URI_BYTES = 200;
+    static final int MAX_URI_BYTES = 200;
 
     private final List<String> allowedSchemes;
 
@@ -56,6 +56,12 @@ public class SAML2RedirectUriValidator {
             return Optional.of("redirect_uri must be an absolute URI");
         }
 
+        // Opaque URIs (e.g. "vscode:callback" without "//") cannot carry the jwt query parameter
+        // reliably; external clients must use hierarchical custom-scheme URIs.
+        if (uri.isOpaque()) {
+            return Optional.of("redirect_uri must be a hierarchical URI");
+        }
+
         String scheme = uri.getScheme().toLowerCase(Locale.ROOT);
 
         if (BLOCKED_SCHEMES.contains(scheme)) {
@@ -64,6 +70,10 @@ public class SAML2RedirectUriValidator {
 
         if (!allowedSchemes.contains(scheme)) {
             return Optional.of("URI scheme '" + scheme + "' is not in the allowlist");
+        }
+
+        if (uri.getUserInfo() != null) {
+            return Optional.of("redirect_uri must not contain user info");
         }
 
         if (uri.getFragment() != null) {
