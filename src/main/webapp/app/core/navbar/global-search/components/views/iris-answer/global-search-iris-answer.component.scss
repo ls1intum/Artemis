@@ -59,7 +59,8 @@
     transition: max-height 0.38s cubic-bezier(0.4, 0, 0.2, 1);
 
     &.is-clamped {
-        max-height: 88px;
+        /* 4 lines × line-height 1.6 × font-size 0.8125rem — matches the JS measurement: lineHeight * CLAMP_LINE_COUNT */
+        max-height: calc(4 * 1.6 * 0.8125rem);
         overflow: hidden;
         -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
         mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
