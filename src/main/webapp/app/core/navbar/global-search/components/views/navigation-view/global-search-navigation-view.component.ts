@@ -3,9 +3,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SkeletonModule } from 'primeng/skeleton';
 import {
     faBook,
-    faCalendarAlt,
     faCalendarCheck,
-    faChartBar,
     faCheckDouble,
     faComments,
     faCube,
@@ -16,8 +14,7 @@ import {
     faKeyboard,
     faProjectDiagram,
     faQuestion,
-    faTrophy,
-    faUsers,
+    faQuestionCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
@@ -28,7 +25,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
-import { GlobalSearchResult } from 'app/core/navbar/global-search/services/global-search.service';
+import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
 import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
@@ -113,7 +110,6 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly faFileUpload = faFileUpload;
     protected readonly faCheckDouble = faCheckDouble;
     protected readonly faQuestion = faQuestion;
-    protected readonly faTrophy = faTrophy;
     protected readonly faCalendarCheck = faCalendarCheck;
 
     // Searchable entities for initial view
@@ -123,7 +119,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             title: 'global.search.entities.exercisesTitle',
             description: 'global.search.entities.exercisesDescription',
             icon: faCube,
-            type: 'page',
+            type: 'filter',
             enabled: true,
             filterTag: 'exercise',
         },
@@ -132,48 +128,36 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             title: 'global.search.entities.lecturesTitle',
             description: 'global.search.entities.lecturesDescription',
             icon: faBook,
-            type: 'page',
-            enabled: false,
+            type: 'filter',
+            enabled: true,
+            filterTag: 'lecture',
         },
         {
             id: 'communication',
             title: 'global.search.entities.communicationTitle',
             description: 'global.search.entities.communicationDescription',
             icon: faComments,
-            type: 'page',
-            enabled: false,
+            type: 'filter',
+            enabled: true,
+            filterTag: 'channel',
         },
         {
-            id: 'iris',
-            title: 'global.search.entities.irisTitle',
-            description: 'global.search.entities.irisDescription',
-            icon: faHashtag,
-            type: 'page',
-            enabled: false,
+            id: 'faqs',
+            title: 'global.search.entities.faqsTitle',
+            description: 'global.search.entities.faqsDescription',
+            icon: faQuestionCircle,
+            type: 'filter',
+            enabled: true,
+            filterTag: 'faq',
         },
         {
-            id: 'users',
-            title: 'global.search.entities.usersTitle',
-            description: 'global.search.entities.usersDescription',
-            icon: faUsers,
-            type: 'page',
-            enabled: false,
-        },
-        {
-            id: 'statistics',
-            title: 'global.search.entities.statisticsTitle',
-            description: 'global.search.entities.statisticsDescription',
-            icon: faChartBar,
-            type: 'feature',
-            enabled: false,
-        },
-        {
-            id: 'calendar',
-            title: 'global.search.entities.calendarTitle',
-            description: 'global.search.entities.calendarDescription',
-            icon: faCalendarAlt,
-            type: 'feature',
-            enabled: false,
+            id: 'exams',
+            title: 'global.search.entities.examsTitle',
+            description: 'global.search.entities.examsDescription',
+            icon: faCalendarCheck,
+            type: 'filter',
+            enabled: true,
+            filterTag: 'exam',
         },
     ];
 
@@ -197,26 +181,114 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         this.entityClick.emit(entity);
     }
 
-    protected getIconForType(type: string, badge?: string): IconDefinition {
+    protected getIconForType(type?: string, badge?: string): IconDefinition {
         if (type === 'exercise') {
-            if (badge === 'Programming') return this.faKeyboard;
-            if (badge === 'Modeling') return this.faProjectDiagram;
-            if (badge === 'Text') return this.faFont;
-            if (badge === 'File Upload') return this.faFileUpload;
-            if (badge === 'Quiz') return this.faCheckDouble;
+            const normalizedBadge = badge?.toLowerCase();
+            if (normalizedBadge === 'programming') return this.faKeyboard;
+            if (normalizedBadge === 'modeling') return this.faProjectDiagram;
+            if (normalizedBadge === 'text') return this.faFont;
+            if (normalizedBadge === 'file upload') return this.faFileUpload;
+            if (normalizedBadge === 'quiz') return this.faCheckDouble;
             return this.faQuestion;
+        }
+        if (type === 'lecture' || type === 'lecture_unit') {
+            return faBook;
+        }
+        if (type === 'channel') {
+            return faHashtag;
+        }
+        if (type === 'faq') {
+            return faQuestionCircle;
+        }
+        if (type === 'exam') {
+            return this.faCalendarCheck;
         }
         return this.faQuestion;
     }
 
     protected navigateToResult(result: GlobalSearchResult) {
-        if (result.type === 'exercise' && result.id) {
-            const courseId = result.metadata['courseId'];
-            if (courseId) {
-                this.router.navigate(['/courses', courseId, 'exercises', result.id]);
-            }
+        const courseId = result.metadata?.['courseId'];
+        if (!courseId) {
+            this.overlay.close();
+            return;
         }
+
+        switch (result.type) {
+            case 'exercise':
+                if (result.id) this.navigateToExercise(result, courseId);
+                break;
+            case 'lecture':
+                if (result.id) this.navigateToLecture(courseId, result.id);
+                break;
+            case 'lecture_unit':
+                if (result.id) this.navigateToLectureUnit(result, courseId);
+                break;
+            case 'exam':
+                if (result.id) this.navigateToExam(result, courseId);
+                break;
+            case 'faq':
+                this.router.navigate(['/courses', courseId, 'faq']);
+                break;
+            case 'channel':
+                if (result.id) this.navigateToChannel(courseId, result.id);
+                break;
+        }
+
         this.overlay.close();
+    }
+
+    private navigateToExercise(result: GlobalSearchResult, courseId: string) {
+        const examId = result.metadata?.['examId'];
+        const exerciseGroupId = result.metadata?.['exerciseGroupId'];
+        const isAtLeastTutor = result.metadata?.['isAtLeastTutor'];
+
+        const isTutorExamExercise = !!(examId && exerciseGroupId && isAtLeastTutor);
+        const isStudentExamExercise = !!examId && !isTutorExamExercise;
+
+        if (isTutorExamExercise) {
+            this.navigateToExamExerciseDetailsPage(courseId, examId, exerciseGroupId, result);
+        } else if (isStudentExamExercise) {
+            this.navigateToStudentExamView(courseId, examId);
+        } else {
+            this.router.navigate(['/courses', courseId, 'exercises', result.id]);
+        }
+    }
+
+    private navigateToExamExerciseDetailsPage(courseId: string, examId: string, exerciseGroupId: string, result: GlobalSearchResult) {
+        const typeSegment = (result.badge?.toLowerCase().replace(/ /g, '-') ?? 'text') + '-exercises';
+        this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
+    }
+
+    private navigateToStudentExamView(courseId: string, examId: string) {
+        this.router.navigate(['/courses', courseId, 'exams', examId]);
+    }
+
+    private navigateToLecture(courseId: string, lectureId: string) {
+        this.router.navigate(['/courses', courseId, 'lectures', lectureId]);
+    }
+
+    private navigateToLectureUnit(result: GlobalSearchResult, courseId: string) {
+        const lectureId = result.metadata?.['lectureId'];
+        if (lectureId) {
+            this.navigateToLecture(courseId, lectureId);
+        }
+    }
+
+    private navigateToExam(result: GlobalSearchResult, courseId: string) {
+        const isAtLeastTutor = !!result.metadata?.['isAtLeastTutor'];
+        if (isAtLeastTutor) {
+            this.navigateToExamDetailsPage(courseId, result.id!);
+        } else {
+            this.navigateToStudentExamView(courseId, result.id!);
+        }
+    }
+
+    private navigateToExamDetailsPage(courseId: string, examId: string) {
+        this.router.navigate(['/course-management', courseId, 'exams', examId]);
+    }
+
+    private navigateToChannel(courseId: string, channelId: string) {
+        this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId } });
     }
 
     @HostListener('window:keydown', ['$event'])

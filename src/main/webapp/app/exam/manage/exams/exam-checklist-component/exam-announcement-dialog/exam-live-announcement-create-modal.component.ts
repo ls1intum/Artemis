@@ -12,6 +12,7 @@ import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underlin
 import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
+import { UnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -28,7 +29,7 @@ export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
     private dialogConfig = inject(DynamicDialogConfig);
     private examManagementService = inject(ExamManagementService);
 
-    actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new OrderedListAction()];
+    actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new UnorderedListAction()];
 
     courseId: number;
     examId: number;

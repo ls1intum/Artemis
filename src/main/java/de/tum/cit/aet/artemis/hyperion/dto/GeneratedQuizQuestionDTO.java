@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * DTO describing one generated quiz question.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@Schema(description = "One generated quiz question")
+@Schema(name = "GeneratedQuizQuestion", description = "One generated quiz question")
 public record GeneratedQuizQuestionDTO(@NotNull @Schema(description = "Question type") QuizQuestionGenerationType type,
         @NotBlank @Size(min = 1, max = 500) @Schema(description = "Question title") String title,
         @NotBlank @Size(min = 1, max = 10000) @Schema(description = "Question text") String questionText,
