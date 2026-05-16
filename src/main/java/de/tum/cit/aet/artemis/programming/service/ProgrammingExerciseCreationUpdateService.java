@@ -237,7 +237,7 @@ public class ProgrammingExerciseCreationUpdateService {
 
         savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
         if (automaticAfterDueDateService.isPresent()) {
-            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDateForNewExercise(savedProgrammingExercise);
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(savedProgrammingExercise);
             if (!Objects.equals(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate)) {
                 savedProgrammingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
                 savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
@@ -335,8 +335,7 @@ public class ProgrammingExerciseCreationUpdateService {
 
         programmingExerciseBuildPlanService.updateBuildPlanForExercise(originalBuildPlanConfiguration, updatedProgrammingExercise);
         if (automaticAfterDueDateService.isPresent()) {
-            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDateForExistingExercise(updatedProgrammingExercise,
-                    buildAndTestOffset);
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(updatedProgrammingExercise, buildAndTestOffset);
             updatedProgrammingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
         }
 
@@ -411,8 +410,7 @@ public class ProgrammingExerciseCreationUpdateService {
 
         programmingExercise.validateDates();
         if (automaticAfterDueDateService.isPresent()) {
-            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDateForExistingExercise(programmingExercise,
-                    originalBuildAndTestOffset);
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
             programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
         }
 

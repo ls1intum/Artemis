@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -31,13 +32,14 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.AutomaticAfterDueDatePreviewRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AutomaticAfterDueDateServiceTest {
 
     @Mock
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Mock
     private ExamDateApi examDateApi;
@@ -45,109 +47,121 @@ class AutomaticAfterDueDateServiceTest {
     @Mock
     private BuildPhasesTemplateService buildPhasesTemplateService;
 
-    AutomaticAfterDueDateService service;
+    @Mock
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    private AutomaticAfterDueDateService service;
 
     @BeforeEach
     void setUp() {
-        service = new AutomaticAfterDueDateService(programmingExerciseRepository, Optional.of(examDateApi), buildPhasesTemplateService);
+        service = new AutomaticAfterDueDateService(programmingExerciseRepository, Optional.of(examDateApi), buildPhasesTemplateService, programmingExerciseBuildConfigRepository);
     }
 
     @Test
-    void recomputeBuildAndTestDate_courseExercise_withDueDateAndAfterDueDatePhase_setsDerivedDate() throws JsonProcessingException {
+    void computeBuildAndTestDateForExistingExercise_courseExercise_withDueDateAndAfterDueDatePhase_returnsDerivedDate() throws JsonProcessingException {
         var dueDate = ZonedDateTime.now().plusDays(1);
         var exercise = createCourseExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE);
 
-        service.recomputeBuildAndTestDate(exercise, null);
+        var result = service.computeBuildAndTestDate(exercise, null);
 
-        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(dueDate.plusMinutes(15));
+        assertThat(result).isEqualTo(dueDate.plusMinutes(15));
     }
 
     @Test
-    void recomputeBuildAndTestDate_courseExercise_withoutDueDate_setsNull() throws JsonProcessingException {
+    void computeBuildAndTestDateForExistingExercise_courseExercise_withoutDueDate_returnsNull() throws JsonProcessingException {
         var exercise = createCourseExercise(null, BuildPhaseCondition.AFTER_DUE_DATE);
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(2));
 
-        service.recomputeBuildAndTestDate(exercise, null);
+        var result = service.computeBuildAndTestDate(exercise, null);
 
-        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
+        assertThat(result).isNull();
     }
 
     @Test
-    void recomputeBuildAndTestDate_courseExercise_withoutAfterDueDatePhase_setsNull() throws JsonProcessingException {
+    void computeBuildAndTestDateForExistingExercise_courseExercise_withoutAfterDueDatePhase_returnsNull() throws JsonProcessingException {
         var dueDate = ZonedDateTime.now().plusDays(1);
         var exercise = createCourseExercise(dueDate, BuildPhaseCondition.ALWAYS);
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(2));
 
-        service.recomputeBuildAndTestDate(exercise, null);
+        var result = service.computeBuildAndTestDate(exercise, null);
 
-        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
+        assertThat(result).isNull();
     }
 
     @Test
-    void recomputeBuildAndTestDate_courseExercise_dueDateChanged_updatesDerivedDate() throws JsonProcessingException {
+    void computeBuildAndTestDateForExistingExercise_courseExercise_dueDateChanged_returnsDerivedDate() throws JsonProcessingException {
         var originalDueDate = ZonedDateTime.now().plusDays(1);
         var updatedDueDate = originalDueDate.plusHours(3);
         var exercise = createCourseExercise(originalDueDate, BuildPhaseCondition.AFTER_DUE_DATE);
 
-        service.recomputeBuildAndTestDate(exercise, null);
-        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(originalDueDate.plusMinutes(15));
+        var firstResult = service.computeBuildAndTestDate(exercise, null);
+        assertThat(firstResult).isEqualTo(originalDueDate.plusMinutes(15));
 
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(firstResult);
         exercise.setDueDate(updatedDueDate);
-        service.recomputeBuildAndTestDate(exercise, originalDueDate);
-        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(updatedDueDate.plusMinutes(15));
+
+        var offset = Duration.between(originalDueDate, firstResult);
+        var secondResult = service.computeBuildAndTestDate(exercise, offset);
+        assertThat(secondResult).isEqualTo(updatedDueDate.plusMinutes(15));
     }
 
     @Test
-    void recomputeBuildAndTestDate_courseExercise_phaseAddedAndRemoved_updatesDerivedDate() throws JsonProcessingException {
+    void computeBuildAndTestDateForExistingExercise_courseExercise_phaseAddedAndRemoved_returnsCorrectDates() throws JsonProcessingException {
         var dueDate = ZonedDateTime.now().plusDays(1);
         var exercise = createCourseExercise(dueDate, BuildPhaseCondition.ALWAYS);
 
-        service.recomputeBuildAndTestDate(exercise, null);
-        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
+        var firstResult = service.computeBuildAndTestDate(exercise, null);
+        assertThat(firstResult).isNull();
 
         exercise.setBuildConfig(createBuildConfig(BuildPhaseCondition.AFTER_DUE_DATE));
-        service.recomputeBuildAndTestDate(exercise, null);
-        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(dueDate.plusMinutes(15));
+        var secondResult = service.computeBuildAndTestDate(exercise, null);
+        assertThat(secondResult).isEqualTo(dueDate.plusMinutes(15));
 
         exercise.setBuildConfig(createBuildConfig(BuildPhaseCondition.ALWAYS));
-        service.recomputeBuildAndTestDate(exercise, null);
-        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
+        var thirdResult = service.computeBuildAndTestDate(exercise, null);
+        assertThat(thirdResult).isNull();
     }
 
     @Test
-    void recomputeBuildAndTestDate_examExercise_usesLatestExamEndWithGrace() throws JsonProcessingException {
+    void computeBuildAndTestDate_usesLatestExamEndWithGrace() throws JsonProcessingException {
         var dueDate = ZonedDateTime.now().plusDays(1);
         var latestExamEndDate = ZonedDateTime.now().plusDays(2);
         var exercise = createExamExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE, 180);
         when(examDateApi.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam())).thenReturn(latestExamEndDate);
 
-        service.recomputeBuildAndTestDate(exercise, null);
+        var result = service.computeBuildAndTestDate(exercise, null);
 
-        assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(latestExamEndDate.plusSeconds(180).plusMinutes(15));
+        assertThat(result).isEqualTo(latestExamEndDate.plusSeconds(180).plusMinutes(15));
     }
 
     @Test
-    void recomputeBuildAndTestDatesForExam_updatesChangedExercisesOnly() throws JsonProcessingException {
+    void updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam_updatesChangedExercisesOnly() throws JsonProcessingException {
         var examId = 42L;
         var exerciseId = 10L;
         var dueDate = ZonedDateTime.now().plusDays(1);
         var latestExamEndDate = ZonedDateTime.now().plusDays(2);
         var exercise = createExamExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE, 120);
+        exercise.setId(exerciseId);
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dueDate.plusMinutes(15));
 
-        when(programmingExerciseRepository.findProgrammingExerciseIdsByExamId(examId)).thenReturn(Set.of(exerciseId));
-        when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigElseThrow(exerciseId)).thenReturn(exercise);
-        when(examDateApi.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam())).thenReturn(latestExamEndDate);
+        var exam = exercise.getExerciseGroup().getExam();
+        exam.setId(examId);
+        var exerciseGroup = exercise.getExerciseGroup();
+        exerciseGroup.setExercises(Set.of(exercise));
+        exam.setExerciseGroups(List.of(exerciseGroup));
 
-        Set<Long> updatedIds = service.recomputeBuildAndTestDatesForExam(examId, null);
+        when(examDateApi.getLatestIndividualExamEndDate(exam)).thenReturn(latestExamEndDate);
+        when(programmingExerciseRepository.saveAll(anyList())).thenReturn(List.of(exercise));
+
+        Set<Long> updatedIds = service.updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(exam, null);
 
         assertThat(updatedIds).containsExactly(exerciseId);
         assertThat(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(latestExamEndDate.plusSeconds(120).plusMinutes(15));
-        verify(programmingExerciseRepository).save(exercise);
+        verify(programmingExerciseRepository).saveAll(anyList());
     }
 
     @Test
-    void recomputeBuildAndTestDatesForExam_doesNotSaveWhenDateUnchanged() throws JsonProcessingException {
+    void updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam_doesNotSaveWhenDateUnchanged() throws JsonProcessingException {
         var examId = 43L;
         var exerciseId = 11L;
         var dueDate = ZonedDateTime.now().plusDays(1);
@@ -155,17 +169,22 @@ class AutomaticAfterDueDateServiceTest {
         var exercise = createExamExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE, 90);
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(latestExamEndDate.plusSeconds(90).plusMinutes(15));
 
-        when(programmingExerciseRepository.findProgrammingExerciseIdsByExamId(examId)).thenReturn(Set.of(exerciseId));
-        when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigElseThrow(exerciseId)).thenReturn(exercise);
-        when(examDateApi.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam())).thenReturn(latestExamEndDate);
+        var exam = exercise.getExerciseGroup().getExam();
+        exam.setId(examId);
+        var exerciseGroup = exercise.getExerciseGroup();
+        exerciseGroup.setExercises(Set.of(exercise));
+        exam.setExerciseGroups(List.of(exerciseGroup));
 
-        service.recomputeBuildAndTestDatesForExam(examId, null);
+        when(examDateApi.getLatestIndividualExamEndDate(exam)).thenReturn(latestExamEndDate);
 
-        verify(programmingExerciseRepository, never()).save(exercise);
+        Set<Long> updatedIds = service.updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(exam, null);
+
+        assertThat(updatedIds).isEmpty();
+        verify(programmingExerciseRepository, never()).saveAll(anyList());
     }
 
     @Test
-    void getAutomaticBuildAndTestDate_existingCourseExercise_dueDateAndAfterDueDatePhase_returnsDerivedDate() throws IOException {
+    void getAutomaticBuildAndTestDate_existingCourseExercise_dueDateAndAfterDueDatePhase_returnsDerivedDate() throws IOException, JsonProcessingException {
         var exerciseId = 10L;
         var dueDate = ZonedDateTime.now().plusDays(2);
         var exercise = createCourseExercise(ZonedDateTime.now().plusDays(1), BuildPhaseCondition.AFTER_DUE_DATE);

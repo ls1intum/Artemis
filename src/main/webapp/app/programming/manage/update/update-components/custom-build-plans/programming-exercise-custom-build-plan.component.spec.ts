@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { of } from 'rxjs';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -31,7 +30,7 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
 
     const buildPlanSignal = signal<BuildPlanPhases | undefined>(undefined);
     const buildPhasesTemplateServiceMock = {
-        getTemplate: vi.fn(),
+        fetchTemplate: vi.fn(),
         buildPlan: buildPlanSignal,
         resetToDefault: vi.fn(),
     };
@@ -131,18 +130,18 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
 
         comp.loadBuildPhasesTemplate();
 
-        expect(buildPhasesTemplateServiceMock.getTemplate).not.toHaveBeenCalled();
+        expect(buildPhasesTemplateServiceMock.fetchTemplate).not.toHaveBeenCalled();
     });
 
     it('should load build phases template and update component state', () => {
-        buildPhasesTemplateServiceMock.getTemplate.mockImplementation(() => {
+        buildPhasesTemplateServiceMock.fetchTemplate.mockImplementation(() => {
             buildPlanSignal.set(templatePhases);
         });
 
         fixture.detectChanges();
         comp.loadBuildPhasesTemplate();
 
-        expect(buildPhasesTemplateServiceMock.getTemplate).toHaveBeenCalledWith(
+        expect(buildPhasesTemplateServiceMock.fetchTemplate).toHaveBeenCalledWith(
             programmingExercise.programmingLanguage,
             programmingExercise.projectType,
             programmingExercise.staticCodeAnalysisEnabled,
@@ -157,7 +156,7 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
     it('should reset custom build plan when template loading fails', () => {
         programmingExercise.buildConfig!.buildPlanConfiguration = 'x';
         programmingExercise.buildConfig!.buildScript = 'y';
-        buildPhasesTemplateServiceMock.getTemplate.mockImplementation(() => {
+        buildPhasesTemplateServiceMock.fetchTemplate.mockImplementation(() => {
             buildPlanSignal.set(undefined);
         });
 
@@ -173,7 +172,7 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
 
         comp.loadBuildPhasesTemplate(true);
 
-        expect(buildPhasesTemplateServiceMock.getTemplate).not.toHaveBeenCalled();
+        expect(buildPhasesTemplateServiceMock.fetchTemplate).not.toHaveBeenCalled();
     });
 
     it('should parse existing build plan configuration on init', () => {

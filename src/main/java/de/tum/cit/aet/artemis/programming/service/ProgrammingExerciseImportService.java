@@ -175,7 +175,7 @@ public class ProgrammingExerciseImportService {
 
         newProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newProgrammingExercise);
         if (automaticAfterDueDateService.isPresent()) {
-            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDateForNewExercise(newProgrammingExercise);
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newProgrammingExercise);
             if (!Objects.equals(newProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate)) {
                 newProgrammingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
                 programmingExerciseRepository.save(newProgrammingExercise);
