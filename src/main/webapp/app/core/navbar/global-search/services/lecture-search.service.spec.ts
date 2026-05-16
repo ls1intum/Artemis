@@ -9,6 +9,8 @@ import { LectureSearchResult } from 'app/core/navbar/global-search/models/lectur
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 
+const MOCK_RUN_ID = '550e8400-e29b-41d4-a716-446655440000';
+
 describe('LectureSearchService', () => {
     setupTestBed({ zoneless: true });
 
@@ -22,6 +24,7 @@ describe('LectureSearchService', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.spyOn(window.crypto, 'randomUUID').mockReturnValue(MOCK_RUN_ID as `${string}-${string}-${string}-${string}-${string}`);
         wsSubject = new Subject<IrisSearchStatusUpdate>();
         mockWebsocketService.subscribe.mockReturnValue(wsSubject.asObservable());
 
@@ -95,7 +98,7 @@ describe('LectureSearchService', () => {
 
             const req = httpTesting.expectOne('api/iris/search-answer');
             expect(req.request.method).toBe('POST');
-            expect(req.request.body).toEqual({ query: 'what are signals?', limit: 5 });
+            expect(req.request.body).toEqual({ query: 'what are signals?', limit: 5, runId: MOCK_RUN_ID });
 
             req.flush(null, { status: 202, statusText: 'Accepted' });
         });
@@ -104,7 +107,7 @@ describe('LectureSearchService', () => {
             service.ask('explain dependency injection', 3).subscribe();
 
             const req = httpTesting.expectOne('api/iris/search-answer');
-            expect(req.request.body).toEqual({ query: 'explain dependency injection', limit: 3 });
+            expect(req.request.body).toEqual({ query: 'explain dependency injection', limit: 3, runId: MOCK_RUN_ID });
 
             req.flush(null, { status: 202, statusText: 'Accepted' });
         });
@@ -116,8 +119,8 @@ describe('LectureSearchService', () => {
             const req = httpTesting.expectOne('api/iris/search-answer');
             req.flush(null, { status: 202, statusText: 'Accepted' });
 
-            wsSubject.next({ runId: 'run-1', isThinking: true });
-            wsSubject.next({ runId: 'run-1', isThinking: false, answer: 'Signals are reactive.', sources: [] });
+            wsSubject.next({ runId: MOCK_RUN_ID, isThinking: true });
+            wsSubject.next({ runId: MOCK_RUN_ID, isThinking: false, answer: 'Signals are reactive.', sources: [] });
 
             expect(received).toHaveLength(2);
             expect(received[0].isThinking).toBe(true);
@@ -126,7 +129,7 @@ describe('LectureSearchService', () => {
 
         it('should return the answer and sources from the server via WebSocket', () => {
             const mockResult: IrisSearchStatusUpdate = {
-                runId: 'run-1',
+                runId: MOCK_RUN_ID,
                 isThinking: false,
                 answer: 'Signals are a reactive primitive in Angular...',
                 sources: [
