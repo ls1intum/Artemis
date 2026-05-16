@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
@@ -147,13 +146,6 @@ public class PyrisJobService {
     public void addGlobalSearchAnswerJob(String userLogin, String runId) {
         var job = new GlobalSearchAnswerJob(runId, userLogin);
         getPyrisJobMap().put(runId, job);
-    }
-
-    public String addLectureChatJob(Long courseId, Long lectureId, Long sessionId, Long userMessageId) {
-        var token = generateJobIdToken();
-        var job = new LectureChatJob(token, courseId, lectureId, sessionId, null, userMessageId, null);
-        getPyrisJobMap().put(token, job);
-        return token;
     }
 
     /**
