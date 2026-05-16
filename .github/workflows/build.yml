@@ -116,9 +116,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '${{ env.java }}'
-          cache: 'gradle'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: false
       - name: Install pnpm dependencies
         run: pnpm install --frozen-lockfile
       - name: Build Angular Client
