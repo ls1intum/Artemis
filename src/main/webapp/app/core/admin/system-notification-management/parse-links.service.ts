@@ -16,14 +16,14 @@ export class ParseLinks {
         }
 
         // Split parts by comma
-        const parts: string[] = header.split(',');
+        const parts: string[] = header.split(/,(?= *<)/);
         const links: { [key: string]: number } = {};
 
         // Parse each part into a named link
         parts.forEach((part) => {
-            const section: string[] = part.split(';');
+            const section: string[] = part.split(/(?<=> *);/);
 
-            if (section.length !== 2) {
+            if (section.length !== 2 || section[1].includes(';')) {
                 throw new Error('section could not be split on ";"');
             }
 
