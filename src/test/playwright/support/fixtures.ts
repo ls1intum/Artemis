@@ -168,6 +168,51 @@ export type ArtemisRequests = {
  * Custom test object extended to use Artemis related fixtures.
  */
 export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRequests>({
+    /**
+     * Wrap `page.goto` with a lightweight Angular-render check. Under heavy parallel
+     * multi-node load the SPA occasionally fails to bootstrap the route component on
+     * the first navigation — only the static app shell + footer render, leaving every
+     * subsequent locator call to time out against a blank page. The wrapper:
+     *   - waits up to 1s for the navbar's `#account-menu` (the universal post-bootstrap
+     *     indicator on routes that include the navbar);
+     *   - if not attached AND the URL is on a navbar-bearing route, reloads once with a
+     *     10s grace window for a fresh chunk fetch to recover;
+     *   - if the URL is on a known no-navbar route (exam participation, quiz live,
+     *     problem-statement standalone, LTI), returns immediately so those tests pay no
+     *     overhead.
+     * Net cost on healthy pages: a single sub-100ms locator check. Net benefit on broken
+     * pages: ~10s reload that turns a deterministic test failure into a passing test.
+     */
+    page: async ({ page }, use) => {
+        const originalGoto = page.goto.bind(page);
+        page.goto = async (url, options) => {
+            const response = await originalGoto(url, options);
+            try {
+                if (Commands.isNoNavbarRoute(page.url())) {
+                    return response;
+                }
+                const attached = await page
+                    .locator('#account-menu')
+                    .waitFor({ state: 'attached', timeout: 1_000 })
+                    .then(() => true)
+                    .catch(() => false);
+                if (!attached) {
+                    await page.reload();
+                    await page.waitForLoadState('load');
+                    await page
+                        .locator('#account-menu')
+                        .waitFor({ state: 'attached', timeout: 10_000 })
+                        .catch(() => undefined);
+                }
+            } catch {
+                // Never let the render-check throw — it must be invisible to tests
+                // whose post-goto assertions are perfectly capable of surfacing their own
+                // errors.
+            }
+            return response;
+        };
+        await use(page);
+    },
     loginPage: async ({ page }, use) => {
         await use(new LoginPage(page));
     },

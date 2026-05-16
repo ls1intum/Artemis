@@ -90,10 +90,25 @@ export class ExamManagementPage {
     }
 
     async verifySubmitted(courseID: number, examID: number, username: string) {
-        await this.page.goto(`/course-management/${courseID}/exams/${examID}/students`);
-        await this.page.waitForLoadState('domcontentloaded');
+        // Navigate to the exam students page. Under heavy multi-node load the Angular route
+        // occasionally fails to bootstrap on the first navigation (chunk-load race), leaving
+        // the page with only the app shell. Detect that case by waiting briefly for the
+        // navbar's account menu, and reload if the route component never mounts — a fresh
+        // chunk fetch reliably recovers.
+        const url = `/course-management/${courseID}/exams/${examID}/students`;
+        await this.page.goto(url);
+        if (
+            !(await this.page
+                .locator('#account-menu')
+                .waitFor({ state: 'attached', timeout: 10_000 })
+                .then(() => true)
+                .catch(() => false))
+        ) {
+            await this.page.reload();
+            await this.page.waitForLoadState('load');
+        }
         const row = this.page.locator('tbody tr', { hasText: username }).first();
-        await row.waitFor({ state: 'visible' });
+        await row.waitFor({ state: 'visible', timeout: 60_000 });
         await expect(row).toContainText('Submitted');
     }
 

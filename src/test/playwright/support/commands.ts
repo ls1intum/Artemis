@@ -18,16 +18,35 @@ export class Commands {
         await Commands.logout(page);
         await page.context().clearCookies();
         const { username, password } = credentials;
-        const response = await page.request.post(`api/core/public/authenticate`, {
-            data: {
-                username,
-                password,
-                rememberMe: true,
-            },
-            failOnStatusCode: false,
-        });
+        // Retry the auth POST on transient 5xx — under heavy parallel multi-node load
+        // the JWT filter / Hazelcast cluster occasionally returns 503 for a few seconds
+        // while a node spins up its Eureka registration or rebalances. Bailing on the
+        // first attempt would surface as a flaky test failure that has nothing to do
+        // with the code under test.
+        const maxAttempts = 5;
+        let response: Awaited<ReturnType<typeof page.request.post>> | undefined;
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            response = await page.request.post(`api/core/public/authenticate`, {
+                data: {
+                    username,
+                    password,
+                    rememberMe: true,
+                },
+                failOnStatusCode: false,
+            });
+            if (response.status() === 200) {
+                break;
+            }
+            if (response.status() < 500 || attempt === maxAttempts - 1) {
+                // 4xx is a permanent failure (bad credentials etc.) — do not retry.
+                // 5xx on the final attempt also escapes the loop so the assertion
+                // below surfaces the actual response.
+                break;
+            }
+            await page.waitForTimeout(1_500 * (attempt + 1));
+        }
 
-        expect(response.status()).toBe(200);
+        expect(response!.status()).toBe(200);
 
         // The previous user's JWT cookie has been cleared and a new one set for `username`.
         // Verify by re-reading: the cookie jar must contain exactly one jwt that is non-empty.
@@ -65,18 +84,41 @@ export class Commands {
      * verification window, force a full page reload to rebuild Angular from scratch — this is
      * cheaper than retrying the whole login and reliably recovers from the rare race.
      * <p>
-     * Skipped silently when the route does not include a navbar (exam mode, problem-statement
-     * standalone, LTI iframe) — there is nothing observable to verify against.
+     * Routes that legitimately do not render a navbar (exam participation, problem-statement
+     * standalone, LTI iframe) are detected by URL pattern and skipped — there is nothing
+     * observable to verify against on those routes.
+     * <p>
+     * If the route SHOULD have a navbar but the navbar never attaches, the SPA's lazy-loaded
+     * route module likely failed to chunk-load (a common symptom under heavy parallel load:
+     * the page renders only the app shell and footer). We force one full reload to retry the
+     * chunk fetch before giving up.
      */
     private static verifyAuthenticatedAs = async (page: Page, credentials: UserCredentials): Promise<void> => {
         const accountMenu = page.locator('#account-menu');
-        const showsNavbar = await accountMenu
-            .waitFor({ state: 'attached', timeout: 5000 })
-            .then(() => true)
-            .catch(() => false);
-        if (!showsNavbar) {
-            return;
+        const expectsNavbar = !Commands.isNoNavbarRoute(page.url());
+
+        const attachedWithin = async (timeout: number): Promise<boolean> =>
+            accountMenu
+                .waitFor({ state: 'attached', timeout })
+                .then(() => true)
+                .catch(() => false);
+
+        if (!(await attachedWithin(5_000))) {
+            if (!expectsNavbar) {
+                // Legitimate no-navbar route — there is nothing to verify.
+                return;
+            }
+            // Navbar missing on a route that should have one ⇒ chunk-load failure or other
+            // bootstrap glitch. Reload to retry; this typically recovers in one round-trip.
+            await page.reload();
+            await page.waitForLoadState('load');
+            if (!(await attachedWithin(30_000))) {
+                // Reload did not help — fall through so the calling test surfaces a useful
+                // error against the missing target element rather than failing here.
+                return;
+            }
         }
+
         // Use a word-boundary regex rather than `toContainText(username)`. Plain substring
         // matching silently passes on the exact race this helper exists to catch: in the
         // instructor→studentOne transition the navbar still showing `artemis_test_user_16`
@@ -103,8 +145,66 @@ export class Commands {
         await expect(accountMenu).toContainText(expectedUser, { timeout: 30000 });
     };
 
+    /**
+     * Routes whose route component intentionally suppresses the app navbar — exam
+     * participation, problem-statement standalone view, LTI iframe view, quiz/exercise
+     * "live" or "participate" views, and exam conduction. The login verification helper
+     * skips navbar checks on these routes so we do not pay a reload overhead on tests
+     * targeting them.
+     */
+    static isNoNavbarRoute(url: string): boolean {
+        return /\/exam-participation\/|\/problem-statement\/|\/lti13|\/exercises\/[^/]+\/live\b|\/exercises\/[^/]+\/participate\b|\/exams\/\d+\/.+\/conduction/.test(url);
+    }
+
     static logout = async (page: Page): Promise<void> => {
         await page.request.post('api/core/public/logout');
+    };
+
+    /**
+     * Navigates to a URL and waits for the Angular app to actually render the route.
+     *
+     * Plain `page.goto` + `waitForLoadState('domcontentloaded')` only guarantees the HTML
+     * shell has parsed; under heavy parallel multi-node load the route's lazy-loaded
+     * chunk occasionally fails to resolve in time, leaving the page with only the
+     * app shell (banner + footer) and no navbar / route component. We detect that case
+     * by waiting for the navbar's `#account-menu` (always present on routes that
+     * include the navbar) and reload once if it never attaches.
+     *
+     * Routes that legitimately suppress the navbar (exam participation, problem-statement
+     * standalone, LTI) should not use this helper — pass an explicit `renderIndicator`
+     * instead, or just call `page.goto` directly.
+     */
+    static gotoAndEnsureRendered = async (page: Page, url: string, renderIndicator: string = '#account-menu'): Promise<void> => {
+        await page.goto(url);
+        await page.waitForLoadState('load');
+        await Commands.ensureRendered(page, renderIndicator);
+    };
+
+    /**
+     * Verifies that the Angular app has rendered the route component after a navigation
+     * and reloads once if it has not. Idempotent — safe to call multiple times.
+     *
+     * The check distinguishes between routes that should render a navbar and routes
+     * that legitimately do not (exam participation, problem-statement standalone, LTI).
+     * For no-navbar routes the helper returns immediately so it can be applied
+     * universally without slowing those tests down.
+     */
+    static ensureRendered = async (page: Page, renderIndicator: string = '#account-menu'): Promise<void> => {
+        if (Commands.isNoNavbarRoute(page.url())) {
+            return;
+        }
+        const indicator = page.locator(renderIndicator);
+        const attachedWithin = async (timeout: number): Promise<boolean> =>
+            indicator
+                .waitFor({ state: 'attached', timeout })
+                .then(() => true)
+                .catch(() => false);
+        if (await attachedWithin(5_000)) {
+            return;
+        }
+        await page.reload();
+        await page.waitForLoadState('load');
+        await attachedWithin(30_000);
     };
 
     static reloadUntilFound = async (page: Page, locator: Locator, interval = 10000, timeout = 60000) => {

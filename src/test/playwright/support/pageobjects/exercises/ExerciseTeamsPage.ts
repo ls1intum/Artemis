@@ -37,73 +37,130 @@ export class ExerciseTeamsPage {
     /**
      * Searches for a tutor via the owner typeahead.
      *
-     * The tutor typeahead (team-owner-search) uses switchMap WITHOUT debounce.
-     * Every keystroke cancels the previous in-flight HTTP. Under heavy parallel
-     * test load, the server can take 10-30s to respond, so the final HTTP from
-     * the last keystroke may not complete within the test timeout.
+     * The tutor typeahead (team-owner-search) uses switchMap WITHOUT debounce, so every
+     * keystroke fires a new HTTP request and cancels the previous one. Under heavy parallel
+     * multi-node load the GET /api/core/courses/{id}/tutors round-trip can take 10-30s and
+     * the final response from the LAST keystroke may not arrive within the test budget.
      *
-     * Solution: pre-fetch the tutor list via Playwright's request API (a single
-     * HTTP call not subject to switchMap cancellation), then install a page.route()
-     * intercept that serves the cached response instantly to all typeahead requests.
-     * This makes the typeahead popup appear immediately after typing.
+     * Strategy: pre-fetch the real tutor list via Playwright's request API (one HTTP call
+     * not subject to switchMap cancellation), with retries to ride out transient slowness.
+     * Then install a `page.route` intercept that serves the cached body instantly to every
+     * subsequent typeahead request. We deliberately use the REAL server response (rather
+     * than a synthetic one) so the typeahead's selected `User` object carries every field
+     * the server later cross-checks during the team save — synthetic payloads can subtly
+     * differ from the real entity (extra fields, missing metadata) and break the save path.
+     *
+     * If every pre-fetch retry fails, we fall through to the real (slower) network — the
+     * fallback timeout is large enough to absorb a few server hiccups.
      */
     private async searchTutor(inputLocator: ReturnType<Page['locator']>, username: string) {
         const listbox = this.page.getByRole('listbox');
 
-        // Pre-fetch tutor data and install route intercept for instant responses
         const courseIdMatch = this.page.url().match(/\/course-management\/(\d+)/);
         const courseId = courseIdMatch?.[1];
+        const routePattern = courseId ? `**/api/core/courses/${courseId}/tutors` : undefined;
         let routeInstalled = false;
 
-        if (courseId) {
-            try {
-                const apiResponse = await this.page.request.get(`api/core/courses/${courseId}/tutors`);
-                if (apiResponse.ok()) {
-                    const body = await apiResponse.body();
-                    const routePattern = `**/api/core/courses/${courseId}/tutors`;
-                    await this.page.route(routePattern, (route) => route.fulfill({ status: 200, contentType: 'application/json', body }));
-                    routeInstalled = true;
-                }
-            } catch {
-                // Pre-fetch failed; fall through to normal typeahead behavior
+        if (routePattern && courseId) {
+            const cachedBody = await this.fetchTutorListWithRetries(courseId, username);
+            if (cachedBody) {
+                await this.page.route(routePattern, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: cachedBody }));
+                routeInstalled = true;
             }
         }
 
         try {
-            // Ensure the input is in the DOM and interactive before typing. Under parallel CI load
-            // the tab containing the input renders late, and fill() against a not-yet-attached input
-            // silently no-ops, leaving the typeahead never triggered.
             await inputLocator.waitFor({ state: 'visible', timeout: 30_000 });
+            // Click first so the ngbTypeahead directive's focus subject fires; some keystroke patterns
+            // race the directive's subscription if the input is only programmatically populated.
+            await inputLocator.click();
 
-            // Retry with different input strategies — fill() can fail to trigger Angular's
-            // typeahead if signal-based change detection misses the event. Subsequent attempts
-            // use focus + pressSequentially with a longer delay, which always dispatches real
-            // keyboard events the typeahead listens for.
+            // The listbox timeout per attempt is large enough to absorb real-network latency
+            // when the route mock is not installed (prefetch failed), but short enough that
+            // four retries still fit comfortably inside the per-test budget.
+            const listboxTimeoutMs = routeInstalled ? 15_000 : 45_000;
             for (let attempt = 0; attempt < 4; attempt++) {
                 if (attempt > 0) {
                     await this.page.waitForTimeout(500);
                     await inputLocator.clear();
+                    await inputLocator.click();
                 }
-                if (attempt === 0) {
-                    await inputLocator.fill(username);
-                } else {
-                    await inputLocator.focus();
-                    await inputLocator.pressSequentially(username, { delay: 80 });
-                }
+                // pressSequentially dispatches real keyboard events that the typeahead's text$
+                // stream reliably picks up, whereas fill() can race ngbTypeahead's internal
+                // subscription on the first paint of the dialog.
+                await inputLocator.pressSequentially(username, { delay: 80 });
                 try {
-                    await listbox.waitFor({ state: 'visible', timeout: 15000 });
+                    await listbox.waitFor({ state: 'visible', timeout: listboxTimeoutMs });
                     const option = listbox.getByText(new RegExp(username, 'i')).first();
-                    await option.waitFor({ state: 'visible', timeout: 5000 });
+                    await option.waitFor({ state: 'visible', timeout: 5_000 });
                     await option.click();
-                    break;
+                    return;
                 } catch {
                     if (attempt === 3) throw new Error(`Tutor search autocomplete did not appear after 4 attempts for '${username}'`);
                 }
             }
         } finally {
-            if (routeInstalled && courseId) {
-                await this.page.unroute(`**/api/core/courses/${courseId}/tutors`);
+            if (routeInstalled && routePattern) {
+                await this.page.unroute(routePattern);
             }
+        }
+    }
+
+    /**
+     * Pre-fetches the course tutor list with retries. Uses Playwright's request context
+     * (a single HTTP call not subject to switchMap cancellation) so the route intercept
+     * can serve subsequent typeahead requests deterministically.
+     *
+     * Treats both empty responses AND responses missing the expected user as transient
+     * failures and retries. Under heavy parallel load the server occasionally returns
+     * a list that omits the seeded tutor (a node whose user-group / Hibernate session
+     * has not yet picked up the membership). Returning that payload via the route mock
+     * would make the typeahead silently filter to zero results — exactly the failure
+     * mode that has been chasing us across runs.
+     *
+     * Returns `undefined` if every retry fails — the caller then falls back to the
+     * real (slower) network path with a more generous per-attempt timeout.
+     */
+    private async fetchTutorListWithRetries(courseId: string, expectedUsername: string): Promise<Buffer | undefined> {
+        const url = `api/core/courses/${courseId}/tutors`;
+        const maxAttempts = 8;
+        const perAttemptTimeoutMs = 15_000;
+        const backoffMs = 1_000;
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            try {
+                const response = await this.page.request.get(url, { timeout: perAttemptTimeoutMs });
+                if (response.ok()) {
+                    const body = await response.body();
+                    if (this.bodyContainsUser(body, expectedUsername)) {
+                        return body;
+                    }
+                }
+            } catch {
+                // network/timeout — fall through to backoff + retry
+            }
+            await this.page.waitForTimeout(backoffMs);
+        }
+        return undefined;
+    }
+
+    /**
+     * Checks whether the JSON body parses as an array of users containing one whose
+     * `login` matches the expected username (case-insensitive substring match — the
+     * typeahead's own filter uses the same logic, so this mirrors what would actually
+     * show up in the listbox after filtering).
+     */
+    private bodyContainsUser(body: Buffer, expectedUsername: string): boolean {
+        try {
+            const parsed = JSON.parse(body.toString('utf-8'));
+            if (!Array.isArray(parsed) || parsed.length === 0) {
+                return false;
+            }
+            const needle = expectedUsername.toLowerCase();
+            return parsed.some((u: { login?: string; name?: string }) => {
+                return (u.login ?? '').toLowerCase().includes(needle) || (u.name ?? '').toLowerCase().includes(needle);
+            });
+        } catch {
+            return false;
         }
     }
 

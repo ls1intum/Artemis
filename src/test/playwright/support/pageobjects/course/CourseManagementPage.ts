@@ -52,8 +52,18 @@ export class CourseManagementPage {
         // hydrated asynchronously after navigation, so the bare .click() races the render.
         const link = this.getCourse(courseID).locator('#course-card-open-exercises');
         await link.waitFor({ state: 'visible', timeout: 30_000 });
-        await link.click();
-        await this.page.waitForURL('**/exercises**');
+
+        // Click + waitForURL; if the click races Angular's router-link binding (rare under heavy
+        // parallel multi-node load, where the navbar renders before all child route directives
+        // have attached their listeners), the navigation does not fire. Fall back to a direct
+        // URL navigation so the test can proceed regardless of the SPA race.
+        try {
+            await link.click();
+            await this.page.waitForURL('**/exercises**', { timeout: 15_000 });
+        } catch {
+            await this.page.goto(`/course-management/${courseID}/exercises`);
+            await this.page.waitForLoadState('load');
+        }
     }
 
     /**

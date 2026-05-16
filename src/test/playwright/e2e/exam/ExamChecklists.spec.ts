@@ -290,8 +290,27 @@ async function createExam(course: any, page: Page, customConfig?: any) {
 }
 
 async function navigateToExamDetailsPage(page: Page, course: any, exam: Exam) {
-    await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
-    await page.waitForLoadState('domcontentloaded');
+    const url = `/course-management/${course.id}/exams/${exam.id}`;
+    // The exam-detail page wraps every checklist row in `@if (exam)` (and several rows in
+    // `@if (exam().publishResultsDate)`), so testid lookups fail until the GET /exams/{id}
+    // round-trip completes. `domcontentloaded` only signals HTML parse — wait for the heading
+    // explicitly so the page is fully hydrated before checklist assertions run.
+    //
+    // Under heavy multi-node load Angular occasionally fails to bootstrap the route component
+    // on first navigation (the app shell + footer render, the route does not). Reload once if
+    // the heading does not appear within 15s — a fresh chunk fetch reliably recovers.
+    await page.goto(url);
+    const titleLocator = page.locator('#exam-detail-title');
+    const attachedWithin = async (timeout: number): Promise<boolean> =>
+        titleLocator
+            .waitFor({ state: 'visible', timeout })
+            .then(() => true)
+            .catch(() => false);
+    if (!(await attachedWithin(15_000))) {
+        await page.reload();
+        await page.waitForLoadState('load');
+        await titleLocator.waitFor({ state: 'visible', timeout: 30_000 });
+    }
 }
 
 async function addExamExerciseGroup(examExerciseGroups: ExamExerciseGroupsPage, examExerciseGroupCreation: ExamExerciseGroupCreationPage, isMandatory?: boolean) {
