@@ -7,7 +7,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
-import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';
+import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
@@ -16,6 +16,12 @@ import { catchError, debounceTime, of, switchMap, tap } from 'rxjs';
 
 /** Delay in ms after a new result before measuring the rendered answer height. */
 const ANSWER_MEASURE_DELAY_MS = 60;
+
+/** Number of lines shown before the answer is clamped. Must match the CSS `max-height` on `.iris-answer-text.is-clamped`. */
+const CLAMP_LINE_COUNT = 4;
+
+/** Fallback line-height in px used when `getComputedStyle` returns `"normal"` (no explicit value set). */
+const DEFAULT_LINE_HEIGHT_PX = 20;
 
 /**
  * Extra debounce for the Iris pipeline on top of the base search debounce.
@@ -33,7 +39,7 @@ const IRIS_ANSWER_DEBOUNCE_MS = SEARCH_DEBOUNCE_MS + 300;
     styleUrls: ['./global-search-iris-answer.component.scss'],
 })
 export class GlobalSearchIrisAnswerComponent {
-    private readonly lectureSearchService = inject(LectureSearchService);
+    private readonly irisSearchAnswerService = inject(IrisSearchAnswerService);
 
     readonly searchQuery = input.required<string>();
 
@@ -64,19 +70,19 @@ export class GlobalSearchIrisAnswerComponent {
     constructor() {
         // Measure answer overflow after each new result; reset when the result clears.
         effect((onCleanup) => {
-            const r = this.irisResult();
+            const result = this.irisResult();
             untracked(() => {
                 this.isExpanded.set(false);
                 this.isOverflowing.set(false);
                 this.moreOpen.set(false);
             });
-            if (!r?.answer) return;
+            if (!result?.answer) return;
             const measureTimeout = setTimeout(() => {
-                const el = this.answerBody()?.nativeElement;
-                if (el) {
-                    const rawLineHeight = getComputedStyle(el).lineHeight;
-                    const lineHeight = rawLineHeight === 'normal' ? 20 : parseFloat(rawLineHeight);
-                    untracked(() => this.isOverflowing.set(el.scrollHeight > lineHeight * 4));
+                const element = this.answerBody()?.nativeElement;
+                if (element) {
+                    const rawLineHeight = getComputedStyle(element).lineHeight;
+                    const lineHeight = rawLineHeight === 'normal' ? DEFAULT_LINE_HEIGHT_PX : parseFloat(rawLineHeight);
+                    untracked(() => this.isOverflowing.set(element.scrollHeight > lineHeight * CLAMP_LINE_COUNT));
                 }
             }, ANSWER_MEASURE_DELAY_MS);
             onCleanup(() => clearTimeout(measureTimeout));
@@ -97,7 +103,7 @@ export class GlobalSearchIrisAnswerComponent {
                     if (!query.trim()) {
                         return of(undefined);
                     }
-                    return this.lectureSearchService.ask(query).pipe(catchError(() => of(undefined)));
+                    return this.irisSearchAnswerService.ask(query).pipe(catchError(() => of(undefined)));
                 }),
                 takeUntilDestroyed(),
             )

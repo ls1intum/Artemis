@@ -9,7 +9,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
-import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';
+import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import { GlobalSearchIrisAnswerComponent } from './global-search-iris-answer.component';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
@@ -62,11 +62,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [GlobalSearchIrisAnswerComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
-            providers: [
-                provideRouter([]),
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LectureSearchService, useValue: { ask: mockAsk, search: vi.fn().mockReturnValue(NEVER) } },
-            ],
+            providers: [provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }, { provide: IrisSearchAnswerService, useValue: { ask: mockAsk } }],
         });
 
         fixture = TestBed.createComponent(GlobalSearchIrisAnswerComponent);
@@ -273,7 +269,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
     });
 
     describe('ask() pipeline integration', () => {
-        it('should call lectureSearchService.ask() after debounce when query is non-empty', () => {
+        it('should call irisSearchAnswerService.ask() after debounce when query is non-empty', () => {
             fixture.componentRef.setInput('searchQuery', 'angular signals');
             fixture.detectChanges();
             vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
@@ -282,7 +278,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(mockAsk).toHaveBeenCalledWith('angular signals');
         });
 
-        it('should NOT call lectureSearchService.ask() for an empty query', () => {
+        it('should NOT call irisSearchAnswerService.ask() for an empty query', () => {
             mockAsk.mockClear();
             fixture.componentRef.setInput('searchQuery', '   ');
             fixture.detectChanges();
