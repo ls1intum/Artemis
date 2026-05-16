@@ -299,7 +299,7 @@ services:
             chmod 777 /root &&
             rm -f test-reports/results*.xml &&
             (command -v bun >/dev/null 2>&1 || (apt-get update >/dev/null && apt-get install -y --no-install-recommends unzip ca-certificates >/dev/null && curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.14")) &&
-            export PATH="/root/.bun/bin:$PATH" &&
+            export PATH="/root/.bun/bin:\$PATH" &&
             bun install --frozen-lockfile &&
             bun run playwright:setup &&
             PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml bunx playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
