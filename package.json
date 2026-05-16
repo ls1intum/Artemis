@@ -246,7 +246,7 @@
         "update": "ncu -i --format group",
         "webapp:build": "bun run clean-www && bun run prebuild --develop && cross-env NODE_OPTIONS=--max-old-space-size=6144 ng build --configuration development",
         "webapp:prod": "bun run clean-www && bun run prebuild && cross-env NODE_OPTIONS=--max-old-space-size=6144 NG_BUILD_OPTIMIZE_CHUNKS=1 ng build --configuration production",
-        "sbom:generate-full": "bunx @cyclonedx/cdxgen@12 --type bun --output build/reports/client-sbom-full.json --spec-version 1.6 --no-babel --no-recurse",
+        "sbom:generate-full": "cross-env FETCH_LICENSE=false bunx @cyclonedx/cdxgen@12.4.0 --type bun --output build/reports/client-sbom-full.json --spec-version 1.6 --no-babel --no-recurse --profile generic",
         "sbom:filter-shipped": "node supporting_scripts/sbom-filter-by-bundle.mjs build/reports/client-sbom-full.json build/reports/client-sbom.json build/resources/main/static",
         "sbom:generate": "bun run sbom:generate-full && bun run sbom:filter-shipped"
     }

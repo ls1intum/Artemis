@@ -39,7 +39,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "9.2"
+version = "9.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -581,6 +581,13 @@ configurations.matching { it.name != 'mockitoAgent' }.configureEach {
         if (details.requested.group == "io.netty" && !details.requested.name.startsWith("netty-tcnative")) {
             details.useVersion("${netty_version}")
             details.because("Patched Netty release; pre-${netty_version} contains multiple high-severity CVEs.")
+        }
+        // Force every io.opentelemetry module (BOM-managed by Spring Boot at 1.55.x and pulled in
+        // directly by micrometer-tracing-bridge-otel) up to the patched line. Pre-1.62.0 has
+        // GHSA-rcgg-9c38-7xpx (unbounded memory allocation in W3C Baggage propagation).
+        if (details.requested.group == "io.opentelemetry") {
+            details.useVersion("${opentelemetry_version}")
+            details.because("Patched OpenTelemetry release; pre-${opentelemetry_version} contains GHSA-rcgg-9c38-7xpx.")
         }
     }
 }

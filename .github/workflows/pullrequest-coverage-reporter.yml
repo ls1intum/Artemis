@@ -33,7 +33,7 @@ jobs:
     steps:
       - name: Find PR number
         id: find-pr
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         continue-on-error: true
         env:
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
@@ -129,7 +129,7 @@ jobs:
 
       - name: Download server JaCoCo XML
         if: steps.changes.outputs.has_server_changes == 'true'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: Server JaCoCo XML
@@ -139,7 +139,7 @@ jobs:
 
       - name: Download client coverage summaries
         if: steps.changes.outputs.has_client_changes == 'true'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: Client Coverage Summaries
@@ -211,7 +211,7 @@ jobs:
 
       - name: Update PR description with coverage
         if: steps.find-pr.outputs.result != ''
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           PR_NUMBER: ${{ steps.find-pr.outputs.result }}
           PR_AUTHOR: ${{ steps.find-pr.outputs.author }}
