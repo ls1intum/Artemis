@@ -112,7 +112,7 @@ function buildFlakinessTable(flakinessResults) {
         const dfr = (r.defaultBranchFailureRate * 100).toFixed(1);
         const cfr = (r.combinedFailureRate * 100).toFixed(1);
         const testId = `${escapeMd(r.className)}#${escapeMd(r.testName)}`;
-        table += `| \`${testId}\` | **${r.flakinessScore}%** | ${dfr}% | ${cfr}% |\n`;
+        table += `| \`${testId}\` | **${Math.round(r.flakinessScore)}%** | ${dfr}% | ${cfr}% |\n`;
     }
     return table;
 }
