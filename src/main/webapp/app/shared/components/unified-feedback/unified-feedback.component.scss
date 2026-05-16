@@ -38,11 +38,13 @@
     align-items: center;
     gap: 0.5rem;
     border-bottom: 1px solid var(--bs-border-color);
+    overflow: hidden;
 }
 
 .unified-feedback-reference-label {
     color: var(--bs-body-color);
     font-weight: 500;
+    flex-shrink: 0;
 }
 
 .unified-feedback-reference-text {
@@ -52,6 +54,10 @@
     font-family: var(--bs-font-monospace);
     font-size: 0.75rem;
     color: var(--bs-black);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .unified-feedback-main {
@@ -62,6 +68,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.5rem;
     margin-bottom: 0.125rem;
 }
 
@@ -69,10 +76,13 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .unified-feedback-icon {
     font-size: 1.1rem;
+    flex-shrink: 0;
 }
 
 .unified-feedback.alert-success .unified-feedback-icon {
@@ -95,6 +105,9 @@
     font-weight: 600;
     font-size: 0.95rem;
     color: inherit;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .unified-feedback.alert-success .unified-feedback-title {
@@ -145,6 +158,8 @@
     font-weight: 600;
     font-size: 0.8rem;
     color: var(--bs-body-color);
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .unified-feedback.alert-success .unified-feedback-points {

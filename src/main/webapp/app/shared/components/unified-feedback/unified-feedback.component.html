@@ -12,7 +12,7 @@
                 <div class="unified-feedback-header-left">
                     <fa-icon [icon]="inferredIcon()" class="unified-feedback-icon" />
                     @if (inferredTitle()) {
-                        <span class="unified-feedback-title">{{ inferredTitle() }}</span>
+                        <span class="unified-feedback-title" [pTooltip]="inferredTitle()!" tooltipPosition="top">{{ inferredTitle() }}</span>
                     }
                 </div>
                 <div class="unified-feedback-points">{{ points() }} {{ 'artemisApp.feedback.points' | artemisTranslate }}</div>

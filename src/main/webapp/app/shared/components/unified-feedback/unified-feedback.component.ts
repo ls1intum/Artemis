@@ -1,6 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TooltipModule } from 'primeng/tooltip';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faMessage, faTimes } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -25,7 +26,7 @@ interface FeedbackTypeConfig {
     standalone: true,
     templateUrl: './unified-feedback.component.html',
     styleUrls: ['./unified-feedback.component.scss'],
-    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TooltipModule],
 })
 export class UnifiedFeedbackComponent {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
