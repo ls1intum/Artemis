@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.buildagent;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -188,6 +189,29 @@ public class BuildAgentConfiguration {
             binds.add(new Bind(gradleCacheHostPath, new Volume("/root/.gradle"), mode));
         }
         return binds;
+    }
+
+    /**
+     * @return {@code true} if the build-container caches are mounted read-only. In this mode the agent must not
+     *         attempt to prune the cache (it is the operator's responsibility to manage cache contents); the
+     *         {@code BuildContainerCacheCleanupService} short-circuits when this returns {@code true}.
+     */
+    public boolean isBuildContainerCacheReadOnly() {
+        return buildContainerCacheReadOnly;
+    }
+
+    /**
+     * @return the configured Maven build-container cache host path, or {@code null} if no Maven cache is configured.
+     */
+    public Path mavenCacheHostPath() {
+        return (mavenCacheHostPath != null && !mavenCacheHostPath.isBlank()) ? Path.of(mavenCacheHostPath) : null;
+    }
+
+    /**
+     * @return the configured Gradle build-container cache host path, or {@code null} if no Gradle cache is configured.
+     */
+    public Path gradleCacheHostPath() {
+        return (gradleCacheHostPath != null && !gradleCacheHostPath.isBlank()) ? Path.of(gradleCacheHostPath) : null;
     }
 
     /**

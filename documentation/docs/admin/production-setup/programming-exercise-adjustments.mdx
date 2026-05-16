@@ -202,7 +202,7 @@ can coexist if needed.
 
 ### Configuration
 
-Set the following two optional keys in `application-buildagent.yml` on each build agent:
+Set the following keys in `application-buildagent.yml` on each build agent:
 
 ```yaml
 artemis:
@@ -210,8 +210,20 @@ artemis:
         build-container-cache:
             maven: /var/cache/artemis-buildagent/m2
             gradle: /var/cache/artemis-buildagent/gradle
-            read-only: false   # set to true to mount both caches read-only (see below)
+            read-only: false                # set to true to mount both caches read-only (see below)
+
+            # --- Cache cleanup (drain-and-prune, JVM-driven) ----------------------------------
+            cleanup-enabled: true                              # default; flip to false to disable cleanup entirely
+            cleanup-cron: "0 0 5 * * *"                        # Spring 6-field cron; default daily 05:00 UTC
+            cleanup-max-age-days: 30                           # phase 1: delete files unread for N days
+            maven-max-size: 3GB                                # phase 2: hard cap on the Maven cache total size
+            gradle-max-size: 6GB                               # phase 2: hard cap on the Gradle cache total size
+            size-low-watermark-ratio: 0.75                     # evict LRU until total drops below this × max-size
 ```
+
+The bind-mount keys (`maven`, `gradle`, `read-only`) are the minimal subset required to enable caching; the
+`cleanup-*` keys are optional and default to the values shown above. The cleanup mechanism is described in detail
+in the [Cleanup section](#caching-bind-mounts-cleanup).
 
 Either path key can be set independently. When set, the corresponding host directory is bind-mounted into every
 build container at `/root/.m2` or `/root/.gradle` respectively, which is `$HOME/.m2` / `$HOME/.gradle` for the
@@ -268,16 +280,123 @@ The optional `read-only` flag (default `false`) controls the bind access mode fo
   - **Fallback only:** mode `0777` (world-writable) is the easiest last-resort workaround when an agent runs a mix
     of root and non-root build images, but be aware that it lets any local process on the build-agent host modify
     the cache — only acceptable on machines that run nothing besides the Artemis build agent.
-- The cache grows over time. A weekly cron such as
-  `find <path> -atime +30 -type f -delete && find <path> -mindepth 1 -type d -empty -delete` keeps both the file
-  footprint and the empty-directory residue bounded. The default Linux mount option (`relatime`) updates `atime`
-  often enough that this predicate behaves intuitively; on `noatime` mounts switch to `-mtime` instead, but note
-  that `-mtime` reflects download time and will re-download an old-but-hot artefact after each prune.
-- Pair the prune with a disk-space alert on the cache filesystem. The exact mechanism depends on your monitoring
+- The cache grows over time and is pruned by a JVM-driven daily cleanup; see the
+  [Cleanup section](#caching-bind-mounts-cleanup) below.
+- Pair the cleanup with a disk-space alert on the cache filesystem. The exact mechanism depends on your monitoring
   stack — for example, a Prometheus + node_exporter setup can fire when
   `(node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.2` for the mount point, which leaves enough head
   room to investigate before builds start failing. The cache is recoverable (it is just a download mirror), so
   alerting at 80% used is plenty.
+
+### Cleanup (drain-and-prune) {/* #caching-bind-mounts-cleanup */}
+
+The cache is pruned by a scheduled task that runs **inside the build agent JVM**, not by a host-level cron job.
+The agent first pauses itself, waits for in-flight builds to finish, runs the prune, and then resumes. Driving the
+prune from inside the agent avoids two classes of bug that an out-of-band `find -delete` cron is exposed to:
+
+1. **Race-free deletion.** A host cron would race with running builds reading the cache — deleting a file that an
+   active Maven/Gradle process is about to open would force the build to re-download from Maven Central. The agent
+   pauses first, so no build is reading the cache during the prune.
+2. **Single source of truth for cache paths.** The Spring configuration is the only place that names the cache
+   directories; the JVM reads them from there. With a host cron, the path lived in both `application-prod.yml` and
+   the crontab, and the two could drift.
+
+#### Two-phase eviction
+
+Each configured cache is processed independently and is walked exactly once. The walk materialises one entry per
+regular file (path + size + last-access time) into an in-memory list; two filters then run against that list:
+
+1. **Phase 1 — age-based prune (soft target).** Delete every regular file whose `atime` is older than
+   `cleanup-max-age-days` (default 30 days). This is the day-to-day mechanism that keeps the cache lean.
+2. **Phase 2 — size-based eviction (hard cap).** If the surviving total size still exceeds `maven-max-size` /
+   `gradle-max-size` (defaults 3 GB / 6 GB), delete files in ascending order of `atime` (oldest used first) until
+   the remaining total drops below `max-size × size-low-watermark-ratio` (default 0.75 → 2.25 GB / 4.5 GB).
+
+After both phases, empty directories are swept post-order so the layout matches what Maven / Gradle would create
+on the next miss. The hard cap dominates: if you set `cleanup-max-age-days` very high (or disable age-pruning
+implicitly with a tiny watermark), the size cap still bounds total disk use.
+
+> **Why `atime` and not `mtime`?** `mtime` records when an artifact was downloaded — it never changes once the
+> file lands on disk, so an `mtime`-based prune re-downloads old-but-still-hot artifacts after every cycle.
+> `atime` records when the file was last read, which is exactly what we want for an LRU cache. The default Linux
+> mount option `relatime` bumps `atime` at most once per day (sufficient for our 30-day default) without the I/O
+> overhead of strict `atime`. The cleanup task does not work correctly on filesystems mounted with `noatime`;
+> use `relatime` or `strictatime` for the cache mount.
+
+#### Pause semantics and race safety
+
+The cleanup task takes an exclusive maintenance pause through the build agent's existing pause/resume mechanism:
+
+- It calls `pauseForMaintenance()` on `SharedQueueProcessingService`. The call returns `true` only when this
+  invocation actually transitioned the agent from running to paused.
+- If the return is `false`, the agent was already paused (administrator pause, failure-backoff, or an overlapping
+  cleanup cycle). The cleanup task **logs and aborts without resuming** — ownership of the pause stays with
+  whoever already held it. This is enforced by an integration test
+  (`testCacheCleanupDoesNotResumeAdminPause`).
+- The pause causes the agent's listener and scheduled job-pickup task to be removed, so no new jobs are accepted.
+  In-flight builds run to completion up to `pause-grace-period-seconds` (default 60 s); any straggler is force-
+  cancelled and re-queued, where another live agent picks it up.
+- The resume call is wrapped in a `finally`, so an exception inside the prune still resumes the agent.
+
+The whole cleanup invocation is bounded by a 15-minute wall-clock cap. If walking and pruning the caches exceeds
+that duration (pathological filesystem state, NFS hang, etc.), the in-flight phase finishes its current file,
+remaining files are skipped, and the agent is resumed. The next scheduled invocation re-runs the cleanup from
+scratch.
+
+#### Per-agent staggering
+
+`cleanup-cron` is a Spring 6-field cron expression and is templated per host by Ansible so multiple agents in the
+same group do not drain simultaneously. The reference inventory uses a 3-minute offset based on the trailing
+number in the agent's hostname:
+
+```yaml
+# group_vars/<agent group>.yml
+continuous_integration:
+  localci:
+    build_container_cache:
+      cleanup_cron: "0 {{ (inventory_hostname.split('.')[0] | regex_search('([0-9]+)$') | int - 1) * 3 }} 5 * * *"
+```
+
+That resolves to `0 0 5 * * *` on `agent01`, `0 3 5 * * *` on `agent02`, …, `0 57 5 * * *` on `agent20`. The
+spread keeps total cluster capacity at ≥ (N − 1) / N at any moment during the maintenance window. 05:00 UTC was
+chosen because it falls outside business hours for the European audience that Artemis is typically deployed for;
+override per environment if your audience differs.
+
+If two or more agents do happen to drain at the same time (e.g. multiple groups inheriting the same cron), the
+cluster still degrades gracefully — pending builds wait briefly until one of them resumes — but the staggered
+expression is preferred so the operator never has to wonder.
+
+#### Read-only caches skip cleanup
+
+When `read-only: true` is set, the bind mounts are read-only inside the container, so by definition the agent
+cannot grow the cache and there is nothing for the cleanup task to prune. In that mode the cleanup short-circuits
+with a log line (`Build-container cache is read-only; cleanup is the operator's responsibility, skipping.`) and
+the agent is not paused. Operators using read-only caches own cache contents — typically a separate warm-up job
+populates the cache out of band; the prune of that warm-up cache is on the operator's side.
+
+#### Operator runbook
+
+- **Disable cleanup temporarily** (e.g. while debugging) — set `cleanup-enabled: false` in
+  `application-buildagent.yml` and restart the agent. The agent will keep serving builds; the cache will grow
+  monotonically until you re-enable cleanup.
+- **Force an immediate prune** — the cleanup task is invoked via `@Scheduled` and is not exposed as a REST
+  endpoint by default; the simplest "manual prune" is to (a) shorten `cleanup-cron` to fire in the next minute,
+  restart the agent, wait, then revert and restart again; or (b) restart the agent twice (the second restart
+  loses no work because the first has already drained) and then rely on the next scheduled cycle.
+- **Inspect what the prune did** — search the agent log for the line:
+  `Cache prune for /var/cache/artemis-buildagent/m2: age-deleted=X files / X bytes; size-deleted=X files / X bytes;`
+  Each invocation logs one such line per configured cache, plus the empty-directory sweep count and total
+  duration.
+- **Wipe the cache after suspected corruption** — pause the agent administratively (via the admin UI or
+  Hazelcast pause topic), `rm -rf /var/cache/artemis-buildagent/m2/*` and `/gradle/*` as root, then resume.
+  The next builds will re-download from Maven Central; the cache warms back up over the following hours.
+- **Adjust size caps for an agent with a tighter disk** — set `maven-max-size` / `gradle-max-size` in the agent
+  group's inventory (Ansible `group_vars/<group>.yml`). Spring's `DataSize` parser accepts `MB`, `GB`, etc. The
+  values render straight through to `application-prod.yml` on the host; no role change is needed.
+
+The default values (3 GB Maven, 6 GB Gradle, 30-day age threshold, daily 05:00 UTC) are sized for the production
+agents in the Artemis reference fleet (74 GB root filesystem, ~25–35 GB free). Tighten them for agents on smaller
+disks; loosen for fat agents that serve many distinct exercises.
 
 ### Caveats
 

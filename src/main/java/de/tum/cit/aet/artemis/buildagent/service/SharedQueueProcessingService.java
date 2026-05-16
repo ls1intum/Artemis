@@ -203,6 +203,30 @@ public class SharedQueueProcessingService {
     }
 
     /**
+     * Pauses the agent for maintenance work (e.g. cache cleanup) initiated by another local service.
+     * <p>
+     * Delegates to {@link #pauseBuildAgent(boolean)} with {@code dueToFailures=false} so the consecutive-failure
+     * counter is not affected and the status DTO reflects an administrative pause, not a back-off pause. The
+     * transition check inside {@code pauseBuildAgent} is performed under the agent state-transition lock, so this
+     * call is race-free against a concurrent administrative pause.
+     *
+     * @return {@code true} if this call actually transitioned the agent from running to paused. {@code false} if
+     *         the agent was already paused (idempotent no-op); callers must treat that as "someone else owns the
+     *         pause" and must not invoke {@link #resumeFromMaintenance()} in their cleanup path.
+     */
+    public boolean pauseForMaintenance() {
+        return pauseBuildAgent(false);
+    }
+
+    /**
+     * Resumes the agent after a maintenance cycle. Idempotent — safe to call from a {@code finally} block even if
+     * {@link #pauseForMaintenance()} returned {@code false} or threw before pausing succeeded.
+     */
+    public void resumeFromMaintenance() {
+        resumeBuildAgent();
+    }
+
+    /**
      * Resets the initialized state so that init() will re-register all listeners.
      * This is useful for tests that need to re-initialize the service after calling
      * removeListenerAndCancelScheduledFuture().
@@ -998,8 +1022,11 @@ public class SharedQueueProcessingService {
      * @param dueToFailures {@code true} if the pause was triggered by repeated build failures
      *                          (e.g. to implement back-off behaviour), {@code false} if the pause
      *                          was initiated administratively or for maintenance.
+     * @return {@code true} if this call actually transitioned the agent from running to paused;
+     *         {@code false} if the agent was already paused (idempotent no-op). Callers that intend
+     *         to resume the agent later must only do so if they observed the {@code true} transition.
      */
-    private void pauseBuildAgent(boolean dueToFailures) {
+    private boolean pauseBuildAgent(boolean dueToFailures) {
         // Collect running job futures outside the lock so we can wait on them without holding it.
         List<CompletableFuture<BuildResult>> runningFuturesWrapper = List.of();
 
@@ -1007,7 +1034,7 @@ public class SharedQueueProcessingService {
         try {
             if (isPaused.get()) {
                 log.info("Build agent is already paused");
-                return;
+                return false;
             }
             log.info("Pausing build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
 
@@ -1059,6 +1086,7 @@ public class SharedQueueProcessingService {
 
         // After handling all running jobs, close the underlying services of the build agent.
         buildAgentConfiguration.closeBuildAgentServices();
+        return true;
     }
 
     private void handleTimeoutAndCancelRunningJobs() {

@@ -62,10 +62,26 @@ artemis:
         # `read-only: true` mounts both caches read-only inside the container — required when student submissions
         # must not be able to write the shared cache (cache-poisoning concern). The cache must then be populated
         # out of band, e.g. by a trusted warm-up build the operator runs separately. Default false.
+        #
+        # The cleanup-* keys configure the JVM-driven cache cleanup. The agent pauses itself, prunes the cache, then
+        # resumes. The prune runs in two phases: (1) age-based — delete files whose access time is older than
+        # `cleanup-max-age-days`; (2) size-based — if the total cache size still exceeds `maven-max-size` /
+        # `gradle-max-size`, delete least-recently-used files until the total drops below `size * size-low-watermark-ratio`.
+        # When the cache is mounted read-only the cleanup short-circuits — cache contents are then the operator's
+        # responsibility. See documentation/docs/admin/production-setup/programming-exercise-adjustments.mdx.
+        #
+        # `cleanup-cron` is a Spring cron expression (6 fields: sec min hour dom month dow). Ansible templates a
+        # per-agent stagger so multiple agents in the same group do not drain simultaneously.
         # build-container-cache:
         #     maven: /var/cache/artemis-buildagent/m2
         #     gradle: /var/cache/artemis-buildagent/gradle
         #     read-only: false
+        #     cleanup-enabled: true
+        #     cleanup-cron: "0 0 5 * * *"        # default: daily 05:00 UTC
+        #     cleanup-max-age-days: 30
+        #     maven-max-size: 3GB
+        #     gradle-max-size: 6GB
+        #     size-low-watermark-ratio: 0.75     # evict until total drops below 0.75 × max-size
         proxies:
             use-system-proxy: false
             default:

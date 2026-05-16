@@ -12,6 +12,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,6 +32,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
@@ -88,6 +94,12 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
     @Autowired
     private BuildAgentInformationService buildAgentInformationService;
+
+    @Autowired
+    private BuildContainerCacheCleanupService buildContainerCacheCleanupService;
+
+    @Autowired
+    private de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration buildAgentConfiguration;
 
     @BeforeAll
     void init() {
@@ -403,6 +415,72 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             var queued = buildJobQueue.peek();
             return queued != null && queued.id().equals(queueItem.id());
         });
+    }
+
+    /**
+     * End-to-end test for the cache cleanup service: configure a tempdir cache with an old file, invoke the
+     * cleanup service directly, and assert (a) age-eligible files are deleted, (b) the agent transitions
+     * paused-then-resumed via the real pause/resume machinery and ends in {@code ACTIVE}.
+     */
+    @Test
+    void testCacheCleanupPausesAndResumesAgent(@org.junit.jupiter.api.io.TempDir Path tempCache) throws IOException {
+        Path oldFile = tempCache.resolve("group/old.jar");
+        Files.createDirectories(oldFile.getParent());
+        Files.write(oldFile, new byte[64]);
+        Files.setAttribute(oldFile, "basic:lastAccessTime", FileTime.from(Instant.now().minus(Duration.ofDays(60))));
+
+        // Point the cleanup service at our tempdir as the Maven cache; leave Gradle unset.
+        ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", tempCache.toString());
+        ReflectionTestUtils.setField(buildAgentConfiguration, "gradleCacheHostPath", "");
+        try {
+            var outcome = buildContainerCacheCleanupService.runCleanup();
+
+            assertThat(outcome.wasSkipped()).isFalse();
+            assertThat(outcome.perCache()).hasSize(1);
+            assertThat(outcome.perCache().getFirst().ageDeletedFiles()).isEqualTo(1);
+            assertThat(oldFile).doesNotExist();
+
+            // The agent must end the call in a running state (resumeFromMaintenance was called). With no queued
+            // jobs the post-resume status is IDLE; if a queued job exists the agent transitions to ACTIVE. Either
+            // is acceptable for this test — what matters is that the agent is NOT paused.
+            await().atMost(30, TimeUnit.SECONDS).until(() -> {
+                var info = buildAgentInformation.get(buildAgentShortName);
+                return info != null && (info.status() == BuildAgentStatus.ACTIVE || info.status() == BuildAgentStatus.IDLE);
+            });
+            assertThat(sharedQueueProcessingService.isPaused()).isFalse();
+        }
+        finally {
+            ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "");
+            ReflectionTestUtils.setField(buildAgentConfiguration, "gradleCacheHostPath", "");
+        }
+    }
+
+    /**
+     * Race-safety invariant: if another caller (admin pause, failure backoff) already paused the agent, the cleanup
+     * service must NOT trigger a resume on their behalf. The agent must remain paused after {@code runCleanup()}.
+     */
+    @Test
+    void testCacheCleanupDoesNotResumeAdminPause(@org.junit.jupiter.api.io.TempDir Path tempCache) throws IOException {
+        pauseBuildAgentTopic.publish(buildAgentShortName);
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+            var info = buildAgentInformation.get(buildAgentShortName);
+            return info != null && info.status() == BuildAgentStatus.PAUSED;
+        });
+
+        ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", tempCache.toString());
+        try {
+            var outcome = buildContainerCacheCleanupService.runCleanup();
+
+            assertThat(outcome.wasSkipped()).isTrue();
+            assertThat(outcome.skippedReason()).isEqualTo("already-paused");
+            // Agent must remain paused — cleanup must not resume someone else's pause.
+            var info = buildAgentInformation.get(buildAgentShortName);
+            assertThat(info.status()).isEqualTo(BuildAgentStatus.PAUSED);
+        }
+        finally {
+            ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "");
+            // @AfterEach will resume the agent for subsequent tests.
+        }
     }
 
     @Test
