@@ -226,8 +226,9 @@ The optional `read-only` flag (default `false`) controls the bind access mode fo
 - `read-only: true` — both caches are mounted with `:ro`. Untrusted student submissions cannot mutate the shared
   cache, so cache poisoning is structurally impossible. The trade-off is that the cache must be populated out of
   band — typically by a trusted "warm-up" build the operator runs separately (`docker run --rm -v /var/cache/artemis-buildagent/m2:/root/.m2 ls1tum/artemis-maven-template:… mvn -f /path/to/seed-pom.xml dependency:resolve`)
-  or by occasionally flipping the flag back to `false` long enough to repopulate. An empty read-only cache is
-  harmless but provides no speedup.
+  or by occasionally flipping the flag back to `false` long enough to repopulate. An empty or partial read-only
+  cache will fail builds because Maven/Gradle cannot write fetched artifacts to a read-only local repository —
+  warm-up is required before enabling read-only.
 
 ### Host directory requirements
 
