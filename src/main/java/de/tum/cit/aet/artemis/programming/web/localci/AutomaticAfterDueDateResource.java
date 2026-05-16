@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.web.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -62,24 +63,21 @@ public class AutomaticAfterDueDateResource {
     @PostMapping("programming-exercises/timeline/automatic-after-due-date-preview")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ZonedDateTime> previewAutomaticAfterDueDate(@RequestBody AutomaticAfterDueDatePreviewRequestDTO requestDTO) {
+    public ResponseEntity<ZonedDateTime> previewAutomaticAfterDueDate(@RequestBody AutomaticAfterDueDatePreviewRequestDTO requestDTO) throws IOException {
         Long programmingExerciseId = requestDTO.programmingExerciseId();
         Long examId = requestDTO.examId();
 
-        Exam examForCreation = null;
         if (programmingExerciseId != null) {
             var programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
             authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         }
         if (examId != null) {
-            examForCreation = examRepositoryApi.orElseThrow(() -> new BadRequestAlertException("Exam support is not enabled", ENTITY_NAME, "examSupportNotEnabled"))
+            Exam exam = examRepositoryApi.orElseThrow(() -> new BadRequestAlertException("Exam support is not enabled", ENTITY_NAME, "examSupportNotEnabled"))
                     .findByIdElseThrow(examId);
-            examAccessApi.orElseThrow(() -> new BadRequestAlertException("Exam support is not enabled", ENTITY_NAME, "examSupportNotEnabled"))
-                    .checkCourseAndExamAccessForEditorElseThrow(examForCreation.getCourse().getId(), examForCreation.getId());
+            examAccessApi.orElseThrow().checkCourseAndExamAccessForEditorElseThrow(exam.getCourse().getId(), exam.getId());
         }
 
-        ZonedDateTime previewDate = automaticAfterDueDateService.getAutomaticBuildAndTestDate(programmingExerciseId, requestDTO.dueDate(), requestDTO.hasAfterDueDateBuildPhase(),
-                requestDTO.programmingLanguage(), requestDTO.projectType(), requestDTO.staticCodeAnalysisEnabled(), requestDTO.sequentialTestRuns(), examForCreation);
+        ZonedDateTime previewDate = automaticAfterDueDateService.getAutomaticBuildAndTestDate(requestDTO);
         return ResponseEntity.ok(previewDate);
     }
 

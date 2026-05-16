@@ -320,10 +320,10 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             hasAfterDueDateBuildPhase: this.customizeBuildPlan()
                 ? !!this.buildPhasesTemplateService.buildPlan()?.phases?.some((phase) => phase.condition === 'AFTER_DUE_DATE')
                 : undefined,
-            programmingLanguage: this.exercise.programmingLanguage,
+            programmingLanguage: this.exercise.programmingLanguage!,
             projectType: this.exercise.projectType,
-            staticCodeAnalysisEnabled: this.exercise.staticCodeAnalysisEnabled,
-            sequentialTestRuns: this.exercise.buildConfig?.sequentialTestRuns,
+            staticCodeAnalysisEnabled: !!this.exercise.staticCodeAnalysisEnabled,
+            sequentialTestRuns: !!this.exercise.buildConfig?.sequentialTestRuns,
         };
 
         // avoid many calls to server when user is typing script for example
