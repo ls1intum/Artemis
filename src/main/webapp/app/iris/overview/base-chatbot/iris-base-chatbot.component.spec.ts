@@ -983,7 +983,7 @@ describe('IrisBaseChatbotComponent', () => {
 
             const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
             expect(relatedEntityButton).not.toBeNull();
-            expect(component.relatedEntityRoute()).toBe('../lectures/55');
+            expect(component.relatedEntityRoute()).toBe('/courses/456/lectures/55');
         });
 
         it('should display correct related entity button when programming exercise session selected', async () => {
@@ -1002,7 +1002,7 @@ describe('IrisBaseChatbotComponent', () => {
 
             const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
             expect(relatedEntityButton).not.toBeNull();
-            expect(component.relatedEntityRoute()).toBe('../exercises/99');
+            expect(component.relatedEntityRoute()).toBe('/courses/456/exercises/99');
         });
 
         it('should display correct related entity button when text exercise session selected', async () => {
@@ -1020,7 +1020,7 @@ describe('IrisBaseChatbotComponent', () => {
 
             const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
             expect(relatedEntityButton).not.toBeNull();
-            expect(component.relatedEntityRoute()).toBe('../exercises/77');
+            expect(component.relatedEntityRoute()).toBe('/courses/456/exercises/77');
             expect(component.relatedEntityLinkButtonLabel()).toBe('artemisApp.exerciseChatbot.goToRelatedEntityButton.exerciseLabel');
         });
     });

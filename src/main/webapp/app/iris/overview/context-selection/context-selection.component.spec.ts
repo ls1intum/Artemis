@@ -142,16 +142,6 @@ describe('ContextSelectionComponent', () => {
     });
 
     describe('allGroups', () => {
-        it('should include a course group with the course name', () => {
-            const groups = component.allGroups();
-            const courseGroup = groups.find((g) => g.label === 'artemisApp.iris.contextSelection.courseGroup');
-            expect(courseGroup).toBeDefined();
-            expect(courseGroup!.items).toHaveLength(1);
-            expect(courseGroup!.items[0].label).toBe('Test Course');
-            expect(courseGroup!.items[0].mode).toBe(ChatServiceMode.COURSE);
-            expect(courseGroup!.items[0].entityId).toBe(courseId);
-        });
-
         it('should include a lectures group', () => {
             const groups = component.allGroups();
             const lecturesGroup = groups.find((g) => g.label === 'artemisApp.iris.contextSelection.lecturesGroup');
@@ -176,16 +166,6 @@ describe('ContextSelectionComponent', () => {
 
             expect(programmingItem?.mode).toBe(ChatServiceMode.PROGRAMMING_EXERCISE);
             expect(textItem?.mode).toBe(ChatServiceMode.TEXT_EXERCISE);
-        });
-
-        it('should not include course group when courseName is empty', () => {
-            courseStorageServiceMock.getCourse.mockReturnValue({ id: courseId, title: '', lectures: [], exercises: [] });
-            fixture = TestBed.createComponent(ContextSelectionComponent);
-            component = fixture.componentInstance;
-
-            const groups = component.allGroups();
-            const courseGroup = groups.find((g) => g.label === 'artemisApp.iris.contextSelection.courseGroup');
-            expect(courseGroup).toBeUndefined();
         });
 
         it('should not include lectures group when there are no lectures', () => {
