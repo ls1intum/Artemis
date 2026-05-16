@@ -49,11 +49,14 @@ class BuildContainerCacheCleanupServiceTest {
         buildAgentConfiguration = mock(BuildAgentConfiguration.class);
         sharedQueueProcessingService = mock(SharedQueueProcessingService.class);
 
-        // Default: both caches configured, not read-only, pause is granted.
+        // Default: both caches configured, not read-only, pause is granted and remains held throughout the run.
         when(buildAgentConfiguration.mavenCacheHostPath()).thenReturn(mavenCache);
         when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(gradleCache);
         when(buildAgentConfiguration.isBuildContainerCacheReadOnly()).thenReturn(false);
         lenient().when(sharedQueueProcessingService.pauseForMaintenance()).thenReturn(true);
+        // The cleanup checks isPaused() at every loop iteration to detect mid-run resume; default to "still paused"
+        // so the standard prune flow proceeds. Tests that exercise the abort-on-resume path override this.
+        lenient().when(sharedQueueProcessingService.isPaused()).thenReturn(true);
 
         service = new BuildContainerCacheCleanupService(buildAgentConfiguration, sharedQueueProcessingService);
         service.setCleanupEnabled(true);
@@ -224,6 +227,47 @@ class BuildContainerCacheCleanupServiceTest {
 
         verify(sharedQueueProcessingService, times(1)).pauseForMaintenance();
         verify(sharedQueueProcessingService, times(1)).resumeFromMaintenance();
+    }
+
+    @Test
+    void cleanupAbortsWhenPauseIsReleasedMidRun() throws IOException {
+        // Many age-eligible files so phase 1 runs long enough that we can flip pause-released between iterations.
+        for (int i = 0; i < 50; i++) {
+            touchFileWithAtime(mavenCache.resolve("a/file" + i + ".jar"), 64, daysAgo(60));
+        }
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+        // First call to isPaused() inside the loop returns true (still ours); the second returns false (released).
+        when(sharedQueueProcessingService.isPaused()).thenReturn(true, false);
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        PruneStats mavenStats = statsFor(outcome, mavenCache);
+        // We must have stopped early — strictly fewer than the 50 eligible files were deleted.
+        assertThat(mavenStats.ageDeletedFiles()).isLessThan(50);
+        // The finally block still resumes (idempotent), so resume is called once.
+        verify(sharedQueueProcessingService, times(1)).resumeFromMaintenance();
+    }
+
+    @Test
+    void invalidLowWatermarkRatioFallsBackToDefault() throws IOException {
+        // Cap 1000 bytes, ratio 2.0 → would compute low=2000 (> cap) and disable phase 2 silently. The clamp must
+        // detect this and fall back to 0.75 → low=750, evicting until total ≤ 750.
+        service.setMavenMaxSize(DataSize.ofBytes(1000));
+        service.setLowWatermarkRatio(2.0);
+        service.setMaxAgeDays(365);  // disable age phase
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+
+        Path f1 = touchFileWithAtime(mavenCache.resolve("a/old.jar"), 500, daysAgo(20));
+        Path f2 = touchFileWithAtime(mavenCache.resolve("a/mid.jar"), 500, daysAgo(10));
+        Path f3 = touchFileWithAtime(mavenCache.resolve("a/new.jar"), 500, daysAgo(1));
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        PruneStats stats = statsFor(outcome, mavenCache);
+        assertThat(stats.sizeDeletedFiles()).isGreaterThanOrEqualTo(1);
+        // The oldest must be the one that goes first.
+        assertThat(f1).doesNotExist();
+        assertThat(f3).exists();
     }
 
     // --- helpers ------------------------------------------------------------------------------------------------

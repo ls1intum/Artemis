@@ -225,6 +225,11 @@ The bind-mount keys (`maven`, `gradle`, `read-only`) are the minimal subset requ
 `cleanup-*` keys are optional and default to the values shown above. The cleanup mechanism is described in detail
 in the [Cleanup section](#caching-bind-mounts-cleanup).
 
+> **Size unit convention.** Spring's `DataSize` parser treats `3GB` as **3 GiB** (3 × 1024³ ≈ 3.22 × 10⁹ bytes),
+> not 3 × 10⁹ bytes. This matches `df -h` / `du -h` output. If you prefer decimal multiples (3 × 10⁹), use the
+> explicit byte count: `maven-max-size: 3000000000`. The 7 % difference rarely matters in practice but is worth
+> knowing when sizing against a tight disk.
+
 Either path key can be set independently. When set, the corresponding host directory is bind-mounted into every
 build container at `/root/.m2` or `/root/.gradle` respectively, which is `$HOME/.m2` / `$HOME/.gradle` for the
 default root-based Java build images shipped with Artemis (`ls1tum/artemis-maven-template`, `ls1tum/artemis-gradle-template`,
@@ -338,10 +343,18 @@ The cleanup task takes an exclusive maintenance pause through the build agent's 
   cancelled and re-queued, where another live agent picks it up.
 - The resume call is wrapped in a `finally`, so an exception inside the prune still resumes the agent.
 
-The whole cleanup invocation is bounded by a 15-minute wall-clock cap. If walking and pruning the caches exceeds
-that duration (pathological filesystem state, NFS hang, etc.), the in-flight phase finishes its current file,
-remaining files are skipped, and the agent is resumed. The next scheduled invocation re-runs the cleanup from
-scratch.
+The prune phase itself is bounded by a 15-minute wall-clock cap (checked at every loop iteration **and**
+periodically inside the initial file walk so a hung NFS mount cannot block past the cap). If exceeded, the
+in-flight phase finishes its current file, remaining files are skipped, and the agent is resumed. The next
+scheduled invocation re-runs the cleanup from scratch. The cap is on the prune itself, not on the total
+maintenance window: the drain of in-flight builds can additionally take up to `pause-grace-period-seconds`
+(default 60 s) before the prune starts.
+
+If the agent's pause is released while the prune is mid-way (an administrator clicks "Resume" or a remote
+`resumeBuildAgentTopic` message fires), the cleanup detects this on the next loop iteration and aborts
+immediately rather than continue deleting files behind the back of a build that is now allowed to run. The
+abort is logged as `Pause was released during phase N (...) for <root>; aborting prune to avoid racing with
+a live build.`
 
 #### Per-agent staggering
 

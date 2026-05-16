@@ -184,30 +184,33 @@ public class BuildContainerCacheCleanupService {
         Path root = target.root;
         if (!Files.isDirectory(root)) {
             log.warn("Configured cache path {} does not exist or is not a directory; skipping.", root);
-            return new PruneStats(root, 0, 0, 0, 0, 0, 0, 1, Duration.ZERO);
+            return summariseAndLog(root, 0, 0, 0, 0, 0, 0, 1, start);
         }
 
-        // Phase 0: collect file metadata in a single walk.
+        // Phase 0: collect file metadata in a single walk. The walk is bounded by the wall-clock deadline so a
+        // hung filesystem (NFS stall, etc.) cannot keep the agent paused indefinitely.
         List<FileEntry> entries = new ArrayList<>();
         int errors = 0;
         try {
-            entries = walk(root);
+            entries = walk(root, deadline);
         }
         catch (IOException e) {
             log.warn("Walking cache {} failed; the prune for this cache will be skipped.", root, e);
             errors++;
-            return new PruneStats(root, 0, 0, 0, 0, 0, 0, errors, Duration.between(start, Instant.now()));
+            return summariseAndLog(root, 0, 0, 0, 0, 0, 0, errors, start);
         }
 
         long initialBytes = entries.stream().mapToLong(FileEntry::size).sum();
         Instant ageCutoff = Instant.now().minus(Duration.ofDays(maxAgeDays));
 
-        // Phase 1: age-based eviction. Remove entries we deleted so phase 2 sees the survivors.
+        // Phase 1: age-based eviction. Remove every age-eligible entry from the in-memory list whether or not the
+        // file delete succeeded — phase 2 must not retry an already-failed delete (would double-count errors and
+        // be guaranteed to fail again for the same reason).
         long ageDeletedBytes = 0;
         int ageDeletedFiles = 0;
         var it = entries.iterator();
         while (it.hasNext()) {
-            if (Instant.now().isAfter(deadline)) {
+            if (isCleanupAborted(deadline, "phase 1 (age)", root)) {
                 break;
             }
             FileEntry entry = it.next();
@@ -215,24 +218,24 @@ public class BuildContainerCacheCleanupService {
                 if (tryDelete(entry.path)) {
                     ageDeletedFiles++;
                     ageDeletedBytes += entry.size;
-                    it.remove();
                 }
                 else {
                     errors++;
                 }
+                it.remove();
             }
         }
 
         // Phase 2: size-based eviction (LRU by atime among survivors).
         long survivingBytes = initialBytes - ageDeletedBytes;
         long high = target.maxSize.toBytes();
-        long low = Math.round(high * lowWatermarkRatio);
+        long low = Math.round(high * effectiveLowWatermarkRatio());
         long sizeDeletedBytes = 0;
         int sizeDeletedFiles = 0;
         if (survivingBytes > high) {
             entries.sort(Comparator.comparing(FileEntry::atime));
             for (FileEntry entry : entries) {
-                if (survivingBytes <= low || Instant.now().isAfter(deadline)) {
+                if (survivingBytes <= low || isCleanupAborted(deadline, "phase 2 (size)", root)) {
                     break;
                 }
                 if (tryDelete(entry.path)) {
@@ -249,6 +252,16 @@ public class BuildContainerCacheCleanupService {
         // Sweep empty directories post-order. Walk afresh because the in-memory list does not track dirs.
         int emptyDirsRemoved = sweepEmptyDirectories(root, deadline);
 
+        return summariseAndLog(root, initialBytes, ageDeletedFiles, ageDeletedBytes, sizeDeletedFiles, sizeDeletedBytes, emptyDirsRemoved, errors, start);
+    }
+
+    /**
+     * Emits the canonical {@code Cache prune for <root>: ...} info line and builds the {@link PruneStats} record.
+     * Centralised so every exit point — including the early returns on missing root and walk failure — produces the
+     * grep marker that the admin runbook documents.
+     */
+    private PruneStats summariseAndLog(Path root, long initialBytes, int ageDeletedFiles, long ageDeletedBytes, int sizeDeletedFiles, long sizeDeletedBytes, int emptyDirsRemoved,
+            int errors, Instant start) {
         Duration duration = Duration.between(start, Instant.now());
         log.info("Cache prune for {}: age-deleted={} files / {} bytes; size-deleted={} files / {} bytes; empty dirs removed={}; errors={}; took {}", root, ageDeletedFiles,
                 ageDeletedBytes, sizeDeletedFiles, sizeDeletedBytes, emptyDirsRemoved, errors, duration);
@@ -256,15 +269,41 @@ public class BuildContainerCacheCleanupService {
     }
 
     /**
+     * Returns {@code true} when the in-flight prune must stop — either the wall-clock cap has been reached or the
+     * agent is no longer paused (admin/topic resume, failure-backoff). Logs once at the abort point so the operator
+     * can correlate the partial work in the {@code Cache prune for ...} summary line.
+     */
+    private boolean isCleanupAborted(Instant deadline, String phase, Path root) {
+        if (Instant.now().isAfter(deadline)) {
+            log.warn("Wall-clock cap reached during {} for {}; remaining files skipped until the next cycle.", phase, root);
+            return true;
+        }
+        if (!sharedQueueProcessingService.isPaused()) {
+            log.warn("Pause was released during {} for {} (admin or topic resume); aborting prune to avoid racing with a live build.", phase, root);
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Walks the cache tree and returns one {@link FileEntry} per regular file. Symlinks, sockets, FIFOs, and other
      * non-regular files are ignored (the Maven / Gradle cache structure does not contain them under normal use).
+     * <p>
+     * The walk itself is bounded by the wall-clock {@code deadline} and by the agent staying paused — checked every
+     * {@value #WALK_DEADLINE_CHECK_INTERVAL} files. Without this, a hung filesystem (NFS stall, autofs backoff, …)
+     * could keep the agent paused indefinitely while {@code Files.walkFileTree} blocked inside the kernel.
      */
-    private List<FileEntry> walk(Path root) throws IOException {
+    private List<FileEntry> walk(Path root, Instant deadline) throws IOException {
         List<FileEntry> result = new ArrayList<>();
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
 
+            int counter;
+
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                if ((++counter & (WALK_DEADLINE_CHECK_INTERVAL - 1)) == 0 && isCleanupAborted(deadline, "phase 0 (walk)", root)) {
+                    return FileVisitResult.TERMINATE;
+                }
                 if (attrs.isRegularFile()) {
                     FileTime atime = attrs.lastAccessTime();
                     result.add(new FileEntry(file, attrs.size(), atime.toInstant()));
@@ -281,6 +320,9 @@ public class BuildContainerCacheCleanupService {
         return result;
     }
 
+    /** Files between deadline checks during the walk. Power of two so we can mask instead of mod. */
+    private static final int WALK_DEADLINE_CHECK_INTERVAL = 1024;
+
     /**
      * Post-order sweep of empty directories below {@code root} (the root itself is kept). Mirrors
      * {@code find <root> -mindepth 1 -type d -empty -delete} but skips on wall-clock deadline.
@@ -292,7 +334,7 @@ public class BuildContainerCacheCleanupService {
 
                 @Override
                 public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-                    if (Instant.now().isAfter(deadline)) {
+                    if (isCleanupAborted(deadline, "empty-dir sweep", root)) {
                         return FileVisitResult.TERMINATE;
                     }
                     if (dir.equals(root)) {
@@ -329,6 +371,21 @@ public class BuildContainerCacheCleanupService {
             log.warn("Failed to delete cache file {}: {}", file, e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Returns {@link #lowWatermarkRatio} clamped to {@code (0.0, 1.0)}. Misconfigurations outside that range would
+     * either disable phase-2 eviction entirely (ratio ≥ 1.0 → low ≥ high, condition {@code survivingBytes ≤ low}
+     * is met immediately) or evict to zero / negative bytes (ratio ≤ 0.0). Either is silently wrong; we clamp and
+     * warn so the operator notices in the log without crashing the agent at boot.
+     */
+    private double effectiveLowWatermarkRatio() {
+        if (Double.isNaN(lowWatermarkRatio) || lowWatermarkRatio <= 0.0 || lowWatermarkRatio >= 1.0) {
+            log.warn("size-low-watermark-ratio is {}, which is outside the open interval (0, 1); falling back to 0.75. Fix the configuration to silence this warning.",
+                    lowWatermarkRatio);
+            return 0.75;
+        }
+        return lowWatermarkRatio;
     }
 
     private List<CacheTarget> collectTargets() {

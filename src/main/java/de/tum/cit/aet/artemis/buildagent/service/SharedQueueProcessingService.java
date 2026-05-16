@@ -209,13 +209,36 @@ public class SharedQueueProcessingService {
      * counter is not affected and the status DTO reflects an administrative pause, not a back-off pause. The
      * transition check inside {@code pauseBuildAgent} is performed under the agent state-transition lock, so this
      * call is race-free against a concurrent administrative pause.
+     * <p>
+     * <strong>Failure semantics.</strong> {@code pauseBuildAgent} flips {@code isPaused} before it performs the
+     * remaining side effects (listener removal, distributed-info update, executor/Docker shutdown). If any of those
+     * throws, the agent would otherwise be left in a paused state with no caller knowing it must resume — silently
+     * parked off the build queue. To prevent that leak, this method catches any throwable after the pause-attempt
+     * and unconditionally calls {@link #resumeBuildAgent()} (which is idempotent and a no-op when the flag is still
+     * unset). The exception is then rethrown so the caller's {@code try/finally} reports the failure.
      *
      * @return {@code true} if this call actually transitioned the agent from running to paused. {@code false} if
      *         the agent was already paused (idempotent no-op); callers must treat that as "someone else owns the
      *         pause" and must not invoke {@link #resumeFromMaintenance()} in their cleanup path.
      */
     public boolean pauseForMaintenance() {
-        return pauseBuildAgent(false);
+        try {
+            return pauseBuildAgent(false);
+        }
+        catch (RuntimeException | Error e) {
+            // pauseBuildAgent may have flipped isPaused to true before the failure (e.g. a Hazelcast hiccup during
+            // listener removal). Roll back so the agent does not stay paused with no caller to resume it.
+            if (isPaused.get()) {
+                try {
+                    log.warn("pauseForMaintenance failed after isPaused was set; rolling back via resumeBuildAgent.");
+                    resumeBuildAgent();
+                }
+                catch (Exception rollbackFailure) {
+                    log.error("Rollback resume after pauseForMaintenance failure also failed; agent may be stuck paused.", rollbackFailure);
+                }
+            }
+            throw e;
+        }
     }
 
     /**

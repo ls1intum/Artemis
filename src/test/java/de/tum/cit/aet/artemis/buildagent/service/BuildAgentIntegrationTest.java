@@ -429,6 +429,8 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         Files.write(oldFile, new byte[64]);
         Files.setAttribute(oldFile, "basic:lastAccessTime", FileTime.from(Instant.now().minus(Duration.ofDays(60))));
 
+        // The test base disables the scheduled cleanup so it cannot fire spontaneously. Re-enable for this test.
+        ReflectionTestUtils.setField(buildContainerCacheCleanupService, "cleanupEnabled", true);
         // Point the cleanup service at our tempdir as the Maven cache; leave Gradle unset.
         ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", tempCache.toString());
         ReflectionTestUtils.setField(buildAgentConfiguration, "gradleCacheHostPath", "");
@@ -450,6 +452,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             assertThat(sharedQueueProcessingService.isPaused()).isFalse();
         }
         finally {
+            ReflectionTestUtils.setField(buildContainerCacheCleanupService, "cleanupEnabled", false);
             ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "");
             ReflectionTestUtils.setField(buildAgentConfiguration, "gradleCacheHostPath", "");
         }
@@ -467,6 +470,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             return info != null && info.status() == BuildAgentStatus.PAUSED;
         });
 
+        ReflectionTestUtils.setField(buildContainerCacheCleanupService, "cleanupEnabled", true);
         ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", tempCache.toString());
         try {
             var outcome = buildContainerCacheCleanupService.runCleanup();
@@ -478,6 +482,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             assertThat(info.status()).isEqualTo(BuildAgentStatus.PAUSED);
         }
         finally {
+            ReflectionTestUtils.setField(buildContainerCacheCleanupService, "cleanupEnabled", false);
             ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "");
             // @AfterEach will resume the agent for subsequent tests.
         }
