@@ -29,7 +29,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.OrganizationCountDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationMemberDTO;
@@ -240,23 +239,6 @@ public class AdminOrganizationResource {
         Page<OrganizationCourseDTO> page = organizationService.getCoursesByOrganizationId(organizationId, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-    }
-
-    /**
-     * GET organizations/:organizationId/count : Get the number of users and courses
-     * currently mapped to an organization
-     *
-     * @param organizationId the id of the organization to retrieve the number of users and courses
-     * @return ResponseEntity containing a map containing the numbers of users and courses
-     */
-    @GetMapping("organizations/{organizationId}/count")
-    public ResponseEntity<OrganizationCountDTO> getNumberOfUsersAndCoursesByOrganization(@PathVariable long organizationId) {
-        log.debug("REST request to get number of users and courses of organization : {}", organizationId);
-
-        OrganizationCountDTO numberOfUsersAndCourses = new OrganizationCountDTO(organizationId, organizationRepository.getNumberOfUsersByOrganizationId(organizationId),
-                organizationRepository.getNumberOfCoursesByOrganizationId(organizationId));
-
-        return new ResponseEntity<>(numberOfUsersAndCourses, HttpStatus.OK);
     }
 
     /**

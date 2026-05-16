@@ -21,7 +21,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.OrganizationCountDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationMemberDTO;
@@ -597,29 +596,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).id()).isEqualTo(matchingCourse.getId());
-    }
-
-    /**
-     * Test get number of users and courses of a given organization
-     */
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetNumberOfUsersAndCoursesOfOrganization() throws Exception {
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        course1 = courseRepository.save(course1);
-
-        Organization organization = organizationUtilService.createOrganization();
-        organization = organizationRepo.save(organization);
-
-        courseRepository.addOrganizationToCourse(course1.getId(), organization);
-        User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testGetNumberOfUsers_");
-
-        userTestRepository.addOrganizationToUser(student.getId(), organization);
-
-        OrganizationCountDTO result = request.get("/api/core/admin/organizations/" + organization.getId() + "/count", HttpStatus.OK, OrganizationCountDTO.class);
-
-        assertThat(result.numberOfUsers()).isEqualTo(1);
-        assertThat(result.numberOfCourses()).isEqualTo(1);
     }
 
     /**
