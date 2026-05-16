@@ -78,7 +78,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
 
         describe('itemCount', () => {
             it('should equal action button count plus searchable entities when not searching', () => {
-                // actionButtonCount = 1 (lecture search button), searchableEntities.length = 5
+                // actionButtonCount = 1 (lecture button; iris is inline), searchableEntities.length = 5
                 expect(component.itemCount()).toBe(6);
             });
 
@@ -142,24 +142,12 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(spy).not.toHaveBeenCalled();
             });
 
-            it('should emit SearchView.Lecture when Enter is pressed at index 1', () => {
-                const spy = vi.fn();
-                component.viewSelected.subscribe(spy);
-
-                fixture.componentRef.setInput('selectedIndex', 1);
-                fixture.detectChanges();
-
-                const event = new KeyboardEvent('keydown', { key: 'Enter' });
-                component.handleKeydown(event);
-
-                expect(spy).toHaveBeenCalledWith(SearchView.Lecture);
-            });
-
-            it('should handle Enter on entities', () => {
+            it('should handle Enter on first entity at index 1', () => {
+                // Lecture button is at index 0; first entity starts at index 1 (Lecture(0), Entity(1))
                 const spy = vi.fn();
                 component.entityClick.subscribe(spy);
 
-                fixture.componentRef.setInput('selectedIndex', 2); // Iris(0), Lecture(1), Entity(2)
+                fixture.componentRef.setInput('selectedIndex', 1);
                 fixture.detectChanges();
 
                 const event = new KeyboardEvent('keydown', { key: 'Enter' });
@@ -168,10 +156,23 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(spy).toHaveBeenCalledWith(component['searchableEntities'][0]);
             });
 
+            it('should handle Enter on entities', () => {
+                const spy = vi.fn();
+                component.entityClick.subscribe(spy);
+
+                fixture.componentRef.setInput('selectedIndex', 2); // Lecture(0), Entity(1), Entity(2)
+                fixture.detectChanges();
+
+                const event = new KeyboardEvent('keydown', { key: 'Enter' });
+                component.handleKeydown(event);
+
+                expect(spy).toHaveBeenCalledWith(component['searchableEntities'][1]);
+            });
+
             it('should handle Enter on results', () => {
                 fixture.componentRef.setInput('showResults', true);
                 fixture.componentRef.setInput('results', [{ id: '123', type: 'exercise', metadata: { courseId: 1 } }] as GlobalSearchResult[]);
-                fixture.componentRef.setInput('selectedIndex', 2); // Iris(0), Lecture(1), Result(2)
+                fixture.componentRef.setInput('selectedIndex', 1); // Lecture(0), Result(1)
                 fixture.detectChanges();
 
                 const event = new KeyboardEvent('keydown', { key: 'Enter' });
