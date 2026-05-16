@@ -227,7 +227,7 @@ describe('IrisChatService', () => {
 
             expect(createMessageSpy).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: { mode: ChatServiceMode.LECTURE, entityId: pendingEntityId } }));
             // After the send commits the switch, the override is cleared and committed is updated
-            expect(service['_pendingOverride']()).toBeUndefined();
+            expect(service['_pendingContext']()).toBeUndefined();
             expect(service['_committedContext']()).toEqual({ mode: ChatServiceMode.LECTURE, entityId: pendingEntityId });
         });
 

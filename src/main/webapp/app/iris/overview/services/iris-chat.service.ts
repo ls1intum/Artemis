@@ -64,11 +64,11 @@ export class IrisChatService implements OnDestroy {
     /**
      * Set only when the user has selected a different context via the dropdown but has not yet sent a
      * message. Undefined means "no divergence from committed". The display context (dropdown, placeholder)
-     * is derived as {@link _pendingOverride} ?? {@link _committedContext}, so clearing this
+     * is derived as {@link _pendingContext} ?? {@link _committedContext}, so clearing this
      * automatically reverts the UI to the committed state without any manual sync.
      */
-    private readonly _pendingOverride = signal<SessionContext | undefined>(undefined);
-    readonly displayContext = computed(() => this._pendingOverride() ?? this._committedContext());
+    private readonly _pendingContext = signal<SessionContext | undefined>(undefined);
+    readonly displayContext = computed(() => this._pendingContext() ?? this._committedContext());
 
     public get sessionId(): number | undefined {
         return this.currentSessionIdSubject.value;
@@ -172,7 +172,7 @@ export class IrisChatService implements OnDestroy {
         // Reset every subject unconditionally.
         this.sessionId = undefined;
         this._committedContext.set(undefined);
-        this._pendingOverride.set(undefined);
+        this._pendingContext.set(undefined);
         this.messages.next([]);
         this.stages.next([]);
         this.suggestions.next([]);
@@ -262,7 +262,7 @@ export class IrisChatService implements OnDestroy {
      * Sends a message to the server and returns the created message.
      *
      * If the user has selected a different context via the dropdown since the last send
-     * ({@link _pendingOverride}), it is included in the request body so the server applies the
+     * ({@link _pendingContext}), it is included in the request body so the server applies the
      * context switch atomically (CTXSWAP marker first, then the user message) in one round trip.
      *
      * @param message to be created
@@ -276,7 +276,7 @@ export class IrisChatService implements OnDestroy {
         // Trim messages (Spaces, newlines)
         message = message.trim();
 
-        const contextToCommit = this._pendingOverride();
+        const contextToCommit = this._pendingContext();
         const pendingContextDTO = contextToCommit ? { mode: contextToCommit.mode, entityId: contextToCommit.entityId } : undefined;
         const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles, pendingContextDTO);
 
@@ -298,7 +298,7 @@ export class IrisChatService implements OnDestroy {
                         );
                     this.chatSessions.next(updatedSessions);
                 }
-                this._pendingOverride.set(undefined);
+                this._pendingContext.set(undefined);
                 this.suggestions.next([]);
                 this.replaceOrAddMessage(this.mapMessageDTO(response.body!));
             }),
@@ -610,7 +610,7 @@ export class IrisChatService implements OnDestroy {
             this.websocketSessionSubscription?.unsubscribe();
             this.websocketSessionSubscription = undefined;
             this.sessionId = undefined;
-            this._pendingOverride.set(undefined);
+            this._pendingContext.set(undefined);
             this.messages.next([]);
             this.stages.next([]);
             this.suggestions.next([]);
@@ -713,9 +713,9 @@ export class IrisChatService implements OnDestroy {
         }
         const committed = this._committedContext();
         if (committed?.mode === mode && committed?.entityId === entityId) {
-            this._pendingOverride.set(undefined);
+            this._pendingContext.set(undefined);
         } else {
-            this._pendingOverride.set({ mode, entityId, entityName });
+            this._pendingContext.set({ mode, entityId, entityName });
         }
     }
 
