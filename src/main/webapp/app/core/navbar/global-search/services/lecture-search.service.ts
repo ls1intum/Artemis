@@ -39,35 +39,33 @@ export class LectureSearchService {
      */
     ask(query: string, limit = 5): Observable<IrisSearchStatusUpdate> {
         return new Observable<IrisSearchStatusUpdate>((subscriber) => {
-            let currentRunId: string | undefined;
+            // Generate the correlation ID client-side so it's known before the HTTP call.
+            // The server registers this ID as the Hazelcast job token; WebSocket callbacks echo it back.
+            const runId = window.crypto.randomUUID();
 
             // 1. Subscribe to the WebSocket channel first so we never miss the thinking callback.
+            //    The filter is definite from the start — no undefined fallback needed.
             const wsSubscription = this.websocketService
                 .subscribe<IrisSearchStatusUpdate>(LECTURE_SEARCH_WS_CHANNEL)
                 .pipe(
-                    filter((update) => currentRunId === undefined || update.runId === currentRunId),
+                    filter((update) => update.runId === runId),
                     timeout(LECTURE_SEARCH_WS_TIMEOUT_MS),
                 )
                 .subscribe({
                     next: (update) => {
                         subscriber.next(update);
                         if (!update.isThinking) {
-                            // Final result received — complete the observable.
                             subscriber.complete();
                         }
                     },
                     error: (err) => subscriber.error(err),
                 });
 
-            // 2. Fire the HTTP request. Artemis returns 202 with { runId }; results arrive via WebSocket.
-            const httpSubscription = this.http.post<{ runId: string }>('api/iris/search-answer', { query, limit }, { observe: 'response' }).subscribe({
-                next: (response) => {
-                    currentRunId = response.body?.runId ?? undefined;
-                },
+            // 2. Fire the HTTP request with the client-generated runId. Server returns 202 with no body.
+            const httpSubscription = this.http.post('api/iris/search-answer', { query, limit, runId }).subscribe({
                 error: (err) => subscriber.error(err),
             });
 
-            // Teardown: unsubscribe from both when the outer Observable is cancelled or completed.
             return () => {
                 wsSubscription.unsubscribe();
                 httpSubscription.unsubscribe();
