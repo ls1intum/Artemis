@@ -142,13 +142,11 @@ public class PyrisJobService {
      * The job stores the requesting user's login so that WebSocket status updates can be routed.
      *
      * @param userLogin the login of the user who initiated the search
-     * @return the unique token identifying this job
+     * @param runId     the client-generated UUID that identifies this job and is echoed in WebSocket callbacks
      */
-    public String addGlobalSearchAnswerJob(String userLogin) {
-        var token = generateJobIdToken();
-        var job = new GlobalSearchAnswerJob(token, userLogin);
-        getPyrisJobMap().put(token, job);
-        return token;
+    public void addGlobalSearchAnswerJob(String userLogin, String runId) {
+        var job = new GlobalSearchAnswerJob(runId, userLogin);
+        getPyrisJobMap().put(runId, job);
     }
 
     public String addLectureChatJob(Long courseId, Long lectureId, Long sessionId, Long userMessageId) {
