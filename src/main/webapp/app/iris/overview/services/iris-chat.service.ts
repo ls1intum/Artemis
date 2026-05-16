@@ -703,7 +703,7 @@ export class IrisChatService implements OnDestroy {
     /**
      * Records a dropdown context selection as a pending override without touching the server.
      * The database, message history, and websocket subscription stay untouched until the next
-     * {@link sendMessage}, which forwards the override as query params so the server inserts the
+     * {@link sendMessage}, which forwards the override in the request body via IrisMessageRequestDTO.pendingContext so the server inserts the
      * CTXSWAP marker atomically. If the user reverts to the committed context before sending,
      * the override is cleared and no marker is written.
      */

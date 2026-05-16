@@ -55,20 +55,23 @@
         }
 
         .p-chip-remove-icon {
-            display: none;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             font-size: 0.75rem;
             line-height: 1;
             margin-left: 6px;
+            opacity: 0.4;
+            transition: opacity 0.15s ease;
         }
 
-        &:hover {
+        &:hover,
+        &:focus-within {
             background-color: color-mix(in srgb, var(--primary) 22%, transparent);
             border-color: color-mix(in srgb, var(--primary) 45%, transparent);
 
             .p-chip-remove-icon {
-                display: inline-flex;
+                opacity: 1;
             }
         }
     }

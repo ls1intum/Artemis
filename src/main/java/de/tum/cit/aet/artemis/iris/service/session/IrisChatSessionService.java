@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -435,11 +434,13 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                     throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
                 }
                 authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+                irisSettingsService.ensureEnabledForCourseOrElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember());
                 yield exercise.getTitle();
             }
             case LECTURE_CHAT -> {
                 var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(newEntityId);
                 authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
+                irisSettingsService.ensureEnabledForCourseOrElseThrow(lecture.getCourse());
                 yield lecture.getTitle();
             }
             case COURSE_CHAT -> {
@@ -448,6 +449,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 }
                 var course = courseRepository.findByIdElseThrow(courseId);
                 authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+                irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
                 yield course.getTitle();
             }
             default -> throw new IllegalStateException("IrisChatSessionService.applyContextChange does not handle chat mode " + newMode);
@@ -483,10 +485,6 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             markerEntityId = newEntityId;
         }
 
-        session.setMode(newMode);
-        session.setEntityId(newEntityId);
-        irisChatSessionRepository.save(session);
-
         var markerAttributes = JsonObjectMapper.get().createObjectNode();
         markerAttributes.put("transition", transition);
         markerAttributes.put("entityMode", entityMode.name());
@@ -495,6 +493,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         IrisMessage markerMessage = new IrisMessage();
         markerMessage.addContent(new IrisJsonMessageContent(markerAttributes));
         IrisMessage savedMarker = irisMessageService.saveMessage(markerMessage, session, IrisMessageSender.CTXSWAP);
+
+        session.setMode(newMode);
+        session.setEntityId(newEntityId);
+        irisChatSessionRepository.save(session);
+
         sendOverWebsocket(session, savedMarker);
     }
 
@@ -503,10 +506,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * "context removed" (switch back to COURSE_CHAT). Returns an empty string if the previous entity
      * cannot be resolved (e.g., was deleted) so the marker still renders cleanly.
      */
-    private String lookupRemovedContextName(IrisChatMode previousMode, @Nullable Long previousEntityId) {
-        if (previousEntityId == null) {
-            return "";
-        }
+    private String lookupRemovedContextName(IrisChatMode previousMode, long previousEntityId) {
         return switch (previousMode) {
             case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> exerciseRepository.findById(previousEntityId).map(Exercise::getTitle).orElse("");
             case LECTURE_CHAT -> lectureRepositoryApi.flatMap(api -> api.findById(previousEntityId)).map(Lecture::getTitle).orElse("");
