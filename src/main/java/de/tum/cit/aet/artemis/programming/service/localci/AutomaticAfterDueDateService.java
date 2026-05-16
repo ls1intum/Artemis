@@ -46,7 +46,7 @@ public class AutomaticAfterDueDateService {
         this.buildPhasesTemplateService = buildPhasesTemplateService;
     }
 
-    public ZonedDateTime computeRunAfterDueDate(ZonedDateTime newDueDate, boolean hasAfterDueDatePhase, Duration offset) {
+    private ZonedDateTime computeRunAfterDueDate(ZonedDateTime newDueDate, boolean hasAfterDueDatePhase, Duration offset) {
         if (!hasAfterDueDatePhase || newDueDate == null) {
             return null;
         }
@@ -107,13 +107,25 @@ public class AutomaticAfterDueDateService {
         return computeRunAfterDueDate(dueDate, hasAfterDueDatePhase, offset);
     }
 
-    /**
-     * Recomputes the "Run Tests after Due Date" value for the given programming exercise and updates the exercise object.
-     *
-     * @param exercise the programming exercise to recompute the date for
-     */
-    public void recomputeBuildAndTestDate(ProgrammingExercise exercise, ZonedDateTime originalDueDate) {
-        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(deriveBuildAndTestDate(exercise, null, null, originalDueDate));
+    public ZonedDateTime computeBuildAndTestDateForNewExercise(ProgrammingExercise programmingExerciseWithBuildConfig) {
+        return computeBuildAndTestDateForExistingExercise(programmingExerciseWithBuildConfig, null);
+    }
+
+    public ZonedDateTime computeBuildAndTestDateForExistingExercise(final ProgrammingExercise programmingExerciseWithBuildConfig, final Duration buildAndTestOffset) {
+        if (buildAndTestDateIsValid(programmingExerciseWithBuildConfig)) {
+            return programmingExerciseWithBuildConfig.getBuildAndTestStudentSubmissionsAfterDueDate();
+        }
+        final List<BuildPhaseDTO> phases = programmingExerciseWithBuildConfig.getBuildConfig().getBuildPlanPhases().map(BuildPlanPhasesDTO::phases).orElse(null);
+        return computeRunAfterDueDate(programmingExerciseWithBuildConfig.getDueDate(), hasAfterDueDatePhase(phases), buildAndTestOffset);
+
+    }
+
+    private boolean buildAndTestDateIsValid(ProgrammingExercise programmingExercise) {
+        if (programmingExercise.getDueDate() == null && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
+            return false;
+        }
+        return programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                && !programmingExercise.getDueDate().isAfter(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
     }
 
     /**
@@ -129,7 +141,7 @@ public class AutomaticAfterDueDateService {
             ProgrammingExercise exercise = programmingExerciseRepository
                     .findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigElseThrow(programmingExerciseId);
             ZonedDateTime previousDate = exercise.getBuildAndTestStudentSubmissionsAfterDueDate();
-            ZonedDateTime derivedDate = deriveBuildAndTestDate(exercise, null, null, originalExamLatestEndDate);
+            ZonedDateTime derivedDate = deriveBuildAndTestDate(exercise, originalExamLatestEndDate);
             if (!Objects.equals(previousDate, derivedDate)) {
                 exercise.setBuildAndTestStudentSubmissionsAfterDueDate(derivedDate);
                 programmingExerciseRepository.save(exercise);
@@ -138,8 +150,8 @@ public class AutomaticAfterDueDateService {
         return programmingExerciseIds;
     }
 
-    private ZonedDateTime deriveBuildAndTestDate(ProgrammingExercise exercise, Boolean hasSetAfterDueDatePhase, ZonedDateTime newDueDate, ZonedDateTime originalDueDate) {
-        boolean hasAfterDueDatePhase = Objects.requireNonNullElse(hasSetAfterDueDatePhase, hasAfterDueDateBuildPhase(exercise));
+    private ZonedDateTime deriveBuildAndTestDate(ProgrammingExercise exercise, ZonedDateTime originalDueDate) {
+        boolean hasAfterDueDatePhase = hasAfterDueDateBuildPhase(exercise);
         if (!hasAfterDueDatePhase) {
             return null;
         }
@@ -147,10 +159,6 @@ public class AutomaticAfterDueDateService {
         final ZonedDateTime previousDueDate = exercise.isExamExercise() || originalDueDate != null ? originalDueDate : exercise.getDueDate();
         final ZonedDateTime previousRunAfterDate = exercise.getBuildAndTestStudentSubmissionsAfterDueDate();
         Duration offset = (previousDueDate == null || previousRunAfterDate == null) ? null : Duration.between(previousDueDate, previousRunAfterDate);
-
-        if (newDueDate != null) {
-            return toOffsetDate(newDueDate, offset);
-        }
 
         ZonedDateTime referenceDate = exercise.isExamExercise() ? getLatestExamEndDateWithGrace(exercise.getExerciseGroup().getExam()) : exercise.getDueDate();
         if (referenceDate == null) {

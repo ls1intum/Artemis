@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -202,6 +203,9 @@ public class ProgrammingExerciseUpdateResource {
                 : new ArrayList<>();
         // Capture original competency IDs before update() mutates the entity (L1 cache)
         final Set<Long> originalCompetencyIds = programmingExerciseBeforeUpdate.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
+        final Duration originalBuildAndTestOffset = programmingExerciseBeforeUpdate.getDueDate() == null
+                || programmingExerciseBeforeUpdate.getBuildAndTestStudentSubmissionsAfterDueDate() == null ? null
+                        : Duration.between(programmingExerciseBeforeUpdate.getDueDate(), programmingExerciseBeforeUpdate.getBuildAndTestStudentSubmissionsAfterDueDate());
 
         // Update the existing exercise with DTO values
         ProgrammingExercise updatedProgrammingExercise = update(updateDTO, programmingExerciseBeforeUpdate);
@@ -305,7 +309,7 @@ public class ProgrammingExerciseUpdateResource {
 
         // Only save after checking for errors
         ProgrammingExercise savedProgrammingExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(updatedProgrammingExercise, notificationText,
-                originalCompetencyIds, originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalDueDate, originalProblemStatement);
+                originalCompetencyIds, originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalBuildAndTestOffset, originalProblemStatement);
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, updatedProgrammingExercise);
@@ -522,6 +526,8 @@ public class ProgrammingExerciseUpdateResource {
         final String originalProblemStatement = programmingExercise.getProblemStatement();
         final String originalBuildPlanConfiguration = programmingExercise.getBuildConfig() != null ? programmingExercise.getBuildConfig().getBuildPlanConfiguration() : null;
         final Set<Long> originalCompetencyIds = programmingExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
+        final Duration originalBuildAndTestOffset = programmingExercise.getDueDate() == null || programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null ? null
+                : Duration.between(programmingExercise.getDueDate(), programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
 
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         update(updateDTO, programmingExercise);
@@ -531,7 +537,7 @@ public class ProgrammingExerciseUpdateResource {
         // Call the service directly with the captured originals instead of re-entering the update path
         // (which would re-capture stale "originals" from the already-mutated L1 cache entity).
         ProgrammingExercise savedExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(programmingExercise, null, originalCompetencyIds,
-                originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalDueDate, originalProblemStatement);
+                originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalBuildAndTestOffset, originalProblemStatement);
 
         // Apply all post-save side effects that the normal update path performs
         exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);

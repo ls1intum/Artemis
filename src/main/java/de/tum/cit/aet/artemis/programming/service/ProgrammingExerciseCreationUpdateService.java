@@ -8,10 +8,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -235,8 +237,11 @@ public class ProgrammingExerciseCreationUpdateService {
 
         savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
         if (automaticAfterDueDateService.isPresent()) {
-            automaticAfterDueDateService.orElseThrow().recomputeBuildAndTestDate(savedProgrammingExercise, null);
-            savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDateForNewExercise(savedProgrammingExercise);
+            if (!Objects.equals(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate)) {
+                savedProgrammingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
+                savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+            }
         }
 
         programmingExerciseCreationScheduleService.performScheduleOperationsAndCheckNotifications(savedProgrammingExercise);
@@ -317,19 +322,22 @@ public class ProgrammingExerciseCreationUpdateService {
      * @param originalBuildPlanConfiguration the build plan configuration before the update (for change detection)
      * @param originalReleaseDate            the release date before the update (for notification change detection)
      * @param originalAssessmentDueDate      the assessment due date before the update (for notification change detection)
+     * @param buildAndTestOffset             how much the build and test date should be set after, can be left null if the build and test already set or not in localCI
      * @param originalProblemStatement       the problem statement before the update (for notification change detection)
      * @return the updated programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText, Set<Long> originalCompetencyIds,
             @Nullable String originalBuildPlanConfiguration, @Nullable ZonedDateTime originalReleaseDate, @Nullable ZonedDateTime originalAssessmentDueDate,
-            @Nullable ZonedDateTime originalDueDate, @Nullable String originalProblemStatement) throws JsonProcessingException {
+            @Nullable Duration buildAndTestOffset, @Nullable String originalProblemStatement) throws JsonProcessingException {
         validateProblemStatementLength(updatedProgrammingExercise.getProblemStatement());
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
         programmingExerciseBuildPlanService.updateBuildPlanForExercise(originalBuildPlanConfiguration, updatedProgrammingExercise);
         if (automaticAfterDueDateService.isPresent()) {
-            automaticAfterDueDateService.orElseThrow().recomputeBuildAndTestDate(updatedProgrammingExercise, originalDueDate);
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDateForExistingExercise(updatedProgrammingExercise,
+                    buildAndTestOffset);
+            updatedProgrammingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
         }
 
         channelService.updateExerciseChannel(updatedProgrammingExercise, updatedProgrammingExercise);
@@ -388,23 +396,24 @@ public class ProgrammingExerciseCreationUpdateService {
      * @return the updated ProgrammingExercise object.
      */
     public ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository
-                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigAndGradingCriteria(
-                        timelineUpdateDTO.id())
-                .orElseThrow();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(timelineUpdateDTO.id());
 
         // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
         ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
         programmingExerciseBeforeUpdate.setReleaseDate(programmingExercise.getReleaseDate());
         programmingExerciseBeforeUpdate.setStartDate(programmingExercise.getStartDate());
         programmingExerciseBeforeUpdate.setAssessmentDueDate(programmingExercise.getAssessmentDueDate());
+        final Duration originalBuildAndTestOffset = programmingExercise.getDueDate() == null || programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null ? null
+                : Duration.between(programmingExercise.getDueDate(), programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
 
         // Apply the DTO values to the existing exercise
         timelineUpdateDTO.applyTo(programmingExercise);
 
         programmingExercise.validateDates();
         if (automaticAfterDueDateService.isPresent()) {
-            automaticAfterDueDateService.orElseThrow().recomputeBuildAndTestDate(programmingExercise, programmingExercise.getDueDate());
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDateForExistingExercise(programmingExercise,
+                    originalBuildAndTestOffset);
+            programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
         }
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);

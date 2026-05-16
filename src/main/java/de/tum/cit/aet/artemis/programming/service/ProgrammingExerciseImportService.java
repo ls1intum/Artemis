@@ -4,8 +4,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -173,8 +175,11 @@ public class ProgrammingExerciseImportService {
 
         newProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newProgrammingExercise);
         if (automaticAfterDueDateService.isPresent()) {
-            automaticAfterDueDateService.orElseThrow().recomputeBuildAndTestDate(newProgrammingExercise, null);
-            programmingExerciseRepository.save(newProgrammingExercise);
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDateForNewExercise(newProgrammingExercise);
+            if (!Objects.equals(newProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate)) {
+                newProgrammingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
+                programmingExerciseRepository.save(newProgrammingExercise);
+            }
         }
         programmingExerciseImportBasicService.importRepositories(originalProgrammingExercise, newProgrammingExercise);
 
