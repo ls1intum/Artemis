@@ -488,6 +488,115 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         }
     }
 
+    /**
+     * Cleanup with both Maven and Gradle caches configured prunes both in the same invocation; each appears in
+     * the per-cache stats with its own delete counts.
+     */
+    @Test
+    void testCacheCleanupProcessesBothCachesIndependently(@org.junit.jupiter.api.io.TempDir Path mavenTemp, @org.junit.jupiter.api.io.TempDir Path gradleTemp) throws IOException {
+        Path mavenOld = mavenTemp.resolve("m/oldlib.jar");
+        Path gradleOld = gradleTemp.resolve("g/oldlib.jar");
+        Files.createDirectories(mavenOld.getParent());
+        Files.createDirectories(gradleOld.getParent());
+        Files.write(mavenOld, new byte[256]);
+        Files.write(gradleOld, new byte[512]);
+        Files.setAttribute(mavenOld, "basic:lastAccessTime", FileTime.from(Instant.now().minus(Duration.ofDays(60))));
+        Files.setAttribute(gradleOld, "basic:lastAccessTime", FileTime.from(Instant.now().minus(Duration.ofDays(60))));
+
+        ReflectionTestUtils.setField(buildContainerCacheCleanupService, "cleanupEnabled", true);
+        ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", mavenTemp.toString());
+        ReflectionTestUtils.setField(buildAgentConfiguration, "gradleCacheHostPath", gradleTemp.toString());
+        try {
+            var outcome = buildContainerCacheCleanupService.runCleanup();
+
+            assertThat(outcome.wasSkipped()).isFalse();
+            assertThat(outcome.perCache()).hasSize(2);
+            assertThat(outcome.perCache().stream().mapToInt(s -> s.ageDeletedFiles()).sum()).isEqualTo(2);
+            assertThat(mavenOld).doesNotExist();
+            assertThat(gradleOld).doesNotExist();
+
+            await().atMost(30, TimeUnit.SECONDS).until(() -> {
+                var info = buildAgentInformation.get(buildAgentShortName);
+                return info != null && (info.status() == BuildAgentStatus.ACTIVE || info.status() == BuildAgentStatus.IDLE);
+            });
+        }
+        finally {
+            ReflectionTestUtils.setField(buildContainerCacheCleanupService, "cleanupEnabled", false);
+            ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "");
+            ReflectionTestUtils.setField(buildAgentConfiguration, "gradleCacheHostPath", "");
+        }
+    }
+
+    /**
+     * When the cache is mounted read-only, cleanup must short-circuit before the pause is taken — operators using
+     * a read-only cache are responsible for its contents, and the agent must not invoke pause/resume just to do
+     * nothing.
+     */
+    @Test
+    void testCacheCleanupSkipsWhenReadOnly(@org.junit.jupiter.api.io.TempDir Path tempCache) throws IOException {
+        Files.write(tempCache.resolve("payload.jar"), new byte[64]);
+        Files.setAttribute(tempCache.resolve("payload.jar"), "basic:lastAccessTime", FileTime.from(Instant.now().minus(Duration.ofDays(60))));
+
+        ReflectionTestUtils.setField(buildContainerCacheCleanupService, "cleanupEnabled", true);
+        ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", tempCache.toString());
+        ReflectionTestUtils.setField(buildAgentConfiguration, "buildContainerCacheReadOnly", true);
+        try {
+            var outcome = buildContainerCacheCleanupService.runCleanup();
+
+            assertThat(outcome.wasSkipped()).isTrue();
+            assertThat(outcome.skippedReason()).isEqualTo("read-only");
+            // Read-only mode → no deletion happened.
+            assertThat(tempCache.resolve("payload.jar")).exists();
+            // Agent state: pauseForMaintenance was never called, so we should still be in the pre-test running state.
+            assertThat(sharedQueueProcessingService.isPaused()).isFalse();
+        }
+        finally {
+            ReflectionTestUtils.setField(buildAgentConfiguration, "buildContainerCacheReadOnly", false);
+            ReflectionTestUtils.setField(buildContainerCacheCleanupService, "cleanupEnabled", false);
+            ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "");
+        }
+    }
+
+    /**
+     * When cleanup is disabled via configuration, the scheduled task is a complete no-op — it must not pause the
+     * agent and must not walk any directory.
+     */
+    @Test
+    void testCacheCleanupSkipsWhenDisabled(@org.junit.jupiter.api.io.TempDir Path tempCache) throws IOException {
+        Files.write(tempCache.resolve("would-be-deleted.jar"), new byte[64]);
+        Files.setAttribute(tempCache.resolve("would-be-deleted.jar"), "basic:lastAccessTime", FileTime.from(Instant.now().minus(Duration.ofDays(60))));
+
+        // Note: the base class already sets cleanup-enabled=false; we just don't flip it.
+        ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", tempCache.toString());
+        try {
+            var outcome = buildContainerCacheCleanupService.runCleanup();
+
+            assertThat(outcome.wasSkipped()).isTrue();
+            assertThat(outcome.skippedReason()).isEqualTo("disabled");
+            assertThat(tempCache.resolve("would-be-deleted.jar")).exists();
+            assertThat(sharedQueueProcessingService.isPaused()).isFalse();
+        }
+        finally {
+            ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "");
+        }
+    }
+
+    /**
+     * Reuse of pauseForMaintenance/resumeFromMaintenance must leave the agent in the correct end state after
+     * a full pause-then-resume cycle, regardless of whether cleanup actually walked any directories.
+     */
+    @Test
+    void testPauseForMaintenanceAndResumeFromMaintenanceFullCycle() {
+        assertThat(sharedQueueProcessingService.isPaused()).isFalse();
+
+        boolean transitioned = sharedQueueProcessingService.pauseForMaintenance();
+        assertThat(transitioned).isTrue();
+        await().atMost(30, TimeUnit.SECONDS).until(() -> sharedQueueProcessingService.isPaused());
+
+        sharedQueueProcessingService.resumeFromMaintenance();
+        await().atMost(30, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
+    }
+
     @Test
     void testBuildAgentNoCommitHash() {
         var queueItem = createBuildJobQueueItemWithNoCommitHash();

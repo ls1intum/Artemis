@@ -117,4 +117,90 @@ class BuildAgentConfigurationTest {
 
         assertThat(binds).allSatisfy(b -> assertThat(b.getAccessMode()).isEqualTo(AccessMode.ro));
     }
+
+    // --- Helper-method coverage for the cleanup service consumers -----------------------------------------------
+
+    @Test
+    void testIsBuildContainerCacheReadOnlyDefaultsFalse() {
+        BuildAgentConfiguration config = new BuildAgentConfiguration(null);
+
+        assertThat(config.isBuildContainerCacheReadOnly()).isFalse();
+    }
+
+    @Test
+    void testIsBuildContainerCacheReadOnlyReturnsTrueWhenSet() {
+        BuildAgentConfiguration config = new BuildAgentConfiguration(null);
+        ReflectionTestUtils.setField(config, "buildContainerCacheReadOnly", true);
+
+        assertThat(config.isBuildContainerCacheReadOnly()).isTrue();
+    }
+
+    @Test
+    void testMavenCacheHostPathReturnsNullWhenUnset() {
+        BuildAgentConfiguration config = new BuildAgentConfiguration(null);
+
+        assertThat(config.mavenCacheHostPath()).isNull();
+    }
+
+    @Test
+    void testMavenCacheHostPathReturnsNullWhenBlank() {
+        BuildAgentConfiguration config = new BuildAgentConfiguration(null);
+        ReflectionTestUtils.setField(config, "mavenCacheHostPath", "");
+
+        assertThat(config.mavenCacheHostPath()).isNull();
+    }
+
+    @Test
+    void testMavenCacheHostPathReturnsNullWhenOnlyWhitespace() {
+        BuildAgentConfiguration config = new BuildAgentConfiguration(null);
+        ReflectionTestUtils.setField(config, "mavenCacheHostPath", "   ");
+
+        assertThat(config.mavenCacheHostPath()).isNull();
+    }
+
+    @Test
+    void testMavenCacheHostPathReturnsParsedPath() {
+        BuildAgentConfiguration config = new BuildAgentConfiguration(null);
+        ReflectionTestUtils.setField(config, "mavenCacheHostPath", "/var/cache/artemis-buildagent/m2");
+
+        java.nio.file.Path result = config.mavenCacheHostPath();
+
+        assertThat(result).isNotNull();
+        assertThat(result.toString()).isEqualTo("/var/cache/artemis-buildagent/m2");
+    }
+
+    @Test
+    void testGradleCacheHostPathReturnsNullWhenUnset() {
+        BuildAgentConfiguration config = new BuildAgentConfiguration(null);
+
+        assertThat(config.gradleCacheHostPath()).isNull();
+    }
+
+    @Test
+    void testGradleCacheHostPathReturnsNullWhenBlank() {
+        BuildAgentConfiguration config = new BuildAgentConfiguration(null);
+        ReflectionTestUtils.setField(config, "gradleCacheHostPath", "");
+
+        assertThat(config.gradleCacheHostPath()).isNull();
+    }
+
+    @Test
+    void testGradleCacheHostPathReturnsParsedPath() {
+        BuildAgentConfiguration config = new BuildAgentConfiguration(null);
+        ReflectionTestUtils.setField(config, "gradleCacheHostPath", "/var/cache/artemis-buildagent/gradle");
+
+        java.nio.file.Path result = config.gradleCacheHostPath();
+
+        assertThat(result).isNotNull();
+        assertThat(result.toString()).isEqualTo("/var/cache/artemis-buildagent/gradle");
+    }
+
+    @Test
+    void testCacheHostPathsAreIndependent() {
+        BuildAgentConfiguration config = new BuildAgentConfiguration(null);
+        ReflectionTestUtils.setField(config, "mavenCacheHostPath", "/m2/path");
+
+        assertThat(config.mavenCacheHostPath()).isNotNull();
+        assertThat(config.gradleCacheHostPath()).isNull();
+    }
 }

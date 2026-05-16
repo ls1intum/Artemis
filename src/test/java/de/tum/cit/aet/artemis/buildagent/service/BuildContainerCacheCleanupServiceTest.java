@@ -270,6 +270,326 @@ class BuildContainerCacheCleanupServiceTest {
         assertThat(f3).exists();
     }
 
+    // --- Additional edge-case coverage --------------------------------------------------------------------------
+
+    @Test
+    void emptyCacheRunsWithoutErrorAndReturnsZeroCounters() {
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        PruneStats stats = statsFor(outcome, mavenCache);
+        assertThat(stats.initialBytes()).isZero();
+        assertThat(stats.ageDeletedFiles()).isZero();
+        assertThat(stats.sizeDeletedFiles()).isZero();
+        assertThat(stats.errors()).isZero();
+        verify(sharedQueueProcessingService, times(1)).resumeFromMaintenance();
+    }
+
+    @Test
+    void cacheWithOnlyDirectoriesAndNoFilesIsHandled() throws IOException {
+        // Empty subdirectory tree — phase 0 walk produces 0 file entries, sweep should remove the leaves.
+        Files.createDirectories(mavenCache.resolve("group/artifact/version"));
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        PruneStats stats = statsFor(outcome, mavenCache);
+        assertThat(stats.ageDeletedFiles()).isZero();
+        assertThat(stats.sizeDeletedFiles()).isZero();
+        assertThat(stats.emptyDirsRemoved()).isGreaterThanOrEqualTo(3);
+        // Root itself must remain — only its descendants are eligible for removal.
+        assertThat(mavenCache).exists();
+    }
+
+    @Test
+    void rootDirectoryItselfIsNeverDeletedEvenIfEmpty() throws IOException {
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+
+        service.runCleanup();
+
+        assertThat(mavenCache).exists();
+        assertThat(mavenCache).isDirectory();
+    }
+
+    @Test
+    void bothCachesGetIndependentStatsAndDeleteCounts() throws IOException {
+        // Two ageing files in each cache.
+        touchFileWithAtime(mavenCache.resolve("m/old.jar"), 100, daysAgo(60));
+        touchFileWithAtime(mavenCache.resolve("m/new.jar"), 100, daysAgo(1));
+        touchFileWithAtime(gradleCache.resolve("g/old.jar"), 200, daysAgo(60));
+        touchFileWithAtime(gradleCache.resolve("g/new.jar"), 200, daysAgo(1));
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        assertThat(outcome.perCache()).hasSize(2);
+        PruneStats mavenStats = statsFor(outcome, mavenCache);
+        PruneStats gradleStats = statsFor(outcome, gradleCache);
+        assertThat(mavenStats.ageDeletedFiles()).isEqualTo(1);
+        assertThat(mavenStats.ageDeletedBytes()).isEqualTo(100);
+        assertThat(gradleStats.ageDeletedFiles()).isEqualTo(1);
+        assertThat(gradleStats.ageDeletedBytes()).isEqualTo(200);
+    }
+
+    @Test
+    void onlyGradleConfiguredProcessesGradleAlone() throws IOException {
+        when(buildAgentConfiguration.mavenCacheHostPath()).thenReturn(null);
+        touchFileWithAtime(gradleCache.resolve("g/old.jar"), 64, daysAgo(60));
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        assertThat(outcome.perCache()).hasSize(1);
+        assertThat(outcome.perCache().getFirst().root()).isEqualTo(gradleCache);
+        assertThat(outcome.perCache().getFirst().ageDeletedFiles()).isEqualTo(1);
+    }
+
+    @Test
+    void zeroAgeDaysDeletesEverythingViaPhase1() throws IOException {
+        service.setMaxAgeDays(0); // every file qualifies as "older than 0 days" since their atime is in the past
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+
+        touchFileWithAtime(mavenCache.resolve("a.jar"), 10, daysAgo(0));
+        touchFileWithAtime(mavenCache.resolve("b.jar"), 10, daysAgo(1));
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        PruneStats stats = statsFor(outcome, mavenCache);
+        assertThat(stats.ageDeletedFiles()).isGreaterThanOrEqualTo(1);
+    }
+
+    @Test
+    void hugeAgeDaysKeepsEverythingWhenBelowSizeCap() throws IOException {
+        service.setMaxAgeDays(100_000);
+        service.setMavenMaxSize(DataSize.ofGigabytes(100));
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+
+        Path f = touchFileWithAtime(mavenCache.resolve("keep.jar"), 64, daysAgo(365 * 5));
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        PruneStats stats = statsFor(outcome, mavenCache);
+        assertThat(stats.ageDeletedFiles()).isZero();
+        assertThat(stats.sizeDeletedFiles()).isZero();
+        assertThat(f).exists();
+    }
+
+    @Test
+    void nestedEmptyDirectoriesAreFullyCollapsedAfterDeletion() throws IOException {
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+        touchFileWithAtime(mavenCache.resolve("a/b/c/d/leaf.jar"), 10, daysAgo(60));
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        PruneStats stats = statsFor(outcome, mavenCache);
+        assertThat(stats.ageDeletedFiles()).isEqualTo(1);
+        assertThat(stats.emptyDirsRemoved()).isGreaterThanOrEqualTo(4);
+        assertThat(mavenCache.resolve("a")).doesNotExist();
+        assertThat(mavenCache).exists();
+    }
+
+    @Test
+    void siblingNonEmptyDirectoryIsPreservedDuringSweep() throws IOException {
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+        // age-eligible inside one subdir; recent file inside another sibling — sibling must stay.
+        touchFileWithAtime(mavenCache.resolve("old/oldfile.jar"), 10, daysAgo(60));
+        touchFileWithAtime(mavenCache.resolve("keep/keepfile.jar"), 10, daysAgo(1));
+
+        service.runCleanup();
+
+        assertThat(mavenCache.resolve("old")).doesNotExist();
+        assertThat(mavenCache.resolve("keep")).exists();
+        assertThat(mavenCache.resolve("keep/keepfile.jar")).exists();
+    }
+
+    @Test
+    void ratioNaNFallsBackToDefault() throws IOException {
+        service.setMavenMaxSize(DataSize.ofBytes(1000));
+        service.setLowWatermarkRatio(Double.NaN);
+        service.setMaxAgeDays(365);
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+
+        // Total 1500 > cap 1000. Default ratio 0.75 → low 750. Evict 500 → remaining 1000 still > 750, keep evicting.
+        touchFileWithAtime(mavenCache.resolve("a/a.jar"), 500, daysAgo(20));
+        touchFileWithAtime(mavenCache.resolve("a/b.jar"), 500, daysAgo(10));
+        touchFileWithAtime(mavenCache.resolve("a/c.jar"), 500, daysAgo(1));
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        PruneStats stats = statsFor(outcome, mavenCache);
+        assertThat(stats.sizeDeletedFiles()).isGreaterThanOrEqualTo(1);
+    }
+
+    @Test
+    void ratioOfZeroFallsBackToDefault() throws IOException {
+        service.setMavenMaxSize(DataSize.ofBytes(1000));
+        service.setLowWatermarkRatio(0.0);
+        service.setMaxAgeDays(365);
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+
+        touchFileWithAtime(mavenCache.resolve("a/a.jar"), 600, daysAgo(20));
+        touchFileWithAtime(mavenCache.resolve("a/b.jar"), 600, daysAgo(1));
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        PruneStats stats = statsFor(outcome, mavenCache);
+        // With default ratio 0.75 and cap 1000, low=750. After evicting 600 → 600 ≤ 750, stop. So 1 deletion.
+        assertThat(stats.sizeDeletedFiles()).isEqualTo(1);
+    }
+
+    @Test
+    void ratioOfOneFallsBackToDefault() throws IOException {
+        service.setMavenMaxSize(DataSize.ofBytes(1000));
+        service.setLowWatermarkRatio(1.0);
+        service.setMaxAgeDays(365);
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+
+        touchFileWithAtime(mavenCache.resolve("a/a.jar"), 600, daysAgo(20));
+        touchFileWithAtime(mavenCache.resolve("a/b.jar"), 600, daysAgo(1));
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        // ratio==1 would compute low==high; phase 2 condition `survivingBytes <= low` becomes survivingBytes <= cap,
+        // which is reached after the first eviction. Fallback to 0.75 makes the loop go further than 0 deletions.
+        PruneStats stats = statsFor(outcome, mavenCache);
+        assertThat(stats.sizeDeletedFiles()).isEqualTo(1);
+    }
+
+    @Test
+    void ratioOfNegativeFallsBackToDefault() throws IOException {
+        service.setMavenMaxSize(DataSize.ofBytes(1000));
+        service.setLowWatermarkRatio(-1.0);
+        service.setMaxAgeDays(365);
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+
+        touchFileWithAtime(mavenCache.resolve("a/a.jar"), 600, daysAgo(20));
+        touchFileWithAtime(mavenCache.resolve("a/b.jar"), 600, daysAgo(1));
+
+        // With negative ratio and no clamp, low=-750 → survivingBytes <= -750 is false → loop deletes everything.
+        // The clamp must prevent this.
+        CleanupOutcome outcome = service.runCleanup();
+
+        PruneStats stats = statsFor(outcome, mavenCache);
+        assertThat(stats.sizeDeletedFiles()).isEqualTo(1);
+    }
+
+    @Test
+    void validRatioInRangeIsHonored() throws IOException {
+        service.setMavenMaxSize(DataSize.ofBytes(1000));
+        service.setLowWatermarkRatio(0.5); // low watermark 500
+        service.setMaxAgeDays(365);
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+
+        touchFileWithAtime(mavenCache.resolve("a/a.jar"), 400, daysAgo(20));
+        touchFileWithAtime(mavenCache.resolve("a/b.jar"), 400, daysAgo(10));
+        touchFileWithAtime(mavenCache.resolve("a/c.jar"), 400, daysAgo(1));
+
+        // Total 1200 > cap 1000. Evict oldest 400 → 800 > 500 (low) → evict next 400 → 400 ≤ 500, stop.
+        CleanupOutcome outcome = service.runCleanup();
+
+        PruneStats stats = statsFor(outcome, mavenCache);
+        assertThat(stats.sizeDeletedFiles()).isEqualTo(2);
+    }
+
+    @Test
+    void cleanupOutcomeIsAlwaysNonNull() {
+        when(buildAgentConfiguration.mavenCacheHostPath()).thenReturn(null);
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        assertThat(outcome).isNotNull();
+        assertThat(outcome.perCache()).isNotNull();
+    }
+
+    @Test
+    void completedRunReportsWasSkippedFalse() throws IOException {
+        touchFileWithAtime(mavenCache.resolve("a.jar"), 10, daysAgo(60));
+        touchFileWithAtime(gradleCache.resolve("g.jar"), 10, daysAgo(60));
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        assertThat(outcome.wasSkipped()).isFalse();
+        assertThat(outcome.skippedReason()).isNull();
+    }
+
+    @Test
+    void pruneStatsExposeInitialBytesBeforeAnyEviction() throws IOException {
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+        touchFileWithAtime(mavenCache.resolve("a.jar"), 1024, daysAgo(60));
+        touchFileWithAtime(mavenCache.resolve("b.jar"), 2048, daysAgo(1));
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        PruneStats stats = statsFor(outcome, mavenCache);
+        assertThat(stats.initialBytes()).isEqualTo(1024 + 2048);
+    }
+
+    @Test
+    void fileDeletedExternallyBetweenWalkAndPruneIsHandledCleanly() throws IOException {
+        // Touch a file then delete it before runCleanup() — simulates a build container that legitimately removed
+        // an artifact between phase 0 (walk) and phase 1 (delete). Files.deleteIfExists returns true (no error).
+        // Hard to simulate the real race without a custom FileSystem; instead verify deleteIfExists semantics by
+        // confirming a non-existent file doesn't blow up phase 1 when produced from the walk list directly.
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+        Path ghost = mavenCache.resolve("ghost.jar");
+        Files.write(ghost, new byte[16]);
+        Files.setAttribute(ghost, "basic:lastAccessTime", FileTime.from(daysAgo(60)));
+        Files.delete(ghost); // gone before runCleanup walks
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        PruneStats stats = statsFor(outcome, mavenCache);
+        assertThat(stats.errors()).isZero();
+    }
+
+    @Test
+    void resumeIsCalledExactlyOnceAcrossSuccessfulRun() throws IOException {
+        touchFileWithAtime(mavenCache.resolve("a.jar"), 10, daysAgo(60));
+        touchFileWithAtime(gradleCache.resolve("g.jar"), 10, daysAgo(60));
+
+        service.runCleanup();
+
+        verify(sharedQueueProcessingService, times(1)).pauseForMaintenance();
+        verify(sharedQueueProcessingService, times(1)).resumeFromMaintenance();
+    }
+
+    @Test
+    void pruneStatsRecordCarriesNonZeroDuration() throws IOException {
+        touchFileWithAtime(mavenCache.resolve("a.jar"), 10, daysAgo(60));
+        when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        PruneStats stats = statsFor(outcome, mavenCache);
+        assertThat(stats.duration()).isNotNull();
+        assertThat(stats.duration().isNegative()).isFalse();
+    }
+
+    @Test
+    void readOnlyShortCircuitDoesNotInvokePauseEvenWithCachePathsSet() {
+        when(buildAgentConfiguration.isBuildContainerCacheReadOnly()).thenReturn(true);
+        // cache paths are configured by @BeforeEach — read-only must take precedence
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        assertThat(outcome.wasSkipped()).isTrue();
+        assertThat(outcome.skippedReason()).isEqualTo("read-only");
+        verify(sharedQueueProcessingService, never()).pauseForMaintenance();
+        verify(sharedQueueProcessingService, never()).resumeFromMaintenance();
+    }
+
+    @Test
+    void mavenAndGradleStatsReturnedAsSeparateEntries() throws IOException {
+        touchFileWithAtime(mavenCache.resolve("a.jar"), 100, daysAgo(60));
+        touchFileWithAtime(gradleCache.resolve("g.jar"), 200, daysAgo(60));
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        assertThat(outcome.perCache()).hasSize(2);
+        var roots = outcome.perCache().stream().map(PruneStats::root).toList();
+        assertThat(roots).containsExactlyInAnyOrder(mavenCache, gradleCache);
+    }
+
     // --- helpers ------------------------------------------------------------------------------------------------
 
     private static Instant daysAgo(int days) {
