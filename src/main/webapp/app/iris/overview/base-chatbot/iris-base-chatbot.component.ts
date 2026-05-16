@@ -1,6 +1,5 @@
 import {
     faArrowDown,
-    faChalkboardUser,
     faCheck,
     faChevronDown,
     faCircleInfo,
@@ -8,8 +7,6 @@ import {
     faCompress,
     faCopy,
     faExpand,
-    faFont,
-    faKeyboard,
     faLink,
     faMagnifyingGlass,
     faPaperPlane,
@@ -18,7 +15,6 @@ import {
     faThumbsUp,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService } from 'primeng/api';
@@ -51,7 +47,6 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import {
-    IrisJsonMessageContent,
     IrisMessageContent,
     IrisMessageContentType,
     IrisTextMessageContent,
@@ -60,7 +55,6 @@ import {
     McqSetData,
     getMcqData,
     getMcqSetData,
-    isJsonContent,
     isMcqContent,
     isMcqSetContent,
 } from 'app/iris/shared/entities/iris-content-type.model';
@@ -95,6 +89,8 @@ import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 import { EXERCISE_PLACEHOLDER_LABEL_KEYS, LECTURE_PLACEHOLDER_LABEL_KEYS } from './iris-chatbot-placeholder-labels';
 import { createActiveSuggestionChips } from './iris-chatbot-suggestion-chips';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
+import { IrisContextSwitchDividerComponent } from 'app/iris/overview/context-selection/iris-context-switch-divider.component';
+import { routeForContext } from 'app/iris/overview/context-selection/iris-context.util';
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -145,6 +141,7 @@ const PLACEHOLDER_FADE_DURATION_MS = 300;
         ConfirmDialogModule,
         MenuModule,
         ContextSelectionComponent,
+        IrisContextSwitchDividerComponent,
     ],
     providers: [ConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -211,38 +208,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.computeRelatedEntityRoute(this.chatService.committedContext()?.mode, this.chatService.committedContext()?.entityId),
     );
     readonly relatedEntityLinkButtonLabel = computed<string | undefined>(() => this.computeRelatedEntityLinkButtonLabel(this.chatService.committedContext()?.mode));
-
-    protected getContextSwitchInfo(message: IrisMessage): {
-        transition: 'added' | 'removed' | 'changed';
-        entityIcon: IconProp | undefined;
-        entityRoute: string | undefined;
-        name: string;
-    } {
-        const jsonContent = message.content?.find((c) => isJsonContent(c)) as IrisJsonMessageContent | undefined;
-        const transition = jsonContent?.attributes?.['transition'] as 'added' | 'removed' | 'changed' | undefined;
-        const entityMode = jsonContent?.attributes?.['entityMode'] as string | undefined;
-        const entityId = jsonContent?.attributes?.['entityId'] as number | undefined;
-        const name = (jsonContent?.attributes?.['name'] as string | undefined) ?? '';
-        return {
-            transition: transition ?? 'added',
-            entityIcon: this.iconForEntityMode(entityMode),
-            entityRoute: this.computeRelatedEntityRoute(entityMode as ChatServiceMode | undefined, entityId),
-            name,
-        };
-    }
-
-    private iconForEntityMode(entityMode: string | undefined): IconProp | undefined {
-        switch (entityMode) {
-            case ChatServiceMode.LECTURE:
-                return faChalkboardUser;
-            case ChatServiceMode.PROGRAMMING_EXERCISE:
-                return faKeyboard;
-            case ChatServiceMode.TEXT_EXERCISE:
-                return faFont;
-            default:
-                return undefined;
-        }
-    }
 
     // Observable-derived signals (using toSignal for reactive state)
 
@@ -1221,24 +1186,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     private computeRelatedEntityRoute(currentChatMode: ChatServiceMode | undefined, currentRelatedEntityId: number | undefined): string | undefined {
-        if (!currentChatMode || !currentRelatedEntityId) {
-            return undefined;
-        }
-        // Absolute path so the link works in every layout (dashboard, embedded, widget), not only
-        // when the current URL is /courses/:courseId/iris where `../exercises/X` resolves cleanly.
-        const courseId = this.chatService.getCourseId();
-        if (!courseId) {
-            return undefined;
-        }
-        switch (currentChatMode) {
-            case ChatServiceMode.PROGRAMMING_EXERCISE:
-            case ChatServiceMode.TEXT_EXERCISE:
-                return `/courses/${courseId}/exercises/${currentRelatedEntityId}`;
-            case ChatServiceMode.LECTURE:
-                return `/courses/${courseId}/lectures/${currentRelatedEntityId}`;
-            default:
-                return undefined;
-        }
+        return routeForContext(this.chatService.getCourseId(), currentChatMode, currentRelatedEntityId);
     }
 
     private computeRelatedEntityLinkButtonLabel(currentChatMode: ChatServiceMode | undefined): string | undefined {

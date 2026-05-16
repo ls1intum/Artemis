@@ -103,14 +103,6 @@ public class IrisMessageResource {
 
     /**
      * POST sessions/{sessionId}/messages: Send a new message from the user to the LLM.
-     * <p>
-     * Optionally accepts a {@link IrisMessageRequestDTO#pendingContext()}. When provided and differing from the
-     * session's current mode/entity, the context switch is applied atomically before the user message is persisted:
-     * a {@link IrisMessageSender#CTXSWAP} marker is inserted into the chat history and pushed over the websocket so
-     * the client can render the divider in sequence with the user message.
-     * <p>
-     * The dropdown-only context change (without a follow-up send) is intentionally a client-local affair — only an
-     * actual send commits it server-side, so users browsing the dropdown do not produce stray markers or DB writes.
      *
      * @param sessionId  of the session
      * @param requestDTO containing message content, optional uncommitted files and optional pending context
