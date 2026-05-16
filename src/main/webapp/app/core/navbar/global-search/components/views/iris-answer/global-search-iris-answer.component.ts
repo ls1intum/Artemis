@@ -17,6 +17,13 @@ import { catchError, debounceTime, of, switchMap, tap } from 'rxjs';
 /** Delay in ms after a new result before measuring the rendered answer height. */
 const ANSWER_MEASURE_DELAY_MS = 60;
 
+/**
+ * Extra debounce for the Iris pipeline on top of the base search debounce.
+ * Firing an LLM pipeline on every keystroke is wasteful; waiting longer means
+ * the user has likely finished typing before the request goes out.
+ */
+const IRIS_ANSWER_DEBOUNCE_MS = SEARCH_DEBOUNCE_MS + 300;
+
 @Component({
     selector: 'jhi-global-search-iris-answer',
     standalone: true,
@@ -80,7 +87,7 @@ export class GlobalSearchIrisAnswerComponent {
         // switchMap cancels the previous ask() subscription on every new query.
         toObservable(this.searchQuery)
             .pipe(
-                debounceTime(SEARCH_DEBOUNCE_MS),
+                debounceTime(IRIS_ANSWER_DEBOUNCE_MS),
                 tap(() => {
                     this.irisResult.set(undefined);
                     this.irisThinking.set(false);
