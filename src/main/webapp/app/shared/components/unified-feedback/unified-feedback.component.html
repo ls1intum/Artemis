@@ -3,7 +3,7 @@
         @if (inferredReference() && showReference()) {
             <div class="unified-feedback-reference">
                 <span class="unified-feedback-reference-label" jhiTranslate="artemisApp.feedback.reference"></span>
-                <span class="unified-feedback-reference-text">{{ inferredReference() }}</span>
+                <span class="unified-feedback-reference-text" [pTooltip]="inferredReference()!" tooltipPosition="top">{{ inferredReference() }}</span>
             </div>
         }
 
