@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChildren } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SkeletonModule } from 'primeng/skeleton';
 import {
@@ -55,6 +55,7 @@ export const NAV_ACTION_COUNT = 1;
 })
 export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private readonly profileService = inject(ProfileService);
+    private readonly cdr = inject(ChangeDetectorRef);
 
     readonly searchQuery = input.required<string>();
     readonly selectedIndex = input<number>(-1);
@@ -92,6 +93,15 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     constructor() {
         super();
+        // The toolbar button opens the dialog by changing a signal in a sibling component tree.
+        // Angular's signal propagation only marks this component's parent dirty, not this OnPush
+        // child. Force a check whenever the overlay opens so artemisTranslate re-evaluates with
+        // the translations that loaded after this component was first rendered (with visible=false).
+        effect(() => {
+            if (this.overlay.isOpen()) {
+                this.cdr.markForCheck();
+            }
+        });
         effect(() => {
             const idx = this.selectedIndex();
             const items = this.selectableItems();
