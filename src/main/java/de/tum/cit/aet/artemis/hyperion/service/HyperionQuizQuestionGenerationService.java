@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionRefinementRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionRefinementResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionCompetencyContextService.CompetencyContext;
 import io.micrometer.observation.annotation.Observed;
 
 /**
@@ -48,6 +49,8 @@ public class HyperionQuizQuestionGenerationService {
 
     private static final String PROMPT_GENERATE_QUIZ_QUESTIONS_USER = "/prompts/hyperion/generate_quiz_questions_user.st";
 
+    private static final String PROMPT_GENERATE_QUIZ_QUESTIONS_USER_COMPETENCY = "/prompts/hyperion/generate_quiz_questions_user_competency.st";
+
     private static final String PROMPT_REFINE_QUIZ_QUESTION_SYSTEM = "/prompts/hyperion/refine_quiz_question_system.st";
 
     private static final String PROMPT_REFINE_QUIZ_QUESTION_USER = "/prompts/hyperion/refine_quiz_question_user.st";
@@ -63,9 +66,13 @@ public class HyperionQuizQuestionGenerationService {
 
     private final HyperionPromptTemplateService templateService;
 
-    public HyperionQuizQuestionGenerationService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService) {
+    private final HyperionCompetencyContextService competencyGraphService;
+
+    public HyperionQuizQuestionGenerationService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService,
+            HyperionCompetencyContextService competencyGraphService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
+        this.competencyGraphService = competencyGraphService;
     }
 
     /**
@@ -83,16 +90,20 @@ public class HyperionQuizQuestionGenerationService {
             throw new InternalServerErrorAlertException("AI chat client is not configured", "QuizQuestionGeneration", "QuizQuestionGeneration.chatClientNotConfigured");
         }
 
-        String topic = sanitizeInput(request.topic());
         String optionalPrompt = sanitizeInput(request.optionalPrompt());
         String requestedQuestionTypes = request.questionTypes().stream().map(QuizQuestionGenerationType::getValue).collect(Collectors.joining(", "));
 
         var outputConverter = new BeanOutputConverter<>(GeneratedQuestionsOutput.class);
         String systemPrompt = templateService.render(PROMPT_GENERATE_QUIZ_QUESTIONS_SYSTEM, Map.of());
-        String userPrompt = templateService.renderObject(PROMPT_GENERATE_QUIZ_QUESTIONS_USER,
-                Map.of("courseTitle", getSanitizedCourseTitle(course), "courseDescription", getSanitizedCourseDescription(course), "topic", topic, "optionalPrompt", optionalPrompt,
-                        "language", request.language().getValue(), "numberOfQuestions", request.numberOfQuestions(), "difficulty", request.difficulty(), "questionTypes",
-                        requestedQuestionTypes, "format", outputConverter.getFormat()));
+        String userPrompt;
+
+        boolean isCompetencyMode = request.competencyIds() != null && !request.competencyIds().isEmpty();
+        if (isCompetencyMode) {
+            userPrompt = buildCompetencyModePrompt(course, request, optionalPrompt, requestedQuestionTypes, outputConverter);
+        }
+        else {
+            userPrompt = buildFreeTopicPrompt(course, request, optionalPrompt, requestedQuestionTypes, outputConverter);
+        }
 
         GeneratedQuestionsOutput generatedQuestions;
         try {
@@ -105,6 +116,71 @@ public class HyperionQuizQuestionGenerationService {
 
         List<GeneratedQuizQuestionDTO> questions = mapAndValidateGeneratedQuestions(generatedQuestions);
         return new QuizQuestionGenerationResponseDTO(questions);
+    }
+
+    /**
+     * Builds and returns the user prompt for the given request without calling the LLM.
+     * Used to preview the prompt that would be sent to the AI.
+     * TODO: remove
+     *
+     * @param course  the course context
+     * @param request the quiz generation configuration
+     * @return the rendered user prompt string
+     */
+    public String previewPrompt(Course course, QuizQuestionGenerationRequestDTO request) {
+        String optionalPrompt = sanitizeInput(request.optionalPrompt());
+        String requestedQuestionTypes = request.questionTypes().stream().map(QuizQuestionGenerationType::getValue).collect(Collectors.joining(", "));
+        var outputConverter = new BeanOutputConverter<>(GeneratedQuestionsOutput.class);
+
+        boolean isCompetencyMode = request.competencyIds() != null && !request.competencyIds().isEmpty();
+        if (isCompetencyMode) {
+            return buildCompetencyModePrompt(course, request, optionalPrompt, requestedQuestionTypes, outputConverter);
+        }
+        return buildFreeTopicPrompt(course, request, optionalPrompt, requestedQuestionTypes, outputConverter);
+    }
+
+    private String buildFreeTopicPrompt(Course course, QuizQuestionGenerationRequestDTO request, String optionalPrompt, String requestedQuestionTypes,
+            BeanOutputConverter<GeneratedQuestionsOutput> outputConverter) {
+        String topic = sanitizeInput(request.topic());
+        return templateService.renderObject(PROMPT_GENERATE_QUIZ_QUESTIONS_USER,
+                Map.of("courseTitle", getSanitizedCourseTitle(course), "courseDescription", getSanitizedCourseDescription(course), "topic", topic, "optionalPrompt", optionalPrompt,
+                        "language", request.language().getValue(), "numberOfQuestions", request.numberOfQuestions(), "difficulty", request.difficulty(), "questionTypes",
+                        requestedQuestionTypes, "format", outputConverter.getFormat()));
+    }
+
+    private String buildCompetencyModePrompt(Course course, QuizQuestionGenerationRequestDTO request, String optionalPrompt, String requestedQuestionTypes,
+            BeanOutputConverter<GeneratedQuestionsOutput> outputConverter) {
+        CompetencyContext context = competencyGraphService.computeContext(course.getId(), request.competencyIds());
+
+        String competencyList = context.competencies().stream().map(c -> {
+            String taxonomy = c.getTaxonomy() != null ? c.getTaxonomy().name() : "UNDERSTAND";
+            String description = c.getDescription() != null && !c.getDescription().isBlank() ? ": " + sanitizeInput(c.getDescription()) : "";
+            return "- " + sanitizeInput(c.getTitle()) + " (" + taxonomy + ")" + description;
+        }).collect(Collectors.joining("\n"));
+
+        String relationLines = context.relations().stream().map(r -> {
+            String tail = sanitizeInput(r.getTailCompetency().getTitle());
+            String head = sanitizeInput(r.getHeadCompetency().getTitle());
+            return switch (r.getType()) {
+                case ASSUMES -> "- \"" + tail + "\" requires \"" + head + "\" as a prerequisite (ASSUMES)";
+                case EXTENDS -> "- \"" + tail + "\" is a deeper treatment of \"" + head + "\" (EXTENDS)";
+                case MATCHES -> "- \"" + tail + "\" and \"" + head + "\" cover the same topic (MATCHES)";
+            };
+        }).collect(Collectors.joining("\n"));
+
+        // relationSection ends with \n so the template's own newline creates a blank line before lectureSection
+        String relationSection = relationLines.isBlank() ? "" : "## Competency Relations\nHow the selected competencies relate to each other:\n" + relationLines + "\n";
+
+        String lectureSection = context.lectureSnippets().isEmpty() ? "" : "## Relevant Lecture Content\n" + context.lectureSnippets().stream().collect(Collectors.joining("\n\n"));
+
+        int difficulty = request.difficulty();
+
+        return templateService.renderObject(PROMPT_GENERATE_QUIZ_QUESTIONS_USER_COMPETENCY,
+                Map.ofEntries(Map.entry("courseTitle", getSanitizedCourseTitle(course)), Map.entry("courseDescription", getSanitizedCourseDescription(course)),
+                        Map.entry("competencyList", competencyList), Map.entry("relationSection", relationSection), Map.entry("lectureSection", lectureSection),
+                        Map.entry("optionalPrompt", optionalPrompt), Map.entry("language", request.language().getValue()),
+                        Map.entry("numberOfQuestions", request.numberOfQuestions()), Map.entry("questionTypes", requestedQuestionTypes), Map.entry("difficulty", difficulty),
+                        Map.entry("format", outputConverter.getFormat())));
     }
 
     /**

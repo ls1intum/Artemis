@@ -324,6 +324,8 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
 
     boolean existsByIdAndCourseId(long competencyId, long courseId);
 
+    boolean existsByCourseId(long courseId);
+
     @Query("""
             SELECT c
             FROM CourseCompetency c

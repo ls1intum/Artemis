@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.springframework.context.annotation.Conditional;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
@@ -34,6 +37,28 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
         this.lectureUnitLinkRepository = lectureUnitLinkRepository;
         this.competencyRepositoryApi = competencyRepositoryApi;
+    }
+
+    /**
+     * Returns the IDs of all lecture units linked to any of the given competencies.
+     *
+     * @param competencyIds the set of selected competency IDs
+     * @return set of lecture unit IDs linked to at least one of the given competencies
+     */
+    public Set<Long> findLectureUnitIdsByCompetencyIds(Set<Long> competencyIds) {
+        return lectureUnitLinkRepository.findLectureUnitIdsByCompetencyIds(competencyIds);
+    }
+
+    /**
+     * Returns all relations for a course where at least one endpoint is in the given set of competency IDs.
+     *
+     * @param courseId      the course to load relations from
+     * @param competencyIds the set of selected competency IDs
+     * @return relations touching at least one selected competency
+     */
+    public Set<CompetencyRelation> findRelationsInvolvingCompetencies(long courseId, Set<Long> competencyIds) {
+        return competencyRelationRepository.findAllWithHeadAndTailByCourseId(courseId).stream()
+                .filter(r -> competencyIds.contains(r.getHeadCompetency().getId()) || competencyIds.contains(r.getTailCompetency().getId())).collect(Collectors.toSet());
     }
 
     public void deleteAllByCourseId(Long courseId) {

@@ -19,7 +19,12 @@
                 "modalTitle": "Generate Quiz with AI",
                 "configuration": {
                     "title": "Configuration",
+                    "mode": "Generation mode",
+                    "modeFreeTopicLabel": "Free topic",
+                    "modeCompetencyGraphLabel": "From competencies",
                     "topic": "Topic",
+                    "competencies": "Competencies",
+                    "competenciesPlaceholder": "Select competencies to assess...",
                     "optionalPrompt": "Optional prompt",
                     "optionalPromptTooltip": "Add optional instructions, constraints, or expectations to steer the generated questions.",
                     "language": "Language",
@@ -43,6 +48,7 @@
                 },
                 "actions": {
                     "generate": "Generate",
+                    "previewPrompt": "[DEBUG] Preview Prompt",
                     "openInEditor": "Open in editor",
                     "addToEditor": "Add to quiz",
                     "loading": {
@@ -53,8 +59,9 @@
                     }
                 },
                 "errors": {
-                    "invalidConfiguration": "Please provide a topic and select at least one question type.",
+                    "invalidConfiguration": "Please provide a topic (or select competencies) and at least one question type.",
                     "generationFailed": "Failed to generate quiz questions. Please try again.",
+                    "competencyLoadFailed": "Failed to load course competencies. Please try again.",
                     "refinementFailed": "Failed to refine quiz questions. Please try again.",
                     "partialRefinementFailed": "{{ count }} question(s) could not be refined and were skipped."
                 },

@@ -10,13 +10,17 @@
 
 
 /**
- * Request to generate quiz questions
+ * Request to generate quiz questions. Either topic or competencyIds must be provided.
  */
 export interface QuizQuestionGenerationRequest { 
     /**
-     * Main topic for the generated quiz
+     * Main topic for the generated quiz (used in free-topic mode)
      */
-    topic: string;
+    topic?: string;
+    /**
+     * IDs of course competencies to assess (used in competency mode). Either topic or competencyIds must be provided.
+     */
+    competencyIds?: Array<number>;
     /**
      * Optional additional instructions
      */

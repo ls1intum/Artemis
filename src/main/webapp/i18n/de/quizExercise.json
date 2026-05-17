@@ -19,7 +19,12 @@
                 "modalTitle": "Quizfragen mit KI generieren",
                 "configuration": {
                     "title": "Konfiguration",
+                    "mode": "Generierungsmodus",
+                    "modeFreeTopicLabel": "Freies Thema",
+                    "modeCompetencyGraphLabel": "Aus Kompetenzen",
                     "topic": "Thema",
+                    "competencies": "Kompetenzen",
+                    "competenciesPlaceholder": "Zu prüfende Kompetenzen auswählen...",
                     "optionalPrompt": "Optionaler Prompt",
                     "optionalPromptTooltip": "Füge optionale Anweisungen, Einschränkungen oder Erwartungen hinzu, um die generierten Fragen gezielt zu steuern.",
                     "language": "Sprache",
@@ -43,6 +48,7 @@
                 },
                 "actions": {
                     "generate": "Generieren",
+                    "previewPrompt": "[DEBUG] Prompt Vorschau",
                     "openInEditor": "Im Editor öffnen",
                     "addToEditor": "Zum Quiz hinzufügen",
                     "loading": {
@@ -53,8 +59,9 @@
                     }
                 },
                 "errors": {
-                    "invalidConfiguration": "Bitte gib ein Thema an und wähle mindestens einen Fragetyp aus.",
+                    "invalidConfiguration": "Bitte gib ein Thema an (oder wähle Kompetenzen aus) und wähle mindestens einen Fragetyp.",
                     "generationFailed": "Quizfragen konnten nicht generiert werden. Bitte versuche es erneut.",
+                    "competencyLoadFailed": "Kurskompetenzen konnten nicht geladen werden. Bitte versuche es erneut.",
                     "refinementFailed": "Quizfragen konnten nicht verfeinert werden. Bitte versuche es erneut.",
                     "partialRefinementFailed": "{{ count }} Frage(n) konnten nicht verfeinert werden und wurden übersprungen."
                 },

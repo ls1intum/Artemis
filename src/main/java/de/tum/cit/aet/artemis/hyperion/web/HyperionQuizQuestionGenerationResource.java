@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import java.util.Optional;
+
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,7 +16,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -40,13 +45,20 @@ public class HyperionQuizQuestionGenerationResource {
 
     private final HyperionQuizQuestionGenerationService quizQuestionGenerationService;
 
-    public HyperionQuizQuestionGenerationResource(CourseRepository courseRepository, HyperionQuizQuestionGenerationService quizQuestionGenerationService) {
+    private final Optional<CourseCompetencyApi> courseCompetencyApi;
+
+    public HyperionQuizQuestionGenerationResource(CourseRepository courseRepository, HyperionQuizQuestionGenerationService quizQuestionGenerationService,
+            Optional<CourseCompetencyApi> courseCompetencyApi) {
         this.courseRepository = courseRepository;
         this.quizQuestionGenerationService = quizQuestionGenerationService;
+        this.courseCompetencyApi = courseCompetencyApi;
     }
 
     /**
      * POST /courses/{courseId}/quiz-exercises/generate-questions : Generate quiz questions from a configuration.
+     * Accepts two modes:
+     * - Free-topic mode: {@code topic} must be provided.
+     * - Competency-graph mode: {@code competencyIds} must be provided; requires the Atlas module and the course to have competencies.
      *
      * @param courseId the id of the course
      * @param request  generation configuration
@@ -56,9 +68,37 @@ public class HyperionQuizQuestionGenerationResource {
     @PostMapping("courses/{courseId}/quiz-exercises/generate-questions")
     public ResponseEntity<QuizQuestionGenerationResponseDTO> generateQuizQuestions(@PathVariable long courseId, @Valid @RequestBody QuizQuestionGenerationRequestDTO request) {
         log.debug("REST request to Hyperion generate quiz questions for course [{}]", courseId);
+
+        boolean isCompetencyMode = request.competencyIds() != null && !request.competencyIds().isEmpty();
+        if (isCompetencyMode) {
+            if (courseCompetencyApi.isEmpty()) {
+                throw new BadRequestAlertException("Competency-graph mode requires the Atlas module to be enabled", "QuizQuestionGeneration", "atlasNotEnabled");
+            }
+            if (!courseCompetencyApi.get().courseHasCompetencies(courseId)) {
+                throw new BadRequestAlertException("This course has no competencies configured", "QuizQuestionGeneration", "noCompetencies");
+            }
+        }
+
         Course course = courseRepository.findByIdElseThrow(courseId);
         var result = quizQuestionGenerationService.generateQuizQuestions(course, request);
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * POST /courses/{courseId}/quiz-exercises/preview-prompt : Returns the rendered LLM prompt for the given request without calling the LLM.
+     * TODO: Remove this
+     *
+     * @param courseId the id of the course
+     * @param request  generation configuration
+     * @return the rendered prompt string
+     */
+    @EnforceAtLeastEditorInCourse
+    @PostMapping(value = "courses/{courseId}/quiz-exercises/preview-prompt", produces = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity<String> previewPrompt(@PathVariable long courseId, @Valid @RequestBody QuizQuestionGenerationRequestDTO request) {
+        log.debug("REST request to preview Hyperion quiz question prompt for course [{}]", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        String prompt = quizQuestionGenerationService.previewPrompt(course, request);
+        return ResponseEntity.ok(prompt);
     }
 
     /**

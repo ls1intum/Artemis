@@ -16,10 +16,62 @@
         <section class="quiz-ai-generation-configuration">
             <h6 class="section-title" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.title"></h6>
 
-            <div class="field-group">
-                <label class="field-label" for="quiz-ai-topic" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.topic"></label>
-                <input id="quiz-ai-topic" pInputText class="w-100" [ngModel]="topic()" (ngModelChange)="topic.set($event)" />
-            </div>
+            <!-- Mode toggle — competency mode only shown when the course has competencies -->
+            @if (isLoadingCompetencies() || hasCompetencies()) {
+                <div class="field-group">
+                    <span class="field-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.mode"></span>
+                    <div class="selection-list">
+                        <button
+                            pButton
+                            type="button"
+                            severity="secondary"
+                            class="selection-button"
+                            [ngClass]="{ 'selection-button-active': !isCompetencyMode() }"
+                            (click)="selectMode('free-topic')"
+                        >
+                            <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.modeFreeTopicLabel"></span>
+                        </button>
+                        <button
+                            pButton
+                            type="button"
+                            severity="secondary"
+                            class="selection-button"
+                            [ngClass]="{ 'selection-button-active': isCompetencyMode() }"
+                            [disabled]="isLoadingCompetencies()"
+                            (click)="selectMode('competency-graph')"
+                        >
+                            <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.modeCompetencyGraphLabel"></span>
+                        </button>
+                    </div>
+                </div>
+            }
+
+            <!-- Free-topic mode: topic input -->
+            @if (!isCompetencyMode()) {
+                <div class="field-group">
+                    <label class="field-label" for="quiz-ai-topic" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.topic"></label>
+                    <input id="quiz-ai-topic" pInputText class="w-100" [ngModel]="topic()" (ngModelChange)="topic.set($event)" />
+                </div>
+            }
+
+            <!-- Competency-graph mode: multi-select -->
+            @if (isCompetencyMode()) {
+                <div class="field-group">
+                    <label class="field-label" for="quiz-ai-competencies" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.competencies"></label>
+                    <p-multiselect
+                        inputId="quiz-ai-competencies"
+                        [options]="courseCompetencies()"
+                        [ngModel]="selectedCompetencies()"
+                        (ngModelChange)="selectedCompetencies.set($event)"
+                        optionLabel="title"
+                        [placeholder]="'artemisApp.quizExercise.aiGeneration.configuration.competenciesPlaceholder' | artemisTranslate"
+                        [loading]="isLoadingCompetencies()"
+                        [showToggleAll]="false"
+                        styleClass="w-100"
+                        appendTo="body"
+                    />
+                </div>
+            }
 
             <div class="field-group">
                 <div class="field-label label-with-help">
@@ -110,6 +162,9 @@
                     <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.generate"></span>
                 }
             </button>
+            <button pButton type="button" severity="secondary" outlined class="w-100 mt-2" [disabled]="!canGenerate() || isLoadingPromptPreview()" (click)="previewPrompt()">
+                <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.previewPrompt"></span>
+            </button>
         </section>
 
         <section class="quiz-ai-generation-preview">
@@ -120,7 +175,9 @@
                 }
             </div>
 
-            @if (!hasGeneratedQuestions()) {
+            @if (promptPreview()) {
+                <pre class="prompt-preview">{{ promptPreview() }}</pre>
+            } @else if (!hasGeneratedQuestions()) {
                 <div class="preview-empty">
                     <h6 jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.emptyTitle"></h6>
                     <p class="mb-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.emptyDescription"></p>
