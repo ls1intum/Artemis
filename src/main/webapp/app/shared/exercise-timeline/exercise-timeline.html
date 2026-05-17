@@ -1,51 +1,58 @@
 <div class="frame">
-    @for (item of timelineItems(); track $index; let index = $index) {
+    @for (internalItem of internalTimelineItems(); track $index; let index = $index) {
         <div class="timeline-item-row">
             <div class="timeline-graphic">
                 <div class="timeline-graphic-line"></div>
-                @if (item.kind === 'required') {
-                    @if (item.date() !== undefined) {
-                        <div class="timeline-graphic-circle required-and-defined">
-                            <div class="timeline-graphic-circle-dot"></div>
-                        </div>
-                    } @else {
-                        <div class="timeline-graphic-circle required-and-undefined"></div>
+                <div
+                    class="timeline-graphic-circle"
+                    [class.required]="internalItem.kind === 'required'"
+                    [class.optional]="internalItem.kind === 'optional'"
+                    [class.valid]="!internalItem.isBeforePreviousDate && !internalItem.isInputRequiredButUndefined"
+                    [class.invalid]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
+                >
+                    @if (internalItem.date() !== undefined) {
+                        <div
+                            class="timeline-graphic-circle-dot"
+                            [class.invalid]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
+                        ></div>
                     }
-                } @else {
-                    <div class="timeline-graphic-circle optional">
-                        @if (item.date() !== undefined) {
-                            <div class="timeline-graphic-circle-dot"></div>
-                        }
-                    </div>
-                }
+                </div>
                 <div class="timeline-graphic-line"></div>
             </div>
             <div class="label-and-input">
                 @if (index > 0) {
                     <div class="spacer"></div>
                 }
-                <label class="label" [for]="'datepicker-' + index" [jhiTranslate]="item.labelStringKey"></label>
-                <p-datepicker
-                    styleClass="timeline-datepicker"
-                    [inputStyle]="{ width: '100%', 'box-sizing': 'border-box' }"
-                    [inputId]="'datepicker-' + index"
-                    [ngModel]="item.date()"
-                    (ngModelChange)="updateDate(item, $event)"
-                    #dateModel="ngModel"
-                    [showTime]="true"
-                    dateFormat="dd . mm . yy |"
-                    timeSeparator=" : "
-                    placeholder="dd . mm . yyyy | hh : mm"
-                    pInputMask="99 . 99 . 9999 | 99 : 99"
-                    slotChar="dd . mm . yyyy | hh : mm"
-                    keepInvalid="true"
-                    showClear="true"
-                    showIcon="true"
-                    iconDisplay="input"
-                    appendTo="body"
-                    showOnFocus="false"
-                    [invalid]="item.kind === 'required' && dateModel.touched && item.date() === undefined"
-                />
+                <label class="label" [for]="'datepicker-' + index" [jhiTranslate]="internalItem.labelStringKey"></label>
+                <div class="datepicker-and-info">
+                    <p-datepicker
+                        styleClass="timeline-datepicker"
+                        [inputStyle]="{ width: '100%', 'box-sizing': 'border-box' }"
+                        [inputId]="'datepicker-' + index"
+                        [ngModel]="internalItem.date()"
+                        (ngModelChange)="updateDate(internalItem, $event)"
+                        #dateModel="ngModel"
+                        [showTime]="true"
+                        dateFormat="dd . mm . yy |"
+                        timeSeparator=" : "
+                        placeholder="dd . mm . yyyy | hh : mm"
+                        pInputMask="99 . 99 . 9999 | 99 : 99"
+                        slotChar="dd . mm . yyyy | hh : mm"
+                        keepInvalid="true"
+                        showClear="true"
+                        showIcon="true"
+                        iconDisplay="input"
+                        appendTo="body"
+                        showOnFocus="false"
+                        [invalid]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
+                    />
+                    <i
+                        class="pi pi-info-circle timeline-datepicker-info-icon"
+                        [class.visible]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
+                        [pTooltip]="internalItem.tooltip"
+                        tooltipPosition="right"
+                    ></i>
+                </div>
             </div>
         </div>
     }

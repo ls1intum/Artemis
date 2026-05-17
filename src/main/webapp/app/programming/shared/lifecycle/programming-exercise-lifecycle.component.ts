@@ -63,7 +63,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             date: signal<Date | undefined>(undefined),
         },
         {
-            kind: 'optional',
+            kind: 'required',
             labelStringKey: 'artemisApp.exercise.dueDate',
             date: signal<Date | undefined>(undefined),
         },

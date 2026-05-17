@@ -34,21 +34,29 @@
                 border-radius: 50%;
                 box-sizing: border-box;
 
-                &.required-and-undefined {
-                    border: 3px solid red;
+                &.required {
+                    border: 3px solid var(--bs-danger);
+
+                    &.valid {
+                        border-color: green;
+                    }
                 }
 
-                &.required-and-defined {
-                    border: 3px solid green;
-                }
+                &.optional {
+                    &::before {
+                        position: absolute;
+                        inset: 0;
+                        border-radius: 50%;
+                        background: repeating-conic-gradient(green -19deg 19deg, transparent 19deg 41deg);
+                        content: '';
+                        mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 3px));
+                    }
 
-                &.optional::before {
-                    position: absolute;
-                    inset: 0;
-                    border-radius: 50%;
-                    background: repeating-conic-gradient(green -19deg 19deg, transparent 19deg 41deg);
-                    content: '';
-                    mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 3px));
+                    &.invalid {
+                        &::before {
+                            background: repeating-conic-gradient(var(--bs-danger) -19deg 19deg, transparent 19deg 41deg);
+                        }
+                    }
                 }
 
                 .timeline-graphic-circle-dot {
@@ -57,6 +65,10 @@
                     height: 0.8rem;
                     border-radius: 50%;
                     background-color: green;
+
+                    &.invalid {
+                        background-color: var(--bs-danger);
+                    }
                 }
             }
         }
@@ -70,6 +82,22 @@
             .spacer {
                 height: 0.5rem;
                 width: 100%;
+            }
+
+            .datepicker-and-info {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+
+                .timeline-datepicker-info-icon {
+                    width: 1rem;
+                    color: var(--bs-danger);
+                    visibility: hidden;
+
+                    &.visible {
+                        visibility: visible;
+                    }
+                }
             }
 
             .timeline-datepicker {
