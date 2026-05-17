@@ -12,21 +12,21 @@
         </button>
     </h2>
 </div>
-@if (studentExam && !studentExam.submitted) {
+@if (studentExam() && !studentExam().submitted) {
     <div class="alert alert-danger text-center">
         <strong jhiTranslate="artemisApp.exam.examSummary.youAreViewingAnUnsubmittedExam"></strong>
     </div>
 }
-@if (studentExam?.exam) {
+@if (studentExam()?.exam) {
     <div>
         <jhi-exam-general-information
-            [exam]="studentExam.exam!"
-            [studentExam]="studentExam"
-            [reviewIsOpen]="(studentExam?.exam || false) && isBeforeStudentReviewEnd && isAfterStudentReviewStart && !isTestRun"
+            [exam]="studentExam().exam!"
+            [studentExam]="studentExam()"
+            [reviewIsOpen]="(studentExam()?.exam || false) && isBeforeStudentReviewEnd && isAfterStudentReviewStart && !isTestRun"
         />
     </div>
 }
-@if (studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO) {
+@if (studentExam() && studentExam().exercises && studentExam().exam?.course && studentExamGradeInfoDTO) {
     <div class="mb-4" id="exam-summary-result-overview">
         <jhi-exam-result-overview
             [studentExamWithGrade]="studentExamGradeInfoDTO!"
@@ -44,7 +44,7 @@
     </div>
 }
 <h3 jhiTranslate="artemisApp.exam.exercises"></h3>
-@for (exercise of studentExam?.exercises; track exercise; let i = $index) {
+@for (exercise of studentExam()?.exercises; track exercise; let i = $index) {
     <div [id]="'exercise-' + exercise.id">
         <jhi-collapsible-card [isCardContentCollapsed]="exerciseInfos[exercise.id!].isCollapsed" [toggleCollapse]="toggleCollapseExercise(exerciseInfos[exercise.id!])">
             <div class="header">
@@ -143,7 +143,7 @@
                                     @case (QUIZ) {
                                         <jhi-quiz-exam-summary
                                             [quizParticipation]="exercise"
-                                            [exam]="studentExam.exam!"
+                                            [exam]="studentExam().exam!"
                                             [submission]="exerciseInfos[exercise.id!]!.submission!"
                                             [resultsPublished]="resultsArePublished"
                                         />
@@ -186,14 +186,13 @@
                         <jhi-programming-exam-summary
                             [exercise]="exercise"
                             [participation]="exerciseInfos[exercise.id!]!.participation!"
-                            [submission]="exerciseInfos[exercise.id!]!.submission!"
                             [isTestRun]="isTestRun"
                             [exam]="examWithOnlyIdAndStudentReviewPeriod"
                             [isAfterStudentReviewStart]="isAfterStudentReviewStart"
                             [resultsPublished]="resultsArePublished"
                             [isPrinting]="isPrinting"
                             [isAfterResultsArePublished]="resultsArePublished"
-                            [instructorView]="instructorView"
+                            [instructorView]="instructorView()"
                         />
                     }
                 }

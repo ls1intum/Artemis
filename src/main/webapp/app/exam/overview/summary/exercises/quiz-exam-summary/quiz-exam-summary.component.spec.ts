@@ -23,6 +23,8 @@ import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 const multipleChoiceQuestion = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as MultipleChoiceQuestion;
 const wrongAnswerOption = { id: 1, isCorrect: false, question: multipleChoiceQuestion } as AnswerOption;
@@ -37,7 +39,7 @@ dragAndDropQuestion.correctMappings = [correctDragAndDropMapping];
 dragAndDropQuestion.dragItems = [dragItem];
 dragAndDropQuestion.dropLocations = [dropLocation];
 
-const shortAnswerQuestion = { id: 3, type: QuizQuestionType.SHORT_ANSWER } as ShortAnswerQuestion;
+const shortAnswerQuestion = { id: 3, type: QuizQuestionType.SHORT_ANSWER, text: 'short answer text' } as ShortAnswerQuestion;
 const shortAnswerSpot = { id: 1, width: 1, spotNr: 1, question: shortAnswerQuestion, posX: 1, posY: 1, tempID: 1 } as ShortAnswerSpot;
 const shortAnswerSolution = { id: 1, text: 'solution', question: shortAnswerQuestion, posX: 1, posY: 1, tempID: 1 } as ShortAnswerSolution;
 const correctShortAnswerMapping = {
@@ -68,38 +70,41 @@ const submissionWithAnswers = {
 const exercise = { id: 1, studentParticipations: [studentParticipation], quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion] } as QuizExercise;
 
 describe('QuizExamSummaryComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<QuizExamSummaryComponent>;
     let component: QuizExamSummaryComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(QuizExamSummaryComponent);
-                component = fixture.componentInstance;
-                component.quizParticipation = {
-                    quizQuestions: exercise.quizQuestions!,
-                    studentParticipations: exercise.studentParticipations,
-                };
-                component.submission = { id: 2, submittedAnswers: [] };
-                component.resultsPublished = true;
-                component.exam = { id: 1 } as Exam;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(QuizExamSummaryComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('quizParticipation', {
+            quizQuestions: exercise.quizQuestions!,
+            studentParticipations: exercise.studentParticipations,
+        });
+        fixture.componentRef.setInput('submission', { id: 2, submittedAnswers: [] });
+        fixture.componentRef.setInput('resultsPublished', true);
+        fixture.componentRef.setInput('exam', { id: 1 } as Exam);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
-        component.exam = { id: 1, publishResultsDate: dayjs().subtract(1, 'hours') } as Exam;
-        component.ngOnChanges();
+        fixture.componentRef.setInput('exam', { id: 1, publishResultsDate: dayjs().subtract(1, 'hours') } as Exam);
+        fixture.detectChanges();
         expect(component).not.toBeNull();
-        expect(component.exam).not.toBeNull();
-        expect(component.showMissingResultsNotice).toBeTrue();
+        expect(component.exam()).not.toBeNull();
+        expect(component.showMissingResultsNotice).toBe(true);
     });
 
     it('should initialize the solution dictionaries correctly', () => {
-        component.submission = submissionWithAnswers;
-        component.ngOnChanges();
+        fixture.componentRef.setInput('submission', submissionWithAnswers);
+        fixture.detectChanges();
         expect(component.selectedAnswerOptions.get(1)![0]).toEqual(correctAnswerOption);
         expect(component.getScoreForQuizQuestion(1)).toBe(1);
         expect(component.dragAndDropMappings.get(2)![0]).toEqual(correctDragAndDropMapping);

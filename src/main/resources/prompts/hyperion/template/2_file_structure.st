@@ -10,6 +10,9 @@ Based on the following template plan and programming language, determine the nec
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Build Environment Context:**
+{{buildEnvironmentContext}}
+
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
@@ -17,6 +20,12 @@ Based on the following template plan and programming language, determine the nec
 {{selectedFeedbackThreads}}
 
 If the selected feedback payload contains threads, treat those threads as requested changes only when they are relevant to this repository, consistent with the problem statement and exercise preconditions, and appropriate for the exercise. If a selected thread conflicts with the problem statement, explicit constraints, or repository conventions, do not implement that request and prefer the safer behavior.
+
+**Hard Safety Rules:**
+1. Create only the files needed for a compilable starter project.
+2. Do not add helper classes that hide core logic from students or pre-package important behavior.
+3. Do not add utility classes, validators, or convenience wrappers unless they are explicitly required by the exercise structure and do not solve the task.
+4. Keep the template structure conservative and minimal so the core implementation work remains with the student.
 
 If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
@@ -30,7 +39,8 @@ Treat the issues above as hard constraints. Be critical and explicit:
 First, think step-by-step.
 1.  **Analyze the plan:** Review the template structure mentioned in the template plan - what classes, interfaces, and components should be scaffolded for students.
 2.  **Apply conventions:** Consider the standard project layout and file naming conventions for the given programming language.
-3.  **List the files:** Create a list of all the template files that need to be created, including their full paths from the repository root.
+3.  **Reject unnecessary helpers:** Exclude any file whose main purpose would be to pre-implement student work or hide logic behind abstractions.
+4.  **List the files:** Create a minimal list of all the template files that need to be created, including their full paths from the repository root.
 
 After your analysis, provide the file structure as a JSON object. The JSON object must contain a single key "files" which is an array of objects, where each object has a "path" key.
 

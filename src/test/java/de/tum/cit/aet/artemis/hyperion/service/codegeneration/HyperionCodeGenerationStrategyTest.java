@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -30,10 +31,6 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.retry.TransientAiException;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
@@ -49,7 +46,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 class HyperionCodeGenerationServiceTest {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final String BUILD_ENVIRONMENT_CONTEXT = "pom.xml:\n<project></project>";
 
     @Mock
     private ChatModel chatModel;
@@ -87,7 +84,7 @@ class HyperionCodeGenerationServiceTest {
 
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, "build logs", "repo structure", "consistency issues", "{\"threads\":[]}");
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, "build logs", "repo structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues");
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).path()).isEqualTo("Sort.java");
@@ -104,7 +101,7 @@ class HyperionCodeGenerationServiceTest {
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Test.java\",\"content\":\"class Test {}\"}]}";
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, null, "repo structure", "consistency issues", "{\"threads\":[]}");
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, null, "repo structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues");
 
         assertThat(result).hasSize(1);
         verify(chatModel, times(2)).call(any(Prompt.class));
@@ -112,45 +109,109 @@ class HyperionCodeGenerationServiceTest {
 
     @Test
     void generateCode_withNullRepositoryStructure_throwsIllegalArgumentException() {
-        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", null, "consistency issues", "{\"threads\":[]}")).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("repositoryStructure must not be null");
+        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", null, BUILD_ENVIRONMENT_CONTEXT, "consistency issues"))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("repositoryStructure must not be null");
     }
 
     @Test
     void generateCode_withNullConsistencyIssues_throwsIllegalArgumentException() {
-        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", "repo structure", null, "{\"threads\":[]}")).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", "repo structure", BUILD_ENVIRONMENT_CONTEXT, null)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("consistencyIssues must not be null");
     }
 
     @Test
-    void normalizeSelectedFeedbackThreads_withOversizedValidJson_trimsThreadsAndReturnsValidJson() throws Exception {
-        int maxLength = getMaxSelectedFeedbackThreadsLength();
-        String oversizedPayload = createOversizedThreadsPayload(80, 300);
-
-        String normalized = ReflectionTestUtils.invokeMethod(strategy, "normalizeSelectedFeedbackThreads", oversizedPayload);
-
-        assertThat(normalized).isNotNull();
-        assertThat(normalized.length()).isLessThanOrEqualTo(maxLength);
-
-        JsonNode normalizedJson = OBJECT_MAPPER.readTree(normalized);
-        assertThat(normalizedJson.path("repositoryType").asText()).isEqualTo("SOLUTION");
-        assertThat(normalizedJson.path("threads").isArray()).isTrue();
-        assertThat(normalizedJson.path("threads").size()).isLessThan(80);
-        assertThat(normalizedJson.path("threads")).isNotEmpty();
+    void generateCode_withNullBuildEnvironmentContext_throwsIllegalArgumentException() {
+        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", "repo structure", null, "consistency issues")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("buildEnvironmentContext must not be null");
     }
 
     @Test
-    void normalizeSelectedFeedbackThreads_withOversizedInvalidJson_returnsLastValidObject() throws Exception {
-        int maxLength = getMaxSelectedFeedbackThreadsLength();
-        String validPayload = createOversizedThreadsPayload(2, 120);
-        assertThat(validPayload.length()).isLessThan(maxLength);
+    void generateCode_withSensitivePromptContext_redactsSecretsBeforePassingThemToGenerationStages() throws Exception {
+        String buildEnvironmentContext = """
+                gradle.properties
+                apiKey=abc123-secret
+                Authorization: Bearer bearer-token-value
+                repositoryUrl=https://ci-user:super-secret@example.org/repo.git
+                <password>xml-secret</password>
+                -----BEGIN PRIVATE KEY-----
+                private-key-material
+                -----END PRIVATE KEY-----
+                safe.property=value
+                """;
+        String consistencyIssues = """
+                password: another-secret
+                export GH_TOKEN=ghp_1234567890abcdef
+                credentials=build-user:hunter2
+                Keep this diagnostic detail visible
+                """;
 
-        String oversizedInvalidPayload = validPayload + " {\"threads\":[" + "x".repeat(maxLength);
+        setupMockTemplateAndChatResponses("{\"solutionPlan\":\"plan\",\"files\":[]}");
 
-        String normalized = ReflectionTestUtils.invokeMethod(strategy, "normalizeSelectedFeedbackThreads", oversizedInvalidPayload);
+        strategy.generateCode(user, exercise, 1L, "logs", "repo structure", buildEnvironmentContext, consistencyIssues);
 
-        assertThat(normalized).isEqualTo(OBJECT_MAPPER.writeValueAsString(OBJECT_MAPPER.readTree(validPayload)));
-        assertThat(OBJECT_MAPPER.readTree(normalized).path("threads").size()).isEqualTo(2);
+        assertThat(strategy.getLastBuildEnvironmentContext()).contains("apiKey=[REDACTED]").contains("Authorization: Bearer [REDACTED]")
+                .contains("repositoryUrl=https://ci-user:[REDACTED]@example.org/repo.git").contains("<password>[REDACTED]</password>").contains("[REDACTED]")
+                .contains("safe.property=value").doesNotContain("abc123-secret").doesNotContain("bearer-token-value").doesNotContain("super-secret").doesNotContain("xml-secret")
+                .doesNotContain("private-key-material").doesNotContain("BEGIN PRIVATE KEY");
+        assertThat(strategy.getLastConsistencyIssues()).contains("password: [REDACTED]").contains("export GH_TOKEN=[REDACTED]").contains("credentials=[REDACTED]")
+                .contains("Keep this diagnostic detail visible").doesNotContain("another-secret").doesNotContain("ghp_1234567890abcdef").doesNotContain("hunter2");
+    }
+
+    @Test
+    void generateCode_withNonSecretConfigurationIdentifiers_keepsVisibleValues() throws Exception {
+        String buildEnvironmentContext = """
+                TOKEN_LIFETIME_SECONDS=3600
+                PASSWORD_HASH_ALGORITHM=bcrypt
+                CLIENT_SECRET=super-secret-client-value
+                api_key=real-api-key-value
+                """;
+        String consistencyIssues = """
+                password_policy=minimum-length-12
+                auth_token=real-auth-token
+                """;
+
+        setupMockTemplateAndChatResponses("{\"solutionPlan\":\"plan\",\"files\":[]}");
+
+        strategy.generateCode(user, exercise, 1L, "logs", "repo structure", buildEnvironmentContext, consistencyIssues);
+
+        assertThat(strategy.getLastBuildEnvironmentContext()).contains("TOKEN_LIFETIME_SECONDS=3600").contains("PASSWORD_HASH_ALGORITHM=bcrypt")
+                .contains("CLIENT_SECRET=[REDACTED]").contains("api_key=[REDACTED]").doesNotContain("super-secret-client-value").doesNotContain("real-api-key-value");
+        assertThat(strategy.getLastConsistencyIssues()).contains("password_policy=minimum-length-12").contains("auth_token=[REDACTED]").doesNotContain("real-auth-token");
+    }
+
+    @Test
+    void generateCode_withBlankBuildEnvironmentContext_usesDefaultAndTrimsConsistencyIssues() throws Exception {
+        setupMockTemplateAndChatResponses("{\"solutionPlan\":\"plan\",\"files\":[]}");
+
+        strategy.generateCode(user, exercise, 1L, "logs", "repo structure", "   \n\t  ", "  diagnostic detail  ");
+
+        assertThat(strategy.getLastBuildEnvironmentContext()).isEqualTo("No build environment files found.");
+        assertThat(strategy.getLastConsistencyIssues()).isEqualTo("diagnostic detail");
+    }
+
+    @Test
+    void generateCode_withLongPromptContext_keepsRedactionAndAppliesLengthLimits() throws Exception {
+        String filler = "visible-context-".repeat(900);
+        String buildEnvironmentContext = "password=secret-value\n" + filler.repeat(2);
+        String consistencyIssues = "token=secret-value\n" + filler.repeat(2);
+
+        setupMockTemplateAndChatResponses("{\"solutionPlan\":\"plan\",\"files\":[]}");
+
+        strategy.generateCode(user, exercise, 1L, "logs", "repo structure", buildEnvironmentContext, consistencyIssues);
+
+        assertThat(strategy.getLastBuildEnvironmentContext()).startsWith("password=[REDACTED]").hasSize(12000).doesNotContain("secret-value");
+        assertThat(strategy.getLastConsistencyIssues()).startsWith("token=[REDACTED]").hasSize(10000).doesNotContain("secret-value");
+    }
+
+    @Test
+    void generateCode_withLargeMultilinePromptContext_redactsSecretsWithoutOverflow() throws Exception {
+        String repeatedLine = "visible.property=%s\n".formatted("x".repeat(200));
+        String buildEnvironmentContext = repeatedLine.repeat(40) + "password=super-secret-value\n" + repeatedLine.repeat(2460);
+
+        setupMockTemplateAndChatResponses("{\"solutionPlan\":\"plan\",\"files\":[]}");
+
+        assertThatCode(() -> strategy.generateCode(user, exercise, 1L, "logs", "repo structure", buildEnvironmentContext, "diagnostic detail")).doesNotThrowAnyException();
+        assertThat(strategy.getLastBuildEnvironmentContext()).contains("password=[REDACTED]").doesNotContain("super-secret-value").hasSize(12000);
     }
 
     @Test
@@ -370,7 +431,7 @@ class HyperionCodeGenerationServiceTest {
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException(new TimeoutException("Channel response timed out after 60000 milliseconds.")));
 
         assertThatThrownBy(() -> strategy.testCallChatClient(user, exercise, "test-template", templateVariables)).isInstanceOf(NetworkingException.class).hasMessageContaining(
-                "The AI took too long to respond and this generation request timed out after 5 minutes. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.");
+                "The AI took too long to respond and this generation request timed out after 15 minutes. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.");
     }
 
     private void setupMockTemplateAndChatResponses(String finalResponse) {
@@ -396,23 +457,11 @@ class HyperionCodeGenerationServiceTest {
         return new ChatResponse(List.of(generation), metadata);
     }
 
-    private int getMaxSelectedFeedbackThreadsLength() {
-        return (int) ReflectionTestUtils.getField(HyperionCodeGenerationService.class, "MAX_SELECTED_FEEDBACK_THREADS_LENGTH");
-    }
-
-    private String createOversizedThreadsPayload(int threadCount, int commentLength) throws Exception {
-        StringBuilder payload = new StringBuilder("{\"repositoryType\":\"SOLUTION\",\"threads\":[");
-        for (int index = 0; index < threadCount; index++) {
-            if (index > 0) {
-                payload.append(',');
-            }
-            payload.append("{\"id\":").append(index).append(",\"comments\":[{\"type\":\"USER\",\"text\":\"").append("x".repeat(commentLength)).append("\"}]}");
-        }
-        payload.append("]}");
-        return OBJECT_MAPPER.writeValueAsString(OBJECT_MAPPER.readTree(payload.toString()));
-    }
-
     private static class TestCodeGenerationStrategy extends HyperionCodeGenerationService {
+
+        private String lastBuildEnvironmentContext;
+
+        private String lastConsistencyIssues;
 
         public TestCodeGenerationStrategy(ChatClient chatClient, HyperionPromptTemplateService templates, LLMTokenUsageService llmTokenUsageService) {
             super(chatClient, templates, llmTokenUsageService);
@@ -420,28 +469,30 @@ class HyperionCodeGenerationServiceTest {
 
         @Override
         protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
-                String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
+                String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
+            lastBuildEnvironmentContext = buildEnvironmentContext;
+            lastConsistencyIssues = consistencyIssues;
             Map<String, Object> variables = Map.of("test", "plan");
             return callChatClient(user, exercise, courseId, "test-plan-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
+                String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "structure");
             return callChatClient(user, exercise, courseId, "test-structure-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
+                String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "headers");
             return callChatClient(user, exercise, courseId, "test-headers-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
+                String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "logic");
             return callChatClient(user, exercise, courseId, "test-logic-template", variables);
         }
@@ -460,6 +511,14 @@ class HyperionCodeGenerationServiceTest {
         public CodeGenerationResponseDTO testCallChatClient(User user, ProgrammingExercise exercise, String prompt, Map<String, Object> templateVariables)
                 throws NetworkingException {
             return testCallChatClient(user, exercise, 1L, prompt, templateVariables);
+        }
+
+        public String getLastBuildEnvironmentContext() {
+            return lastBuildEnvironmentContext;
+        }
+
+        public String getLastConsistencyIssues() {
+            return lastConsistencyIssues;
         }
     }
 }

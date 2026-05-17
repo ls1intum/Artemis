@@ -37,18 +37,38 @@ public class HyperionCodeGenerationTaskService {
      * @param exercise                  target exercise
      * @param courseId                  resolved course id for telemetry attribution
      * @param repositoryType            target repository type
+     * @param initialAutoGeneration     whether the request belongs to the initial automatically-triggered generation flow
      * @param selectedFeedbackThreadIds selected review-thread ids to forward into the prompt context
      * @param cleanup                   optional cleanup action to run after job completion
      */
     @Async
-    public void runJobAsync(String jobId, User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType, List<Long> selectedFeedbackThreadIds,
-            Runnable cleanup) {
+    public void runJobAsync(String jobId, User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType, boolean initialAutoGeneration,
+            List<Long> selectedFeedbackThreadIds, Runnable cleanup) {
         var topicSuffix = "code-generation/jobs/" + jobId;
         var publisher = new WebsocketEventPublisher(websocket, user.getLogin(), topicSuffix, exercise, repositoryType, jobId);
 
         publisher.started();
         try {
-            executionService.generateAndCompileCode(exercise, user, courseId, repositoryType, selectedFeedbackThreadIds, publisher);
+            executionService.generateAndCompileCode(exercise, user, courseId, repositoryType, initialAutoGeneration, selectedFeedbackThreadIds, publisher);
+        }
+        catch (Exception ex) {
+            publisher.error("Unhandled error: " + ex.getMessage());
+        }
+        finally {
+            if (cleanup != null) {
+                cleanup.run();
+            }
+        }
+    }
+
+    @Async
+    public void runJobAsync(String jobId, User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType, boolean initialAutoGeneration, Runnable cleanup) {
+        var topicSuffix = "code-generation/jobs/" + jobId;
+        var publisher = new WebsocketEventPublisher(websocket, user.getLogin(), topicSuffix, exercise, repositoryType, jobId);
+
+        publisher.started();
+        try {
+            executionService.generateAndCompileCode(exercise, user, courseId, repositoryType, initialAutoGeneration, publisher);
         }
         catch (Exception ex) {
             publisher.error("Unhandled error: " + ex.getMessage());

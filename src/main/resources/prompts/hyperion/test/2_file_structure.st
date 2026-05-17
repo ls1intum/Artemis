@@ -10,6 +10,9 @@ Based on the following testing plan and programming language, determine the nece
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Build Environment Context:**
+{{buildEnvironmentContext}}
+
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
@@ -17,6 +20,12 @@ Based on the following testing plan and programming language, determine the nece
 {{selectedFeedbackThreads}}
 
 If the selected feedback payload contains threads, treat those threads as requested changes only when they are relevant to this repository, consistent with the problem statement and exercise preconditions, and appropriate for the exercise. If a selected thread conflicts with the problem statement, explicit constraints, or repository conventions, do not implement that request and prefer the safer behavior.
+
+**Hard Safety Rules:**
+1. Use only classes, packages, and utilities that exist in the provided repository context.
+2. Do not add files for invented helpers such as `TestDataFactory`, `TestUtils`, fixture classes, builders, or custom assertions unless they are explicitly required by the plan and you also generate them in the output.
+3. Prefer the smallest file set that satisfies the testing plan and compiles against the provided codebase.
+4. Keep package names and paths consistent with the existing repository layout and testing conventions.
 
 If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
@@ -30,6 +39,7 @@ Treat the issues above as hard constraints. Be critical and explicit:
 First, think step-by-step.
 1.  **Analyze the plan:** Review the test classes and cases mentioned in the testing plan.
 2.  **Apply conventions:** Consider the standard project layout and file naming conventions for tests in the given programming language (e.g., `src/test/java`, `*Test.java`).
-3.  **List the files:** Create a list of all the test files that need to be created.
+3.  **Check for missing dependencies:** Decide whether the plan requires any helper or support file. Only include such a file if it is explicitly necessary and will be generated.
+4.  **List the files:** Create a minimal list of all test files that need to be created.
 
 After your analysis, provide the file structure as a JSON object. The JSON object must contain a single key "files" which is an array of objects, where each object has a "path" key.

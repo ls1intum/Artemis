@@ -402,6 +402,11 @@ public class ProgrammingExerciseGradingService {
             relevantTestCases = filterRelevantTestCasesForStudent(testCases, result);
         }
 
+        if (log.isDebugEnabled()) {
+            log.debug("Calculating score for exercise {} (isStudent={}): {} active test cases, {} relevant test cases (names: {})", exercise.getId(), isStudentParticipation,
+                    testCases.size(), relevantTestCases.size(), relevantTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
+        }
+
         // We only apply submission policies if it is a student participation
         return calculateScoreForResult(testCases, relevantTestCases, result, exercise, isStudentParticipation);
     }
@@ -855,7 +860,8 @@ public class ProgrammingExerciseGradingService {
      */
     private void setCreditsForTestCaseFeedback(double credits, final ProgrammingExerciseTestCase testCase, final Result result) {
         // We need to compare testcases ignoring the case, because the testcaseRepository is case-insensitive
-        result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && fb.getTestCase().equals(testCase)).findFirst()
+        // SCA (static code analysis) feedback also has type AUTOMATIC but no test case attached, so guard against null.
+        result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && Objects.equals(fb.getTestCase(), testCase)).findFirst()
                 .ifPresent(feedback -> feedback.setCredits(credits));
     }
 

@@ -1,8 +1,8 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { CoursesForDashboardDTO } from 'app/core/course/shared/entities/courses-for-dashboard-dto';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
 import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
@@ -60,7 +60,7 @@ export class GradeScoreDTO {
 }
 
 @Injectable({ providedIn: 'root' })
-export class CourseManagementService {
+export class CourseManagementService implements OnDestroy {
     private http = inject(HttpClient);
     private courseStorageService = inject(CourseStorageService);
     private lectureService = inject(LectureService);
@@ -75,6 +75,35 @@ export class CourseManagementService {
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
 
     private fetchingCoursesForNotifications = false;
+
+    private stateGeneration = 0;
+    private currentUserId?: number;
+    private authenticationStateSubscription: Subscription;
+
+    constructor() {
+        this.currentUserId = this.accountService.userIdentity()?.id;
+        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
+            if (this.currentUserId !== user?.id) {
+                this.currentUserId = user?.id;
+                this.resetState();
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.authenticationStateSubscription?.unsubscribe();
+    }
+
+    /**
+     * Clears the cached courses-for-notifications list. Called on logout / user change so the next
+     * user does not see the previous user's enrolled courses. The generation counter ensures
+     * in-flight dashboard fetches don't repopulate the subject after reset.
+     */
+    private resetState(): void {
+        this.stateGeneration++;
+        this.fetchingCoursesForNotifications = false;
+        this.coursesForNotifications.next(undefined);
+    }
 
     /**
      * updates a course using a PUT request
@@ -188,8 +217,10 @@ export class CourseManagementService {
      */
     findAllForDashboard(): Observable<HttpResponse<CoursesForDashboardDTO>> {
         this.fetchingCoursesForNotifications = true;
+        const generation = this.stateGeneration;
         return this.http.get<CoursesForDashboardDTO>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' }).pipe(
             map((res: HttpResponse<CoursesForDashboardDTO>) => {
+                if (this.stateGeneration !== generation) return res;
                 if (res.body) {
                     const courses: Course[] = [];
                     res.body.courses?.forEach((courseForDashboardDTO) => {
@@ -205,7 +236,7 @@ export class CourseManagementService {
                     // Replace the CourseForDashboardDTOs in the response body with the normal courses to enable further processing.
                     const courseResponse = res.clone({ body: courses });
                     this.processCourseEntityArrayResponseType(courseResponse);
-                    this.setCoursesForNotifications(courseResponse);
+                    this.setCoursesForNotifications(courseResponse, generation);
                     this.courseStorageService.setCourses(courseResponse.body !== null ? courseResponse.body : undefined);
                 }
                 return res;
@@ -351,9 +382,10 @@ export class CourseManagementService {
      */
     getAllCoursesWithQuizExercises(): Observable<EntityArrayResponseType> {
         this.fetchingCoursesForNotifications = true;
+        const generation = this.stateGeneration;
         return this.http.get<Course[]>(this.resourceUrl + '/courses-with-quiz', { observe: 'response' }).pipe(
             map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
-            map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
+            map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res, generation)),
         );
     }
 
@@ -364,9 +396,10 @@ export class CourseManagementService {
     getWithUserStats(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         this.fetchingCoursesForNotifications = true;
+        const generation = this.stateGeneration;
         return this.http.get<Course[]>(`${this.resourceUrl}/with-user-stats`, { params: options, observe: 'response' }).pipe(
             map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
-            map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
+            map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res, generation)),
         );
     }
 
@@ -537,13 +570,16 @@ export class CourseManagementService {
      * @returns {BehaviorSubject<Course[] | undefined>}
      */
     getCoursesForNotifications(): BehaviorSubject<Course[] | undefined> {
+        const generation = this.stateGeneration;
         // The timeout is set to ensure that the request for retrieving courses
         // here is only made if there was no similar request made before.
         setTimeout(() => {
+            if (this.stateGeneration !== generation) return;
             // Retrieve courses if no courses were fetched before and are not queried at the moment.
             if (!this.fetchingCoursesForNotifications && !this.coursesForNotifications.getValue()) {
                 this.findAllForNotifications().subscribe({
                     next: (res: HttpResponse<Course[]>) => {
+                        if (this.stateGeneration !== generation) return;
                         this.coursesForNotifications.next(res.body || undefined);
                     },
                     error: () => (this.fetchingCoursesForNotifications = false),
@@ -594,7 +630,10 @@ export class CourseManagementService {
         return courseRes;
     }
 
-    private setCoursesForNotifications(res: EntityArrayResponseType): EntityArrayResponseType {
+    private setCoursesForNotifications(res: EntityArrayResponseType, generation: number = this.stateGeneration): EntityArrayResponseType {
+        if (this.stateGeneration !== generation) {
+            return res;
+        }
         if (res.body) {
             this.coursesForNotifications.next(res.body);
             this.fetchingCoursesForNotifications = false;
@@ -727,9 +766,10 @@ export class CourseManagementService {
 
     public findAllForNotifications(): Observable<EntityArrayResponseType> {
         this.fetchingCoursesForNotifications = true;
+        const generation = this.stateGeneration;
         return this.http.get<Course[]>(`${this.resourceUrl}/for-notifications`, { observe: 'response' }).pipe(
             map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
-            map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
+            map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res, generation)),
         );
     }
 

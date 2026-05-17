@@ -526,12 +526,14 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
         modelingAssessment = resultRepository.findDistinctWithFeedbackBySubmissionId(modelingSubmission2.getId()).orElseThrow();
         assertThat(modelingAssessment.getFeedbacks()).as("assessment is correctly stored").hasSize(1);
-        assertThat(modelingAssessment.getFeedbacks().getFirst().getCredits()).as("feedback credits are correct").isEqualTo(changedFeedback.getCredits());
-        assertThat(modelingAssessment.getFeedbacks().getFirst().getText()).as("feedback text are correct").isEqualTo(changedFeedback.getText());
+        Feedback storedChangedFeedback = modelingAssessment.getFeedbacks().iterator().next();
+        assertThat(storedChangedFeedback.getCredits()).as("feedback credits are correct").isEqualTo(changedFeedback.getCredits());
+        assertThat(storedChangedFeedback.getText()).as("feedback text are correct").isEqualTo(changedFeedback.getText());
         modelingAssessment = resultRepository.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).orElseThrow();
         assertThat(modelingAssessment.getFeedbacks()).as("existing manual assessment has correct amount of feedback").hasSize(1);
-        assertThat(modelingAssessment.getFeedbacks().getFirst().getCredits()).as("existing manual assessment did not change credits").isEqualTo(originalFeedback.getCredits());
-        assertThat(modelingAssessment.getFeedbacks().getFirst().getText()).as("existing manual assessment did not change text").isEqualTo(originalFeedback.getText());
+        Feedback storedOriginalFeedback = modelingAssessment.getFeedbacks().iterator().next();
+        assertThat(storedOriginalFeedback.getCredits()).as("existing manual assessment did not change credits").isEqualTo(originalFeedback.getCredits());
+        assertThat(storedOriginalFeedback.getText()).as("existing manual assessment did not change text").isEqualTo(originalFeedback.getText());
     }
 
     private void checkAssessmentNotFinished(Result storedResult, User assessor) {

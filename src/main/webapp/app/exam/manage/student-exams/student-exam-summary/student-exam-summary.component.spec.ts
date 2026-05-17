@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent } from 'ng-mocks';
@@ -9,6 +11,8 @@ import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/stude
 import { ExamResultSummaryComponent } from 'app/exam/overview/summary/exam-result-summary.component';
 
 describe('StudentExamSummaryComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<StudentExamSummaryComponent>;
     let component: StudentExamSummaryComponent;
 
@@ -39,7 +43,7 @@ describe('StudentExamSummaryComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {

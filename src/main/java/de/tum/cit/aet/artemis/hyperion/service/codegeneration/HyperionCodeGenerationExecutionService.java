@@ -63,7 +63,7 @@ public class HyperionCodeGenerationExecutionService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationExecutionService.class);
 
-    private static final int MAX_ITERATIONS = 2;
+    private static final int DEFAULT_MAX_ITERATIONS = 2;
 
     private static final long TIMEOUT = 180_000; // 3 minutes
 
@@ -170,6 +170,18 @@ public class HyperionCodeGenerationExecutionService {
         this.consistencyCheckService = consistencyCheckService;
         this.reviewCommentContextRendererService = reviewCommentContextRendererService;
         this.exerciseVersionService = exerciseVersionService;
+    }
+
+    public HyperionCodeGenerationExecutionService(String defaultBranch, GitService gitService, RepositoryService repositoryService,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ResultRepository resultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionProgrammingExerciseContextRendererService repositoryStructureService,
+            HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy,
+            ProgrammingSubmissionService programmingSubmissionService, HyperionConsistencyCheckService consistencyCheckService, ExerciseVersionService exerciseVersionService) {
+        this(defaultBranch, gitService, repositoryService, solutionProgrammingExerciseParticipationRepository, templateProgrammingExerciseParticipationRepository,
+                programmingSubmissionRepository, resultRepository, continuousIntegrationTriggerService, programmingExerciseParticipationService, repositoryStructureService,
+                solutionStrategy, templateStrategy, testStrategy, programmingSubmissionService, consistencyCheckService, null, exerciseVersionService);
     }
 
     /**
@@ -332,12 +344,13 @@ public class HyperionCodeGenerationExecutionService {
      * @param user                      the initiating user
      * @param courseId                  the resolved course id for telemetry attribution
      * @param repositoryType            repository type to generate
+     * @param initialAutoGeneration     whether the request belongs to the initial automatically-triggered generation flow
      * @param selectedFeedbackThreadIds selected review-thread ids to forward into the prompt context
      * @param publisher                 event publisher for websocket updates
      * @return the latest build result or null
      */
-    public Result generateAndCompileCode(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType, List<Long> selectedFeedbackThreadIds,
-            HyperionCodeGenerationEventPublisher publisher) {
+    public Result generateAndCompileCode(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType, boolean initialAutoGeneration,
+            List<Long> selectedFeedbackThreadIds, HyperionCodeGenerationEventPublisher publisher) {
         RepositorySetupResult setupResult = setupRepository(exercise, repositoryType);
         if (!setupResult.success()) {
             publisher.error("Repository setup failed");
@@ -350,8 +363,8 @@ public class HyperionCodeGenerationExecutionService {
         GenerationExecutionResult executionResult;
 
         try {
-            executionResult = executeGenerationAttempts(exercise, user, courseId, repositoryType, selectedFeedbackThreadIds, publisher, setupResult.repository(), repositoryUri,
-                    executionProgress);
+            executionResult = executeGenerationAttempts(exercise, user, courseId, repositoryType, initialAutoGeneration, selectedFeedbackThreadIds, publisher,
+                    setupResult.repository(), repositoryUri, executionProgress);
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -387,18 +400,26 @@ public class HyperionCodeGenerationExecutionService {
         return executionResult.result;
     }
 
+    public Result generateAndCompileCode(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType, boolean initialAutoGeneration,
+            HyperionCodeGenerationEventPublisher publisher) {
+        return generateAndCompileCode(exercise, user, courseId, repositoryType, initialAutoGeneration, null, publisher);
+    }
+
     private GenerationExecutionResult executeGenerationAttempts(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType,
-            List<Long> selectedFeedbackThreadIds, HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri,
-            GenerationExecutionProgress executionProgress) throws Exception {
+            boolean initialAutoGeneration, List<Long> selectedFeedbackThreadIds, HyperionCodeGenerationEventPublisher publisher, Repository repository,
+            LocalVCRepositoryUri repositoryUri, GenerationExecutionProgress executionProgress) throws Exception {
         HyperionCodeGenerationService strategy = resolveStrategy(repositoryType);
         String consistencyIssues = buildConsistencyIssuesPrompt(exercise);
+        String buildEnvironmentContext = repositoryStructureService.getBuildEnvironmentContext(repository);
         String selectedFeedbackThreads = buildSelectedFeedbackPrompt(exercise, repositoryType, selectedFeedbackThreadIds);
+        boolean useSelectedFeedback = selectedFeedbackThreadIds != null;
         String lastBuildLogs = null;
+        int maxIterations = resolveMaxIterations(repositoryType, initialAutoGeneration);
 
-        for (int attempt = 0; attempt < MAX_ITERATIONS; attempt++) {
+        for (int attempt = 0; attempt < maxIterations; attempt++) {
             executionProgress.attemptsUsed = attempt + 1;
             GenerationAttemptResult attemptResult = executeGenerationAttempt(strategy, exercise, user, courseId, repositoryType, publisher, repository, repositoryUri,
-                    lastBuildLogs, consistencyIssues, selectedFeedbackThreads, executionProgress);
+                    lastBuildLogs, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads, useSelectedFeedback, executionProgress);
             if (attemptResult != null) {
                 executionProgress.buildResultOutcome = attemptResult.buildResultOutcome();
                 executionProgress.result = executionProgress.buildResultOutcome.result();
@@ -415,11 +436,21 @@ public class HyperionCodeGenerationExecutionService {
         return executionProgress.snapshot();
     }
 
+    private int resolveMaxIterations(RepositoryType repositoryType, boolean initialAutoGeneration) {
+        if (initialAutoGeneration && (repositoryType == RepositoryType.SOLUTION || repositoryType == RepositoryType.TEMPLATE)) {
+            return 1;
+        }
+        return DEFAULT_MAX_ITERATIONS;
+    }
+
     private GenerationAttemptResult executeGenerationAttempt(HyperionCodeGenerationService strategy, ProgrammingExercise exercise, User user, Long courseId,
             RepositoryType repositoryType, HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri, String lastBuildLogs,
-            String consistencyIssues, String selectedFeedbackThreads, GenerationExecutionProgress executionProgress) throws Exception {
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, boolean useSelectedFeedback, GenerationExecutionProgress executionProgress)
+            throws Exception {
         String repositoryStructure = repositoryStructureService.getRepositoryStructure(repository);
-        List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, consistencyIssues, selectedFeedbackThreads);
+        List<GeneratedFileDTO> generatedFiles = useSelectedFeedback
+                ? strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads)
+                : strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, buildEnvironmentContext, consistencyIssues);
         if (generatedFiles == null || generatedFiles.isEmpty()) {
             return null;
         }
@@ -552,14 +583,17 @@ public class HyperionCodeGenerationExecutionService {
     }
 
     /**
-     * Builds a prompt-friendly JSON payload of explicitly selected review threads for the current repository.
+     * Builds a prompt-friendly JSON payload for explicitly selected review threads.
      *
      * @param exercise                  the programming exercise to analyze
-     * @param repositoryType            the repository currently being generated
+     * @param repositoryType            the target repository type
      * @param selectedFeedbackThreadIds the explicitly selected review-thread ids
      * @return serialized selected-thread prompt context
      */
     private String buildSelectedFeedbackPrompt(ProgrammingExercise exercise, RepositoryType repositoryType, List<Long> selectedFeedbackThreadIds) {
+        if (reviewCommentContextRendererService == null) {
+            return "{\"repositoryType\":\"" + repositoryType.name() + "\",\"threads\":[]}";
+        }
         try {
             return reviewCommentContextRendererService.renderCodeGenerationSelectedFeedback(exercise.getId(), repositoryType, selectedFeedbackThreadIds);
         }

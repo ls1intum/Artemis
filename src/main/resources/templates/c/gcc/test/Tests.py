@@ -46,7 +46,7 @@ def main():
     testLSan: TestLSan = TestLSan(makefileLocation, requirements=[testCompile.name])
     tester.addTest(testLSan)
     # This test requires the "TestLSan" to finish with "SUCCESS" to be run:
-    tester.addTest(TestOutput(makefileLocation, requirements=[testASan.name], name="TestOutputLSan", executable="lsan.out"))
+    tester.addTest(TestOutput(makefileLocation, requirements=[testLSan.name], name="TestOutputLSan", executable="lsan.out"))
 
     # Run the actual tests:
     tester.run()

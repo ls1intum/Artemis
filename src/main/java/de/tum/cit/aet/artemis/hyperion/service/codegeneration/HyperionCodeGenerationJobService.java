@@ -63,13 +63,22 @@ public class HyperionCodeGenerationJobService {
      * @param exercise                  the target exercise
      * @param courseId                  resolved course id for telemetry attribution
      * @param repositoryType            the target repository type
+     * @param initialAutoGeneration     whether this job is the initial automatic generation pass
      * @param selectedFeedbackThreadIds selected review-thread ids to forward into the prompt context
      * @return the created job id
      */
-    public String startJob(User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType, List<Long> selectedFeedbackThreadIds) {
+    public String startJob(User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType, boolean initialAutoGeneration,
+            List<Long> selectedFeedbackThreadIds) {
         JobInfo job = claimJob(user.getLogin(), exercise.getId(), repositoryType);
         String jobId = job.jobId();
-        taskService.runJobAsync(jobId, user, exercise, courseId, repositoryType, selectedFeedbackThreadIds, () -> clearJob(exercise.getId(), jobId));
+        taskService.runJobAsync(jobId, user, exercise, courseId, repositoryType, initialAutoGeneration, selectedFeedbackThreadIds, () -> clearJob(exercise.getId(), jobId));
+        return jobId;
+    }
+
+    public String startJob(User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType, boolean initialAutoGeneration) {
+        JobInfo job = claimJob(user.getLogin(), exercise.getId(), repositoryType);
+        String jobId = job.jobId();
+        taskService.runJobAsync(jobId, user, exercise, courseId, repositoryType, initialAutoGeneration, () -> clearJob(exercise.getId(), jobId));
         return jobId;
     }
 

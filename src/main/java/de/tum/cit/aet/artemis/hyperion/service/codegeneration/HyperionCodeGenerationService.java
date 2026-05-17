@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,12 +60,35 @@ public abstract class HyperionCodeGenerationService {
 
     private static final Pattern CHANNEL_TIMEOUT_MESSAGE_PATTERN = Pattern.compile("Channel response timed out after \\d+ milliseconds");
 
-    private static final String USER_FRIENDLY_CHANNEL_TIMEOUT_MESSAGE = "The AI took too long to respond and this generation request timed out after 5 minutes. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.";
+    private static final String REDACTED_PLACEHOLDER = "[REDACTED]";
+
+    private static final Pattern PRIVATE_KEY_BLOCK_PATTERN = Pattern.compile("-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----.*?-----END [A-Z0-9 ]*PRIVATE KEY-----",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+
+    private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("(?i)(\\bBearer\\s+)([A-Za-z0-9._\\-+/=]+)");
+
+    private static final Pattern CREDENTIAL_URL_PATTERN = Pattern.compile("(?i)(https?://[^\\s:@/]+:)([^@\\s/]+)(@)");
+
+    private static final Pattern XML_SECRET_TAG_PATTERN = Pattern.compile(
+            "(?is)(<\\s*(?:password|passwd|pwd|token|secret|secretKey|apiKey|accessKey|clientSecret|privateKey)\\s*>)(.*?)(<\\s*/\\s*(?:password|passwd|pwd|token|secret|secretKey|apiKey|accessKey|clientSecret|privateKey)\\s*>)");
+
+    private static final Pattern SENSITIVE_KEY_VALUE_PATTERN = Pattern.compile("^(\\s*(?:export\\s+)?[\"']?)([A-Za-z0-9][A-Za-z0-9_.-]*)([\"']?\\s*[:=]\\s*)(\\S.*?)\\s*$");
+
+    private static final List<String> SENSITIVE_KEY_NAMES = List.of("apikey", "api_key", "api-key", "accesskey", "access_key", "access-key", "secretkey", "secret_key",
+            "secret-key", "clientsecret", "client_secret", "client-secret", "privatekey", "private_key", "private-key", "sshkey", "ssh_key", "ssh-key", "authtoken", "auth_token",
+            "auth-token", "bearertoken", "bearer_token", "bearer-token", "aws_access_key_id", "aws_secret_access_key", "x-api-key", "secret", "token", "password", "passwd", "pwd",
+            "credential", "credentials");
+
+    private static final String USER_FRIENDLY_CHANNEL_TIMEOUT_MESSAGE = "The AI took too long to respond and this generation request timed out after 15 minutes. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.";
 
     /**
      * Maximum number of characters kept when passing consistency issues into AI prompts.
      */
     private static final int MAX_CONSISTENCY_ISSUES_LENGTH = 10000;
+
+    private static final String DEFAULT_BUILD_ENVIRONMENT_CONTEXT = "No build environment files found.";
+
+    private static final int MAX_BUILD_ENVIRONMENT_CONTEXT_LENGTH = 12000;
 
     private static final String DEFAULT_SELECTED_FEEDBACK_THREADS = "{\"threads\":[]}";
 
@@ -75,6 +99,8 @@ public abstract class HyperionCodeGenerationService {
      * Used to sanitize consistency issue text before prompt rendering.
      */
     private static final String CONTROL_CHARS_PATTERN = "[\\p{Cntrl}&&[^\r\n\t]]";
+
+    private static final String BUILD_ENVIRONMENT_CONTEXT_TEMPLATE_VARIABLE = "buildEnvironmentContext";
 
     private static final String SELECTED_FEEDBACK_THREADS_TEMPLATE_VARIABLE = "selectedFeedbackThreads";
 
@@ -99,13 +125,14 @@ public abstract class HyperionCodeGenerationService {
      * @param courseId                the resolved course id for telemetry attribution
      * @param previousBuildLogs       build failure logs from previous attempts for iterative improvement
      * @param repositoryStructure     tree-format representation of current repository structure
+     * @param buildEnvironmentContext rendered build-file context for dependency and toolchain alignment
      * @param consistencyIssues       formatted consistency issues to inform the generation prompts
      * @param selectedFeedbackThreads selected review-thread payload to inform the generation prompts
      * @return list of generated code files
      * @throws NetworkingException if AI service communication fails
      */
     public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
-            String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
         if (user == null) {
             throw new IllegalArgumentException("user must not be null");
         }
@@ -115,14 +142,24 @@ public abstract class HyperionCodeGenerationService {
         if (repositoryStructure == null) {
             throw new IllegalArgumentException("repositoryStructure must not be null");
         }
+        String normalizedBuildEnvironmentContext = normalizeBuildEnvironmentContext(buildEnvironmentContext);
         String normalizedConsistencyIssues = normalizeConsistencyIssues(consistencyIssues);
         String normalizedSelectedFeedbackThreads = normalizeSelectedFeedbackThreads(selectedFeedbackThreads);
-        CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, courseId, previousBuildLogs, repositoryStructure, normalizedConsistencyIssues,
-                normalizedSelectedFeedbackThreads);
-        CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure,
+        CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, courseId, previousBuildLogs, repositoryStructure, normalizedBuildEnvironmentContext,
                 normalizedConsistencyIssues, normalizedSelectedFeedbackThreads);
+        CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure,
+                normalizedBuildEnvironmentContext, normalizedConsistencyIssues, normalizedSelectedFeedbackThreads);
 
         return coreLogicResponse.getFiles();
+    }
+
+    public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
+            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+        return generateCode(user, exercise, courseId, previousBuildLogs, repositoryStructure, buildEnvironmentContext, consistencyIssues, DEFAULT_SELECTED_FEEDBACK_THREADS);
+    }
+
+    private String normalizeBuildEnvironmentContext(String buildEnvironmentContext) {
+        return normalizePromptContext(buildEnvironmentContext, "buildEnvironmentContext must not be null", DEFAULT_BUILD_ENVIRONMENT_CONTEXT, MAX_BUILD_ENVIRONMENT_CONTEXT_LENGTH);
     }
 
     /**
@@ -132,18 +169,7 @@ public abstract class HyperionCodeGenerationService {
      * @return trimmed, control-character-free text truncated to the configured limit
      */
     private String normalizeConsistencyIssues(String consistencyIssues) {
-        if (consistencyIssues == null) {
-            throw new IllegalArgumentException("consistencyIssues must not be null");
-        }
-        String trimmed = consistencyIssues.trim();
-        if (trimmed.isEmpty()) {
-            return "";
-        }
-        String sanitized = trimmed.replaceAll(CONTROL_CHARS_PATTERN, "").trim();
-        if (sanitized.length() > MAX_CONSISTENCY_ISSUES_LENGTH) {
-            return sanitized.substring(0, MAX_CONSISTENCY_ISSUES_LENGTH);
-        }
-        return sanitized;
+        return normalizePromptContext(consistencyIssues, "consistencyIssues must not be null", "", MAX_CONSISTENCY_ISSUES_LENGTH);
     }
 
     private String normalizeSelectedFeedbackThreads(String selectedFeedbackThreads) {
@@ -229,12 +255,67 @@ public abstract class HyperionCodeGenerationService {
         return serialized.length() <= MAX_SELECTED_FEEDBACK_THREADS_LENGTH ? serialized : null;
     }
 
-    protected Map<String, Object> baseTemplateVariables(ProgrammingExercise exercise, String repositoryStructure, String consistencyIssues, String selectedFeedbackThreads) {
+    private String normalizePromptContext(String input, String nullMessage, String emptyFallback, int maxLength) {
+        if (input == null) {
+            throw new IllegalArgumentException(nullMessage);
+        }
+        String trimmed = input.trim();
+        if (trimmed.isEmpty()) {
+            return emptyFallback;
+        }
+        String sanitized = trimmed.replaceAll(CONTROL_CHARS_PATTERN, "").trim();
+        String redacted = redactSecrets(sanitized).trim();
+        if (redacted.isEmpty()) {
+            return emptyFallback;
+        }
+        if (redacted.length() > maxLength) {
+            return redacted.substring(0, maxLength);
+        }
+        return redacted;
+    }
+
+    private String redactSecrets(String input) {
+        String redacted = PRIVATE_KEY_BLOCK_PATTERN.matcher(input).replaceAll(REDACTED_PLACEHOLDER);
+        redacted = BEARER_TOKEN_PATTERN.matcher(redacted).replaceAll("$1" + REDACTED_PLACEHOLDER);
+        redacted = CREDENTIAL_URL_PATTERN.matcher(redacted).replaceAll("$1" + REDACTED_PLACEHOLDER + "$3");
+        redacted = XML_SECRET_TAG_PATTERN.matcher(redacted).replaceAll("$1" + REDACTED_PLACEHOLDER + "$3");
+        return redacted.lines().map(this::redactSensitiveKeyValueLine).collect(Collectors.joining("\n"));
+    }
+
+    private String redactSensitiveKeyValueLine(String line) {
+        Matcher matcher = SENSITIVE_KEY_VALUE_PATTERN.matcher(line);
+        if (!matcher.matches() || !isSensitiveKeyName(matcher.group(2))) {
+            return line;
+        }
+        return matcher.group(1) + matcher.group(2) + matcher.group(3) + REDACTED_PLACEHOLDER;
+    }
+
+    private boolean isSensitiveKeyName(String keyName) {
+        String normalizedKeyName = keyName.toLowerCase(Locale.ROOT);
+        return SENSITIVE_KEY_NAMES.stream().anyMatch(sensitiveName -> normalizedKeyName.equals(sensitiveName) || normalizedKeyName.endsWith("." + sensitiveName)
+                || normalizedKeyName.endsWith("_" + sensitiveName) || normalizedKeyName.endsWith("-" + sensitiveName));
+    }
+
+    /**
+     * Creates the common template variable set shared by the different generation stages.
+     *
+     * @param exercise                programming exercise context
+     * @param repositoryStructure     tree-format representation of the repository
+     * @param buildEnvironmentContext rendered build-file context for dependency and toolchain alignment
+     * @param consistencyIssues       sanitized consistency issue text
+     * @param selectedFeedbackThreads selected review-thread payload
+     * @return mutable template variable map populated with the shared values
+     */
+    protected Map<String, Object> baseTemplateVariables(ProgrammingExercise exercise, String repositoryStructure, String buildEnvironmentContext, String consistencyIssues,
+            String selectedFeedbackThreads) {
         if (exercise == null) {
             throw new IllegalArgumentException("exercise must not be null");
         }
         if (repositoryStructure == null) {
             throw new IllegalArgumentException("repositoryStructure must not be null");
+        }
+        if (buildEnvironmentContext == null) {
+            throw new IllegalArgumentException("buildEnvironmentContext must not be null");
         }
         if (consistencyIssues == null) {
             throw new IllegalArgumentException("consistencyIssues must not be null");
@@ -245,6 +326,7 @@ public abstract class HyperionCodeGenerationService {
         Map<String, Object> variables = new HashMap<>();
         variables.put("programmingLanguage", exercise.getProgrammingLanguage());
         variables.put("repositoryStructure", repositoryStructure);
+        variables.put(BUILD_ENVIRONMENT_CONTEXT_TEMPLATE_VARIABLE, buildEnvironmentContext);
         variables.put("consistencyIssues", consistencyIssues);
         variables.put(SELECTED_FEEDBACK_THREADS_TEMPLATE_VARIABLE, selectedFeedbackThreads);
         return variables;
@@ -484,13 +566,20 @@ public abstract class HyperionCodeGenerationService {
      * @param courseId                the resolved course id for telemetry attribution
      * @param previousBuildLogs       build failure logs from previous attempts for correction
      * @param repositoryStructure     tree-format representation of current repository structure
+     * @param buildEnvironmentContext rendered build-file context for dependency and toolchain alignment
      * @param consistencyIssues       formatted consistency issues to inform the generation prompts
      * @param selectedFeedbackThreads selected review-thread payload to inform the generation prompts
      * @return AI response containing the solution plan
      * @throws NetworkingException if AI service communication fails
      */
     protected abstract CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
-            String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException;
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException;
+
+    protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
+            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+        return generateSolutionPlan(user, exercise, courseId, previousBuildLogs, repositoryStructure, buildEnvironmentContext, consistencyIssues,
+                DEFAULT_SELECTED_FEEDBACK_THREADS);
+    }
 
     /**
      * Defines the file structure and organization for the solution.
@@ -501,13 +590,19 @@ public abstract class HyperionCodeGenerationService {
      * @param courseId                the resolved course id for telemetry attribution
      * @param solutionPlan            the high-level solution plan from step 1
      * @param repositoryStructure     tree-format representation of current repository structure
+     * @param buildEnvironmentContext rendered build-file context for dependency and toolchain alignment
      * @param consistencyIssues       formatted consistency issues to inform the generation prompts
      * @param selectedFeedbackThreads selected review-thread payload to inform the generation prompts
      * @return AI response containing file structure definitions
      * @throws NetworkingException if AI service communication fails
      */
     protected abstract CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException;
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException;
+
+    protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
+            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+        return defineFileStructure(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues, DEFAULT_SELECTED_FEEDBACK_THREADS);
+    }
 
     /**
      * Generates class definitions and method signatures.
@@ -518,13 +613,20 @@ public abstract class HyperionCodeGenerationService {
      * @param courseId                the resolved course id for telemetry attribution
      * @param solutionPlan            the high-level solution plan from step 1
      * @param repositoryStructure     tree-format representation of current repository structure
+     * @param buildEnvironmentContext rendered build-file context for dependency and toolchain alignment
      * @param consistencyIssues       formatted consistency issues to inform the generation prompts
      * @param selectedFeedbackThreads selected review-thread payload to inform the generation prompts
      * @return AI response containing class and method headers
      * @throws NetworkingException if AI service communication fails
      */
     protected abstract CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan,
-            String repositoryStructure, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException;
+            String repositoryStructure, String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException;
+
+    protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
+            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+        return generateClassAndMethodHeaders(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues,
+                DEFAULT_SELECTED_FEEDBACK_THREADS);
+    }
 
     /**
      * Generates the core implementation logic for the solution.
@@ -535,13 +637,19 @@ public abstract class HyperionCodeGenerationService {
      * @param courseId                the resolved course id for telemetry attribution
      * @param solutionPlan            the high-level solution plan from step 1
      * @param repositoryStructure     tree-format representation of current repository structure
+     * @param buildEnvironmentContext rendered build-file context for dependency and toolchain alignment
      * @param consistencyIssues       formatted consistency issues to inform the generation prompts
      * @param selectedFeedbackThreads selected review-thread payload to inform the generation prompts
      * @return AI response containing complete implementation with generated files
      * @throws NetworkingException if AI service communication fails
      */
     protected abstract CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException;
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException;
+
+    protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
+            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+        return generateCoreLogic(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues, DEFAULT_SELECTED_FEEDBACK_THREADS);
+    }
 
     /**
      * Returns the repository type that this strategy generates code for.

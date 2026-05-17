@@ -54,7 +54,7 @@ class HyperionCodeGenerationTaskServiceTest {
     void runJobAsync_sendsStartedAndRunsCleanup() {
         Runnable cleanup = mock(Runnable.class);
 
-        service.runJobAsync("job-1", user, exercise, 1L, RepositoryType.SOLUTION, List.of(9L), cleanup);
+        service.runJobAsync("job-1", user, exercise, 1L, RepositoryType.SOLUTION, true, cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventDTO> payloadCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventDTO.class);
         verify(websocket).send(eq("student1"), eq("code-generation/jobs/job-1"), payloadCaptor.capture());
@@ -64,17 +64,16 @@ class HyperionCodeGenerationTaskServiceTest {
         assertThat(payload.exerciseId()).isEqualTo(7L);
         assertThat(payload.repositoryType()).isEqualTo(RepositoryType.SOLUTION);
         assertThat(payload.message()).isEqualTo("Started");
-        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.SOLUTION), eq(List.of(9L)),
-                any(HyperionCodeGenerationEventPublisher.class));
+        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.SOLUTION), eq(true), any(HyperionCodeGenerationEventPublisher.class));
         verify(cleanup).run();
     }
 
     @Test
     void runJobAsync_whenExecutionFails_sendsErrorAndRunsCleanup() {
         Runnable cleanup = mock(Runnable.class);
-        doThrow(new RuntimeException("boom")).when(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TEMPLATE), eq(List.of()), any());
+        doThrow(new RuntimeException("boom")).when(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TEMPLATE), eq(false), any());
 
-        service.runJobAsync("job-2", user, exercise, 1L, RepositoryType.TEMPLATE, List.of(), cleanup);
+        service.runJobAsync("job-2", user, exercise, 1L, RepositoryType.TEMPLATE, false, cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventDTO> payloadCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventDTO.class);
         verify(websocket, times(2)).send(eq("student1"), eq("code-generation/jobs/job-2"), payloadCaptor.capture());
@@ -90,10 +89,10 @@ class HyperionCodeGenerationTaskServiceTest {
     void runJobAsync_whenExecutionCompletesWithPartialOutcome_sendsDonePayloadWithCompletionStatusAndAttempts() {
         Runnable cleanup = mock(Runnable.class);
 
-        service.runJobAsync("job-3", user, exercise, 1L, RepositoryType.TESTS, List.of(), cleanup);
+        service.runJobAsync("job-3", user, exercise, 1L, RepositoryType.TESTS, false, cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventPublisher> publisherCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventPublisher.class);
-        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TESTS), eq(List.of()), publisherCaptor.capture());
+        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TESTS), eq(false), publisherCaptor.capture());
 
         reset(websocket);
         publisherCaptor.getValue().done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED, Map.of(), 2,
@@ -118,10 +117,10 @@ class HyperionCodeGenerationTaskServiceTest {
     void runJobAsync_whenPublisherSendsFileUpdate_forwardsIterationInPayload() {
         Runnable cleanup = mock(Runnable.class);
 
-        service.runJobAsync("job-4", user, exercise, 1L, RepositoryType.TEMPLATE, List.of(), cleanup);
+        service.runJobAsync("job-4", user, exercise, 1L, RepositoryType.TEMPLATE, false, cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventPublisher> publisherCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventPublisher.class);
-        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TEMPLATE), eq(List.of()), publisherCaptor.capture());
+        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TEMPLATE), eq(false), publisherCaptor.capture());
 
         reset(websocket);
         publisherCaptor.getValue().fileUpdated("src/main/java/App.java", RepositoryType.TEMPLATE, 2);

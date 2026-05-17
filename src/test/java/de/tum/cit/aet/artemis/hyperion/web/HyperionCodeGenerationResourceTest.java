@@ -8,7 +8,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -67,55 +66,55 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void generateCode_withValidRequest_returnsJobId() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false, null);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false);
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
-        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.SOLUTION, null)).thenReturn("job-123");
+        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false)).thenReturn("job-123");
 
         ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-123");
         assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.SOLUTION);
-        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, null);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false);
     }
 
     @Test
     void generateCode_withTemplateType_returnsJobId() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.TEMPLATE, false, null);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.TEMPLATE, false);
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
-        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.TEMPLATE, null)).thenReturn("job-456");
+        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.TEMPLATE, false)).thenReturn("job-456");
 
         ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-456");
         assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.TEMPLATE);
-        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TEMPLATE, null);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TEMPLATE, false);
     }
 
     @Test
     void generateCode_withTestsType_returnsJobId() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.TESTS, false, null);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.TESTS, false);
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
-        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.TESTS, null)).thenReturn("job-789");
+        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.TESTS, false)).thenReturn("job-789");
 
         ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-789");
         assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.TESTS);
-        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TESTS, null);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TESTS, false);
     }
 
     @Test
     void validateGenerationRequest_withNegativeExerciseId_throwsException() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false, null);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false);
 
         assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(resource, "validateGenerationRequest", -1L, request)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Exercise ID must be positive");
@@ -123,7 +122,7 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void validateGenerationRequest_withZeroExerciseId_throwsException() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false, null);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false);
 
         assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(resource, "validateGenerationRequest", 0L, request)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Exercise ID must be positive");
@@ -131,7 +130,7 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void validateGenerationRequest_withNullRepositoryType_throwsException() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(null, false, null);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(null, false);
 
         assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(resource, "validateGenerationRequest", 1L, request)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Repository type is required");
@@ -139,7 +138,7 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void validateGenerationRequest_withUnsupportedRepositoryType_throwsException() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.AUXILIARY, false, null);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.AUXILIARY, false);
 
         assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(resource, "validateGenerationRequest", 1L, request)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Repository type not supported for code generation");
@@ -147,20 +146,10 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void validateGenerationRequest_withValidInput_passesValidation() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false, null);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false);
 
         // Should not throw any exception
         ReflectionTestUtils.invokeMethod(resource, "validateGenerationRequest", 1L, request);
-    }
-
-    @Test
-    void validateGenerationRequest_withTooManySelectedFeedbackThreadIds_throwsException() {
-        int maxSelectedFeedbackThreadIds = (int) ReflectionTestUtils.getField(HyperionCodeGenerationResource.class, "MAX_SELECTED_FEEDBACK_THREAD_IDS");
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false,
-                java.util.stream.LongStream.rangeClosed(1, maxSelectedFeedbackThreadIds + 1L).boxed().toList());
-
-        assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(resource, "validateGenerationRequest", 1L, request)).isInstanceOf(BadRequestAlertException.class)
-                .hasMessageContaining("Too many selected feedback thread ids");
     }
 
     @Test
@@ -218,22 +207,22 @@ class HyperionCodeGenerationResourceTest {
     void generateCode_withValidExamExercise_returnsJobId() {
         de.tum.cit.aet.artemis.exam.domain.ExerciseGroup mockExerciseGroup = mock(de.tum.cit.aet.artemis.exam.domain.ExerciseGroup.class);
         testExercise.setExerciseGroup(mockExerciseGroup);
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false, null);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false);
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
-        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.SOLUTION, null)).thenReturn("job-exam-1");
+        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false)).thenReturn("job-exam-1");
 
         ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-exam-1");
-        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, null);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false);
     }
 
     @Test
     void generateCode_withCheckOnly_returnsExistingJob() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, true, null);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, true);
         HyperionCodeGenerationJobService.JobInfo jobInfo = new HyperionCodeGenerationJobService.JobInfo("job-check-1", testUser.getLogin(), 1L, RepositoryType.SOLUTION,
                 Instant.now());
 
@@ -247,12 +236,12 @@ class HyperionCodeGenerationResourceTest {
         assertThat(response.getBody().jobId()).isEqualTo("job-check-1");
         assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.SOLUTION);
         verify(codeGenerationJobService).getActiveJob(testUser, testExercise);
-        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, null);
+        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false);
     }
 
     @Test
     void generateCode_withCheckOnlyAndNoActiveJob_returnsNoContent() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, true, null);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, true);
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
@@ -263,29 +252,21 @@ class HyperionCodeGenerationResourceTest {
         assertThat(response.getStatusCode().value()).isEqualTo(204);
         assertThat(response.getBody()).isNull();
         verify(codeGenerationJobService).getActiveJob(testUser, testExercise);
-        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, null);
+        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false);
     }
 
     @Test
-    void generateCode_withSelectedFeedbackThreads_forwardsThreadIds() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false, List.of(4L, 8L));
+    void generateCode_withInitialAutoGeneration_forwardsFlagToJobService() {
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false, true);
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
-        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.SOLUTION, List.of(4L, 8L))).thenReturn("job-selected-threads");
+        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.SOLUTION, true)).thenReturn("job-auto-1");
 
         ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
 
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().jobId()).isEqualTo("job-selected-threads");
-        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, List.of(4L, 8L));
-    }
-
-    @Test
-    void validateGenerationRequest_withInvalidSelectedFeedbackThreadIds_throwsException() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false, List.of(1L, 0L));
-
-        assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(resource, "validateGenerationRequest", 1L, request)).isInstanceOf(BadRequestAlertException.class)
-                .hasMessageContaining("Selected feedback thread ids must be positive");
+        assertThat(response.getBody().jobId()).isEqualTo("job-auto-1");
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, true);
     }
 }

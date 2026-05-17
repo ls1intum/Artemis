@@ -135,15 +135,7 @@ public class OpenAPIConfiguration {
 
     private void removeDtoSuffixFromAttributeNames(Map<String, Schema> schemas) {
         schemas.forEach((key, value) -> {
-            @SuppressWarnings("unchecked")
-            Map<String, Schema<?>> properties = value.getProperties();
-
-            if (properties == null) {
-                return;
-            }
-            properties.forEach((propertyKey, propertyValue) -> {
-                removeDTOSuffixesFromSchemaRecursively(propertyValue);
-            });
+            removeDTOSuffixesFromSchemaRecursively(value);
         });
     }
 
@@ -192,6 +184,33 @@ public class OpenAPIConfiguration {
 
         if (schema.getItems() != null) {
             removeDTOSuffixesFromSchemaRecursively(schema.getItems());
+        }
+
+        if (schema.getAdditionalProperties() instanceof Schema<?> additionalPropertiesSchema) {
+            removeDTOSuffixesFromSchemaRecursively(additionalPropertiesSchema);
+        }
+
+        if (schema.getProperties() != null) {
+            schema.getProperties().values().forEach(this::removeDTOSuffixesFromSchemaRecursively);
+        }
+
+        if (schema.getAllOf() != null) {
+            schema.getAllOf().forEach(this::removeDTOSuffixesFromSchemaRecursively);
+        }
+
+        if (schema.getAnyOf() != null) {
+            schema.getAnyOf().forEach(this::removeDTOSuffixesFromSchemaRecursively);
+        }
+
+        if (schema.getOneOf() != null) {
+            schema.getOneOf().forEach(this::removeDTOSuffixesFromSchemaRecursively);
+        }
+
+        if (schema.getDiscriminator() != null && schema.getDiscriminator().getMapping() != null) {
+            schema.getDiscriminator().getMapping()
+                    .replaceAll((key, value) -> value != null && value.startsWith("#/components/schemas/") && value.endsWith("DTO")
+                            ? value.substring(0, value.length() - DTO_NUMBER_OF_CHARACTERS)
+                            : value);
         }
     }
 

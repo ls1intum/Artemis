@@ -15,6 +15,17 @@ export const MAX_SUBMISSION_TEXT_LENGTH = 30 * 1000;
 export const MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
 /** Short names must start with a letter and cannot contain special characters **/
 export const SHORT_NAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9]{2,}$/;
+/**
+ * Maximum length for course short names. Bounds the length of the student repository slug
+ * `{courseShortName + exerciseShortName}-{login}.git` so it fits in NAME_MAX (255 bytes) and
+ * the participation.repository_url column. Keep in sync with COURSE_SHORT_NAME_MAX_LENGTH in Constants.java.
+ */
+export const COURSE_SHORT_NAME_MAX_LENGTH = 24;
+/**
+ * Maximum length for programming exercise short names.
+ * Keep in sync with PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH in Constants.java.
+ */
+export const PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH = 36;
 /** Programming exercise titles must only contain alphanumeric characters, or whitespaces, or '_' or '-' **/
 export const EXERCISE_TITLE_NAME_PATTERN = '^[a-zA-Z0-9-_ ]+';
 export const EXERCISE_TITLE_NAME_REGEX = new RegExp(EXERCISE_TITLE_NAME_PATTERN);
@@ -56,3 +67,8 @@ export const PACKAGE_NAME_PATTERN_FOR_GO =
 // Package names are lowercase identifiers which are usable for variables. This excludes reserved words, await and yield. test and artemis_test are also disallowed.
 export const PACKAGE_NAME_PATTERN_FOR_DART =
     '^(?!(?:assert|await|break|case|catch|class|const|continue|default|do|else|enum|extends|false|final|finally|for|if|in|is|new|null|rethrow|return|super|switch|this|throw|true|try|var|void|while|with|yield|test|artemis_test)$)[a-z_][a-z0-9_]*$';
+/**
+ * Maximum programming exercise problem statement character length.
+ * Keep in sync with MAX_PROBLEM_STATEMENT_LENGTH in ProgrammingExerciseCreationUpdateService.
+ */
+export const MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH = 100 * 1000;
