@@ -37,6 +37,11 @@
                     {{ 'artemisApp.review.threadOutdated' | artemisTranslate }}
                 </span>
             }
+            @if (isSelectedAsFeedback()) {
+                <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--selected-feedback">
+                    {{ 'artemisApp.review.threadSelectedForCodeGeneration' | artemisTranslate }}
+                </span>
+            }
         </div>
         <button pButton type="button" text size="small" class="monaco-review-comment-thread-toggle" (click)="toggleThreadBody()">
             <span class="monaco-review-comment-thread-toggle-icon" [class.monaco-review-comment-thread-toggle--collapsed]="!showThreadBody()" aria-hidden="true"></span>
@@ -199,6 +204,23 @@
                 rows="1"
             ></textarea>
             <div class="monaco-review-comment-actions">
+                @if (showFeedbackAction() && !thread().outdated && (!thread().resolved || isSelectedAsFeedback())) {
+                    <button
+                        pButton
+                        type="button"
+                        severity="secondary"
+                        size="small"
+                        class="monaco-review-comment-feedback-selection-button"
+                        [class.monaco-review-comment-feedback-selection-button--selected]="isSelectedAsFeedback()"
+                        (click)="toggleFeedbackSelection()"
+                    >
+                        @if (isSelectedAsFeedback()) {
+                            {{ 'artemisApp.review.removeThreadFromFeedback' | artemisTranslate }}
+                        } @else {
+                            {{ 'artemisApp.review.selectThreadAsFeedback' | artemisTranslate }}
+                        }
+                    </button>
+                }
                 <div class="monaco-review-comment-resolve-controls">
                     <button pButton type="button" severity="secondary" size="small" class="monaco-review-comment-resolve-main-button" (click)="toggleResolved()">
                         @if (thread().resolved) {
@@ -234,15 +256,6 @@
                                 </button>
                             </ng-template>
                         </p-menu>
-                    }
-                    @if (showFeedbackAction() && !thread().outdated && (!thread().resolved || isSelectedAsFeedback())) {
-                        <button pButton type="button" severity="secondary" size="small" (click)="toggleFeedbackSelection()">
-                            @if (isSelectedAsFeedback()) {
-                                {{ 'artemisApp.review.removeThreadFromFeedback' | artemisTranslate }}
-                            } @else {
-                                {{ 'artemisApp.review.selectThreadAsFeedback' | artemisTranslate }}
-                            }
-                        </button>
                     }
                 </div>
                 <button pButton type="button" size="small" (click)="submitReply()">
