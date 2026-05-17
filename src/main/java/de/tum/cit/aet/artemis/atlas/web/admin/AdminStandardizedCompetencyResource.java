@@ -170,13 +170,13 @@ public class AdminStandardizedCompetencyResource {
     /**
      * GET admin/standardized-competencies/export : Exports the catalog of standardized competencies, knowledge areas and sources of this Artemis instance
      *
-     * @return the ResponseEntity with status 200 (OK) and the body containing the JSON string of the standardized competency catalog
+     * @return the ResponseEntity with status 200 (OK) and the body containing the standardized competency catalog
      */
     @GetMapping("standardized-competencies/export")
-    public ResponseEntity<String> exportStandardizedCompetencyCatalog() {
+    public ResponseEntity<StandardizedCompetencyCatalogDTO> exportStandardizedCompetencyCatalog() {
         log.debug("REST request to export standardized competency catalog");
 
-        String catalog = standardizedCompetencyService.exportStandardizedCompetencyCatalog();
+        var catalog = standardizedCompetencyService.exportStandardizedCompetencyCatalog();
 
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(MediaType.APPLICATION_JSON);
