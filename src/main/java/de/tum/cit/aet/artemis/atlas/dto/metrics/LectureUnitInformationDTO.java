@@ -37,7 +37,7 @@ public record LectureUnitInformationDTO(long id, long lectureId, String lectureT
      * @param lectureUnit the LectureUnit to create the DTO from
      * @return the created DTO
      */
-    public static <L extends LectureUnit> LectureUnitInformationDTO of(L lectureUnit) {
+    public static LectureUnitInformationDTO of(LectureUnit lectureUnit) {
         return new LectureUnitInformationDTO(lectureUnit.getId(), lectureUnit.getLecture().getId(), lectureUnit.getLecture().getTitle(), lectureUnit.getName(),
                 lectureUnit.getReleaseDate(), LectureUnitType.fromEntityClass(lectureUnit.getClass()));
     }
