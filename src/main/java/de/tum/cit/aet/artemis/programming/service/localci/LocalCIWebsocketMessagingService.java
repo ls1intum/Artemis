@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceResult;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
@@ -157,6 +158,20 @@ public class LocalCIWebsocketMessagingService {
         String channel = "/topic/admin/build-agent/" + buildAgentDetails.buildAgent().name();
         log.debug("Sending message on topic {}: {}", channel, buildAgentDetails);
         websocketMessagingService.sendMessage(channel, buildAgentDetails);
+    }
+
+    /**
+     * Sends the result of a build-agent maintenance action (cache cleanup / cache wipe / Docker image clear) to the
+     * per-agent admin topic so the admin viewing the build-agent details page receives a real-time toast describing
+     * what was actually freed (or which errors occurred). The result topic is decoupled from the periodic
+     * {@link BuildAgentInformation} state push: that one is a snapshot, this one is an event.
+     *
+     * @param result the maintenance action outcome to deliver
+     */
+    public void sendMaintenanceResult(BuildAgentMaintenanceResult result) {
+        String channel = "/topic/admin/build-agent/" + result.agentShortName() + "/maintenance";
+        log.debug("Sending maintenance result on topic {}: {}", channel, result);
+        websocketMessagingService.sendMessage(channel, result);
     }
 
     /**

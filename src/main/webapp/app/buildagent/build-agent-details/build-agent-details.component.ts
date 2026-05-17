@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
+import { BuildAgentMaintenanceResult } from 'app/buildagent/shared/entities/build-agent-maintenance-result.model';
 import { EMPTY, Observable, Subject, Subscription, catchError, concatMap, debounceTime, from, switchMap, tap } from 'rxjs';
 import { faBroom, faCircleCheck, faEraser, faFilter, faHardDrive, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -65,6 +66,7 @@ import { extractHost, looksLikeAddress } from 'app/buildagent/shared/build-agent
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
     private readonly buildAgentsService = inject(BuildAgentsService);
+    private readonly bytesPipe = new BytesPipe();
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly buildQueueService = inject(BuildOverviewService);
@@ -119,11 +121,17 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     /** WebSocket channel for receiving agent-specific updates (constructed from base topic + agent name) */
     agentDetailsWebsocketChannel: string;
 
+    /** WebSocket channel for receiving maintenance-action results for this agent (toast notifications). */
+    maintenanceResultWebsocketChannel: string;
+
     /** Base WebSocket topic for agent updates */
     readonly agentUpdatesChannel = '/topic/admin/build-agent';
 
     /** WebSocket topic for receiving running jobs updates across all agents */
     readonly runningBuildJobsChannel = '/topic/admin/running-jobs';
+
+    /** Subscription that surfaces maintenance-action toasts driven by Hazelcast → WebSocket. */
+    private maintenanceResultSubscription?: Subscription;
 
     /** List of finished build jobs for this agent with pagination */
     finishedBuildJobs = signal<FinishedBuildJob[]>([]);
@@ -210,6 +218,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.agentDetailsWebsocketSubscription?.unsubscribe();
         this.runningJobsWebsocketSubscription?.unsubscribe();
+        this.maintenanceResultSubscription?.unsubscribe();
         this.agentDetailsSubscription?.unsubscribe();
         this.runningJobsSubscription?.unsubscribe();
         clearInterval(this.buildDurationInterval);
@@ -230,6 +239,14 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 this.updateBuildAgent(buildAgent);
             });
 
+        // Subscribe to maintenance-action results pushed by the agent that ran the action. The Hazelcast
+        // topic listener on a core node fans these out onto a per-agent WebSocket channel; each push becomes
+        // one toast describing what was actually freed / which errors occurred / how long it took.
+        this.maintenanceResultWebsocketChannel = this.agentDetailsWebsocketChannel + '/maintenance';
+        this.maintenanceResultSubscription = this.websocketService
+            .subscribe<BuildAgentMaintenanceResult>(this.maintenanceResultWebsocketChannel)
+            .subscribe((result: BuildAgentMaintenanceResult) => this.showMaintenanceResultToast(result));
+
         // Subscribe to all running jobs and filter to only show jobs for this agent
         this.runningJobsWebsocketSubscription = this.websocketService.subscribe<BuildJob[]>(this.runningBuildJobsChannel).subscribe((allRunningBuildJobs: BuildJob[]) => {
             // Filter to only include jobs running on this specific agent
@@ -240,6 +257,62 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 this.runningBuildJobs.set([]);
             }
         });
+    }
+
+    /**
+     * Translates a {@link BuildAgentMaintenanceResult} into an operator-friendly toast. We surface the action name,
+     * the bytes freed (so success has a tangible number), and the error count when non-zero. Failed and skipped
+     * outcomes get their own colour so an idle "nothing to delete" run does not look like a successful wipe.
+     */
+    private showMaintenanceResultToast(result: BuildAgentMaintenanceResult): void {
+        const freed = result.bytesFreed > 0 ? this.bytesPipe.transform(result.bytesFreed) : '0 B';
+        const items = result.itemsAffected;
+        const errs = result.errorCount;
+        const action = this.maintenanceActionLabel(result.actionType);
+
+        switch (result.outcome) {
+            case 'SUCCESS':
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.buildAgents.alerts.maintenanceSuccess',
+                    translationParams: { action, freed, items },
+                });
+                break;
+            case 'PARTIAL_FAILURE':
+                this.alertService.addAlert({
+                    type: AlertType.WARNING,
+                    message: 'artemisApp.buildAgents.alerts.maintenancePartial',
+                    translationParams: { action, freed, items, errors: errs },
+                });
+                break;
+            case 'FAILED':
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: 'artemisApp.buildAgents.alerts.maintenanceFailed',
+                    translationParams: { action, detail: result.message ?? '' },
+                });
+                break;
+            case 'SKIPPED':
+                this.alertService.addAlert({
+                    type: AlertType.INFO,
+                    message: 'artemisApp.buildAgents.alerts.maintenanceSkipped',
+                    translationParams: { action, reason: result.skipReason ?? '' },
+                });
+                break;
+        }
+    }
+
+    private maintenanceActionLabel(type: BuildAgentMaintenanceResult['actionType']): string {
+        switch (type) {
+            case 'RUN_CACHE_CLEANUP':
+                return 'Cache cleanup';
+            case 'WIPE_MAVEN_CACHE':
+                return 'Maven cache wipe';
+            case 'WIPE_GRADLE_CACHE':
+                return 'Gradle cache wipe';
+            case 'CLEAR_DOCKER_IMAGES':
+                return 'Docker image clear';
+        }
     }
 
     /**
@@ -353,6 +426,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         // Unsubscribe from old channels
         this.agentDetailsWebsocketSubscription?.unsubscribe();
         this.runningJobsWebsocketSubscription?.unsubscribe();
+        this.maintenanceResultSubscription?.unsubscribe();
 
         // Update channel and re-subscribe
         this.agentDetailsWebsocketChannel = this.agentUpdatesChannel + '/' + this.agentName;

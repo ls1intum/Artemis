@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceResult;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
@@ -56,6 +57,8 @@ public class DistributedDataAccessService {
     private DistributedTopic<String> resumeBuildAgentTopic;
 
     private DistributedTopic<BuildAgentMaintenanceAction> buildAgentMaintenanceActionTopic;
+
+    private DistributedTopic<BuildAgentMaintenanceResult> buildAgentMaintenanceResultTopic;
 
     public DistributedDataAccessService(Optional<DistributedDataProvider> distributedDataProvider) {
         this.distributedDataProvider = distributedDataProvider.orElseThrow(
@@ -335,6 +338,21 @@ public class DistributedDataAccessService {
             this.buildAgentMaintenanceActionTopic = this.distributedDataProvider.getTopic("buildAgentMaintenanceActionTopic");
         }
         return this.buildAgentMaintenanceActionTopic;
+    }
+
+    /**
+     * Counterpart to {@link #getBuildAgentMaintenanceActionTopic()}: the agent that ran the action publishes a
+     * {@link BuildAgentMaintenanceResult} on this topic when the action finishes (success, partial failure, full
+     * failure, or skipped). Core nodes listen and forward to the per-agent WebSocket channel so the admin viewing
+     * the build-agent details page gets a real-time toast with the bytes freed / error count.
+     *
+     * @return the distributed topic for build-agent maintenance results
+     */
+    public DistributedTopic<BuildAgentMaintenanceResult> getBuildAgentMaintenanceResultTopic() {
+        if (this.buildAgentMaintenanceResultTopic == null) {
+            this.buildAgentMaintenanceResultTopic = this.distributedDataProvider.getTopic("buildAgentMaintenanceResultTopic");
+        }
+        return this.buildAgentMaintenanceResultTopic;
     }
 
     /**

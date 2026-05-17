@@ -81,6 +81,8 @@ public class LocalCIEventListenerService {
 
     private final LocalCIQueueWebsocketService localCIQueueWebsocketService;
 
+    private final LocalCIWebsocketMessagingService localCIWebsocketMessagingService;
+
     private final BuildJobRepository buildJobRepository;
 
     private final DistributedDataAccessService distributedDataAccessService;
@@ -92,9 +94,11 @@ public class LocalCIEventListenerService {
     private final MailService mailService;
 
     public LocalCIEventListenerService(DistributedDataAccessService distributedDataAccessService, LocalCIQueueWebsocketService localCIQueueWebsocketService,
-            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, UserService userService, MailService mailService) {
+            LocalCIWebsocketMessagingService localCIWebsocketMessagingService, BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService,
+            UserService userService, MailService mailService) {
         this.distributedDataAccessService = distributedDataAccessService;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
+        this.localCIWebsocketMessagingService = localCIWebsocketMessagingService;
         this.buildJobRepository = buildJobRepository;
         this.programmingMessagingService = programmingMessagingService;
         this.userService = userService;
@@ -113,6 +117,11 @@ public class LocalCIEventListenerService {
         distributedDataAccessService.getDistributedProcessingJobs().addEntryListener(new ProcessingBuildJobItemListener());
         distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener());
         distributedDataAccessService.getDistributedDockerImageCleanupInfo().addListener(new DockerImageCleanupInfoListener());
+        // Forward maintenance-action results from the broadcast topic to the per-agent WebSocket channel so the
+        // admin viewing the build-agent details page gets a real-time toast describing what was actually freed.
+        // Every core node subscribes; the local WebsocketMessagingService only delivers to its locally-connected
+        // STOMP clients, so an admin sees the message exactly once regardless of which node they are connected to.
+        distributedDataAccessService.getBuildAgentMaintenanceResultTopic().addMessageListener(localCIWebsocketMessagingService::sendMaintenanceResult);
     }
 
     /**

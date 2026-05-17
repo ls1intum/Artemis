@@ -42,7 +42,11 @@
                 "gradleWipeTriggered": "Gradle cache wipe request sent successfully. The agent will pause, delete the cache, then resume.",
                 "gradleWipeFailed": "Failed to trigger Gradle cache wipe.",
                 "dockerClearTriggered": "Docker image clear request sent successfully. The agent will pause, remove unused images, then resume.",
-                "dockerClearFailed": "Failed to trigger Docker image clearing."
+                "dockerClearFailed": "Failed to trigger Docker image clearing.",
+                "maintenanceSuccess": "{{ action }} finished — {{ freed }} freed across {{ items }} items.",
+                "maintenancePartial": "{{ action }} completed with {{ errors }} errors — {{ freed }} freed across {{ items }} items. Check agent logs.",
+                "maintenanceFailed": "{{ action }} failed: {{ detail }}",
+                "maintenanceSkipped": "{{ action }} was skipped ({{ reason }})."
             },
             "notFound": "Build agent '{{ agentName }}' is currently not available.",
             "notFoundHint": "The agent may be offline or was replaced. Recent build jobs from this agent are shown below.",

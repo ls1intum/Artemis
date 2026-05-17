@@ -42,7 +42,11 @@
                 "gradleWipeTriggered": "Anfrage zum Löschen des Gradle-Caches erfolgreich gesendet. Der Agent wird angehalten, der Cache gelöscht und der Agent wieder fortgesetzt.",
                 "gradleWipeFailed": "Auslösen des Gradle-Cache-Löschens fehlgeschlagen.",
                 "dockerClearTriggered": "Anfrage zum Entfernen ungenutzter Docker-Images erfolgreich gesendet. Der Agent wird angehalten, Images entfernt und der Agent wieder fortgesetzt.",
-                "dockerClearFailed": "Auslösen des Docker-Image-Entfernens fehlgeschlagen."
+                "dockerClearFailed": "Auslösen des Docker-Image-Entfernens fehlgeschlagen.",
+                "maintenanceSuccess": "{{ action }} abgeschlossen — {{ freed }} freigegeben über {{ items }} Elemente.",
+                "maintenancePartial": "{{ action }} abgeschlossen mit {{ errors }} Fehlern — {{ freed }} freigegeben über {{ items }} Elemente. Bitte Agent-Logs prüfen.",
+                "maintenanceFailed": "{{ action }} fehlgeschlagen: {{ detail }}",
+                "maintenanceSkipped": "{{ action }} übersprungen ({{ reason }})."
             },
             "notFound": "Build Agent '{{ agentName }}' ist derzeit nicht verfügbar.",
             "notFoundHint": "Der Agent ist möglicherweise offline oder wurde ersetzt. Kürzliche Build Jobs dieses Agenten werden unten angezeigt.",

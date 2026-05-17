@@ -32,6 +32,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.unit.DataSize;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceResult;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 /**
@@ -192,26 +194,10 @@ public class BuildContainerCacheCleanupService {
             if (!buildAgentShortName.equals(action.agentShortName())) {
                 return;
             }
+            Instant start = Instant.now();
+            BuildAgentMaintenanceResult result;
             try {
-                switch (action.type()) {
-                    case RUN_CACHE_CLEANUP -> runCleanup();
-                    case WIPE_MAVEN_CACHE -> wipeMavenCache();
-                    case WIPE_GRADLE_CACHE -> wipeGradleCache();
-                    case CLEAR_DOCKER_IMAGES ->
-                        // Direct call (no maintenance pause): pausing closes the Docker client, which would make
-                        // the subsequent removeImageCmd silently no-op. Docker handles its own concurrency for
-                        // removeImageCmd vs. a freshly-bound container (the catch in clearAllUnusedDockerImages
-                        // logs a warn and continues). The admin UI's pause-drain-resume promise covers the cache
-                        // wipes (which need the agent quiesced because the build container would race the wipe)
-                        // but not the Docker clear (where Docker's daemon enforces consistency on its side).
-                        buildAgentDockerService.clearAllUnusedDockerImages();
-                    default -> throw new IllegalStateException("Unhandled maintenance action type: " + action.type());
-                }
-                // The action freed disk; publish the new snapshot immediately so the admin UI (which watches the
-                // distributed BuildAgentInformation map via WebSocket) reflects the post-action sizes within
-                // seconds instead of waiting for the 5-minute slow-stats tick. The Reclaim-disk dialog re-reads
-                // these values when re-opened.
-                publishFreshDiskStats();
+                result = dispatchMaintenanceAction(action, start);
             }
             catch (Throwable t) {
                 // Catch Throwable (not just RuntimeException) so Error / wrapped InterruptedException cannot tear
@@ -221,7 +207,20 @@ public class BuildContainerCacheCleanupService {
                     Thread.currentThread().interrupt();
                 }
                 log.error("Maintenance action {} for agent {} failed", action.type(), action.agentShortName(), t);
+                long elapsed = Duration.between(start, Instant.now()).toMillis();
+                result = new BuildAgentMaintenanceResult(buildAgentShortName, Instant.now(), action.type(), BuildAgentMaintenanceResult.Outcome.FAILED, 0L, 0L, 0L, elapsed, null,
+                        t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
             }
+            // The action freed disk; refresh the local snapshot so the admin UI (which watches the distributed
+            // BuildAgentInformation map via WebSocket) reflects post-action sizes within seconds instead of
+            // waiting for the 5-minute slow-stats tick. Done unconditionally — even on FAILED the disk numbers
+            // may have moved, and refreshing is cheap.
+            publishFreshDiskStats();
+            // Push the outcome to the result topic so a core node can fan it out to the WebSocket subscribed by
+            // the admin currently viewing this agent's details page. Publish failures are swallowed at debug
+            // level because we have already logged the action result above; losing the toast is bad UX but not
+            // a correctness issue.
+            publishMaintenanceResult(result);
         });
         log.info("Registered build-agent maintenance topic listener for {}", buildAgentShortName);
     }
@@ -243,6 +242,91 @@ public class BuildContainerCacheCleanupService {
         }
         catch (Exception republishFailure) {
             log.debug("Post-maintenance disk-stats refresh failed; next periodic push will correct it: {}", republishFailure.getMessage());
+        }
+    }
+
+    /**
+     * Runs one maintenance action and packages the outcome into a {@link BuildAgentMaintenanceResult} that downstream
+     * code (the WebSocket fan-out on the core nodes) can hand to the operator as a toast.
+     * <p>
+     * Each action's underlying domain type ({@link CleanupOutcome}, {@link WipeOutcome},
+     * {@link BuildAgentDockerService.UnusedImageStats}) carries different fields, so this method normalises them all
+     * into the shared {@code bytesFreed / itemsAffected / errorCount / outcome} shape.
+     */
+    private BuildAgentMaintenanceResult dispatchMaintenanceAction(BuildAgentMaintenanceAction action, Instant start) {
+        Instant when = Instant.now();
+        return switch (action.type()) {
+            case RUN_CACHE_CLEANUP -> toResult(action.type(), runCleanup(), start, when);
+            case WIPE_MAVEN_CACHE -> toResult(action.type(), wipeMavenCache(), start, when);
+            case WIPE_GRADLE_CACHE -> toResult(action.type(), wipeGradleCache(), start, when);
+            // Direct call (no maintenance pause): pausing closes the Docker client, which would make the
+            // subsequent removeImageCmd silently no-op. Docker handles its own concurrency for removeImageCmd vs.
+            // a freshly-bound container (the catch in clearAllUnusedDockerImages logs a warn and continues). The
+            // admin UI's pause-drain-resume promise covers the cache wipes (which need the agent quiesced because
+            // the build container would race the wipe) but not the Docker clear (where Docker's daemon enforces
+            // consistency on its side). Snapshot bytes-before so we can report bytesFreed accurately.
+            case CLEAR_DOCKER_IMAGES -> {
+                BuildAgentDockerService.UnusedImageStats before = buildAgentDockerService.getUnusedDockerImageStats();
+                int removed = buildAgentDockerService.clearAllUnusedDockerImages();
+                BuildAgentDockerService.UnusedImageStats after = buildAgentDockerService.getUnusedDockerImageStats();
+                long bytesFreed = Math.max(0L, before.totalBytes() - after.totalBytes());
+                long errors = Math.max(0L, before.count() - removed);
+                BuildAgentMaintenanceResult.Outcome outcome;
+                if (before.count() == 0) {
+                    // Nothing to do — surfaces in the toast as "Nothing to clear" so the operator knows the action
+                    // ran but had no effect.
+                    outcome = BuildAgentMaintenanceResult.Outcome.SUCCESS;
+                }
+                else {
+                    outcome = errors > 0 ? BuildAgentMaintenanceResult.Outcome.PARTIAL_FAILURE : BuildAgentMaintenanceResult.Outcome.SUCCESS;
+                }
+                yield new BuildAgentMaintenanceResult(buildAgentShortName, when, action.type(), outcome, bytesFreed, removed, errors,
+                        Duration.between(start, Instant.now()).toMillis(), null, null);
+            }
+        };
+    }
+
+    private BuildAgentMaintenanceResult toResult(BuildAgentMaintenanceAction.Type actionType, WipeOutcome wipe, Instant start, Instant when) {
+        if (wipe.wasSkipped()) {
+            return new BuildAgentMaintenanceResult(buildAgentShortName, when, actionType, BuildAgentMaintenanceResult.Outcome.SKIPPED, 0L, 0L, 0L,
+                    Duration.between(start, Instant.now()).toMillis(), wipe.skippedReason(), null);
+        }
+        WipeStats stats = wipe.stats();
+        long bytesFreed = stats != null ? stats.deletedBytes() : 0L;
+        long items = stats != null ? stats.deletedFiles() : 0L;
+        long errors = stats != null ? stats.errors() : 0L;
+        BuildAgentMaintenanceResult.Outcome outcome = errors > 0 ? BuildAgentMaintenanceResult.Outcome.PARTIAL_FAILURE : BuildAgentMaintenanceResult.Outcome.SUCCESS;
+        return new BuildAgentMaintenanceResult(buildAgentShortName, when, actionType, outcome, bytesFreed, items, errors, Duration.between(start, Instant.now()).toMillis(), null,
+                null);
+    }
+
+    private BuildAgentMaintenanceResult toResult(BuildAgentMaintenanceAction.Type actionType, CleanupOutcome cleanup, Instant start, Instant when) {
+        if (cleanup.wasSkipped()) {
+            return new BuildAgentMaintenanceResult(buildAgentShortName, when, actionType, BuildAgentMaintenanceResult.Outcome.SKIPPED, 0L, 0L, 0L,
+                    Duration.between(start, Instant.now()).toMillis(), cleanup.skippedReason(), null);
+        }
+        long bytesFreed = 0L;
+        long items = 0L;
+        long errors = 0L;
+        for (PruneStats per : cleanup.perCache()) {
+            bytesFreed += per.ageDeletedBytes() + per.sizeDeletedBytes();
+            items += per.ageDeletedFiles() + per.sizeDeletedFiles();
+            errors += per.errors();
+        }
+        BuildAgentMaintenanceResult.Outcome outcome = errors > 0 ? BuildAgentMaintenanceResult.Outcome.PARTIAL_FAILURE : BuildAgentMaintenanceResult.Outcome.SUCCESS;
+        return new BuildAgentMaintenanceResult(buildAgentShortName, when, actionType, outcome, bytesFreed, items, errors, Duration.between(start, Instant.now()).toMillis(), null,
+                null);
+    }
+
+    private void publishMaintenanceResult(BuildAgentMaintenanceResult result) {
+        try {
+            if (!distributedDataAccessService.isConnectedToCluster()) {
+                return;
+            }
+            distributedDataAccessService.getBuildAgentMaintenanceResultTopic().publish(result);
+        }
+        catch (Exception e) {
+            log.debug("Could not publish maintenance result for {}: {}", result.actionType(), e.getMessage());
         }
     }
 
