@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.programming.util.ZipTestUtil.extractExerciseJsonFromZip;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
@@ -395,6 +396,41 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
                 HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_preservesBuildAndTestDateOffset() throws Exception {
+        addInstructorToCourse();
+
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+
+        // Setup exercise with an AFTER_DUE_DATE phase
+        var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+
+        ZonedDateTime originalDueDate = ZonedDateTime.now().plusDays(2);
+        ZonedDateTime originalBuildAndTestDate = originalDueDate.plusHours(1);
+
+        programmingExercise.setDueDate(originalDueDate);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(originalBuildAndTestDate);
+        programmingExerciseRepository.save(programmingExercise);
+
+        // Update the due date (shift by +2 hours)
+        ZonedDateTime newDueDate = originalDueDate.plusHours(2);
+        programmingExercise.setDueDate(newDueDate);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+
+        // Expected build and test date is shifted by +2 hours
+        ZonedDateTime expectedBuildAndTestDate = originalBuildAndTestDate.plusHours(2);
+
+        var updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
+                HttpStatus.OK);
+
+        var exerciseFromDb = programmingExerciseRepository.findByIdElseThrow(updatedExercise.getId());
+
+        assertThat(exerciseFromDb.getBuildAndTestStudentSubmissionsAfterDueDate()).as("buildAndTestStudentSubmissionsAfterDueDate should be shifted by the same offset").isNotNull()
+                .isCloseTo(expectedBuildAndTestDate, within(1, java.time.temporal.ChronoUnit.SECONDS));
     }
 
     private void setupLocalVCRepository(LocalRepository localRepo, ProgrammingExercise exercise) throws Exception {
