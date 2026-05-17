@@ -46,7 +46,7 @@ import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
-import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
+import { INPUT_FIELD_IS_DISPLAYED_IN_SIMPLE_MODE_RECORD, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
@@ -129,24 +129,24 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     isSimpleMode = signal<boolean>(true);
     isAuxiliaryRepositoryInputValid = signal<boolean>(true);
 
-    isEditFieldDisplayedRecord = computed(() => {
-        const inputFieldEditModeMapping = IS_DISPLAYED_IN_SIMPLE_MODE;
+    isFieldDisplayedRecord = computed(() => {
+        const isFieldDisplayedMapping: Record<ProgrammingExerciseInputField, boolean> = {} as Record<ProgrammingExerciseInputField, boolean>;
 
-        const isEditFieldDisplayedMapping: Record<ProgrammingExerciseInputField, boolean> = {} as Record<ProgrammingExerciseInputField, boolean>;
-        Object.keys(inputFieldEditModeMapping).forEach((key) => {
+        Object.keys(INPUT_FIELD_IS_DISPLAYED_IN_SIMPLE_MODE_RECORD).forEach((key) => {
             let isDisplayed = true;
             if (this.isSimpleMode() && !(this.isImportFromFile || this.isImportFromExistingExercise)) {
-                isDisplayed = inputFieldEditModeMapping[key as ProgrammingExerciseInputField];
+                isDisplayed = INPUT_FIELD_IS_DISPLAYED_IN_SIMPLE_MODE_RECORD[key as ProgrammingExerciseInputField];
             }
 
-            isEditFieldDisplayedMapping[key as ProgrammingExerciseInputField] = isDisplayed;
+            isFieldDisplayedMapping[key as ProgrammingExerciseInputField] = isDisplayed;
         });
+
         // show the SHORT_NAME field when importing from the sharing platform
         if (this.isImportFromSharing) {
-            isEditFieldDisplayedMapping[ProgrammingExerciseInputField.SHORT_NAME] = true;
+            isFieldDisplayedMapping[ProgrammingExerciseInputField.SHORT_NAME] = true;
         }
 
-        return isEditFieldDisplayedMapping;
+        return isFieldDisplayedMapping;
     });
 
     private readonly translationBasePath = 'artemisApp.programmingExercise.';
@@ -685,7 +685,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
                 valid: Boolean(
                     this.exerciseGradingComponent?.formValid &&
-                    (this.isExamMode || !this.isEditFieldDisplayedRecord().plagiarismControl || this.exercisePlagiarismComponent()?.isFormValid()),
+                    (this.isExamMode || !this.isFieldDisplayedRecord().plagiarismControl || this.exercisePlagiarismComponent()?.isFormValid()),
                 ),
                 empty: this.exerciseGradingComponent?.formEmpty,
             },

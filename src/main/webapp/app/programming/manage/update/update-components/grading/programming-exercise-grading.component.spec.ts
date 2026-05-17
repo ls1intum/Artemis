@@ -220,7 +220,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 it('should NOT be displayed', () => {
                     extraCondition?.();
                     fixture.detectChanges(false);
-                    comp.isEditFieldDisplayedRecord()[field] = false;
+                    comp.isFieldDisplayedRecord()[field] = false;
                     checkFieldVisibility(selector, false, true);
                 });
             });
@@ -261,7 +261,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 field: ProgrammingExerciseInputField.ASSESSMENT_INSTRUCTIONS,
                 extraCondition: () => {
                     comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-                    comp.isEditFieldDisplayedRecord()[ProgrammingExerciseInputField.ASSESSMENT_INSTRUCTIONS] = true;
+                    comp.isFieldDisplayedRecord()[ProgrammingExerciseInputField.ASSESSMENT_INSTRUCTIONS] = true;
                 },
             },
             {

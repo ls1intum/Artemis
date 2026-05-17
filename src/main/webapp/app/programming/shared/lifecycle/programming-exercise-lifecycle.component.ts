@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input, signal } from '@angular/core';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
@@ -22,6 +22,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgStyle } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExerciseTimeline, TimelineItem } from 'app/shared/exercise-timeline/exercise-timeline';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -36,6 +37,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         NgStyle,
         ExerciseFeedbackSuggestionOptionsComponent,
         ArtemisTranslatePipe,
+        ExerciseTimeline,
     ],
 })
 export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnDestroy, OnInit, OnChanges {
@@ -49,6 +51,23 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     protected readonly faCogs = faCogs;
     protected readonly faUserCheck = faUserCheck;
     protected readonly faUserSlash = faUserSlash;
+    protected readonly testTimelineItems: TimelineItem[] = [
+        {
+            kind: 'required',
+            labelStringKey: 'artemisApp.exercise.releaseDate',
+            date: signal<Date | undefined>(undefined),
+        },
+        {
+            kind: 'optional',
+            labelStringKey: 'artemisApp.exercise.startDate',
+            date: signal<Date | undefined>(undefined),
+        },
+        {
+            kind: 'optional',
+            labelStringKey: 'artemisApp.exercise.dueDate',
+            date: signal<Date | undefined>(undefined),
+        },
+    ];
 
     @Input() exercise: ProgrammingExercise;
     @Input() isExamMode: boolean;

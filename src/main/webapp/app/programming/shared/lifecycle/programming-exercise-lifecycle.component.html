@@ -1,7 +1,8 @@
 <div class="timeline-box">
+    @let isFieldDisplayed = isEditFieldDisplayedRecord();
     <div class="test-schedule">
         <div class="test-schedule-row d-flex justify-content-around">
-            @if ((isEditFieldDisplayedRecord()?.releaseDate || !isEditFieldDisplayedRecord()) && !isExamMode) {
+            @if ((!isFieldDisplayed || isFieldDisplayed.releaseDate) && !isExamMode) {
                 <jhi-programming-exercise-test-schedule-date-picker
                     [(ngModel)]="exercise.releaseDate"
                     (ngModelChange)="updateReleaseDate($event)"
@@ -11,7 +12,7 @@
                     tooltipText="artemisApp.programmingExercise.timeline.releaseDateTooltip"
                 />
             }
-            @if ((isEditFieldDisplayedRecord()?.startDate || !isEditFieldDisplayedRecord()) && !isExamMode) {
+            @if ((!isFieldDisplayed || isFieldDisplayed.startDate) && !isExamMode) {
                 <jhi-programming-exercise-test-schedule-date-picker
                     [(ngModel)]="exercise.startDate"
                     (ngModelChange)="updateStartDate($event)"
@@ -33,7 +34,7 @@
                     <fa-icon [icon]="faCogs" size="lg" />
                 </div>
             </div>
-            @if ((isEditFieldDisplayedRecord()?.dueDate || !isEditFieldDisplayedRecord()) && !isExamMode) {
+            @if ((!isFieldDisplayed || isFieldDisplayed.dueDate) && !isExamMode) {
                 <jhi-programming-exercise-test-schedule-date-picker
                     [(ngModel)]="exercise.dueDate"
                     (ngModelChange)="updateExampleSolutionPublicationDate($event)"
@@ -47,7 +48,7 @@
                     id="programming-exercise-due-date-picker"
                 />
             }
-            @if ((isEditFieldDisplayedRecord()?.runTestsAfterDueDate || !isEditFieldDisplayedRecord()) && (isExamMode || exercise.dueDate)) {
+            @if ((!isFieldDisplayed || isFieldDisplayed.runTestsAfterDueDate) && (isExamMode || exercise.dueDate)) {
                 <jhi-programming-exercise-test-schedule-date-picker
                     class="test-schedule-date px-1"
                     [(ngModel)]="exercise.buildAndTestStudentSubmissionsAfterDueDate"
@@ -58,7 +59,7 @@
                     tooltipText="artemisApp.programmingExercise.timeline.afterDueDateTooltip"
                 />
             }
-            @if ((isEditFieldDisplayedRecord()?.assessmentDueDate || !isEditFieldDisplayedRecord()) && (isExamMode || isImport || exercise.dueDate)) {
+            @if ((!isFieldDisplayed || isFieldDisplayed.assessmentDueDate) && (isExamMode || isImport || exercise.dueDate)) {
                 <div>
                     <div class="test-schedule-date px-1">
                         <div class="test-schedule-date-title test-schedule-date-title-small-button">
@@ -99,7 +100,7 @@
                     }
                 </div>
             }
-            @if ((isEditFieldDisplayedRecord()?.exampleSolutionPublicationDate || !isEditFieldDisplayedRecord()) && !isExamMode) {
+            @if ((!isFieldDisplayed || isFieldDisplayed.exampleSolutionPublicationDate) && !isExamMode) {
                 <div>
                     <jhi-programming-exercise-test-schedule-date-picker
                         [(ngModel)]="exercise.exampleSolutionPublicationDate"
@@ -120,16 +121,17 @@
             }
         </div>
     </div>
+    <!-- Checkboxes -->
     @if (
         !readOnly &&
-        (!isEditFieldDisplayedRecord() ||
-            isEditFieldDisplayedRecord()?.complaintOnAutomaticAssessment ||
-            isEditFieldDisplayedRecord()?.manualFeedbackRequests ||
-            isEditFieldDisplayedRecord()?.showTestNamesToStudents ||
-            isEditFieldDisplayedRecord()?.includeTestsIntoExampleSolution)
+        (!isFieldDisplayed ||
+            isFieldDisplayed.complaintOnAutomaticAssessment ||
+            isFieldDisplayed.manualFeedbackRequests ||
+            isFieldDisplayed.showTestNamesToStudents ||
+            isFieldDisplayed.includeTestsIntoExampleSolution)
     ) {
         <h6 jhiTranslate="artemisApp.assessment.assessment"></h6>
-        @if ((isEditFieldDisplayedRecord()?.complaintOnAutomaticAssessment || !isEditFieldDisplayedRecord()) && (isExamMode || exercise.course?.complaintsEnabled)) {
+        @if ((!isFieldDisplayed || isFieldDisplayed.complaintOnAutomaticAssessment) && (isExamMode || exercise.course?.complaintsEnabled)) {
             <div class="form-check">
                 <input
                     type="checkbox"
@@ -167,7 +169,7 @@
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip'" />
             </div>
         }
-        @if ((isEditFieldDisplayedRecord()?.manualFeedbackRequests || !isEditFieldDisplayedRecord()) && !isExamMode) {
+        @if ((!isFieldDisplayed || isFieldDisplayed.manualFeedbackRequests) && !isExamMode) {
             <div class="form-check">
                 <input
                     type="checkbox"
@@ -197,7 +199,7 @@
                 }
             </div>
         }
-        @if (isEditFieldDisplayedRecord()?.showTestNamesToStudents || !isEditFieldDisplayedRecord()) {
+        @if (!isFieldDisplayed || isFieldDisplayed.showTestNamesToStudents) {
             <div class="form-check">
                 <input
                     class="form-check-input"
@@ -212,7 +214,7 @@
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.showTestNamesToStudentsTooltip'" />
             </div>
         }
-        @if (isEditFieldDisplayedRecord()?.includeTestsIntoExampleSolution || !isEditFieldDisplayedRecord()) {
+        @if (!isFieldDisplayed || isFieldDisplayed.includeTestsIntoExampleSolution) {
             <div class="form-check">
                 <input
                     type="checkbox"
@@ -236,4 +238,6 @@
             <jhi-exercise-feedback-suggestion-options [exercise]="exercise" [dueDate]="exercise.dueDate" [readOnly]="readOnly" />
         }
     }
+    <div style="height: 1rem"></div>
+    <jhi-exercise-timeline [timelineItems]="testTimelineItems" />
 </div>

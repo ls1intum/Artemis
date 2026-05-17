@@ -1,7 +1,7 @@
 <section class="mb-5">
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle"></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepMessage"></p>
-    @if (isEditFieldDisplayedRecord().includeExerciseInCourseScoreCalculation) {
+    @if (isFieldDisplayedRecord().includeExerciseInCourseScoreCalculation) {
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ programmingExercise.course ? 'Course' : 'Exam' }}Label"></label>
             <div>
@@ -10,7 +10,7 @@
         </div>
     }
     <div class="row">
-        @if (isEditFieldDisplayedRecord().points) {
+        @if (isFieldDisplayedRecord().points) {
             <div class="col">
                 <div class="form-group">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
@@ -31,7 +31,7 @@
                 </div>
             </div>
         }
-        @if (isEditFieldDisplayedRecord().bonusPoints) {
+        @if (isFieldDisplayedRecord().bonusPoints) {
             <div class="col">
                 <div class="form-group" [hidden]="programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
@@ -91,7 +91,7 @@
             }
         </div>
     }
-    @if (isEditFieldDisplayedRecord().submissionPolicy) {
+    @if (isFieldDisplayedRecord().submissionPolicy) {
         <div class="form-group">
             <jhi-submission-policy-update
                 [editable]="!programmingExerciseCreationConfig.isEdit"
@@ -108,7 +108,7 @@
             }
         </div>
     }
-    @if (isEditFieldDisplayedRecord().timeline) {
+    @if (isFieldDisplayedRecord().timeline) {
         <div class="form-group">
             <div>
                 <label jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline"></label>
@@ -120,17 +120,17 @@
                 [isExamMode]="programmingExerciseCreationConfig.isExamMode"
                 [readOnly]="false"
                 [importOptions]="importOptions"
-                [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
+                [isEditFieldDisplayedRecord]="isFieldDisplayedRecord()"
             />
         </div>
     }
-    @if (isEditFieldDisplayedRecord().assessmentInstructions && programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
+    @if (isFieldDisplayedRecord().assessmentInstructions && programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise" />
         </div>
     }
-    @if (isEditFieldDisplayedRecord().presentationScore) {
+    @if (isFieldDisplayedRecord().presentationScore) {
         <jhi-presentation-score-checkbox [exercise]="programmingExercise" />
     }
     @if (programmingExerciseCreationConfig.showSummary) {
