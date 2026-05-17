@@ -12,24 +12,15 @@ export class CompetencyManagementPage {
         // are not racing the page load. Under parallel CI load the response can take >15s; loosen
         // the status assertion (any 2xx/3xx, not strictly 200) and bump the timeout accordingly.
         //
-        // If `waitForResponse` times out, it usually means Angular failed to bootstrap the
-        // route component — the API request that would have produced the response was never
-        // made. Reload once and retry: a fresh chunk fetch typically recovers from the
-        // multi-node-load Angular bootstrap race.
-        const url = `/course-management/${courseId}/competency-management`;
-        const responsePredicate = (resp: { url(): string; status(): number }) => resp.url().includes(`/api/atlas/courses/${courseId}/course-competencies`) && resp.status() < 400;
-
-        const waitOnce = async () => this.page.waitForResponse(responsePredicate, { timeout: 30_000 });
-
-        const firstWait = waitOnce();
-        await this.page.goto(url);
-        try {
-            await firstWait;
-        } catch {
-            const secondWait = waitOnce();
-            await this.page.reload();
-            await secondWait;
-        }
+        // The `page.goto` fixture wrapper (see `support/fixtures.ts`) already handles the case
+        // where Angular fails to bootstrap the route component on the first navigation by
+        // reloading once, so the initial API call is guaranteed to fire (either on the first
+        // navigation or after the wrapper's reload). A single response wait is enough.
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(`/api/atlas/courses/${courseId}/course-competencies`) && resp.status() < 400, {
+            timeout: 45000,
+        });
+        await this.page.goto(`/course-management/${courseId}/competency-management`);
+        await responsePromise;
         const closeButton = this.page.locator('#close-button');
         if (await closeButton.isVisible()) {
             await closeButton.click();
