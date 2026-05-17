@@ -39,6 +39,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @ExtendWith(MockitoExtension.class)
 class AutomaticAfterDueDateServiceTest {
 
+    private static final ZonedDateTime BASE_TIME = ZonedDateTime.parse("2050-01-01T12:00:00Z");
+
     @Mock
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -64,7 +66,7 @@ class AutomaticAfterDueDateServiceTest {
 
     @Test
     void computeBuildAndTestDateForExistingExercise_courseExercise_withDueDateAndAfterDueDatePhase_returnsDerivedDate() throws JsonProcessingException {
-        var dueDate = ZonedDateTime.now().plusDays(1);
+        var dueDate = BASE_TIME.plusDays(1);
         var exercise = createCourseExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE);
 
         var result = service.computeBuildAndTestDate(exercise, null);
@@ -75,7 +77,7 @@ class AutomaticAfterDueDateServiceTest {
     @Test
     void computeBuildAndTestDateForExistingExercise_courseExercise_withoutDueDate_returnsNull() throws JsonProcessingException {
         var exercise = createCourseExercise(null, BuildPhaseCondition.AFTER_DUE_DATE);
-        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(2));
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(BASE_TIME.plusHours(2));
 
         var result = service.computeBuildAndTestDate(exercise, null);
 
@@ -84,9 +86,9 @@ class AutomaticAfterDueDateServiceTest {
 
     @Test
     void computeBuildAndTestDateForExistingExercise_courseExercise_withoutAfterDueDatePhase_returnsNull() throws JsonProcessingException {
-        var dueDate = ZonedDateTime.now().plusDays(1);
+        var dueDate = BASE_TIME.plusDays(1);
         var exercise = createCourseExercise(dueDate, BuildPhaseCondition.ALWAYS);
-        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(2));
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(BASE_TIME.plusHours(2));
 
         var result = service.computeBuildAndTestDate(exercise, null);
 
@@ -95,7 +97,7 @@ class AutomaticAfterDueDateServiceTest {
 
     @Test
     void computeBuildAndTestDateForExistingExercise_courseExercise_dueDateChanged_returnsDerivedDate() throws JsonProcessingException {
-        var originalDueDate = ZonedDateTime.now().plusDays(1);
+        var originalDueDate = BASE_TIME.plusDays(1);
         var updatedDueDate = originalDueDate.plusHours(3);
         var exercise = createCourseExercise(originalDueDate, BuildPhaseCondition.AFTER_DUE_DATE);
 
@@ -112,7 +114,7 @@ class AutomaticAfterDueDateServiceTest {
 
     @Test
     void computeBuildAndTestDateForExistingExercise_courseExercise_phaseAddedAndRemoved_returnsCorrectDates() throws JsonProcessingException {
-        var dueDate = ZonedDateTime.now().plusDays(1);
+        var dueDate = BASE_TIME.plusDays(1);
         var exercise = createCourseExercise(dueDate, BuildPhaseCondition.ALWAYS);
 
         var firstResult = service.computeBuildAndTestDate(exercise, null);
@@ -129,8 +131,8 @@ class AutomaticAfterDueDateServiceTest {
 
     @Test
     void computeBuildAndTestDate_usesLatestExamEndWithGrace() throws JsonProcessingException {
-        var dueDate = ZonedDateTime.now().plusDays(1);
-        var latestExamEndDate = ZonedDateTime.now().plusDays(2);
+        var dueDate = BASE_TIME.plusDays(1);
+        var latestExamEndDate = BASE_TIME.plusDays(2);
         var exercise = createExamExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE, 180);
         when(examDateApi.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam())).thenReturn(latestExamEndDate);
         when(examApi.findByExerciseIdElseThrow(exercise.getId())).thenReturn(exercise.getExam());
@@ -144,8 +146,8 @@ class AutomaticAfterDueDateServiceTest {
     void updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam_updatesChangedExercisesOnly() throws JsonProcessingException {
         var examId = 42L;
         var exerciseId = 10L;
-        var dueDate = ZonedDateTime.now().plusDays(1);
-        var latestExamEndDate = ZonedDateTime.now().plusDays(2);
+        var dueDate = BASE_TIME.plusDays(1);
+        var latestExamEndDate = BASE_TIME.plusDays(2);
         var exercise = createExamExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE, 120);
         exercise.setId(exerciseId);
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dueDate.plusMinutes(15));
@@ -169,9 +171,8 @@ class AutomaticAfterDueDateServiceTest {
     @Test
     void updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam_doesNotSaveWhenDateUnchanged() throws JsonProcessingException {
         var examId = 43L;
-        var exerciseId = 11L;
-        var dueDate = ZonedDateTime.now().plusDays(1);
-        var latestExamEndDate = ZonedDateTime.now().plusDays(2);
+        var dueDate = BASE_TIME.plusDays(1);
+        var latestExamEndDate = BASE_TIME.plusDays(2);
         var exercise = createExamExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE, 90);
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(latestExamEndDate.plusSeconds(90).plusMinutes(15));
 
@@ -192,8 +193,8 @@ class AutomaticAfterDueDateServiceTest {
     @Test
     void getAutomaticBuildAndTestDate_existingCourseExercise_dueDateAndAfterDueDatePhase_returnsDerivedDate() throws IOException, JsonProcessingException {
         var exerciseId = 10L;
-        var dueDate = ZonedDateTime.now().plusDays(2);
-        var exercise = createCourseExercise(ZonedDateTime.now().plusDays(1), BuildPhaseCondition.AFTER_DUE_DATE);
+        var dueDate = BASE_TIME.plusDays(2);
+        var exercise = createCourseExercise(BASE_TIME.plusDays(1), BuildPhaseCondition.AFTER_DUE_DATE);
 
         var previewDate = service.getAutomaticBuildAndTestDate(new AutomaticAfterDueDatePreviewRequestDTO(exerciseId, null, dueDate, null, null, null, null, null), exercise, null);
 
@@ -202,7 +203,7 @@ class AutomaticAfterDueDateServiceTest {
 
     @Test
     void getAutomaticBuildAndTestDate_newCourseExercise_withoutExplicitPhaseFlag_usesDefaultTemplate() throws IOException {
-        var dueDate = ZonedDateTime.now().plusDays(1);
+        var dueDate = BASE_TIME.plusDays(1);
         var defaultPhases = List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml")));
         when(buildPhasesTemplateService.getBuildPlanPhasesFor(ProgrammingLanguage.JAVA, Optional.of(ProjectType.PLAIN_MAVEN), true, false)).thenReturn(defaultPhases);
 
@@ -214,8 +215,8 @@ class AutomaticAfterDueDateServiceTest {
 
     @Test
     void getAutomaticBuildAndTestDate_newExamExercise_usesExamEndWithGraceAndOffset() throws IOException {
-        var dueDate = ZonedDateTime.now().plusDays(1);
-        var latestExamEndDate = ZonedDateTime.now().plusDays(3);
+        var dueDate = BASE_TIME.plusDays(1);
+        var latestExamEndDate = BASE_TIME.plusDays(3);
         var exam = new Exam();
         exam.setId(1L);
         exam.setGracePeriod(120);

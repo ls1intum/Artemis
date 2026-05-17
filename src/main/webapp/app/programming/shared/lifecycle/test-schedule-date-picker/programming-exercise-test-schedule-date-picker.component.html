@@ -30,7 +30,7 @@
         </button>
     }
     @if (selectedDate && !readOnly) {
-        @if (canReset) {
+        @if (canReset()) {
             <button (click)="resetDate()" type="button" class="btn btn-light btn-lifecycle calendar-event-toggle">
                 <fa-icon class="icon-static" [icon]="faCalendarCheck" size="2x" />
                 <fa-icon class="icon-remove" [icon]="faCalendarMinus" size="2x" />

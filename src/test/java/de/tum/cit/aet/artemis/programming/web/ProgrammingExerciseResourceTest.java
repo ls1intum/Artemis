@@ -429,8 +429,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         var exerciseFromDb = programmingExerciseRepository.findByIdElseThrow(updatedExercise.getId());
 
-        assertThat(exerciseFromDb.getBuildAndTestStudentSubmissionsAfterDueDate()).as("buildAndTestStudentSubmissionsAfterDueDate should be shifted by the same offset").isNotNull()
-                .isCloseTo(expectedBuildAndTestDate, within(1, java.time.temporal.ChronoUnit.SECONDS));
+        assertThat(exerciseFromDb.getBuildAndTestStudentSubmissionsAfterDueDate()).isNotNull();
+        assertThat(exerciseFromDb.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant()).as("buildAndTestStudentSubmissionsAfterDueDate should be shifted by the same offset")
+                .isCloseTo(expectedBuildAndTestDate.toInstant(), within(1, java.time.temporal.ChronoUnit.SECONDS));
     }
 
     private void setupLocalVCRepository(LocalRepository localRepo, ProgrammingExercise exercise) throws Exception {

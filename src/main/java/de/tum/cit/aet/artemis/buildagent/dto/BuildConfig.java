@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.buildagent.dto;
 
 import java.io.Serializable;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,7 +35,19 @@ public record BuildConfig(String buildScript, String dockerImage, String commitH
     }
 
     private boolean hasNonStaticCodeAnalysisResultPath() {
-        Stream<String> fileNames = resultPaths.stream().map(path -> Path.of(path).getFileName().toString());
-        return fileNames.anyMatch(fileName -> StaticCodeAnalysisTool.getToolByFilePattern(fileName).isEmpty());
+        return resultPaths.stream().anyMatch(BuildConfig::isNonStaticCodeAnalysisResultPath);
+    }
+
+    private static boolean isNonStaticCodeAnalysisResultPath(String path) {
+        if (path == null) {
+            return true;
+        }
+        try {
+            String fileName = Path.of(path).getFileName().toString();
+            return StaticCodeAnalysisTool.getToolByFilePattern(fileName).isEmpty();
+        }
+        catch (InvalidPathException ex) {
+            return true;
+        }
     }
 }

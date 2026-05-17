@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild, forwardRef, input } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { isDate } from 'app/shared/util/utils';
@@ -32,7 +32,7 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
     @Input() tooltipText: string;
     @Input() readOnly: boolean;
     @Output() onDateReset = new EventEmitter();
-    @Input() canReset = true;
+    readonly canReset = input(false);
 
     // Icons
     faCalendarMinus = faCalendarMinus;
@@ -62,7 +62,7 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
      * This makes it easier to also reset date, that can only be selected if the current date is not set
      */
     resetDate() {
-        if (this.canReset) {
+        if (this.canReset()) {
             this.writeValue(undefined);
             this.onDateReset.emit();
         }

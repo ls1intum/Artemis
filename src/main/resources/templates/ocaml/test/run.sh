@@ -27,6 +27,10 @@ while [ $# -gt 0 ]; do
       shift
       ;;
     --only)
+      if [ -z "${2:-}" ]; then
+        echo "Missing value for --only (expected: all|compile|test)" >&2
+        exit 1
+      fi
       ONLY="$2"
       shift 2
       ;;

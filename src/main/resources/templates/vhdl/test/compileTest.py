@@ -8,7 +8,7 @@ def export_junit(retCode: int, msg: str, testName: str = 'Compile'):
     tc = TestCase(testName)
 
     if retCode != 0:
-        return
+        tc.add_failure_info(message=msg)
     ts = TestSuite("ERA Tester", [tc])
     with open('result.xml', 'w') as f:
         TestSuite.to_file(f, [ts], prettyprint=False)

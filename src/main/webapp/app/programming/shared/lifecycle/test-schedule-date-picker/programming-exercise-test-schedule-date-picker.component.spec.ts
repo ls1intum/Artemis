@@ -76,7 +76,8 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
     });
 
     it('should not reset date if canReset is false', () => {
-        comp.canReset = false;
+        fixture.componentRef.setInput('canReset', false);
+        fixture.detectChanges();
         const spy = vi.spyOn(comp.onDateReset, 'emit');
         comp.resetDate();
 

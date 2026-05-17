@@ -56,13 +56,6 @@ public class AutomaticAfterDueDateService {
         this.examApi = examApi;
     }
 
-    private ZonedDateTime computeRunAfterDueDate(ZonedDateTime newDueDate, boolean hasAfterDueDatePhase, Duration offset) {
-        if (!hasAfterDueDatePhase || newDueDate == null) {
-            return null;
-        }
-        return toOffsetDate(newDueDate, offset);
-    }
-
     /**
      * Computes the "Run Tests after Due Date" value for a programming exercise.
      * This method is used when the client needs to see what the date will be set to
@@ -100,6 +93,10 @@ public class AutomaticAfterDueDateService {
             hasAfterDueDatePhase = hasAfterDueDatePhase(phases);
         }
 
+        if (!hasAfterDueDatePhase) {
+            return null;
+        }
+
         final Duration offset;
         if (relevantData.programmingExerciseId() == null) {
             offset = null;
@@ -114,7 +111,11 @@ public class AutomaticAfterDueDateService {
                     : Duration.between(dueDate, loadedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         }
 
-        return computeRunAfterDueDate(dueDate, hasAfterDueDatePhase, offset);
+        if (dueDate == null) {
+            return null;
+        }
+
+        return toOffsetDate(dueDate, offset);
     }
 
     /**
@@ -197,13 +198,17 @@ public class AutomaticAfterDueDateService {
 
         final boolean hasAfterDueDatePhase = hasAfterDueDatePhase(exerciseWithBuildConfig.getBuildConfig().getBuildPlanPhases().map(BuildPlanPhasesDTO::phases).orElse(null));
 
-        // if correctly set already then keep as is to allow client to modify the build and test date
-        final ZonedDateTime currentBuildAndTestDate = exerciseWithBuildConfig.getBuildAndTestStudentSubmissionsAfterDueDate();
-        if (!forceCompute && currentBuildAndTestDate != null && (dueDate != null && !dueDate.isAfter(currentBuildAndTestDate))) {
-            return exerciseWithBuildConfig.getBuildAndTestStudentSubmissionsAfterDueDate();
+        if (!hasAfterDueDatePhase || dueDate == null) {
+            return null;
         }
 
-        return computeRunAfterDueDate(dueDate, hasAfterDueDatePhase, offset);
+        // if correctly set already then keep as is to allow client to modify the build and test date
+        final ZonedDateTime currentBuildAndTestDate = exerciseWithBuildConfig.getBuildAndTestStudentSubmissionsAfterDueDate();
+        if (!forceCompute && currentBuildAndTestDate != null && !dueDate.isAfter(currentBuildAndTestDate)) {
+            return currentBuildAndTestDate;
+        }
+
+        return toOffsetDate(dueDate, offset);
     }
 
     private boolean hasAfterDueDatePhase(final List<BuildPhaseDTO> phases) {
@@ -211,9 +216,6 @@ public class AutomaticAfterDueDateService {
     }
 
     private ZonedDateTime toOffsetDate(ZonedDateTime referenceDate, Duration offset) {
-        if (referenceDate == null) {
-            return null;
-        }
         if (offset != null) {
             return referenceDate.plus(offset);
         }

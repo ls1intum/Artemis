@@ -344,6 +344,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             },
             error: () => {
                 this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
+                this.previousAutomaticAfterDueDatePreviewRequest = undefined;
             },
         });
     }

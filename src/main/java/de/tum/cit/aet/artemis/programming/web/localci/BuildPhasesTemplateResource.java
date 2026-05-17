@@ -87,11 +87,11 @@ public class BuildPhasesTemplateResource {
             boolean staticAnalysis, boolean sequentialRuns, boolean examMode) {
         try {
             List<BuildPhaseDTO> phases = buildPhasesTemplateService.getBuildPlanPhasesFor(language, optionalProjectType, staticAnalysis, sequentialRuns);
-            if (examMode) {
-                phases = buildPhasesTemplateService.applyExamDefaults(phases);
-            }
             if (phases == null) {
                 return ResponseEntity.notFound().build();
+            }
+            if (examMode) {
+                phases = buildPhasesTemplateService.applyExamDefaults(phases);
             }
             final String image = buildPhasesTemplateService.getDefaultDockerImageFor(language, optionalProjectType);
 

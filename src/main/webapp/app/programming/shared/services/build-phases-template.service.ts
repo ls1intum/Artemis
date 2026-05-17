@@ -9,20 +9,8 @@ export class BuildPhasesTemplateService {
 
     private resourceUrl = 'api/programming/phases/templates';
 
-    static readonly DEFAULT_BUILD_PLAN: BuildPlanPhases = {
-        phases: [
-            {
-                name: '',
-                script: '# enter the script of this phase',
-                condition: 'ALWAYS',
-                forceRun: false,
-                resultPaths: [],
-            },
-        ],
-    } as BuildPlanPhases;
-
     // shared signal
-    readonly buildPlan = signal<BuildPlanPhases | undefined>(BuildPhasesTemplateService.DEFAULT_BUILD_PLAN);
+    readonly buildPlan = signal<BuildPlanPhases | undefined>(BuildPhasesTemplateService.createDefaultBuildPlan());
 
     /**
      * Fetches the build plan template for the given programming language and project type from the server.
@@ -46,7 +34,7 @@ export class BuildPhasesTemplateService {
      * Resets the shared buildPlan signal to the default build plan.
      */
     resetToDefault(): void {
-        this.buildPlan.set(BuildPhasesTemplateService.DEFAULT_BUILD_PLAN);
+        this.buildPlan.set(BuildPhasesTemplateService.createDefaultBuildPlan());
     }
 
     private buildURIWithParams(
@@ -65,6 +53,20 @@ export class BuildPhasesTemplateService {
         return {
             uri: path,
             params: params,
+        };
+    }
+
+    private static createDefaultBuildPlan(): BuildPlanPhases {
+        return {
+            phases: [
+                {
+                    name: '',
+                    script: '# enter the script of this phase',
+                    condition: 'ALWAYS',
+                    forceRun: false,
+                    resultPaths: [],
+                },
+            ],
         };
     }
 }

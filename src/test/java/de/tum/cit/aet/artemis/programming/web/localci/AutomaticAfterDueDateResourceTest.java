@@ -31,6 +31,8 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
 
     private static final String TEST_PREFIX = "autoafterduedate";
 
+    private static final ZonedDateTime BASE_TIME = ZonedDateTime.parse("2050-01-01T12:00:00Z");
+
     /**
      * Login of an editor who exists in the DB (has EDITOR authority) but is NOT a member
      * of any course created in this test class. Used to verify exercise/exam-level 403s.
@@ -56,7 +58,7 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
 
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         courseExercise = (ProgrammingExercise) course.getExercises().iterator().next();
-        courseExercise.setDueDate(ZonedDateTime.now().plusDays(3));
+        courseExercise.setDueDate(BASE_TIME.plusDays(3));
 
         examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
     }
@@ -90,7 +92,7 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
         // what matters is that the request is not rejected.
         // If it is non-null it must be after the due date.
         if (result != null) {
-            assertThat(result).isAfterOrEqualTo(courseExercise.getDueDate());
+            assertThat(result.toInstant()).isAfterOrEqualTo(courseExercise.getDueDate().toInstant());
         }
     }
 
@@ -133,17 +135,17 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void previewAutomaticAfterDueDate_newCourseExercise_returnsDateOrNull() throws Exception {
-        ZonedDateTime dueDate = ZonedDateTime.now().plusDays(5);
+        ZonedDateTime dueDate = BASE_TIME.plusDays(5);
         // Use hasAfterDueDateBuildPhase=true so the result is deterministic
         var requestDTO = new AutomaticAfterDueDatePreviewRequestDTO(null, null, dueDate, true, null, null, null, null);
         ZonedDateTime result = request.postWithResponseBody(BASE_URL, requestDTO, ZonedDateTime.class, HttpStatus.OK);
-        assertThat(result).isAfterOrEqualTo(dueDate);
+        assertThat(result.toInstant()).isAfterOrEqualTo(dueDate.toInstant());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void previewAutomaticAfterDueDate_newCourseExercise_noAfterDueDatePhase_returnsNull() throws Exception {
-        ZonedDateTime dueDate = ZonedDateTime.now().plusDays(5);
+        ZonedDateTime dueDate = BASE_TIME.plusDays(5);
         var requestDTO = new AutomaticAfterDueDatePreviewRequestDTO(null, null, dueDate, false, null, null, null, null);
         ZonedDateTime result = request.postWithResponseBody(BASE_URL, requestDTO, ZonedDateTime.class, HttpStatus.OK);
         assertThat(result).isNull();
@@ -159,12 +161,12 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
         // Give the exercise an after-due-date build phase so the service has something to compute.
         attachAfterDueDateBuildPhase(courseExercise);
 
-        ZonedDateTime newDueDate = ZonedDateTime.now().plusDays(7);
+        ZonedDateTime newDueDate = BASE_TIME.plusDays(7);
         var requestDTO = new AutomaticAfterDueDatePreviewRequestDTO(courseExercise.getId(), null, newDueDate, null, null, null, null, null);
         ZonedDateTime result = request.postWithResponseBody(BASE_URL, requestDTO, ZonedDateTime.class, HttpStatus.OK);
 
         assertThat(result).isNotNull();
-        assertThat(result).isAfter(newDueDate);
+        assertThat(result.toInstant()).isAfter(newDueDate.toInstant());
     }
 
     /**
@@ -178,7 +180,7 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
         attachAfterDueDateBuildPhase(courseExercise);
 
         // Establish a known offset: buildAndTestDate = dueDate + 2 hours
-        ZonedDateTime originalDueDate = ZonedDateTime.now().plusDays(3);
+        ZonedDateTime originalDueDate = BASE_TIME.plusDays(3);
         ZonedDateTime originalBuildAndTestDate = originalDueDate.plusHours(2);
         courseExercise.setDueDate(originalDueDate);
         courseExercise.setBuildAndTestStudentSubmissionsAfterDueDate(originalBuildAndTestDate);
@@ -197,12 +199,12 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
 
     /** A request for a brand-new exercise (no IDs) using explicit phase flag. */
     private static AutomaticAfterDueDatePreviewRequestDTO newExerciseRequest() {
-        return new AutomaticAfterDueDatePreviewRequestDTO(null, null, ZonedDateTime.now().plusDays(2), true, null, null, null, null);
+        return new AutomaticAfterDueDatePreviewRequestDTO(null, null, BASE_TIME.plusDays(2), true, null, null, null, null);
     }
 
     /** A request referencing an existing course exercise. */
     private AutomaticAfterDueDatePreviewRequestDTO existingCourseExerciseRequest() {
-        return new AutomaticAfterDueDatePreviewRequestDTO(courseExercise.getId(), null, ZonedDateTime.now().plusDays(2), null, null, null, null, null);
+        return new AutomaticAfterDueDatePreviewRequestDTO(courseExercise.getId(), null, BASE_TIME.plusDays(2), null, null, null, null, null);
     }
 
     /**
