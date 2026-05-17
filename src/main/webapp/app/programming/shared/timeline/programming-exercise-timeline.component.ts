@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input, model, signal } from '@angular/core';
+import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, computed, effect, inject, input, model, signal } from '@angular/core';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
@@ -21,7 +21,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgStyle } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseTimeline, TimelineItem } from 'app/shared/exercise-timeline/exercise-timeline';
 
 @Component({
@@ -36,7 +35,6 @@ import { ExerciseTimeline, TimelineItem } from 'app/shared/exercise-timeline/exe
         FaIconComponent,
         NgStyle,
         ExerciseFeedbackSuggestionOptionsComponent,
-        ArtemisTranslatePipe,
         ExerciseTimeline,
     ],
 })
@@ -46,7 +44,7 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
     private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
 
-    protected readonly assessmentType = AssessmentType;
+    protected readonly AssessmentType = AssessmentType;
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly faCogs = faCogs;
     protected readonly faUserCheck = faUserCheck;
@@ -75,11 +73,29 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
     buildAndTestStudentSubmissionsAfterDueDate = model<Dayjs | undefined>();
     assessmentDueDate = model<Dayjs | undefined>();
     exampleSolutionPublicationDate = model<Dayjs | undefined>();
+    assessmentType = model<AssessmentType>();
+    allowFeedbackRequests = model<boolean>();
     isExamMode = input.required<boolean>();
     exercise = input.required<ProgrammingExercise>();
     readOnly = input(false);
     importOptions = input<ImportOptions>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
+
+    isDatePickableForRunningTestsAfterDueDate = signal(false);
+    isEnablingToRunTestsAfterDueDateToggleEnabled = computed(() => {
+        const isFieldDisplayed = this.isEditFieldDisplayedRecord();
+        return (!isFieldDisplayed || isFieldDisplayed.runTestsAfterDueDate) && (this.isExamMode() || !!this.dueDate());
+    });
+    isDatePickableForSemiAutomaticAssessmentDueDate = signal(false);
+    isSemiAutomaticAssessmentToggleEnabled = computed(() => {
+        const isFieldDisplayed = this.isEditFieldDisplayedRecord();
+        return (!isFieldDisplayed || isFieldDisplayed.assessmentDueDate) && (this.isImport() || !!this.dueDate() || this.isExamMode());
+    });
+    isDatePickableForExampleSolutionPublicationDate = signal(this.exampleSolutionPublicationDate() !== undefined);
+    isExampleSolutionPublicationDateToggleEnabled = computed(() => {
+        const isFieldDisplayed = this.isEditFieldDisplayedRecord();
+        return (!isFieldDisplayed || isFieldDisplayed.exampleSolutionPublicationDate) && !this.isExamMode();
+    });
 
     @ViewChildren(ProgrammingExerciseTestScheduleDatePickerComponent) datePickerComponents: QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
 
@@ -95,10 +111,52 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
     isImport = signal(false);
     private urlSubscription: Subscription;
 
+    constructor() {
+        effect(() => {
+            if (!this.isEnablingToRunTestsAfterDueDateToggleEnabled()) {
+                this.isDatePickableForRunningTestsAfterDueDate.set(false);
+                this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
+            }
+        });
+        effect(() => {
+            if (!this.isDatePickableForRunningTestsAfterDueDate()) {
+                this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
+            }
+        });
+        effect(() => {
+            if (!this.isSemiAutomaticAssessmentToggleEnabled()) {
+                this.isDatePickableForSemiAutomaticAssessmentDueDate.set(false);
+                this.assessmentDueDate.set(undefined);
+            }
+        });
+        effect(() => {
+            if (this.isDatePickableForSemiAutomaticAssessmentDueDate()) {
+                this.assessmentType.set(AssessmentType.SEMI_AUTOMATIC);
+            } else {
+                this.assessmentType.set(AssessmentType.AUTOMATIC);
+                this.assessmentDueDate.set(undefined);
+            }
+        });
+        effect(() => {
+            if (!this.isExampleSolutionPublicationDateToggleEnabled()) {
+                this.isDatePickableForExampleSolutionPublicationDate.set(false);
+                this.exampleSolutionPublicationDate.set(undefined);
+            }
+        });
+        effect(() => {
+            if (!this.isDatePickableForExampleSolutionPublicationDate()) {
+                this.exampleSolutionPublicationDate.set(undefined);
+            }
+        });
+    }
+
     /**
      * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC
      */
     ngOnInit(): void {
+        this.isDatePickableForRunningTestsAfterDueDate.set(this.buildAndTestStudentSubmissionsAfterDueDate() !== undefined);
+        this.isDatePickableForSemiAutomaticAssessmentDueDate.set(this.assessmentDueDate() !== undefined);
+        this.isDatePickableForExampleSolutionPublicationDate.set(this.exampleSolutionPublicationDate() !== undefined);
         this.updateIsImportBasedOnUrl();
 
         const exercise = this.exercise();
