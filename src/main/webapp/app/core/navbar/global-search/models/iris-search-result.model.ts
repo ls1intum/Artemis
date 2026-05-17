@@ -1,6 +1,6 @@
-import { LectureSearchResult } from './lecture-search-result.model';
+import { GlobalSearchSource } from './global-search-source.model';
 
 export interface IrisSearchResult {
     answer: string | undefined;
-    sources: LectureSearchResult[];
+    sources: GlobalSearchSource[];
 }

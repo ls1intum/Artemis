@@ -42,13 +42,13 @@
                     @for (source of moreOpen() ? sources() : sources().slice(0, 2); track $index) {
                         <a
                             class="iris-chip d-inline-flex align-items-center text-decoration-none text-nowrap rounded-pill"
-                            [routerLink]="source.lectureUnit.link"
-                            [queryParams]="source.lectureUnit.queryParams"
+                            [routerLink]="linkFor(source)"
+                            [queryParams]="queryParamsFor(source)"
                         >
-                            <fa-icon [icon]="iconFor(source.lectureUnit.sourceType)" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
-                            <span class="iris-chip-name text-truncate">{{ source.lectureUnit.name }}</span>
-                            @if (source.lectureUnit.displayMeta) {
-                                <span class="iris-chip-meta text-body-secondary">· {{ source.lectureUnit.displayMeta }}</span>
+                            <fa-icon [icon]="iconFor(source.sourceType)" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
+                            <span class="iris-chip-name text-truncate">{{ source.title }}</span>
+                            @if (source.lectureUnit?.displayMeta) {
+                                <span class="iris-chip-meta text-body-secondary">· {{ source.lectureUnit!.displayMeta }}</span>
                             }
                         </a>
                     }

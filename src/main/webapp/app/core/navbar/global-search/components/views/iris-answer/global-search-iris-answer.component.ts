@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faChevronUp, faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faCalendarCheck, faChevronUp, faComments, faFile, faFilePdf, faFileVideo, faKeyboard, faQuestionCircle, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
+import { GlobalSearchSource } from 'app/core/navbar/global-search/models/global-search-source.model';
 import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
@@ -61,10 +62,39 @@ export class GlobalSearchIrisAnswerComponent {
         lecture_unit_slide: faFilePdf,
         lecture_unit_slide_video: faFileVideo,
         lecture_unit_video: faVideo,
+        exercise: faKeyboard,
+        faq: faQuestionCircle,
+        exam: faCalendarCheck,
+        channel: faComments,
+        lecture: faBook,
     };
 
     protected iconFor(sourceType: string): IconDefinition {
         return this.SOURCE_ICONS[sourceType] ?? faFile;
+    }
+
+    protected linkFor(source: GlobalSearchSource): string[] {
+        if (source.lectureUnit) return [source.lectureUnit.link];
+        const cid = String(source.course.id);
+        const eid = String(source.entityId);
+        switch (source.sourceType) {
+            case 'exercise':
+                return ['/courses', cid, 'exercises', eid];
+            case 'faq':
+                return ['/courses', cid, 'faq'];
+            case 'exam':
+                return ['/courses', cid, 'exams', eid];
+            case 'channel':
+                return ['/courses', cid, 'communication'];
+            default:
+                return ['/courses', cid];
+        }
+    }
+
+    protected queryParamsFor(source: GlobalSearchSource): Record<string, unknown> {
+        if (source.lectureUnit) return source.lectureUnit.queryParams;
+        if (source.sourceType === 'channel') return { conversationId: String(source.entityId) };
+        return {};
     }
 
     constructor() {
