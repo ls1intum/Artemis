@@ -184,11 +184,18 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
      * pages: ~10s reload that turns a deterministic test failure into a passing test.
      */
     page: async ({ page }, use) => {
+        // Unauthenticated routes (login / account / reset) do not render `#account-menu`
+        // (the navbar template gates it on `isAuthenticated()`), so the render-check would
+        // always go through the reload+10s grace path on those routes and burn budget for
+        // nothing. Short-circuit them via a path prefix.
+        const isUnauthenticatedRoute = (url: string) => /\/(sign-in|account|reset|register|forget-password)(\/|\?|$)/.test(url);
+
         const originalGoto = page.goto.bind(page);
         page.goto = async (url, options) => {
             const response = await originalGoto(url, options);
             try {
-                if (Commands.isNoNavbarRoute(page.url())) {
+                const currentUrl = page.url();
+                if (Commands.isNoNavbarRoute(currentUrl) || isUnauthenticatedRoute(currentUrl)) {
                     return response;
                 }
                 const attached = await page
