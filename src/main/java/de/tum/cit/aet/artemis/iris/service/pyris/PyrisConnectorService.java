@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisLearningDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryConnectionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryWithRelationsDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
@@ -193,10 +194,10 @@ public class PyrisConnectorService {
      * @param limit the maximum number of results to return
      * @return list of matching lecture search results
      */
-    public List<PyrisLectureSearchResultDTO> searchLectures(String query, int limit) {
+    public List<PyrisLectureSearchResultDTO> searchLectures(String query, int limit, PyrisAccessContextDTO accessContext) {
         var endpoint = "/api/v1/search/lectures";
         try {
-            var requestDTO = new PyrisLectureSearchRequestDTO(query, limit);
+            var requestDTO = new PyrisLectureSearchRequestDTO(query, limit, accessContext);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, PyrisLectureSearchResultDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
                 return List.of();
@@ -223,11 +224,11 @@ public class PyrisConnectorService {
      * @param jobToken    the Hazelcast job token used for callback authentication and WebSocket routing
      * @param aiSelection the user's LLM selection (LOCAL_AI or CLOUD_AI)
      */
-    public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection) {
+    public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, PyrisAccessContextDTO accessContext) {
         var endpoint = "/api/v1/pipelines/global-search/run";
         try {
             var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null);
-            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, List.of());
+            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, List.of(), accessContext);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
             if (response.getStatusCode().value() != 202) {
                 log.warn("Unexpected status {} from Pyris search/ask async", response.getStatusCode().value());
