@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
@@ -53,6 +54,8 @@ public class DistributedDataAccessService {
     private DistributedTopic<String> pauseBuildAgentTopic;
 
     private DistributedTopic<String> resumeBuildAgentTopic;
+
+    private DistributedTopic<BuildAgentMaintenanceAction> buildAgentMaintenanceActionTopic;
 
     public DistributedDataAccessService(Optional<DistributedDataProvider> distributedDataProvider) {
         this.distributedDataProvider = distributedDataProvider.orElseThrow(
@@ -318,6 +321,20 @@ public class DistributedDataAccessService {
             this.resumeBuildAgentTopic = this.distributedDataProvider.getTopic("resumeBuildAgentTopic");
         }
         return this.resumeBuildAgentTopic;
+    }
+
+    /**
+     * Shared broadcast channel that asks a specific build agent to run a maintenance action (cache cleanup, cache
+     * wipe, Docker image clearing). The payload includes the target agent's short name; every agent receives the
+     * message but only the matching one acts. Lazily initialised on first access.
+     *
+     * @return the distributed topic for build-agent maintenance actions
+     */
+    public DistributedTopic<BuildAgentMaintenanceAction> getBuildAgentMaintenanceActionTopic() {
+        if (this.buildAgentMaintenanceActionTopic == null) {
+            this.buildAgentMaintenanceActionTopic = this.distributedDataProvider.getTopic("buildAgentMaintenanceActionTopic");
+        }
+        return this.buildAgentMaintenanceActionTopic;
     }
 
     /**

@@ -86,6 +86,8 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
     private DistributedTopic<String> resumeBuildAgentTopic;
 
+    private DistributedTopic<de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction> maintenanceTopic;
+
     @Autowired
     private ApplicationContext applicationContext;
 
@@ -109,6 +111,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildAgentInformation = distributedDataAccessService.getDistributedBuildAgentInformation();
         pauseBuildAgentTopic = distributedDataAccessService.getPauseBuildAgentTopic();
         resumeBuildAgentTopic = distributedDataAccessService.getResumeBuildAgentTopic();
+        maintenanceTopic = distributedDataAccessService.getBuildAgentMaintenanceActionTopic();
         canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
         // this triggers the initialization of all required beans in the application context
         // in production the DeferredEagerBeanInitializer would do this automatically
@@ -595,6 +598,103 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         sharedQueueProcessingService.resumeFromMaintenance();
         await().atMost(30, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
+    }
+
+    /**
+     * MAINTENANCE status: a maintenance pause must surface as {@code MAINTENANCE} in BuildAgentInformation, not as
+     * the ambiguous {@code PAUSED}. Distinguishing these in the admin UI lets operators tell "scheduled cleanup
+     * is running" apart from "an admin clicked Pause".
+     */
+    @Test
+    void testPauseForMaintenanceSurfacesMaintenanceStatus() {
+        boolean transitioned = sharedQueueProcessingService.pauseForMaintenance();
+        assertThat(transitioned).isTrue();
+        try {
+            await().atMost(30, TimeUnit.SECONDS).until(() -> {
+                var info = buildAgentInformation.get(buildAgentShortName);
+                return info != null && info.status() == BuildAgentStatus.MAINTENANCE;
+            });
+        }
+        finally {
+            sharedQueueProcessingService.resumeFromMaintenance();
+        }
+    }
+
+    /**
+     * End-to-end via Hazelcast topic: publish a RUN_CACHE_CLEANUP action targeted at this agent and assert the
+     * pruned file is gone after the agent has resumed. Targets the production multi-node code path: a maintenance
+     * action enters via the topic listener, not via a direct method call.
+     */
+    @Test
+    void testMaintenanceTopicTriggersCacheCleanup(@org.junit.jupiter.api.io.TempDir Path tempCache) throws IOException {
+        Path oldFile = tempCache.resolve("topic/old.jar");
+        Files.createDirectories(oldFile.getParent());
+        Files.write(oldFile, new byte[64]);
+        Files.setAttribute(oldFile, "basic:lastAccessTime", FileTime.from(Instant.now().minus(Duration.ofDays(60))));
+
+        ReflectionTestUtils.setField(buildContainerCacheCleanupService, "cleanupEnabled", true);
+        ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", tempCache.toString());
+        ReflectionTestUtils.setField(buildAgentConfiguration, "gradleCacheHostPath", "");
+        try {
+            maintenanceTopic.publish(new de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction(buildAgentShortName,
+                    de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction.Type.RUN_CACHE_CLEANUP));
+
+            // The agent pauses, prunes, and resumes asynchronously; allow up to 30 s.
+            await().atMost(30, TimeUnit.SECONDS).until(() -> !oldFile.toFile().exists());
+
+            // After the work, the agent must be running again.
+            await().atMost(30, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
+        }
+        finally {
+            ReflectionTestUtils.setField(buildContainerCacheCleanupService, "cleanupEnabled", false);
+            ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "");
+        }
+    }
+
+    /**
+     * End-to-end via topic: WIPE_MAVEN_CACHE deletes a freshly-touched file regardless of age, exercising the same
+     * Hazelcast broadcast → listener → cleanup-service path as the admin Reclaim disk UI.
+     */
+    @Test
+    void testMaintenanceTopicTriggersWipeMavenCache(@org.junit.jupiter.api.io.TempDir Path tempCache) throws IOException {
+        Path freshFile = tempCache.resolve("wipe/fresh.jar");
+        Files.createDirectories(freshFile.getParent());
+        Files.write(freshFile, new byte[64]);
+        // Deliberately recent atime — wipe must delete it anyway.
+        Files.setAttribute(freshFile, "basic:lastAccessTime", FileTime.from(Instant.now()));
+
+        ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", tempCache.toString());
+        try {
+            maintenanceTopic.publish(new de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction(buildAgentShortName,
+                    de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction.Type.WIPE_MAVEN_CACHE));
+
+            await().atMost(30, TimeUnit.SECONDS).until(() -> !freshFile.toFile().exists());
+            await().atMost(30, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
+        }
+        finally {
+            ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "");
+        }
+    }
+
+    /**
+     * Topic messages targeted at a different agent must be ignored. We publish with a wrong short name and assert
+     * the agent never pauses.
+     */
+    @Test
+    void testMaintenanceTopicMessageForOtherAgentIsIgnored() {
+        maintenanceTopic.publish(new de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction("some-other-agent-not-us",
+                de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction.Type.RUN_CACHE_CLEANUP));
+
+        // Give the listener thread a couple of seconds to mistakenly process the message before we conclude it
+        // was ignored. The pause grace period in the test base is 2s; a wrongful pause would surface well within
+        // that window.
+        try {
+            Thread.sleep(3_000);
+        }
+        catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+        assertThat(sharedQueueProcessingService.isPaused()).isFalse();
     }
 
     @Test

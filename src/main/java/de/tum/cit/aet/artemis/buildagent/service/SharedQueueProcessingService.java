@@ -138,6 +138,12 @@ public class SharedQueueProcessingService {
     private final DistributedDataAccessService distributedDataAccessService;
 
     /**
+     * Lazily-resolved reference to {@link BuildContainerCacheCleanupService}; the cleanup service itself depends
+     * on us for pause/resume, so a direct constructor injection would form a cycle Spring refuses to satisfy.
+     */
+    private final BuildContainerCacheCleanupService buildContainerCacheCleanupService;
+
+    /**
      * Serializes availability checks with dequeue+registration of a processing job.
      * <p>
      * Prevents races among timer-driven checks and queue event callbacks that could:
@@ -164,11 +170,28 @@ public class SharedQueueProcessingService {
     /** UUID of the resume build agent message listener. Stored to allow removal on reconnection. */
     private UUID resumeListenerId;
 
+    /** UUID of the build-agent maintenance-action message listener (cache cleanup, wipe, Docker image clear). */
+    private UUID maintenanceListenerId;
+
     /** Scheduled future for checking availability and processing next build job. */
     private ScheduledFuture<?> scheduledFuture;
 
     /** Flag to indicate whether the build agent is paused. */
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
+
+    /**
+     * Flag to indicate that the current pause was triggered by a maintenance action (cache cleanup, cache wipe,
+     * Docker image clearing) rather than an administrative pause or a failure-backoff pause. Read by
+     * {@link BuildAgentInformationService} when resolving {@link BuildAgentStatus} so the DTO reflects
+     * {@code MAINTENANCE} instead of plain {@code PAUSED}, which lets operators distinguish "scheduled cleanup is
+     * running" from "an admin clicked Pause".
+     * <p>
+     * Set in {@link #pauseForMaintenance()} before the underlying pause attempt, cleared in
+     * {@link #resumeFromMaintenance()} and in the rollback path on a failed pause. The flag is only meaningful
+     * while {@link #isPaused} is also {@code true}; consumers that read this flag must observe {@code isPaused}
+     * first to avoid TOCTOU.
+     */
+    private final AtomicBoolean inMaintenance = new AtomicBoolean(false);
 
     /** Flag to track whether initialization has completed. Uses AtomicBoolean for thread-safe access. */
     private final AtomicBoolean initialized = new AtomicBoolean(false);
@@ -191,6 +214,14 @@ public class SharedQueueProcessingService {
     /** @return true if the build agent is paused, false otherwise */
     public boolean isPaused() {
         return isPaused.get();
+    }
+
+    /**
+     * @return {@code true} if the current pause is due to a maintenance action. Only meaningful while
+     *         {@link #isPaused()} is also {@code true}; callers should check {@code isPaused()} first.
+     */
+    public boolean isInMaintenance() {
+        return inMaintenance.get();
     }
 
     /**
@@ -222,8 +253,18 @@ public class SharedQueueProcessingService {
      *         pause" and must not invoke {@link #resumeFromMaintenance()} in their cleanup path.
      */
     public boolean pauseForMaintenance() {
+        // Set the maintenance flag BEFORE attempting the pause so the very first information push that observes
+        // isPaused=true also observes inMaintenance=true; otherwise consumers (e.g. the admin UI) would briefly see
+        // a plain PAUSED status that immediately flips to MAINTENANCE.
+        inMaintenance.set(true);
         try {
-            return pauseBuildAgent(false);
+            boolean transitioned = pauseBuildAgent(false);
+            if (!transitioned) {
+                // We did not own the transition (the agent was already paused by someone else). Clear the flag so we
+                // do not mis-label an unrelated administrative pause as MAINTENANCE.
+                inMaintenance.set(false);
+            }
+            return transitioned;
         }
         catch (RuntimeException | Error e) {
             // pauseBuildAgent may have flipped isPaused to true before the failure (e.g. a Hazelcast hiccup during
@@ -237,16 +278,24 @@ public class SharedQueueProcessingService {
                     log.error("Rollback resume after pauseForMaintenance failure also failed; agent may be stuck paused.", rollbackFailure);
                 }
             }
+            inMaintenance.set(false);
             throw e;
         }
     }
 
     /**
      * Resumes the agent after a maintenance cycle. Idempotent — safe to call from a {@code finally} block even if
-     * {@link #pauseForMaintenance()} returned {@code false} or threw before pausing succeeded.
+     * {@link #pauseForMaintenance()} returned {@code false} or threw before pausing succeeded. The maintenance flag
+     * is cleared in a {@code finally} so the {@code MAINTENANCE} status falls back to {@code ACTIVE}/{@code IDLE}
+     * (or, on a thrown resume, to {@code PAUSED} — which is still strictly more accurate than {@code MAINTENANCE}).
      */
     public void resumeFromMaintenance() {
-        resumeBuildAgent();
+        try {
+            resumeBuildAgent();
+        }
+        finally {
+            inMaintenance.set(false);
+        }
     }
 
     /**
@@ -261,7 +310,8 @@ public class SharedQueueProcessingService {
 
     public SharedQueueProcessingService(BuildAgentConfiguration buildAgentConfiguration, BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap,
             TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService, BuildJobContainerService buildJobContainerService,
-            BuildAgentInformationService buildAgentInformationService, DistributedDataAccessService distributedDataAccessService) {
+            BuildAgentInformationService buildAgentInformationService, DistributedDataAccessService distributedDataAccessService,
+            @org.springframework.context.annotation.Lazy BuildContainerCacheCleanupService buildContainerCacheCleanupService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildJobManagementService = buildJobManagementService;
         this.buildLogsMap = buildLogsMap;
@@ -270,6 +320,7 @@ public class SharedQueueProcessingService {
         this.buildAgentDockerService = buildAgentDockerService;
         this.buildJobContainerService = buildJobContainerService;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.buildContainerCacheCleanupService = buildContainerCacheCleanupService;
     }
 
     /**
@@ -382,6 +433,7 @@ public class SharedQueueProcessingService {
 
             var pauseTopic = distributedDataAccessService.getPauseBuildAgentTopic();
             var resumeTopic = distributedDataAccessService.getResumeBuildAgentTopic();
+            var maintenanceTopic = distributedDataAccessService.getBuildAgentMaintenanceActionTopic();
 
             // Remove old listeners if they exist (prevents duplicate listeners on reconnection)
             if (pauseListenerId != null) {
@@ -391,6 +443,10 @@ public class SharedQueueProcessingService {
             if (resumeListenerId != null) {
                 resumeTopic.removeMessageListener(resumeListenerId);
                 resumeListenerId = null;
+            }
+            if (maintenanceListenerId != null) {
+                maintenanceTopic.removeMessageListener(maintenanceListenerId);
+                maintenanceListenerId = null;
             }
 
             pauseListenerId = pauseTopic.addMessageListener(buildAgentName -> {
@@ -402,6 +458,28 @@ public class SharedQueueProcessingService {
             resumeListenerId = resumeTopic.addMessageListener(buildAgentName -> {
                 if (buildAgentShortName.equals(buildAgentName)) {
                     resumeBuildAgent();
+                }
+            });
+
+            // Maintenance actions: single broadcast topic, payload identifies the target agent and the action type.
+            // We ignore any message addressed to a different agent, exactly like the pause/resume listeners.
+            maintenanceListenerId = maintenanceTopic.addMessageListener(action -> {
+                if (!buildAgentShortName.equals(action.agentShortName())) {
+                    return;
+                }
+                try {
+                    switch (action.type()) {
+                        case RUN_CACHE_CLEANUP -> buildContainerCacheCleanupService.runCleanup();
+                        case WIPE_MAVEN_CACHE -> buildContainerCacheCleanupService.wipeMavenCache();
+                        case WIPE_GRADLE_CACHE -> buildContainerCacheCleanupService.wipeGradleCache();
+                        case CLEAR_DOCKER_IMAGES -> buildAgentDockerService.clearAllUnusedDockerImages();
+                    }
+                }
+                catch (RuntimeException e) {
+                    // The action services log their own internal failures; this catch is defence-in-depth so a bug
+                    // in one action does not prevent the Hazelcast listener thread from processing subsequent
+                    // messages addressed to this agent.
+                    log.error("Maintenance action {} for agent {} failed", action.type(), action.agentShortName(), e);
                 }
             });
 

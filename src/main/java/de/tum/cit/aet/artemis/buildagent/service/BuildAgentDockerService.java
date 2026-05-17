@@ -498,6 +498,79 @@ public class BuildAgentDockerService {
     }
 
     /**
+     * Aggregate statistics for the admin Reclaim-disk dialog and the build-agent details disk-usage tile.
+     *
+     * @param count      how many Docker images are currently not bound to a running container
+     * @param totalBytes the sum of their reported sizes
+     */
+    public record UnusedImageStats(int count, long totalBytes) {
+
+        public static final UnusedImageStats EMPTY = new UnusedImageStats(0, 0L);
+    }
+
+    /**
+     * @return aggregate stats for the Docker images that {@link #clearAllUnusedDockerImages()} would delete.
+     *         Cheaper than calling that method: enumerates images once and sums their reported sizes without
+     *         deleting anything. Returns {@link UnusedImageStats#EMPTY} when Docker is unavailable.
+     */
+    public UnusedImageStats getUnusedDockerImageStats() {
+        if (dockerClientNotAvailable("Cannot enumerate unused Docker images.")) {
+            return UnusedImageStats.EMPTY;
+        }
+        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
+        Set<String> imageIdsInUse = dockerClient.listContainersCmd().exec().stream().map(Container::getImageId).collect(Collectors.toSet());
+        List<Image> allImages = dockerClient.listImagesCmd().exec();
+        int count = 0;
+        long totalBytes = 0L;
+        for (Image image : allImages) {
+            if (imageIdsInUse.contains(image.getId())) {
+                continue;
+            }
+            count++;
+            Long size = image.getSize();
+            if (size != null) {
+                totalBytes += size;
+            }
+        }
+        return new UnusedImageStats(count, totalBytes);
+    }
+
+    /**
+     * Removes every Docker image that is currently not bound to a running container, regardless of how recently it
+     * was used. Distinct from {@link #deleteOldDockerImages()} (which only removes images older than
+     * {@code imageExpiryDays}) and from {@link #checkUsableDiskSpaceThenCleanUp()} (which deletes a small batch
+     * once disk space falls below the threshold). This method exists for the admin-triggered "reclaim disk"
+     * action, where the operator has explicitly decided that pulling on the next assignment is acceptable in
+     * exchange for freeing space immediately.
+     *
+     * @return the number of images that were successfully removed. {@code 0} if Docker is unavailable.
+     */
+    public int clearAllUnusedDockerImages() {
+        if (dockerClientNotAvailable("Cannot clear unused Docker images.")) {
+            return 0;
+        }
+        Set<String> unused = getUnusedDockerImages();
+        int removed = 0;
+        for (String imageName : unused) {
+            try (final var removeCommand = buildAgentConfiguration.getDockerClient().removeImageCmd(imageName)) {
+                removeCommand.exec();
+                removed++;
+                log.info("Removed unused Docker image {} during admin-triggered disk reclaim", imageName);
+            }
+            catch (NotFoundException ignored) {
+                // Image vanished between enumeration and removal — fine.
+                log.debug("Docker image {} was already gone during admin-triggered disk reclaim", imageName);
+            }
+            catch (RuntimeException e) {
+                // Image may have become bound to a freshly-started container in the brief window since enumeration.
+                log.warn("Could not remove Docker image {} during admin-triggered disk reclaim: {}", imageName, e.getMessage());
+            }
+        }
+        log.info("Admin-triggered disk reclaim removed {} of {} unused Docker images.", removed, unused.size());
+        return removed;
+    }
+
+    /**
      * Gets a set of Docker image names that are not associated with any running containers.
      *
      * @return a set of image names that are not associated with any running containers.

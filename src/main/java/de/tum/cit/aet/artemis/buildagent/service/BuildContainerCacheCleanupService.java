@@ -15,6 +15,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,15 +149,8 @@ public class BuildContainerCacheCleanupService {
         }
 
         log.info("Pausing build agent for build-container cache cleanup (targets: {})", targets.stream().map(t -> t.root.toString()).toList());
-        boolean ownsPause = sharedQueueProcessingService.pauseForMaintenance();
-        if (!ownsPause) {
-            log.warn("Build agent was already paused when cache cleanup tried to start; skipping this cycle to avoid resuming someone else's pause.");
-            return CleanupOutcome.skipped("already-paused");
-        }
-
-        Instant deadline = Instant.now().plus(MAX_CLEANUP_DURATION);
         List<PruneStats> perCache = new ArrayList<>(targets.size());
-        try {
+        Optional<String> skipReason = pausedAndDo("cache cleanup", deadline -> {
             for (CacheTarget target : targets) {
                 if (Instant.now().isAfter(deadline)) {
                     log.warn("Wall-clock cap of {} reached during cache cleanup before processing {}; skipping remaining caches until the next cycle.", MAX_CLEANUP_DURATION,
@@ -164,12 +159,113 @@ public class BuildContainerCacheCleanupService {
                 }
                 perCache.add(prune(target, deadline));
             }
-        }
-        finally {
-            log.info("Resuming build agent after build-container cache cleanup");
-            sharedQueueProcessingService.resumeFromMaintenance();
+        });
+        if (skipReason.isPresent()) {
+            return CleanupOutcome.skipped(skipReason.get());
         }
         return new CleanupOutcome(perCache, null);
+    }
+
+    /**
+     * Wipes the Maven cache: pauses the agent, deletes every regular file under the configured cache root
+     * regardless of age, sweeps empty directories, then resumes. Returns immediately if no Maven cache is
+     * configured or the cache is mounted read-only.
+     */
+    public WipeOutcome wipeMavenCache() {
+        return wipe(buildAgentConfiguration.mavenCacheHostPath(), "Maven cache wipe");
+    }
+
+    /**
+     * Wipes the Gradle cache: same semantics as {@link #wipeMavenCache()} against the Gradle cache root.
+     */
+    public WipeOutcome wipeGradleCache() {
+        return wipe(buildAgentConfiguration.gradleCacheHostPath(), "Gradle cache wipe");
+    }
+
+    private WipeOutcome wipe(Path root, String description) {
+        if (root == null) {
+            log.debug("{} requested but no cache path is configured; skipping.", description);
+            return WipeOutcome.skipped("no-target");
+        }
+        if (buildAgentConfiguration.isBuildContainerCacheReadOnly()) {
+            log.info("Build-container cache is read-only; {} is the operator's responsibility, skipping.", description);
+            return WipeOutcome.skipped("read-only");
+        }
+        log.info("Pausing build agent for {} (target: {})", description, root);
+        AtomicReference<WipeStats> statsRef = new AtomicReference<>();
+        Optional<String> skipReason = pausedAndDo(description, deadline -> statsRef.set(wipeRoot(root, deadline)));
+        if (skipReason.isPresent()) {
+            return WipeOutcome.skipped(skipReason.get());
+        }
+        return new WipeOutcome(statsRef.get(), null);
+    }
+
+    /**
+     * Pause/work/resume scaffolding shared by {@link #runCleanup()}, {@link #wipeMavenCache()},
+     * {@link #wipeGradleCache()}. The {@code work} consumer receives the wall-clock deadline so each phase inside
+     * can self-cap (the pause + 15 min budget is the contract; the existing per-loop {@code isCleanupAborted}
+     * check inside both the prune and the wipe re-checks this deadline and the agent's paused state).
+     *
+     * @return {@code Optional.empty()} when this call owned the pause and ran the work to completion; the reason
+     *         string otherwise (currently always {@code "already-paused"} — the only short-circuit at this level).
+     */
+    private Optional<String> pausedAndDo(String description, java.util.function.Consumer<Instant> work) {
+        boolean ownsPause = sharedQueueProcessingService.pauseForMaintenance();
+        if (!ownsPause) {
+            log.warn("Build agent was already paused when {} tried to start; skipping to avoid resuming someone else's pause.", description);
+            return Optional.of("already-paused");
+        }
+        Instant deadline = Instant.now().plus(MAX_CLEANUP_DURATION);
+        try {
+            work.accept(deadline);
+            return Optional.empty();
+        }
+        finally {
+            log.info("Resuming build agent after {}", description);
+            sharedQueueProcessingService.resumeFromMaintenance();
+        }
+    }
+
+    /**
+     * Single-walk wipe of a cache root: deletes every regular file regardless of age, then sweeps empty
+     * directories post-order. The caller has already acquired the maintenance pause.
+     */
+    WipeStats wipeRoot(Path root, Instant deadline) {
+        Instant start = Instant.now();
+        if (!Files.isDirectory(root)) {
+            log.warn("Configured cache path {} does not exist or is not a directory; nothing to wipe.", root);
+            return new WipeStats(root, 0, 0, 0, 1, Duration.between(start, Instant.now()));
+        }
+        long initialBytes = 0;
+        int deletedFiles = 0;
+        long deletedBytes = 0;
+        int errors = 0;
+        List<FileEntry> entries;
+        try {
+            entries = walk(root, deadline);
+        }
+        catch (IOException e) {
+            log.warn("Walking cache {} failed; wipe will be skipped.", root, e);
+            return new WipeStats(root, 0, 0, 0, 1, Duration.between(start, Instant.now()));
+        }
+        for (FileEntry entry : entries) {
+            initialBytes += entry.size();
+            if (isCleanupAborted(deadline, "wipe", root)) {
+                break;
+            }
+            if (tryDelete(entry.path())) {
+                deletedFiles++;
+                deletedBytes += entry.size();
+            }
+            else {
+                errors++;
+            }
+        }
+        int emptyDirsRemoved = sweepEmptyDirectories(root, deadline);
+        Duration duration = Duration.between(start, Instant.now());
+        log.info("Cache wipe for {}: deleted={} files / {} bytes (of {} initial bytes); empty dirs removed={}; errors={}; took {}", root, deletedFiles, deletedBytes, initialBytes,
+                emptyDirsRemoved, errors, duration);
+        return new WipeStats(root, deletedFiles, deletedBytes, emptyDirsRemoved, errors, duration);
     }
 
     /**
@@ -441,6 +537,22 @@ public class BuildContainerCacheCleanupService {
 
         static CleanupOutcome skipped(String reason) {
             return new CleanupOutcome(List.of(), reason);
+        }
+
+        public boolean wasSkipped() {
+            return skippedReason != null;
+        }
+    }
+
+    /** Per-wipe statistics. {@code initialBytes} is the size of the cache before any file was deleted. */
+    public record WipeStats(Path root, int deletedFiles, long deletedBytes, int emptyDirsRemoved, int errors, Duration duration) {
+    }
+
+    /** Outcome of one {@link #wipeMavenCache()} / {@link #wipeGradleCache()} invocation. */
+    public record WipeOutcome(WipeStats stats, String skippedReason) {
+
+        static WipeOutcome skipped(String reason) {
+            return new WipeOutcome(null, reason);
         }
 
         public boolean wasSkipped() {

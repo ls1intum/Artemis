@@ -2,6 +2,10 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
+import java.io.IOException;
+import java.nio.file.FileStore;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -9,6 +13,7 @@ import java.util.Objects;
 
 import jakarta.annotation.PreDestroy;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.GitProperties;
@@ -51,6 +56,37 @@ public class BuildAgentInformationService {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
+    /**
+     * Reference to {@link SharedQueueProcessingService} used to read its {@code inMaintenance} flag during status
+     * resolution. Injected lazily because {@code SharedQueueProcessingService} already injects this service —
+     * Spring's circular-dependency detector would otherwise reject the bean graph. The lazy proxy is only invoked
+     * when an information update actually happens (well after both beans exist).
+     */
+    private final SharedQueueProcessingService sharedQueueProcessingService;
+
+    private final BuildAgentDockerService buildAgentDockerService;
+
+    /**
+     * Disk-space and cache-size statistics that flow into {@link BuildAgentDetailsDTO}. The "fast" ones
+     * ({@code diskTotalBytes}, {@code diskUsableBytes}) are refreshed on each 10-second push because the underlying
+     * {@code Files.getFileStore} call is microseconds. The "slow" ones ({@code mavenCacheBytes},
+     * {@code gradleCacheBytes}, {@code dockerUnusedImageBytes}, {@code dockerUnusedImageCount}) require a recursive
+     * filesystem walk or a Docker daemon round-trip and are refreshed on a 5-minute cadence by
+     * {@link #refreshSlowDiskStats()}. Marked {@code volatile} so reads on the push thread see the latest values
+     * written by the scheduler thread.
+     */
+    private volatile long diskTotalBytes;
+
+    private volatile long diskUsableBytes;
+
+    private volatile long mavenCacheBytes;
+
+    private volatile long gradleCacheBytes;
+
+    private volatile long dockerUnusedImageBytes;
+
+    private volatile int dockerUnusedImageCount;
+
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
@@ -58,11 +94,14 @@ public class BuildAgentInformationService {
     private String buildAgentDisplayName;
 
     public BuildAgentInformationService(BuildAgentConfiguration buildAgentConfiguration, BuildAgentSshKeyService buildAgentSSHKeyService,
-            DistributedDataAccessService distributedDataAccessService, GitProperties gitProperties) {
+            DistributedDataAccessService distributedDataAccessService, GitProperties gitProperties, @Lazy SharedQueueProcessingService sharedQueueProcessingService,
+            BuildAgentDockerService buildAgentDockerService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
         this.gitProperties = gitProperties;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.sharedQueueProcessingService = sharedQueueProcessingService;
+        this.buildAgentDockerService = buildAgentDockerService;
     }
 
     /**
@@ -214,8 +253,15 @@ public class BuildAgentInformationService {
         // Use buildAgentShortName as key since that's what we use to store the agent info
         BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(buildAgentShortName);
         if (isPaused) {
-            boolean isAlreadySelfPaused = agent != null && agent.status() == BuildAgentStatus.SELF_PAUSED;
-            status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentStatus.SELF_PAUSED : BuildAgentStatus.PAUSED;
+            // Order matters: a maintenance pause supersedes failure-backoff or admin-pause labels, so operators see
+            // the action that is actually running. SELF_PAUSED still wins over plain PAUSED for failures.
+            if (sharedQueueProcessingService.isInMaintenance()) {
+                status = BuildAgentStatus.MAINTENANCE;
+            }
+            else {
+                boolean isAlreadySelfPaused = agent != null && agent.status() == BuildAgentStatus.SELF_PAUSED;
+                status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentStatus.SELF_PAUSED : BuildAgentStatus.PAUSED;
+            }
         }
         else {
             status = hasJobs ? BuildAgentStatus.ACTIVE : BuildAgentStatus.IDLE;
@@ -243,8 +289,99 @@ public class BuildAgentInformationService {
         var cancelledBuilds = getCancelledBuilds(agent, recentBuildJob);
         var timedOutBuilds = getTimedOutBuilds(agent, recentBuildJob);
 
+        // Refresh the cheap disk numbers inline (a single getFileStore syscall, microseconds). The heavier cache &
+        // Docker-image stats are refreshed on a slower @Scheduled cadence and read from the volatile fields.
+        refreshFastDiskStats();
+
         return new BuildAgentDetailsDTO(averageBuildDuration, successfulBuilds, failedBuilds, cancelledBuilds, timedOutBuilds, totalsBuilds, lastBuildDate, startDate, gitRevision,
-                consecutiveFailures, dockerVersion);
+                consecutiveFailures, dockerVersion, diskTotalBytes, diskUsableBytes, mavenCacheBytes, gradleCacheBytes, dockerUnusedImageBytes, dockerUnusedImageCount);
+    }
+
+    /**
+     * Cheap disk-space probe: {@code Files.getFileStore} returns the {@code FileStore} of the filesystem hosting
+     * the cache directory (or {@code /} when no cache is configured). The total + usable byte counts come from a
+     * single statfs(3)-like syscall — safe to call on every 10s push without holding a thread on slow I/O.
+     */
+    private void refreshFastDiskStats() {
+        Path probe = pickDiskProbeRoot();
+        try {
+            FileStore store = Files.getFileStore(probe);
+            diskTotalBytes = store.getTotalSpace();
+            diskUsableBytes = store.getUsableSpace();
+        }
+        catch (IOException e) {
+            log.debug("Could not probe disk usage on {}: {}", probe, e.getMessage());
+            diskTotalBytes = 0;
+            diskUsableBytes = 0;
+        }
+    }
+
+    /**
+     * Slow stats: cache-directory walks and Docker daemon enumeration. Runs every 5 minutes (with an immediate
+     * first run shortly after startup so the disk panel and Reclaim-disk dialog have non-zero data the first time
+     * an operator opens them). Failures are isolated per stat — if the Docker daemon is offline the cache walks
+     * still complete.
+     */
+    @Scheduled(initialDelayString = "15000", fixedRateString = "300000")
+    public void refreshSlowDiskStats() {
+        Path mavenRoot = buildAgentConfiguration.mavenCacheHostPath();
+        mavenCacheBytes = directorySize(mavenRoot);
+        Path gradleRoot = buildAgentConfiguration.gradleCacheHostPath();
+        gradleCacheBytes = directorySize(gradleRoot);
+        try {
+            BuildAgentDockerService.UnusedImageStats stats = buildAgentDockerService.getUnusedDockerImageStats();
+            dockerUnusedImageBytes = stats.totalBytes();
+            dockerUnusedImageCount = stats.count();
+        }
+        catch (RuntimeException e) {
+            // Docker daemon hiccup — preserve last-known values rather than zero them.
+            log.debug("Could not refresh unused Docker image stats: {}", e.getMessage());
+        }
+    }
+
+    private long directorySize(@Nullable Path root) {
+        if (root == null || !Files.isDirectory(root)) {
+            return 0L;
+        }
+        long[] total = { 0L };
+        try {
+            Files.walkFileTree(root, new java.nio.file.SimpleFileVisitor<>() {
+
+                @Override
+                public java.nio.file.FileVisitResult visitFile(Path file, java.nio.file.attribute.BasicFileAttributes attrs) {
+                    if (attrs.isRegularFile()) {
+                        total[0] += attrs.size();
+                    }
+                    return java.nio.file.FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public java.nio.file.FileVisitResult visitFileFailed(Path file, IOException exc) {
+                    // A file vanishing mid-walk is normal in a live cache; ignore and keep going.
+                    return java.nio.file.FileVisitResult.CONTINUE;
+                }
+            });
+        }
+        catch (IOException e) {
+            log.debug("Could not compute size of {}: {}", root, e.getMessage());
+        }
+        return total[0];
+    }
+
+    /**
+     * @return a path on the filesystem whose free space we should report. Prefers the Maven cache root, falls back
+     *         to the Gradle cache root, then to root {@code /} so we always have something to probe.
+     */
+    private Path pickDiskProbeRoot() {
+        Path maven = buildAgentConfiguration.mavenCacheHostPath();
+        if (maven != null && Files.isDirectory(maven)) {
+            return maven;
+        }
+        Path gradle = buildAgentConfiguration.gradleCacheHostPath();
+        if (gradle != null && Files.isDirectory(gradle)) {
+            return gradle;
+        }
+        return Path.of("/");
     }
 
     private ZonedDateTime getLastBuildDate(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob) {

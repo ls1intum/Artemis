@@ -72,7 +72,7 @@ class SharedQueueProcessingServiceTest {
         lenient().when(taskScheduler.scheduleAtFixedRate(any(Runnable.class), any(java.time.Duration.class))).thenReturn(mock(ScheduledFuture.class));
 
         service = new SharedQueueProcessingService(buildAgentConfiguration, buildJobManagementService, buildLogsMap, taskScheduler, buildAgentDockerService,
-                buildJobContainerService, buildAgentInformationService, distributedDataAccessService);
+                buildJobContainerService, buildAgentInformationService, distributedDataAccessService, mock(BuildContainerCacheCleanupService.class));
     }
 
     @Test

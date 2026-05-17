@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -23,10 +24,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import com.github.dockerjava.api.command.InfoCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.ListContainersCmd;
+import com.github.dockerjava.api.command.ListImagesCmd;
+import com.github.dockerjava.api.command.RemoveImageCmd;
 import com.github.dockerjava.api.command.StopContainerCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Info;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
@@ -190,5 +194,95 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
 
         // Verify that removeContainerCmd() was called
         verify(dockerClient, times(1)).removeContainerCmd(anyString());
+    }
+
+    // --- clearAllUnusedDockerImages + getUnusedDockerImageStats (admin Reclaim disk) ---------------------------
+
+    @Test
+    void testClearAllUnusedDockerImagesRemovesEveryUnusedImage() {
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        doReturn(listContainersCmd).when(dockerClient).listContainersCmd();
+        Container runningContainer = mock(Container.class);
+        doReturn("in-use-image-id").when(runningContainer).getImageId();
+        doReturn(List.of(runningContainer)).when(listContainersCmd).exec();
+
+        ListImagesCmd listImagesCmd = mock(ListImagesCmd.class);
+        doReturn(listImagesCmd).when(dockerClient).listImagesCmd();
+        Image unusedA = mock(Image.class);
+        doReturn("unused-a-id").when(unusedA).getId();
+        doReturn(new String[] { "ls1tum/artemis-maven-template:java17-25" }).when(unusedA).getRepoTags();
+        Image unusedB = mock(Image.class);
+        doReturn("unused-b-id").when(unusedB).getId();
+        doReturn(new String[] { "ls1tum/artemis-gradle-template:java17-25" }).when(unusedB).getRepoTags();
+        Image inUse = mock(Image.class);
+        doReturn("in-use-image-id").when(inUse).getId();
+        doReturn(new String[] { "in-use:latest" }).when(inUse).getRepoTags();
+        doReturn(List.of(unusedA, unusedB, inUse)).when(listImagesCmd).exec();
+
+        RemoveImageCmd removeImageCmd = mock(RemoveImageCmd.class);
+        doReturn(removeImageCmd).when(dockerClient).removeImageCmd(anyString());
+
+        int removed = buildAgentDockerService.clearAllUnusedDockerImages();
+
+        assertThat(removed).isEqualTo(2);
+        verify(dockerClient).removeImageCmd("ls1tum/artemis-maven-template:java17-25");
+        verify(dockerClient).removeImageCmd("ls1tum/artemis-gradle-template:java17-25");
+        verify(dockerClient, never()).removeImageCmd("in-use:latest");
+    }
+
+    @Test
+    void testClearAllUnusedDockerImagesToleratesNotFoundPerImage() {
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        doReturn(listContainersCmd).when(dockerClient).listContainersCmd();
+        doReturn(List.<Container>of()).when(listContainersCmd).exec();
+
+        ListImagesCmd listImagesCmd = mock(ListImagesCmd.class);
+        doReturn(listImagesCmd).when(dockerClient).listImagesCmd();
+        Image one = mock(Image.class);
+        doReturn("one-id").when(one).getId();
+        doReturn(new String[] { "image-a:latest" }).when(one).getRepoTags();
+        Image two = mock(Image.class);
+        doReturn("two-id").when(two).getId();
+        doReturn(new String[] { "image-b:latest" }).when(two).getRepoTags();
+        doReturn(List.of(one, two)).when(listImagesCmd).exec();
+
+        RemoveImageCmd okCmd = mock(RemoveImageCmd.class);
+        RemoveImageCmd notFoundCmd = mock(RemoveImageCmd.class);
+        doThrow(new NotFoundException("gone")).when(notFoundCmd).exec();
+        doReturn(notFoundCmd).when(dockerClient).removeImageCmd("image-a:latest");
+        doReturn(okCmd).when(dockerClient).removeImageCmd("image-b:latest");
+
+        int removed = buildAgentDockerService.clearAllUnusedDockerImages();
+
+        assertThat(removed).isEqualTo(1);
+        verify(dockerClient).removeImageCmd("image-a:latest");
+        verify(dockerClient).removeImageCmd("image-b:latest");
+    }
+
+    @Test
+    void testGetUnusedDockerImageStatsSumsSizesOfImagesNotInUse() {
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        doReturn(listContainersCmd).when(dockerClient).listContainersCmd();
+        Container running = mock(Container.class);
+        doReturn("bound-id").when(running).getImageId();
+        doReturn(List.of(running)).when(listContainersCmd).exec();
+
+        ListImagesCmd listImagesCmd = mock(ListImagesCmd.class);
+        doReturn(listImagesCmd).when(dockerClient).listImagesCmd();
+        Image free1 = mock(Image.class);
+        doReturn("free1-id").when(free1).getId();
+        doReturn(123_456_789L).when(free1).getSize();
+        Image free2 = mock(Image.class);
+        doReturn("free2-id").when(free2).getId();
+        doReturn(1_000L).when(free2).getSize();
+        Image bound = mock(Image.class);
+        doReturn("bound-id").when(bound).getId();
+        doReturn(999_999_999L).when(bound).getSize();
+        doReturn(List.of(free1, free2, bound)).when(listImagesCmd).exec();
+
+        var stats = buildAgentDockerService.getUnusedDockerImageStats();
+
+        assertThat(stats.count()).isEqualTo(2);
+        assertThat(stats.totalBytes()).isEqualTo(123_456_789L + 1_000L);
     }
 }

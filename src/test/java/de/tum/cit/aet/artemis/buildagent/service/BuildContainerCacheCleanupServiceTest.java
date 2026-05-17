@@ -25,6 +25,7 @@ import org.springframework.util.unit.DataSize;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.service.BuildContainerCacheCleanupService.CleanupOutcome;
 import de.tum.cit.aet.artemis.buildagent.service.BuildContainerCacheCleanupService.PruneStats;
+import de.tum.cit.aet.artemis.buildagent.service.BuildContainerCacheCleanupService.WipeOutcome;
 
 /**
  * Unit tests for {@link BuildContainerCacheCleanupService}. The pause/resume hand-off to the queue processing
@@ -588,6 +589,91 @@ class BuildContainerCacheCleanupServiceTest {
         assertThat(outcome.perCache()).hasSize(2);
         var roots = outcome.perCache().stream().map(PruneStats::root).toList();
         assertThat(roots).containsExactlyInAnyOrder(mavenCache, gradleCache);
+    }
+
+    // --- Wipe cache (admin Reclaim disk) tests ------------------------------------------------------------------
+
+    @Test
+    void wipeMavenCacheDeletesEveryFileRegardlessOfAge() throws IOException {
+        // Mix of ages including a brand-new file the cleanup phases would never have touched.
+        Path old = touchFileWithAtime(mavenCache.resolve("a/old.jar"), 100, daysAgo(60));
+        Path mid = touchFileWithAtime(mavenCache.resolve("a/mid.jar"), 200, daysAgo(10));
+        Path fresh = touchFileWithAtime(mavenCache.resolve("b/fresh.jar"), 300, daysAgo(0));
+
+        WipeOutcome outcome = service.wipeMavenCache();
+
+        assertThat(outcome.wasSkipped()).isFalse();
+        assertThat(outcome.stats().deletedFiles()).isEqualTo(3);
+        assertThat(outcome.stats().deletedBytes()).isEqualTo(600);
+        assertThat(old).doesNotExist();
+        assertThat(mid).doesNotExist();
+        assertThat(fresh).doesNotExist();
+        // Root preserved; nested empty dirs collapsed.
+        assertThat(mavenCache).exists();
+        assertThat(mavenCache.resolve("a")).doesNotExist();
+        assertThat(mavenCache.resolve("b")).doesNotExist();
+        verify(sharedQueueProcessingService, times(1)).pauseForMaintenance();
+        verify(sharedQueueProcessingService, times(1)).resumeFromMaintenance();
+    }
+
+    @Test
+    void wipeGradleCacheDeletesEveryFileRegardlessOfAge() throws IOException {
+        Path g = touchFileWithAtime(gradleCache.resolve("dist/recent.jar"), 64, daysAgo(1));
+
+        WipeOutcome outcome = service.wipeGradleCache();
+
+        assertThat(outcome.wasSkipped()).isFalse();
+        assertThat(outcome.stats().deletedFiles()).isEqualTo(1);
+        assertThat(g).doesNotExist();
+    }
+
+    @Test
+    void wipeMavenCacheSkipsWhenNoMavenPathConfigured() {
+        when(buildAgentConfiguration.mavenCacheHostPath()).thenReturn(null);
+
+        WipeOutcome outcome = service.wipeMavenCache();
+
+        assertThat(outcome.wasSkipped()).isTrue();
+        assertThat(outcome.skippedReason()).isEqualTo("no-target");
+        verify(sharedQueueProcessingService, never()).pauseForMaintenance();
+    }
+
+    @Test
+    void wipeSkipsWhenCacheIsReadOnly() throws IOException {
+        when(buildAgentConfiguration.isBuildContainerCacheReadOnly()).thenReturn(true);
+        Path f = touchFileWithAtime(mavenCache.resolve("would-be-deleted.jar"), 64, daysAgo(60));
+
+        WipeOutcome outcome = service.wipeMavenCache();
+
+        assertThat(outcome.wasSkipped()).isTrue();
+        assertThat(outcome.skippedReason()).isEqualTo("read-only");
+        assertThat(f).exists(); // read-only path is operator-owned; we did not touch it
+        verify(sharedQueueProcessingService, never()).pauseForMaintenance();
+    }
+
+    @Test
+    void wipeSkipsWhenAgentAlreadyPaused() throws IOException {
+        when(sharedQueueProcessingService.pauseForMaintenance()).thenReturn(false);
+        touchFileWithAtime(mavenCache.resolve("old.jar"), 64, daysAgo(60));
+
+        WipeOutcome outcome = service.wipeMavenCache();
+
+        assertThat(outcome.wasSkipped()).isTrue();
+        assertThat(outcome.skippedReason()).isEqualTo("already-paused");
+        verify(sharedQueueProcessingService, never()).resumeFromMaintenance();
+    }
+
+    @Test
+    void wipeResumesAgentEvenWhenRootIsMissing() {
+        when(buildAgentConfiguration.mavenCacheHostPath()).thenReturn(mavenCache.resolve("does-not-exist"));
+
+        // No throw; the wipe logs a warn and returns a non-skipped outcome with errors=1.
+        WipeOutcome outcome = service.wipeMavenCache();
+
+        assertThat(outcome.wasSkipped()).isFalse();
+        assertThat(outcome.stats().errors()).isEqualTo(1);
+        verify(sharedQueueProcessingService, times(1)).pauseForMaintenance();
+        verify(sharedQueueProcessingService, times(1)).resumeFromMaintenance();
     }
 
     // --- helpers ------------------------------------------------------------------------------------------------

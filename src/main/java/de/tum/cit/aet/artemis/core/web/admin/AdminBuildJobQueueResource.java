@@ -377,4 +377,67 @@ public class AdminBuildJobQueueResource {
         localCIBuildJobQueueService.clearDistributedData();
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * {@code PUT /admin/agents/{agentName}/run-cache-cleanup} : run the regular age + size cache cleanup on demand.
+     * <p>
+     * This is the same task the daily scheduler runs (defined in
+     * {@code BuildContainerCacheCleanupService.scheduledCleanup()}), invoked synchronously against a single agent.
+     * The agent pauses itself, drains in-flight builds, prunes, and resumes; this endpoint returns immediately
+     * with the broadcast acknowledged. Operators observe progress via the agent's status flipping to
+     * {@code MAINTENANCE} in the live build-agent information.
+     * <p>
+     * <strong>Authorization:</strong> requires admin privileges, enforced by {@code @EnforceAdmin}.
+     *
+     * @param agentName the short name of the build agent
+     * @return 204 No Content once the broadcast is sent
+     */
+    @PutMapping("agents/{agentName}/run-cache-cleanup")
+    public ResponseEntity<Void> runCacheCleanupOnAgent(@PathVariable String agentName) {
+        log.debug("REST request to run cache cleanup on agent {}", agentName);
+        localCIBuildJobQueueService.runCacheCleanupOnAgent(agentName);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * {@code DELETE /admin/agents/{agentName}/cache/maven} : wipe the entire Maven dependency cache on one agent.
+     * <p>
+     * Destructive: every file under the configured Maven cache root is deleted regardless of age. The agent
+     * pauses first; in-flight builds that don't finish within the grace period are cancelled and re-queued for
+     * another live agent. Used when artifacts are suspected corrupt (bit-rot, half-written, or cache-poisoning).
+     * <p>
+     * <strong>Authorization:</strong> requires admin privileges, enforced by {@code @EnforceAdmin}.
+     */
+    @DeleteMapping("agents/{agentName}/cache/maven")
+    public ResponseEntity<Void> wipeMavenCacheOnAgent(@PathVariable String agentName) {
+        log.debug("REST request to wipe Maven cache on agent {}", agentName);
+        localCIBuildJobQueueService.wipeMavenCacheOnAgent(agentName);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * {@code DELETE /admin/agents/{agentName}/cache/gradle} : wipe the entire Gradle dependency cache on one agent.
+     * Same semantics as {@link #wipeMavenCacheOnAgent(String)} against the Gradle cache root.
+     */
+    @DeleteMapping("agents/{agentName}/cache/gradle")
+    public ResponseEntity<Void> wipeGradleCacheOnAgent(@PathVariable String agentName) {
+        log.debug("REST request to wipe Gradle cache on agent {}", agentName);
+        localCIBuildJobQueueService.wipeGradleCacheOnAgent(agentName);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * {@code DELETE /admin/agents/{agentName}/docker-images} : remove every Docker image not bound to a running
+     * container on the target agent, regardless of age.
+     * <p>
+     * Distinct from the existing scheduled cleanup (which only removes images older than {@code imageExpiryDays}).
+     * Used when an agent is running out of disk and the operator wants to reclaim space immediately. The next
+     * build that needs a deleted image will pull it on assignment.
+     */
+    @DeleteMapping("agents/{agentName}/docker-images")
+    public ResponseEntity<Void> clearDockerImagesOnAgent(@PathVariable String agentName) {
+        log.debug("REST request to clear unused Docker images on agent {}", agentName);
+        localCIBuildJobQueueService.clearDockerImagesOnAgent(agentName);
+        return ResponseEntity.noContent().build();
+    }
 }

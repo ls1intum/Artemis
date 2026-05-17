@@ -518,6 +518,42 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         log.info("Current statuses: {}", agents.stream().map(agent -> agent.buildAgent().displayName() + "=" + agent.status()).toList());
     }
 
+    // --- Maintenance action REST endpoints (admin Reclaim disk UI) ----------------------------------------------
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testRunCacheCleanupOnAgentEndpoint() throws Exception {
+        request.put("/api/core/admin/agents/" + URLEncoder.encode(buildAgentShortName, StandardCharsets.UTF_8) + "/run-cache-cleanup", null, HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testWipeMavenCacheOnAgentEndpoint() throws Exception {
+        request.delete("/api/core/admin/agents/" + URLEncoder.encode(buildAgentShortName, StandardCharsets.UTF_8) + "/cache/maven", HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testWipeGradleCacheOnAgentEndpoint() throws Exception {
+        request.delete("/api/core/admin/agents/" + URLEncoder.encode(buildAgentShortName, StandardCharsets.UTF_8) + "/cache/gradle", HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testClearDockerImagesOnAgentEndpoint() throws Exception {
+        request.delete("/api/core/admin/agents/" + URLEncoder.encode(buildAgentShortName, StandardCharsets.UTF_8) + "/docker-images", HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMaintenanceEndpointsRejectNonAdmin() throws Exception {
+        String agent = URLEncoder.encode(buildAgentShortName, StandardCharsets.UTF_8);
+        request.put("/api/core/admin/agents/" + agent + "/run-cache-cleanup", null, HttpStatus.FORBIDDEN);
+        request.delete("/api/core/admin/agents/" + agent + "/cache/maven", HttpStatus.FORBIDDEN);
+        request.delete("/api/core/admin/agents/" + agent + "/cache/gradle", HttpStatus.FORBIDDEN);
+        request.delete("/api/core/admin/agents/" + agent + "/docker-images", HttpStatus.FORBIDDEN);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildJob() {

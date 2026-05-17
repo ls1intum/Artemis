@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
@@ -152,6 +153,34 @@ public class SharedQueueManagementService {
 
     public void resumeAllBuildAgents() {
         distributedDataAccessService.getBuildAgentInformation().forEach(agent -> resumeBuildAgent(agent.buildAgent().name()));
+    }
+
+    /**
+     * Publishes a maintenance action targeted at one specific build agent. All connected agents receive the
+     * broadcast and ignore it unless the {@code agentShortName} matches their own. Returns immediately — the
+     * action runs asynchronously on the target agent and its progress is observable via the periodic
+     * {@code BuildAgentInformation} push (status flips to {@code MAINTENANCE} during the work).
+     *
+     * @param agent the short name of the target build agent
+     */
+    public void runCacheCleanupOnAgent(String agent) {
+        publishMaintenanceAction(agent, BuildAgentMaintenanceAction.Type.RUN_CACHE_CLEANUP);
+    }
+
+    public void wipeMavenCacheOnAgent(String agent) {
+        publishMaintenanceAction(agent, BuildAgentMaintenanceAction.Type.WIPE_MAVEN_CACHE);
+    }
+
+    public void wipeGradleCacheOnAgent(String agent) {
+        publishMaintenanceAction(agent, BuildAgentMaintenanceAction.Type.WIPE_GRADLE_CACHE);
+    }
+
+    public void clearDockerImagesOnAgent(String agent) {
+        publishMaintenanceAction(agent, BuildAgentMaintenanceAction.Type.CLEAR_DOCKER_IMAGES);
+    }
+
+    private void publishMaintenanceAction(String agent, BuildAgentMaintenanceAction.Type type) {
+        distributedDataAccessService.getBuildAgentMaintenanceActionTopic().publish(new BuildAgentMaintenanceAction(agent, type));
     }
 
     /**

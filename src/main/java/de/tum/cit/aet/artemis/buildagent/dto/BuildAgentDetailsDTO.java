@@ -11,6 +11,14 @@ import org.jspecify.annotations.Nullable;
 /**
  * Data transfer object containing detailed information about a build agent's status and performance metrics.
  * This information is stored in the distributed Hazelcast map and displayed in the build agent details UI.
+ * <p>
+ * The disk-statistics fields ({@code diskTotalBytes}, {@code diskUsableBytes}, {@code mavenCacheBytes},
+ * {@code gradleCacheBytes}, {@code dockerUnusedImageBytes}, {@code dockerUnusedImageCount}) are populated by
+ * {@code BuildAgentInformationService}. The two filesystem-level numbers come from a cheap
+ * {@code Files.getFileStore} call on every 10-second push; the four heavier numbers (cache walks + Docker daemon
+ * enumeration) refresh on a slower 5-minute cadence so a multi-GB cache cannot stall the periodic push. All disk
+ * fields are {@code 0} until the slow-stats scheduler has run once, and when Docker is unavailable / no cache is
+ * configured.
  *
  * @param averageBuildDuration     the average duration of builds in seconds
  * @param successfulBuilds         the total number of successful builds processed by this agent
@@ -23,11 +31,22 @@ import org.jspecify.annotations.Nullable;
  * @param gitRevision              the Git commit hash of the build agent's code version, or null if unavailable
  * @param consecutiveBuildFailures the number of consecutive build failures (used for auto-pause functionality)
  * @param dockerVersion            the version of Docker running on this build agent, or null if unavailable
+ * @param diskTotalBytes           total bytes on the filesystem hosting the cache (or {@code /} if no cache is
+ *                                     configured). {@code 0} until first measurement.
+ * @param diskUsableBytes          usable (free-for-non-root) bytes on the same filesystem. {@code 0} until first
+ *                                     measurement.
+ * @param mavenCacheBytes          on-disk size of the configured Maven cache; {@code 0} when no Maven cache is
+ *                                     configured.
+ * @param gradleCacheBytes         on-disk size of the configured Gradle cache; {@code 0} when no Gradle cache is
+ *                                     configured.
+ * @param dockerUnusedImageBytes   total reported size of Docker images that are not currently bound to a running
+ *                                     container; {@code 0} when Docker is unavailable.
+ * @param dockerUnusedImageCount   count of those unused Docker images
  */
 public record BuildAgentDetailsDTO(long averageBuildDuration, long successfulBuilds, long failedBuilds, long cancelledBuilds, long timedOutBuild, long totalBuilds,
-        @Nullable ZonedDateTime lastBuildDate, @NotNull ZonedDateTime startDate, @Nullable String gitRevision, int consecutiveBuildFailures, @Nullable String dockerVersion)
-        implements Serializable {
+        @Nullable ZonedDateTime lastBuildDate, @NotNull ZonedDateTime startDate, @Nullable String gitRevision, int consecutiveBuildFailures, @Nullable String dockerVersion,
+        long diskTotalBytes, long diskUsableBytes, long mavenCacheBytes, long gradleCacheBytes, long dockerUnusedImageBytes, int dockerUnusedImageCount) implements Serializable {
 
     @Serial
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 3L;
 }
