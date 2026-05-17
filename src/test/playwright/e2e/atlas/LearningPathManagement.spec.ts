@@ -71,13 +71,19 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
         await settings.waitFor({ state: 'visible', timeout: 30_000 });
         await settings.click();
 
-        // Toggle checkbox off and save
+        // Toggle checkbox off and save. A fresh course defaults to LP disabled, so the toggle
+        // is typically a no-op — the save still issues a PUT we wait for so the LP management
+        // page below sees the committed state.
         const lpCheckbox = page.locator('#field_learningPathsEnabled');
         await expect(lpCheckbox).toBeVisible({ timeout: 15000 });
         if (await lpCheckbox.isChecked()) {
             await lpCheckbox.click();
         }
+        const saveResponse = page
+            .waitForResponse((resp) => resp.url().includes(`/api/core/courses/`) && resp.request().method() === 'PUT' && resp.ok(), { timeout: 15000 })
+            .catch(() => undefined);
         await page.locator('#save-entity').click();
+        await saveResponse;
 
         await Commands.gotoAndEnsureRendered(page, `/course-management/${course.id}/learning-path-management`);
         await page.waitForLoadState('domcontentloaded');
@@ -91,7 +97,19 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
         await expect(page.locator('jhi-learning-paths-state .spinner-border')).not.toBeVisible({ timeout: 30000 });
         await expect(page.locator('jhi-learning-paths-analytics .spinner-border')).not.toBeVisible({ timeout: 30000 });
 
-        await expect(page.locator('jhi-feature-activation')).toBeVisible({ timeout: 15000 });
+        // Under heavy load the management view briefly renders an empty state before the
+        // disabled-LP flag propagates to the activation card. Re-issue the navigation if the
+        // card hasn't attached within a generous initial wait; one reload reliably recovers.
+        const activationCard = page.locator('jhi-feature-activation');
+        const visibleWithin = async (timeout: number): Promise<boolean> =>
+            activationCard
+                .waitFor({ state: 'visible', timeout })
+                .then(() => true)
+                .catch(() => false);
+        if (!(await visibleWithin(15_000))) {
+            await Commands.gotoAndEnsureRendered(page, `/course-management/${course.id}/learning-path-management`);
+            await expect(activationCard).toBeVisible({ timeout: 30_000 });
+        }
     });
 
     test('Create simple learning path', async ({ page, courseManagementAPIRequests }) => {

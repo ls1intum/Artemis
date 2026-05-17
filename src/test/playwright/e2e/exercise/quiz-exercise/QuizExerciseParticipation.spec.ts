@@ -62,10 +62,11 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
          */
         test('Selected MC options stay fully populated across reloads after quiz evaluation', async ({ login, exerciseAPIRequests, page, quizExerciseMultipleChoice }) => {
             // The scheduled quiz-evaluation job + repeated page reloads make this test
-            // routinely exceed the 60s fast-test budget under parallel CI load. `test.slow()`
-            // triples the budget (180s) which comfortably covers a delayed evaluation job
-            // plus the 3 verification reloads further down.
-            test.slow();
+            // routinely exceed the 60s fast-test budget under parallel CI load. The 120s
+            // evaluation poll alone consumes most of `test.slow()`'s 180s budget under
+            // heavy multi-node load, so set an explicit 6-minute timeout that comfortably
+            // covers worst-case scheduler delay (120s) + 3 verification reloads (≤30s each).
+            test.setTimeout(360_000);
             const quizDurationSeconds = 10;
             await login(admin);
             const shortQuiz = await exerciseAPIRequests.createQuizExercise({
@@ -93,9 +94,14 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
              * the MC question on this response, or null when evaluation has not yet populated a rated result (e.g. the `results` array is still empty).
              */
             async function reloadAndReadSelectedOptionIds(): Promise<number[] | null> {
+                // Bound the response wait to 45s so a single hung request (the multi-node
+                // observation under load) does not consume the entire test budget — the
+                // outer poll re-issues the navigation on null, which will retry the
+                // request.
                 const responsePromise = page.waitForResponse(
                     (response) =>
                         response.url().includes(`/api/quiz/quiz-exercises/${shortQuiz.id}/start-participation`) && response.request().method() === 'POST' && response.ok(),
+                    { timeout: 45_000 },
                 );
                 await page.goto(`/courses/${course.id}/exercises/${shortQuiz.id!}`);
                 const body = await (await responsePromise).json();

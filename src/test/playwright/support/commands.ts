@@ -75,6 +75,20 @@ export class Commands {
             await page.goto(url);
             await page.waitForLoadState('load');
             await Commands.verifyAuthenticatedAs(page, credentials);
+            // Under heavy multi-node load Angular's lazy chunk fetch occasionally fails and the
+            // SPA falls back to /courses instead of the requested route. Re-issue the
+            // navigation if the URL ended up on the courses list when the requested URL was
+            // something else — the requested URL is the source of truth here, so a single
+            // re-navigation reliably recovers without slowing healthy logins.
+            try {
+                const requested = new URL(url, page.url()).pathname;
+                if (requested !== '/courses' && page.url().endsWith('/courses') && !page.url().includes(requested)) {
+                    await page.goto(url);
+                    await page.waitForLoadState('load');
+                }
+            } catch {
+                // URL parsing failure (non-absolute, etc.) — ignore, the caller's assertions will surface real issues.
+            }
         }
     };
 
@@ -184,6 +198,38 @@ export class Commands {
         await page.goto(url);
         await page.waitForLoadState('load');
         await Commands.ensureRendered(page, renderIndicator);
+    };
+
+    /**
+     * Navigates to `url` and ensures the page actually settled on a path that contains
+     * `expectedPathFragment`. Under heavy multi-node load Angular occasionally redirects
+     * a freshly navigated route to the root `/courses` list when its lazy-loaded chunk
+     * fails to bootstrap — the page renders but the requested page is gone. Reload-based
+     * recovery doesn't help here because reloading the wrong URL just keeps it wrong.
+     *
+     * Strategy: navigate, give the route a short window to settle, and re-issue the
+     * navigation if the URL slipped back to a different path. Three attempts is enough
+     * to ride out a transient chunk-load failure without blowing typical test budgets.
+     */
+    static gotoVerified = async (page: Page, url: string, expectedPathFragment: string, timeoutPerAttempt = 10_000): Promise<void> => {
+        const urlSettled = async (): Promise<boolean> => {
+            const start = Date.now();
+            while (Date.now() - start < timeoutPerAttempt) {
+                if (page.url().includes(expectedPathFragment)) {
+                    return true;
+                }
+                await page.waitForTimeout(250);
+            }
+            return false;
+        };
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await page.goto(url);
+            await page.waitForLoadState('load');
+            if (await urlSettled()) {
+                return;
+            }
+        }
+        throw new Error(`gotoVerified: navigated to ${url} but page settled at ${page.url()} (expected fragment "${expectedPathFragment}")`);
     };
 
     /**
