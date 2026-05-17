@@ -71,6 +71,27 @@ class BuildAgentCacheDirectoryInitializerTest {
     }
 
     @Test
+    void buildSetfaclCommand_appendsPathAsLastArgumentAndPreservesAllAclSpecs() {
+        // Regression: an earlier off-by-one sized the argv as args.length + 1 and OVERWROTE the final argument
+        // (the trailing ACL spec) with the path. The command shipped to setfacl was missing its last "-m u:...:rwx"
+        // and every run on staging produced "Invalid argument near character 1". Pin the full argv shape here.
+        Path cacheDir = Path.of("/var/cache/artemis-buildagent/m2");
+
+        String[] cmd = BuildAgentCacheDirectoryInitializer.buildSetfaclCommand(cacheDir, "-R", "-m", "u:artemis:rwx", "-d", "-m", "u:artemis:rwx");
+
+        assertThat(cmd).containsExactly("setfacl", "-R", "-m", "u:artemis:rwx", "-d", "-m", "u:artemis:rwx", "/var/cache/artemis-buildagent/m2");
+    }
+
+    @Test
+    void buildSetfaclCommand_acceptsAnEmptyArgsArrayWithoutOverwritingTheBinaryName() {
+        Path cacheDir = Path.of("/tmp/cache");
+
+        String[] cmd = BuildAgentCacheDirectoryInitializer.buildSetfaclCommand(cacheDir);
+
+        assertThat(cmd).containsExactly("setfacl", "/tmp/cache");
+    }
+
+    @Test
     void handlesBothMavenAndGradle() throws IOException {
         Path mavenPath = scratch.resolve("m2");
         Path gradlePath = scratch.resolve("gradle");

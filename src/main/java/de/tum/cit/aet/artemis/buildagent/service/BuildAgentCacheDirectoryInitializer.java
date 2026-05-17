@@ -174,10 +174,7 @@ public class BuildAgentCacheDirectoryInitializer {
      * {@code acl} package and restart the agent, or run the printed command once by hand.
      */
     private boolean runSetfacl(String label, Path cacheRoot, String... args) {
-        String[] full = new String[args.length + 1];
-        full[0] = "setfacl";
-        System.arraycopy(args, 0, full, 1, args.length);
-        full[full.length - 1] = cacheRoot.toString();
+        String[] full = buildSetfaclCommand(cacheRoot, args);
         ProcessBuilder pb = new ProcessBuilder(full).redirectErrorStream(true);
         Process process;
         try {
@@ -229,5 +226,20 @@ public class BuildAgentCacheDirectoryInitializer {
     private String currentUser() {
         String user = System.getProperty("user.name");
         return (user != null && !user.isBlank()) ? user : null;
+    }
+
+    /**
+     * Build the {@code setfacl} argv as: {@code ["setfacl", ...args, cacheRoot]}. Extracted so a unit test can
+     * assert the exact command without having {@code setfacl} on PATH. The path must be the LAST argument because
+     * setfacl interprets the trailing positional as the file/directory to operate on; all flags and ACL specs
+     * come before it. An earlier off-by-one bug here truncated the final ACL spec and produced
+     * "Invalid argument near character 1" on every staging deployment until this method was extracted and tested.
+     */
+    static String[] buildSetfaclCommand(Path cacheRoot, String... args) {
+        String[] full = new String[args.length + 2];
+        full[0] = "setfacl";
+        System.arraycopy(args, 0, full, 1, args.length);
+        full[full.length - 1] = cacheRoot.toString();
+        return full;
     }
 }
