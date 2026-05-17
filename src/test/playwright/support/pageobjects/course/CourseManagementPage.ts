@@ -216,7 +216,16 @@ export class CourseManagementPage {
      * @param credentials - The user credentials to be confirmed into the group.
      */
     private async confirmUserIntoGroup(credentials: UserCredentials) {
-        await this.page.locator('#typeahead-basic').fill(credentials.username);
+        const typeahead = this.page.locator('#typeahead-basic');
+        await typeahead.waitFor({ state: 'visible', timeout: 30_000 });
+        // Wait for the NgbTypeahead directive to finish its first change-detection cycle. The
+        // directive's host-property binding `[attr.aria-expanded]="isPopupOpen()"` is the
+        // first DOM-observable proof that the directive instance exists AND has flushed CD —
+        // ie. its `_valueChanges$` subscription on the input element is live. Without this
+        // wait the very first keystroke on a cold dialog mount under heavy multi-node load
+        // silently bypasses the typeahead's not-yet-attached listener.
+        await this.page.locator('#typeahead-basic[aria-expanded]').waitFor({ state: 'attached', timeout: 30_000 });
+        await typeahead.fill(credentials.username);
         await this.page.locator('.dropdown-item', { hasText: `(${credentials.username})` }).click();
     }
 

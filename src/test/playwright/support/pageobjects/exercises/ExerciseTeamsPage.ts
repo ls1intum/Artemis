@@ -41,10 +41,20 @@ export class ExerciseTeamsPage {
 
     /**
      * Enters the team short name.
+     *
+     * The team-update-dialog runs an asynchronous short-name uniqueness check on every
+     * change with a 500ms debounce: `shortName$.pipe(debounceTime(500), switchMap(... existsByShortName ...))`.
+     * If we move on to interact with the tutor typeahead before that HTTP finishes, the
+     * resulting change-detection cycle on the response sometimes interferes with the
+     * ngbTypeahead directive's first input event. Wait through the debounce window so
+     * the validation request fires + settles before subsequent UI interactions.
+     *
      * @param teamShortName - the team short name.
      */
     async enterTeamShortName(teamShortName: string) {
         await this.page.locator('#teamShortName').fill(teamShortName);
+        // Debounce is 500 ms; allow another 400 ms for the existsByShortName response.
+        await this.page.waitForTimeout(900);
     }
 
     /**
