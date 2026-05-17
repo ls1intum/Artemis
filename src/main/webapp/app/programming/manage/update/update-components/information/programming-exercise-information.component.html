@@ -33,6 +33,7 @@
                         name="shortName"
                         id="field_shortName"
                         minlength="3"
+                        [maxlength]="PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH"
                         [pattern]="programmingExerciseCreationConfig.shortNamePattern"
                         [(ngModel)]="programmingExercise().shortName"
                         [readOnly]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise().id"

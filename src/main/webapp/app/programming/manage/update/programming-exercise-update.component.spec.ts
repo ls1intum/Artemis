@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { WindFile } from 'app/programming/shared/entities/wind.file';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
@@ -58,6 +57,8 @@ jest.mock('y-monaco', () => ({
         destroy: jest.fn(),
     })),
 }));
+
+const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -370,16 +371,41 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             response$.next(new HttpResponse({ body: savedEntity }));
 
-            expect(router.navigate).toHaveBeenCalledWith([
-                'course-management',
-                courseId,
-                'programming-exercises',
-                savedEntity.id,
-                'code-editor',
-                RepositoryType.TEMPLATE,
-                savedEntity.templateParticipation!.id,
-            ]);
+            expect(router.navigate).toHaveBeenCalledWith(
+                ['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, savedEntity.templateParticipation!.id],
+                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
+            );
             expect(comp.isGeneratingWithAi()).toBeFalse();
+        });
+
+        it('should navigate to the exam template editor with auto-start state after AI exercise creation in exam mode', () => {
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.releaseDate = dayjs();
+            const exerciseGroup = new ExerciseGroup();
+            exerciseGroup.id = 3;
+            exerciseGroup.exam = { id: 9, course } as any;
+            entity.exerciseGroup = exerciseGroup;
+
+            const savedEntity = new ProgrammingExercise(undefined, exerciseGroup);
+            savedEntity.id = 7;
+            savedEntity.templateParticipation = { id: 11 } as any;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+
+            const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+
+            comp.saveExerciseWithAi();
+
+            response$.next(new HttpResponse({ body: savedEntity }));
+
+            expect(router.navigate).toHaveBeenCalledWith(
+                ['course-management', courseId, 'exams', 9, 'exercise-groups', 3, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, 11],
+                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
+            );
         });
 
         it('should fall back to regular save when hyperion is disabled', () => {
@@ -664,14 +690,12 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             // WHEN
             fixture.detectChanges();
             comp.programmingExercise.buildConfig!.buildPlanConfiguration = 'some custom build definition';
-            comp.programmingExercise.buildConfig!.windfile = new WindFile();
             tick();
             comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
             comp.onProjectTypeChange(ProjectType.FACT);
 
             // THEN
             expect(comp.programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
-            expect(comp.programmingExercise.buildConfig?.windfile).toBeUndefined();
         }));
     });
 

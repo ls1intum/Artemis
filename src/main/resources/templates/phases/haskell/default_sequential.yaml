@@ -1,0 +1,14 @@
+- name: run_structural_tests
+  script: |-
+    # the build process is specified in `run.sh` in the test repository
+    # -s enables the safe testing mode
+    chmod +x run.sh
+    ./run.sh -s
+- name: run_behavior_tests
+  script: |-
+    # the build process is specified in `run.sh` in the test repository
+    # -s enables the safe testing mode
+    chmod +x run.sh
+    ./run.sh -s
+  resultPaths:
+    - 'test-reports/results.xml'

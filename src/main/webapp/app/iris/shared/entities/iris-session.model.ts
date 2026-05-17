@@ -10,8 +10,7 @@ export class IrisSession implements BaseEntity {
     latestSuggestions?: string;
     title?: string;
     creationDate: Date;
-    mode: ChatServiceMode;
+    mode?: ChatServiceMode;
     entityId: number;
-    type?: string;
     citationInfo?: IrisCitationMetaDTO[];
 }

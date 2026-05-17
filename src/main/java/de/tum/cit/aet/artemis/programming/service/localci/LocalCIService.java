@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -14,15 +15,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 
 /**
@@ -37,18 +36,15 @@ public class LocalCIService implements ContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    private final BuildScriptProviderService buildScriptProviderService;
-
-    private final AeolusTemplateService aeolusTemplateService;
+    private final BuildPhasesTemplateService buildPhasesTemplateService;
 
     private final DistributedDataAccessService distributedDataAccessService;
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
-    public LocalCIService(BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService,
-            DistributedDataAccessService distributedDataAccessService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
-        this.buildScriptProviderService = buildScriptProviderService;
-        this.aeolusTemplateService = aeolusTemplateService;
+    public LocalCIService(BuildPhasesTemplateService buildPhasesTemplateService, DistributedDataAccessService distributedDataAccessService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+        this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.distributedDataAccessService = distributedDataAccessService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
@@ -61,22 +57,21 @@ public class LocalCIService implements ContinuousIntegrationService {
     }
 
     /**
-     * Fetches the default build plan configuration for the given exercise and the windfile for its metadata (docker image etc.).
+     * Fetches the default build plan configuration for the given localci exercise
      *
      * @param exercise for which the build plans should be recreated
      */
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException {
-        // TODO: implement this differently for LocalCI in the future
         if (exercise == null) {
             return;
         }
         log.debug("Recreating build plans for exercise {}", exercise.getTitle());
-        String script = buildScriptProviderService.getScriptFor(exercise);
-        Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
+        List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise);
+        String image = buildPhasesTemplateService.getDefaultDockerImageFor(exercise);
         ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
-        buildConfig.setBuildScript(script);
-        buildConfig.setBuildPlanConfiguration(JsonObjectMapper.get().writeValueAsString(windfile));
+        buildConfig.setBuildScript(null);
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(phases, image).toBuildPlanConfiguration());
         // recreating the build plans for the exercise means we need to store the updated build config in the database
         programmingExerciseBuildConfigRepository.save(buildConfig);
     }
