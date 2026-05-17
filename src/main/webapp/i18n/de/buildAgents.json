@@ -19,6 +19,7 @@
             "idle": "Inaktiv",
             "paused": "Angehalten",
             "selfPaused": "Selbst Angehalten",
+            "maintenance": "Wartung",
             "onlineAgents": "online Agent(en)",
             "of": "von",
             "buildJobsRunning": "Build Jobs laufen",
@@ -33,7 +34,15 @@
                 "buildAgentsPaused": "Anfrage zum Anhalten aller Build-Agenten erfolgreich gesendet. Die Agenten akzeptieren keine neuen Build-Jobs und werden die aktuellen Build-Jobs entweder ordnungsgemäß beenden oder nach einer konfigurierbaren Anzahl von Sekunden abbrechen.",
                 "buildAgentsResumed": "Anfrage zum Fortsetzen aller Build-Agenten erfolgreich gesendet. Die Agenten werden wieder neue Build-Jobs annehmen.",
                 "distributedDataCleared": "Verteilte Daten erfolgreich gelöscht.",
-                "distributedDataClearFailed": "Löschen der verteilten Daten fehlgeschlagen."
+                "distributedDataClearFailed": "Löschen der verteilten Daten fehlgeschlagen.",
+                "cleanupTriggered": "Anfrage zur Cache-Bereinigung erfolgreich gesendet. Der Agent wird angehalten, der Cache bereinigt und der Agent wieder fortgesetzt.",
+                "cleanupFailed": "Auslösen der Cache-Bereinigung fehlgeschlagen.",
+                "mavenWipeTriggered": "Anfrage zum Löschen des Maven-Caches erfolgreich gesendet. Der Agent wird angehalten, der Cache gelöscht und der Agent wieder fortgesetzt.",
+                "mavenWipeFailed": "Auslösen des Maven-Cache-Löschens fehlgeschlagen.",
+                "gradleWipeTriggered": "Anfrage zum Löschen des Gradle-Caches erfolgreich gesendet. Der Agent wird angehalten, der Cache gelöscht und der Agent wieder fortgesetzt.",
+                "gradleWipeFailed": "Auslösen des Gradle-Cache-Löschens fehlgeschlagen.",
+                "dockerClearTriggered": "Anfrage zum Entfernen ungenutzter Docker-Images erfolgreich gesendet. Der Agent wird angehalten, Images entfernt und der Agent wieder fortgesetzt.",
+                "dockerClearFailed": "Auslösen des Docker-Image-Entfernens fehlgeschlagen."
             },
             "notFound": "Build Agent '{{ agentName }}' ist derzeit nicht verfügbar.",
             "notFoundHint": "Der Agent ist möglicherweise offline oder wurde ersetzt. Kürzliche Build Jobs dieses Agenten werden unten angezeigt.",
@@ -48,6 +57,40 @@
                 "descriptionSecond": "Diese Aktion ist irreversibel und führt zu Datenverlust. Das System benötigt einige Minuten, um wieder in den Normalbetrieb zurückzukehren.",
                 "descriptionThird": "Wenn du sicher bist, dass du fortfahren möchtest, gib bitte 'CLEAR DATA' in das untenstehende Eingabefeld ein und klicke auf die Schaltfläche 'Daten löschen'.",
                 "clearData": "Daten löschen"
+            },
+            "maintenanceAction": {
+                "title": "Wartung",
+                "subtitle": "Cache- oder Docker-Wartung auf diesem Agenten auslösen. Der Agent wird angehalten, führt die Aktion aus und wird wieder fortgesetzt.",
+                "runCleanup": "Cache-Bereinigung ausführen",
+                "reclaimDisk": "Speicherplatz freigeben…"
+            },
+            "reclaim": {
+                "explanationIntro": "Diese Aktion läuft auf Agent '{{ agentName }}' und durchläuft vier Schritte:",
+                "stepPause": "Diesen Build-Agenten anhalten, damit er keine neuen Jobs annimmt.",
+                "stepDrain": "Bis zu {{ grace }} s auf laufende Builds warten — alle, die in dieser Zeit nicht fertig werden, werden abgebrochen und für einen anderen aktiven Agenten neu eingereiht.",
+                "stepDelete": "Jedes unten ausgewählte Element löschen.",
+                "stepResume": "Den Agenten wieder fortsetzen.",
+                "warning": "Gelöschte Dateien können nicht wiederhergestellt werden. Maven- und Gradle-Artefakte werden bei den nächsten Builds, die sie benötigen, erneut von Maven Central heruntergeladen; Docker-Images werden erneut gezogen, wenn die nächste Aufgabe sie benötigt.",
+                "optionMavenLabel": "Maven-Abhängigkeits-Cache",
+                "optionMavenHelp": "Löscht jede Datei unter /root/.m2 im Host-Cache-Mount dieses Agenten.",
+                "optionGradleLabel": "Gradle-Abhängigkeits-Cache",
+                "optionGradleHelp": "Löscht jede Datei unter /root/.gradle im Host-Cache-Mount dieses Agenten.",
+                "optionDockerLabel": "Ungenutzte Docker-Images",
+                "optionDockerHelp": "Entfernt Docker-Images, die derzeit keinem laufenden Container zugeordnet sind.",
+                "images": "Images",
+                "typeConfirmPrompt": "Gib {{ word }} ein, um die Bestätigen-Schaltfläche zu aktivieren:",
+                "confirmButton": "Speicherplatz freigeben"
+            },
+            "disk": {
+                "tileTitle": "Festplattennutzung",
+                "total": "Gesamt",
+                "usable": "Frei",
+                "used": "Belegt",
+                "cacheMaven": "Maven-Cache",
+                "cacheGradle": "Gradle-Cache",
+                "dockerImages": "Docker-Images (ungenutzt)",
+                "lastUpdated": "Zuletzt aktualisiert",
+                "notYetReported": "Festplattennutzung von diesem Agenten noch nicht gemeldet."
             }
         }
     }

@@ -1,0 +1,102 @@
+<div class="reclaim-disk-dialog">
+    <p
+        class="text-muted"
+        jhiTranslate="artemisApp.buildAgents.reclaim.explanationIntro"
+        [translateValues]="{ agentName: data.agentName, grace: data.pauseGracePeriodSeconds ?? 60 }"
+    ></p>
+
+    <ol class="explanation-steps">
+        <li jhiTranslate="artemisApp.buildAgents.reclaim.stepPause"></li>
+        <li jhiTranslate="artemisApp.buildAgents.reclaim.stepDrain" [translateValues]="{ grace: data.pauseGracePeriodSeconds ?? 60 }"></li>
+        <li jhiTranslate="artemisApp.buildAgents.reclaim.stepDelete"></li>
+        <li jhiTranslate="artemisApp.buildAgents.reclaim.stepResume"></li>
+    </ol>
+
+    <div class="alert alert-warning" jhiTranslate="artemisApp.buildAgents.reclaim.warning"></div>
+
+    <!-- Disk summary tile (mirrors the page-level tile so the operator has it right next to the checkboxes). -->
+    <div class="disk-summary mb-3">
+        <strong jhiTranslate="artemisApp.buildAgents.disk.tileTitle"></strong>
+        <div class="text-muted">
+            <span jhiTranslate="artemisApp.buildAgents.disk.usable"></span>: <strong>{{ data.diskUsableBytes | bytes }}</strong>
+            &nbsp;/&nbsp;
+            <span jhiTranslate="artemisApp.buildAgents.disk.total"></span>: <strong>{{ data.diskTotalBytes | bytes }}</strong>
+        </div>
+    </div>
+
+    <!-- Three independent checkboxes; each shows what would be freed. -->
+    <div class="options">
+        <div class="form-check option-row">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                id="reclaim-maven"
+                [checked]="wipeMaven()"
+                (change)="wipeMaven.set($any($event.target).checked)"
+                data-testid="reclaim-maven-checkbox"
+            />
+            <label class="form-check-label" for="reclaim-maven">
+                <strong jhiTranslate="artemisApp.buildAgents.reclaim.optionMavenLabel"></strong>
+                <span class="text-muted ms-2">— {{ data.mavenCacheBytes | bytes }}</span>
+                <div class="text-muted small" jhiTranslate="artemisApp.buildAgents.reclaim.optionMavenHelp"></div>
+            </label>
+        </div>
+
+        <div class="form-check option-row">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                id="reclaim-gradle"
+                [checked]="wipeGradle()"
+                (change)="wipeGradle.set($any($event.target).checked)"
+                data-testid="reclaim-gradle-checkbox"
+            />
+            <label class="form-check-label" for="reclaim-gradle">
+                <strong jhiTranslate="artemisApp.buildAgents.reclaim.optionGradleLabel"></strong>
+                <span class="text-muted ms-2">— {{ data.gradleCacheBytes | bytes }}</span>
+                <div class="text-muted small" jhiTranslate="artemisApp.buildAgents.reclaim.optionGradleHelp"></div>
+            </label>
+        </div>
+
+        <div class="form-check option-row">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                id="reclaim-docker"
+                [checked]="clearDocker()"
+                (change)="clearDocker.set($any($event.target).checked)"
+                data-testid="reclaim-docker-checkbox"
+            />
+            <label class="form-check-label" for="reclaim-docker">
+                <strong jhiTranslate="artemisApp.buildAgents.reclaim.optionDockerLabel"></strong>
+                <span class="text-muted ms-2">
+                    — {{ data.dockerUnusedImageBytes | bytes }} ({{ data.dockerUnusedImageCount ?? 0 }} <span jhiTranslate="artemisApp.buildAgents.reclaim.images"></span>)
+                </span>
+                <div class="text-muted small" jhiTranslate="artemisApp.buildAgents.reclaim.optionDockerHelp"></div>
+            </label>
+        </div>
+    </div>
+
+    <!-- Type-CONFIRM safety affordance. -->
+    <div class="mt-3">
+        <label for="reclaim-confirm" class="form-label" jhiTranslate="artemisApp.buildAgents.reclaim.typeConfirmPrompt" [translateValues]="{ word: confirmWord }"></label>
+        <input
+            type="text"
+            class="form-control"
+            id="reclaim-confirm"
+            [value]="typedConfirm()"
+            (input)="typedConfirm.set($any($event.target).value)"
+            data-testid="reclaim-confirm-input"
+            autocomplete="off"
+        />
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+        <button type="button" class="btn btn-secondary" (click)="cancel()" data-testid="reclaim-cancel-button">
+            <span jhiTranslate="entity.action.cancel"></span>
+        </button>
+        <button type="button" class="btn btn-danger" [disabled]="!canConfirm()" (click)="confirm()" data-testid="reclaim-confirm-button">
+            <span jhiTranslate="artemisApp.buildAgents.reclaim.confirmButton"></span>
+        </button>
+    </div>
+</div>

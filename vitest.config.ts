@@ -85,6 +85,7 @@ export default defineConfig({
             'src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // include build phases template service tests
             'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
             'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
+            'src/main/webapp/app/shared/pipes/bytes.pipe.spec.ts', // include bytes pipe used by the build-agent admin UI
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,

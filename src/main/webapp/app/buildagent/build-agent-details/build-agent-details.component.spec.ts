@@ -23,6 +23,7 @@ import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.s
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
@@ -197,6 +198,7 @@ describe('BuildAgentDetailsComponent', () => {
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
                 { provide: BuildOverviewService, useValue: mockBuildQueueService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                MockProvider(DialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 provideHttpClient(),

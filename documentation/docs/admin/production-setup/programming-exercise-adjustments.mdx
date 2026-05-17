@@ -392,17 +392,21 @@ populates the cache out of band; the prune of that warm-up cache is on the opera
 - **Disable cleanup temporarily** (e.g. while debugging) — set `cleanup-enabled: false` in
   `application-buildagent.yml` and restart the agent. The agent will keep serving builds; the cache will grow
   monotonically until you re-enable cleanup.
-- **Force an immediate prune** — the cleanup task is invoked via `@Scheduled` and is not exposed as a REST
-  endpoint by default; the simplest "manual prune" is to (a) shorten `cleanup-cron` to fire in the next minute,
-  restart the agent, wait, then revert and restart again; or (b) restart the agent twice (the second restart
-  loses no work because the first has already drained) and then rely on the next scheduled cycle.
+- **Force an immediate prune** — on the build-agent details page (`/admin/build-agents/details?agentName=…`),
+  click **Run cache cleanup**. The agent flips to `MAINTENANCE` status while it pauses, prunes, and resumes;
+  the operation is the same as the scheduled task.
 - **Inspect what the prune did** — search the agent log for the line:
   `Cache prune for /var/cache/artemis-buildagent/m2: age-deleted=X files / X bytes; size-deleted=X files / X bytes;`
   Each invocation logs one such line per configured cache, plus the empty-directory sweep count and total
   duration.
-- **Wipe the cache after suspected corruption** — pause the agent administratively (via the admin UI or
-  Hazelcast pause topic), `rm -rf /var/cache/artemis-buildagent/m2/*` and `/gradle/*` as root, then resume.
-  The next builds will re-download from Maven Central; the cache warms back up over the following hours.
+- **Wipe the cache after suspected corruption** — on the build-agent details page, click **Reclaim disk…**, tick
+  the Maven and/or Gradle box (the sum of files that will be deleted is shown next to each), type the confirmation
+  word, and Confirm. The agent pauses, deletes every file under the chosen cache root regardless of age, then
+  resumes. The next builds will re-download from Maven Central; the cache warms back up over the following hours.
+- **Reclaim disk when Docker images dominate** — same Reclaim disk… dialog also offers **Unused Docker images**,
+  which removes every image not bound to a running container regardless of `imageExpiryDays`. The next build that
+  needs a freshly-removed image will pull it on assignment (slow); operators should only use this when an agent is
+  actually close to full.
 - **Adjust size caps for an agent with a tighter disk** — set `maven-max-size` / `gradle-max-size` in the agent
   group's inventory (Ansible `group_vars/<group>.yml`). Spring's `DataSize` parser accepts `MB`, `GB`, etc. The
   values render straight through to `application-prod.yml` on the host; no role change is needed.

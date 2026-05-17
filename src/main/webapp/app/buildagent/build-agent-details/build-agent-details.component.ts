@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
-import { faCircleCheck, faFilter, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faBroom, faCircleCheck, faEraser, faFilter, faHardDrive, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
+import { DialogService } from 'primeng/dynamicdialog';
+import { ReclaimDiskDialogComponent, ReclaimDiskDialogResult } from 'app/buildagent/build-agent-details/reclaim-disk-dialog/reclaim-disk-dialog.component';
+import { BytesPipe } from 'app/shared/pipes/bytes.pipe';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
@@ -56,6 +59,7 @@ import { extractHost, looksLikeAddress } from 'app/buildagent/shared/build-agent
         AdminTitleBarActionsDirective,
         RunningJobsTableComponent,
         FinishedJobsTableComponent,
+        BytesPipe,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
@@ -66,6 +70,12 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private readonly buildQueueService = inject(BuildOverviewService);
     private readonly alertService = inject(AlertService);
     private readonly modalService = inject(NgbModal);
+    private readonly dialogService = inject(DialogService);
+
+    /** Icons surfaced in the Maintenance card. */
+    protected readonly faBroom = faBroom;
+    protected readonly faEraser = faEraser;
+    protected readonly faHardDrive = faHardDrive;
 
     /** Current build agent information including status and configuration */
     buildAgent = signal<BuildAgentInformation | undefined>(undefined);
@@ -444,6 +454,94 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
                 message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName',
+            });
+        }
+    }
+
+    /**
+     * Runs the regular age + size cache cleanup on the current agent. Non-destructive — same task as the daily
+     * scheduler. Returns immediately; the agent flips through MAINTENANCE status and back via WebSocket pushes.
+     */
+    runCacheCleanup(): void {
+        const name = this.buildAgent()?.buildAgent?.name;
+        if (!name) {
+            this.alertService.addAlert({ type: AlertType.WARNING, message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName' });
+            return;
+        }
+        this.buildAgentsService.runCacheCleanup(name).subscribe({
+            next: () => this.alertService.addAlert({ type: AlertType.SUCCESS, message: 'artemisApp.buildAgents.alerts.cleanupTriggered' }),
+            error: () => this.alertService.addAlert({ type: AlertType.DANGER, message: 'artemisApp.buildAgents.alerts.cleanupFailed' }),
+        });
+    }
+
+    /**
+     * Opens the Reclaim disk dialog. On confirm with one or more options selected, fires the matching REST calls
+     * concurrently. Each call returns 204 immediately; the actions themselves run serially on the build agent
+     * because they all acquire the maintenance pause. Toasts give per-action feedback.
+     */
+    openReclaimDiskDialog(): void {
+        const agent = this.buildAgent();
+        const name = agent?.buildAgent?.name;
+        if (!name) {
+            this.alertService.addAlert({ type: AlertType.WARNING, message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName' });
+            return;
+        }
+        const details = agent?.buildAgentDetails;
+        const ref = this.dialogService.open(ReclaimDiskDialogComponent, {
+            header: this.translateHeader(name),
+            width: '40rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            data: {
+                agentName: name,
+                pauseGracePeriodSeconds: agent?.pauseAfterConsecutiveBuildFailures ? undefined : 60, // server default
+                diskTotalBytes: details?.diskTotalBytes,
+                diskUsableBytes: details?.diskUsableBytes,
+                mavenCacheBytes: details?.mavenCacheBytes,
+                gradleCacheBytes: details?.gradleCacheBytes,
+                dockerUnusedImageBytes: details?.dockerUnusedImageBytes,
+                dockerUnusedImageCount: details?.dockerUnusedImageCount,
+            },
+        });
+        ref?.onClose.subscribe((result?: ReclaimDiskDialogResult) => {
+            if (!result) {
+                return;
+            }
+            this.dispatchReclaim(name, result);
+        });
+    }
+
+    private translateHeader(agentName: string): string {
+        // Header rendered as a plain string by PrimeNG; the translation service is the canonical formatter
+        // elsewhere in the module, but here we rely on the i18n key being interpolated by the directive when the
+        // header itself is rendered. PrimeNG cannot interpolate jhiTranslate, so we pass a fallback English string;
+        // the translation directive on the template body still works for everything inside the dialog.
+        return `Reclaim disk on ${agentName}`;
+    }
+
+    private dispatchReclaim(name: string, result: ReclaimDiskDialogResult): void {
+        // Fire each selected action and surface its result independently. We do not wait for all to complete
+        // before showing the first toast — the operator sees progress as it happens, and the agent's status
+        // flipping to MAINTENANCE is itself live in the UI via the websocket subscription.
+        if (result.wipeMaven) {
+            this.buildAgentsService.wipeMavenCache(name).subscribe({
+                next: () => this.alertService.addAlert({ type: AlertType.SUCCESS, message: 'artemisApp.buildAgents.alerts.mavenWipeTriggered' }),
+                error: () => this.alertService.addAlert({ type: AlertType.DANGER, message: 'artemisApp.buildAgents.alerts.mavenWipeFailed' }),
+            });
+        }
+        if (result.wipeGradle) {
+            this.buildAgentsService.wipeGradleCache(name).subscribe({
+                next: () => this.alertService.addAlert({ type: AlertType.SUCCESS, message: 'artemisApp.buildAgents.alerts.gradleWipeTriggered' }),
+                error: () => this.alertService.addAlert({ type: AlertType.DANGER, message: 'artemisApp.buildAgents.alerts.gradleWipeFailed' }),
+            });
+        }
+        if (result.clearDocker) {
+            this.buildAgentsService.clearDockerImages(name).subscribe({
+                next: () => this.alertService.addAlert({ type: AlertType.SUCCESS, message: 'artemisApp.buildAgents.alerts.dockerClearTriggered' }),
+                error: () => this.alertService.addAlert({ type: AlertType.DANGER, message: 'artemisApp.buildAgents.alerts.dockerClearFailed' }),
             });
         }
     }

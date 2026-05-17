@@ -19,6 +19,7 @@
             "idle": "Idle",
             "paused": "Paused",
             "selfPaused": "Self paused",
+            "maintenance": "Maintenance",
             "onlineAgents": "online agent(s)",
             "of": "of",
             "buildJobsRunning": "build jobs running",
@@ -33,7 +34,15 @@
                 "buildAgentsPaused": "Pause request sent to all build agents. The agents will not accept new build jobs and will gracefully finish the current build jobs or will cancel them after a configurable seconds.",
                 "buildAgentsResumed": "Resume request sent to all build agents. The agents will start accepting new build jobs.",
                 "distributedDataCleared": "Distributed data cleared successfully.",
-                "distributedDataClearFailed": "Failed to clear distributed data."
+                "distributedDataClearFailed": "Failed to clear distributed data.",
+                "cleanupTriggered": "Cache cleanup request sent successfully. The agent will pause, prune the cache, then resume.",
+                "cleanupFailed": "Failed to trigger cache cleanup.",
+                "mavenWipeTriggered": "Maven cache wipe request sent successfully. The agent will pause, delete the cache, then resume.",
+                "mavenWipeFailed": "Failed to trigger Maven cache wipe.",
+                "gradleWipeTriggered": "Gradle cache wipe request sent successfully. The agent will pause, delete the cache, then resume.",
+                "gradleWipeFailed": "Failed to trigger Gradle cache wipe.",
+                "dockerClearTriggered": "Docker image clear request sent successfully. The agent will pause, remove unused images, then resume.",
+                "dockerClearFailed": "Failed to trigger Docker image clearing."
             },
             "notFound": "Build agent '{{ agentName }}' is currently not available.",
             "notFoundHint": "The agent may be offline or was replaced. Recent build jobs from this agent are shown below.",
@@ -48,6 +57,40 @@
                 "descriptionSecond": "This action is irreversible and will lead in data loss. The system will take a few minutes to return to normal operation.",
                 "descriptionThird": "If you are sure you want to proceed, please type 'CLEAR DATA' in the input field below and click the 'Clear Data' button.",
                 "clearData": "Clear Data"
+            },
+            "maintenanceAction": {
+                "title": "Maintenance",
+                "subtitle": "Trigger cache or Docker maintenance on this agent. The agent pauses, performs the action, then resumes.",
+                "runCleanup": "Run cache cleanup",
+                "reclaimDisk": "Reclaim disk…"
+            },
+            "reclaim": {
+                "explanationIntro": "This action runs against agent '{{ agentName }}' and goes through four steps:",
+                "stepPause": "Pause this build agent so it stops claiming new jobs.",
+                "stepDrain": "Wait up to {{ grace }} s for in-flight builds — any that do not finish in time are cancelled and re-queued for another live agent.",
+                "stepDelete": "Delete every item you check below.",
+                "stepResume": "Resume the agent.",
+                "warning": "Deleted files cannot be recovered. Maven and Gradle artifacts will re-download from Maven Central on the next build that needs them; Docker images will re-pull when the next exercise that needs them runs.",
+                "optionMavenLabel": "Maven dependency cache",
+                "optionMavenHelp": "Wipes every file under /root/.m2 on this agent's host cache mount.",
+                "optionGradleLabel": "Gradle dependency cache",
+                "optionGradleHelp": "Wipes every file under /root/.gradle on this agent's host cache mount.",
+                "optionDockerLabel": "Unused Docker images",
+                "optionDockerHelp": "Removes Docker images that are not currently bound to a running container.",
+                "images": "images",
+                "typeConfirmPrompt": "Type {{ word }} to enable the Confirm button:",
+                "confirmButton": "Reclaim disk"
+            },
+            "disk": {
+                "tileTitle": "Disk usage",
+                "total": "Total",
+                "usable": "Free",
+                "used": "Used",
+                "cacheMaven": "Maven cache",
+                "cacheGradle": "Gradle cache",
+                "dockerImages": "Docker images (unused)",
+                "lastUpdated": "Last updated",
+                "notYetReported": "Disk usage not yet reported by this agent."
             }
         }
     }
