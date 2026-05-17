@@ -78,7 +78,12 @@ test.describe('Build agent maintenance actions', { tag: '@multi-node' }, () => {
         return agents.find((a) => a.buildAgent.name === agentName)?.status;
     }
 
-    test('Run cache cleanup flips the agent through MAINTENANCE and back', async ({ page }) => {
+    test('Disk usage tile renders and the cleanup REST endpoint drives the agent through MAINTENANCE and back', async ({ page }) => {
+        // The non-destructive "run cache cleanup" path no longer has a dedicated UI button (the user-facing surface
+        // is the Reclaim disk dialog; cleanup runs daily via the scheduled cron). We still need to verify the
+        // multi-node dispatch path for this REST endpoint — it's the same Hazelcast topic broadcast as the wipe
+        // actions and would silently break if the listener registration regressed. We trigger it via the REST API
+        // directly so we don't depend on a UI button that may or may not exist.
         const agent = await pickRunningAgent(page);
 
         await page.goto(`/admin/build-agents/details?agentName=${encodeURIComponent(agent.name)}`);
@@ -88,10 +93,11 @@ test.describe('Build agent maintenance actions', { tag: '@multi-node' }, () => {
         await expect(page.getByTestId('disk-usage-tile')).toBeVisible();
         await expect(page.getByTestId('disk-total')).toBeVisible();
 
-        await page.getByTestId('run-cache-cleanup-button').click();
+        const cleanupResponse = await page.request.put(`/api/core/admin/agents/${encodeURIComponent(agent.name)}/run-cache-cleanup`);
+        expect(cleanupResponse.status()).toBe(204);
 
-        // Status must briefly transition to MAINTENANCE. This is observed via the REST API rather than the UI
-        // text because the UI badge translation is volatile across locales; the API status enum is stable.
+        // Status must briefly transition to MAINTENANCE. Observed via the REST API rather than the UI text because
+        // the badge translation is volatile across locales; the API status enum is stable.
         await expect
             .poll(async () => currentAgentStatus(page, agent.name), { timeout: STATUS_TRANSITION_TIMEOUT_MS, message: 'Agent never entered MAINTENANCE status' })
             .toBe('MAINTENANCE');

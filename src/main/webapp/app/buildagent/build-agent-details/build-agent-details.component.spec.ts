@@ -416,7 +416,55 @@ describe('BuildAgentDetailsComponent', () => {
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({ type: AlertType.WARNING, message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName' });
     });
 
-    it('openReclaimDiskDialog should open the dialog with current disk + cache details', () => {
+    it('openReclaimDiskDialog refetches BuildAgentInformation and opens the dialog with the freshly-loaded sizes', () => {
+        const dialogService = TestBed.inject(DialogService);
+        const onClose = new Subject<undefined>();
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
+        // Stale signal value (e.g. before a wipe).
+        component.buildAgent.set({
+            ...mockBuildAgent,
+            buildAgentDetails: {
+                ...mockBuildAgent.buildAgentDetails,
+                diskTotalBytes: 100,
+                diskUsableBytes: 10,
+                mavenCacheBytes: 999,
+                gradleCacheBytes: 888,
+                dockerUnusedImageBytes: 777,
+                dockerUnusedImageCount: 9,
+            } as any,
+        });
+        // Fresh REST payload — what the dialog must actually display, not the stale signal.
+        const freshAgent = {
+            ...mockBuildAgent,
+            buildAgentDetails: {
+                ...mockBuildAgent.buildAgentDetails,
+                diskTotalBytes: 100,
+                diskUsableBytes: 40,
+                mavenCacheBytes: 5,
+                gradleCacheBytes: 7,
+                dockerUnusedImageBytes: 3,
+                dockerUnusedImageCount: 2,
+            } as any,
+        };
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValueOnce(of(freshAgent));
+
+        component.openReclaimDiskDialog();
+
+        expect(mockBuildAgentsService.getBuildAgentDetails).toHaveBeenCalledWith(mockBuildAgent.buildAgent!.name);
+        expect(openSpy).toHaveBeenCalledTimes(1);
+        const [, config] = openSpy.mock.calls[0];
+        expect(config.data).toMatchObject({
+            agentName: mockBuildAgent.buildAgent!.name,
+            diskTotalBytes: 100,
+            diskUsableBytes: 40,
+            mavenCacheBytes: 5,
+            gradleCacheBytes: 7,
+            dockerUnusedImageBytes: 3,
+            dockerUnusedImageCount: 2,
+        });
+    });
+
+    it('openReclaimDiskDialog falls back to the cached signal value if the refetch fails', () => {
         const dialogService = TestBed.inject(DialogService);
         const onClose = new Subject<undefined>();
         const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
@@ -432,6 +480,7 @@ describe('BuildAgentDetailsComponent', () => {
                 dockerUnusedImageCount: 2,
             } as any,
         });
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValueOnce(throwError(() => new Error('boom')));
 
         component.openReclaimDiskDialog();
 
@@ -453,6 +502,7 @@ describe('BuildAgentDetailsComponent', () => {
         const onClose = new Subject<undefined>();
         vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
         component.buildAgent.set(mockBuildAgent);
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValueOnce(of(mockBuildAgent));
 
         component.openReclaimDiskDialog();
         onClose.next(undefined);
@@ -467,6 +517,7 @@ describe('BuildAgentDetailsComponent', () => {
         const onClose = new Subject<{ wipeMaven: boolean; wipeGradle: boolean; clearDocker: boolean }>();
         vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
         component.buildAgent.set(mockBuildAgent);
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValueOnce(of(mockBuildAgent));
 
         component.openReclaimDiskDialog();
         onClose.next({ wipeMaven: true, wipeGradle: true, clearDocker: true });
@@ -481,6 +532,7 @@ describe('BuildAgentDetailsComponent', () => {
         const onClose = new Subject<{ wipeMaven: boolean; wipeGradle: boolean; clearDocker: boolean }>();
         vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
         component.buildAgent.set(mockBuildAgent);
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValueOnce(of(mockBuildAgent));
 
         component.openReclaimDiskDialog();
         onClose.next({ wipeMaven: false, wipeGradle: true, clearDocker: false });
@@ -496,6 +548,7 @@ describe('BuildAgentDetailsComponent', () => {
         vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
         mockBuildAgentsService.wipeMavenCache.mockReturnValueOnce(throwError(() => new Error('maven dead')));
         component.buildAgent.set(mockBuildAgent);
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValueOnce(of(mockBuildAgent));
 
         component.openReclaimDiskDialog();
         onClose.next({ wipeMaven: true, wipeGradle: true, clearDocker: false });

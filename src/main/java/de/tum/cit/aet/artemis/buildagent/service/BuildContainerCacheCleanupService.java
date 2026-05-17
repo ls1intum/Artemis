@@ -19,11 +19,13 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -91,6 +93,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
  */
 @Service
 @Profile(PROFILE_BUILDAGENT)
+@Lazy(false)
 public class BuildContainerCacheCleanupService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildContainerCacheCleanupService.class);
@@ -121,18 +124,48 @@ public class BuildContainerCacheCleanupService {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
-    /** UUID of the maintenance topic listener registered in {@link #registerMaintenanceListener()}. */
+    /**
+     * Used to refresh and republish the disk-usage snapshot immediately after a maintenance action so the admin
+     * UI does not show stale sizes for up to 5 minutes (the default slow-stats cadence). Calling
+     * {@code refreshSlowDiskStats()} re-walks the caches and re-queries Docker, then
+     * {@code updateLocalBuildAgentInformation(false)} pushes the new {@link
+     * de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation} to the cluster within ~10 ms.
+     */
+    private final BuildAgentInformationService buildAgentInformationService;
+
+    /** UUID of the maintenance topic listener registered in {@link #ensureMaintenanceListenerRegistered()}. */
     private UUID maintenanceListenerId;
 
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
     public BuildContainerCacheCleanupService(BuildAgentConfiguration buildAgentConfiguration, SharedQueueProcessingService sharedQueueProcessingService,
-            BuildAgentDockerService buildAgentDockerService, DistributedDataAccessService distributedDataAccessService) {
+            BuildAgentDockerService buildAgentDockerService, DistributedDataAccessService distributedDataAccessService, BuildAgentInformationService buildAgentInformationService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.sharedQueueProcessingService = sharedQueueProcessingService;
         this.buildAgentDockerService = buildAgentDockerService;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.buildAgentInformationService = buildAgentInformationService;
+    }
+
+    /**
+     * Registers a connection-state callback so the maintenance listener is re-attached after any Hazelcast
+     * reconnect. The topic membership lives in the Hazelcast cluster, so a transient disconnect drops our listener
+     * server-side; without re-registration the agent would silently stop responding to maintenance broadcasts until
+     * JVM restart. The same pattern is used by {@code SharedQueueProcessingService} for the pause/resume topics.
+     */
+    @PostConstruct
+    void registerConnectionStateListenerForReconnect() {
+        distributedDataAccessService.addConnectionStateListener(isInitialConnection -> {
+            if (!isInitialConnection) {
+                // Reconnect: the previously-registered listener is dead server-side; drop the stale UUID so the
+                // next @Scheduled tick re-registers fresh.
+                synchronized (this) {
+                    maintenanceListenerId = null;
+                }
+                log.info("Hazelcast client reconnected to cluster. Build-agent maintenance topic listener will be re-registered.");
+            }
+        });
     }
 
     /**
@@ -143,8 +176,9 @@ public class BuildContainerCacheCleanupService {
      * <p>
      * Driven by a {@code @Scheduled} retry so a build agent that starts up before the Hazelcast cluster is
      * reachable still registers the listener once the cluster comes online (the schedule keeps trying every five
-     * seconds until {@code maintenanceListenerId} is set). The listener is removed on shutdown so Hazelcast does
-     * not retain a dead reference.
+     * seconds until {@code maintenanceListenerId} is set). After a Hazelcast reconnect, {@link
+     * #registerConnectionStateListenerForReconnect()} resets {@code maintenanceListenerId} so this method re-runs
+     * the registration. The listener is removed on shutdown so Hazelcast does not retain a dead reference.
      */
     @Scheduled(initialDelayString = "5000", fixedRateString = "5000")
     synchronized void ensureMaintenanceListenerRegistered() {
@@ -173,6 +207,11 @@ public class BuildContainerCacheCleanupService {
                         buildAgentDockerService.clearAllUnusedDockerImages();
                     default -> throw new IllegalStateException("Unhandled maintenance action type: " + action.type());
                 }
+                // The action freed disk; publish the new snapshot immediately so the admin UI (which watches the
+                // distributed BuildAgentInformation map via WebSocket) reflects the post-action sizes within
+                // seconds instead of waiting for the 5-minute slow-stats tick. The Reclaim-disk dialog re-reads
+                // these values when re-opened.
+                publishFreshDiskStats();
             }
             catch (Throwable t) {
                 // Catch Throwable (not just RuntimeException) so Error / wrapped InterruptedException cannot tear
@@ -185,6 +224,26 @@ public class BuildContainerCacheCleanupService {
             }
         });
         log.info("Registered build-agent maintenance topic listener for {}", buildAgentShortName);
+    }
+
+    /**
+     * Synchronously recomputes the disk-usage snapshot (Maven walk, Gradle walk, Docker enumeration, filesystem
+     * probe) and republishes the {@link de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation} so the next
+     * websocket tick carries fresh sizes. Called at the end of each maintenance action; isolated so failures here
+     * cannot mask a successful action — the next periodic 10-second push would correct any miss.
+     */
+    private void publishFreshDiskStats() {
+        try {
+            buildAgentInformationService.refreshSlowDiskStats();
+            // Read the current pause flag rather than hard-coding false: CLEAR_DOCKER_IMAGES runs without a pause,
+            // so if the agent is admin-paused at the time the maintenance message arrives, we must not flip the
+            // distributed status DTO to "not paused" — operators reading the status during an incident would
+            // misinterpret the agent as ACTIVE/IDLE for up to 10 seconds, until the next periodic push corrects it.
+            buildAgentInformationService.updateLocalBuildAgentInformation(sharedQueueProcessingService.isPaused());
+        }
+        catch (Exception republishFailure) {
+            log.debug("Post-maintenance disk-stats refresh failed; next periodic push will correct it: {}", republishFailure.getMessage());
+        }
     }
 
     @PreDestroy

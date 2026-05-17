@@ -61,7 +61,7 @@ class BuildContainerCacheCleanupServiceTest {
         lenient().when(sharedQueueProcessingService.isPaused()).thenReturn(true);
 
         service = new BuildContainerCacheCleanupService(buildAgentConfiguration, sharedQueueProcessingService, mock(BuildAgentDockerService.class),
-                mock(de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService.class));
+                mock(de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService.class), mock(BuildAgentInformationService.class));
         service.setCleanupEnabled(true);
         service.setMaxAgeDays(30);
         service.setMavenMaxSize(DataSize.ofGigabytes(3));

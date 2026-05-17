@@ -486,6 +486,20 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             this.alertService.addAlert({ type: AlertType.WARNING, message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName' });
             return;
         }
+        // Refetch fresh BuildAgentInformation from the REST endpoint before opening the dialog so the operator
+        // never sees stale sizes — especially right after a wipe, when the cached signal value would still report
+        // the pre-wipe numbers until the next websocket push lands. If the REST call fails we fall back to the
+        // current signal value (typical for offline agents).
+        this.buildAgentsService.getBuildAgentDetails(name).subscribe({
+            next: (fresh) => {
+                this.updateBuildAgent(fresh);
+                this.openReclaimDiskDialogWith(name, fresh);
+            },
+            error: () => this.openReclaimDiskDialogWith(name, agent),
+        });
+    }
+
+    private openReclaimDiskDialogWith(name: string, agent: BuildAgentInformation | undefined): void {
         const details = agent?.buildAgentDetails;
         const ref = this.dialogService.open(ReclaimDiskDialogComponent, {
             header: this.translateHeader(name),
