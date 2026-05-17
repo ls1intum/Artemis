@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
@@ -32,13 +33,16 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
-import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
@@ -47,6 +51,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -278,13 +283,12 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining() throws Exception {
-        Course course = courseUtilService.createCourse();
-
-        MultipleChoiceQuestion mcQuestion = new MultipleChoiceQuestion();
-        mcQuestion.setTitle("Test Question");
-        mcQuestion.setPoints(1.0);
-        mcQuestion.setScoringType(ScoringType.ALL_OR_NOTHING);
-        mcQuestion = quizQuestionRepository.save(mcQuestion);
+        // Use a quiz exercise attached to the course so the training-submit endpoint can resolve the question
+        // through the course-scoped repository lookup (see QuizQuestionRepository#findByIdAndCourseIdElseThrow).
+        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
+        MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).findFirst()
+                .orElseThrow();
         QuizQuestionProgressData dataExisting = new QuizQuestionProgressData();
         dataExisting.setEasinessFactor(2.5);
         dataExisting.setInterval(1);
@@ -297,7 +301,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
         submittedAnswer.setQuizQuestion(mcQuestion);
-        submittedAnswer.setSelectedOptions(Set.of());
+        // Select exactly the correct answer options so the ALL_OR_NOTHING scoring yields a full score (lastScore = 1.0).
+        submittedAnswer.setSelectedOptions(mcQuestion.getAnswerOptions().stream().filter(option -> Boolean.TRUE.equals(option.isIsCorrect())).collect(Collectors.toSet()));
 
         quizTrainingLeaderboardService.setInitialLeaderboardEntry(userId, course.getId(), true);
 
@@ -328,6 +333,112 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(data.getBox()).isEqualTo(1);
         ZonedDateTime expectedUtc = TimeUtil.now().plusDays(1);
         assertThat(savedProgress.get().getDueDate()).isCloseTo(expectedUtc, within(1, ChronoUnit.SECONDS));
+    }
+
+    /**
+     * Security regression: a student must not be able to submit a training answer for a quiz question that belongs to a different course.
+     * The training-submit endpoint scopes the question lookup to the path {@code courseId}; a mismatched id pair must return 404 instead of
+     * leaking the question (with its solutions) via {@link SubmittedAnswerAfterEvaluationDTO}.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSubmitForTraining_questionFromOtherCourse_returns404() throws Exception {
+        Course courseA = quizExerciseUtilService.addCourseWithOneQuizExercise("Course A Quiz");
+        Course courseB = quizExerciseUtilService.addCourseWithOneQuizExercise("Course B Quiz");
+        QuizExercise quizExerciseA = (QuizExercise) courseA.getExercises().stream().findFirst().orElseThrow();
+        MultipleChoiceQuestion mcQuestionInCourseA = (MultipleChoiceQuestion) quizExerciseA.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).findFirst()
+                .orElseThrow();
+
+        MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
+        submittedAnswer.setQuizQuestion(mcQuestionInCourseA);
+        submittedAnswer.setSelectedOptions(mcQuestionInCourseA.getAnswerOptions().stream().filter(option -> Boolean.TRUE.equals(option.isIsCorrect())).collect(Collectors.toSet()));
+
+        // Submit the question from course A while passing course B's id in the path → must 404 instead of returning the question's solutions.
+        request.postWithResponseBody("/api/quiz/courses/" + courseB.getId() + "/training-questions/" + mcQuestionInCourseA.getId() + "/submit?isRated=true", submittedAnswer,
+                SubmittedAnswerAfterEvaluationDTO.class, HttpStatus.NOT_FOUND);
+
+        // No progress should have been recorded for the cross-course attempt.
+        Optional<QuizQuestionProgress> progress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, mcQuestionInCourseA.getId());
+        assertThat(progress).isEmpty();
+    }
+
+    /**
+     * Strict conversion: when the runtime type of the submitted answer payload doesn't match the question's type (e.g. a MC payload posted
+     * for a SA question), the training endpoint must reject the request with 400 rather than silently scoring it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSubmitForTraining_typeMismatch_returns400() throws Exception {
+        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
+        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().stream().filter(ShortAnswerQuestion.class::isInstance).findFirst().orElseThrow();
+        MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).findFirst()
+                .orElseThrow();
+
+        // Build a multiple-choice payload but submit it for the short-answer question's id → type mismatch → 400.
+        MultipleChoiceSubmittedAnswer mismatchedAnswer = new MultipleChoiceSubmittedAnswer();
+        mismatchedAnswer.setQuizQuestion(mcQuestion);
+        mismatchedAnswer.setSelectedOptions(Set.of(mcQuestion.getAnswerOptions().getFirst()));
+
+        request.postWithResponseBody("/api/quiz/courses/" + course.getId() + "/training-questions/" + saQuestion.getId() + "/submit?isRated=true", mismatchedAnswer,
+                SubmittedAnswerAfterEvaluationDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Drag-and-drop training submission round-trip: verifies that the DTO conversion correctly preserves drag-item / drop-location
+     * mappings (with their positional indices) and that the scoring logic runs against the server-managed mappings — not the
+     * client-supplied ones.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSubmitForTraining_dragAndDropQuestion() throws Exception {
+        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
+        DragAndDropQuestion dndQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).findFirst().orElseThrow();
+
+        DragAndDropSubmittedAnswer correctAnswer = (DragAndDropSubmittedAnswer) QuizExerciseFactory.generateSubmittedAnswerFor(dndQuestion, true);
+
+        SubmittedAnswerAfterEvaluationDTO result = request.postWithResponseBody(
+                "/api/quiz/courses/" + course.getId() + "/training-questions/" + dndQuestion.getId() + "/submit?isRated=true", correctAnswer,
+                SubmittedAnswerAfterEvaluationDTO.class, HttpStatus.OK);
+
+        assertThat(result).isNotNull();
+        assertThat(result.dragAndDropSubmittedAnswer()).isNotNull();
+        Assertions.assertThat(result.dragAndDropSubmittedAnswer().mappings()).as("the server must persist all drag-and-drop mappings").hasSize(correctAnswer.getMappings().size());
+        // Correct mappings → full score for this question.
+        assertThat(result.scoreInPoints()).isEqualTo(dndQuestion.getPoints());
+
+        Optional<QuizQuestionProgress> savedProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, dndQuestion.getId());
+        assertThat(savedProgress).isPresent();
+        assertThat(savedProgress.get().getProgressJson().getLastScore()).isEqualTo(1.0);
+    }
+
+    /**
+     * Short-answer training submission round-trip: verifies that the DTO conversion correctly preserves submitted texts (with their
+     * server-managed spot references) and that the scoring matches the question's spot-by-spot expectations.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSubmitForTraining_shortAnswerQuestion() throws Exception {
+        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
+        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().stream().filter(ShortAnswerQuestion.class::isInstance).findFirst().orElseThrow();
+
+        ShortAnswerSubmittedAnswer correctAnswer = (ShortAnswerSubmittedAnswer) QuizExerciseFactory.generateSubmittedAnswerFor(saQuestion, true);
+
+        SubmittedAnswerAfterEvaluationDTO result = request.postWithResponseBody(
+                "/api/quiz/courses/" + course.getId() + "/training-questions/" + saQuestion.getId() + "/submit?isRated=true", correctAnswer,
+                SubmittedAnswerAfterEvaluationDTO.class, HttpStatus.OK);
+
+        assertThat(result).isNotNull();
+        assertThat(result.shortAnswerSubmittedAnswer()).isNotNull();
+        Assertions.assertThat(result.shortAnswerSubmittedAnswer().submittedTexts()).as("the server must persist one submitted text per filled spot")
+                .hasSize(saQuestion.getSpots().size());
+        assertThat(result.scoreInPoints()).isEqualTo(saQuestion.getPoints());
+
+        Optional<QuizQuestionProgress> savedProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, saQuestion.getId());
+        assertThat(savedProgress).isPresent();
+        assertThat(savedProgress.get().getProgressJson().getLastScore()).isEqualTo(1.0);
     }
 
     @Test

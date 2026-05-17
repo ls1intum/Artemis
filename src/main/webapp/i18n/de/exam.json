@@ -218,6 +218,7 @@
                 "relative": "Änderung relativ zur normalen Bearbeitungszeit"
             },
             "events": {
+                "title": "Klausur Benachrichtigungen",
                 "button": "Benachrichtigungen",
                 "type": {
                     "examWideAnnouncement": "Klausurweite Ankündigung",
@@ -526,7 +527,6 @@
             "confirmationStartText": "Bestätigungstext bei Klausurbeginn",
             "confirmationEndText": "Bestätigungstext zum Klausurende",
             "assessmentDashboard": "Bewertung",
-            "examChecklist": "Klausurcheckliste",
             "studentExams": "Klausuren der Studierenden",
             "students": "Studierende",
             "gradingSystem": "Notenschlüssel",

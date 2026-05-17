@@ -85,11 +85,12 @@
     .diff-pane-header {
         display: flex;
         align-items: center;
-        width: 50%;
+        flex-shrink: 0;
         padding: 0.25rem 0.5rem;
         background-color: var(--p-content-background);
 
         &--right {
+            flex: 1 1 0;
             border-left: 1px solid var(--p-content-border-color);
         }
     }
