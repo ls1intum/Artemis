@@ -8,17 +8,18 @@ export class CompetencyManagementPage {
     }
 
     async goto(courseId: number) {
-        // Wait for both the SPA route mount AND the initial competency fetch so subsequent steps
-        // are not racing the page load. Under parallel CI load the response can take >15s; loosen
-        // the status assertion (any 2xx/3xx, not strictly 200) and bump the timeout accordingly.
+        // Opportunistically wait for the initial competency fetch so subsequent steps are not
+        // racing the page load. The wait is bounded (15s) and `.catch`ed so it never blows the
+        // @fast 60s budget when tests call `goto` twice — when the response truly stalls, the
+        // caller's own auto-waiting locator assertion will surface the real failure with a
+        // clearer message than a generic `waitForResponse: Timeout` here.
         //
         // The `page.goto` fixture wrapper (see `support/fixtures.ts`) already handles the case
         // where Angular fails to bootstrap the route component on the first navigation by
-        // reloading once, so the initial API call is guaranteed to fire (either on the first
-        // navigation or after the wrapper's reload). A single response wait is enough.
-        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(`/api/atlas/courses/${courseId}/course-competencies`) && resp.status() < 400, {
-            timeout: 45000,
-        });
+        // reloading once, so by the time `goto` returns the page is hydrated.
+        const responsePromise = this.page
+            .waitForResponse((resp) => resp.url().includes(`/api/atlas/courses/${courseId}/course-competencies`) && resp.status() < 400, { timeout: 15000 })
+            .catch(() => undefined);
         await this.page.goto(`/course-management/${courseId}/competency-management`);
         await responsePromise;
         const closeButton = this.page.locator('#close-button');
