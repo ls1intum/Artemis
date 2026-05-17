@@ -11,7 +11,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { ProgrammingExerciseTimelineComponent } from '../../shared/lifecycle/programming-exercise-timeline.component';
+import { ProgrammingExerciseTimelineComponent } from '../../shared/timeline/programming-exercise-timeline.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 

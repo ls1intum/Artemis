@@ -12,7 +12,7 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { Subject, Subscription } from 'rxjs';
 import { FormsModule, NgModel } from '@angular/forms';
 import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/submission-policy-update.component';
-import { ProgrammingExerciseTimelineComponent } from '../../../../shared/lifecycle/programming-exercise-timeline.component';
+import { ProgrammingExerciseTimelineComponent } from '../../../../shared/timeline/programming-exercise-timeline.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

@@ -10,7 +10,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { DetailOverviewNavigationBarComponent } from '../detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { HelpIconComponent } from '../components/help-icon/help-icon.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { ProgrammingExerciseTimelineComponent } from '../../programming/shared/lifecycle/programming-exercise-timeline.component';
+import { ProgrammingExerciseTimelineComponent } from '../../programming/shared/timeline/programming-exercise-timeline.component';
 import { NgStyle, NgTemplateOutlet } from '@angular/common';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
