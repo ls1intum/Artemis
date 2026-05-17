@@ -42,6 +42,10 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
     });
 
     test('Updates competency-exercise linking', async ({ page, courseManagementExercises, competencyManagement }) => {
+        // This test does 4 exercise-list page navigations + 2 competencyManagement.goto +
+        // multiple saves; under heavy multi-node load that easily exceeds the @fast 60s
+        // budget even on the happy path. Triple it.
+        test.slow();
         // Link to first competency
         await page.goto(`/course-management/${course.id}/exercises`);
         await courseManagementExercises.getExercise(exercise.id!).getByRole('link', { name: 'Edit' }).click();
