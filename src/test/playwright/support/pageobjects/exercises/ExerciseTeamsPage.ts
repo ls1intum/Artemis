@@ -12,19 +12,23 @@ export class ExerciseTeamsPage {
     }
 
     /**
-     * Clicks the "Create team" button and waits for the dialog to be fully rendered
-     * AND for the NgbTypeahead directives on both search inputs to have completed
-     * their `ngOnInit` subscription. The directive sets `aria-autocomplete="list"`
-     * on its host element during initialization, so we wait for that attribute as
-     * a proxy for "directive subscription is live". Without this wait the
-     * subsequent typeahead interactions silently miss their first input event under
-     * heavy parallel load.
+     * Clicks the "Create team" button and waits for the dialog to be fully rendered AND for
+     * the NgbTypeahead directives on both search inputs to have completed their `ngOnInit`
+     * subscription. The directive sets `aria-autocomplete="list"` on its host element during
+     * initialization, so we wait for that attribute as a proxy for "directive subscription
+     * is live".
      */
     async createTeam() {
         await this.page.locator('button', { hasText: 'Create team' }).click();
         await this.page.getByRole('dialog').waitFor({ state: 'visible', timeout: 30_000 });
-        await this.page.locator('#owner-search-input[aria-autocomplete="list"]').waitFor({ state: 'attached', timeout: 30_000 });
-        await this.page.locator('#student-search-input[aria-autocomplete="list"]').waitFor({ state: 'attached', timeout: 30_000 });
+        // Wait for the ngbTypeahead directive to have completed its first change-detection
+        // cycle on both search inputs. `aria-expanded` is set by the directive via host
+        // property binding (`[attr.aria-expanded]="isPopupOpen()"`) — unlike the hard-coded
+        // `aria-autocomplete="list"` in the template, this attribute is ONLY there once the
+        // directive has instantiated and run CD. Waiting for it removes the cold-mount race
+        // where keystrokes silently bypass the typeahead's not-yet-attached input listener.
+        await this.page.locator('#owner-search-input[aria-expanded]').waitFor({ state: 'attached', timeout: 30_000 });
+        await this.page.locator('#student-search-input[aria-expanded]').waitFor({ state: 'attached', timeout: 30_000 });
     }
 
     /**
@@ -100,31 +104,8 @@ export class ExerciseTeamsPage {
                     await this.page.waitForTimeout(500);
                     await inputLocator.clear();
                 }
-                // Drive the typeahead entirely from within the page's main JS context: focus
-                // the input, fire the `focus` + `click` synthetic events the component template
-                // forwards into the directive's subjects, then set the value via the native
-                // input prototype setter (so framework value-tracking sees it) and dispatch
-                // the `input` event the ngbTypeahead directive listens to.
-                //
-                // Doing all of this in a single `page.evaluate` avoids the cold-mount race
-                // we previously hit: when a separate Playwright click is followed by a
-                // separate keyboard.type, the directive's `_valueChanges$` subscription can
-                // still be pending on the very first dialog open and the first keystroke is
-                // silently swallowed. A single evaluate completes synchronously *after*
-                // Angular's pending NgZone microtasks have drained on the receiving end of
-                // the CDP roundtrip, so the directive is guaranteed live when the input
-                // event fires.
-                await this.page.evaluate((u) => {
-                    const el = document.querySelector('#owner-search-input') as HTMLInputElement | null;
-                    if (!el) {
-                        return;
-                    }
-                    el.focus();
-                    el.click();
-                    const valueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
-                    valueSetter?.call(el, u);
-                    el.dispatchEvent(new Event('input', { bubbles: true }));
-                }, username);
+                await inputLocator.click();
+                await this.page.keyboard.type(username, { delay: 30 });
                 try {
                     await listbox.waitFor({ state: 'visible', timeout: listboxTimeoutMs });
                     const option = listbox.getByText(new RegExp(username, 'i')).first();
