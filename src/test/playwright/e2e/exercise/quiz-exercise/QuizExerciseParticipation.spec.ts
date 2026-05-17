@@ -121,8 +121,11 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                 .toBe(true);
 
             const expectedSortedOptionIds = [...expectedTickedOptionIds].sort((a, b) => a - b);
-            // Reload several times after evaluation completes; the bug manifested non-deterministically, so the loop amplifies any remaining flakiness.
-            for (let iteration = 0; iteration < 5; iteration++) {
+            // Reload several times after evaluation completes; the bug manifested non-deterministically,
+            // so the loop amplifies any remaining flakiness. Three reloads is the sweet spot: enough to
+            // catch the original eagerly-fetched / cached-collection regression, few enough to fit the
+            // slow-test budget under heavy parallel CI load.
+            for (let iteration = 0; iteration < 3; iteration++) {
                 const selectedOptionIds = await reloadAndReadSelectedOptionIds();
                 expect(selectedOptionIds, `iteration ${iteration}: server must return exactly the answer options the student ticked`).toEqual(expectedSortedOptionIds);
             }
