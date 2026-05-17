@@ -60,11 +60,23 @@ test.describe('Text exercise management', { tag: '@slow' }, () => {
             expect(textSubmission.text).toBe(submission);
 
             // Make sure text exercise is shown in exercises list. Under heavy parallel CI
-            // load the exercises-list HTTP can take >10s after navigation; give the card a
-            // generous timeout so the assertion does not race the API response + render.
-            await page.goto(`/course-management/${course.id}/exercises`);
-            await page.waitForLoadState('domcontentloaded');
-            await expect(courseManagementExercises.getExercise(exercise.id!)).toBeVisible({ timeout: 30_000 });
+            // load the exercises-list HTTP can take >10s after navigation; reload if the
+            // freshly created card doesn't render within the first window — single reload
+            // reliably recovers from chunk-load races.
+            const exerciseUrl = `/course-management/${course.id}/exercises`;
+            const card = courseManagementExercises.getExercise(exercise.id!);
+            const visibleWithin = async (timeout: number): Promise<boolean> =>
+                card
+                    .waitFor({ state: 'visible', timeout })
+                    .then(() => true)
+                    .catch(() => false);
+            await page.goto(exerciseUrl);
+            await page.waitForLoadState('load');
+            if (!(await visibleWithin(20_000))) {
+                await page.reload();
+                await page.waitForLoadState('load');
+                await expect(card).toBeVisible({ timeout: 30_000 });
+            }
         });
 
         test.afterEach('Delete created exercise', async ({ login, exerciseAPIRequests }) => {

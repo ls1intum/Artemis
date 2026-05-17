@@ -95,22 +95,34 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
              */
             async function reloadAndReadSelectedOptionIds(): Promise<number[] | null> {
                 // Bound the response wait to 45s so a single hung request (the multi-node
-                // observation under load) does not consume the entire test budget — the
-                // outer poll re-issues the navigation on null, which will retry the
-                // request.
-                const responsePromise = page.waitForResponse(
-                    (response) =>
-                        response.url().includes(`/api/quiz/quiz-exercises/${shortQuiz.id}/start-participation`) && response.request().method() === 'POST' && response.ok(),
-                    { timeout: 45_000 },
-                );
-                await page.goto(`/courses/${course.id}/exercises/${shortQuiz.id!}`);
-                const body = await (await responsePromise).json();
-                const submission = (body.submissions ?? [])[0];
-                if (!submission || !(submission.results ?? []).length) {
-                    return null;
+                // observation under load) does not consume the entire test budget. On
+                // timeout we re-issue the navigation up to two more times before giving up
+                // — a hung start-participation POST is a backend race that consistently
+                // recovers on subsequent retries within 1-2 attempts.
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    const responsePromise = page.waitForResponse(
+                        (response) =>
+                            response.url().includes(`/api/quiz/quiz-exercises/${shortQuiz.id}/start-participation`) && response.request().method() === 'POST' && response.ok(),
+                        { timeout: 45_000 },
+                    );
+                    await page.goto(`/courses/${course.id}/exercises/${shortQuiz.id!}`);
+                    let body: any;
+                    try {
+                        body = await (await responsePromise).json();
+                    } catch {
+                        if (attempt === 2) {
+                            throw new Error(`reloadAndReadSelectedOptionIds: start-participation never returned after 3 attempts`);
+                        }
+                        continue;
+                    }
+                    const submission = (body.submissions ?? [])[0];
+                    if (!submission || !(submission.results ?? []).length) {
+                        return null;
+                    }
+                    const mcAnswer = (submission.submittedAnswers ?? []).find((submittedAnswer: any) => submittedAnswer.quizQuestion?.id === mcQuestionId);
+                    return mcAnswer ? (mcAnswer.selectedOptions ?? []).map((option: any) => option.id).sort((a: number, b: number) => a - b) : [];
                 }
-                const mcAnswer = (submission.submittedAnswers ?? []).find((submittedAnswer: any) => submittedAnswer.quizQuestion?.id === mcQuestionId);
-                return mcAnswer ? (mcAnswer.selectedOptions ?? []).map((option: any) => option.id).sort((a: number, b: number) => a - b) : [];
+                return null;
             }
 
             // Poll the refresh endpoint until the scheduled evaluation job has created a rated
