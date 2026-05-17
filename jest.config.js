@@ -206,10 +206,10 @@ module.exports = {
     // Per-file coverage is unchanged — the exam-module tests still cover the same files, just under Vitest.
     coverageThreshold: {
         global: {
-            statements: 83.0,
-            branches: 73,
-            functions: 72.5,
-            lines: 84.0,
+            statements: 82.8,
+            branches: 72.8,
+            functions: 72.3,
+            lines: 83.7,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs

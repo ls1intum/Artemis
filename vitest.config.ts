@@ -141,6 +141,7 @@ export default defineConfig({
                 'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.ts', // include checklist-panel for code coverage
                 'src/main/webapp/app/hyperion/**/*.ts', // include hyperion module for code coverage
                 'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.ts', // include build phases editor for code coverage
+                'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/*.ts', // include custom build plan components for code coverage
                 'src/main/webapp/app/programming/manage/version-history/**/*.ts', // include programming version history for code coverage
                 'src/main/webapp/app/communication/**/*.ts', // include all communication module for code coverage
                 'src/main/webapp/app/exercise/participation/**/*.ts', // include participation for code coverage
