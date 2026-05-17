@@ -56,6 +56,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastStudentInLecture;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -105,11 +109,13 @@ public class LectureResource {
 
     private final ChannelRepository channelRepository;
 
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     private final YouTubeUrlService youTubeUrlService;
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ChannelService channelService, ChannelRepository channelRepository,
-            SlideRepository slideRepository, YouTubeUrlService youTubeUrlService) {
+            SlideRepository slideRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -119,6 +125,7 @@ public class LectureResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.slideRepository = slideRepository;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.youTubeUrlService = youTubeUrlService;
     }
 
@@ -145,6 +152,7 @@ public class LectureResource {
 
         Lecture savedLecture = lectureRepository.save(newLecture);
         String channelName = channelService.createLectureChannel(savedLecture, Optional.ofNullable(newLectureDto.channelName()));
+        indexLectureInWeaviate(savedLecture);
         SimpleLectureDTO savedLectureDTO = SimpleLectureDTO.from(savedLecture, course, channelName);
         return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(savedLectureDTO);
     }
@@ -194,6 +202,9 @@ public class LectureResource {
 
         lectureService.correctDefaultLectureAndChannelNames(courseId);
 
+        List<Long> savedLectureIds = savedLectures.stream().map(Lecture::getId).toList();
+        lectureRepository.findAllById(savedLectureIds).forEach(this::indexLectureInWeaviate);
+
         return ResponseEntity.noContent().build();
     }
 
@@ -234,6 +245,7 @@ public class LectureResource {
 
         channelService.updateLectureChannel(originalLecture, updatedLectureDto.channelName());
         Lecture result = lectureRepository.save(originalLecture);
+        indexLectureInWeaviate(result);
 
         SimpleLectureDTO resultDTO = SimpleLectureDTO.from(result, course, updatedLectureDto.channelName());
         return ResponseEntity.ok().body(resultDTO);
@@ -446,6 +458,7 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
 
         final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse, true);
+        indexLectureInWeaviate(savedLecture);
 
         final var lectureDTO = SimpleLectureDTO.from(savedLecture, destinationCourse, null /* channel name not needed in client */);
         return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(lectureDTO);
@@ -499,4 +512,19 @@ public class LectureResource {
         lectureService.delete(lecture, true);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
     }
+
+    private void indexLectureInWeaviate(Lecture lecture) {
+        searchableEntityWeaviateService.ifPresent(service -> {
+            service.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
+            lecture.getLectureUnits().forEach(unit -> {
+                if (LectureUnitSearchableEntityDTO.isIndexable(unit)) {
+                    service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(unit));
+                }
+                else {
+                    service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unit.getId());
+                }
+            });
+        });
+    }
+
 }

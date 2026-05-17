@@ -70,28 +70,34 @@ export class ExerciseTeamsPage {
         }
 
         try {
-            // Retry with different input strategies — fill() can fail to trigger
-            // Angular's typeahead if change detection doesn't pick up the event.
-            for (let attempt = 0; attempt < 3; attempt++) {
+            // Ensure the input is in the DOM and interactive before typing. Under parallel CI load
+            // the tab containing the input renders late, and fill() against a not-yet-attached input
+            // silently no-ops, leaving the typeahead never triggered.
+            await inputLocator.waitFor({ state: 'visible', timeout: 30_000 });
+
+            // Retry with different input strategies — fill() can fail to trigger Angular's
+            // typeahead if signal-based change detection misses the event. Subsequent attempts
+            // use focus + pressSequentially with a longer delay, which always dispatches real
+            // keyboard events the typeahead listens for.
+            for (let attempt = 0; attempt < 4; attempt++) {
                 if (attempt > 0) {
                     await this.page.waitForTimeout(500);
                     await inputLocator.clear();
                 }
-                // First attempt: fill() (fast). Subsequent: pressSequentially (reliable).
                 if (attempt === 0) {
                     await inputLocator.fill(username);
                 } else {
-                    await inputLocator.click();
-                    await inputLocator.pressSequentially(username, { delay: 50 });
+                    await inputLocator.focus();
+                    await inputLocator.pressSequentially(username, { delay: 80 });
                 }
                 try {
-                    await listbox.waitFor({ state: 'visible', timeout: 10000 });
+                    await listbox.waitFor({ state: 'visible', timeout: 15000 });
                     const option = listbox.getByText(new RegExp(username, 'i')).first();
                     await option.waitFor({ state: 'visible', timeout: 5000 });
                     await option.click();
                     break;
                 } catch {
-                    if (attempt === 2) throw new Error(`Tutor search autocomplete did not appear after 3 attempts for '${username}'`);
+                    if (attempt === 3) throw new Error(`Tutor search autocomplete did not appear after 4 attempts for '${username}'`);
                 }
             }
         } finally {
@@ -108,7 +114,10 @@ export class ExerciseTeamsPage {
      */
     private async searchStudent(inputLocator: ReturnType<Page['locator']>, username: string) {
         const listbox = this.page.getByRole('listbox');
-        for (let attempt = 0; attempt < 3; attempt++) {
+        // Ensure the input is mounted before we start typing — under parallel CI load the dialog
+        // body can render late and pressSequentially against an absent element silently no-ops.
+        await inputLocator.waitFor({ state: 'visible', timeout: 30_000 });
+        for (let attempt = 0; attempt < 4; attempt++) {
             if (attempt > 0) {
                 await this.page.waitForTimeout(500);
             }
@@ -119,13 +128,13 @@ export class ExerciseTeamsPage {
             await inputLocator.pressSequentially(username, { delay: 100 });
 
             try {
-                await listbox.waitFor({ state: 'visible', timeout: 10000 });
+                await listbox.waitFor({ state: 'visible', timeout: 15000 });
                 const option = listbox.getByText(new RegExp(username, 'i')).first();
                 await option.waitFor({ state: 'visible', timeout: 5000 });
                 await option.click();
                 return;
             } catch {
-                if (attempt === 2) throw new Error(`Student search autocomplete did not appear after 3 attempts for '${username}'`);
+                if (attempt === 3) throw new Error(`Student search autocomplete did not appear after 4 attempts for '${username}'`);
             }
         }
     }

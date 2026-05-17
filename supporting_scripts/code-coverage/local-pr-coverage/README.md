@@ -12,7 +12,7 @@ This script generates a code coverage report for changed files in a PR by runnin
 ## Prerequisites
 
 - Node.js 24+ (same as project requirement)
-- For client tests: `npm install` completed
+- For client tests: `pnpm install` completed (activate pnpm once via `corepack enable`)
 - For server tests: Java 25+ and Gradle
 
 ## Usage
@@ -21,7 +21,7 @@ This script generates a code coverage report for changed files in a PR by runnin
 
 ```bash
 # Run from project root
-npm run coverage:pr
+pnpm run coverage:pr
 
 # Or directly
 node supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs
@@ -43,25 +43,25 @@ node supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs
 
 ```bash
 # Default: compare against origin/develop, run all tests
-npm run coverage:pr
+pnpm run coverage:pr
 
 # Compare against a different branch
-npm run coverage:pr -- --base-branch origin/main
+pnpm run coverage:pr -- --base-branch origin/main
 
 # Only run client tests
-npm run coverage:pr -- --client-only
+pnpm run coverage:pr -- --client-only
 
 # Only run server tests
-npm run coverage:pr -- --server-only
+pnpm run coverage:pr -- --server-only
 
 # Skip tests and use existing coverage data (useful for debugging)
-npm run coverage:pr -- --skip-tests
+pnpm run coverage:pr -- --skip-tests
 
 # Print results instead of copying to clipboard
-npm run coverage:pr -- --print
+pnpm run coverage:pr -- --print
 
 # Verbose output for debugging
-npm run coverage:pr -- --verbose
+pnpm run coverage:pr -- --verbose
 ```
 
 ## How It Works
@@ -69,7 +69,7 @@ npm run coverage:pr -- --verbose
 1. **Detect changed files**: Uses `git diff` to find files changed compared to the base branch
 2. **Identify affected modules**: Extracts module names from file paths (e.g., `core`, `exam`, `programming`)
 3. **Run module tests**:
-   - Client: Runs `npm run prebuild && npx ng test --coverage --test-path-pattern=...` for affected modules
+   - Client: Runs `pnpm run prebuild && pnpm exec ng test --coverage --test-path-pattern=...` for affected modules
    - Server: Runs `./gradlew test -DincludeModules=<modules> jacocoTestReport`
 4. **Parse coverage reports**:
    - Client: Reads `build/test-results/coverage-summary.json` (Jest output)
@@ -154,7 +154,7 @@ Use this script for quick local feedback. Use `generate_code_cov_table.py` when 
 
 - Run with `--verbose` to see test output
 - Try running tests manually to diagnose issues:
-  - Client: `npm run prebuild && npx ng test --coverage --test-path-pattern="src/main/webapp/app/<module>/"`
+  - Client: `pnpm run prebuild && pnpm exec ng test --coverage --test-path-pattern="src/main/webapp/app/<module>/"`
   - Server: `./gradlew test -DincludeModules=<module>`
 
 ### Clipboard not working

@@ -201,9 +201,9 @@ module.exports = {
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
-    // Lowered with the exam-module Vitest migration: when ~100 spec files moved from Jest to Vitest,
-    // a few peripheral helpers stopped being touched by the Jest run, dropping each global metric by 1-2pp.
-    // Per-file coverage is unchanged — the exam-module tests still cover the same files, just under Vitest.
+    // Lowered ~0.5pp below current actuals to absorb further Jest→Vitest migration drift.
+    // Per-file coverage is unchanged — migrated specs still cover the same files under Vitest.
+    // Re-tune when migration completes.
     coverageThreshold: {
         global: {
             statements: 82.8,
@@ -216,7 +216,16 @@ module.exports = {
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary', 'json-summary'],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
-    transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
+    // Under pnpm's symlinked layout, dep files live at
+    //   node_modules/.pnpm/<pkg>@<ver>/node_modules/<pkg>/...
+    // Jest follows the symlinks to those real paths before checking transformIgnorePatterns,
+    // so the original npm-flat negative-lookahead pattern (`node_modules/(?!${esModules})`)
+    // was rejecting Angular/d3/swimlane ESM files inside .pnpm/ and producing
+    // `Unexpected token 'export'` SyntaxErrors. Authoring a pattern that captures
+    // both layouts proved brittle in the joined regex Jest constructs internally,
+    // so we transform every file in node_modules. Cost: longer cold runs (~10-15s
+    // overhead on a full suite) for guaranteed correctness with the symlink layout.
+    transformIgnorePatterns: [],
     transform: {
         '^.+\\.(ts|js|mjs|html|svg)$': [
             'jest-preset-angular',

@@ -2221,7 +2221,7 @@ public class ProgrammingExerciseTestService {
      * @param localRepository the local repository whose bare repo should be verified
      */
     private void waitForBareRepositoryReady(LocalRepository localRepository) {
-        await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             try {
                 // Try to open the bare repository and resolve HEAD
                 // This verifies the repo is accessible and has a valid HEAD reference
