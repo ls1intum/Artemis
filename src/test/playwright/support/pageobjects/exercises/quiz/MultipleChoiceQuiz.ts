@@ -14,14 +14,13 @@ export class MultipleChoiceQuiz {
             scope = scope.locator('#question' + quizQuestionId);
         }
         const answerOption = scope.locator('#answer-option-' + optionNumber);
-        // Wait for the option to mount AND for the submit button to also be rendered. Under
-        // heavy multi-node load Playwright's click can fire on a freshly-mounted DOM div
-        // before Angular wires the (click) handler that toggles the answer, so the click
-        // silently no-ops and the submit button stays disabled. Waiting for the submit
-        // button (rendered alongside the option in the same component tree) gives Angular
-        // a clear signal that the route is interactive.
+        // Wait for the option's icon (.selection > fa-icon) to render before clicking. The
+        // outer answer-option div can be visible while the inner icon is still painting and
+        // the (click) handler that toggles selection is wired only after the component's
+        // first change-detection cycle — clicking too early lands on a static div with no
+        // handler and the toggle silently no-ops.
         await answerOption.waitFor({ state: 'visible', timeout: 30_000 });
-        await this.page.locator('#submit-exercise, #submit-exercise-popover, #submit-quiz').first().waitFor({ state: 'attached', timeout: 30_000 });
+        await answerOption.locator('.selection fa-icon').first().waitFor({ state: 'visible', timeout: 30_000 });
         // Click the parent answer-option div (which owns the toggleSelection handler)
         // rather than the inner .selection icon — clicking the icon child works when
         // events bubble but fails when the icon hasn't fully painted yet.
