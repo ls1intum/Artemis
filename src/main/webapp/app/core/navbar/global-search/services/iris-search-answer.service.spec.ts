@@ -83,7 +83,11 @@ describe('IrisSearchAnswerService', () => {
             answer: 'Signals are a reactive primitive in Angular...',
             sources: [
                 {
+                    sourceType: 'lecture_unit_slide',
+                    entityId: 1,
                     course: { id: 1, name: 'Advanced Web Development' },
+                    title: 'Introduction to Signals',
+                    snippet: 'Signals are a reactive primitive...',
                     lecture: { id: 1, name: 'Angular Basics' },
                     lectureUnit: {
                         id: 1,
@@ -93,7 +97,6 @@ describe('IrisSearchAnswerService', () => {
                         sourceType: 'lecture_unit_slide',
                         queryParams: { unit: 1, page: 3 },
                     },
-                    snippet: 'Signals are a reactive primitive...',
                 },
             ],
         };

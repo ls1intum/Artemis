@@ -17,6 +17,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchAnswerWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchSourceDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisSearchAskRequestDTO;
@@ -47,7 +48,7 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
                         "backpropagation snippet"));
         irisRequestMockProvider.mockSearchLectures(results);
 
-        var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5);
+        var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5, null);
         List<PyrisLectureSearchResultDTO> response = request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
 
         assertThat(response).hasSize(2);
@@ -61,7 +62,7 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
     void search_shouldReturnEmptyList() throws Exception {
         irisRequestMockProvider.mockSearchLectures(List.of());
 
-        var requestDTO = new PyrisLectureSearchRequestDTO("nonexistent topic", 5);
+        var requestDTO = new PyrisLectureSearchRequestDTO("nonexistent topic", 5, null);
         List<PyrisLectureSearchResultDTO> response = request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
 
         assertThat(response).isEmpty();
@@ -72,13 +73,13 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
     void search_whenPyrisFails_shouldReturnInternalServerError() throws Exception {
         irisRequestMockProvider.mockSearchLecturesError(HttpStatus.INTERNAL_SERVER_ERROR);
 
-        var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5);
+        var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5, null);
         request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
     void search_asUnauthenticated_shouldReturnUnauthorized() throws Exception {
-        var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5);
+        var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5, null);
         request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.UNAUTHORIZED);
     }
 
@@ -120,8 +121,7 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
         var requestDTO = new PyrisSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID());
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
 
-        var source = new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.CourseDTO(1L, "ML"), new PyrisLectureSearchResultDTO.LectureDTO(2L, "Intro"),
-                new PyrisLectureSearchResultDTO.LectureUnitDTO(3L, "Neural Nets", "/link/3", 5, "lecture_unit_slide", Map.of("unit", 3L, "page", 5), "p. 5"), "backprop snippet");
+        var source = new PyrisGlobalSearchSourceDTO("lecture_unit_slide", 3L, new PyrisLectureSearchResultDTO.CourseDTO(1L, "ML"), "Neural Nets", "backprop snippet", null, null);
         var doneStage = new PyrisStageDTO("LLM", 90, PyrisStageState.DONE, null, false, null);
         sendLectureSearchStatus(jobIdRef.get(), new PyrisGlobalSearchAnswerStatusUpdateDTO(List.of(doneStage), "Neural networks learn via backpropagation.", List.of(source)));
 
