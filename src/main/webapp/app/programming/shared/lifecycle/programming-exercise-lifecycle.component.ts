@@ -308,6 +308,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         const dueDate = this.exercise.dueDate;
         if (!dueDate && !this.isExamMode) {
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
+            this.previousAutomaticAfterDueDatePreviewRequest = undefined;
             return;
         }
 

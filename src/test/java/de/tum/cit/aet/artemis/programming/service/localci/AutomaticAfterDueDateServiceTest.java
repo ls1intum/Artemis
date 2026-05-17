@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -50,11 +51,15 @@ class AutomaticAfterDueDateServiceTest {
     @Mock
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
+    @Mock
+    private ExamApi examApi;
+
     private AutomaticAfterDueDateService service;
 
     @BeforeEach
     void setUp() {
-        service = new AutomaticAfterDueDateService(programmingExerciseRepository, Optional.of(examDateApi), buildPhasesTemplateService, programmingExerciseBuildConfigRepository);
+        service = new AutomaticAfterDueDateService(programmingExerciseRepository, Optional.of(examDateApi), buildPhasesTemplateService, programmingExerciseBuildConfigRepository,
+                examApi);
     }
 
     @Test
@@ -128,6 +133,7 @@ class AutomaticAfterDueDateServiceTest {
         var latestExamEndDate = ZonedDateTime.now().plusDays(2);
         var exercise = createExamExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE, 180);
         when(examDateApi.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam())).thenReturn(latestExamEndDate);
+        when(examApi.findByExerciseIdElseThrow(exercise.getId())).thenReturn(exercise.getExam());
 
         var result = service.computeBuildAndTestDate(exercise, null);
 

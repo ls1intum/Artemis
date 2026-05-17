@@ -1678,4 +1678,14 @@ public class ExamService {
         }
         return events;
     }
+
+    /**
+     * Get one exam by an exercise id.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the exam
+     */
+    public Exam findByExerciseIdElseThrow(final Long exerciseId) {
+        return examRepository.findByExerciseIdElseThrow(exerciseId);
+    }
 }
