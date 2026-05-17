@@ -26,7 +26,7 @@ import { ExerciseTimeline, TimelineItem } from 'app/shared/exercise-timeline/exe
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
-    templateUrl: './programming-exercise-lifecycle.component.html',
+    templateUrl: './programming-exercise-timeline.component.html',
     styleUrls: ['./test-schedule-date-picker/programming-exercise-test-schedule-picker.scss'],
     imports: [
         ProgrammingExerciseTestScheduleDatePickerComponent,
@@ -40,7 +40,7 @@ import { ExerciseTimeline, TimelineItem } from 'app/shared/exercise-timeline/exe
         ExerciseTimeline,
     ],
 })
-export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnDestroy, OnInit, OnChanges {
+export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDestroy, OnInit, OnChanges {
     private translateService = inject(TranslateService);
     private exerciseService = inject(ExerciseService);
     private profileService = inject(ProfileService);

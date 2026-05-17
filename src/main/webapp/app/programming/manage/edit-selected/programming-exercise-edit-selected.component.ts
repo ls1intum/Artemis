@@ -11,14 +11,14 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { ProgrammingExerciseLifecycleComponent } from 'app/programming/shared/lifecycle/programming-exercise-lifecycle.component';
+import { ProgrammingExerciseTimelineComponent } from '../../shared/lifecycle/programming-exercise-timeline.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',
     templateUrl: './programming-exercise-edit-selected.component.html',
-    imports: [TranslateDirective, FormsModule, HelpIconComponent, ProgrammingExerciseLifecycleComponent, ButtonComponent, FaIconComponent],
+    imports: [TranslateDirective, FormsModule, HelpIconComponent, ProgrammingExerciseTimelineComponent, ButtonComponent, FaIconComponent],
 })
 export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);

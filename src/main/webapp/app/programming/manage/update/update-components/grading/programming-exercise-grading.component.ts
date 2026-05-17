@@ -12,7 +12,7 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { Subject, Subscription } from 'rxjs';
 import { FormsModule, NgModel } from '@angular/forms';
 import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/submission-policy-update.component';
-import { ProgrammingExerciseLifecycleComponent } from 'app/programming/shared/lifecycle/programming-exercise-lifecycle.component';
+import { ProgrammingExerciseTimelineComponent } from '../../../../shared/lifecycle/programming-exercise-timeline.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -35,7 +35,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         SubmissionPolicyUpdateComponent,
         NgbAlert,
         HelpIconComponent,
-        ProgrammingExerciseLifecycleComponent,
+        ProgrammingExerciseTimelineComponent,
         GradingInstructionsDetailsComponent,
         PresentationScoreComponent,
         KeyValuePipe,
@@ -57,7 +57,7 @@ export class ProgrammingExerciseGradingComponent implements AfterContentInit, On
     isFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
     @ViewChild(SubmissionPolicyUpdateComponent) submissionPolicyUpdateComponent?: SubmissionPolicyUpdateComponent;
-    @ViewChild(ProgrammingExerciseLifecycleComponent) lifecycleComponent?: ProgrammingExerciseLifecycleComponent;
+    @ViewChild(ProgrammingExerciseTimelineComponent) lifecycleComponent?: ProgrammingExerciseTimelineComponent;
     @ViewChild('maxScore') maxScoreField?: NgModel;
     @ViewChild('bonusPoints') bonusPointsField?: NgModel;
     @ViewChild('maxPenalty') maxPenaltyField?: NgModel;

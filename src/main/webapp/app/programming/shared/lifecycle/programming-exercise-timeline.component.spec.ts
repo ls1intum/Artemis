@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ProgrammingExerciseLifecycleComponent } from 'app/programming/shared/lifecycle/programming-exercise-lifecycle.component';
+import { ProgrammingExerciseTimelineComponent } from './programming-exercise-timeline.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programming/shared/lifecycle/test-schedule-date-picker/programming-exercise-test-schedule-date-picker.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -21,8 +21,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
-    let comp: ProgrammingExerciseLifecycleComponent;
-    let fixture: ComponentFixture<ProgrammingExerciseLifecycleComponent>;
+    let comp: ProgrammingExerciseTimelineComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseTimelineComponent>;
 
     const startDate = dayjs().add(5, 'days');
     const nextDueDate = dayjs().add(6, 'days');
@@ -48,7 +48,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
-        fixture = TestBed.createComponent(ProgrammingExerciseLifecycleComponent);
+        fixture = TestBed.createComponent(ProgrammingExerciseTimelineComponent);
         comp = fixture.componentInstance;
 
         exercise = {

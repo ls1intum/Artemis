@@ -9,7 +9,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ProgrammingExerciseLifecycleComponent } from 'app/programming/shared/lifecycle/programming-exercise-lifecycle.component';
+import { ProgrammingExerciseTimelineComponent } from '../../../../shared/lifecycle/programming-exercise-timeline.component';
 import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/submission-policy-update.component';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
@@ -170,7 +170,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
         const calculateFormStatusSpy = jest.spyOn(comp, 'calculateFormStatus');
 
         comp.submissionPolicyUpdateComponent = { form: { valueChanges: new Subject() } } as any as SubmissionPolicyUpdateComponent;
-        comp.lifecycleComponent = { formValidChanges: new Subject() } as any as ProgrammingExerciseLifecycleComponent;
+        comp.lifecycleComponent = { formValidChanges: new Subject() } as any as ProgrammingExerciseTimelineComponent;
 
         comp.ngAfterContentInit();
 
