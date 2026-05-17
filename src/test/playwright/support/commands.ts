@@ -147,13 +147,19 @@ export class Commands {
 
     /**
      * Routes whose route component intentionally suppresses the app navbar — exam
-     * participation, problem-statement standalone view, LTI iframe view, quiz/exercise
+     * participation, problem-statement standalone view, LTI launch views, quiz/exercise
      * "live" or "participate" views, and exam conduction. The login verification helper
      * skips navbar checks on these routes so we do not pay a reload overhead on tests
      * targeting them.
+     *
+     * Note: Artemis LTI routes are mounted at `/lti/{launch|dynamic-registration|select-content|...}`
+     * (`app.routes.ts` `path: 'lti'`); the literal `lti13` only appears in API endpoint
+     * paths (`/api/lti/public/lti13/...`), not in router URLs.
      */
     static isNoNavbarRoute(url: string): boolean {
-        return /\/exam-participation\/|\/problem-statement\/|\/lti13|\/exercises\/[^/]+\/live\b|\/exercises\/[^/]+\/participate\b|\/exams\/\d+\/.+\/conduction/.test(url);
+        return /\/exam-participation\/|\/problem-statement\/|\/lti\/(?:launch|dynamic-registration|select-content)\b|\/exercises\/[^/]+\/live\b|\/exercises\/[^/]+\/participate\b|\/exams\/\d+\/.+\/conduction/.test(
+            url,
+        );
     }
 
     static logout = async (page: Page): Promise<void> => {

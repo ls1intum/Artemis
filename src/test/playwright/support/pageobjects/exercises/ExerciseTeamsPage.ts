@@ -1,6 +1,11 @@
 import { Page } from 'playwright';
 import { expect } from '@playwright/test';
 
+/** Escapes regex meta-characters in `value` so it can be used as a literal pattern. */
+function escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /**
  * Page object for the exercise teams page.
  */
@@ -12,11 +17,11 @@ export class ExerciseTeamsPage {
     }
 
     /**
-     * Clicks the "Create team" button and waits for the dialog to be fully rendered AND for
-     * the NgbTypeahead directives on both search inputs to have completed their `ngOnInit`
-     * subscription. The directive sets `aria-autocomplete="list"` on its host element during
-     * initialization, so we wait for that attribute as a proxy for "directive subscription
-     * is live".
+     * Clicks the "Create team" button and waits for the dialog to be fully rendered, with
+     * both typeahead inputs visible. The owner-search typeahead now uses debounceTime(200)
+     * on its text$ stream (matching team-student-search), so race-prone first-keystroke
+     * timing is handled at the component layer instead of by waiting on a host-property
+     * attribute here.
      */
     async createTeam() {
         await this.page.locator('button', { hasText: 'Create team' }).click();
@@ -54,18 +59,18 @@ export class ExerciseTeamsPage {
     /**
      * Searches for a tutor via the owner typeahead.
      *
-     * The tutor typeahead (team-owner-search) uses switchMap WITHOUT debounce, so every
-     * keystroke fires a new HTTP request and cancels the previous one. Under heavy parallel
-     * multi-node load the GET /api/core/courses/{id}/tutors round-trip can take 10-30s and
-     * the final response from the LAST keystroke may not arrive within the test budget.
+     * The team-owner-search typeahead now applies `debounceTime(200) + distinctUntilChanged`
+     * on its text$ stream (matching team-student-search), so rapid typing coalesces into a
+     * single trailing HTTP rather than cascading through switchMap cancellations. We still
+     * pre-fetch the tutor list via Playwright's request API and install a `page.route`
+     * intercept so the typeahead's HTTP is fulfilled instantly regardless of server load —
+     * under heavy parallel multi-node load the real `GET /api/core/courses/{id}/tutors`
+     * round-trip can occasionally exceed the listbox wait timeout even with debounce.
      *
-     * Strategy: pre-fetch the real tutor list via Playwright's request API (one HTTP call
-     * not subject to switchMap cancellation), with retries to ride out transient slowness.
-     * Then install a `page.route` intercept that serves the cached body instantly to every
-     * subsequent typeahead request. We deliberately use the REAL server response (rather
-     * than a synthetic one) so the typeahead's selected `User` object carries every field
-     * the server later cross-checks during the team save — synthetic payloads can subtly
-     * differ from the real entity (extra fields, missing metadata) and break the save path.
+     * We deliberately serve the REAL server response (rather than a synthetic one) so the
+     * typeahead's selected `User` object carries every field the server later cross-checks
+     * during the team save — synthetic payloads can subtly differ from the real entity
+     * (extra fields, missing metadata) and break the save path.
      *
      * If every pre-fetch retry fails, we fall through to the real (slower) network — the
      * fallback timeout is large enough to absorb a few server hiccups.
@@ -112,7 +117,7 @@ export class ExerciseTeamsPage {
                 await this.page.keyboard.type(username, { delay: 30 });
                 try {
                     await listbox.waitFor({ state: 'visible', timeout: listboxTimeoutMs });
-                    const option = listbox.getByText(new RegExp(username, 'i')).first();
+                    const option = listbox.getByText(new RegExp(escapeRegExp(username), 'i')).first();
                     await option.waitFor({ state: 'visible', timeout: 5_000 });
                     await option.click();
                     return;
@@ -207,7 +212,7 @@ export class ExerciseTeamsPage {
 
             try {
                 await listbox.waitFor({ state: 'visible', timeout: 15000 });
-                const option = listbox.getByText(new RegExp(username, 'i')).first();
+                const option = listbox.getByText(new RegExp(escapeRegExp(username), 'i')).first();
                 await option.waitFor({ state: 'visible', timeout: 5000 });
                 await option.click();
                 return;

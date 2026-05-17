@@ -64,7 +64,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // The scheduled quiz-evaluation job + repeated page reloads make this test
             // routinely exceed the 60s fast-test budget under parallel CI load. `test.slow()`
             // triples the budget (180s) which comfortably covers a delayed evaluation job
-            // plus the 5 verification reloads.
+            // plus the 3 verification reloads further down.
             test.slow();
             const quizDurationSeconds = 10;
             await login(admin);
