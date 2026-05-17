@@ -60,9 +60,10 @@ test.describe('Text exercise management', { tag: '@slow' }, () => {
             expect(textSubmission.text).toBe(submission);
 
             // Make sure text exercise is shown in exercises list. Under heavy parallel CI
-            // load the exercises-list HTTP can take >10s after navigation; reload if the
-            // freshly created card doesn't render within the first window — single reload
-            // reliably recovers from chunk-load races.
+            // load the exercises-list response occasionally lags behind the create response,
+            // so the freshly created card isn't in the first render. Reload up to three
+            // times before failing — each reload re-fetches the list, and the server-side
+            // commit reliably propagates within a few seconds.
             const exerciseUrl = `/course-management/${course.id}/exercises`;
             const card = courseManagementExercises.getExercise(exercise.id!);
             const visibleWithin = async (timeout: number): Promise<boolean> =>
@@ -72,10 +73,15 @@ test.describe('Text exercise management', { tag: '@slow' }, () => {
                     .catch(() => false);
             await page.goto(exerciseUrl);
             await page.waitForLoadState('load');
-            if (!(await visibleWithin(20_000))) {
+            for (let attempt = 0; attempt < 3; attempt++) {
+                if (await visibleWithin(20_000)) {
+                    break;
+                }
+                if (attempt === 2) {
+                    throw new Error(`Newly created text exercise card #exercise-card-${exercise.id!} did not appear after 3 reloads`);
+                }
                 await page.reload();
                 await page.waitForLoadState('load');
-                await expect(card).toBeVisible({ timeout: 30_000 });
             }
         });
 

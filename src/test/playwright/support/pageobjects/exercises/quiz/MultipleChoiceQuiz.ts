@@ -14,26 +14,18 @@ export class MultipleChoiceQuiz {
             scope = scope.locator('#question' + quizQuestionId);
         }
         const answerOption = scope.locator('#answer-option-' + optionNumber);
-        // Wait for the option to mount before clicking. Under heavy multi-node load the
-        // quiz route component renders after `login`'s navigation completes, so an
-        // unguarded click can race the render and silently no-op against a stale DOM.
+        // Wait for the option to mount AND for the submit button to also be rendered. Under
+        // heavy multi-node load Playwright's click can fire on a freshly-mounted DOM div
+        // before Angular wires the (click) handler that toggles the answer, so the click
+        // silently no-ops and the submit button stays disabled. Waiting for the submit
+        // button (rendered alongside the option in the same component tree) gives Angular
+        // a clear signal that the route is interactive.
         await answerOption.waitFor({ state: 'visible', timeout: 30_000 });
-        await answerOption.locator('#mc-answer-selection-' + optionNumber).click();
-        // Verify the tick took. The component's (click) handler lives on the outer
-        // #answer-option div, which sets the `.selected` class when toggled on. If the
-        // class hasn't applied within 5s the click landed on the disabled branch
-        // (clickDisabled() = true while a submit is in flight or the quiz already
-        // ended) — re-click the parent once to force the toggle through.
-        const selectedWithin = async (timeout: number): Promise<boolean> =>
-            answerOption
-                .filter({ has: this.page.locator('.fa-check-square, .fa-dot-circle') })
-                .waitFor({ state: 'visible', timeout })
-                .then(() => true)
-                .catch(() => false);
-        if (!(await selectedWithin(5_000))) {
-            await answerOption.click();
-            await selectedWithin(5_000);
-        }
+        await this.page.locator('#submit-exercise, #submit-exercise-popover, #submit-quiz').first().waitFor({ state: 'attached', timeout: 30_000 });
+        // Click the parent answer-option div (which owns the toggleSelection handler)
+        // rather than the inner .selection icon — clicking the icon child works when
+        // events bubble but fails when the icon hasn't fully painted yet.
+        await answerOption.click();
     }
 
     /**
