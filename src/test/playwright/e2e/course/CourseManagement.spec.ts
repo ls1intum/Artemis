@@ -72,6 +72,9 @@ test.describe('Course management', { tag: '@fast' }, () => {
         });
 
         test('Manually adds and removes a student', async ({ navigationBar, courseManagement }) => {
+            // 4 openCourseManagement + 4 openCourse navigations + add/remove flows easily
+            // exceed the @fast 60s budget under heavy multi-node load. Triple it.
+            test.slow();
             const username = studentOne.username;
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
