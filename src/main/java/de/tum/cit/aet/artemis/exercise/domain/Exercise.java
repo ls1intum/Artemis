@@ -693,6 +693,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return null;
     }
 
+    @JsonProperty("athenaConfig")
     public void setAthenaConfig(ExerciseAthenaConfig athenaConfig) {
         this.athenaConfig = athenaConfig;
     }

@@ -203,11 +203,11 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
 
         component.toggleFeedbackRequests({ target: { checked: true } });
         expect(component.exercise.allowFeedbackRequests).toBeTrue();
-        expect(component.exercise.feedbackSuggestionModule).toBe('moduleA');
+        expect(component.exercise.athenaConfig?.preliminaryFeedbackModule).toBe('moduleA');
 
         component.toggleFeedbackRequests({ target: { checked: false } });
         expect(component.exercise.allowFeedbackRequests).toBeFalse();
-        expect(component.exercise.feedbackSuggestionModule).toBe('moduleA');
+        expect(component.exercise.athenaConfig?.preliminaryFeedbackModule).toBeUndefined();
     });
 
     it('should honor the initial module when athena remains enabled', fakeAsync(() => {

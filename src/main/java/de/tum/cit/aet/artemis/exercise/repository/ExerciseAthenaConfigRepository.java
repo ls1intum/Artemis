@@ -37,7 +37,7 @@ public interface ExerciseAthenaConfigRepository extends ArtemisJpaRepository<Exe
      *
      * @param exerciseId the ID of the exercise
      */
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Transactional // ok because of delete
     void deleteByExerciseId(Long exerciseId);
 
