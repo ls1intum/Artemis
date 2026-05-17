@@ -338,6 +338,35 @@ public class BuildAgentInformationService {
             log.debug("Could not probe disk usage on {}: {}", probe, e.getMessage());
         }
         diskStats = new DiskStatsSnapshot(totalBytes, usableBytes, mavenBytes, gradleBytes, dockerBytes, dockerCount);
+        // Push the refreshed snapshot to the cluster. The agent only naturally publishes its info on build
+        // events (start/end, pause/resume, docker version change); on an idle agent the disk fields would
+        // otherwise remain at their initial-zero values forever — and the admin UI would show "Disk usage not
+        // yet reported by this agent" even though refreshSlowDiskStats had populated diskStats in memory.
+        // We preserve the previously-published pause/failure state by reading the current map entry, so this
+        // refresh push never accidentally flips the agent's status.
+        republishCurrentState();
+    }
+
+    /**
+     * Republishes the locally-cached BuildAgentInformation while preserving the pause/failure flags from the
+     * previous distributed entry. Used by {@link #refreshSlowDiskStats()} so the periodic slow-stats refresh
+     * actually reaches the admin UI even when no build events are firing on the agent.
+     */
+    private void republishCurrentState() {
+        if (!distributedDataAccessService.isConnectedToCluster()) {
+            return;
+        }
+        try {
+            BuildAgentInformation previous = distributedDataAccessService.getDistributedBuildAgentInformation().get(buildAgentShortName);
+            boolean wasPaused = previous != null
+                    && (previous.status() == BuildAgentStatus.PAUSED || previous.status() == BuildAgentStatus.SELF_PAUSED || previous.status() == BuildAgentStatus.MAINTENANCE);
+            boolean wasSelfPaused = previous != null && previous.status() == BuildAgentStatus.SELF_PAUSED;
+            int prevFailures = previous != null && previous.buildAgentDetails() != null ? previous.buildAgentDetails().consecutiveBuildFailures() : DEFAULT_CONSECUTIVE_FAILURES;
+            updateLocalBuildAgentInformation(wasPaused, wasSelfPaused, prevFailures);
+        }
+        catch (Exception e) {
+            log.debug("Could not republish BuildAgentInformation after slow-stats refresh: {}", e.getMessage());
+        }
     }
 
     private long directorySize(@Nullable Path root) {

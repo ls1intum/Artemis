@@ -15,12 +15,22 @@
     }
 
     .options {
+        // Bootstrap's .form-check pulls its checkbox into negative margin (margin-left: -1.5em on
+        // .form-check-input) so the checkbox sits at the row's left edge. Inside a PrimeNG dialog
+        // that left edge IS the visible left edge of the dialog body, which clips the checkbox in
+        // half. Reserve enough left space here so the checkbox stays fully inside the dialog.
+        padding-left: 0.5rem;
+
         .option-row {
             padding: 0.5rem 0;
             border-bottom: 1px solid var(--bs-border-color-translucent, rgba(0, 0, 0, 0.05));
 
             &:last-child {
                 border-bottom: none;
+            }
+
+            .form-check-label {
+                cursor: pointer;
             }
         }
     }
