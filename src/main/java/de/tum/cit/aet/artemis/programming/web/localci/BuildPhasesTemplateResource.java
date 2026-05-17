@@ -81,6 +81,7 @@ public class BuildPhasesTemplateResource {
      * @param optionalProjectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @param staticAnalysis      Whether the static analysis template should be used
      * @param sequentialRuns      Whether the sequential runs template should be used
+     * @param examMode            Whether the exercise is in exam mode
      * @return The requested build plan phases, or 404 if the phases don't exist
      */
     private ResponseEntity<BuildPlanPhasesDTO> getBuildPhasesTemplateFileContentWithResponse(ProgrammingLanguage language, Optional<ProjectType> optionalProjectType,
