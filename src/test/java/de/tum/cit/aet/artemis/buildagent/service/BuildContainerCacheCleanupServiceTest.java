@@ -24,6 +24,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.util.unit.DataSize;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceResult;
 import de.tum.cit.aet.artemis.buildagent.service.BuildContainerCacheCleanupService.CleanupOutcome;
 import de.tum.cit.aet.artemis.buildagent.service.BuildContainerCacheCleanupService.PruneStats;
 import de.tum.cit.aet.artemis.buildagent.service.BuildContainerCacheCleanupService.WipeOutcome;
@@ -67,6 +69,7 @@ class BuildContainerCacheCleanupServiceTest {
         service.setMavenMaxSize(DataSize.ofGigabytes(3));
         service.setGradleMaxSize(DataSize.ofGigabytes(6));
         service.setLowWatermarkRatio(0.75);
+        service.setBuildAgentShortName("agent-under-test");
     }
 
     @Test
@@ -676,6 +679,83 @@ class BuildContainerCacheCleanupServiceTest {
         assertThat(outcome.stats().errors()).isEqualTo(1);
         verify(sharedQueueProcessingService, times(1)).pauseForMaintenance();
         verify(sharedQueueProcessingService, times(1)).resumeFromMaintenance();
+    }
+
+    // --- maintenance-result outcome mapping -------------------------------------------------------------------
+    // The agent publishes a BuildAgentMaintenanceResult after each maintenance action so the admin UI can render a
+    // toast. The conversion from the existing WipeOutcome / CleanupOutcome records to that result is the part the
+    // UI is sensitive to (right colour, right "freed" count, right error count) — these tests pin the mapping.
+
+    @Test
+    void toResult_wipeWithoutErrors_isSuccessAndReportsBytesFreed() {
+        BuildContainerCacheCleanupService.WipeStats stats = new BuildContainerCacheCleanupService.WipeStats(mavenCache, 5, 1024L, 2, 0, Duration.ofMillis(40));
+        WipeOutcome outcome = new WipeOutcome(stats, null);
+
+        Instant start = Instant.now();
+        BuildAgentMaintenanceResult result = service.toResult(BuildAgentMaintenanceAction.Type.WIPE_MAVEN_CACHE, outcome, start, start);
+
+        assertThat(result.agentShortName()).isEqualTo("agent-under-test");
+        assertThat(result.actionType()).isEqualTo(BuildAgentMaintenanceAction.Type.WIPE_MAVEN_CACHE);
+        assertThat(result.outcome()).isEqualTo(BuildAgentMaintenanceResult.Outcome.SUCCESS);
+        assertThat(result.bytesFreed()).isEqualTo(1024L);
+        assertThat(result.itemsAffected()).isEqualTo(5L);
+        assertThat(result.errorCount()).isZero();
+        assertThat(result.skipReason()).isNull();
+    }
+
+    @Test
+    void toResult_wipeWithErrors_isPartialFailureWithErrorCount() {
+        // 3 files deleted, 7 errors (e.g. permission denied on root-owned files) — the operator must see the
+        // partial-failure variant or they will assume the wipe succeeded when it really didn't free anything.
+        BuildContainerCacheCleanupService.WipeStats stats = new BuildContainerCacheCleanupService.WipeStats(gradleCache, 3, 512L, 0, 7, Duration.ofMillis(60));
+        WipeOutcome outcome = new WipeOutcome(stats, null);
+
+        BuildAgentMaintenanceResult result = service.toResult(BuildAgentMaintenanceAction.Type.WIPE_GRADLE_CACHE, outcome, Instant.now(), Instant.now());
+
+        assertThat(result.outcome()).isEqualTo(BuildAgentMaintenanceResult.Outcome.PARTIAL_FAILURE);
+        assertThat(result.bytesFreed()).isEqualTo(512L);
+        assertThat(result.itemsAffected()).isEqualTo(3L);
+        assertThat(result.errorCount()).isEqualTo(7L);
+    }
+
+    @Test
+    void toResult_skippedWipe_carriesSkipReason() {
+        WipeOutcome outcome = WipeOutcome.skipped("read-only");
+
+        BuildAgentMaintenanceResult result = service.toResult(BuildAgentMaintenanceAction.Type.WIPE_MAVEN_CACHE, outcome, Instant.now(), Instant.now());
+
+        assertThat(result.outcome()).isEqualTo(BuildAgentMaintenanceResult.Outcome.SKIPPED);
+        assertThat(result.skipReason()).isEqualTo("read-only");
+        assertThat(result.bytesFreed()).isZero();
+        assertThat(result.itemsAffected()).isZero();
+        assertThat(result.errorCount()).isZero();
+    }
+
+    @Test
+    void toResult_cleanupSumsAcrossCaches_andReportsErrorsAsPartialFailure() {
+        // The toast aggregates per-cache prune stats so the operator sees a single "freed across X items" number.
+        PruneStats maven = new PruneStats(mavenCache, 10_000L, 2, 800L, 1, 100L, 1, 0, Duration.ofMillis(50));
+        PruneStats gradle = new PruneStats(gradleCache, 20_000L, 0, 0L, 3, 1_500L, 2, 4, Duration.ofMillis(80));
+        CleanupOutcome outcome = new CleanupOutcome(java.util.List.of(maven, gradle), null);
+
+        BuildAgentMaintenanceResult result = service.toResult(BuildAgentMaintenanceAction.Type.RUN_CACHE_CLEANUP, outcome, Instant.now(), Instant.now());
+
+        assertThat(result.outcome()).isEqualTo(BuildAgentMaintenanceResult.Outcome.PARTIAL_FAILURE);
+        // ageDeletedBytes (800 + 0) + sizeDeletedBytes (100 + 1500) == 2400
+        assertThat(result.bytesFreed()).isEqualTo(2400L);
+        // ageDeletedFiles (2 + 0) + sizeDeletedFiles (1 + 3) == 6
+        assertThat(result.itemsAffected()).isEqualTo(6L);
+        assertThat(result.errorCount()).isEqualTo(4L);
+    }
+
+    @Test
+    void toResult_skippedCleanup_isSkipped() {
+        CleanupOutcome outcome = CleanupOutcome.skipped("disabled");
+
+        BuildAgentMaintenanceResult result = service.toResult(BuildAgentMaintenanceAction.Type.RUN_CACHE_CLEANUP, outcome, Instant.now(), Instant.now());
+
+        assertThat(result.outcome()).isEqualTo(BuildAgentMaintenanceResult.Outcome.SKIPPED);
+        assertThat(result.skipReason()).isEqualTo("disabled");
     }
 
     // --- helpers ------------------------------------------------------------------------------------------------

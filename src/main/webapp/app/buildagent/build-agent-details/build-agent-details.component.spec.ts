@@ -7,6 +7,7 @@ import { BuildJob, FinishedBuildJob } from 'app/buildagent/shared/entities/build
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
 import { BuildAgentInformation, BuildAgentStatus } from 'app/buildagent/shared/entities/build-agent-information.model';
+import { BuildAgentMaintenanceResult } from 'app/buildagent/shared/entities/build-agent-maintenance-result.model';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { JobTimingInfo } from 'app/buildagent/shared/entities/job-timing-info.model';
 import { BuildConfig } from 'app/buildagent/shared/entities/build-config.model';
@@ -191,6 +192,7 @@ describe('BuildAgentDetailsComponent', () => {
 
     let agentTopicSubject: Subject<BuildAgentInformation>;
     let runningJobsSubject: Subject<BuildJob[]>;
+    let maintenanceTopicSubject: Subject<BuildAgentMaintenanceResult>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -223,12 +225,16 @@ describe('BuildAgentDetailsComponent', () => {
 
         agentTopicSubject = new Subject<BuildAgentInformation>();
         runningJobsSubject = new Subject<BuildJob[]>();
+        maintenanceTopicSubject = new Subject<BuildAgentMaintenanceResult>();
         mockWebsocketService.subscribe.mockImplementation((topic: string) => {
             if (topic === '/topic/admin/running-jobs') {
                 return runningJobsSubject.asObservable();
             }
             if (topic === '/topic/admin/build-agent/' + mockBuildAgent.buildAgent?.name) {
                 return agentTopicSubject.asObservable();
+            }
+            if (topic === '/topic/admin/build-agent/' + mockBuildAgent.buildAgent?.name + '/maintenance') {
+                return maintenanceTopicSubject.asObservable();
             }
             return new Subject().asObservable();
         });
@@ -247,6 +253,9 @@ describe('BuildAgentDetailsComponent', () => {
             }
             if (topic === '/topic/admin/build-agent/' + mockBuildAgent.buildAgent?.name) {
                 return agentTopicSubject.asObservable();
+            }
+            if (topic === '/topic/admin/build-agent/' + mockBuildAgent.buildAgent?.name + '/maintenance') {
+                return maintenanceTopicSubject.asObservable();
             }
             return new Subject().asObservable();
         });
@@ -268,7 +277,89 @@ describe('BuildAgentDetailsComponent', () => {
 
         expect(component.buildAgent()).toEqual(mockBuildAgent);
         expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent()?.buildAgent?.name);
+        expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent()?.buildAgent?.name + '/maintenance');
         expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/running-jobs');
+    });
+
+    // --- Maintenance-result toast pipeline ---
+    // The agent publishes a BuildAgentMaintenanceResult after each maintenance action; the per-agent WebSocket
+    // channel /topic/admin/build-agent/<name>/maintenance carries it to the admin viewing this page. These tests
+    // pin the mapping between outcome → alert level and verify the toast contains the freed/error counts so
+    // operators get accurate feedback instead of a silent dialog close.
+
+    function maintenanceResult(overrides: Partial<BuildAgentMaintenanceResult>): BuildAgentMaintenanceResult {
+        return {
+            agentShortName: mockBuildAgent.buildAgent!.name!,
+            timestamp: '2026-05-17T19:00:00Z',
+            actionType: 'WIPE_MAVEN_CACHE',
+            outcome: 'SUCCESS',
+            bytesFreed: 0,
+            itemsAffected: 0,
+            errorCount: 0,
+            durationMs: 50,
+            ...overrides,
+        };
+    }
+
+    it('SUCCESS maintenance result triggers a success toast with the freed amount', () => {
+        component.ngOnInit();
+
+        maintenanceTopicSubject.next(maintenanceResult({ outcome: 'SUCCESS', bytesFreed: 1024, itemsAffected: 5 }));
+
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.SUCCESS, message: 'artemisApp.buildAgents.alerts.maintenanceSuccess' }));
+    });
+
+    it('PARTIAL_FAILURE maintenance result triggers a warning toast carrying the error count', () => {
+        component.ngOnInit();
+
+        maintenanceTopicSubject.next(maintenanceResult({ outcome: 'PARTIAL_FAILURE', bytesFreed: 512, itemsAffected: 3, errorCount: 7 }));
+
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith(
+            expect.objectContaining({
+                type: AlertType.WARNING,
+                message: 'artemisApp.buildAgents.alerts.maintenancePartial',
+                translationParams: expect.objectContaining({ errors: 7 }),
+            }),
+        );
+    });
+
+    it('FAILED maintenance result triggers a danger toast carrying the failure detail', () => {
+        component.ngOnInit();
+
+        maintenanceTopicSubject.next(maintenanceResult({ outcome: 'FAILED', message: 'disk full' }));
+
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith(
+            expect.objectContaining({
+                type: AlertType.DANGER,
+                message: 'artemisApp.buildAgents.alerts.maintenanceFailed',
+                translationParams: expect.objectContaining({ detail: 'disk full' }),
+            }),
+        );
+    });
+
+    it('SKIPPED maintenance result triggers an info toast carrying the skip reason', () => {
+        component.ngOnInit();
+
+        maintenanceTopicSubject.next(maintenanceResult({ outcome: 'SKIPPED', skipReason: 'read-only' }));
+
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith(
+            expect.objectContaining({
+                type: AlertType.INFO,
+                message: 'artemisApp.buildAgents.alerts.maintenanceSkipped',
+                translationParams: expect.objectContaining({ reason: 'read-only' }),
+            }),
+        );
+    });
+
+    it('each maintenance action type maps to a human-readable action label in the toast', () => {
+        component.ngOnInit();
+
+        maintenanceTopicSubject.next(maintenanceResult({ actionType: 'RUN_CACHE_CLEANUP', outcome: 'SUCCESS' }));
+        maintenanceTopicSubject.next(maintenanceResult({ actionType: 'WIPE_GRADLE_CACHE', outcome: 'SUCCESS' }));
+        maintenanceTopicSubject.next(maintenanceResult({ actionType: 'CLEAR_DOCKER_IMAGES', outcome: 'SUCCESS' }));
+
+        const calls = alertServiceAddAlertStub.mock.calls.map(([alert]) => alert.translationParams?.action);
+        expect(calls).toEqual(expect.arrayContaining(['Cache cleanup', 'Gradle cache wipe', 'Docker image clear']));
     });
 
     it('should unsubscribe from the websocket channel on destruction', () => {

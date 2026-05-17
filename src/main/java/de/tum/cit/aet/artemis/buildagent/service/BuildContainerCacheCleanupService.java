@@ -286,7 +286,7 @@ public class BuildContainerCacheCleanupService {
         };
     }
 
-    private BuildAgentMaintenanceResult toResult(BuildAgentMaintenanceAction.Type actionType, WipeOutcome wipe, Instant start, Instant when) {
+    BuildAgentMaintenanceResult toResult(BuildAgentMaintenanceAction.Type actionType, WipeOutcome wipe, Instant start, Instant when) {
         if (wipe.wasSkipped()) {
             return new BuildAgentMaintenanceResult(buildAgentShortName, when, actionType, BuildAgentMaintenanceResult.Outcome.SKIPPED, 0L, 0L, 0L,
                     Duration.between(start, Instant.now()).toMillis(), wipe.skippedReason(), null);
@@ -300,7 +300,7 @@ public class BuildContainerCacheCleanupService {
                 null);
     }
 
-    private BuildAgentMaintenanceResult toResult(BuildAgentMaintenanceAction.Type actionType, CleanupOutcome cleanup, Instant start, Instant when) {
+    BuildAgentMaintenanceResult toResult(BuildAgentMaintenanceAction.Type actionType, CleanupOutcome cleanup, Instant start, Instant when) {
         if (cleanup.wasSkipped()) {
             return new BuildAgentMaintenanceResult(buildAgentShortName, when, actionType, BuildAgentMaintenanceResult.Outcome.SKIPPED, 0L, 0L, 0L,
                     Duration.between(start, Instant.now()).toMillis(), cleanup.skippedReason(), null);
@@ -762,6 +762,10 @@ public class BuildContainerCacheCleanupService {
 
     void setLowWatermarkRatio(double lowWatermarkRatio) {
         this.lowWatermarkRatio = lowWatermarkRatio;
+    }
+
+    void setBuildAgentShortName(String buildAgentShortName) {
+        this.buildAgentShortName = buildAgentShortName;
     }
 
     /** One cache to prune (root path + size cap). */

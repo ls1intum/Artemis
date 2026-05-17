@@ -276,19 +276,52 @@ The optional `read-only` flag (default `false`) controls the bind access mode fo
 
 ### Host directory requirements
 
-- The directories must exist before the build agent starts; the agent does not create them.
-- They must be writable by the build-container user. The recommended permissions depend on the build image:
-  - **Root-based images (Artemis defaults):** create the directories owned by `root:root` with mode `0755`. The
-    container's root user can read and write; no other host user can.
-  - **Custom non-root images:** `chown` the host directory to the UID/GID the container runs as, or set a POSIX
-    ACL granting that UID write access. Avoid world-writable permissions when a more precise grant works.
-  - **Fallback only:** mode `0777` (world-writable) is the easiest last-resort workaround when an agent runs a mix
-    of root and non-root build images, but be aware that it lets any local process on the build-agent host modify
-    the cache — only acceptable on machines that run nothing besides the Artemis build agent.
-- The cache grows over time and is pruned by a JVM-driven daily cleanup; see the
-  [Cleanup section](#caching-bind-mounts-cleanup) below.
-- Pair the cleanup with a disk-space alert on the cache filesystem. The exact mechanism depends on your monitoring
-  stack — for example, a Prometheus + node_exporter setup can fire when
+For setups deployed via the official Ansible role (`artemis-ansible-collection`), all of the requirements below are
+handled automatically by `roles/artemis/tasks/build_container_cache.yml`. The list documents what the role does and
+what an admin doing a manual setup must reproduce.
+
+- **`acl` package on the host.** The build agent JVM applies a POSIX *default* ACL on the cache directory at
+  startup so files later written by the (root-owned) Docker build container can still be deleted by the (non-root)
+  agent JVM when an operator clicks "Reclaim disk…". The JVM shells out to `setfacl` for this, which lives in the
+  `acl` package:
+
+  ```bash
+  # Ubuntu / Debian
+  sudo apt-get install -y acl
+  # RHEL / CentOS / Rocky
+  sudo yum install -y acl
+  ```
+
+  If `setfacl` is missing, the JVM still starts and builds still work, but the operator-triggered cache wipe will
+  fail with permission errors on root-owned files. The agent log carries a single WARN with the manual fix.
+
+- **Cache directory ownership.** The directory must be owned by the user the agent JVM runs as (typically
+  `artemis:artemis`, UID 1337) at mode `0775`. The JVM creates the directory itself on first startup if it is
+  missing, so the only manual step is making sure the *parent* (e.g. `/var/cache/artemis-buildagent`) is writable
+  by that user. If the directory already exists under different ownership (for example because an older Ansible
+  run created it as `root:root`), `chown -R artemis:artemis` once and the JVM takes it from there on the next
+  start.
+
+  The agent JVM applies, at startup, the equivalent of:
+
+  ```bash
+  sudo setfacl -R   -m u:artemis:rwx \
+                 -d -m u:artemis:rwx \
+                 /var/cache/artemis-buildagent/m2
+  ```
+
+  on both the Maven and Gradle cache roots. The `-R` (access ACL) covers files already in the directory; the
+  `-d -m` (default ACL) is inherited by every file the build container creates from that point on. The action is
+  idempotent and re-applied on every JVM start.
+
+- **Why not just `0777` or `chown` after the fact?** Both work, but they are inferior:
+  - `0777` lets any local process on the build-agent host modify the cache — only acceptable on single-purpose
+    hosts and noisy in audits.
+  - `chown` post-build means an operator must manually fix ownership every time a container creates new files;
+    the default ACL does this for every new file automatically.
+
+- **Disk-space alerting.** Pair the cleanup with a disk-space alert on the cache filesystem. The exact mechanism
+  depends on your monitoring stack — for example, a Prometheus + node_exporter setup can fire when
   `(node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.2` for the mount point, which leaves enough head
   room to investigate before builds start failing. The cache is recoverable (it is just a download mirror), so
   alerting at 80% used is plenty.
@@ -419,6 +452,23 @@ information in one place:
 - The selected REST calls fire sequentially (rxjs `concat`), not in parallel — each action holds the maintenance
   pause for the duration of its work, and a follow-on action publishing while the first is still draining would
   observe the agent already paused and silently skip. Sequencing ensures all selected actions actually run.
+
+#### Result toast
+
+Each maintenance action returns its outcome to the operator via a per-agent WebSocket toast. After the agent
+finishes the action it publishes a `BuildAgentMaintenanceResult` on a dedicated Hazelcast topic
+(`buildAgentMaintenanceResultTopic`); core nodes forward it to `/topic/admin/build-agent/<name>/maintenance` and
+the build-agent details page renders one of four toast variants:
+
+| Outcome | Toast level | Triggered when |
+|---|---|---|
+| `SUCCESS` | green / success | Action ran and reported zero errors. Toast shows the bytes freed and the number of items removed. |
+| `PARTIAL_FAILURE` | yellow / warning | Action ran but one or more items could not be removed (most commonly: permission denied because the `acl` package is not installed and the cache contains root-owned files). The toast carries the error count and tells the operator to check the agent log. |
+| `FAILED` | red / danger | Action threw before completing. The toast carries the exception message. |
+| `SKIPPED` | blue / info | Action short-circuited before running, for example because the cache is configured `read-only: true` or the corresponding cache path is unset. The toast carries the skip reason. |
+
+The result record also carries `durationMs` and a timestamp; both are logged at the agent for forensic queries
+even if no admin happens to be watching the page at the moment the action finishes.
 
 #### Disk usage tile
 
