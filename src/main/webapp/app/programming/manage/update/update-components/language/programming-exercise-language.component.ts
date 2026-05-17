@@ -2,11 +2,10 @@ import { AfterViewChecked, AfterViewInit, Component, EventEmitter, Input, OnDest
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { Subject, Subscription } from 'rxjs';
-import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { ProgrammingExerciseTheiaComponent } from 'app/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
@@ -29,7 +28,6 @@ import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
         FaIconComponent,
         ProgrammingExerciseTheiaComponent,
         ProgrammingExerciseCustomBuildPlanComponent,
-        ProgrammingExerciseCustomAeolusBuildPlanComponent,
         KeyValuePipe,
         RemoveKeysPipe,
     ],
@@ -44,7 +42,6 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
 
     @ViewChild('select') selectLanguageField: NgModel;
     @ViewChild('packageName') packageNameField?: NgModel;
-    @ViewChild(ProgrammingExerciseCustomAeolusBuildPlanComponent) programmingExerciseCustomAeolusBuildPlanComponent?: ProgrammingExerciseCustomAeolusBuildPlanComponent;
     @ViewChild(ProgrammingExerciseCustomBuildPlanComponent) programmingExerciseCustomBuildPlanComponent?: ProgrammingExerciseCustomBuildPlanComponent;
     @ViewChild(ProgrammingExerciseTheiaComponent) programmingExerciseTheiaComponent?: ProgrammingExerciseTheiaComponent;
 
@@ -55,7 +52,6 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
 
     faExclamationTriangle = faExclamationTriangle;
     protected readonly PROFILE_LOCALCI = PROFILE_LOCALCI;
-    protected readonly PROFILE_AEOLUS = PROFILE_AEOLUS;
 
     readonly DOCKER_REGISTRY_LINKS = {
         ghcrLink: 'https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry',
@@ -74,16 +70,12 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
             this.fieldSubscriptions.push(this.packageNameField?.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormValid())));
         }
 
-        const dockerImageField =
-            this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField() ??
-            this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField();
+        const dockerImageField = this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField();
         if (!(dockerImageField?.valueChanges as EventEmitter<string>)?.observed) {
             this.fieldSubscriptions.push(dockerImageField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
 
-        const timeoutField =
-            this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField() ??
-            this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField();
+        const timeoutField = this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField();
         if (!(timeoutField?.valueChanges as EventEmitter<number>)?.observed) {
             this.fieldSubscriptions.push(timeoutField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
@@ -113,7 +105,7 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     }
 
     isCustomBuildPlanValid(): boolean {
-        if (!this.programmingExercise.customizeBuildPlanWithAeolus) {
+        if (!this.programmingExercise.customizeBuildPlan) {
             return true;
         }
 
@@ -121,13 +113,6 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
             return (
                 (this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField()?.valid ?? false) &&
                 (this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField()?.valid ?? false)
-            );
-        }
-
-        if (this.programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_AEOLUS) {
-            return (
-                (this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField()?.valid ?? false) &&
-                (this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField()?.valid ?? false)
             );
         }
 

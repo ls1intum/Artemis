@@ -23,9 +23,16 @@ export class CourseManagementPage {
 
     /**
      * Opens the course settings page.
+     * <p>
+     * Waits explicitly for the settings tab to render before clicking. The course detail layout is
+     * hydrated asynchronously after openCourse() navigates, so the bare .click() races the render
+     * under parallel CI load (see CourseManagement.spec.ts:260, where the deletion-summary test
+     * builds up 25+ child entities via API before reaching the UI step).
      */
     async openCourseSettings() {
-        await this.page.locator('#course-settings').click();
+        const settings = this.page.locator('#course-settings');
+        await settings.waitFor({ state: 'visible', timeout: 30_000 });
+        await settings.click();
     }
 
     /**
@@ -41,7 +48,11 @@ export class CourseManagementPage {
      * @param courseID the id of the course
      */
     async openExercisesOfCourse(courseID: number) {
-        await this.getCourse(courseID).locator('#course-card-open-exercises').click();
+        // Wait for the course card and its open-exercises link to be visible. The course list is
+        // hydrated asynchronously after navigation, so the bare .click() races the render.
+        const link = this.getCourse(courseID).locator('#course-card-open-exercises');
+        await link.waitFor({ state: 'visible', timeout: 30_000 });
+        await link.click();
         await this.page.waitForURL('**/exercises**');
     }
 
@@ -58,7 +69,15 @@ export class CourseManagementPage {
      * @param courseID
      */
     async openCourse(courseID: number) {
-        await this.getCourse(courseID).locator('#course-card-header').click();
+        // Wait for the course card header to be visible before clicking; the course list renders
+        // asynchronously and the bare .click() races the render under parallel test load.
+        const header = this.getCourse(courseID).locator('#course-card-header');
+        await header.waitFor({ state: 'visible', timeout: 30_000 });
+        await header.click();
+        // Wait for SPA navigation into the course detail to complete before subsequent steps
+        // (e.g. openCourseSettings) race the next render. Without this, the next click() can fire
+        // while the previous page is still mounted, then auto-wait against the wrong DOM.
+        await this.page.waitForURL(new RegExp(`/course-management/${courseID}(/|$)`));
     }
 
     private async assertCourseSummary(expectedCourseSummary: CourseSummary) {
@@ -153,9 +172,16 @@ export class CourseManagementPage {
 
     /**
      * Removes the first user from the registered students.
+     * <p>
+     * The students table re-renders after `addStudent()` and the bare click() can race that
+     * second render under parallel load — the row that previously had the delete button is
+     * detached and the locator points at nothing. Wait for the delete button to be attached
+     * and visible before clicking.
      */
     async removeFirstUser() {
-        await this.page.locator('#registered-students button[jhideletebutton]').first().click();
+        const deleteButton = this.page.locator('#registered-students button[jhideletebutton]').first();
+        await deleteButton.waitFor({ state: 'visible', timeout: 30_000 });
+        await deleteButton.click();
         await this.page.getByTestId('delete-dialog-confirm-button').click();
     }
 
@@ -205,7 +231,7 @@ export class CourseManagementPage {
     }
 
     async checkIfStudentSubmissionExists(studentName: string) {
-        await expect(this.page.locator('.datatable-body-row', { hasText: studentName })).toBeVisible();
+        await expect(this.page.getByRole('row').filter({ hasText: studentName })).toBeVisible();
     }
 
     /*

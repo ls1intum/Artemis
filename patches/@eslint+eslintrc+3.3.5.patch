@@ -1,7 +1,7 @@
-diff --git a/node_modules/@eslint/eslintrc/dist/eslintrc-universal.cjs b/node_modules/@eslint/eslintrc/dist/eslintrc-universal.cjs
+diff --git a/dist/eslintrc-universal.cjs b/dist/eslintrc-universal.cjs
 index 6000445..e9d8e80 100644
---- a/node_modules/@eslint/eslintrc/dist/eslintrc-universal.cjs
-+++ b/node_modules/@eslint/eslintrc/dist/eslintrc-universal.cjs
+--- a/dist/eslintrc-universal.cjs
++++ b/dist/eslintrc-universal.cjs
 @@ -216,6 +216,7 @@ function emitDeprecationWarning(source, errorCode) {
   * Copyright (c) 2015-2017 Evgeny Poberezkin
   */
@@ -28,10 +28,10 @@ index 6000445..e9d8e80 100644
  
      return ajv;
  };
-diff --git a/node_modules/@eslint/eslintrc/dist/eslintrc.cjs b/node_modules/@eslint/eslintrc/dist/eslintrc.cjs
+diff --git a/dist/eslintrc.cjs b/dist/eslintrc.cjs
 index 1b76091..4006c05 100644
---- a/node_modules/@eslint/eslintrc/dist/eslintrc.cjs
-+++ b/node_modules/@eslint/eslintrc/dist/eslintrc.cjs
+--- a/dist/eslintrc.cjs
++++ b/dist/eslintrc.cjs
 @@ -1449,6 +1449,7 @@ function emitDeprecationWarning(source, errorCode) {
   * Copyright (c) 2015-2017 Evgeny Poberezkin
   */

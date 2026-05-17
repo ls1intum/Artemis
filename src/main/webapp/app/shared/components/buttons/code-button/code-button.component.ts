@@ -86,6 +86,7 @@ export class CodeButtonComponent implements OnInit {
     participations = input<ProgrammingExerciseStudentParticipation[]>([]);
     exercise = input<ProgrammingExercise>();
     hideLabelMobile = input<boolean>(false);
+    hideLabelBreakpoint = input<'md' | 'xl'>('md');
     isPractice = input<boolean>(false);
 
     // Fields (immutable after construction)

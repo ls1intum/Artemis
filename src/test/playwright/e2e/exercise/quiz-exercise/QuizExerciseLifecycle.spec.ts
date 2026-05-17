@@ -14,7 +14,10 @@ const course = { id: SEED_COURSES.exerciseManagement.id } as any;
  * Asserts: question title, question text, and all answer option texts.
  */
 async function assertMCQuestionInView(page: Page, title: string) {
-    await expect(page.getByText(title)).toBeVisible({ timeout: 15000 });
+    // 30s rather than 15s: the preview/solution route uses a separate lazy-loaded chunk and the
+    // first navigation after edit can run long under parallel CI load. The subsequent text checks
+    // inherit Playwright's default 10s once the first match resolves.
+    await expect(page.getByText(title)).toBeVisible({ timeout: 30000 });
     await expect(page.getByText(multipleChoiceTemplate.text)).toBeVisible();
     for (const option of multipleChoiceTemplate.answerOptions) {
         await expect(page.getByText(option.text)).toBeVisible();

@@ -100,7 +100,7 @@ describe('IrisChatService', () => {
         const wsStub = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         service.switchTo(ChatServiceMode.COURSE, id);
 
-        expect(httpStub).toHaveBeenCalledWith('course-chat/' + id);
+        expect(httpStub).toHaveBeenCalledWith(ChatServiceMode.COURSE, id);
         expect(wsStub).toHaveBeenCalledWith(id);
     });
 
@@ -110,7 +110,7 @@ describe('IrisChatService', () => {
         const wsStub = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id);
 
-        expect(httpStub).toHaveBeenCalledWith('programming-exercise-chat/' + id);
+        expect(httpStub).toHaveBeenCalledWith(ChatServiceMode.PROGRAMMING_EXERCISE, id);
         expect(wsStub).toHaveBeenCalledWith(id);
     });
 
@@ -127,16 +127,15 @@ describe('IrisChatService', () => {
         expect(await waitForCurrentRelatedEntityId()).toBe(relatedEntityId);
     });
 
-    it('should initialize current chat context from legacy mode field', async () => {
+    it('should initialize current chat context from mode field', async () => {
         const relatedEntityId = 66;
-        const newSession: Omit<IrisSession, 'chatMode'> & { chatMode?: ChatServiceMode; mode: ChatServiceMode } = {
+        const newSession: IrisSession = {
             ...mockConversationWithNoMessages,
             id: 444,
-            chatMode: undefined,
             mode: ChatServiceMode.LECTURE,
             entityId: relatedEntityId,
         };
-        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: newSession } as unknown as HttpResponse<IrisSession>));
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: newSession } as HttpResponse<IrisSession>));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
 
@@ -291,7 +290,7 @@ describe('IrisChatService', () => {
     it('should update session title from websocket STATUS payload', async () => {
         const myTitle = 'My new session title';
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
-        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([{ id, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1 } as IrisSessionDTO]));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([{ id, creationDate: new Date(), mode: ChatServiceMode.COURSE, entityId: 1 } as IrisSessionDTO]));
 
         const wsPayloadWithTitle = {
             type: IrisChatWebsocketPayloadType.STATUS,
@@ -367,7 +366,7 @@ describe('IrisChatService', () => {
         });
 
         it('should switch to a different session if llm usage is accepted', async () => {
-            const newSession = { ...mockConversation, id: 456, chatMode: ChatServiceMode.COURSE, entityName: 'Course 1' };
+            const newSession = { ...mockConversation, id: 456, mode: ChatServiceMode.COURSE, entityName: 'Course 1' };
 
             const closeSpy = vi.spyOn(service as any, 'close');
             vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSession));
@@ -390,9 +389,9 @@ describe('IrisChatService', () => {
         it('should switch if LLM usage is not required for the mode', async () => {
             accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
             service['hasJustAcceptedLLMUsage'] = false;
-            service['sessionCreationIdentifier'] = 'tutor-suggestion/1';
+            service['sessionContext'] = { mode: ChatServiceMode.TUTOR_SUGGESTION, entityId: 1 };
 
-            const newSession = { id: 12, chatMode: ChatServiceMode.TUTOR_SUGGESTION, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
+            const newSession = { id: 12, mode: ChatServiceMode.TUTOR_SUGGESTION, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
             const newSessionFull = { id: 12, mode: ChatServiceMode.TUTOR_SUGGESTION, creationDate: new Date(), entityId: 1, userId: 1 } as IrisSession;
 
             const closeSpy = vi.spyOn(service as any, 'close');
@@ -414,9 +413,9 @@ describe('IrisChatService', () => {
         it('should switch if user has just accepted LLM usage', async () => {
             accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
             service['hasJustAcceptedLLMUsage'] = true;
-            service['sessionCreationIdentifier'] = 'course/1';
+            service['sessionContext'] = { mode: ChatServiceMode.COURSE, entityId: 1 };
 
-            const newSession = { id: 12, chatMode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
+            const newSession = { id: 12, mode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
             const newSessionFull = { id: 12, mode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1, userId: 1 } as IrisSession;
 
             const closeSpy = vi.spyOn(service as any, 'close');
@@ -473,8 +472,8 @@ describe('IrisChatService', () => {
     describe('deleteSession', () => {
         it('should delete a non-active session and remove it from the list', async () => {
             const sessions = [
-                { id: 1, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
-                { id: 2, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
+                { id: 1, creationDate: new Date(), mode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
+                { id: 2, creationDate: new Date(), mode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
             ];
             service.chatSessions.next(sessions);
             service.sessionId = 1;
@@ -492,8 +491,8 @@ describe('IrisChatService', () => {
 
         it('should delete the active session and switch to the next available session', async () => {
             const sessions = [
-                { id: 1, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
-                { id: 2, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
+                { id: 1, creationDate: new Date(), mode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
+                { id: 2, creationDate: new Date(), mode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
             ];
             service.chatSessions.next(sessions);
             service.sessionId = 1;
@@ -510,7 +509,7 @@ describe('IrisChatService', () => {
         });
 
         it('should delete the last remaining session and stay in closed state', async () => {
-            const sessions = [{ id: 1, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO];
+            const sessions = [{ id: 1, creationDate: new Date(), mode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO];
             service.chatSessions.next(sessions);
             service.sessionId = 1;
 
@@ -527,7 +526,7 @@ describe('IrisChatService', () => {
         });
 
         it('should clear latestStartedSession if the deleted session matches', async () => {
-            const session = { id: 5, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO;
+            const session = { id: 5, creationDate: new Date(), mode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO;
             service.chatSessions.next([session]);
             service.latestStartedSession = session;
             service.sessionId = 99; // different from 5
@@ -651,7 +650,7 @@ describe('IrisChatService', () => {
             scopedService.messages.next([mockServerMessage]);
             scopedService.chatSessions.next([{ id: 1 } as IrisSessionDTO]);
             scopedService.latestStartedSession = { id: 1 } as IrisSessionDTO;
-            scopedService['sessionCreationIdentifier'] = 'course-chat/1';
+            scopedService['sessionContext'] = { mode: ChatServiceMode.COURSE, entityId: 1 };
             scopedService.hasJustAcceptedLLMUsage = true;
             scopedService.rateLimitInfo = { rateLimitTimeframeHours: 1 } as IrisRateLimitInformation;
 
@@ -661,7 +660,7 @@ describe('IrisChatService', () => {
             expect(scopedService.messages.getValue()).toEqual([]);
             expect(scopedService.chatSessions.getValue()).toEqual([]);
             expect(scopedService.latestStartedSession).toBeUndefined();
-            expect(scopedService['sessionCreationIdentifier']).toBeUndefined();
+            expect(scopedService['sessionContext']).toBeUndefined();
             expect(scopedService.hasJustAcceptedLLMUsage).toBe(false);
             expect(scopedService.rateLimitInfo).toBeUndefined();
             // courseId is route-derived, not user-private — it is intentionally preserved so the next
@@ -740,7 +739,7 @@ describe('IrisChatService', () => {
             vi.spyOn(httpServiceMock, 'getChatSessions').mockReturnValue(of([]));
             vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
 
-            scopedService.switchToSession({ id: 7, chatMode: ChatServiceMode.COURSE, entityId: 1, creationDate: new Date() } as IrisSessionDTO);
+            scopedService.switchToSession({ id: 7, mode: ChatServiceMode.COURSE, entityId: 1, creationDate: new Date() } as IrisSessionDTO);
             expect(scopedService['chatSessionByIdSubscription']).toBeDefined();
 
             authState.next(undefined);

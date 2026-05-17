@@ -6,7 +6,7 @@ on:
 
 # Limit the number of concurrent runs to one per PR
 concurrency:
-  group: test-mysql-${{ github.head_ref || github.run_id }}
+  group: test-mysql-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 # Keep in sync with test.yml
@@ -61,7 +61,7 @@ jobs:
         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification -Dzonky.test.database.type=MYSQL | tee tests.log
     - name: Upload JUnit Test Results
       if: success() || failure()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: JUnit Test Results (MySQL)
         path: build/test-results/test/*.xml
@@ -76,7 +76,7 @@ jobs:
         path: build/test-results/test/*.xml
         numFailures: 99
     - name: Test Report
-      uses: dorny/test-reporter@v2
+      uses: dorny/test-reporter@v3
       if: success() || failure()
       with:
         name: MySQL Tests
