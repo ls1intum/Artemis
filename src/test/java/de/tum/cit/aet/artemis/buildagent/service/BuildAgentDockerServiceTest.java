@@ -200,6 +200,9 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
 
     @Test
     void testClearAllUnusedDockerImagesRemovesEveryUnusedImage() {
+        // Three images: two unused (one with a repo tag, one dangling — i.e. no tags), one bound to a running
+        // container. The id-based clear must hit both unused images regardless of whether they carry tags, and
+        // must skip the bound one.
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         doReturn(listContainersCmd).when(dockerClient).listContainersCmd();
         Container runningContainer = mock(Container.class);
@@ -208,16 +211,16 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
 
         ListImagesCmd listImagesCmd = mock(ListImagesCmd.class);
         doReturn(listImagesCmd).when(dockerClient).listImagesCmd();
-        Image unusedA = mock(Image.class);
-        doReturn("unused-a-id").when(unusedA).getId();
-        doReturn(new String[] { "ls1tum/artemis-maven-template:java17-25" }).when(unusedA).getRepoTags();
-        Image unusedB = mock(Image.class);
-        doReturn("unused-b-id").when(unusedB).getId();
-        doReturn(new String[] { "ls1tum/artemis-gradle-template:java17-25" }).when(unusedB).getRepoTags();
+        Image taggedUnused = mock(Image.class);
+        doReturn("unused-tagged-id").when(taggedUnused).getId();
+        doReturn(new String[] { "ls1tum/artemis-maven-template:java17-25" }).when(taggedUnused).getRepoTags();
+        Image danglingUnused = mock(Image.class);
+        doReturn("unused-dangling-id").when(danglingUnused).getId();
+        doReturn(new String[] { "<none>:<none>" }).when(danglingUnused).getRepoTags();
         Image inUse = mock(Image.class);
         doReturn("in-use-image-id").when(inUse).getId();
         doReturn(new String[] { "in-use:latest" }).when(inUse).getRepoTags();
-        doReturn(List.of(unusedA, unusedB, inUse)).when(listImagesCmd).exec();
+        doReturn(List.of(taggedUnused, danglingUnused, inUse)).when(listImagesCmd).exec();
 
         RemoveImageCmd removeImageCmd = mock(RemoveImageCmd.class);
         doReturn(removeImageCmd).when(dockerClient).removeImageCmd(anyString());
@@ -225,9 +228,10 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
         int removed = buildAgentDockerService.clearAllUnusedDockerImages();
 
         assertThat(removed).isEqualTo(2);
-        verify(dockerClient).removeImageCmd("ls1tum/artemis-maven-template:java17-25");
-        verify(dockerClient).removeImageCmd("ls1tum/artemis-gradle-template:java17-25");
-        verify(dockerClient, never()).removeImageCmd("in-use:latest");
+        // Both unused images are removed by their ID, not their tag.
+        verify(dockerClient).removeImageCmd("unused-tagged-id");
+        verify(dockerClient).removeImageCmd("unused-dangling-id");
+        verify(dockerClient, never()).removeImageCmd("in-use-image-id");
     }
 
     @Test
@@ -240,23 +244,21 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
         doReturn(listImagesCmd).when(dockerClient).listImagesCmd();
         Image one = mock(Image.class);
         doReturn("one-id").when(one).getId();
-        doReturn(new String[] { "image-a:latest" }).when(one).getRepoTags();
         Image two = mock(Image.class);
         doReturn("two-id").when(two).getId();
-        doReturn(new String[] { "image-b:latest" }).when(two).getRepoTags();
         doReturn(List.of(one, two)).when(listImagesCmd).exec();
 
         RemoveImageCmd okCmd = mock(RemoveImageCmd.class);
         RemoveImageCmd notFoundCmd = mock(RemoveImageCmd.class);
         doThrow(new NotFoundException("gone")).when(notFoundCmd).exec();
-        doReturn(notFoundCmd).when(dockerClient).removeImageCmd("image-a:latest");
-        doReturn(okCmd).when(dockerClient).removeImageCmd("image-b:latest");
+        doReturn(notFoundCmd).when(dockerClient).removeImageCmd("one-id");
+        doReturn(okCmd).when(dockerClient).removeImageCmd("two-id");
 
         int removed = buildAgentDockerService.clearAllUnusedDockerImages();
 
         assertThat(removed).isEqualTo(1);
-        verify(dockerClient).removeImageCmd("image-a:latest");
-        verify(dockerClient).removeImageCmd("image-b:latest");
+        verify(dockerClient).removeImageCmd("one-id");
+        verify(dockerClient).removeImageCmd("two-id");
     }
 
     @Test

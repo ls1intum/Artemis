@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -87,6 +88,7 @@ import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
  */
 @Service
 @Profile(PROFILE_BUILDAGENT)
+@Lazy(false)
 public class BuildContainerCacheCleanupService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildContainerCacheCleanupService.class);
@@ -97,6 +99,8 @@ public class BuildContainerCacheCleanupService {
     private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final SharedQueueProcessingService sharedQueueProcessingService;
+
+    private final BuildAgentDockerService buildAgentDockerService;
 
     @Value("${artemis.continuous-integration.build-container-cache.cleanup-enabled:true}")
     private boolean cleanupEnabled;
@@ -113,9 +117,28 @@ public class BuildContainerCacheCleanupService {
     @Value("${artemis.continuous-integration.build-container-cache.size-low-watermark-ratio:0.75}")
     private double lowWatermarkRatio;
 
-    public BuildContainerCacheCleanupService(BuildAgentConfiguration buildAgentConfiguration, SharedQueueProcessingService sharedQueueProcessingService) {
+    public BuildContainerCacheCleanupService(BuildAgentConfiguration buildAgentConfiguration, SharedQueueProcessingService sharedQueueProcessingService,
+            BuildAgentDockerService buildAgentDockerService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.sharedQueueProcessingService = sharedQueueProcessingService;
+        this.buildAgentDockerService = buildAgentDockerService;
+    }
+
+    /**
+     * Admin-triggered "clear unused Docker images" wrapped in the maintenance pause. Distinct from calling
+     * {@link BuildAgentDockerService#clearAllUnusedDockerImages()} directly because acquiring the pause stops new
+     * builds from binding to an image during enumeration → removal, and also surfaces {@code MAINTENANCE} status
+     * in the admin UI for the duration of the clear (the dialog promises this UX for all three maintenance
+     * options — cache wipes go through {@link #wipeMavenCache()} / {@link #wipeGradleCache()}, this method gives
+     * the Docker option the same treatment).
+     *
+     * @return the number of images removed (0 if Docker is unavailable, the agent was already paused, or the
+     *         operation failed). The skip reason is logged.
+     */
+    public int clearUnusedDockerImagesUnderPause() {
+        AtomicReference<Integer> removed = new AtomicReference<>(0);
+        pausedAndDo("Docker image clear", deadline -> removed.set(buildAgentDockerService.clearAllUnusedDockerImages()));
+        return removed.get();
     }
 
     /**
@@ -170,6 +193,8 @@ public class BuildContainerCacheCleanupService {
      * Wipes the Maven cache: pauses the agent, deletes every regular file under the configured cache root
      * regardless of age, sweeps empty directories, then resumes. Returns immediately if no Maven cache is
      * configured or the cache is mounted read-only.
+     *
+     * @return outcome describing whether the wipe ran (and its stats) or was skipped (and why)
      */
     public WipeOutcome wipeMavenCache() {
         return wipe(buildAgentConfiguration.mavenCacheHostPath(), "Maven cache wipe");
@@ -177,6 +202,8 @@ public class BuildContainerCacheCleanupService {
 
     /**
      * Wipes the Gradle cache: same semantics as {@link #wipeMavenCache()} against the Gradle cache root.
+     *
+     * @return outcome describing whether the wipe ran (and its stats) or was skipped (and why)
      */
     public WipeOutcome wipeGradleCache() {
         return wipe(buildAgentConfiguration.gradleCacheHostPath(), "Gradle cache wipe");
@@ -217,7 +244,19 @@ public class BuildContainerCacheCleanupService {
         }
         Instant deadline = Instant.now().plus(MAX_CLEANUP_DURATION);
         try {
-            work.accept(deadline);
+            try {
+                work.accept(deadline);
+            }
+            catch (Throwable t) {
+                // Catch Throwable so a fault inside the prune / wipe is logged here (with the operator-grep
+                // marker we promise) and does NOT propagate past the resume in the outer finally. The listener
+                // would otherwise wrap it as a generic stack trace and the documented "Cache prune for <root>"
+                // summary line in the runbook would never appear.
+                if (t instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+                log.error("Maintenance work \"{}\" failed; the agent will still be resumed.", description, t);
+            }
             return Optional.empty();
         }
         finally {
@@ -248,9 +287,11 @@ public class BuildContainerCacheCleanupService {
             log.warn("Walking cache {} failed; wipe will be skipped.", root, e);
             return new WipeStats(root, 0, 0, 0, 1, Duration.between(start, Instant.now()));
         }
+        boolean aborted = false;
         for (FileEntry entry : entries) {
             initialBytes += entry.size();
             if (isCleanupAborted(deadline, "wipe", root)) {
+                aborted = true;
                 break;
             }
             if (tryDelete(entry.path())) {
@@ -261,7 +302,9 @@ public class BuildContainerCacheCleanupService {
                 errors++;
             }
         }
-        int emptyDirsRemoved = sweepEmptyDirectories(root, deadline);
+        // Skip the empty-dir sweep if the wipe loop aborted on deadline/release — the sweep would re-iterate the
+        // tree and push us further past the 15 min wall-clock cap the contract promises.
+        int emptyDirsRemoved = aborted ? 0 : sweepEmptyDirectories(root, deadline);
         Duration duration = Duration.between(start, Instant.now());
         log.info("Cache wipe for {}: deleted={} files / {} bytes (of {} initial bytes); empty dirs removed={}; errors={}; took {}", root, deletedFiles, deletedBytes, initialBytes,
                 emptyDirsRemoved, errors, duration);

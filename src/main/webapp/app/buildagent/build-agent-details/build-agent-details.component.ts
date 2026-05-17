@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
-import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
+import { EMPTY, Observable, Subject, Subscription, catchError, concatMap, debounceTime, from, switchMap, tap } from 'rxjs';
 import { faBroom, faCircleCheck, faEraser, faFilter, faHardDrive, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ReclaimDiskDialogComponent, ReclaimDiskDialogResult } from 'app/buildagent/build-agent-details/reclaim-disk-dialog/reclaim-disk-dialog.component';
@@ -523,27 +523,49 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     }
 
     private dispatchReclaim(name: string, result: ReclaimDiskDialogResult): void {
-        // Fire each selected action and surface its result independently. We do not wait for all to complete
-        // before showing the first toast — the operator sees progress as it happens, and the agent's status
-        // flipping to MAINTENANCE is itself live in the UI via the websocket subscription.
+        // Sequence the selected actions one after another (concat, not parallel). The server-side maintenance
+        // listener holds the agent's pause for the duration of each action; a second REST call that lands while
+        // the first is still draining its in-flight builds would observe the agent already paused and quietly
+        // skip with reason "already-paused". By chaining we ensure the operator's intent — "run all three of
+        // these" — actually translates to three completed actions, with each toast appearing in the order the
+        // dialog declared.
+        const steps: { run: () => Observable<void>; ok: string; fail: string }[] = [];
         if (result.wipeMaven) {
-            this.buildAgentsService.wipeMavenCache(name).subscribe({
-                next: () => this.alertService.addAlert({ type: AlertType.SUCCESS, message: 'artemisApp.buildAgents.alerts.mavenWipeTriggered' }),
-                error: () => this.alertService.addAlert({ type: AlertType.DANGER, message: 'artemisApp.buildAgents.alerts.mavenWipeFailed' }),
+            steps.push({
+                run: () => this.buildAgentsService.wipeMavenCache(name),
+                ok: 'artemisApp.buildAgents.alerts.mavenWipeTriggered',
+                fail: 'artemisApp.buildAgents.alerts.mavenWipeFailed',
             });
         }
         if (result.wipeGradle) {
-            this.buildAgentsService.wipeGradleCache(name).subscribe({
-                next: () => this.alertService.addAlert({ type: AlertType.SUCCESS, message: 'artemisApp.buildAgents.alerts.gradleWipeTriggered' }),
-                error: () => this.alertService.addAlert({ type: AlertType.DANGER, message: 'artemisApp.buildAgents.alerts.gradleWipeFailed' }),
+            steps.push({
+                run: () => this.buildAgentsService.wipeGradleCache(name),
+                ok: 'artemisApp.buildAgents.alerts.gradleWipeTriggered',
+                fail: 'artemisApp.buildAgents.alerts.gradleWipeFailed',
             });
         }
         if (result.clearDocker) {
-            this.buildAgentsService.clearDockerImages(name).subscribe({
-                next: () => this.alertService.addAlert({ type: AlertType.SUCCESS, message: 'artemisApp.buildAgents.alerts.dockerClearTriggered' }),
-                error: () => this.alertService.addAlert({ type: AlertType.DANGER, message: 'artemisApp.buildAgents.alerts.dockerClearFailed' }),
+            steps.push({
+                run: () => this.buildAgentsService.clearDockerImages(name),
+                ok: 'artemisApp.buildAgents.alerts.dockerClearTriggered',
+                fail: 'artemisApp.buildAgents.alerts.dockerClearFailed',
             });
         }
+        from(steps)
+            .pipe(
+                concatMap((step) =>
+                    step.run().pipe(
+                        tap({
+                            next: () => this.alertService.addAlert({ type: AlertType.SUCCESS, message: step.ok }),
+                            error: () => this.alertService.addAlert({ type: AlertType.DANGER, message: step.fail }),
+                        }),
+                        // Swallow a step's error so the next step still runs (each step is independent; a Docker
+                        // clear failure should not silently cancel the Gradle wipe the operator also asked for).
+                        catchError(() => EMPTY),
+                    ),
+                ),
+            )
+            .subscribe();
     }
 
     /**

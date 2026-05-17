@@ -542,6 +542,12 @@ public class BuildAgentDockerService {
      * once disk space falls below the threshold). This method exists for the admin-triggered "reclaim disk"
      * action, where the operator has explicitly decided that pulling on the next assignment is acceptable in
      * exchange for freeing space immediately.
+     * <p>
+     * Removes by <em>image ID</em>, not repo-tag. The id-based form covers two cases the repo-tag form did not:
+     * dangling {@code <none>:<none>} images (which often dominate disk use on a busy build agent and have no
+     * repo-tag entries), and the multi-tag case where iterating tags would either un-tag-without-deleting or
+     * count the same image twice. The {@code id} matches what {@link #getUnusedDockerImageStats()} reports, so
+     * the bytes the Reclaim-disk dialog promises are the bytes this method actually reclaims.
      *
      * @return the number of images that were successfully removed. {@code 0} if Docker is unavailable.
      */
@@ -549,25 +555,36 @@ public class BuildAgentDockerService {
         if (dockerClientNotAvailable("Cannot clear unused Docker images.")) {
             return 0;
         }
-        Set<String> unused = getUnusedDockerImages();
+        Set<String> unusedIds = getUnusedDockerImageIds();
         int removed = 0;
-        for (String imageName : unused) {
-            try (final var removeCommand = buildAgentConfiguration.getDockerClient().removeImageCmd(imageName)) {
+        for (String imageId : unusedIds) {
+            try (final var removeCommand = buildAgentConfiguration.getDockerClient().removeImageCmd(imageId)) {
                 removeCommand.exec();
                 removed++;
-                log.info("Removed unused Docker image {} during admin-triggered disk reclaim", imageName);
+                log.info("Removed unused Docker image {} during admin-triggered disk reclaim", imageId);
             }
             catch (NotFoundException ignored) {
                 // Image vanished between enumeration and removal — fine.
-                log.debug("Docker image {} was already gone during admin-triggered disk reclaim", imageName);
+                log.debug("Docker image {} was already gone during admin-triggered disk reclaim", imageId);
             }
             catch (RuntimeException e) {
                 // Image may have become bound to a freshly-started container in the brief window since enumeration.
-                log.warn("Could not remove Docker image {} during admin-triggered disk reclaim: {}", imageName, e.getMessage());
+                log.warn("Could not remove Docker image {} during admin-triggered disk reclaim: {}", imageId, e.getMessage());
             }
         }
-        log.info("Admin-triggered disk reclaim removed {} of {} unused Docker images.", removed, unused.size());
+        log.info("Admin-triggered disk reclaim removed {} of {} unused Docker images.", removed, unusedIds.size());
         return removed;
+    }
+
+    /**
+     * @return the set of image IDs of images not currently bound to any running container. Used by
+     *         {@link #clearAllUnusedDockerImages()} and the unit tests for it. Returns an empty set when Docker is
+     *         unavailable.
+     */
+    private Set<String> getUnusedDockerImageIds() {
+        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
+        Set<String> imageIdsInUse = dockerClient.listContainersCmd().exec().stream().map(Container::getImageId).collect(Collectors.toSet());
+        return dockerClient.listImagesCmd().exec().stream().map(Image::getId).filter(id -> id != null && !imageIdsInUse.contains(id)).collect(Collectors.toSet());
     }
 
     /**

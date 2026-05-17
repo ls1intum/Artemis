@@ -67,25 +67,25 @@ public class BuildAgentInformationService {
     private final BuildAgentDockerService buildAgentDockerService;
 
     /**
-     * Disk-space and cache-size statistics that flow into {@link BuildAgentDetailsDTO}. The "fast" ones
-     * ({@code diskTotalBytes}, {@code diskUsableBytes}) are refreshed on each 10-second push because the underlying
-     * {@code Files.getFileStore} call is microseconds. The "slow" ones ({@code mavenCacheBytes},
-     * {@code gradleCacheBytes}, {@code dockerUnusedImageBytes}, {@code dockerUnusedImageCount}) require a recursive
-     * filesystem walk or a Docker daemon round-trip and are refreshed on a 5-minute cadence by
-     * {@link #refreshSlowDiskStats()}. Marked {@code volatile} so reads on the push thread see the latest values
-     * written by the scheduler thread.
+     * Disk-space and cache-size statistics that flow into {@link BuildAgentDetailsDTO}. Bundled into a single
+     * immutable snapshot so the 10-second push thread reads a coherent set of values — under the previous
+     * field-by-field design, a reader that arrived between writes could pair a fresh Maven number with a stale
+     * Gradle number, actively misleading the Reclaim-disk dialog.
+     * <p>
+     * The single {@code volatile} reference is the publication point. All six values are refreshed together by
+     * {@link #refreshSlowDiskStats()} on a 5-minute cadence. The {@code Files.getFileStore} call that produces
+     * {@code diskTotalBytes} / {@code diskUsableBytes} is usually a microsecond {@code statfs(3)} but can block
+     * for minutes on a stalled NFS / autofs mount, so it also runs on the slow scheduler rather than inline on
+     * every push — a hung filesystem must not be able to block the periodic agent-information push.
      */
-    private volatile long diskTotalBytes;
+    private volatile DiskStatsSnapshot diskStats = DiskStatsSnapshot.EMPTY;
 
-    private volatile long diskUsableBytes;
+    /** Immutable bundle of disk-related statistics. Single volatile reference is the publication point. */
+    private record DiskStatsSnapshot(long diskTotalBytes, long diskUsableBytes, long mavenCacheBytes, long gradleCacheBytes, long dockerUnusedImageBytes,
+            int dockerUnusedImageCount) {
 
-    private volatile long mavenCacheBytes;
-
-    private volatile long gradleCacheBytes;
-
-    private volatile long dockerUnusedImageBytes;
-
-    private volatile int dockerUnusedImageCount;
+        static final DiskStatsSnapshot EMPTY = new DiskStatsSnapshot(0, 0, 0, 0, 0, 0);
+    }
 
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
@@ -289,54 +289,55 @@ public class BuildAgentInformationService {
         var cancelledBuilds = getCancelledBuilds(agent, recentBuildJob);
         var timedOutBuilds = getTimedOutBuilds(agent, recentBuildJob);
 
-        // Refresh the cheap disk numbers inline (a single getFileStore syscall, microseconds). The heavier cache &
-        // Docker-image stats are refreshed on a slower @Scheduled cadence and read from the volatile fields.
-        refreshFastDiskStats();
-
+        DiskStatsSnapshot snap = diskStats;
         return new BuildAgentDetailsDTO(averageBuildDuration, successfulBuilds, failedBuilds, cancelledBuilds, timedOutBuilds, totalsBuilds, lastBuildDate, startDate, gitRevision,
-                consecutiveFailures, dockerVersion, diskTotalBytes, diskUsableBytes, mavenCacheBytes, gradleCacheBytes, dockerUnusedImageBytes, dockerUnusedImageCount);
+                consecutiveFailures, dockerVersion, snap.diskTotalBytes(), snap.diskUsableBytes(), snap.mavenCacheBytes(), snap.gradleCacheBytes(), snap.dockerUnusedImageBytes(),
+                snap.dockerUnusedImageCount());
     }
 
     /**
-     * Cheap disk-space probe: {@code Files.getFileStore} returns the {@code FileStore} of the filesystem hosting
-     * the cache directory (or {@code /} when no cache is configured). The total + usable byte counts come from a
-     * single statfs(3)-like syscall — safe to call on every 10s push without holding a thread on slow I/O.
-     */
-    private void refreshFastDiskStats() {
-        Path probe = pickDiskProbeRoot();
-        try {
-            FileStore store = Files.getFileStore(probe);
-            diskTotalBytes = store.getTotalSpace();
-            diskUsableBytes = store.getUsableSpace();
-        }
-        catch (IOException e) {
-            log.debug("Could not probe disk usage on {}: {}", probe, e.getMessage());
-            diskTotalBytes = 0;
-            diskUsableBytes = 0;
-        }
-    }
-
-    /**
-     * Slow stats: cache-directory walks and Docker daemon enumeration. Runs every 5 minutes (with an immediate
-     * first run shortly after startup so the disk panel and Reclaim-disk dialog have non-zero data the first time
-     * an operator opens them). Failures are isolated per stat — if the Docker daemon is offline the cache walks
-     * still complete.
+     * Slow stats: cache-directory walks, Docker daemon enumeration, and (since this commit) the
+     * {@code Files.getFileStore} probe. Runs every 5 minutes (with an immediate first run shortly after startup so
+     * the disk panel and Reclaim-disk dialog have non-zero data the first time an operator opens them). All six
+     * values are written via a single atomic snapshot assignment so the 10-second push thread never observes a
+     * half-updated state.
+     * <p>
+     * The filesystem probe is on this cadence rather than inline on the push because {@code getFileStore} is
+     * usually fast but on a stalled NFS / autofs mount it can block for the system automount timeout (5–10 min on
+     * RHEL). A blocked push thread also stops publishing the agent information, which is far worse than a 5-min
+     * delay in the disk-usage tile.
+     * <p>
+     * Each sub-step is isolated — a Docker daemon hiccup does not zero the cache numbers, a missing cache root
+     * does not zero the docker stats, an NFS hang on the filesystem probe does not block the others (the catch
+     * blocks preserve the previous snapshot value for the affected field).
      */
     @Scheduled(initialDelayString = "15000", fixedRateString = "300000")
     public void refreshSlowDiskStats() {
-        Path mavenRoot = buildAgentConfiguration.mavenCacheHostPath();
-        mavenCacheBytes = directorySize(mavenRoot);
-        Path gradleRoot = buildAgentConfiguration.gradleCacheHostPath();
-        gradleCacheBytes = directorySize(gradleRoot);
+        DiskStatsSnapshot previous = diskStats;
+        long mavenBytes = directorySize(buildAgentConfiguration.mavenCacheHostPath());
+        long gradleBytes = directorySize(buildAgentConfiguration.gradleCacheHostPath());
+        long dockerBytes = previous.dockerUnusedImageBytes();
+        int dockerCount = previous.dockerUnusedImageCount();
         try {
             BuildAgentDockerService.UnusedImageStats stats = buildAgentDockerService.getUnusedDockerImageStats();
-            dockerUnusedImageBytes = stats.totalBytes();
-            dockerUnusedImageCount = stats.count();
+            dockerBytes = stats.totalBytes();
+            dockerCount = stats.count();
         }
         catch (RuntimeException e) {
-            // Docker daemon hiccup — preserve last-known values rather than zero them.
             log.debug("Could not refresh unused Docker image stats: {}", e.getMessage());
         }
+        long totalBytes = previous.diskTotalBytes();
+        long usableBytes = previous.diskUsableBytes();
+        Path probe = pickDiskProbeRoot();
+        try {
+            FileStore store = Files.getFileStore(probe);
+            totalBytes = store.getTotalSpace();
+            usableBytes = store.getUsableSpace();
+        }
+        catch (IOException e) {
+            log.debug("Could not probe disk usage on {}: {}", probe, e.getMessage());
+        }
+        diskStats = new DiskStatsSnapshot(totalBytes, usableBytes, mavenBytes, gradleBytes, dockerBytes, dockerCount);
     }
 
     private long directorySize(@Nullable Path root) {

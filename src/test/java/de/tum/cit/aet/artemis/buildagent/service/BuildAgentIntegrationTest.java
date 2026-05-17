@@ -21,6 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -429,7 +430,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     void testCacheCleanupPausesAndResumesAgent(@org.junit.jupiter.api.io.TempDir Path tempCache) throws IOException {
         Path oldFile = tempCache.resolve("group/old.jar");
         Files.createDirectories(oldFile.getParent());
-        Files.write(oldFile, new byte[64]);
+        FileUtils.writeByteArrayToFile(oldFile.toFile(), new byte[64]);
         Files.setAttribute(oldFile, "basic:lastAccessTime", FileTime.from(Instant.now().minus(Duration.ofDays(60))));
 
         // The test base disables the scheduled cleanup so it cannot fire spontaneously. Re-enable for this test.
@@ -501,8 +502,8 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         Path gradleOld = gradleTemp.resolve("g/oldlib.jar");
         Files.createDirectories(mavenOld.getParent());
         Files.createDirectories(gradleOld.getParent());
-        Files.write(mavenOld, new byte[256]);
-        Files.write(gradleOld, new byte[512]);
+        FileUtils.writeByteArrayToFile(mavenOld.toFile(), new byte[256]);
+        FileUtils.writeByteArrayToFile(gradleOld.toFile(), new byte[512]);
         Files.setAttribute(mavenOld, "basic:lastAccessTime", FileTime.from(Instant.now().minus(Duration.ofDays(60))));
         Files.setAttribute(gradleOld, "basic:lastAccessTime", FileTime.from(Instant.now().minus(Duration.ofDays(60))));
 
@@ -537,7 +538,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
      */
     @Test
     void testCacheCleanupSkipsWhenReadOnly(@org.junit.jupiter.api.io.TempDir Path tempCache) throws IOException {
-        Files.write(tempCache.resolve("payload.jar"), new byte[64]);
+        FileUtils.writeByteArrayToFile(tempCache.resolve("payload.jar").toFile(), new byte[64]);
         Files.setAttribute(tempCache.resolve("payload.jar"), "basic:lastAccessTime", FileTime.from(Instant.now().minus(Duration.ofDays(60))));
 
         ReflectionTestUtils.setField(buildContainerCacheCleanupService, "cleanupEnabled", true);
@@ -566,7 +567,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
      */
     @Test
     void testCacheCleanupSkipsWhenDisabled(@org.junit.jupiter.api.io.TempDir Path tempCache) throws IOException {
-        Files.write(tempCache.resolve("would-be-deleted.jar"), new byte[64]);
+        FileUtils.writeByteArrayToFile(tempCache.resolve("would-be-deleted.jar").toFile(), new byte[64]);
         Files.setAttribute(tempCache.resolve("would-be-deleted.jar"), "basic:lastAccessTime", FileTime.from(Instant.now().minus(Duration.ofDays(60))));
 
         // Note: the base class already sets cleanup-enabled=false; we just don't flip it.
@@ -629,7 +630,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     void testMaintenanceTopicTriggersCacheCleanup(@org.junit.jupiter.api.io.TempDir Path tempCache) throws IOException {
         Path oldFile = tempCache.resolve("topic/old.jar");
         Files.createDirectories(oldFile.getParent());
-        Files.write(oldFile, new byte[64]);
+        FileUtils.writeByteArrayToFile(oldFile.toFile(), new byte[64]);
         Files.setAttribute(oldFile, "basic:lastAccessTime", FileTime.from(Instant.now().minus(Duration.ofDays(60))));
 
         ReflectionTestUtils.setField(buildContainerCacheCleanupService, "cleanupEnabled", true);
@@ -659,7 +660,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     void testMaintenanceTopicTriggersWipeMavenCache(@org.junit.jupiter.api.io.TempDir Path tempCache) throws IOException {
         Path freshFile = tempCache.resolve("wipe/fresh.jar");
         Files.createDirectories(freshFile.getParent());
-        Files.write(freshFile, new byte[64]);
+        FileUtils.writeByteArrayToFile(freshFile.toFile(), new byte[64]);
         // Deliberately recent atime — wipe must delete it anyway.
         Files.setAttribute(freshFile, "basic:lastAccessTime", FileTime.from(Instant.now()));
 

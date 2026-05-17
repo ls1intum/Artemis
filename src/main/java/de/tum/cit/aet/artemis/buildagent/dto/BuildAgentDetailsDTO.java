@@ -47,6 +47,10 @@ public record BuildAgentDetailsDTO(long averageBuildDuration, long successfulBui
         @Nullable ZonedDateTime lastBuildDate, @NotNull ZonedDateTime startDate, @Nullable String gitRevision, int consecutiveBuildFailures, @Nullable String dockerVersion,
         long diskTotalBytes, long diskUsableBytes, long mavenCacheBytes, long gradleCacheBytes, long dockerUnusedImageBytes, int dockerUnusedImageCount) implements Serializable {
 
+    // Keep the serialVersionUID stable when adding compatible fields (Java's default Serializable allows readers
+    // on older versions to consume newer payloads, filling absent fields with their type defaults — `0L` for long
+    // here, which doubles as the documented "not yet populated" sentinel). Bumping the UID would force a rolling
+    // upgrade to coordinate a cluster-wide restart, which Artemis does not currently require.
     @Serial
-    private static final long serialVersionUID = 3L;
+    private static final long serialVersionUID = 2L;
 }

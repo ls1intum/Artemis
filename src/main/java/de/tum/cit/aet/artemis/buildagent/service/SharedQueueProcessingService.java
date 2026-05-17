@@ -253,18 +253,14 @@ public class SharedQueueProcessingService {
      *         pause" and must not invoke {@link #resumeFromMaintenance()} in their cleanup path.
      */
     public boolean pauseForMaintenance() {
-        // Set the maintenance flag BEFORE attempting the pause so the very first information push that observes
-        // isPaused=true also observes inMaintenance=true; otherwise consumers (e.g. the admin UI) would briefly see
-        // a plain PAUSED status that immediately flips to MAINTENANCE.
-        inMaintenance.set(true);
+        // Set the maintenance flag ONLY when we actually own the transition. Setting before pauseBuildAgent was the
+        // previous design, but it caused a window where an existing admin pause could be momentarily mis-labelled
+        // MAINTENANCE: between inMaintenance.set(true) and our follow-up clear, the 10-second push thread could see
+        // (isPaused=true admin) AND (inMaintenance=true us) and emit the wrong status DTO. Setting the flag only on
+        // a successful transition + explicitly republishing closes the window.
+        boolean transitioned;
         try {
-            boolean transitioned = pauseBuildAgent(false);
-            if (!transitioned) {
-                // We did not own the transition (the agent was already paused by someone else). Clear the flag so we
-                // do not mis-label an unrelated administrative pause as MAINTENANCE.
-                inMaintenance.set(false);
-            }
-            return transitioned;
+            transitioned = pauseBuildAgent(false);
         }
         catch (RuntimeException | Error e) {
             // pauseBuildAgent may have flipped isPaused to true before the failure (e.g. a Hazelcast hiccup during
@@ -278,9 +274,22 @@ public class SharedQueueProcessingService {
                     log.error("Rollback resume after pauseForMaintenance failure also failed; agent may be stuck paused.", rollbackFailure);
                 }
             }
-            inMaintenance.set(false);
             throw e;
         }
+        if (transitioned) {
+            inMaintenance.set(true);
+            // pauseBuildAgent already pushed an updated information record with isPaused=true while it held the
+            // transition lock, but at that moment inMaintenance was still false so the DTO carried PAUSED.
+            // Republish now so consumers see MAINTENANCE within one push cycle instead of the next 10s tick.
+            try {
+                buildAgentInformationService.updateLocalBuildAgentInformation(true);
+            }
+            catch (Exception republishFailure) {
+                // The next periodic push will correct it within ~10s; don't mask the successful pause.
+                log.debug("Could not republish MAINTENANCE status; next push will correct it: {}", republishFailure.getMessage());
+            }
+        }
+        return transitioned;
     }
 
     /**
@@ -472,14 +481,20 @@ public class SharedQueueProcessingService {
                         case RUN_CACHE_CLEANUP -> buildContainerCacheCleanupService.runCleanup();
                         case WIPE_MAVEN_CACHE -> buildContainerCacheCleanupService.wipeMavenCache();
                         case WIPE_GRADLE_CACHE -> buildContainerCacheCleanupService.wipeGradleCache();
-                        case CLEAR_DOCKER_IMAGES -> buildAgentDockerService.clearAllUnusedDockerImages();
+                        case CLEAR_DOCKER_IMAGES -> buildContainerCacheCleanupService.clearUnusedDockerImagesUnderPause();
+                        default -> throw new IllegalStateException("Unhandled maintenance action type: " + action.type());
                     }
                 }
-                catch (RuntimeException e) {
-                    // The action services log their own internal failures; this catch is defence-in-depth so a bug
-                    // in one action does not prevent the Hazelcast listener thread from processing subsequent
-                    // messages addressed to this agent.
-                    log.error("Maintenance action {} for agent {} failed", action.type(), action.agentShortName(), e);
+                catch (Throwable t) {
+                    // Catch Throwable (not just RuntimeException) so Error / wrapped InterruptedException cannot
+                    // tear down the listener thread — Hazelcast would then silently drop every future
+                    // maintenance message for this agent until the JVM restarts, the classic
+                    // "stopped working and we don't know when" failure mode. The action services log their own
+                    // internal failures; this is defence-in-depth.
+                    if (t instanceof InterruptedException) {
+                        Thread.currentThread().interrupt();
+                    }
+                    log.error("Maintenance action {} for agent {} failed", action.type(), action.agentShortName(), t);
                 }
             });
 
@@ -509,7 +524,7 @@ public class SharedQueueProcessingService {
         cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
     }
 
-    /** Removes all listeners (queue, pause, resume) if the Hazelcast instance is running. */
+    /** Removes all listeners (queue, pause, resume, maintenance) if the Hazelcast instance is running. */
     private void removeListener() {
         if (distributedDataAccessService.isInstanceRunning()) {
             if (this.listenerId != null) {
@@ -520,6 +535,9 @@ public class SharedQueueProcessingService {
             }
             if (this.resumeListenerId != null) {
                 distributedDataAccessService.getResumeBuildAgentTopic().removeMessageListener(this.resumeListenerId);
+            }
+            if (this.maintenanceListenerId != null) {
+                distributedDataAccessService.getBuildAgentMaintenanceActionTopic().removeMessageListener(this.maintenanceListenerId);
             }
         }
     }

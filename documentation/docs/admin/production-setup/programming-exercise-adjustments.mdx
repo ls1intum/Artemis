@@ -387,6 +387,79 @@ with a log line (`Build-container cache is read-only; cleanup is the operator's 
 the agent is not paused. Operators using read-only caches own cache contents — typically a separate warm-up job
 populates the cache out of band; the prune of that warm-up cache is on the operator's side.
 
+### Admin UI for on-demand maintenance {/* #admin-ui-maintenance */}
+
+The build-agent details page (`/admin/build-agents/details?agentName=…`) exposes four operator actions that go
+through the multi-node-correct path described above. A REST call hits any core node (load-balanced via nginx),
+the core publishes onto a Hazelcast topic, every agent receives the broadcast, only the addressed agent acts.
+
+| Action | UI affordance | REST endpoint | Pause behaviour |
+|---|---|---|---|
+| Run cache cleanup | "Run cache cleanup" button | `PUT /api/core/admin/agents/{name}/run-cache-cleanup` | Same drain/cleanup/resume cycle as the daily scheduler |
+| Wipe Maven cache | Reclaim disk → Maven option | `DELETE /api/core/admin/agents/{name}/cache/maven` | Pause, delete every file under `/root/.m2`, resume |
+| Wipe Gradle cache | Reclaim disk → Gradle option | `DELETE /api/core/admin/agents/{name}/cache/gradle` | Pause, delete every file under `/root/.gradle`, resume |
+| Clear unused Docker images | Reclaim disk → Docker option | `DELETE /api/core/admin/agents/{name}/docker-images` | Pause, remove every image not bound to a running container (by image ID — dangling images included), resume |
+
+During any of these, the agent's status flips to a new value `MAINTENANCE` (distinct from `PAUSED` / `SELF_PAUSED`)
+so dashboards and other operators can see what is actually happening. The transition is observable via the live
+`BuildAgentInformation` push and via the agent details page's status badge (info-blue colour).
+
+#### Reclaim disk dialog
+
+The "Reclaim disk…" button opens a unified confirmation dialog so operators decide what to delete with full
+information in one place:
+
+- Plain-English explanation of the pause-drain-act-resume cycle (with the configured grace-period seconds spelled
+  out — defaults to `pause-grace-period-seconds: 60`).
+- The current free / total disk on the agent.
+- Three independent checkboxes, each showing the bytes that would be reclaimed: Maven cache, Gradle cache,
+  Unused Docker images.
+- A "type **RECLAIM** to confirm" safety affordance. The Confirm button stays disabled until both (a) at least
+  one option is checked and (b) the confirm word matches exactly.
+- The selected REST calls fire sequentially (rxjs `concat`), not in parallel — each action holds the maintenance
+  pause for the duration of its work, and a follow-on action publishing while the first is still draining would
+  observe the agent already paused and silently skip. Sequencing ensures all selected actions actually run.
+
+#### Disk usage tile
+
+The build-agent details page also surfaces a disk-usage tile next to the Maintenance card showing free / total
+bytes on the filesystem hosting the cache and a Bootstrap progress bar (yellow ≥ 70 % used, red ≥ 85 %). The
+values are populated by the build-agent JVM on two cadences:
+
+- **Slow stats** (5-minute scheduler) — walks the Maven and Gradle cache directories to compute their on-disk
+  size, enumerates unused Docker images for their total bytes and count, and probes the cache filesystem via
+  `Files.getFileStore`. All six values are written together as a single atomic snapshot so readers never see a
+  partially-updated set.
+- **Periodic push** (10 s) — reads the current snapshot and includes it in the `BuildAgentInformation` published
+  to the Hazelcast distributed map; the admin UI subscribes via `/topic/admin/build-agent/<name>`.
+
+The filesystem probe runs on the slow scheduler (not inline on the 10 s push) so a stalled NFS / autofs mount
+cannot block the periodic agent-information push. Defaults are tuned for the production fleet (74 GB root
+filesystem, ~25–35 GB free); operators with tighter disks should set lower `maven-max-size` / `gradle-max-size`
+caps in the agent group's inventory.
+
+#### Configuration reference
+
+All keys live under `artemis.continuous-integration.build-container-cache.*` in `application-buildagent.yml`
+(or on the corresponding ansible inventory keys). Defaults shown.
+
+| Key | Default | Purpose |
+|---|---|---|
+| `maven` | _unset_ | Host path bind-mounted into the container as `/root/.m2`. Leave unset to disable Maven caching. |
+| `gradle` | _unset_ | Host path bind-mounted into the container as `/root/.gradle`. |
+| `read-only` | `false` | When `true`, both binds are mounted `:ro`; cleanup and wipe are operator's responsibility. |
+| `cleanup-enabled` | `true` | Disable the daily scheduled cleanup task entirely. |
+| `cleanup-cron` | `0 0 5 * * *` | Spring 6-field cron expression; ansible templates a per-agent stagger so multiple agents do not drain at the same minute. |
+| `cleanup-max-age-days` | `30` | Age threshold for phase-1 eviction. Files whose access time is older than this are deleted. |
+| `maven-max-size` | `3GB` | Phase-2 hard cap on the Maven cache total size; if exceeded, evict LRU-by-atime until under `size-low-watermark-ratio × max-size`. |
+| `gradle-max-size` | `6GB` | Same for Gradle. |
+| `size-low-watermark-ratio` | `0.75` | Phase-2 stop threshold. Out-of-range values (NaN, ≤0, ≥1) clamp back to 0.75 with a warn log. |
+
+The four on-demand actions exposed by the admin UI **do not have their own configuration keys** — they reuse the
+cache paths, the read-only flag, and the maintenance pause. `pause-grace-period-seconds`
+(`artemis.continuous-integration.pause-grace-period-seconds`, default 60) controls how long an action waits for
+in-flight builds before cancelling and re-queueing them onto another live agent.
+
 #### Operator runbook
 
 - **Disable cleanup temporarily** (e.g. while debugging) — set `cleanup-enabled: false` in

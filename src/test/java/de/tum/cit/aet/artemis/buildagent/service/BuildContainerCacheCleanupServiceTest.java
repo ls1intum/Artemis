@@ -17,6 +17,7 @@ import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -59,7 +60,7 @@ class BuildContainerCacheCleanupServiceTest {
         // so the standard prune flow proceeds. Tests that exercise the abort-on-resume path override this.
         lenient().when(sharedQueueProcessingService.isPaused()).thenReturn(true);
 
-        service = new BuildContainerCacheCleanupService(buildAgentConfiguration, sharedQueueProcessingService);
+        service = new BuildContainerCacheCleanupService(buildAgentConfiguration, sharedQueueProcessingService, mock(BuildAgentDockerService.class));
         service.setCleanupEnabled(true);
         service.setMaxAgeDays(30);
         service.setMavenMaxSize(DataSize.ofGigabytes(3));
@@ -533,7 +534,7 @@ class BuildContainerCacheCleanupServiceTest {
         // confirming a non-existent file doesn't blow up phase 1 when produced from the walk list directly.
         when(buildAgentConfiguration.gradleCacheHostPath()).thenReturn(null);
         Path ghost = mavenCache.resolve("ghost.jar");
-        Files.write(ghost, new byte[16]);
+        FileUtils.writeByteArrayToFile(ghost.toFile(), new byte[16]);
         Files.setAttribute(ghost, "basic:lastAccessTime", FileTime.from(daysAgo(60)));
         Files.delete(ghost); // gone before runCleanup walks
 
@@ -685,7 +686,7 @@ class BuildContainerCacheCleanupServiceTest {
     private static Path touchFileWithAtime(Path file, int sizeBytes, Instant atime) throws IOException {
         Files.createDirectories(file.getParent());
         byte[] data = new byte[sizeBytes];
-        Files.write(file, data);
+        FileUtils.writeByteArrayToFile(file.toFile(), data);
         Files.setAttribute(file, "basic:lastAccessTime", FileTime.from(atime));
         return file;
     }

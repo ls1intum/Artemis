@@ -45,7 +45,8 @@ test.describe('Build agent maintenance actions', { tag: '@multi-node' }, () => {
      * otherwise produce ambiguous MAINTENANCE/PAUSED assertions).
      */
     async function pickRunningAgent(page: import('@playwright/test').Page): Promise<BuildAgentDTO> {
-        const result = await expect
+        // Gate on at least one agent being in ACTIVE/IDLE state — the cluster may not be fully warm at test start.
+        await expect
             .poll(
                 async () => {
                     const response = await page.request.get('/api/core/admin/build-agents');
@@ -58,7 +59,7 @@ test.describe('Build agent maintenance actions', { tag: '@multi-node' }, () => {
                 { timeout: AGENT_LIST_TIMEOUT_MS, message: 'No build agent reached an ACTIVE/IDLE state' },
             )
             .toBeDefined();
-        // expect.poll returns void; re-fetch to get the value back out.
+        // Re-fetch to obtain the value — expect.poll returns void.
         const response = await page.request.get('/api/core/admin/build-agents');
         const agents = (await response.json()) as BuildAgentInformation[];
         const target = agents.find((a) => a.status === 'ACTIVE' || a.status === 'IDLE');
@@ -66,7 +67,6 @@ test.describe('Build agent maintenance actions', { tag: '@multi-node' }, () => {
             throw new Error('No running build agent available for the maintenance test');
         }
         return target.buildAgent;
-        // (the `result` assertion above just gates the wait; the actual return uses the latest fetch)
     }
 
     async function currentAgentStatus(page: import('@playwright/test').Page, agentName: string): Promise<string | undefined> {

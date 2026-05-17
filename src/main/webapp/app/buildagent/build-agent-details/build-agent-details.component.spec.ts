@@ -46,6 +46,10 @@ describe('BuildAgentDetailsComponent', () => {
         pauseBuildAgent: vi.fn().mockReturnValue(of({})),
         resumeBuildAgent: vi.fn().mockReturnValue(of({})),
         getFinishedBuildJobs: vi.fn().mockReturnValue(of({})),
+        runCacheCleanup: vi.fn().mockReturnValue(of({})),
+        wipeMavenCache: vi.fn().mockReturnValue(of({})),
+        wipeGradleCache: vi.fn().mockReturnValue(of({})),
+        clearDockerImages: vi.fn().mockReturnValue(of({})),
     };
 
     const repositoryInfo: RepositoryInfo = {
@@ -366,6 +370,139 @@ describe('BuildAgentDetailsComponent', () => {
             type: AlertType.DANGER,
             message: 'artemisApp.buildAgents.alerts.buildAgentResumeFailed',
         });
+    });
+
+    // --- Maintenance actions (Reclaim disk admin UI) ------------------------------------------------------------
+    //
+    // These tests pattern-match the existing pause/resume tests: signal is set AFTER any detectChanges so that
+    // ngOnInit's getBuildAgentDetails subscription does not overwrite the value we just set. Don't add a
+    // detectChanges before the set unless you also re-set the signal afterwards.
+
+    it('runCacheCleanup should warn when agent has no name', () => {
+        component.buildAgent.set({ ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: '' } });
+
+        component.runCacheCleanup();
+
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({ type: AlertType.WARNING, message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName' });
+        expect(mockBuildAgentsService.runCacheCleanup).not.toHaveBeenCalled();
+    });
+
+    it('runCacheCleanup should call the service and show the success toast', () => {
+        component.buildAgent.set(mockBuildAgent);
+
+        component.runCacheCleanup();
+
+        expect(mockBuildAgentsService.runCacheCleanup).toHaveBeenCalledWith(mockBuildAgent.buildAgent!.name);
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({ type: AlertType.SUCCESS, message: 'artemisApp.buildAgents.alerts.cleanupTriggered' });
+    });
+
+    it('runCacheCleanup should show the failure toast when the service errors', () => {
+        mockBuildAgentsService.runCacheCleanup.mockReturnValueOnce(throwError(() => new Error('boom')));
+        component.buildAgent.set(mockBuildAgent);
+
+        component.runCacheCleanup();
+
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'artemisApp.buildAgents.alerts.cleanupFailed' });
+    });
+
+    it('openReclaimDiskDialog should warn when agent has no name and never open the dialog', () => {
+        const dialogService = TestBed.inject(DialogService);
+        const openSpy = vi.spyOn(dialogService, 'open');
+        component.buildAgent.set({ ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: '' } });
+
+        component.openReclaimDiskDialog();
+
+        expect(openSpy).not.toHaveBeenCalled();
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({ type: AlertType.WARNING, message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName' });
+    });
+
+    it('openReclaimDiskDialog should open the dialog with current disk + cache details', () => {
+        const dialogService = TestBed.inject(DialogService);
+        const onClose = new Subject<undefined>();
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
+        component.buildAgent.set({
+            ...mockBuildAgent,
+            buildAgentDetails: {
+                ...mockBuildAgent.buildAgentDetails,
+                diskTotalBytes: 100,
+                diskUsableBytes: 40,
+                mavenCacheBytes: 5,
+                gradleCacheBytes: 7,
+                dockerUnusedImageBytes: 3,
+                dockerUnusedImageCount: 2,
+            } as any,
+        });
+
+        component.openReclaimDiskDialog();
+
+        expect(openSpy).toHaveBeenCalledTimes(1);
+        const [, config] = openSpy.mock.calls[0];
+        expect(config.data).toMatchObject({
+            agentName: mockBuildAgent.buildAgent!.name,
+            diskTotalBytes: 100,
+            diskUsableBytes: 40,
+            mavenCacheBytes: 5,
+            gradleCacheBytes: 7,
+            dockerUnusedImageBytes: 3,
+            dockerUnusedImageCount: 2,
+        });
+    });
+
+    it('openReclaimDiskDialog should dispatch nothing when the dialog is cancelled', () => {
+        const dialogService = TestBed.inject(DialogService);
+        const onClose = new Subject<undefined>();
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
+        component.buildAgent.set(mockBuildAgent);
+
+        component.openReclaimDiskDialog();
+        onClose.next(undefined);
+
+        expect(mockBuildAgentsService.wipeMavenCache).not.toHaveBeenCalled();
+        expect(mockBuildAgentsService.wipeGradleCache).not.toHaveBeenCalled();
+        expect(mockBuildAgentsService.clearDockerImages).not.toHaveBeenCalled();
+    });
+
+    it('openReclaimDiskDialog with all three options selected dispatches all three REST calls in sequence', () => {
+        const dialogService = TestBed.inject(DialogService);
+        const onClose = new Subject<{ wipeMaven: boolean; wipeGradle: boolean; clearDocker: boolean }>();
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
+        component.buildAgent.set(mockBuildAgent);
+
+        component.openReclaimDiskDialog();
+        onClose.next({ wipeMaven: true, wipeGradle: true, clearDocker: true });
+
+        expect(mockBuildAgentsService.wipeMavenCache).toHaveBeenCalledWith(mockBuildAgent.buildAgent!.name);
+        expect(mockBuildAgentsService.wipeGradleCache).toHaveBeenCalledWith(mockBuildAgent.buildAgent!.name);
+        expect(mockBuildAgentsService.clearDockerImages).toHaveBeenCalledWith(mockBuildAgent.buildAgent!.name);
+    });
+
+    it('openReclaimDiskDialog skips disabled options on confirm', () => {
+        const dialogService = TestBed.inject(DialogService);
+        const onClose = new Subject<{ wipeMaven: boolean; wipeGradle: boolean; clearDocker: boolean }>();
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
+        component.buildAgent.set(mockBuildAgent);
+
+        component.openReclaimDiskDialog();
+        onClose.next({ wipeMaven: false, wipeGradle: true, clearDocker: false });
+
+        expect(mockBuildAgentsService.wipeMavenCache).not.toHaveBeenCalled();
+        expect(mockBuildAgentsService.wipeGradleCache).toHaveBeenCalledWith(mockBuildAgent.buildAgent!.name);
+        expect(mockBuildAgentsService.clearDockerImages).not.toHaveBeenCalled();
+    });
+
+    it('openReclaimDiskDialog surfaces a failure alert if one of the selected actions errors', () => {
+        const dialogService = TestBed.inject(DialogService);
+        const onClose = new Subject<{ wipeMaven: boolean; wipeGradle: boolean; clearDocker: boolean }>();
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as any);
+        mockBuildAgentsService.wipeMavenCache.mockReturnValueOnce(throwError(() => new Error('maven dead')));
+        component.buildAgent.set(mockBuildAgent);
+
+        component.openReclaimDiskDialog();
+        onClose.next({ wipeMaven: true, wipeGradle: true, clearDocker: false });
+
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'artemisApp.buildAgents.alerts.mavenWipeFailed' });
+        // The failure in step 1 must NOT prevent step 2 from running — concat with catchError(EMPTY) on each step.
+        expect(mockBuildAgentsService.wipeGradleCache).toHaveBeenCalledWith(mockBuildAgent.buildAgent!.name);
     });
 
     it('should trigger refresh on search term change', async () => {
