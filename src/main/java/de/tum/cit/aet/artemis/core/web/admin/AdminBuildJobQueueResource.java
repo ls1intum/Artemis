@@ -407,6 +407,9 @@ public class AdminBuildJobQueueResource {
      * another live agent. Used when artifacts are suspected corrupt (bit-rot, half-written, or cache-poisoning).
      * <p>
      * <strong>Authorization:</strong> requires admin privileges, enforced by {@code @EnforceAdmin}.
+     *
+     * @param agentName the short name of the build agent
+     * @return 204 No Content once the broadcast is sent
      */
     @DeleteMapping("agents/{agentName}/cache/maven")
     public ResponseEntity<Void> wipeMavenCacheOnAgent(@PathVariable String agentName) {
@@ -418,6 +421,9 @@ public class AdminBuildJobQueueResource {
     /**
      * {@code DELETE /admin/agents/{agentName}/cache/gradle} : wipe the entire Gradle dependency cache on one agent.
      * Same semantics as {@link #wipeMavenCacheOnAgent(String)} against the Gradle cache root.
+     *
+     * @param agentName the short name of the build agent
+     * @return 204 No Content once the broadcast is sent
      */
     @DeleteMapping("agents/{agentName}/cache/gradle")
     public ResponseEntity<Void> wipeGradleCacheOnAgent(@PathVariable String agentName) {
@@ -433,6 +439,9 @@ public class AdminBuildJobQueueResource {
      * Distinct from the existing scheduled cleanup (which only removes images older than {@code imageExpiryDays}).
      * Used when an agent is running out of disk and the operator wants to reclaim space immediately. The next
      * build that needs a deleted image will pull it on assignment.
+     *
+     * @param agentName the short name of the build agent
+     * @return 204 No Content once the broadcast is sent
      */
     @DeleteMapping("agents/{agentName}/docker-images")
     public ResponseEntity<Void> clearDockerImagesOnAgent(@PathVariable String agentName) {

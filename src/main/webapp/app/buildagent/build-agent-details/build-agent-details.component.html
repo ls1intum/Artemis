@@ -92,11 +92,11 @@
                         <div class="card-body">
                             <h5 class="card-title" jhiTranslate="artemisApp.buildAgents.maintenanceAction.title"></h5>
                             <p class="text-muted small mb-2" jhiTranslate="artemisApp.buildAgents.maintenanceAction.subtitle"></p>
+                            <!-- Single maintenance entry point. The daily scheduled cleanup task already runs the
+                                 age + size eviction on its own cron, so we do not expose a separate "Run cache cleanup"
+                                 button here — operators who need to free disk before the next daily 05:00 UTC run
+                                 open this dialog and tick the relevant caches (Maven + Gradle preselected). -->
                             <div class="d-flex gap-2 flex-wrap">
-                                <button class="btn btn-secondary btn-sm" (click)="runCacheCleanup()" data-testid="run-cache-cleanup-button">
-                                    <fa-icon [icon]="faBroom" />
-                                    <span jhiTranslate="artemisApp.buildAgents.maintenanceAction.runCleanup"></span>
-                                </button>
                                 <button class="btn btn-warning btn-sm" (click)="openReclaimDiskDialog()" data-testid="reclaim-disk-button">
                                     <fa-icon [icon]="faEraser" />
                                     <span jhiTranslate="artemisApp.buildAgents.maintenanceAction.reclaimDisk"></span>

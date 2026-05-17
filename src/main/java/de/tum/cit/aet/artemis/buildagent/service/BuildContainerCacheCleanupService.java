@@ -16,18 +16,21 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+
+import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.unit.DataSize;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 /**
  * Drains the build agent, then prunes the persistent Maven and Gradle dependency caches that live on the host and are
@@ -88,7 +91,6 @@ import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
  */
 @Service
 @Profile(PROFILE_BUILDAGENT)
-@Lazy(false)
 public class BuildContainerCacheCleanupService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildContainerCacheCleanupService.class);
@@ -117,28 +119,85 @@ public class BuildContainerCacheCleanupService {
     @Value("${artemis.continuous-integration.build-container-cache.size-low-watermark-ratio:0.75}")
     private double lowWatermarkRatio;
 
+    private final DistributedDataAccessService distributedDataAccessService;
+
+    /** UUID of the maintenance topic listener registered in {@link #registerMaintenanceListener()}. */
+    private UUID maintenanceListenerId;
+
+    @Value("${artemis.continuous-integration.build-agent.short-name}")
+    private String buildAgentShortName;
+
     public BuildContainerCacheCleanupService(BuildAgentConfiguration buildAgentConfiguration, SharedQueueProcessingService sharedQueueProcessingService,
-            BuildAgentDockerService buildAgentDockerService) {
+            BuildAgentDockerService buildAgentDockerService, DistributedDataAccessService distributedDataAccessService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.sharedQueueProcessingService = sharedQueueProcessingService;
         this.buildAgentDockerService = buildAgentDockerService;
+        this.distributedDataAccessService = distributedDataAccessService;
     }
 
     /**
-     * Admin-triggered "clear unused Docker images" wrapped in the maintenance pause. Distinct from calling
-     * {@link BuildAgentDockerService#clearAllUnusedDockerImages()} directly because acquiring the pause stops new
-     * builds from binding to an image during enumeration → removal, and also surfaces {@code MAINTENANCE} status
-     * in the admin UI for the duration of the clear (the dialog promises this UX for all three maintenance
-     * options — cache wipes go through {@link #wipeMavenCache()} / {@link #wipeGradleCache()}, this method gives
-     * the Docker option the same treatment).
-     *
-     * @return the number of images removed (0 if Docker is unavailable, the agent was already paused, or the
-     *         operation failed). The skip reason is logged.
+     * Subscribes to the build-agent maintenance topic. We own this listener (rather than
+     * {@code SharedQueueProcessingService}) because the dispatch targets methods of this class — putting the
+     * listener registration in the writer would require {@code @Lazy} on a constructor parameter to break the
+     * cycle, which the architecture rules forbid.
+     * <p>
+     * Driven by a {@code @Scheduled} retry so a build agent that starts up before the Hazelcast cluster is
+     * reachable still registers the listener once the cluster comes online (the schedule keeps trying every five
+     * seconds until {@code maintenanceListenerId} is set). The listener is removed on shutdown so Hazelcast does
+     * not retain a dead reference.
      */
-    public int clearUnusedDockerImagesUnderPause() {
-        AtomicReference<Integer> removed = new AtomicReference<>(0);
-        pausedAndDo("Docker image clear", deadline -> removed.set(buildAgentDockerService.clearAllUnusedDockerImages()));
-        return removed.get();
+    @Scheduled(initialDelayString = "5000", fixedRateString = "5000")
+    synchronized void ensureMaintenanceListenerRegistered() {
+        if (maintenanceListenerId != null) {
+            return;
+        }
+        if (!distributedDataAccessService.isInstanceRunning() || !distributedDataAccessService.isConnectedToCluster()) {
+            return;
+        }
+        maintenanceListenerId = distributedDataAccessService.getBuildAgentMaintenanceActionTopic().addMessageListener(action -> {
+            if (!buildAgentShortName.equals(action.agentShortName())) {
+                return;
+            }
+            try {
+                switch (action.type()) {
+                    case RUN_CACHE_CLEANUP -> runCleanup();
+                    case WIPE_MAVEN_CACHE -> wipeMavenCache();
+                    case WIPE_GRADLE_CACHE -> wipeGradleCache();
+                    case CLEAR_DOCKER_IMAGES ->
+                        // Direct call (no maintenance pause): pausing closes the Docker client, which would make
+                        // the subsequent removeImageCmd silently no-op. Docker handles its own concurrency for
+                        // removeImageCmd vs. a freshly-bound container (the catch in clearAllUnusedDockerImages
+                        // logs a warn and continues). The admin UI's pause-drain-resume promise covers the cache
+                        // wipes (which need the agent quiesced because the build container would race the wipe)
+                        // but not the Docker clear (where Docker's daemon enforces consistency on its side).
+                        buildAgentDockerService.clearAllUnusedDockerImages();
+                    default -> throw new IllegalStateException("Unhandled maintenance action type: " + action.type());
+                }
+            }
+            catch (Throwable t) {
+                // Catch Throwable (not just RuntimeException) so Error / wrapped InterruptedException cannot tear
+                // down the listener thread — Hazelcast would then silently drop every future maintenance message
+                // for this agent until the JVM restarts.
+                if (t instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+                log.error("Maintenance action {} for agent {} failed", action.type(), action.agentShortName(), t);
+            }
+        });
+        log.info("Registered build-agent maintenance topic listener for {}", buildAgentShortName);
+    }
+
+    @PreDestroy
+    void unregisterMaintenanceListener() {
+        if (maintenanceListenerId != null && distributedDataAccessService.isInstanceRunning()) {
+            try {
+                distributedDataAccessService.getBuildAgentMaintenanceActionTopic().removeMessageListener(maintenanceListenerId);
+            }
+            catch (Exception e) {
+                log.debug("Could not unregister maintenance topic listener on shutdown: {}", e.getMessage());
+            }
+            maintenanceListenerId = null;
+        }
     }
 
     /**

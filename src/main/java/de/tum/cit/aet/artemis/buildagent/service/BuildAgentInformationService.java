@@ -57,12 +57,12 @@ public class BuildAgentInformationService {
     private final DistributedDataAccessService distributedDataAccessService;
 
     /**
-     * Reference to {@link SharedQueueProcessingService} used to read its {@code inMaintenance} flag during status
-     * resolution. Injected lazily because {@code SharedQueueProcessingService} already injects this service —
-     * Spring's circular-dependency detector would otherwise reject the bean graph. The lazy proxy is only invoked
-     * when an information update actually happens (well after both beans exist).
+     * Shared coordinator that holds the {@code inMaintenance} flag set by {@code SharedQueueProcessingService}
+     * around its pause/resume cycle. Used during status resolution to emit {@code BuildAgentStatus.MAINTENANCE}.
+     * Both writer and reader inject this small bean rather than each other, so the dependency graph stays acyclic
+     * and we avoid the architecturally-forbidden {@code @Lazy} constructor parameter.
      */
-    private final SharedQueueProcessingService sharedQueueProcessingService;
+    private final BuildAgentMaintenanceStateService maintenanceState;
 
     private final BuildAgentDockerService buildAgentDockerService;
 
@@ -94,13 +94,13 @@ public class BuildAgentInformationService {
     private String buildAgentDisplayName;
 
     public BuildAgentInformationService(BuildAgentConfiguration buildAgentConfiguration, BuildAgentSshKeyService buildAgentSSHKeyService,
-            DistributedDataAccessService distributedDataAccessService, GitProperties gitProperties, @Lazy SharedQueueProcessingService sharedQueueProcessingService,
+            DistributedDataAccessService distributedDataAccessService, GitProperties gitProperties, BuildAgentMaintenanceStateService maintenanceState,
             BuildAgentDockerService buildAgentDockerService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
         this.gitProperties = gitProperties;
         this.distributedDataAccessService = distributedDataAccessService;
-        this.sharedQueueProcessingService = sharedQueueProcessingService;
+        this.maintenanceState = maintenanceState;
         this.buildAgentDockerService = buildAgentDockerService;
     }
 
@@ -255,7 +255,7 @@ public class BuildAgentInformationService {
         if (isPaused) {
             // Order matters: a maintenance pause supersedes failure-backoff or admin-pause labels, so operators see
             // the action that is actually running. SELF_PAUSED still wins over plain PAUSED for failures.
-            if (sharedQueueProcessingService.isInMaintenance()) {
+            if (maintenanceState.isInMaintenance()) {
                 status = BuildAgentStatus.MAINTENANCE;
             }
             else {

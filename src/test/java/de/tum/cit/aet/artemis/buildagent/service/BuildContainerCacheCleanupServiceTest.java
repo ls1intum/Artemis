@@ -60,7 +60,8 @@ class BuildContainerCacheCleanupServiceTest {
         // so the standard prune flow proceeds. Tests that exercise the abort-on-resume path override this.
         lenient().when(sharedQueueProcessingService.isPaused()).thenReturn(true);
 
-        service = new BuildContainerCacheCleanupService(buildAgentConfiguration, sharedQueueProcessingService, mock(BuildAgentDockerService.class));
+        service = new BuildContainerCacheCleanupService(buildAgentConfiguration, sharedQueueProcessingService, mock(BuildAgentDockerService.class),
+                mock(de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService.class));
         service.setCleanupEnabled(true);
         service.setMaxAgeDays(30);
         service.setMavenMaxSize(DataSize.ofGigabytes(3));

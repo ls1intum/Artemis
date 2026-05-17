@@ -46,26 +46,37 @@ describe('ReclaimDiskDialogComponent', () => {
         expect(html).toContain('512 B');
     });
 
-    it('disables Confirm by default', async () => {
+    it('Maven and Gradle wipes are preselected; Docker is not (the destructive Docker rebuild cost defaults off)', async () => {
         await configureWithData({ agentName: 'agent01' });
+        expect(component.wipeMaven()).toBe(true);
+        expect(component.wipeGradle()).toBe(true);
+        expect(component.clearDocker()).toBe(false);
+    });
+
+    it('disables Confirm by default until the confirm word is typed (boxes are preselected so the word is the only gate)', async () => {
+        await configureWithData({ agentName: 'agent01' });
+        // Boxes are preselected; the type-RECLAIM gate alone keeps Confirm disabled.
         expect(component.canConfirm()).toBe(false);
     });
 
     it('keeps Confirm disabled if options are picked but confirm word is wrong', async () => {
         await configureWithData({ agentName: 'agent01' });
-        component.wipeMaven.set(true);
         component.typedConfirm.set('NOPE');
         expect(component.canConfirm()).toBe(false);
     });
 
     it('keeps Confirm disabled if confirm word is typed but no option is selected', async () => {
         await configureWithData({ agentName: 'agent01' });
+        // Explicitly uncheck the preselected boxes for this test.
+        component.wipeMaven.set(false);
+        component.wipeGradle.set(false);
         component.typedConfirm.set('RECLAIM');
         expect(component.canConfirm()).toBe(false);
     });
 
     it('enables Confirm when an option is selected AND the confirm word matches exactly', async () => {
         await configureWithData({ agentName: 'agent01' });
+        component.wipeMaven.set(false); // start from a clean state and check Gradle on its own
         component.wipeGradle.set(true);
         component.typedConfirm.set('RECLAIM');
         expect(component.canConfirm()).toBe(true);
@@ -73,7 +84,9 @@ describe('ReclaimDiskDialogComponent', () => {
 
     it('emits the selected options on confirm', async () => {
         await configureWithData({ agentName: 'agent01' });
+        // Default is (true, true, false); explicitly produce (true, false, true) for this assertion.
         component.wipeMaven.set(true);
+        component.wipeGradle.set(false);
         component.clearDocker.set(true);
         component.typedConfirm.set('RECLAIM');
 
@@ -85,7 +98,10 @@ describe('ReclaimDiskDialogComponent', () => {
 
     it('does not close (and emits nothing) if Confirm is invoked while disabled', async () => {
         await configureWithData({ agentName: 'agent01' });
-        component.typedConfirm.set('RECLAIM'); // no option picked
+        // Explicitly uncheck preselected boxes; type the confirm word; canConfirm should remain false.
+        component.wipeMaven.set(false);
+        component.wipeGradle.set(false);
+        component.typedConfirm.set('RECLAIM');
 
         component.confirm();
 

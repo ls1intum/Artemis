@@ -56,9 +56,12 @@ export class ReclaimDiskDialogComponent {
 
     readonly data: ReclaimDiskDialogInput = this.dialogConfig.data ?? { agentName: '' };
 
-    // Reactive checkbox state.
-    readonly wipeMaven = signal(false);
-    readonly wipeGradle = signal(false);
+    // Reactive checkbox state. Maven + Gradle default to checked because the two cache wipes are the common case
+    // (admins who open this dialog usually want to wipe both at once for a clean cache state); Docker default is
+    // off because it has a heavier rebuild cost (the next build that needs an image pulls it freshly). The
+    // type-RECLAIM gate still prevents accidental confirms.
+    readonly wipeMaven = signal(true);
+    readonly wipeGradle = signal(true);
     readonly clearDocker = signal(false);
 
     /** The type-CONFIRM input value. */
