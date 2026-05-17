@@ -65,7 +65,7 @@ public class DeimosLlmConfiguration {
     @Qualifier("deimosChatModel")
     @Lazy
     public OpenAiChatModel deimosChatModel(@Qualifier("deimosOpenAiApi") OpenAiApi openAiApi, @Value("${artemis.deimos.llm.model}") String model,
-            @Value("${artemis.deimos.llm.temperature:0.3}") double temperature) {
+            @Value("${artemis.deimos.llm.temperature:0}") double temperature) {
         log.info("Configuring Deimos ChatModel: model={}, temperature={}", model, temperature);
         OpenAiChatOptions options = OpenAiChatOptions.builder().model(model).temperature(temperature).build();
         return OpenAiChatModel.builder().openAiApi(openAiApi).defaultOptions(options).build();

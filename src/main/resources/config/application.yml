@@ -173,7 +173,7 @@ artemis:
             api-key: dummy
             model: openai/gpt-oss-120b
             completions-path: /api/chat/completions
-            temperature: 0.3
+            temperature: 0
 
     weaviate:
         enabled: false
