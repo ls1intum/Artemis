@@ -12,7 +12,15 @@ export class RepositoryPage {
 
     async openCommitHistory() {
         console.log(`[RepositoryPage] Current URL before opening commit history: ${this.page.url()}`);
-        await this.page.locator('a', { hasText: 'Open Commit History' }).click();
+        // The repository view is opened on a new page created via `context.newPage()` in
+        // `openRepositoryOnNewPage`, bypassing the `page` fixture's Angular-render check.
+        // Under heavy parallel multi-node load that fresh page occasionally fails to fully
+        // bootstrap and the "Open Commit History" link never attaches. Use
+        // `reloadUntilFound` so a stalled chunk fetch recovers via a single reload instead
+        // of consuming the entire 540 s slow-test timeout.
+        const link = this.page.locator('a', { hasText: 'Open Commit History' });
+        await Commands.reloadUntilFound(this.page, link, 15_000, 60_000);
+        await link.click();
         console.log('[RepositoryPage] Clicked "Open Commit History" link');
     }
 

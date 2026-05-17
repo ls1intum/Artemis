@@ -59,10 +59,12 @@ test.describe('Text exercise management', { tag: '@slow' }, () => {
             expect(submissionCreationResponse.status()).toBe(200);
             expect(textSubmission.text).toBe(submission);
 
-            // Make sure text exercise is shown in exercises list
+            // Make sure text exercise is shown in exercises list. Under heavy parallel CI
+            // load the exercises-list HTTP can take >10s after navigation; give the card a
+            // generous timeout so the assertion does not race the API response + render.
             await page.goto(`/course-management/${course.id}/exercises`);
             await page.waitForLoadState('domcontentloaded');
-            await expect(courseManagementExercises.getExercise(exercise.id!)).toBeVisible();
+            await expect(courseManagementExercises.getExercise(exercise.id!)).toBeVisible({ timeout: 30_000 });
         });
 
         test.afterEach('Delete created exercise', async ({ login, exerciseAPIRequests }) => {
