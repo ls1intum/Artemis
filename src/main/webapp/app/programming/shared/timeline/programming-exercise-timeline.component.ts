@@ -1,8 +1,8 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input, signal } from '@angular/core';
+import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input, model, signal } from '@angular/core';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
-import dayjs from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -25,7 +25,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseTimeline, TimelineItem } from 'app/shared/exercise-timeline/exercise-timeline';
 
 @Component({
-    selector: 'jhi-programming-exercise-lifecycle',
+    selector: 'jhi-programming-exercise-timeline',
     templateUrl: './programming-exercise-timeline.component.html',
     styleUrls: ['./test-schedule-date-picker/programming-exercise-test-schedule-picker.scss'],
     imports: [
@@ -69,10 +69,16 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
         },
     ];
 
-    @Input() exercise: ProgrammingExercise;
-    @Input() isExamMode: boolean;
-    @Input() readOnly: boolean;
-    @Input() importOptions?: ImportOptions;
+    releaseDate = model<Dayjs | undefined>();
+    startDate = model<Dayjs | undefined>();
+    dueDate = model<Dayjs | undefined>();
+    buildAndTestStudentSubmissionsAfterDueDate = model<Dayjs | undefined>();
+    assessmentDueDate = model<Dayjs | undefined>();
+    exampleSolutionPublicationDate = model<Dayjs | undefined>();
+    isExamMode = input.required<boolean>();
+    exercise = input.required<ProgrammingExercise>();
+    readOnly = input(false);
+    importOptions = input<ImportOptions>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
 
     @ViewChildren(ProgrammingExerciseTestScheduleDatePickerComponent) datePickerComponents: QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
@@ -86,7 +92,7 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
 
     isAthenaEnabled: boolean;
 
-    isImport = false;
+    isImport = signal(false);
     private urlSubscription: Subscription;
 
     /**
@@ -95,8 +101,9 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
     ngOnInit(): void {
         this.updateIsImportBasedOnUrl();
 
-        if (!this.exercise.id && !this.isImport) {
-            this.exercise.assessmentType = AssessmentType.AUTOMATIC;
+        const exercise = this.exercise();
+        if (!exercise.id && !this.isImport()) {
+            exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
     }
@@ -112,7 +119,7 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
                 }),
             )
             .subscribe(() => {
-                this.isImport = isImportFromExistingExercise || isImportFromFile;
+                this.isImport.set(isImportFromExistingExercise || isImportFromFile);
             });
     }
 
@@ -167,16 +174,18 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
     }
 
     toggleSetTestCaseVisibilityToAfterDueDate() {
-        if (this.importOptions) {
-            this.importOptions.setTestCaseVisibilityToAfterDueDate = !this.importOptions.setTestCaseVisibilityToAfterDueDate;
+        const importOptions = this.importOptions();
+        if (importOptions) {
+            importOptions.setTestCaseVisibilityToAfterDueDate = !importOptions.setTestCaseVisibilityToAfterDueDate;
         }
     }
 
     toggleFeedbackRequests() {
-        this.exercise.allowFeedbackRequests = !this.exercise.allowFeedbackRequests;
-        if (this.exercise.allowFeedbackRequests) {
-            this.exercise.assessmentDueDate = undefined;
-            this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
+        const exercise = this.exercise();
+        exercise.allowFeedbackRequests = !exercise.allowFeedbackRequests;
+        if (exercise.allowFeedbackRequests) {
+            exercise.assessmentDueDate = undefined;
+            exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
         }
     }
 
@@ -186,15 +195,16 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
      *
      */
     toggleAssessmentType() {
-        if (this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
-            this.exercise.assessmentType = AssessmentType.AUTOMATIC;
-            this.exercise.assessmentDueDate = undefined;
-            this.exercise.allowComplaintsForAutomaticAssessments = false;
-            this.exercise.feedbackSuggestionModule = undefined;
+        const exercise = this.exercise();
+        if (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
+            exercise.assessmentType = AssessmentType.AUTOMATIC;
+            exercise.assessmentDueDate = undefined;
+            exercise.allowComplaintsForAutomaticAssessments = false;
+            exercise.feedbackSuggestionModule = undefined;
         } else {
-            this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-            this.exercise.allowComplaintsForAutomaticAssessments = false;
-            this.exercise.allowFeedbackRequests = false;
+            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            exercise.allowComplaintsForAutomaticAssessments = false;
+            exercise.allowFeedbackRequests = false;
         }
     }
 
@@ -202,14 +212,16 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
      * Toggles the value for allowing complaints for automatic assessment between true and false
      */
     toggleComplaintsType() {
-        this.exercise.allowComplaintsForAutomaticAssessments = !this.exercise.allowComplaintsForAutomaticAssessments;
+        const exercise = this.exercise();
+        exercise.allowComplaintsForAutomaticAssessments = !exercise.allowComplaintsForAutomaticAssessments;
     }
 
     /**
      * Toggles the value for allowing complaints for automatic assessment between true and false
      */
     toggleReleaseTests() {
-        this.exercise.releaseTestsWithExampleSolution = !this.exercise.releaseTestsWithExampleSolution;
+        const exercise = this.exercise();
+        exercise.releaseTestsWithExampleSolution = !exercise.releaseTestsWithExampleSolution;
     }
 
     /**
@@ -219,18 +231,19 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
      * @param newReleaseDate The new release date
      */
     updateReleaseDate(newReleaseDate?: dayjs.Dayjs) {
-        this.exercise.releaseDate = newReleaseDate;
-        if (this.readOnly) {
+        const exercise = this.exercise();
+        exercise.releaseDate = newReleaseDate;
+        if (this.readOnly()) {
             // Changes from parent component are allowed but no cascading changes should be made in read-only mode.
             return;
         }
-        if (this.exerciseService.hasStartDateError(this.exercise)) {
+        if (this.exerciseService.hasStartDateError(exercise)) {
             this.updateStartDate(newReleaseDate);
             // Will handle due date and example solution
             return;
         }
-        const safeStartOrReleaseDate = this.exercise.startDate ?? newReleaseDate;
-        if (this.exerciseService.hasDueDateError(this.exercise) && safeStartOrReleaseDate) {
+        const safeStartOrReleaseDate = exercise.startDate ?? newReleaseDate;
+        if (this.exerciseService.hasDueDateError(exercise) && safeStartOrReleaseDate) {
             this.updateDueDate(safeStartOrReleaseDate);
         }
         this.updateExampleSolutionPublicationDate(safeStartOrReleaseDate);
@@ -243,12 +256,13 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
      * @param newStartDate The new start date
      */
     updateStartDate(newStartDate?: dayjs.Dayjs) {
-        this.exercise.startDate = newStartDate;
-        if (this.readOnly) {
+        const exercise = this.exercise();
+        exercise.startDate = newStartDate;
+        if (this.readOnly()) {
             // Changes from parent component are allowed but no cascading changes should be made in read-only mode.
             return;
         }
-        if (this.exerciseService.hasDueDateError(this.exercise)) {
+        if (this.exerciseService.hasDueDateError(exercise)) {
             this.updateDueDate(newStartDate!);
         }
         this.updateExampleSolutionPublicationDate(newStartDate);
@@ -259,13 +273,14 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
      * @param dueDate the new dueDate
      */
     private updateDueDate(dueDate: dayjs.Dayjs) {
+        const exercise = this.exercise();
         alert(this.translateService.instant('artemisApp.programmingExercise.timeline.alertNewDueDate'));
-        this.exercise.dueDate = dueDate;
+        exercise.dueDate = dueDate;
 
         // If the new due date is after the "After Due Date", then we have to set the "After Due Date" to the new due date
-        const afterDue = this.exercise.buildAndTestStudentSubmissionsAfterDueDate;
+        const afterDue = exercise.buildAndTestStudentSubmissionsAfterDueDate;
         if (afterDue && dueDate.isAfter(afterDue)) {
-            this.exercise.buildAndTestStudentSubmissionsAfterDueDate = dueDate;
+            exercise.buildAndTestStudentSubmissionsAfterDueDate = dueDate;
             alert(this.translateService.instant('artemisApp.programmingExercise.timeline.alertNewAfterDueDate'));
         }
     }
@@ -278,15 +293,16 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
      * @param newReleaseOrDueDate the new exampleSolutionPublicationDate if it is after the current exampleSolutionPublicationDate
      */
     updateExampleSolutionPublicationDate(newReleaseOrDueDate?: dayjs.Dayjs) {
-        if (!this.readOnly && this.exerciseService.hasExampleSolutionPublicationDateError(this.exercise)) {
+        const exercise = this.exercise();
+        if (!this.readOnly() && this.exerciseService.hasExampleSolutionPublicationDateError(exercise)) {
             const message =
-                newReleaseOrDueDate && dayjs(newReleaseOrDueDate).isSame(this.exercise.dueDate)
+                newReleaseOrDueDate && dayjs(newReleaseOrDueDate).isSame(exercise.dueDate)
                     ? 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate'
                     : 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate';
             alert(this.translateService.instant(message));
-            this.exercise.exampleSolutionPublicationDate = newReleaseOrDueDate;
+            exercise.exampleSolutionPublicationDate = newReleaseOrDueDate;
             if (!newReleaseOrDueDate) {
-                this.exercise.releaseTestsWithExampleSolution = false;
+                exercise.releaseTestsWithExampleSolution = false;
             }
         }
     }

@@ -28,7 +28,7 @@
                     }
                     @case (DetailType.ProgrammingTimeline) {
                         <dd id="detail-value-{{ detail.title }}">
-                            <jhi-programming-exercise-lifecycle [isExamMode]="detail.data.isExamMode ?? false" [exercise]="detail.data.exercise" [readOnly]="true" />
+                            <jhi-programming-exercise-timeline [isExamMode]="detail.data.isExamMode ?? false" [exercise]="detail.data.exercise" [readOnly]="true" />
                         </dd>
                     }
                     @case (DetailType.Markdown) {
