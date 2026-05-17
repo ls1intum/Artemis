@@ -8,7 +8,7 @@
             "program": "${workspaceFolder}/helloWorld.out",
             "args": [],
             "cwd": "${workspaceFolder}",
-            "preLaunchTask": "Build (debug)"
+            "preLaunchTask": "Build"
         }
     ]
 }
