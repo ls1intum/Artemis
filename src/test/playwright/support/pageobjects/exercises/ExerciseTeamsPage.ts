@@ -88,16 +88,15 @@ export class ExerciseTeamsPage {
                     await this.page.waitForTimeout(500);
                     await inputLocator.clear();
                 }
-                // Click first so the ngbTypeahead directive's focus subject fires; clicks
-                // before typing also ensure the input owns keyboard focus so pressSequentially
-                // events land on it.
+                // Focus the input via a click; the ngbTypeahead directive listens to focus
+                // and click events on the host element, so this also primes its internal
+                // subject before keystrokes start flowing.
                 await inputLocator.click();
-                // The team-owner-search component now applies `debounceTime(200) + distinctUntilChanged`
-                // on its text$ stream (mirroring the sibling team-student-search). A single
-                // `fill` therefore fires one HTTP after the 200ms debounce window — much more
-                // deterministic than pressSequentially, which would otherwise produce a stream
-                // of input events that the debounce coalesces into a single trailing emit anyway.
-                await inputLocator.fill(username);
+                // Use real keyboard events via Page.keyboard.type — `fill()` sometimes does
+                // not interact with ngbTypeahead's internal ValueAccessor correctly when the
+                // ngModel is bound to a non-string (User) value. With debounceTime(200) on
+                // text$, the keystrokes coalesce into a single HTTP after the typing window.
+                await this.page.keyboard.type(username, { delay: 30 });
                 try {
                     await listbox.waitFor({ state: 'visible', timeout: listboxTimeoutMs });
                     const option = listbox.getByText(new RegExp(username, 'i')).first();
