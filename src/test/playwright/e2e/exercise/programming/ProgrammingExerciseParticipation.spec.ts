@@ -223,11 +223,18 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             });
 
             test('Instructor checks the participation', async ({ login, navigationBar, courseManagement, courseManagementExercises, programmingExerciseParticipations }) => {
+                // The shared beforeEach runs 3 student submissions and waits for 3 C builds,
+                // which alone consumes most of the default slow-test budget under CI load.
+                // `test.slow()` triples the budget so the verification steps still fit.
+                test.slow();
                 await login(instructor, '/');
                 await navigationBar.openCourseManagement();
                 await courseManagement.openExercisesOfCourse(course.id!);
                 await courseManagementExercises.openExerciseParticipations(exercise.id!);
-                await programmingExerciseParticipations.getParticipation(team.name!).waitFor({ state: 'visible' });
+                // The participations table fills asynchronously after navigation; give it a
+                // generous timeout because under heavy parallel load both the API response
+                // and Angular's grid-render can be slow.
+                await programmingExerciseParticipations.getParticipation(team.name!).waitFor({ state: 'visible', timeout: 60_000 });
                 await programmingExerciseParticipations.checkParticipationTeam(team.name!, team.name!);
                 const studentUsernames = submissions.map(({ student }) => student.username!);
                 await programmingExerciseParticipations.checkParticipationStudents(team.name!, studentUsernames);

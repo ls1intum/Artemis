@@ -61,6 +61,11 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
          * yield partial collections, so options appeared deselected and the per-question score flipped between 0 and its true value.
          */
         test('Selected MC options stay fully populated across reloads after quiz evaluation', async ({ login, exerciseAPIRequests, page, quizExerciseMultipleChoice }) => {
+            // The scheduled quiz-evaluation job + repeated page reloads make this test
+            // routinely exceed the 60s fast-test budget under parallel CI load. `test.slow()`
+            // triples the budget (180s) which comfortably covers a delayed evaluation job
+            // plus the 5 verification reloads.
+            test.slow();
             const quizDurationSeconds = 10;
             await login(admin);
             const shortQuiz = await exerciseAPIRequests.createQuizExercise({
@@ -102,13 +107,16 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                 return mcAnswer ? (mcAnswer.selectedOptions ?? []).map((option: any) => option.id).sort((a: number, b: number) => a - b) : [];
             }
 
-            // Poll the refresh endpoint until the scheduled evaluation job has created a rated result — more robust than a fixed sleep on loaded CI workers.
-            const evaluationTimeoutMs = (quizDurationSeconds + 30) * 1000;
+            // Poll the refresh endpoint until the scheduled evaluation job has created a rated
+            // result — more robust than a fixed sleep on loaded CI workers. The scheduled job
+            // fires after the quiz `duration` window closes, so under heavy parallel CI load
+            // the job can be delayed by 60-90s waiting for an idle scheduler thread.
+            const evaluationTimeoutMs = 120_000;
             await expect
                 .poll(() => reloadAndReadSelectedOptionIds().then((ids) => ids !== null), {
                     message: 'evaluation did not produce a rated result within the expected window',
                     timeout: evaluationTimeoutMs,
-                    intervals: [1000, 2000, 3000],
+                    intervals: [1000, 2000, 3000, 5000],
                 })
                 .toBe(true);
 

@@ -13,16 +13,18 @@ export class ExerciseTeamsPage {
 
     /**
      * Clicks the "Create team" button and waits for the dialog to be fully rendered
-     * (heading + both typeahead inputs attached) before returning. Without this wait,
-     * a subsequent `enterTeamName` / `setTeamTutor` can race the dialog's component
-     * tree mount and the `NgbTypeahead` directive subscription is not yet wired up
-     * when keystrokes start flowing.
+     * AND for the NgbTypeahead directives on both search inputs to have completed
+     * their `ngOnInit` subscription. The directive sets `aria-autocomplete="list"`
+     * on its host element during initialization, so we wait for that attribute as
+     * a proxy for "directive subscription is live". Without this wait the
+     * subsequent typeahead interactions silently miss their first input event under
+     * heavy parallel load.
      */
     async createTeam() {
         await this.page.locator('button', { hasText: 'Create team' }).click();
         await this.page.getByRole('dialog').waitFor({ state: 'visible', timeout: 30_000 });
-        await this.page.locator('#owner-search-input').waitFor({ state: 'attached', timeout: 30_000 });
-        await this.page.locator('#student-search-input').waitFor({ state: 'attached', timeout: 30_000 });
+        await this.page.locator('#owner-search-input[aria-autocomplete="list"]').waitFor({ state: 'attached', timeout: 30_000 });
+        await this.page.locator('#student-search-input[aria-autocomplete="list"]').waitFor({ state: 'attached', timeout: 30_000 });
     }
 
     /**
@@ -71,7 +73,17 @@ export class ExerciseTeamsPage {
         if (routePattern && courseId) {
             const cachedBody = await this.fetchTutorListWithRetries(courseId, username);
             if (cachedBody) {
-                await this.page.route(routePattern, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: cachedBody }));
+                // Convert Buffer → string explicitly: some Playwright versions handle Buffer bodies
+                // inconsistently when the response is JSON, occasionally surfacing as
+                // HttpErrorResponse on the Angular side. Passing a UTF-8 string is unambiguous.
+                const bodyText = cachedBody.toString('utf-8');
+                await this.page.route(routePattern, (route) =>
+                    route.fulfill({
+                        status: 200,
+                        headers: { 'content-type': 'application/json' },
+                        body: bodyText,
+                    }),
+                );
                 routeInstalled = true;
             }
         }
@@ -88,15 +100,31 @@ export class ExerciseTeamsPage {
                     await this.page.waitForTimeout(500);
                     await inputLocator.clear();
                 }
-                // Focus the input via a click; the ngbTypeahead directive listens to focus
-                // and click events on the host element, so this also primes its internal
-                // subject before keystrokes start flowing.
-                await inputLocator.click();
-                // Use real keyboard events via Page.keyboard.type — `fill()` sometimes does
-                // not interact with ngbTypeahead's internal ValueAccessor correctly when the
-                // ngModel is bound to a non-string (User) value. With debounceTime(200) on
-                // text$, the keystrokes coalesce into a single HTTP after the typing window.
-                await this.page.keyboard.type(username, { delay: 30 });
+                // Drive the typeahead entirely from within the page's main JS context: focus
+                // the input, fire the `focus` + `click` synthetic events the component template
+                // forwards into the directive's subjects, then set the value via the native
+                // input prototype setter (so framework value-tracking sees it) and dispatch
+                // the `input` event the ngbTypeahead directive listens to.
+                //
+                // Doing all of this in a single `page.evaluate` avoids the cold-mount race
+                // we previously hit: when a separate Playwright click is followed by a
+                // separate keyboard.type, the directive's `_valueChanges$` subscription can
+                // still be pending on the very first dialog open and the first keystroke is
+                // silently swallowed. A single evaluate completes synchronously *after*
+                // Angular's pending NgZone microtasks have drained on the receiving end of
+                // the CDP roundtrip, so the directive is guaranteed live when the input
+                // event fires.
+                await this.page.evaluate((u) => {
+                    const el = document.querySelector('#owner-search-input') as HTMLInputElement | null;
+                    if (!el) {
+                        return;
+                    }
+                    el.focus();
+                    el.click();
+                    const valueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+                    valueSetter?.call(el, u);
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                }, username);
                 try {
                     await listbox.waitFor({ state: 'visible', timeout: listboxTimeoutMs });
                     const option = listbox.getByText(new RegExp(username, 'i')).first();
