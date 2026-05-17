@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.programming.dto.AutomaticAfterDueDatePreviewReques
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AutomaticAfterDueDateServiceTest {
@@ -42,7 +42,7 @@ class AutomaticAfterDueDateServiceTest {
     private static final ZonedDateTime BASE_TIME = ZonedDateTime.parse("2050-01-01T12:00:00Z");
 
     @Mock
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Mock
     private ExamDateApi examDateApi;
