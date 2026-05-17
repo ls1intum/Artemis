@@ -20,7 +20,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     setupTestBed({ zoneless: true });
@@ -149,16 +149,16 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
         comp.toggleComplaintsType();
 
-        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBeTrue();
+        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBe(true);
     });
 
     it('should change feedback request allowed after toggling', () => {
         comp.exercise = { ...exercise, allowFeedbackRequests: false };
-        expect(comp.exercise.allowFeedbackRequests).toBeFalse();
+        expect(comp.exercise.allowFeedbackRequests).toBe(false);
 
         comp.toggleFeedbackRequests();
 
-        expect(comp.exercise.allowFeedbackRequests).toBeTrue();
+        expect(comp.exercise.allowFeedbackRequests).toBe(true);
     });
 
     it('should change assessment type from automatic to semi-automatic after toggling', () => {
@@ -167,7 +167,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.toggleAssessmentType();
 
         expect(comp.exercise.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
-        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBeFalse();
+        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBe(false);
     });
 
     it('should change assessment type from semi-automatic to automatic after toggling', () => {
@@ -197,7 +197,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.exercise = { ...exercise, exampleSolutionPublicationDate: dayjs() };
         expect(comp.exercise.releaseTestsWithExampleSolution).toBeFalsy();
         comp.toggleReleaseTests();
-        expect(comp.exercise.releaseTestsWithExampleSolution).toBeTrue();
+        expect(comp.exercise.releaseTestsWithExampleSolution).toBe(true);
     });
 
     it('should not cascade date changes when updateReleaseDate is called when readOnly is true', () => {
@@ -362,7 +362,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         (comp.datePickerComponents.changes as Subject<any>).next({ toArray: () => [datePicker] });
         (datePicker.dateInput.valueChanges as Subject<boolean>).next(true);
         await new Promise((resolve) => setTimeout(resolve));
-        expect(comp.formValid).toBeTrue();
-        expect(comp.formEmpty).toBeTrue();
+        expect(comp.formValid).toBe(true);
+        expect(comp.formEmpty).toBe(true);
     });
 });
