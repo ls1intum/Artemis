@@ -67,7 +67,7 @@ public class AutomaticAfterDueDateService {
     public ZonedDateTime getAutomaticBuildAndTestDate(final AutomaticAfterDueDatePreviewRequestDTO relevantData, final ProgrammingExercise loadedProgrammingExercise,
             final Exam loadedExam) throws IOException {
         final ZonedDateTime dueDate;
-        if (relevantData.examId() != null && examDateApi.isPresent()) {
+        if (relevantData.examId() != null) {
             dueDate = getLatestExamEndDateWithGrace(loadedExam);
         }
         else {
