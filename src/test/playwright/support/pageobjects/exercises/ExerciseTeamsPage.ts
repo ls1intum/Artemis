@@ -21,14 +21,8 @@ export class ExerciseTeamsPage {
     async createTeam() {
         await this.page.locator('button', { hasText: 'Create team' }).click();
         await this.page.getByRole('dialog').waitFor({ state: 'visible', timeout: 30_000 });
-        // Wait for the ngbTypeahead directive to have completed its first change-detection
-        // cycle on both search inputs. `aria-expanded` is set by the directive via host
-        // property binding (`[attr.aria-expanded]="isPopupOpen()"`) — unlike the hard-coded
-        // `aria-autocomplete="list"` in the template, this attribute is ONLY there once the
-        // directive has instantiated and run CD. Waiting for it removes the cold-mount race
-        // where keystrokes silently bypass the typeahead's not-yet-attached input listener.
-        await this.page.locator('#owner-search-input[aria-expanded]').waitFor({ state: 'attached', timeout: 30_000 });
-        await this.page.locator('#student-search-input[aria-expanded]').waitFor({ state: 'attached', timeout: 30_000 });
+        await this.page.locator('#owner-search-input').waitFor({ state: 'visible', timeout: 30_000 });
+        await this.page.locator('#student-search-input').waitFor({ state: 'visible', timeout: 30_000 });
     }
 
     /**
