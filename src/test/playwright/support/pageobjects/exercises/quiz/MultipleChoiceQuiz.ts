@@ -13,10 +13,27 @@ export class MultipleChoiceQuiz {
         if (quizQuestionId != null) {
             scope = scope.locator('#question' + quizQuestionId);
         }
-        await scope
-            .locator('#answer-option-' + optionNumber)
-            .locator('#mc-answer-selection-' + optionNumber)
-            .click();
+        const answerOption = scope.locator('#answer-option-' + optionNumber);
+        // Wait for the option to mount before clicking. Under heavy multi-node load the
+        // quiz route component renders after `login`'s navigation completes, so an
+        // unguarded click can race the render and silently no-op against a stale DOM.
+        await answerOption.waitFor({ state: 'visible', timeout: 30_000 });
+        await answerOption.locator('#mc-answer-selection-' + optionNumber).click();
+        // Verify the tick took. The component's (click) handler lives on the outer
+        // #answer-option div, which sets the `.selected` class when toggled on. If the
+        // class hasn't applied within 5s the click landed on the disabled branch
+        // (clickDisabled() = true while a submit is in flight or the quiz already
+        // ended) — re-click the parent once to force the toggle through.
+        const selectedWithin = async (timeout: number): Promise<boolean> =>
+            answerOption
+                .filter({ has: this.page.locator('.fa-check-square, .fa-dot-circle') })
+                .waitFor({ state: 'visible', timeout })
+                .then(() => true)
+                .catch(() => false);
+        if (!(await selectedWithin(5_000))) {
+            await answerOption.click();
+            await selectedWithin(5_000);
+        }
     }
 
     /**
