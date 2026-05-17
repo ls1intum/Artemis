@@ -61,7 +61,9 @@ public class AutomaticAfterDueDateService {
      * This method is used when the client needs to see what the date will be set to
      * if the update/create/import is applied.
      *
-     * @param relevantData the relevant data needed for knowing what the due date will be set to
+     * @param relevantData              the relevant data needed for knowing what the due date will be set to
+     * @param loadedProgrammingExercise the already loaded programming exercise that has to be set
+     * @param loadedExam                the already loaded exam that has to be set
      * @return the computed date or null if the value would not be set
      */
     public ZonedDateTime getAutomaticBuildAndTestDate(final AutomaticAfterDueDatePreviewRequestDTO relevantData, final ProgrammingExercise loadedProgrammingExercise,

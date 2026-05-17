@@ -5,7 +5,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
     setupTestBed({ zoneless: true });
@@ -68,6 +68,8 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
     });
 
     it('should reset date and emit reset event', () => {
+        fixture.componentRef.setInput('canReset', true);
+        fixture.detectChanges();
         const spy = vi.spyOn(comp.onDateReset, 'emit');
         comp.resetDate();
 
