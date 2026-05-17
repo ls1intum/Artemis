@@ -128,15 +128,12 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
         } else {
             this.exercise.feedbackSuggestionModule = undefined;
             this.gradedFeedbackModule = undefined;
-            this.exercise.allowFeedbackRequests = false;
-            this.preliminaryFeedbackModule = undefined;
         }
     }
 
     toggleFeedbackRequests(event: any) {
         if (event.target.checked) {
             this.exercise.allowFeedbackRequests = true;
-            this.exercise.feedbackSuggestionModule = this.availableAthenaModules[0];
             this.preliminaryFeedbackModule = this.availableAthenaModules[0];
         } else {
             this.exercise.allowFeedbackRequests = false;

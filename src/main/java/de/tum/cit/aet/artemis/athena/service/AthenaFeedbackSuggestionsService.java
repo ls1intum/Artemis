@@ -1,4 +1,4 @@
-﻿package de.tum.cit.aet.artemis.athena.service;
+package de.tum.cit.aet.artemis.athena.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 
