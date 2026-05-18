@@ -97,19 +97,6 @@
               "src/main/webapp/logo/safari-pinned-tab.svg",
               "src/main/webapp/i18n",
               {
-                "glob": "*.{js,css,html,png}",
-                "input": "./node_modules/swagger-ui-dist",
-                "output": "swagger-ui",
-                "ignore": [
-                  "**/index.html"
-                ]
-              },
-              {
-                "glob": "axios.min.js",
-                "input": "./node_modules/axios/dist",
-                "output": "swagger-ui"
-              },
-              {
                 "glob": "**/*",
                 "input": "src/main/webapp/swagger-ui/",
                 "output": "swagger-ui"
@@ -150,7 +137,7 @@
               "outputHashing": "all",
               "sourceMap": {
                 "scripts": true,
-                "styles": false,
+                "styles": true,
                 "hidden": false,
                 "vendor": false
               },
