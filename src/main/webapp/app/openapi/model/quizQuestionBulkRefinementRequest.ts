@@ -7,7 +7,6 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { GeneratedQuizQuestion } from './generatedQuizQuestion';
 
 
 /**
@@ -17,7 +16,7 @@ export interface QuizQuestionBulkRefinementRequest {
     /**
      * The quiz questions to refine
      */
-    questions: Array<GeneratedQuizQuestion>;
+    questions: Array<any>;
     /**
      * User instructions describing how all questions should be changed
      */
