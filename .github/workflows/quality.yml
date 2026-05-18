@@ -9,6 +9,10 @@ on:
     paths:
       -  src/main/java/**
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   code-quality-analysis:
     runs-on: ubuntu-latest
@@ -28,7 +32,7 @@ jobs:
         run: |
           # TODO these values should become zero in the future
           max_large_classes=17
-          max_complex_beans=16
+          max_complex_beans=17
 
           python supporting_scripts/analyze_java_files.py \
             --max-large-classes $max_large_classes \

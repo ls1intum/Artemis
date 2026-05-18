@@ -1,0 +1,33 @@
+# pnpm 11+ install/resolution settings for the documentation/ subproject.
+# Default isolated layout: no hoist shim. The gray-matter patch is applied
+# via `patchedDependencies` below (works on the .pnpm symlink store directly).
+
+preferFrozenLockfile: true
+enablePrePostScripts: true
+autoInstallPeers: true
+
+# Dependency overrides. pnpm 11 reads overrides from this file in preference to
+# `pnpm.overrides` in package.json. Pinned versions address CVE advisories on
+# transitive deps (serialize-javascript GHSA-qj8w-gfj5-8c6v, uuid
+# GHSA-w5hq-g745-h8pq) and align other shared transitives across the docs and
+# root pnpm projects.
+overrides:
+    '@babel/plugin-transform-modules-systemjs': '7.29.4'
+    fast-uri: '3.1.2'
+    follow-redirects: '1.16.0'
+    js-yaml: '4.1.1'
+    minimatch: '10.2.5'
+    qs: '6.15.1'
+    serialize-javascript: '7.0.5'
+    undici: '7.25.0'
+    uuid: '14.0.0'
+    webpack: '5.106.2'
+
+patchedDependencies:
+    'gray-matter@4.0.3': 'patches/gray-matter+4.0.3.patch'
+
+allowBuilds:
+    '@swc/core': true
+    core-js: true
+    core-js-pure: true
+    esbuild: true

@@ -8,6 +8,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
+import { PROFILE_SAML2 } from 'app/app.constants';
+import { MessageModule } from 'primeng/message';
 
 /**
  * Type definition for the user settings form controls.
@@ -26,7 +28,7 @@ interface SettingsForm {
 @Component({
     selector: 'jhi-settings',
     templateUrl: './settings.component.html',
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, ArtemisTranslatePipe, FindLanguageFromKeyPipe],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, ArtemisTranslatePipe, FindLanguageFromKeyPipe, MessageModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsComponent implements OnInit {
@@ -46,6 +48,8 @@ export class SettingsComponent implements OnInit {
     readonly isRegistrationEnabled: boolean;
     /** Whether the current user is an internal user (can edit their name and email) */
     readonly isInternalUser = signal(false);
+    /** Whether the SAML2 profile is active (names/email are synced from IdP and cannot be changed) */
+    readonly isSaml2Active: boolean;
     /** Optional regex pattern restricting allowed email domains (e.g., university emails only) */
     readonly allowedEmailPattern?: string;
     /** Human-readable description of allowed email pattern for display in UI */
@@ -56,6 +60,7 @@ export class SettingsComponent implements OnInit {
     constructor() {
         const profileInfo = this.profileService.getProfileInfo();
         this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
+        this.isSaml2Active = this.profileService.isProfileActive(PROFILE_SAML2);
         this.allowedEmailPattern = profileInfo.allowedEmailPattern;
         this.allowedEmailPatternReadable = profileInfo.allowedEmailPatternReadable;
 
@@ -93,8 +98,22 @@ export class SettingsComponent implements OnInit {
                 });
                 this.currentUser.set(user);
                 this.isInternalUser.set(user.internal || false);
+                this.updateNameAndEmailControlState(user.internal || false);
             }
         });
+    }
+
+    /**
+     * Enables or disables the firstName, lastName, and email form controls based on
+     * whether the user is internal and whether SAML2 is active.
+     * Disabled controls are excluded from validation, preventing spurious errors.
+     */
+    private updateNameAndEmailControlState(isInternal: boolean): void {
+        const shouldDisable = !isInternal || this.isSaml2Active;
+        const action = shouldDisable ? 'disable' : 'enable';
+        this.settingsForm.controls.firstName[action]();
+        this.settingsForm.controls.lastName[action]();
+        this.settingsForm.controls.email[action]();
     }
 
     /**
@@ -117,9 +136,12 @@ export class SettingsComponent implements OnInit {
         const email = this.settingsForm.controls.email.value;
         const langKey = this.settingsForm.controls.langKey.value;
 
-        userToUpdate.firstName = firstName || undefined;
-        userToUpdate.lastName = lastName || undefined;
-        userToUpdate.email = email || undefined;
+        // When SAML2 is active, name and email are managed by the IdP — only langKey can be changed
+        if (!this.isSaml2Active) {
+            userToUpdate.firstName = firstName || undefined;
+            userToUpdate.lastName = lastName || undefined;
+            userToUpdate.email = email || undefined;
+        }
         userToUpdate.langKey = langKey || undefined;
 
         this.accountService.save(userToUpdate).subscribe({
