@@ -4,12 +4,14 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DatePickerModule } from 'primeng/datepicker';
 import { InputMaskModule } from 'primeng/inputmask';
 import { TooltipModule } from 'primeng/tooltip';
+import dayjs, { Dayjs } from 'dayjs/esm';
 
 export type TimelineItem =
-    | { kind: 'required'; labelStringKey: string; date: WritableSignal<Date | undefined> }
-    | { kind: 'optional'; labelStringKey: string; date: WritableSignal<Date | undefined> };
+    | { kind: 'required'; labelStringKey: string; date: WritableSignal<Dayjs | undefined> }
+    | { kind: 'optional'; labelStringKey: string; date: WritableSignal<Dayjs | undefined> };
 
 type InternalTimelineItem = TimelineItem & {
+    internalDate: Date | undefined;
     isInputRequiredButUndefined: boolean;
     isBeforePreviousDate: boolean;
     tooltip: string | undefined;
@@ -25,12 +27,21 @@ export class ExerciseTimeline {
     timelineItems = input.required<TimelineItem[]>();
     internalTimelineItems = computed<InternalTimelineItem[]>(() => this.computeInternalTimelineItems());
 
-    updateDate(item: TimelineItem, value: Date | string | null): void {
-        if (value instanceof Date) {
-            item.date.set(value);
-            return;
+    updateDate(item: TimelineItem, newInternalDate: Date | string | null): void {
+        const currentDate = item.date();
+        let newDate: Dayjs | undefined;
+        if (newInternalDate instanceof Date) {
+            newDate = dayjs(newInternalDate);
+        } else {
+            const parsedDate = typeof newInternalDate === 'string' ? this.parseMaskedDate(newInternalDate) : undefined;
+            newDate = parsedDate ? dayjs(parsedDate) : undefined;
         }
-        item.date.set(typeof value === 'string' ? this.parseMaskedDate(value) : undefined);
+
+        const oldAndNewDateUndefined = currentDate === undefined && newDate === undefined;
+        const oldAndNewDatesAreTheSame = currentDate !== undefined && newDate !== undefined && currentDate.isSame(newDate);
+        if (oldAndNewDateUndefined || oldAndNewDatesAreTheSame) return;
+
+        item.date.set(newDate);
     }
 
     private parseMaskedDate(value: string): Date | undefined {
@@ -54,7 +65,7 @@ export class ExerciseTimeline {
                 date !== undefined &&
                 items.slice(0, index).some((previousItem) => {
                     const previousDate = previousItem.date();
-                    return previousDate !== undefined && date < previousDate;
+                    return previousDate !== undefined && date.isBefore(previousDate);
                 });
             const isInputRequiredButUndefined = item.kind === 'required' && date === undefined;
             let tooltip: string | undefined;
@@ -68,6 +79,7 @@ export class ExerciseTimeline {
                 kind: item.kind,
                 labelStringKey: item.labelStringKey,
                 date: item.date,
+                internalDate: date?.toDate(),
                 isInputRequiredButUndefined,
                 isBeforePreviousDate,
                 tooltip,

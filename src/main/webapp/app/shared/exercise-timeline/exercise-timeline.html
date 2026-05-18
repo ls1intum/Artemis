@@ -10,7 +10,7 @@
                     [class.valid]="!internalItem.isBeforePreviousDate && !internalItem.isInputRequiredButUndefined"
                     [class.invalid]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
                 >
-                    @if (internalItem.date() !== undefined) {
+                    @if (internalItem.internalDate !== undefined) {
                         <div
                             class="timeline-graphic-circle-dot"
                             [class.invalid]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
@@ -29,7 +29,7 @@
                         styleClass="timeline-datepicker"
                         [inputStyle]="{ width: '100%', 'box-sizing': 'border-box' }"
                         [inputId]="'datepicker-' + index"
-                        [ngModel]="internalItem.date()"
+                        [ngModel]="internalItem.internalDate"
                         (ngModelChange)="updateDate(internalItem, $event)"
                         #dateModel="ngModel"
                         [showTime]="true"

@@ -130,6 +130,7 @@
             "due": "Due",
             "dueDate": "Due Date",
             "dueDateError": "Due Date must be after Release Date and Start Date if present. Please check your selection again.",
+            "dateForRunningTestsAfterDueDate": "Date for running tests after due date",
             "startDateError": "Start Date must be after Release Date. Please check your selection again.",
             "assessmentDue": "Assessment Due",
             "assessmentDueDate": "Assessment Due Date",

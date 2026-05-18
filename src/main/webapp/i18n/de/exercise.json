@@ -125,6 +125,7 @@
             "due": "Frist",
             "dueDate": "Einreichungsfrist",
             "dueDateError": "Einreichungsfrist muss nach dem Veröffentlichungsdatum und, falls vorhanden, dem Startdatum sein. Bitte überprüfe deine Auswahl nochmal.",
+            "dateForRunningTestsAfterDueDate": "Testausführungsdatum nach Einreichungsfrist",
             "startDateError": "Startdatum muss nach dem Veröffentlichungsdatum sein. Bitte überprüfe deine Auswahl nochmal.",
             "assessmentDue": "Bewertungsfrist",
             "assessmentDueDate": "Einreichungsfrist der Bewertung",

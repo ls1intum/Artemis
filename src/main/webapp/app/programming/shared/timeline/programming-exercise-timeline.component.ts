@@ -49,23 +49,7 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
     protected readonly faCogs = faCogs;
     protected readonly faUserCheck = faUserCheck;
     protected readonly faUserSlash = faUserSlash;
-    protected readonly testTimelineItems: TimelineItem[] = [
-        {
-            kind: 'required',
-            labelStringKey: 'artemisApp.exercise.releaseDate',
-            date: signal<Date | undefined>(undefined),
-        },
-        {
-            kind: 'optional',
-            labelStringKey: 'artemisApp.exercise.startDate',
-            date: signal<Date | undefined>(undefined),
-        },
-        {
-            kind: 'required',
-            labelStringKey: 'artemisApp.exercise.dueDate',
-            date: signal<Date | undefined>(undefined),
-        },
-    ];
+    protected readonly timelineItems = computed<TimelineItem[]>(() => this.computeTimelineItems());
 
     releaseDate = model<Dayjs | undefined>();
     startDate = model<Dayjs | undefined>();
@@ -164,6 +148,50 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
             exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+    }
+
+    private computeTimelineItems(): TimelineItem[] {
+        const timelineItems: TimelineItem[] = [
+            {
+                kind: 'optional',
+                labelStringKey: 'artemisApp.exercise.releaseDate',
+                date: this.releaseDate,
+            },
+            {
+                kind: 'optional',
+                labelStringKey: 'artemisApp.exercise.startDate',
+                date: this.startDate,
+            },
+            {
+                kind: 'optional',
+                labelStringKey: 'artemisApp.exercise.dueDate',
+                date: this.dueDate,
+            },
+        ];
+
+        if (this.isDatePickableForRunningTestsAfterDueDate()) {
+            timelineItems.push({
+                kind: 'optional',
+                labelStringKey: 'artemisApp.exercise.dateForRunningTestsAfterDueDate',
+                date: this.buildAndTestStudentSubmissionsAfterDueDate,
+            });
+        }
+        if (this.isDatePickableForSemiAutomaticAssessmentDueDate()) {
+            timelineItems.push({
+                kind: 'optional',
+                labelStringKey: 'artemisApp.exercise.assessmentDueDate',
+                date: this.assessmentDueDate,
+            });
+        }
+        if (this.isDatePickableForExampleSolutionPublicationDate()) {
+            timelineItems.push({
+                kind: 'optional',
+                labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
+                date: this.exampleSolutionPublicationDate,
+            });
+        }
+
+        return timelineItems;
     }
 
     private updateIsImportBasedOnUrl() {
