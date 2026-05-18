@@ -20,7 +20,7 @@ export class SystemNotification {
  * DTO containing the relevant information of a system notification.
  */
 export interface SystemNotificationDTO {
-    id: number;
+    id?: number;
     title?: string;
     text?: string;
     notificationDate?: dayjs.Dayjs;

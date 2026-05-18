@@ -10,8 +10,9 @@ import { HttpResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot } from '@angular/router';
 
 import { SystemNotificationManagementResolve } from 'app/core/admin/system-notification-management/system-notification-management-resolve.service';
-import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
+import { SystemNotification, SystemNotificationDTO } from 'app/core/shared/entities/system-notification.model';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
+import dayJs from 'dayjs/esm';
 
 describe('SystemNotificationManagementResolve', () => {
     setupTestBed({ zoneless: true });
@@ -38,8 +39,13 @@ describe('SystemNotificationManagementResolve', () => {
     });
 
     it('should fetch notification by id when id parameter is provided', () => {
-        const expectedNotification = new SystemNotification();
-        const httpResponse = new HttpResponse<SystemNotification>({ body: expectedNotification });
+        const expectedNotification = {
+            id: 1,
+            notificationDate: dayJs(new Date('2023-01-01T00:00:00.000Z')),
+            notificationText: 'Test notification',
+            notificationType: 'INFO',
+        };
+        const httpResponse = new HttpResponse<SystemNotificationDTO>({ body: expectedNotification });
         const routeSnapshot = { params: { id: '1' } } as unknown as ActivatedRouteSnapshot;
 
         vi.spyOn(systemNotificationService, 'find').mockReturnValue(of(httpResponse));
@@ -54,8 +60,12 @@ describe('SystemNotificationManagementResolve', () => {
     });
 
     it('should return new notification when id parameter is not provided', () => {
-        const existingNotification = new SystemNotification();
-        const httpResponse = new HttpResponse<SystemNotification>({ body: existingNotification });
+        const expectedNotificationWithoutId = {
+            notificationDate: dayJs(new Date('2023-01-01T00:00:00.000Z')),
+            notificationText: 'Test notification',
+            notificationType: 'INFO',
+        };
+        const httpResponse = new HttpResponse<SystemNotificationDTO>({ body: expectedNotificationWithoutId });
         const routeSnapshot = { params: { id: undefined } } as unknown as ActivatedRouteSnapshot;
 
         vi.spyOn(systemNotificationService, 'find').mockReturnValue(of(httpResponse));
@@ -63,7 +73,7 @@ describe('SystemNotificationManagementResolve', () => {
         const result = resolver.resolve(routeSnapshot);
 
         // Should return a new SystemNotification instance, not the mocked one
-        expect(result).not.toBe(existingNotification);
+        expect(result).not.toBe(expectedNotificationWithoutId);
         expect(result).toBeInstanceOf(SystemNotification);
         expect(systemNotificationService.find).not.toHaveBeenCalled();
     });
