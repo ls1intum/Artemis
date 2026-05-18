@@ -290,6 +290,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var attachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
         var attachment = attachmentVideoUnit.getAttachment();
         attachmentVideoUnit.setDescription("Changed");
+        int originalAttachmentVersion = attachment.getVersion();
 
         // Wait for async operation to complete (after attachment video unit is saved, the file gets split into slides)
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
@@ -304,6 +305,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(attachmentVideoUnit1.getDescription()).isEqualTo("Changed");
         // Verify attachment file was updated (this should pass)
         assertThat(attachmentVideoUnit1.getAttachment().getLink()).isNotEqualTo(originalAttachmentLink);
+        assertThat(attachmentVideoUnit1.getAttachment().getVersion()).isEqualTo(originalAttachmentVersion + 1);
         // Create a query to find the latest slides for this attachment video unit
         // Since we know there will be duplicate slide numbers, we need to check for the latest ones (with highest ID)
         var groupedSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit1.getId()).stream().collect(Collectors.groupingBy(Slide::getSlideNumber));
@@ -335,18 +337,21 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         persistAttachmentVideoUnitWithLecture();
 
         // Add a second lecture unit
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
         lecture1.addLectureUnit(attachmentVideoUnit);
         lecture1 = lectureRepository.save(lecture1);
 
         List<LectureUnit> orderedUnits = lecture1.getLectureUnits();
+        int originalAttachmentVersion = attachmentVideoUnit.getAttachment().getVersion();
 
         // Updating the lecture unit should not influence order
-        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isOk());
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachmentVideoUnit.getAttachment())).andExpect(status().isOk());
 
         SecurityUtils.setAuthorizationObject();
         List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
+        AttachmentVideoUnit updatedAttachmentVideoUnit = attachmentVideoUnitRepository.findByIdElseThrow(attachmentVideoUnit.getId());
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalAttachmentVersion);
     }
 
     private void persistAttachmentVideoUnitWithLecture() {

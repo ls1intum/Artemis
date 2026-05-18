@@ -102,6 +102,7 @@ public class AttachmentVideoUnitService {
         existingAttachmentVideoUnit.setName(updateUnitDTO.name());
         existingAttachmentVideoUnit.setReleaseDate(updateUnitDTO.releaseDate());
         existingAttachmentVideoUnit.setVideoSource(updateUnitDTO.videoSource());
+        boolean hasUploadedFile = updateFile != null && !updateFile.isEmpty();
         // Note: competency links are updated by the resource layer using lectureUnitService.updateCompetencyLinks
 
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
@@ -125,7 +126,7 @@ public class AttachmentVideoUnitService {
 
         if (createdNewAttachment) {
             // Split the new file into single slides if it is a PDF
-            if (updateFile != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
+            if (hasUploadedFile && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                 slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
             }
             // Trigger processing for newly added attachment
@@ -133,14 +134,19 @@ public class AttachmentVideoUnitService {
         }
         else if (existingAttachment != null) {
             updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
-            handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
-            final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
-            existingAttachment.setVersion(revision);
+
+            // Only increment version and update file if a new file is uploaded
+            if (hasUploadedFile) {
+                handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
+                final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
+                existingAttachment.setVersion(revision);
+            }
+
             Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
             savedAttachmentVideoUnit.setAttachment(savedAttachment);
             evictCache(updateFile, savedAttachmentVideoUnit);
 
-            if (updateFile != null) {
+            if (hasUploadedFile) {
                 // Split the updated file into single slides only if it is a pdf
                 if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                     if (pageOrder == null) {
@@ -152,8 +158,10 @@ public class AttachmentVideoUnitService {
                 }
             }
 
-            // Trigger automated content processing (transcription and ingestion)
-            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
+            // Only trigger processing if file was uploaded or if unit has video (video change detection happens inside service)
+            if (hasUploadedFile || savedAttachmentVideoUnit.getVideoSource() != null) {
+                contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
+            }
         }
 
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
