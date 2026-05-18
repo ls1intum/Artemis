@@ -35,6 +35,48 @@
                 "hours": "hours",
                 "unlimited": "unlimited",
                 "unlimitedTime": "∞",
+                "generalTab": "General",
+                "adminTab": "Admin",
+                "irisEnabled": "Iris is enabled",
+                "irisDisabled": "Iris is disabled",
+                "enableSubtext": "All students in this course can use Iris when it is enabled",
+                "supportLevel": {
+                    "title": "Level of Instructional Support",
+                    "help": "Low prioritizes independent problem-solving. High adds detailed explanations, analogies, and examples.",
+                    "low": "Low",
+                    "moderate": "Moderate",
+                    "high": "High",
+                    "bestSuitedFor": "Best suited for",
+                    "description": {
+                        "low": {
+                            "title": "Support Level: Low",
+                            "text": "Iris asks guiding questions to help students find the solution independently.",
+                            "bestSuitedFor": "Courses where students are expected to work through challenges with minimal direct guidance.",
+                            "exampleUser": "My sorting algorithm is not working. Can you help?",
+                            "exampleIris": "What sorting algorithm are you implementing? What output do you get when you trace through your code with a small input like [3, 1, 2]?"
+                        },
+                        "moderate": {
+                            "title": "Support Level: Moderate",
+                            "text": "Iris asks guiding questions and provides targeted hints to help students work through problems.",
+                            "bestSuitedFor": "Courses where students benefit from concrete nudges and contextual pointers.",
+                            "exampleUser": "My sorting algorithm is not working. Can you help?",
+                            "exampleIris": "Let us work through this step by step. Can you describe what your algorithm should do with the input [3, 1, 4, 1, 5]? Walk me through the first pass."
+                        },
+                        "high": {
+                            "title": "Support Level: High",
+                            "text": "Iris provides detailed conceptual explanations and step-by-step reasoning guidance.",
+                            "bestSuitedFor": "Introductory courses where students need thorough explanations and worked examples to build understanding.",
+                            "exampleUser": "My sorting algorithm is not working. Can you help?",
+                            "exampleIris": "Let us look at your algorithm step by step. A common issue is the comparison logic in the inner loop. Here is how bubble sort processes [3, 1, 4]: in pass 1, compare 3 and 1 — since 3 is greater than 1, swap them. What does your current code do at this step?"
+                        }
+                    }
+                },
+                "exampleConversationLabel": "Example conversation at this level",
+                "additionalGuidelines": "Additional Guidelines",
+                "additionalGuidelinesHelp": "Set additional expectations for how Iris interacts with your students.",
+                "additionalGuidelinesPlaceholder": "Always use Python 3.12 syntax.",
+                "globalRestriction": "Iris is globally restricted from providing complete solutions or full code blocks, regardless of your settings.",
+                "saveChanges": "Save Changes",
                 "error": {
                     "save": "Error while saving Iris settings",
                     "load": "Error while loading Iris settings",

@@ -35,6 +35,48 @@
                 "hours": "Stunden",
                 "unlimited": "unbegrenzt",
                 "unlimitedTime": "∞",
+                "generalTab": "Allgemein",
+                "adminTab": "Admin",
+                "irisEnabled": "Iris ist aktiviert",
+                "irisDisabled": "Iris ist deaktiviert",
+                "enableSubtext": "Alle Studierenden dieses Kurses können Iris nutzen, wenn es aktiviert ist",
+                "supportLevel": {
+                    "title": "Unterstützungsniveau",
+                    "help": "Niedrig fördert selbstständiges Problemlösen. Hoch bietet ausführliche Erklärungen, Analogien und Beispiele.",
+                    "low": "Niedrig",
+                    "moderate": "Mittel",
+                    "high": "Hoch",
+                    "bestSuitedFor": "Am besten geeignet für",
+                    "description": {
+                        "low": {
+                            "title": "Unterstützungsniveau: Niedrig",
+                            "text": "Iris stellt leitende Fragen, um Studierende zur selbstständigen Lösung zu führen.",
+                            "bestSuitedFor": "Kurse, in denen Studierende Aufgaben mit minimalem Hinweis selbst lösen sollen.",
+                            "exampleUser": "Mein Sortieralgorithmus funktioniert nicht. Kannst du helfen?",
+                            "exampleIris": "Welchen Sortieralgorithmus implementierst du? Was gibt dein Code aus, wenn du ihn mit einer kleinen Eingabe wie [3, 1, 2] durchgehst?"
+                        },
+                        "moderate": {
+                            "title": "Unterstützungsniveau: Mittel",
+                            "text": "Iris stellt leitende Fragen und gibt gezielte Hinweise, um Studierende durch Probleme zu führen.",
+                            "bestSuitedFor": "Kurse, in denen Studierende von konkreten Hinweisen und kontextuellen Impulsen profitieren.",
+                            "exampleUser": "Mein Sortieralgorithmus funktioniert nicht. Kannst du helfen?",
+                            "exampleIris": "Lass uns das Schritt für Schritt angehen. Kannst du beschreiben, was dein Algorithmus mit der Eingabe [3, 1, 4, 1, 5] tun soll? Erkläre mir den ersten Durchlauf."
+                        },
+                        "high": {
+                            "title": "Unterstützungsniveau: Hoch",
+                            "text": "Iris bietet detaillierte konzeptionelle Erklärungen und schrittweise Anleitungen.",
+                            "bestSuitedFor": "Einführungskurse, in denen Studierende ausführliche Erklärungen und Beispiele benötigen.",
+                            "exampleUser": "Mein Sortieralgorithmus funktioniert nicht. Kannst du helfen?",
+                            "exampleIris": "Lass uns deinen Algorithmus Schritt für Schritt betrachten. Ein häufiges Problem liegt in der Vergleichslogik der inneren Schleife. So verarbeitet Bubble Sort [3, 1, 4]: Im ersten Durchlauf werden 3 und 1 verglichen — da 3 größer ist, werden sie getauscht. Was macht dein Code an dieser Stelle?"
+                        }
+                    }
+                },
+                "exampleConversationLabel": "Beispielgespräch auf diesem Niveau",
+                "additionalGuidelines": "Zusätzliche Richtlinien",
+                "additionalGuidelinesHelp": "Legen Sie zusätzliche Erwartungen fest, wie Iris mit Ihren Studierenden interagiert.",
+                "additionalGuidelinesPlaceholder": "Verwende immer Python 3.12-Syntax.",
+                "globalRestriction": "Iris ist global eingeschränkt und stellt keine vollständigen Lösungen oder vollständigen Code-Blöcke bereit, unabhängig von Ihren Einstellungen.",
+                "saveChanges": "Änderungen speichern",
                 "error": {
                     "save": "Fehler beim Speichern der Iris Einstellungen",
                     "load": "Fehler beim Laden der Iris Einstellungen",

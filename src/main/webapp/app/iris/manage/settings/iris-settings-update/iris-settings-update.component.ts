@@ -3,8 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { faCheck, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faClock, faCog, faExclamationTriangle, faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
 import { AccountService } from 'app/core/auth/account.service';
@@ -19,10 +18,18 @@ import {
     IrisCourseSettingsWithRateLimitDTO,
     IrisPipelineVariant,
     IrisRateLimitConfiguration,
+    IrisSupportLevel,
+    SLIDER_VALUE_TO_SUPPORT_LEVEL,
+    SUPPORT_LEVEL_SLIDER_VALUES,
 } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { TabsModule } from 'primeng/tabs';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { SliderModule } from 'primeng/slider';
+import { ButtonDirective } from 'primeng/button';
+import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 /**
  * Component for editing Iris course-level settings.
@@ -31,7 +38,20 @@ import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/
 @Component({
     selector: 'jhi-iris-settings-update',
     templateUrl: './iris-settings-update.component.html',
-    imports: [ButtonComponent, TranslateDirective, ArtemisTranslatePipe, FormsModule, FaIconComponent, CourseTitleBarTitleComponent, CourseTitleBarTitleDirective],
+    styleUrl: './iris-settings-update.component.scss',
+    imports: [
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FormsModule,
+        FaIconComponent,
+        CourseTitleBarTitleComponent,
+        CourseTitleBarTitleDirective,
+        TabsModule,
+        ToggleSwitchModule,
+        SliderModule,
+        ButtonDirective,
+        IrisLogoComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactivate {
@@ -126,18 +146,31 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         return settingsChanged || rateLimitChanged;
     });
 
-    // Button types
-    PRIMARY = ButtonType.PRIMARY;
-    WARNING = ButtonType.WARNING;
-    SUCCESS = ButtonType.SUCCESS;
-
     // Icons
-    faSave = faSave;
-    faCheck = faCheck;
-    faExclamationTriangle = faExclamationTriangle;
+    readonly faCheck = faCheck;
+    readonly faExclamationTriangle = faExclamationTriangle;
+    readonly faCog = faCog;
+    readonly faClock = faClock;
+    readonly faLightbulb = faLightbulb;
+
+    // Expose enum for template binding (iris logo size)
+    protected readonly IrisLogoSize = IrisLogoSize;
+
+    // Active settings tab
+    readonly activeTab = signal<string>('general');
 
     // Character limit for custom instructions
     readonly CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
+
+    /**
+     * Current instructional support level, defaulting to MODERATE to mirror the backend.
+     */
+    readonly currentSupportLevel = computed((): IrisSupportLevel => this.settings()?.supportLevel ?? 'moderate');
+
+    /**
+     * Discrete slider position (0 / 50 / 100) for the current support level.
+     */
+    readonly supportLevelSliderValue = computed(() => SUPPORT_LEVEL_SLIDER_VALUES[this.currentSupportLevel()] ?? 50);
 
     constructor() {
         this.isAdmin.set(this.accountService.isAdmin());
@@ -369,6 +402,17 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         const currentSettings = this.settings();
         if (currentSettings) {
             this.settings.set({ ...currentSettings, customInstructions: value });
+        }
+    }
+
+    /**
+     * Map a discrete slider position back to a support level and update the settings signal.
+     */
+    onSupportLevelSliderChange(value: number): void {
+        const level = SLIDER_VALUE_TO_SUPPORT_LEVEL[value] ?? 'moderate';
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            this.settings.set({ ...currentSettings, supportLevel: level });
         }
     }
 
