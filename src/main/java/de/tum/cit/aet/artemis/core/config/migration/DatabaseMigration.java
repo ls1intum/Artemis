@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.vdurmont.semver4j.Semver;
 
+import de.tum.cit.aet.artemis.core.util.ArtemisVersionUtil;
 import de.tum.cit.aet.helios.HeliosClient;
 
 /**
@@ -54,8 +55,8 @@ class MigrationPath {
      *                            after earliestNewVersion.
      */
     public MigrationPath(String requiredVersion) {
-        this.upgradeVersion = new Semver(requiredVersion).nextMajor();
-        this.requiredVersion = new Semver(requiredVersion);
+        this.requiredVersion = ArtemisVersionUtil.parseForComparison(requiredVersion);
+        this.upgradeVersion = this.requiredVersion.nextMajor();
         this.nextUpgradeVersion = upgradeVersion.nextMajor();
         this.errorMessage = "Cannot start Artemis because the migration path was not followed. Please deploy and start the release " + requiredVersion
                 + " first, otherwise the migration will fail";
@@ -122,7 +123,7 @@ public class DatabaseMigration {
      * and up-to-date before proceeding with the application startup.
      */
     public void checkMigrationPath() {
-        var currentVersion = new Semver(currentVersionString);
+        var currentVersion = ArtemisVersionUtil.parseForComparison(currentVersionString);
         previousVersionString = getPreviousVersionElseThrow();
 
         if (previousVersionString == null) {
@@ -131,7 +132,7 @@ public class DatabaseMigration {
             return;
         }
 
-        var previousVersion = new Semver(previousVersionString);
+        var previousVersion = ArtemisVersionUtil.parseForComparison(previousVersionString);
 
         for (MigrationPath path : migrationPaths) {
             if (currentVersion.isGreaterThanOrEqualTo(path.upgradeVersion) && currentVersion.isLowerThan(path.nextUpgradeVersion)) {
@@ -141,7 +142,7 @@ public class DatabaseMigration {
                     System.exit(15);
                 }
                 else if (previousVersion.isGreaterThanOrEqualTo(path.requiredVersion) && !isSchemaConsolidationCompleted()) {
-                    updateInitialChecksum(path.upgradeVersion.toString());
+                    updateInitialChecksum(currentVersionString);
                     log.info("Successfully cleaned up initial schema during migration");
                     break; // Exit after handling the required migration step
                 }
@@ -214,11 +215,12 @@ public class DatabaseMigration {
      * that the checksum update operation has failed. This failure needs to be addressed to ensure
      * the integrity and consistency of the database schema migration process.
      *
-     * @param newVersion The new version of the application for which the initial schema checksum needs to be updated.
+     * @param currentVersion The current application version string (as configured in {@code build.gradle},
+     *                           e.g. {@code "9.2"}) that will be persisted in the DATABASECHANGELOG description.
      * @throws RuntimeException If updating the checksum fails due to an SQLException, encapsulating the original exception.
      */
-    private void updateInitialChecksum(String newVersion) {
-        String description = "Initial schema generation for version " + newVersion;
+    private void updateInitialChecksum(String currentVersion) {
+        String description = "Initial schema generation for version " + currentVersion;
 
         // Nullify checksums for all existing initial schema changesets (ID pattern 0000000000000%)
         // so that Liquibase recalculates them instead of reporting a checksum mismatch.
