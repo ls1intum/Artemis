@@ -21,7 +21,11 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 10
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
-      MAX_INSTANTIATED_BEANS: 142
+      # Bumped from 142 to 145 to accommodate three new eagerly-initialized build-agent services that own
+      # scheduled methods which must fire on the buildagent-only profile (where DeferredEagerBeanInitializer
+      # does not run): BuildAgentMaintenanceStateService, BuildContainerCacheCleanupService, and
+      # BuildAgentCacheDirectoryService. Each is required for the cache-cleanup / maintenance feature to work.
+      MAX_INSTANTIATED_BEANS: 145
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
