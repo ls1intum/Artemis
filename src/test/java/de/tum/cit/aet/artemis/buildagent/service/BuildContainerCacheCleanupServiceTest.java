@@ -932,6 +932,11 @@ class BuildContainerCacheCleanupServiceTest {
         org.junit.jupiter.api.Assumptions.assumeTrue(
                 java.nio.file.attribute.PosixFileAttributeView.class != null && java.nio.file.FileSystems.getDefault().supportedFileAttributeViews().contains("posix"),
                 "POSIX permissions unavailable on this filesystem");
+        // Skip when running as root (the Linux CI container) — root bypasses POSIX permissions, so the "unwritable"
+        // directory is still writable from the JVM's perspective and the wipe completes successfully instead of
+        // reporting errors. The test is only meaningful when the JVM runs as a regular user, which is how the
+        // production agent (the `artemis` service user) runs in real deployments.
+        org.junit.jupiter.api.Assumptions.assumeFalse("root".equals(System.getProperty("user.name")), "root bypasses POSIX permissions; test only meaningful as a non-root user");
         // Create a file inside a directory that is read-only to the JVM user — Files.delete on the file then fails
         // with AccessDeniedException, which the wipe walker should catch as an error rather than aborting the run.
         Path lockedDir = mavenCache.resolve("locked");
@@ -959,9 +964,12 @@ class BuildContainerCacheCleanupServiceTest {
             assertThat(mapped.errorCount()).isGreaterThanOrEqualTo(1);
         }
         finally {
-            // Restore write permission so JUnit's @TempDir cleanup can remove the locked file.
-            Files.setPosixFilePermissions(lockedDir, java.util.EnumSet.of(java.nio.file.attribute.PosixFilePermission.OWNER_READ,
-                    java.nio.file.attribute.PosixFilePermission.OWNER_WRITE, java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE));
+            // Restore write permission so JUnit's @TempDir cleanup can remove the locked file. Guard against the
+            // dir no longer existing — in some scenarios the wipe could have removed it before the assertions fail.
+            if (Files.exists(lockedDir)) {
+                Files.setPosixFilePermissions(lockedDir, java.util.EnumSet.of(java.nio.file.attribute.PosixFilePermission.OWNER_READ,
+                        java.nio.file.attribute.PosixFilePermission.OWNER_WRITE, java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE));
+            }
         }
     }
 
