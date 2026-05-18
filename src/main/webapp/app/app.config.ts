@@ -21,6 +21,7 @@ import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/inter
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
+import { MockCourseInterceptor } from 'app/core/interceptor/mock-course.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -113,6 +114,11 @@ export const appConfig: ApplicationConfig = {
          * the next interceptor in the chain, by calling next.handle(transformedReq).
          * Documentation: https://angular.io/api/common/http/HttpInterceptor
          */
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: MockCourseInterceptor,
+            multi: true,
+        },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: AuthExpiredInterceptor,

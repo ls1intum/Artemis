@@ -4,9 +4,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { CourseManagementExercisesComponent } from 'app/core/course/manage/exercises/course-management-exercises.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
+import { createIntroToJavaCourse } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-exercises';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -27,8 +27,7 @@ describe('Course Management Exercises Component', () => {
     let profileService: ProfileService;
     let getProfileInfoSub: ReturnType<typeof vi.spyOn>;
 
-    const course = new Course();
-    course.id = 123;
+    const course = createIntroToJavaCourse();
     const parentRoute = {
         data: of({ course }),
     } as any as ActivatedRoute;
