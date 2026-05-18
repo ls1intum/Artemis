@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.context.annotation.Conditional;
@@ -14,6 +15,7 @@ import io.weaviate.client6.v1.api.WeaviateClient;
  */
 @Lazy
 @Conditional(WeaviateEnabled.class)
+@ConditionalOnProperty(name = "artemis.openapi-docs-generation", havingValue = "false", matchIfMissing = true)
 @Component
 public class WeaviateHealthIndicator implements HealthIndicator {
 
