@@ -14,7 +14,7 @@
 #   5. Ensures frontend is serving on :9000 (ng serve, or prebuilt static + proxy)
 #   6. Ensures ssh-keys symlink exists at repo root (for cwd-relative lookup)
 #   7. Runs prepareVSCodeForE2ETests.sh (installs deps + patches config)
-#   8. Ensures playwright.env BASE_URL uses IPv4 (127.0.0.1)
+#   8. Ensures playwright.env BASE_URL uses localhost
 #
 # Usage:
 #   ./start-playwright-stack.sh           # ng serve client (HMR, slow startup)
@@ -34,6 +34,8 @@ ok()   { echo -e "${GREEN}[stack]${NC} $*"; }
 warn() { echo -e "${YELLOW}[stack]${NC} $*"; }
 err()  { echo -e "${RED}[stack]${NC} $*"; }
 
+check_client() { curl -sf http://localhost:9000 >/dev/null 2>&1 || curl -sf http://127.0.0.1:9000 >/dev/null 2>&1; }
+
 cd "$(dirname "$0")"
 REPO_ROOT="$(pwd)"
 LOCAL_DIR=".e2e-local"
@@ -46,7 +48,9 @@ mkdir -p "$LOCAL_DIR"
 # --stop-all  : full teardown (client + server + postgres).
 if [ "${1:-}" = "--stop" ]; then
     log "Stopping client only (server + postgres stay up)..."
-    [ -f "$LOCAL_DIR/client.pid" ] && kill "$(cat "$LOCAL_DIR/client.pid")" 2>/dev/null || true
+    if [ -f "$LOCAL_DIR/client.pid" ]; then
+        kill "$(cat "$LOCAL_DIR/client.pid")" 2>/dev/null || true
+    fi
     pkill -f "ng serve" 2>/dev/null || true
     pkill -f "static-server.mjs" 2>/dev/null || true
     rm -f "$LOCAL_DIR/client.pid"
@@ -55,8 +59,12 @@ if [ "${1:-}" = "--stop" ]; then
 fi
 if [ "${1:-}" = "--stop-all" ]; then
     log "Stopping client, server, postgres..."
-    [ -f "$LOCAL_DIR/client.pid" ] && kill "$(cat "$LOCAL_DIR/client.pid")" 2>/dev/null || true
-    [ -f "$LOCAL_DIR/server.pid" ] && kill "$(cat "$LOCAL_DIR/server.pid")" 2>/dev/null || true
+    if [ -f "$LOCAL_DIR/client.pid" ]; then
+        kill "$(cat "$LOCAL_DIR/client.pid")" 2>/dev/null || true
+    fi
+    if [ -f "$LOCAL_DIR/server.pid" ]; then
+        kill "$(cat "$LOCAL_DIR/server.pid")" 2>/dev/null || true
+    fi
     pkill -f "ng serve" 2>/dev/null || true
     pkill -f "static-server.mjs" 2>/dev/null || true
     pkill -f "bootRun"  2>/dev/null || true
@@ -157,7 +165,7 @@ fi
 
 # ----- 5. Client on :9000 ---------------------------------------------------
 log "Ensuring client is up on :9000..."
-if curl -sf http://127.0.0.1:9000 >/dev/null 2>&1; then
+if check_client; then
     ok "Client already serving"
 elif [ "$STATIC_MODE" = true ]; then
     if [ ! -f "build/resources/main/static/index.html" ]; then
@@ -175,9 +183,9 @@ elif [ "$STATIC_MODE" = true ]; then
     echo $! > "$LOCAL_DIR/client.pid"
     for _ in $(seq 1 20); do
         sleep 1
-        curl -sf http://127.0.0.1:9000 >/dev/null 2>&1 && break
+        check_client && break
     done
-    curl -sf http://127.0.0.1:9000 >/dev/null 2>&1 \
+    check_client \
         || { err "Static server failed. Tail: $LOCAL_DIR/client.log"; tail -30 "$LOCAL_DIR/client.log"; exit 1; }
     ok "Static server ready (starts in ~1s on subsequent runs)"
 else
@@ -187,9 +195,9 @@ else
     log "Waiting for client (up to 3 min)..."
     for _ in $(seq 1 60); do
         sleep 3
-        curl -sf http://127.0.0.1:9000 >/dev/null 2>&1 && break
+        check_client && break
     done
-    curl -sf http://127.0.0.1:9000 >/dev/null 2>&1 \
+    check_client \
         || { err "Client failed to start. Tail: $LOCAL_DIR/client.log"; tail -30 "$LOCAL_DIR/client.log"; exit 1; }
     ok "Client ready"
 fi
@@ -203,10 +211,10 @@ else
     ok "Symlink already in place"
 fi
 
-# ----- 7. playwright.env BASE_URL -> IPv4 -----------------------------------
-log "Ensuring playwright.env uses IPv4..."
+# ----- 7. playwright.env BASE_URL -> localhost -----------------------------------
+log "Ensuring playwright.env uses localhost..."
 PW_ENV="src/test/playwright/playwright.env"
-DESIRED_BASE_URL="http://127.0.0.1:9000"
+DESIRED_BASE_URL="http://localhost:9000"
 if grep -q "^BASE_URL=$DESIRED_BASE_URL$" "$PW_ENV"; then
     ok "BASE_URL already $DESIRED_BASE_URL"
 else
@@ -221,4 +229,4 @@ log "Running prepareVSCodeForE2ETests.sh..."
 echo ""
 ok "Stack ready. Run tests via VS Code play button or 'npm --prefix src/test/playwright run playwright:test'."
 echo "  Logs: $LOCAL_DIR/server.log  |  $LOCAL_DIR/client.log"
-echo "  Stop everything: ./start-playwright-stack.sh --stop"
+echo "  Stop everything: ./start-playwright-stack.sh --stop-all"
