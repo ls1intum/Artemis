@@ -190,39 +190,55 @@ public class BuildContainerCacheCleanupService {
         if (!distributedDataAccessService.isInstanceRunning() || !distributedDataAccessService.isConnectedToCluster()) {
             return;
         }
-        maintenanceListenerId = distributedDataAccessService.getBuildAgentMaintenanceActionTopic().addMessageListener(action -> {
-            if (!buildAgentShortName.equals(action.agentShortName())) {
-                return;
-            }
-            Instant start = Instant.now();
-            BuildAgentMaintenanceResult result;
-            try {
-                result = dispatchMaintenanceAction(action, start);
-            }
-            catch (Throwable t) {
-                // Catch Throwable (not just RuntimeException) so Error / wrapped InterruptedException cannot tear
-                // down the listener thread — Hazelcast would then silently drop every future maintenance message
-                // for this agent until the JVM restarts.
-                if (t instanceof InterruptedException) {
-                    Thread.currentThread().interrupt();
-                }
-                log.error("Maintenance action {} for agent {} failed", action.type(), action.agentShortName(), t);
-                long elapsed = Duration.between(start, Instant.now()).toMillis();
-                result = new BuildAgentMaintenanceResult(buildAgentShortName, Instant.now(), action.type(), BuildAgentMaintenanceResult.Outcome.FAILED, 0L, 0L, 0L, elapsed, null,
-                        t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
-            }
-            // The action freed disk; refresh the local snapshot so the admin UI (which watches the distributed
-            // BuildAgentInformation map via WebSocket) reflects post-action sizes within seconds instead of
-            // waiting for the 5-minute slow-stats tick. Done unconditionally — even on FAILED the disk numbers
-            // may have moved, and refreshing is cheap.
-            publishFreshDiskStats();
-            // Push the outcome to the result topic so a core node can fan it out to the WebSocket subscribed by
-            // the admin currently viewing this agent's details page. Publish failures are swallowed at debug
-            // level because we have already logged the action result above; losing the toast is bad UX but not
-            // a correctness issue.
-            publishMaintenanceResult(result);
-        });
+        maintenanceListenerId = distributedDataAccessService.getBuildAgentMaintenanceActionTopic().addMessageListener(this::handleMaintenanceMessage);
         log.info("Registered build-agent maintenance topic listener for {}", buildAgentShortName);
+    }
+
+    /**
+     * Handles one inbound message from the build-agent maintenance topic. Extracted into a package-private method
+     * so the listener body is unit-testable without standing up a real Hazelcast cluster. The contract is:
+     * <ul>
+     * <li>Messages addressed to a different agent are ignored silently (filter by {@code buildAgentShortName}).</li>
+     * <li>{@link Throwable} from {@link #dispatchMaintenanceAction(BuildAgentMaintenanceAction, Instant)} is caught
+     * and converted into a {@link BuildAgentMaintenanceResult.Outcome#FAILED} result so the subscription survives
+     * an action-level Error or wrapped {@link InterruptedException}. If the cause is interrupt the interrupt flag
+     * is restored.</li>
+     * <li>{@link #publishFreshDiskStats()} runs unconditionally so the admin disk-usage tile reflects post-action
+     * sizes even on FAILED.</li>
+     * <li>The result is published to {@code buildAgentMaintenanceResultTopic} for WebSocket fan-out.</li>
+     * </ul>
+     */
+    void handleMaintenanceMessage(BuildAgentMaintenanceAction action) {
+        if (!buildAgentShortName.equals(action.agentShortName())) {
+            return;
+        }
+        Instant start = Instant.now();
+        BuildAgentMaintenanceResult result;
+        try {
+            result = dispatchMaintenanceAction(action, start);
+        }
+        catch (Throwable t) {
+            // Catch Throwable (not just RuntimeException) so Error / wrapped InterruptedException cannot tear
+            // down the listener thread — Hazelcast would then silently drop every future maintenance message
+            // for this agent until the JVM restarts.
+            if (t instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            log.error("Maintenance action {} for agent {} failed", action.type(), action.agentShortName(), t);
+            long elapsed = Duration.between(start, Instant.now()).toMillis();
+            result = new BuildAgentMaintenanceResult(buildAgentShortName, Instant.now(), action.type(), BuildAgentMaintenanceResult.Outcome.FAILED, 0L, 0L, 0L, elapsed, null,
+                    t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
+        }
+        // The action freed disk; refresh the local snapshot so the admin UI (which watches the distributed
+        // BuildAgentInformation map via WebSocket) reflects post-action sizes within seconds instead of
+        // waiting for the 5-minute slow-stats tick. Done unconditionally — even on FAILED the disk numbers
+        // may have moved, and refreshing is cheap.
+        publishFreshDiskStats();
+        // Push the outcome to the result topic so a core node can fan it out to the WebSocket subscribed by
+        // the admin currently viewing this agent's details page. Publish failures are swallowed at debug
+        // level because we have already logged the action result above; losing the toast is bad UX but not
+        // a correctness issue.
+        publishMaintenanceResult(result);
     }
 
     /**
@@ -253,7 +269,7 @@ public class BuildContainerCacheCleanupService {
      * {@link BuildAgentDockerService.UnusedImageStats}) carries different fields, so this method normalises them all
      * into the shared {@code bytesFreed / itemsAffected / errorCount / outcome} shape.
      */
-    private BuildAgentMaintenanceResult dispatchMaintenanceAction(BuildAgentMaintenanceAction action, Instant start) {
+    BuildAgentMaintenanceResult dispatchMaintenanceAction(BuildAgentMaintenanceAction action, Instant start) {
         Instant when = Instant.now();
         return switch (action.type()) {
             case RUN_CACHE_CLEANUP -> toResult(action.type(), runCleanup(), start, when);
@@ -766,6 +782,16 @@ public class BuildContainerCacheCleanupService {
 
     void setBuildAgentShortName(String buildAgentShortName) {
         this.buildAgentShortName = buildAgentShortName;
+    }
+
+    /**
+     * Integration tests rely on awaiting listener readiness before publishing a maintenance message — without this
+     * the @Scheduled listener registration races against the test's first publish and the message is silently lost.
+     *
+     * @return {@code true} when the maintenance topic listener has been registered with the Hazelcast cluster.
+     */
+    public boolean isMaintenanceListenerRegistered() {
+        return maintenanceListenerId != null;
     }
 
     /** One cache to prune (root path + size cap). */

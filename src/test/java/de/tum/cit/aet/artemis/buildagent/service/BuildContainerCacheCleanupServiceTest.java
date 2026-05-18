@@ -22,6 +22,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 import org.springframework.util.unit.DataSize;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.buildagent.service.BuildContainerCacheCleanupServi
 import de.tum.cit.aet.artemis.buildagent.service.BuildContainerCacheCleanupService.PruneStats;
 import de.tum.cit.aet.artemis.buildagent.service.BuildContainerCacheCleanupService.WipeOutcome;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 
 /**
  * Unit tests for {@link BuildContainerCacheCleanupService}. The pause/resume hand-off to the queue processing
@@ -48,12 +50,29 @@ class BuildContainerCacheCleanupServiceTest {
 
     private SharedQueueProcessingService sharedQueueProcessingService;
 
+    private BuildAgentDockerService buildAgentDockerService;
+
+    private BuildAgentInformationService buildAgentInformationService;
+
+    private DistributedDataAccessService distributedDataAccessService;
+
+    @SuppressWarnings("rawtypes")
+    private DistributedTopic maintenanceResultTopic;
+
     private BuildContainerCacheCleanupService service;
 
     @BeforeEach
     void setUp() {
         buildAgentConfiguration = mock(BuildAgentConfiguration.class);
         sharedQueueProcessingService = mock(SharedQueueProcessingService.class);
+        buildAgentDockerService = mock(BuildAgentDockerService.class);
+        buildAgentInformationService = mock(BuildAgentInformationService.class);
+        distributedDataAccessService = mock(DistributedDataAccessService.class);
+        maintenanceResultTopic = mock(DistributedTopic.class);
+        // Default: cluster is connected so publishMaintenanceResult routes through to the topic. Tests that exercise
+        // the "disconnected, swallow publish" path override this.
+        lenient().when(distributedDataAccessService.isConnectedToCluster()).thenReturn(true);
+        lenient().when(distributedDataAccessService.getBuildAgentMaintenanceResultTopic()).thenReturn(maintenanceResultTopic);
 
         // Default: both caches configured, not read-only, pause is granted and remains held throughout the run.
         when(buildAgentConfiguration.mavenCacheHostPath()).thenReturn(mavenCache);
@@ -64,8 +83,8 @@ class BuildContainerCacheCleanupServiceTest {
         // so the standard prune flow proceeds. Tests that exercise the abort-on-resume path override this.
         lenient().when(sharedQueueProcessingService.isPaused()).thenReturn(true);
 
-        service = new BuildContainerCacheCleanupService(buildAgentConfiguration, sharedQueueProcessingService, mock(BuildAgentDockerService.class),
-                mock(DistributedDataAccessService.class), mock(BuildAgentInformationService.class));
+        service = new BuildContainerCacheCleanupService(buildAgentConfiguration, sharedQueueProcessingService, buildAgentDockerService, distributedDataAccessService,
+                buildAgentInformationService);
         service.setCleanupEnabled(true);
         service.setMaxAgeDays(30);
         service.setMavenMaxSize(DataSize.ofGigabytes(3));
@@ -758,6 +777,308 @@ class BuildContainerCacheCleanupServiceTest {
 
         assertThat(result.outcome()).isEqualTo(BuildAgentMaintenanceResult.Outcome.SKIPPED);
         assertThat(result.skipReason()).isEqualTo("disabled");
+    }
+
+    // --- CLEAR_DOCKER_IMAGES outcome mapping -----------------------------------------------------------------
+    // The Docker action's outcome computation lives inline in dispatchMaintenanceAction (not in a toResult
+    // helper). These tests pin the bytes-freed and outcome derived from the before/after UnusedImageStats so a
+    // refactor that breaks the before-after diff or the empty-list special case fails fast.
+
+    @Test
+    void dispatchMaintenanceAction_clearDockerImages_emptyUnusedList_isSuccessWithZeroBytes() {
+        when(buildAgentDockerService.getUnusedDockerImageStats()).thenReturn(BuildAgentDockerService.UnusedImageStats.EMPTY);
+        when(buildAgentDockerService.clearAllUnusedDockerImages()).thenReturn(0);
+        BuildAgentMaintenanceAction action = new BuildAgentMaintenanceAction("agent-under-test", BuildAgentMaintenanceAction.Type.CLEAR_DOCKER_IMAGES);
+
+        BuildAgentMaintenanceResult result = service.dispatchMaintenanceAction(action, Instant.now());
+
+        assertThat(result.actionType()).isEqualTo(BuildAgentMaintenanceAction.Type.CLEAR_DOCKER_IMAGES);
+        assertThat(result.outcome()).isEqualTo(BuildAgentMaintenanceResult.Outcome.SUCCESS);
+        assertThat(result.bytesFreed()).isZero();
+        assertThat(result.itemsAffected()).isZero();
+        assertThat(result.errorCount()).isZero();
+    }
+
+    @Test
+    void dispatchMaintenanceAction_clearDockerImages_allRemoved_isSuccessWithBytesFreed() {
+        // Before: 3 images / 4096 bytes. clearAll returns 3 (all removed). After: empty.
+        when(buildAgentDockerService.getUnusedDockerImageStats()).thenReturn(new BuildAgentDockerService.UnusedImageStats(3, 4096L),
+                BuildAgentDockerService.UnusedImageStats.EMPTY);
+        when(buildAgentDockerService.clearAllUnusedDockerImages()).thenReturn(3);
+        BuildAgentMaintenanceAction action = new BuildAgentMaintenanceAction("agent-under-test", BuildAgentMaintenanceAction.Type.CLEAR_DOCKER_IMAGES);
+
+        BuildAgentMaintenanceResult result = service.dispatchMaintenanceAction(action, Instant.now());
+
+        assertThat(result.outcome()).isEqualTo(BuildAgentMaintenanceResult.Outcome.SUCCESS);
+        assertThat(result.bytesFreed()).isEqualTo(4096L);
+        assertThat(result.itemsAffected()).isEqualTo(3L);
+        assertThat(result.errorCount()).isZero();
+    }
+
+    @Test
+    void dispatchMaintenanceAction_clearDockerImages_someRaced_isPartialFailureWithErrorCount() {
+        // Before: 5 unused images, 10240 bytes. clearAll returns 3 (two raced and could not be removed). After: 2 still
+        // present, totaling 4096 bytes. The remaining 2 == errors, the freed 3 == itemsAffected.
+        when(buildAgentDockerService.getUnusedDockerImageStats()).thenReturn(new BuildAgentDockerService.UnusedImageStats(5, 10240L),
+                new BuildAgentDockerService.UnusedImageStats(2, 4096L));
+        when(buildAgentDockerService.clearAllUnusedDockerImages()).thenReturn(3);
+        BuildAgentMaintenanceAction action = new BuildAgentMaintenanceAction("agent-under-test", BuildAgentMaintenanceAction.Type.CLEAR_DOCKER_IMAGES);
+
+        BuildAgentMaintenanceResult result = service.dispatchMaintenanceAction(action, Instant.now());
+
+        assertThat(result.outcome()).isEqualTo(BuildAgentMaintenanceResult.Outcome.PARTIAL_FAILURE);
+        assertThat(result.bytesFreed()).isEqualTo(10240L - 4096L);
+        assertThat(result.itemsAffected()).isEqualTo(3L);
+        assertThat(result.errorCount()).isEqualTo(2L);
+    }
+
+    // --- Listener message handling: filter + Throwable safety -----------------------------------------------
+
+    @Test
+    void handleMaintenanceMessage_ignoresMessagesAddressedToAnotherAgent() {
+        BuildAgentMaintenanceAction otherAction = new BuildAgentMaintenanceAction("some-other-agent", BuildAgentMaintenanceAction.Type.WIPE_MAVEN_CACHE);
+
+        service.handleMaintenanceMessage(otherAction);
+
+        // No outcome must be published for messages destined for a different agent; the broadcast is sent to every
+        // member of the cluster and each one filters by short-name. A regression that drops the filter would spam
+        // every wipe across every agent.
+        verify(maintenanceResultTopic, never()).publish(any());
+        verify(buildAgentInformationService, never()).refreshSlowDiskStats();
+    }
+
+    @Test
+    void handleMaintenanceMessage_publishesFailedResultWhenDispatchThrowsRuntimeException() {
+        // Make Docker stats throw to force dispatchMaintenanceAction into a runtime failure during CLEAR_DOCKER_IMAGES.
+        when(buildAgentDockerService.getUnusedDockerImageStats()).thenThrow(new RuntimeException("docker daemon unreachable"));
+        BuildAgentMaintenanceAction action = new BuildAgentMaintenanceAction("agent-under-test", BuildAgentMaintenanceAction.Type.CLEAR_DOCKER_IMAGES);
+
+        service.handleMaintenanceMessage(action);
+
+        // The listener catch must convert the Throwable into a FAILED result and publish it so the admin toast
+        // shows the failure. Without the catch the subscription would die and no future maintenance message for
+        // this agent would be acted on until JVM restart.
+        ArgumentCaptor<BuildAgentMaintenanceResult> captor = ArgumentCaptor.forClass(BuildAgentMaintenanceResult.class);
+        verify(maintenanceResultTopic, times(1)).publish(captor.capture());
+        BuildAgentMaintenanceResult published = captor.getValue();
+        assertThat(published.outcome()).isEqualTo(BuildAgentMaintenanceResult.Outcome.FAILED);
+        assertThat(published.actionType()).isEqualTo(BuildAgentMaintenanceAction.Type.CLEAR_DOCKER_IMAGES);
+        assertThat(published.message()).contains("docker daemon unreachable");
+    }
+
+    @Test
+    void handleMaintenanceMessage_publishesFailedResultWhenDispatchThrowsError() {
+        // An Error (not just RuntimeException) must also be caught — otherwise Hazelcast's listener thread would
+        // die and the agent would silently stop responding to admin maintenance actions.
+        when(buildAgentDockerService.getUnusedDockerImageStats()).thenThrow(new OutOfMemoryError("simulated"));
+        BuildAgentMaintenanceAction action = new BuildAgentMaintenanceAction("agent-under-test", BuildAgentMaintenanceAction.Type.CLEAR_DOCKER_IMAGES);
+
+        service.handleMaintenanceMessage(action);
+
+        ArgumentCaptor<BuildAgentMaintenanceResult> captor = ArgumentCaptor.forClass(BuildAgentMaintenanceResult.class);
+        verify(maintenanceResultTopic, times(1)).publish(captor.capture());
+        assertThat(captor.getValue().outcome()).isEqualTo(BuildAgentMaintenanceResult.Outcome.FAILED);
+    }
+
+    @Test
+    void handleMaintenanceMessage_restoresInterruptFlagWhenDispatchThrowsInterruptedException() {
+        // sneakyThrow style: have getUnusedDockerImageStats throw an InterruptedException at runtime to verify the
+        // listener restores the interrupt flag and still publishes FAILED.
+        when(buildAgentDockerService.getUnusedDockerImageStats()).thenAnswer(invocation -> {
+            throwSneaky(new InterruptedException("simulated interrupt"));
+            return null;
+        });
+        BuildAgentMaintenanceAction action = new BuildAgentMaintenanceAction("agent-under-test", BuildAgentMaintenanceAction.Type.CLEAR_DOCKER_IMAGES);
+
+        // Pre-condition: thread is not interrupted.
+        Thread.interrupted(); // clear any prior state
+        service.handleMaintenanceMessage(action);
+
+        try {
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        }
+        finally {
+            Thread.interrupted(); // clear so subsequent tests are not affected
+        }
+        verify(maintenanceResultTopic, times(1)).publish(any(BuildAgentMaintenanceResult.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> void throwSneaky(Throwable t) throws T {
+        throw (T) t;
+    }
+
+    @Test
+    void handleMaintenanceMessage_alwaysPublishesFreshDiskStats_evenWhenActionFailed() {
+        // The disk-stats refresh must run on every action — including FAILED — so the admin disk-usage tile
+        // does not show stale data after a failed wipe.
+        when(buildAgentDockerService.getUnusedDockerImageStats()).thenThrow(new RuntimeException("boom"));
+        BuildAgentMaintenanceAction action = new BuildAgentMaintenanceAction("agent-under-test", BuildAgentMaintenanceAction.Type.CLEAR_DOCKER_IMAGES);
+
+        service.handleMaintenanceMessage(action);
+
+        verify(buildAgentInformationService, times(1)).refreshSlowDiskStats();
+    }
+
+    // --- Wipe with real permission-denied file ---------------------------------------------------------------
+    // The toResult_wipeWithErrors_isPartialFailureWithErrorCount test above constructs a WipeOutcome directly. This
+    // test exercises the real wipe walker against an unwritable file to confirm the on-disk error counter
+    // increments and the action surfaces as PARTIAL_FAILURE end-to-end. Skipped on Windows because POSIX
+    // permission bits do not exist there.
+
+    @Test
+    void wipeMavenCache_realPermissionDeniedFile_incrementsErrorsAndProducesPartialFailure() throws IOException {
+        // Skip on filesystems that don't expose POSIX permissions (Windows). The build agents run on Linux.
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+                java.nio.file.attribute.PosixFileAttributeView.class != null && java.nio.file.FileSystems.getDefault().supportedFileAttributeViews().contains("posix"),
+                "POSIX permissions unavailable on this filesystem");
+        // Create a file inside a directory that is read-only to the JVM user — Files.delete on the file then fails
+        // with AccessDeniedException, which the wipe walker should catch as an error rather than aborting the run.
+        Path lockedDir = mavenCache.resolve("locked");
+        Files.createDirectories(lockedDir);
+        Path unremovable = touchFileWithAtime(lockedDir.resolve("guarded.jar"), 100, Instant.now());
+        Path writable = touchFileWithAtime(mavenCache.resolve("normal/regular.jar"), 200, Instant.now());
+        // Strip write permission from the parent so its children cannot be unlinked.
+        java.util.Set<java.nio.file.attribute.PosixFilePermission> readOnly = java.util.EnumSet.of(java.nio.file.attribute.PosixFilePermission.OWNER_READ,
+                java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE);
+        try {
+            Files.setPosixFilePermissions(lockedDir, readOnly);
+
+            WipeOutcome outcome = service.wipeMavenCache();
+
+            assertThat(outcome.wasSkipped()).isFalse();
+            assertThat(outcome.stats()).isNotNull();
+            // The unwritable file remains on disk (delete failed) and the writable one is gone.
+            assertThat(Files.exists(unremovable)).isTrue();
+            assertThat(Files.exists(writable)).isFalse();
+            assertThat(outcome.stats().errors()).isGreaterThanOrEqualTo(1);
+            // The result mapping must surface PARTIAL_FAILURE so the admin toast shows the error count and prompts
+            // the operator to check logs (this is the regression the ACL setup ultimately fixes).
+            BuildAgentMaintenanceResult mapped = service.toResult(BuildAgentMaintenanceAction.Type.WIPE_MAVEN_CACHE, outcome, Instant.now(), Instant.now());
+            assertThat(mapped.outcome()).isEqualTo(BuildAgentMaintenanceResult.Outcome.PARTIAL_FAILURE);
+            assertThat(mapped.errorCount()).isGreaterThanOrEqualTo(1);
+        }
+        finally {
+            // Restore write permission so JUnit's @TempDir cleanup can remove the locked file.
+            Files.setPosixFilePermissions(lockedDir, java.util.EnumSet.of(java.nio.file.attribute.PosixFilePermission.OWNER_READ,
+                    java.nio.file.attribute.PosixFilePermission.OWNER_WRITE, java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE));
+        }
+    }
+
+    // --- Maintenance topic listener lifecycle (reconnect + initial register) --------------------------------
+    // The maintenance listener owns the operator-triggered surface; if the listener handle dies and is not
+    // re-registered after a Hazelcast reconnect, the agent silently stops responding to admin actions until
+    // JVM restart. These tests pin the reconnect contract.
+
+    @Test
+    void registerConnectionStateListenerForReconnect_subscribesToConnectionState() {
+        // Reset the captured callback collected in setUp's earlier @PostConstruct call (we call manually here).
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<java.util.function.Consumer<Boolean>> captor = ArgumentCaptor.forClass(java.util.function.Consumer.class);
+
+        service.registerConnectionStateListenerForReconnect();
+
+        // The connection-state listener must be registered exactly once during PostConstruct so the bean reacts
+        // to subsequent reconnect events. Without it the wiring is dead and we'd never know.
+        verify(distributedDataAccessService, times(1)).addConnectionStateListener(captor.capture());
+        assertThat(captor.getValue()).isNotNull();
+    }
+
+    @Test
+    void connectionStateCallback_clearsListenerIdOnReconnect_soNextScheduledTickReRegisters() {
+        // 1. Stand up a real topic mock so the @Scheduled tick can register a listener.
+        @SuppressWarnings("rawtypes")
+        DistributedTopic actionTopic = mock(DistributedTopic.class);
+        when(distributedDataAccessService.getBuildAgentMaintenanceActionTopic()).thenReturn(actionTopic);
+        when(distributedDataAccessService.isInstanceRunning()).thenReturn(true);
+        when(distributedDataAccessService.isConnectedToCluster()).thenReturn(true);
+        java.util.UUID initial = java.util.UUID.randomUUID();
+        java.util.UUID afterReconnect = java.util.UUID.randomUUID();
+        when(actionTopic.addMessageListener(any())).thenReturn(initial, afterReconnect);
+
+        // 2. Initial @Scheduled tick: registers a listener (returns 'initial' UUID).
+        service.ensureMaintenanceListenerRegistered();
+        verify(actionTopic, times(1)).addMessageListener(any());
+
+        // 3. Capture the connection-state callback (registered in @PostConstruct via the call from this test
+        // setUp + the explicit invocation below) and fire a reconnect.
+        service.registerConnectionStateListenerForReconnect();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<java.util.function.Consumer<Boolean>> captor = ArgumentCaptor.forClass(java.util.function.Consumer.class);
+        verify(distributedDataAccessService, org.mockito.Mockito.atLeastOnce()).addConnectionStateListener(captor.capture());
+        java.util.function.Consumer<Boolean> callback = captor.getValue();
+
+        // 4. Simulate a Hazelcast reconnect (isInitialConnection = false). The callback must clear the listener
+        // id so the next @Scheduled tick re-registers a fresh listener — otherwise the agent goes dark.
+        callback.accept(false);
+
+        // 5. Next scheduled tick re-registers (would skip if listenerId was still set).
+        service.ensureMaintenanceListenerRegistered();
+        verify(actionTopic, times(2)).addMessageListener(any());
+    }
+
+    @Test
+    void connectionStateCallback_initialConnection_doesNotClearListenerId() {
+        // 1. Set up topic + initial registration.
+        @SuppressWarnings("rawtypes")
+        DistributedTopic actionTopic = mock(DistributedTopic.class);
+        when(distributedDataAccessService.getBuildAgentMaintenanceActionTopic()).thenReturn(actionTopic);
+        when(distributedDataAccessService.isInstanceRunning()).thenReturn(true);
+        when(distributedDataAccessService.isConnectedToCluster()).thenReturn(true);
+        when(actionTopic.addMessageListener(any())).thenReturn(java.util.UUID.randomUUID());
+        service.ensureMaintenanceListenerRegistered();
+
+        // 2. Capture and fire with isInitialConnection = true (first ever connect, not a reconnect).
+        service.registerConnectionStateListenerForReconnect();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<java.util.function.Consumer<Boolean>> captor = ArgumentCaptor.forClass(java.util.function.Consumer.class);
+        verify(distributedDataAccessService, org.mockito.Mockito.atLeastOnce()).addConnectionStateListener(captor.capture());
+        captor.getValue().accept(true);
+
+        // 3. The next scheduled tick must NOT re-register — listener id is still valid, and re-adding would leak
+        // a duplicate subscription that runs every action twice.
+        service.ensureMaintenanceListenerRegistered();
+        verify(actionTopic, times(1)).addMessageListener(any());
+    }
+
+    @Test
+    void ensureMaintenanceListenerRegistered_skipsWhenInstanceNotRunning() {
+        when(distributedDataAccessService.isInstanceRunning()).thenReturn(false);
+        when(distributedDataAccessService.isConnectedToCluster()).thenReturn(true);
+
+        service.ensureMaintenanceListenerRegistered();
+
+        // Must not attempt to fetch the topic at all when the instance is not yet running — otherwise we'd hit a
+        // Hazelcast NPE during the buildagent startup window before the client has authenticated.
+        verify(distributedDataAccessService, never()).getBuildAgentMaintenanceActionTopic();
+    }
+
+    @Test
+    void ensureMaintenanceListenerRegistered_skipsWhenNotConnectedToCluster() {
+        when(distributedDataAccessService.isInstanceRunning()).thenReturn(true);
+        when(distributedDataAccessService.isConnectedToCluster()).thenReturn(false);
+
+        service.ensureMaintenanceListenerRegistered();
+
+        verify(distributedDataAccessService, never()).getBuildAgentMaintenanceActionTopic();
+    }
+
+    @Test
+    void ensureMaintenanceListenerRegistered_isIdempotent_doesNotRegisterTwice() {
+        @SuppressWarnings("rawtypes")
+        DistributedTopic actionTopic = mock(DistributedTopic.class);
+        when(distributedDataAccessService.getBuildAgentMaintenanceActionTopic()).thenReturn(actionTopic);
+        when(distributedDataAccessService.isInstanceRunning()).thenReturn(true);
+        when(distributedDataAccessService.isConnectedToCluster()).thenReturn(true);
+        when(actionTopic.addMessageListener(any())).thenReturn(java.util.UUID.randomUUID());
+
+        service.ensureMaintenanceListenerRegistered();
+        service.ensureMaintenanceListenerRegistered();
+        service.ensureMaintenanceListenerRegistered();
+
+        // Three @Scheduled ticks → exactly one registration. Anything else would silently double-dispatch every
+        // maintenance broadcast.
+        verify(actionTopic, times(1)).addMessageListener(any());
     }
 
     // --- helpers ------------------------------------------------------------------------------------------------

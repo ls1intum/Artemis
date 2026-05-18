@@ -17,7 +17,9 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -46,6 +48,7 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceResult;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
@@ -119,6 +122,11 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         // this triggers the initialization of all required beans in the application context
         // in production the DeferredEagerBeanInitializer would do this automatically
         applicationContext.getBean(SharedQueueProcessingService.class);
+        // Wait for the BuildContainerCacheCleanupService's @Scheduled topic listener to register before any test
+        // publishes a maintenance message. Without this, the first publish races the listener registration and the
+        // message is silently dropped (Hazelcast topic publishes are fire-and-forget — no buffering for late
+        // subscribers).
+        await().atMost(30, TimeUnit.SECONDS).until(() -> buildContainerCacheCleanupService.isMaintenanceListenerRegistered());
     }
 
     @BeforeEach
@@ -673,6 +681,100 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             await().atMost(30, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
         }
         finally {
+            ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "");
+        }
+    }
+
+    /**
+     * End-to-end via topic: WIPE_GRADLE_CACHE deletes a fresh file under the Gradle cache root. Mirrors the Maven
+     * test above so a regression in the dispatch switch for the Gradle case is caught — the listener could otherwise
+     * silently fall through.
+     */
+    @Test
+    void testMaintenanceTopicTriggersWipeGradleCache(@org.junit.jupiter.api.io.TempDir Path tempCache) throws IOException {
+        Path freshFile = tempCache.resolve("wipe/fresh.jar");
+        Files.createDirectories(freshFile.getParent());
+        FileUtils.writeByteArrayToFile(freshFile.toFile(), new byte[64]);
+        Files.setAttribute(freshFile, "basic:lastAccessTime", FileTime.from(Instant.now()));
+
+        ReflectionTestUtils.setField(buildAgentConfiguration, "gradleCacheHostPath", tempCache.toString());
+        try {
+            maintenanceTopic.publish(new BuildAgentMaintenanceAction(buildAgentShortName, BuildAgentMaintenanceAction.Type.WIPE_GRADLE_CACHE));
+
+            await().atMost(30, TimeUnit.SECONDS).until(() -> !freshFile.toFile().exists());
+            await().atMost(30, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
+        }
+        finally {
+            ReflectionTestUtils.setField(buildAgentConfiguration, "gradleCacheHostPath", "");
+        }
+    }
+
+    /**
+     * End-to-end via topic: CLEAR_DOCKER_IMAGES exercises the listener dispatch case that does NOT acquire a
+     * maintenance pause (pause closes the Docker client). The integration assertion is necessarily indirect because
+     * we don't run a real Docker daemon in this test environment — we publish the message and confirm the listener
+     * (a) does not pause the agent and (b) is still alive (a follow-up Maven wipe still dispatches). This guards the
+     * dispatch wiring even when the Docker subsystem itself returns an empty unused-image list.
+     */
+    @Test
+    void testMaintenanceTopicTriggersDockerClear_doesNotPauseAgent_andKeepsListenerAlive(@org.junit.jupiter.api.io.TempDir Path tempCache) throws IOException {
+        Path freshFile = tempCache.resolve("wipe/fresh.jar");
+        Files.createDirectories(freshFile.getParent());
+        FileUtils.writeByteArrayToFile(freshFile.toFile(), new byte[16]);
+        Files.setAttribute(freshFile, "basic:lastAccessTime", FileTime.from(Instant.now()));
+
+        // 1. Fire CLEAR_DOCKER_IMAGES. The dispatch path goes through BuildAgentDockerService directly; with no
+        // Docker daemon available in the test, the call short-circuits internally (UnusedImageStats.EMPTY) but
+        // the listener still completes the round-trip and publishes a result.
+        maintenanceTopic.publish(new BuildAgentMaintenanceAction(buildAgentShortName, BuildAgentMaintenanceAction.Type.CLEAR_DOCKER_IMAGES));
+        try {
+            Thread.sleep(3_000);
+        }
+        catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+        assertThat(sharedQueueProcessingService.isPaused()).as("Docker clear must not acquire a maintenance pause — pausing closes the Docker client").isFalse();
+
+        // 2. Listener is still alive after the Docker dispatch: a subsequent WIPE_MAVEN_CACHE still pauses+wipes.
+        ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", tempCache.toString());
+        try {
+            maintenanceTopic.publish(new BuildAgentMaintenanceAction(buildAgentShortName, BuildAgentMaintenanceAction.Type.WIPE_MAVEN_CACHE));
+            await().atMost(30, TimeUnit.SECONDS).until(() -> !freshFile.toFile().exists());
+            await().atMost(30, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
+        }
+        finally {
+            ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "");
+        }
+    }
+
+    /**
+     * End-to-end: after a maintenance action completes, the agent publishes a {@link BuildAgentMaintenanceResult} on
+     * {@code buildAgentMaintenanceResultTopic}. Core nodes fan this out to the per-agent WebSocket topic; the
+     * client-side build-agent details page subscribes there to render the operator toast. This test pins the
+     * server-side end of that pipeline — without a published result the toast never reaches the operator.
+     */
+    @Test
+    void testMaintenanceActionPublishesResultOnResultTopic(@org.junit.jupiter.api.io.TempDir Path tempCache) throws IOException, InterruptedException {
+        Path freshFile = tempCache.resolve("repo/artifact.jar");
+        Files.createDirectories(freshFile.getParent());
+        FileUtils.writeByteArrayToFile(freshFile.toFile(), new byte[128]);
+        Files.setAttribute(freshFile, "basic:lastAccessTime", FileTime.from(Instant.now()));
+
+        ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", tempCache.toString());
+        LinkedBlockingQueue<BuildAgentMaintenanceResult> seenResults = new LinkedBlockingQueue<>();
+        UUID listenerId = distributedDataAccessService.getBuildAgentMaintenanceResultTopic().addMessageListener(seenResults::add);
+        try {
+            maintenanceTopic.publish(new BuildAgentMaintenanceAction(buildAgentShortName, BuildAgentMaintenanceAction.Type.WIPE_MAVEN_CACHE));
+
+            BuildAgentMaintenanceResult result = seenResults.poll(30, TimeUnit.SECONDS);
+            assertThat(result).as("Agent must publish a BuildAgentMaintenanceResult on the result topic after the wipe completes").isNotNull();
+            assertThat(result.agentShortName()).isEqualTo(buildAgentShortName);
+            assertThat(result.actionType()).isEqualTo(BuildAgentMaintenanceAction.Type.WIPE_MAVEN_CACHE);
+            assertThat(result.outcome()).isIn(BuildAgentMaintenanceResult.Outcome.SUCCESS, BuildAgentMaintenanceResult.Outcome.PARTIAL_FAILURE);
+            assertThat(result.itemsAffected()).isGreaterThanOrEqualTo(1L);
+        }
+        finally {
+            distributedDataAccessService.getBuildAgentMaintenanceResultTopic().removeMessageListener(listenerId);
             ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", "");
         }
     }
