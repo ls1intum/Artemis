@@ -14,7 +14,7 @@
                           with 0.80 <= confidence < 0.95 are inserted with verified=false.
       - verified_by_id / verified_at: populated when a tutor approves a reply.
     -->
-    <changeSet id="20260419120000-1-add-verification-columns-to-answer-post" author="youssefeltoukhi">
+    <changeSet id="20260518152703-1-add-verification-columns-to-answer-post" author="youssefeltoukhi">
         <addColumn tableName="answer_post">
             <column name="confidence_score" type="double"/>
             <column name="verified" type="boolean" defaultValueBoolean="true">
