@@ -18,7 +18,6 @@ import { ProgrammingExerciseInputField } from 'app/programming/manage/update/pro
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
@@ -34,7 +33,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         NgbTooltip,
         SubmissionPolicyUpdateComponent,
         NgbAlert,
-        HelpIconComponent,
         ProgrammingExerciseTimelineComponent,
         GradingInstructionsDetailsComponent,
         PresentationScoreComponent,
