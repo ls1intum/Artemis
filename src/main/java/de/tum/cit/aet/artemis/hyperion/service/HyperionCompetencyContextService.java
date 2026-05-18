@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
@@ -37,8 +38,8 @@ public class HyperionCompetencyContextService {
 
     private static final int LECTURE_SNIPPETS_PER_COMPETENCY = 20;
 
-    // Request a larger pool from Pyris so client-side filtering by lecture unit ID yields enough results.
-    private static final int PYRIS_SEARCH_LIMIT = 50;
+    // Pyris enforces 20 on the search endpoint
+    private static final int PYRIS_SEARCH_LIMIT = 20;
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
 
@@ -136,7 +137,7 @@ public class HyperionCompetencyContextService {
                             .limit(LECTURE_SNIPPETS_PER_COMPETENCY).map(result -> "[" + result.lecture().name() + " – " + result.lectureUnit().name() + "]\n" + result.snippet())
                             .forEach(snippets::add);
                 }
-                catch (PyrisConnectorException e) {
+                catch (PyrisConnectorException | IrisException e) {
                     log.warn("Failed to retrieve lecture snippets from Pyris for competency [{}]: {}", competency.getId(), e.getMessage());
                 }
             }
