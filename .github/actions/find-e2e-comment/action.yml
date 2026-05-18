@@ -14,7 +14,7 @@ runs:
   steps:
     - name: Find PR number
       id: find-pr
-      uses: actions/github-script@v8
+      uses: actions/github-script@v9
       continue-on-error: true
       with:
         result-encoding: string
@@ -35,7 +35,7 @@ runs:
     - name: Find existing E2E comment
       id: find-comment
       if: steps.find-pr.outputs.result != ''
-      uses: actions/github-script@v8
+      uses: actions/github-script@v9
       continue-on-error: true
       with:
         result-encoding: string
