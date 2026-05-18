@@ -957,6 +957,98 @@ class BuildContainerCacheCleanupServiceTest {
         assertThat(mapped.errorCount()).isEqualTo(1);
     }
 
+    // --- Gradle immutable workspace exclusion ---------------------------------------------------------------
+    // Gradle 9 marks each transform / compile / file-hashes workspace under caches/<gradle-version>/ as immutable;
+    // external per-file LRU eviction that deletes one file from inside such a workspace while leaving newer
+    // siblings intact corrupts Gradle's view of the workspace and causes the next build to abort with "The
+    // contents of the immutable workspace '...transforms/<hash>' have been modified". These tests pin the
+    // exclusion contract.
+
+    @Test
+    void isGradleInternalWorkspaceFile_returnsTrueForCachesVersionDir() {
+        Path root = Path.of("/var/cache/artemis-buildagent/gradle");
+        assertThat(BuildContainerCacheCleanupService.isGradleInternalWorkspaceFile(root, root.resolve("caches/9.0.0/transforms/abc123/results.bin"))).isTrue();
+        assertThat(BuildContainerCacheCleanupService.isGradleInternalWorkspaceFile(root, root.resolve("caches/8.6/file-hashes/fileHashes.bin"))).isTrue();
+        assertThat(BuildContainerCacheCleanupService.isGradleInternalWorkspaceFile(root, root.resolve("caches/7.5.1/javaCompile/output.bin"))).isTrue();
+        // Pre-release / RC tags must also be treated as immutable Gradle-version dirs.
+        assertThat(BuildContainerCacheCleanupService.isGradleInternalWorkspaceFile(root, root.resolve("caches/8.7-rc-1/transforms/x/y"))).isTrue();
+    }
+
+    @Test
+    void isGradleInternalWorkspaceFile_returnsFalseForModulesDependencyCache() {
+        Path root = Path.of("/var/cache/artemis-buildagent/gradle");
+        // The actual dependency-artifact cache. Gradle's own retention policy operates on these files; LRU
+        // eviction here is the whole reason the cache cleanup exists.
+        assertThat(BuildContainerCacheCleanupService.isGradleInternalWorkspaceFile(root,
+                root.resolve("caches/modules-2/files-2.1/org.junit.jupiter/junit-jupiter/5.10.0/abc/junit-jupiter-5.10.0.jar"))).isFalse();
+        assertThat(BuildContainerCacheCleanupService.isGradleInternalWorkspaceFile(root, root.resolve("caches/jars-9/abc/example.jar"))).isFalse();
+        assertThat(BuildContainerCacheCleanupService.isGradleInternalWorkspaceFile(root, root.resolve("caches/journal-1/journal-1.lock"))).isFalse();
+    }
+
+    @Test
+    void isGradleInternalWorkspaceFile_returnsFalseForPathsOutsideCachesSubtree() {
+        Path root = Path.of("/var/cache/artemis-buildagent/gradle");
+        // wrapper/, daemon/, init.d/, notifications/ — none of these are immutable workspaces; some are even
+        // expected to be cleaned externally (daemon logs accumulate). Leave the existing eviction in charge.
+        assertThat(BuildContainerCacheCleanupService.isGradleInternalWorkspaceFile(root, root.resolve("wrapper/dists/gradle-9.0.0/abc/gradle-9.0.0.zip"))).isFalse();
+        assertThat(BuildContainerCacheCleanupService.isGradleInternalWorkspaceFile(root, root.resolve("daemon/9.0.0/daemon-1234.out.log"))).isFalse();
+        assertThat(BuildContainerCacheCleanupService.isGradleInternalWorkspaceFile(root, root.resolve("notifications/9.0.0/release-features.txt"))).isFalse();
+    }
+
+    @Test
+    void isGradleInternalWorkspaceFile_returnsFalseForNonGradleCacheRoot() {
+        // Maven cache root has no immutable-workspace concept; even a "caches/<version>/..."-looking path here
+        // should not be excluded, since the helper is supposed to be a no-op for the Maven cache.
+        Path mavenRoot = Path.of("/var/cache/artemis-buildagent/m2");
+        // A hypothetical (Maven would never lay things out like this) caches/<version>/transforms path:
+        assertThat(BuildContainerCacheCleanupService.isGradleInternalWorkspaceFile(mavenRoot, mavenRoot.resolve("repository/org/example/lib/1.0/lib-1.0.jar"))).isFalse();
+    }
+
+    @Test
+    void prune_doesNotDeleteFilesInsideGradleImmutableWorkspace_evenWhenOldEnough() throws IOException {
+        // Set up: a 60-day-old file inside caches/9.0.0/transforms (Gradle immutable workspace) and a 60-day-old
+        // file inside caches/modules-2 (regular dependency cache). The age threshold (30 days) would normally
+        // evict both — but the workspace file must be preserved.
+        Path workspaceFile = touchFileWithAtime(gradleCache.resolve("caches/9.0.0/transforms/abc/transformed/foo.class"), 100, daysAgo(60));
+        Path dependencyFile = touchFileWithAtime(gradleCache.resolve("caches/modules-2/files-2.1/org.example/lib/1.0/abc/lib-1.0.jar"), 100, daysAgo(60));
+        // Use only the Gradle cache for this test; null out the Maven cache.
+        when(buildAgentConfiguration.mavenCacheHostPath()).thenReturn(null);
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        assertThat(outcome.wasSkipped()).isFalse();
+        // The immutable-workspace file must NOT have been touched, even though its atime exceeds the threshold.
+        assertThat(workspaceFile).as("file inside caches/<gradle-version>/ must be preserved").exists();
+        // The dependency-cache file IS old enough; it must have been age-evicted.
+        assertThat(dependencyFile).as("file inside caches/modules-2/ must be age-evicted as before").doesNotExist();
+        PruneStats stats = statsFor(outcome, gradleCache);
+        assertThat(stats.ageDeletedFiles()).isEqualTo(1);
+    }
+
+    @Test
+    void prune_workspaceFilesAreInvisibleToSizePhaseToo() throws IOException {
+        // Phase 2 (size cap) would also normally pick old files. Confirm that workspace files are excluded from
+        // the size-based candidate list as well.
+        // 4 × 2 MB workspace files (each 60 days old, so phase-1 would have wanted them) plus a 1 MB dep file.
+        // Gradle high cap is 6 GB by default — to force phase 2 to fire we set a tiny max-size on the Gradle cache.
+        service.setGradleMaxSize(org.springframework.util.unit.DataSize.ofBytes(3_000_000));
+        service.setLowWatermarkRatio(0.5);
+        for (int i = 0; i < 4; i++) {
+            touchFileWithAtime(gradleCache.resolve("caches/9.0.0/transforms/wks" + i + "/data.bin"), 2_000_000, daysAgo(60));
+        }
+        Path depFile = touchFileWithAtime(gradleCache.resolve("caches/modules-2/files-2.1/lib/lib.jar"), 1_000_000, daysAgo(60));
+        when(buildAgentConfiguration.mavenCacheHostPath()).thenReturn(null);
+
+        CleanupOutcome outcome = service.runCleanup();
+
+        assertThat(outcome.wasSkipped()).isFalse();
+        // All four workspace files survive both phase-1 and phase-2; the dep file is evicted by phase-1 (age).
+        for (int i = 0; i < 4; i++) {
+            assertThat(gradleCache.resolve("caches/9.0.0/transforms/wks" + i + "/data.bin")).exists();
+        }
+        assertThat(depFile).doesNotExist();
+    }
+
     // --- Maintenance topic listener lifecycle (reconnect + initial register) --------------------------------
     // The maintenance listener owns the operator-triggered surface; if the listener handle dies and is not
     // re-registered after a Hazelcast reconnect, the agent silently stops responding to admin actions until

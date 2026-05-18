@@ -557,6 +557,18 @@ public class BuildContainerCacheCleanupService {
             return summariseAndLog(root, 0, 0, 0, 0, 0, 0, errors, start);
         }
 
+        // Filter out files inside Gradle's immutable workspace directories ({@code caches/<gradle-version>/...}).
+        // Gradle marks each transform / compile / file-hashes workspace as immutable once it is fully populated and
+        // expects external code to never modify its contents. A per-file LRU eviction can delete an old file from
+        // inside such a workspace while leaving newer siblings intact, leaving Gradle to see a "modified immutable
+        // workspace" on the next build that touches the cached entry — reported by testers as intermittent
+        // {@code "The contents of the immutable workspace '...transforms/<hash>' have been modified"} failures.
+        // Only the dependency-artifact cache under {@code caches/modules-2/} is safe to LRU-evict externally; the
+        // rest of {@code caches/<gradle-version>/} is Gradle-internal state that Gradle manages itself (Gradle's
+        // own retention removes unused transforms after 30 days of inactivity by default). The Maven cache has no
+        // equivalent immutable-workspace concept, so this filter is a no-op for Maven.
+        entries.removeIf(entry -> isGradleInternalWorkspaceFile(root, entry.path()));
+
         long initialBytes = entries.stream().mapToLong(FileEntry::size).sum();
         Instant ageCutoff = Instant.now().minus(Duration.ofDays(maxAgeDays));
 
@@ -735,6 +747,50 @@ public class BuildContainerCacheCleanupService {
             return false;
         }
     }
+
+    /**
+     * Matches any path whose first two components (relative to the cache root) are {@code caches/<gradle-version>},
+     * where {@code <gradle-version>} is a dotted-number tuple such as {@code 9.0.0}, {@code 8.6}, or {@code 7.5.1}.
+     * Gradle's per-version cache subdirectory ({@code caches/<version>/...}) holds <em>immutable workspaces</em> —
+     * transform outputs, file-hash indexes, execution histories, compile workspaces — that Gradle expects external
+     * code to never modify once they have been marked complete. A per-file LRU eviction targeted at the Gradle
+     * cache tree can otherwise delete an old file from inside such a workspace while leaving newer siblings,
+     * leaving Gradle to observe a "modified immutable workspace" on the next build that consults the cached entry.
+     * <p>
+     * The dependency-artifact cache lives under a sibling directory {@code caches/modules-2/}, which Gradle itself
+     * is happy to have evicted externally (Gradle's own retention policy operates on the same files). Anything
+     * under {@code caches/modules-2/}, {@code caches/jars-<n>/}, or outside {@code caches/} entirely is left to
+     * the eviction logic; only {@code caches/<gradle-version>/} subtrees are protected.
+     * <p>
+     * Package-private so the test suite can exercise the matcher directly without going through a full prune.
+     *
+     * @param cacheRoot the configured cache root that {@code file} lives inside
+     * @param file      an absolute path to a regular file the walker discovered under {@code cacheRoot}
+     * @return {@code true} when {@code file} resides inside a Gradle-version-numbered subdirectory of
+     *         {@code caches/} and is therefore unsafe to LRU-evict
+     */
+    static boolean isGradleInternalWorkspaceFile(Path cacheRoot, Path file) {
+        Path rel;
+        try {
+            rel = cacheRoot.relativize(file);
+        }
+        catch (IllegalArgumentException notUnderRoot) {
+            // The walker only emits paths under the root, so this branch should never trigger; if it ever does we
+            // err on the safe side and let the prune proceed normally (no exclusion).
+            return false;
+        }
+        if (rel.getNameCount() < 2) {
+            return false;
+        }
+        if (!"caches".equals(rel.getName(0).toString())) {
+            return false;
+        }
+        String second = rel.getName(1).toString();
+        return GRADLE_VERSION_DIR.matcher(second).matches();
+    }
+
+    /** Matches Gradle's version-numbered cache subdirectories, e.g. {@code 9.0.0}, {@code 8.6}, {@code 7.5.1-rc-1}. */
+    private static final java.util.regex.Pattern GRADLE_VERSION_DIR = java.util.regex.Pattern.compile("\\d+(?:\\.\\d+)+(?:-[A-Za-z0-9.-]+)?");
 
     /**
      * Returns {@link #lowWatermarkRatio} clamped to {@code (0.0, 1.0)}. Misconfigurations outside that range would
