@@ -172,18 +172,6 @@ public class HyperionCodeGenerationExecutionService {
         this.exerciseVersionService = exerciseVersionService;
     }
 
-    public HyperionCodeGenerationExecutionService(String defaultBranch, GitService gitService, RepositoryService repositoryService,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ResultRepository resultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionProgrammingExerciseContextRendererService repositoryStructureService,
-            HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy,
-            ProgrammingSubmissionService programmingSubmissionService, HyperionConsistencyCheckService consistencyCheckService, ExerciseVersionService exerciseVersionService) {
-        this(defaultBranch, gitService, repositoryService, solutionProgrammingExerciseParticipationRepository, templateProgrammingExerciseParticipationRepository,
-                programmingSubmissionRepository, resultRepository, continuousIntegrationTriggerService, programmingExerciseParticipationService, repositoryStructureService,
-                solutionStrategy, templateStrategy, testStrategy, programmingSubmissionService, consistencyCheckService, null, exerciseVersionService);
-    }
-
     /**
      * Resolves the appropriate code generation strategy based on repository type.
      *
