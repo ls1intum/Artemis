@@ -5,6 +5,7 @@ import {
     getResultIconClass,
     getTextColorClass,
     getUnreferencedFeedback,
+    isAthenaResultFinished,
     isOnlyCompilationTested,
 } from 'app/exercise/result/result.utils';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
@@ -42,6 +43,36 @@ describe('ResultUtils', () => {
         ];
         const unreferencedFeedbacks = getUnreferencedFeedback(feedbacks);
         expect(unreferencedFeedbacks).toEqual([{ type: FeedbackType.AUTOMATIC }, { type: FeedbackType.MANUAL_UNREFERENCED }]);
+    });
+
+    it.each([
+        {
+            changedResults: [{ id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true }] as Result[],
+            currentResults: [] as Result[],
+            expected: true,
+        },
+        {
+            changedResults: [{ id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: false }] as Result[],
+            currentResults: [{ id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined }] as Result[],
+            expected: true,
+        },
+        {
+            changedResults: [{ id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, completionDate: dayjs() }] as Result[],
+            currentResults: [{ id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true }] as Result[],
+            expected: true,
+        },
+        {
+            changedResults: [{ id: 1, assessmentType: AssessmentType.AUTOMATIC, successful: true }] as Result[],
+            currentResults: [] as Result[],
+            expected: false,
+        },
+        {
+            changedResults: [{ id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined }] as Result[],
+            currentResults: [] as Result[],
+            expected: false,
+        },
+    ])('should determine whether Athena result generation finished', ({ changedResults, currentResults, expected }) => {
+        expect(isAthenaResultFinished(changedResults, currentResults)).toBe(expected);
     });
 
     it.each([

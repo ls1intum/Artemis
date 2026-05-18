@@ -162,6 +162,19 @@ export function isAthenaAIResult(result: Result): boolean {
     return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
 }
 
+export function isAthenaResultFinished(changedResults: Result[], currentResults: Result[]): boolean {
+    const latestChangedResult = changedResults.last();
+    const previousLatestResult = currentResults.find((result) => result.id === latestChangedResult?.id);
+
+    return (
+        latestChangedResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
+        latestChangedResult.successful !== undefined &&
+        (changedResults.length > currentResults.length ||
+            previousLatestResult?.successful !== latestChangedResult.successful ||
+            (!!latestChangedResult.completionDate && !previousLatestResult?.completionDate))
+    );
+}
+
 export const evaluateTemplateStatus = (
     exercise: Exercise | undefined,
     participation: Participation | undefined,

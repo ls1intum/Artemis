@@ -24,7 +24,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
+import { getUnreferencedFeedback, isAthenaAIResult, isAthenaResultFinished } from 'app/exercise/result/result.utils';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -199,13 +199,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const oldResults = this.participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const latestResult = results.last();
-                const previousLatestResult = oldResults.find((result) => result.id === latestResult?.id);
-                const athenaResultFinished =
-                    latestResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                    latestResult.successful !== undefined &&
-                    ((results?.length || 0) > (oldResults.length || 0) ||
-                        previousLatestResult?.successful !== latestResult.successful ||
-                        (!!latestResult.completionDate && !previousLatestResult?.completionDate));
+                const athenaResultFinished = isAthenaResultFinished(results, oldResults);
 
                 if (athenaResultFinished) {
                     this.isGeneratingFeedback = false;

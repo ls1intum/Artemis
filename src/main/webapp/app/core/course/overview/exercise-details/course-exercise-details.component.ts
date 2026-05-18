@@ -38,6 +38,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
 import { ScienceService } from 'app/shared/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
+import { isAthenaResultFinished } from 'app/exercise/result/result.utils';
 import { ExerciseSplitPanelComponent } from './exercise-split-panel/exercise-split-panel.component';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 
@@ -382,13 +383,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     const changedResults = getAllResultsOfAllSubmissions(changedParticipation.submissions);
                     const currentResults = getAllResultsOfAllSubmissions(currentParticipation?.submissions);
                     const latestChangedResult = changedResults.last();
-                    const previousLatestResult = currentResults.find((result) => result.id === latestChangedResult?.id);
-                    const athenaResultFinished =
-                        latestChangedResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                        latestChangedResult.successful !== undefined &&
-                        (changedResults.length > currentResults.length ||
-                            previousLatestResult?.successful !== latestChangedResult.successful ||
-                            (!!latestChangedResult.completionDate && !previousLatestResult?.completionDate));
+                    const athenaResultFinished = isAthenaResultFinished(changedResults, currentResults);
 
                     if (athenaResultFinished) {
                         if (latestChangedResult.successful === true) {
