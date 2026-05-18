@@ -477,7 +477,10 @@ public class BuildJobExecutionService {
                     var testResultFileString = fileContent.replace("\n\t", "");
                     if (!testResultFileString.isBlank()) {
                         if (fileName.endsWith(".xml")) {
+                            log.debug("Parsing test result XML file '{}' for build job {} ({} bytes)", fileName, buildJobId, testResultFileString.length());
                             TestResultXmlParser.processTestResultFile(testResultFileString, failedTests, successfulTests);
+                            log.debug("After parsing '{}' for build job {}: {} failed tests, {} successful tests", fileName, buildJobId, failedTests.size(),
+                                    successfulTests.size());
                         }
                         else if (fileName.endsWith(".json")) {
                             CustomFeedbackParser.processTestResultFile(fileName, testResultFileString, failedTests, successfulTests);
