@@ -686,7 +686,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     private void checkIfNoStudentInformationPresent(ComplaintDTO receivedComplaint) {
         assertThat(receivedComplaint.participant()).as("Student should not be contained").isNull();
-}
+    private void checkIfNoStudentInformationPresent(ComplaintDTO receivedComplaint) {
+        assertThat(receivedComplaint.participant()).as("Student should not be contained").isNull();
+    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
