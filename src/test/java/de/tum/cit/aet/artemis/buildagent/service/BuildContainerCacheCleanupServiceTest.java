@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceResult;
 import de.tum.cit.aet.artemis.buildagent.service.BuildContainerCacheCleanupService.CleanupOutcome;
 import de.tum.cit.aet.artemis.buildagent.service.BuildContainerCacheCleanupService.PruneStats;
 import de.tum.cit.aet.artemis.buildagent.service.BuildContainerCacheCleanupService.WipeOutcome;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 /**
  * Unit tests for {@link BuildContainerCacheCleanupService}. The pause/resume hand-off to the queue processing
@@ -63,7 +65,7 @@ class BuildContainerCacheCleanupServiceTest {
         lenient().when(sharedQueueProcessingService.isPaused()).thenReturn(true);
 
         service = new BuildContainerCacheCleanupService(buildAgentConfiguration, sharedQueueProcessingService, mock(BuildAgentDockerService.class),
-                mock(de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService.class), mock(BuildAgentInformationService.class));
+                mock(DistributedDataAccessService.class), mock(BuildAgentInformationService.class));
         service.setCleanupEnabled(true);
         service.setMaxAgeDays(30);
         service.setMavenMaxSize(DataSize.ofGigabytes(3));
@@ -736,7 +738,7 @@ class BuildContainerCacheCleanupServiceTest {
         // The toast aggregates per-cache prune stats so the operator sees a single "freed across X items" number.
         PruneStats maven = new PruneStats(mavenCache, 10_000L, 2, 800L, 1, 100L, 1, 0, Duration.ofMillis(50));
         PruneStats gradle = new PruneStats(gradleCache, 20_000L, 0, 0L, 3, 1_500L, 2, 4, Duration.ofMillis(80));
-        CleanupOutcome outcome = new CleanupOutcome(java.util.List.of(maven, gradle), null);
+        CleanupOutcome outcome = new CleanupOutcome(List.of(maven, gradle), null);
 
         BuildAgentMaintenanceResult result = service.toResult(BuildAgentMaintenanceAction.Type.RUN_CACHE_CLEANUP, outcome, Instant.now(), Instant.now());
 

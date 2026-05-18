@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 
+import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 
@@ -69,7 +70,7 @@ class SharedQueueProcessingServiceTest {
         lenient().when(distributedDataAccessService.getResumeBuildAgentTopic()).thenReturn(topic);
         lenient().when(distributedDataAccessService.getCanceledBuildJobsTopic()).thenReturn(topic);
         lenient().when(distributedDataAccessService.isInstanceRunning()).thenReturn(false);
-        lenient().when(taskScheduler.scheduleAtFixedRate(any(Runnable.class), any(java.time.Duration.class))).thenReturn(mock(ScheduledFuture.class));
+        lenient().when(taskScheduler.scheduleAtFixedRate(any(Runnable.class), any(Duration.class))).thenReturn(mock(ScheduledFuture.class));
 
         service = new SharedQueueProcessingService(buildAgentConfiguration, buildJobManagementService, buildLogsMap, taskScheduler, buildAgentDockerService,
                 buildJobContainerService, buildAgentInformationService, distributedDataAccessService, new BuildAgentMaintenanceStateService());

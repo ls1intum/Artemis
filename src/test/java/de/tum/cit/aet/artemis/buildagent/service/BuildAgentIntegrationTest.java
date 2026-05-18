@@ -43,7 +43,9 @@ import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.command.VersionCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 
+import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
@@ -87,7 +89,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
     private DistributedTopic<String> resumeBuildAgentTopic;
 
-    private DistributedTopic<de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction> maintenanceTopic;
+    private DistributedTopic<BuildAgentMaintenanceAction> maintenanceTopic;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -102,7 +104,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     private BuildContainerCacheCleanupService buildContainerCacheCleanupService;
 
     @Autowired
-    private de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration buildAgentConfiguration;
+    private BuildAgentConfiguration buildAgentConfiguration;
 
     @BeforeAll
     void init() {
@@ -637,8 +639,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", tempCache.toString());
         ReflectionTestUtils.setField(buildAgentConfiguration, "gradleCacheHostPath", "");
         try {
-            maintenanceTopic.publish(new de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction(buildAgentShortName,
-                    de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction.Type.RUN_CACHE_CLEANUP));
+            maintenanceTopic.publish(new BuildAgentMaintenanceAction(buildAgentShortName, BuildAgentMaintenanceAction.Type.RUN_CACHE_CLEANUP));
 
             // The agent pauses, prunes, and resumes asynchronously; allow up to 30 s.
             await().atMost(30, TimeUnit.SECONDS).until(() -> !oldFile.toFile().exists());
@@ -666,8 +667,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         ReflectionTestUtils.setField(buildAgentConfiguration, "mavenCacheHostPath", tempCache.toString());
         try {
-            maintenanceTopic.publish(new de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction(buildAgentShortName,
-                    de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction.Type.WIPE_MAVEN_CACHE));
+            maintenanceTopic.publish(new BuildAgentMaintenanceAction(buildAgentShortName, BuildAgentMaintenanceAction.Type.WIPE_MAVEN_CACHE));
 
             await().atMost(30, TimeUnit.SECONDS).until(() -> !freshFile.toFile().exists());
             await().atMost(30, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
@@ -683,8 +683,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
      */
     @Test
     void testMaintenanceTopicMessageForOtherAgentIsIgnored() {
-        maintenanceTopic.publish(new de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction("some-other-agent-not-us",
-                de.tum.cit.aet.artemis.buildagent.dto.BuildAgentMaintenanceAction.Type.RUN_CACHE_CLEANUP));
+        maintenanceTopic.publish(new BuildAgentMaintenanceAction("some-other-agent-not-us", BuildAgentMaintenanceAction.Type.RUN_CACHE_CLEANUP));
 
         // Give the listener thread a couple of seconds to mistakenly process the message before we conclude it
         // was ignored. The pause grace period in the test base is 2s; a wrongful pause would surface well within
