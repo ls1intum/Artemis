@@ -34,7 +34,7 @@ public class HyperionCompetencyContextService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCompetencyContextService.class);
 
-    private static final int LECTURE_SNIPPETS_PER_COMPETENCY = 3;
+    private static final int LECTURE_SNIPPETS_PER_COMPETENCY = 20;
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
 
@@ -93,12 +93,12 @@ public class HyperionCompetencyContextService {
         Set<Long> selectedIds = selected.stream().map(CourseCompetency::getId).filter(Objects::nonNull).collect(Collectors.toSet());
         Set<CompetencyRelation> relations = competencyRelationApi.map(relApi -> relApi.findRelationsInvolvingCompetencies(courseId, selectedIds)).orElse(Set.of());
 
-        List<String> lectureSnippets = fetchLectureSnippets(courseId, selected, selectedIds);
+        List<String> lectureSnippets = fetchLectureSnippets(selected, selectedIds);
 
         return new CompetencyContext(selected, relations, lectureSnippets);
     }
 
-    private List<String> fetchLectureSnippets(long courseId, List<CourseCompetency> selected, Set<Long> selectedIds) {
+    private List<String> fetchLectureSnippets(List<CourseCompetency> selected, Set<Long> selectedIds) {
         if (competencyRelationApi.isEmpty() || lectureUnitApi.isEmpty() || selectedIds.isEmpty()) {
             return List.of();
         }
@@ -111,24 +111,24 @@ public class HyperionCompetencyContextService {
         List<LectureUnit> lectureUnits = lectureUnitApi.get().findAllByIds(linkedLectureUnitIds);
 
         List<String> snippets = new ArrayList<>();
-        boolean hasNonTextUnits = false;
+        List<Long> nonTextUnitIds = new ArrayList<>();
 
         // TextUnits: include content directly from the database.
         for (LectureUnit unit : lectureUnits) {
             if (unit instanceof TextUnit textUnit && textUnit.getContent() != null && !textUnit.getContent().isBlank()) {
                 snippets.add("[" + unit.getLecture().getTitle() + " – " + unit.getName() + "]\n" + textUnit.getContent());
             }
-            else {
-                hasNonTextUnits = true;
+            else if (unit.getId() != null) {
+                nonTextUnitIds.add(unit.getId());
             }
         }
 
-        // Non-text units (slides etc.): retrieve snippets from Pyris.
-        if (hasNonTextUnits && pyrisConnectorService.isPresent()) {
+        // Non-text units (slides etc.): retrieve snippets from Pyris scoped to the linked unit IDs.
+        if (!nonTextUnitIds.isEmpty() && pyrisConnectorService.isPresent()) {
             for (CourseCompetency competency : selected) {
                 String query = competency.getTitle() + (competency.getDescription() != null ? " " + competency.getDescription() : "");
                 try {
-                    pyrisConnectorService.get().searchLectures(query, LECTURE_SNIPPETS_PER_COMPETENCY).stream().filter(result -> result.course().id() == courseId)
+                    pyrisConnectorService.get().searchLectures(query, LECTURE_SNIPPETS_PER_COMPETENCY, nonTextUnitIds).stream()
                             .map(result -> "[" + result.lecture().name() + " – " + result.lectureUnit().name() + "]\n" + result.snippet()).forEach(snippets::add);
                 }
                 catch (PyrisConnectorException e) {
