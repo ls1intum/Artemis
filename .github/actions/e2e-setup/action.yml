@@ -26,12 +26,23 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Log triggering workflow info
+    # Save the triggering workflow information as an artifact for later reference
+    # It is needed especially when default branch is used to run workflow file instead of PR branch
+    # Do not delete the following two steps, otherwise Helios will not be able to link E2E test results to the default
+    # branch and its latest commit instead of the actual branch and commit being tested
+    - name: Save triggering workflow info
       shell: bash
       run: |
-        echo "TRIGGERING_WORKFLOW_RUN_ID=${{ inputs.workflow-run-id }}"
-        echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=${{ inputs.workflow-head-branch }}"
-        echo "TRIGGERING_WORKFLOW_HEAD_SHA=${{ inputs.workflow-head-sha }}"
+        echo "TRIGGERING_WORKFLOW_RUN_ID=${{ inputs.workflow-run-id }}" > workflow-context.txt
+        echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=${{ inputs.workflow-head-branch }}" >> workflow-context.txt
+        echo "TRIGGERING_WORKFLOW_HEAD_SHA=${{ inputs.workflow-head-sha }}" >> workflow-context.txt
+        cat workflow-context.txt
+    # Do not delete this step, check the comment above.
+    - name: Upload workflow context
+      uses: actions/upload-artifact@v7
+      with:
+        name: workflow-context
+        path: workflow-context.txt
 
     - name: Add link to triggering workflow
       shell: bash
