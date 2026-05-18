@@ -5,7 +5,7 @@ import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iri
 import { WebsocketService } from 'app/shared/service/websocket.service';
 
 /** Maximum time (ms) to wait for a WebSocket response before the Observable errors. */
-const IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS = 30_000;
+const IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS = 60_000;
 
 /** STOMP channel on which Artemis pushes global search answer updates for the current user. */
 const GLOBAL_SEARCH_ANSWER_WS_CHANNEL = '/user/topic/iris/global-search-answer';
