@@ -544,7 +544,10 @@ public class ChannelService {
     public void deleteChannelForExerciseId(long exerciseId) {
         Long exerciseChannelId = channelRepository.findChannelIdByExerciseId(exerciseId);
         if (exerciseChannelId != null) {
-            searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, exerciseChannelId));
+            searchableEntityWeaviateService.ifPresent(service -> {
+                service.deleteAllPostsForChannelAsync(exerciseChannelId);
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, exerciseChannelId);
+            });
             conversationService.deleteConversation(exerciseChannelId);
         }
     }
