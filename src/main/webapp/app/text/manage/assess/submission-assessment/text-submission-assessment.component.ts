@@ -11,7 +11,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { notUndefined } from 'app/foundation/util/string-pure.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -44,6 +44,9 @@ import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessm
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { faCircleNotch, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -59,6 +62,8 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
         RouterLink,
+        ArtemisTranslatePipe,
+        NgbTooltip,
     ],
 })
 export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit, OnDestroy {
@@ -78,6 +83,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * For traceability: Keep order in resetComponent() consistent with declaration.
      */
 
+    // Icons
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faQuestionCircle = faQuestionCircle;
+
     participation?: StudentParticipation;
     result?: Result;
     unreferencedFeedback: Feedback[];
@@ -92,6 +101,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     isAssessor: boolean;
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
+    hasAutomaticFeedback = false;
     hasAssessmentDueDatePassed: boolean;
     correctionRound: number = 0;
     resultId: number;
@@ -251,6 +261,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         return this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH;
     }
 
+    get isFeedbackSuggestionsEnabled(): boolean {
+        return Boolean(this.exercise?.feedbackSuggestionModule);
+    }
+
     private checkPermissions(result?: Result): void {
         this.isAssessor = result?.assessor?.id === this.userId;
     }
@@ -347,6 +361,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         if (this.assessments.length > 0) {
             return;
         }
+        this.isLoading.set(true);
+
         this.feedbackSuggestionsObservable = this.athenaService.getTextFeedbackSuggestions(this.exercise!, this.submission!).subscribe((feedbackSuggestions) => {
             feedbackSuggestions.forEach((suggestion) => {
                 if (suggestion instanceof TextBlockRef) {
@@ -361,6 +377,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 }
             });
             this.validateFeedback();
+            // TODO: The upcoming line to retrieve if there is automatic feedback or not does not work yet
+            // This is due to the fact that all incoming feedback suggestions are of type MANUAL
+            this.hasAutomaticFeedback = this.assessments.some((feedbackItem) => feedbackItem.text?.startsWith(FeedbackSuggestionType.SUGGESTED));
+            this.isLoading.set(false);
         });
     }
 
