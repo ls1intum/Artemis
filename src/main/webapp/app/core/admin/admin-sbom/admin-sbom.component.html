@@ -359,8 +359,17 @@
             </tbody>
         </table>
     </div>
+} @else if (sbomUnavailable()) {
+    <div class="alert alert-info d-flex align-items-start">
+        <fa-icon [icon]="faInfoCircle" class="me-3 mt-1" size="lg" />
+        <div>
+            <strong jhiTranslate="artemisApp.dependencies.notAvailableTitle"></strong>
+            <p class="mb-0 mt-1" jhiTranslate="artemisApp.dependencies.notAvailableExplanation"></p>
+            <p class="mb-0 mt-2 small text-muted" jhiTranslate="artemisApp.dependencies.notAvailableLocalBuildHint"></p>
+        </div>
+    </div>
 } @else {
-    <div class="alert alert-info">
-        <span jhiTranslate="artemisApp.dependencies.notAvailable"></span>
+    <div class="alert alert-danger">
+        <span jhiTranslate="artemisApp.dependencies.loadError"></span>
     </div>
 }

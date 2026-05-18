@@ -67,8 +67,16 @@ tasks.named("processResources") {
     finalizedBy "copySbomsToResources"
 }
 
-// For production builds, generate both server and client SBOMs before copying
-if (project.hasProperty("prod")) {
+// SBOM generation is expensive (cdxgen for the client pulls ~220 npm packages and the
+// CycloneDX Gradle plugin walks the full runtime classpath). On a cold build these legs
+// add ~60 s of work that is only needed for release-eligible artifacts. Gate the dependency
+// hook behind an explicit `-Psbom` opt-in so:
+//   - PR / feature-branch CI builds and local E2E runs skip SBOM generation by default
+//   - Release-eligible CI builds (develop / main / release/* / tags / release events)
+//     opt in via `-Psbom` and ship a WAR containing the SBOM files
+// The runtime AdminSbomResource handles the missing-SBOM case gracefully (returns 404),
+// and the admin UI renders an informational banner.
+if (project.hasProperty("prod") && project.hasProperty("sbom")) {
     tasks.named("copySbomsToResources") {
         dependsOn "cyclonedxBom", "generateClientSbom"
     }
