@@ -7,6 +7,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { PageableResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
+import { UserForRegistration, UserSearchResult } from 'app/shared/user-registration-modal/user-for-registration.model';
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationManagementService {
@@ -112,6 +113,15 @@ export class OrganizationManagementService {
     }
 
     /**
+     * Send a single POST request to bulk-add multiple users to an organization
+     * @param organizationId the id of the organization
+     * @param logins         the logins of the users to add
+     */
+    addUsersToOrganization(organizationId: number, logins: string[]): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.adminResourceUrl}/${organizationId}/users`, logins, { observe: 'response' });
+    }
+
+    /**
      * Send GET request to retrieve a paginated list of users belonging to an organization
      * @param organizationId the id of the organization
      * @param params         the search and pagination parameters
@@ -151,6 +161,29 @@ export class OrganizationManagementService {
                 observe: 'response',
             })
             .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+    }
+
+    /**
+     * Search for users to register to the given organization, matching the given login, name, email, or registration number term.
+     * Results include already-registered users with {@code isRegistered: true}.
+     * @param organizationId the id of the organization
+     * @param loginOrName    the search term
+     * @param pageIndex      zero-based page index
+     * @param pageSize       number of results per page
+     * @returns an observable emitting a search result containing matching users and total count
+     */
+    searchUsersForOrganizationRegistration(organizationId: number, loginOrName: string, pageIndex: number, pageSize: number): Observable<UserSearchResult> {
+        return this.http
+            .get<UserForRegistration[]>(`${this.adminResourceUrl}/${organizationId}/users/search`, {
+                params: { loginOrName, pageIndex, pageSize },
+                observe: 'response',
+            })
+            .pipe(
+                map((res) => ({
+                    content: res.body ?? [],
+                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
+                })),
+            );
     }
 
     private sendTitlesToEntityTitleService(org: Organization | undefined | null) {

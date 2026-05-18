@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationMemberDTO;
+import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -106,6 +107,21 @@ public class AdminOrganizationResource {
         courseRepository.removeOrganizationFromCourse(courseId, organization);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, courseId.toString())).build();
+    }
+
+    /**
+     * POST organizations/:organizationId/users :
+     * Add multiple users to an organization.
+     * Users not found or already members are silently skipped.
+     *
+     * @param organizationId the id of the organization
+     * @param userLogins     the logins of the users to add
+     * @return empty ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("organizations/{organizationId}/users")
+    public ResponseEntity<Void> addUsersToOrganization(@PathVariable Long organizationId, @RequestBody List<String> userLogins) {
+        organizationService.addUsersToOrganization(organizationId, userLogins);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -237,6 +253,24 @@ public class AdminOrganizationResource {
         log.debug("REST request to get courses of organization : {}", organizationId);
         organizationRepository.findByIdElseThrow(organizationId);
         Page<OrganizationCourseDTO> page = organizationService.getCoursesByOrganizationId(organizationId, search);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * GET organizations/:organizationId/users/search : Search for users to register to a given organization
+     *
+     * @param organizationId the id of the organization
+     * @param loginOrName    search term matched against login, full name, email, and registration number
+     * @param pageIndex      zero-based page index (default 0)
+     * @param pageSize       number of results per page (default 10)
+     * @return ResponseEntity containing a list of matching users with pagination headers
+     */
+    @GetMapping("organizations/{organizationId}/users/search")
+    public ResponseEntity<List<UserForRegistrationDTO>> searchUsersForOrganizationRegistration(@PathVariable long organizationId, @RequestParam String loginOrName,
+            @RequestParam(defaultValue = "0") int pageIndex, @RequestParam(defaultValue = "10") int pageSize) {
+        organizationRepository.findByIdElseThrow(organizationId);
+        Page<UserForRegistrationDTO> page = organizationService.searchUsersForOrganizationRegistration(organizationId, loginOrName, pageIndex, pageSize);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

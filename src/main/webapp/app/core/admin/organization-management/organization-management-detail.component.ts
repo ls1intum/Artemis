@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, map, of } from 'rxjs';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { User } from 'app/core/user/user.model';
@@ -17,15 +18,27 @@ import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
+import { UserRegistrationModalComponent } from 'app/shared/user-registration-modal/user-registration-modal.component';
+import { UserForRegistration } from 'app/shared/user-registration-modal/user-for-registration.model';
+import { ButtonDirective } from 'primeng/button';
 
 /**
  * Admin component for viewing and managing organization details.
- * Allows removing users from organizations and browsing their courses.
+ * Allows adding and removing users from organizations and browsing their courses.
  */
 @Component({
     selector: 'jhi-organization-management-detail',
     templateUrl: './organization-management-detail.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective, TableViewComponent],
+    imports: [
+        TranslateDirective,
+        RouterLink,
+        FaIconComponent,
+        DeleteButtonDirective,
+        AdminTitleBarTitleDirective,
+        TableViewComponent,
+        UserRegistrationModalComponent,
+        ButtonDirective,
+    ],
 })
 export class OrganizationManagementDetailComponent implements OnInit {
     private readonly organizationService = inject(OrganizationManagementService);
@@ -62,6 +75,8 @@ export class OrganizationManagementDetailComponent implements OnInit {
     /** Template ref for custom course-id cell rendering */
     readonly courseIdTemplate = viewChild<CellTemplateRef<Course>>('courseIdTemplate');
 
+    readonly userRegistrationModal = viewChild.required(UserRegistrationModalComponent);
+
     readonly userColumns = computed<ColumnDef<User>[]>(() => [
         { field: 'id', headerKey: 'global.field.id', sort: true, width: '80px', templateRef: this.userIdTemplate() },
         { field: 'login', headerKey: 'artemisApp.userManagement.login', sort: true, width: '200px' },
@@ -75,11 +90,28 @@ export class OrganizationManagementDetailComponent implements OnInit {
         { field: 'shortName', headerKey: 'artemisApp.course.shortName', sort: true, width: '150px' },
     ]);
 
-    /** Last load event for users table, used to refresh after removal */
+    /** Last load event for users table, used to refresh after add/remove */
     private lastUsersLoadEvent: TableLazyLoadEvent | undefined;
 
     private usersLoadId = 0;
     private coursesLoadId = 0;
+
+    readonly searchFn = (searchTerm: string, page: number, size: number) => {
+        const id = this.organizationId();
+        if (!id) return of({ content: [], totalElements: 0 });
+        return this.organizationService.searchUsersForOrganizationRegistration(id, searchTerm, page, size);
+    };
+
+    readonly registerFn = (users: UserForRegistration[]): Observable<void> => {
+        const id = this.organizationId();
+        if (!id || users.length === 0) return of(undefined);
+        return this.organizationService
+            .addUsersToOrganization(
+                id,
+                users.map((u) => u.login),
+            )
+            .pipe(map(() => undefined));
+    };
 
     ngOnInit() {
         this.route.data.subscribe(({ organization }) => {
@@ -99,6 +131,16 @@ export class OrganizationManagementDetailComponent implements OnInit {
                 });
             }
         });
+    }
+
+    openAddUsersModal(): void {
+        this.userRegistrationModal().open();
+    }
+
+    onUsersRegistered(): void {
+        if (this.lastUsersLoadEvent) {
+            this.loadUsers(this.lastUsersLoadEvent);
+        }
     }
 
     loadUsers(event: TableLazyLoadEvent): void {

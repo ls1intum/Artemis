@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.core.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -11,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -22,6 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationMemberDTO;
+import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
@@ -196,5 +200,46 @@ public class OrganizationService {
 
         PageRequest pageable = PageRequest.of(search.getPage(), search.getPageSize(), Sort.unsorted());
         return courseRepository.findAll(spec, pageable).map(course -> new OrganizationCourseDTO(course.getId(), course.getTitle(), course.getShortName()));
+    }
+
+    /**
+     * Add multiple users to an organization.
+     * Users not found or already members are silently skipped.
+     *
+     * @param organizationId the id of the organization
+     * @param logins         the logins of the users to add
+     */
+    public void addUsersToOrganization(long organizationId, List<String> logins) {
+        if (logins.isEmpty()) {
+            return;
+        }
+        Organization organization = organizationRepository.findByIdElseThrow(organizationId);
+        List<User> users = userRepository.findAllByLoginsWithOrganizations(logins);
+        List<User> toUpdate = users.stream().filter(user -> !user.getOrganizations().contains(organization)).peek(user -> user.getOrganizations().add(organization)).toList();
+        userRepository.saveAll(toUpdate);
+    }
+
+    /**
+     * Searches Artemis users by login prefix, full-name substring, email substring, or registration-number substring,
+     * and marks each result as already a member of the given organization.
+     *
+     * @param organizationId the organization to check membership against
+     * @param loginOrName    the search term entered by the admin
+     * @param pageIndex      zero-based page index
+     * @param pageSize       number of results per page
+     * @return a page of {@link UserForRegistrationDTO} with {@code isRegistered} set appropriately
+     */
+    public Page<UserForRegistrationDTO> searchUsersForOrganizationRegistration(long organizationId, String loginOrName, int pageIndex, int pageSize) {
+        PageRequest pageable = PageRequest.of(pageIndex, pageSize);
+        String escaped = loginOrName.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(pageable, escaped);
+
+        List<Long> userIds = users.getContent().stream().map(User::getId).toList();
+        Set<Long> memberIds = userIds.isEmpty() ? Set.of() : organizationRepository.findMemberUserIdsByOrganizationIdAndUserIds(organizationId, userIds);
+
+        List<UserForRegistrationDTO> dtos = users.getContent().stream().map(user -> new UserForRegistrationDTO(user.getId(), user.getLogin(), user.getName(), user.getEmail(),
+                user.getRegistrationNumber(), user.getImageUrl(), memberIds.contains(user.getId()))).toList();
+
+        return new PageImpl<>(dtos, pageable, users.getTotalElements());
     }
 }

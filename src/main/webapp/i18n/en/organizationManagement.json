@@ -23,9 +23,13 @@
                 "showAllUsers": "Show all users",
                 "searchForUsers": "Add a user to this organization by searching for login or name",
                 "searchNoResults": "No users found",
+                "addUsersButton": "Add Users",
                 "removeFromOrganization": {
                     "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this organization?"
                 }
+            },
+            "addUserModal": {
+                "title": "Add Users to Organization"
             },
             "modalSelector": {
                 "select": "Select",

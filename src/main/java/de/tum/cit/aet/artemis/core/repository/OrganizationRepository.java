@@ -68,6 +68,22 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
     Set<Organization> findAllOrganizationsByCourseId(@Param("courseId") long courseId);
 
     /**
+     * Returns the subset of the given user IDs that are members of the given organization.
+     *
+     * @param organizationId the organization to check membership against
+     * @param userIds        the user IDs to check; must not be empty
+     * @return the subset of {@code userIds} that belong to the organization
+     */
+    @Query("""
+            SELECT u.id
+            FROM Organization o
+                JOIN o.users u
+            WHERE o.id = :organizationId
+                AND u.id IN :userIds
+            """)
+    Set<Long> findMemberUserIdsByOrganizationIdAndUserIds(@Param("organizationId") long organizationId, @Param("userIds") List<Long> userIds);
+
+    /**
      * Returns the number of users for each organization in the given list, as [organizationId, userCount] pairs.
      *
      * @param ids the organization ids to query

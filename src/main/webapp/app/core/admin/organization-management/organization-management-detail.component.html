@@ -48,6 +48,7 @@
             [totalRows]="usersTotal()"
             [loading]="usersLoading()"
             [rowActions]="userActions"
+            [tableActions]="usersTableActionsRef"
             (onLazyLoad)="loadUsers($event)"
             [options]="tableOptions"
         />
@@ -74,3 +75,12 @@
         <fa-icon [icon]="faUserSlash" class="me-1" />
     </button>
 </ng-template>
+
+<ng-template #usersTableActionsRef>
+    <button pButton type="button" size="small" (click)="openAddUsersModal()">
+        <i class="pi pi-user-plus me-1"></i>
+        <span jhiTranslate="artemisApp.organizationManagement.userSearch.addUsersButton"></span>
+    </button>
+</ng-template>
+
+<jhi-user-registration-modal titleKey="artemisApp.organizationManagement.addUserModal.title" [searchFn]="searchFn" [registerFn]="registerFn" (registered)="onUsersRegistered()" />
