@@ -211,7 +211,7 @@ public class PyrisWebhookService {
      */
     private String executeLectureDeletionWebhook(List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentVideoUnits) {
         String jobToken = pyrisJobService.addLectureIngestionWebhookJob(0, 0, 0);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, "default");
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, "default", "moderate");
         PyrisWebhookLectureDeletionExecutionDTO executionDTO = new PyrisWebhookLectureDeletionExecutionDTO(toUpdateAttachmentVideoUnits, settingsDTO, List.of());
         pyrisConnectorService.executeLectureDeletionWebhook(executionDTO);
         return jobToken;
@@ -228,7 +228,8 @@ public class PyrisWebhookService {
         String jobToken = pyrisJobService.addLectureIngestionWebhookJob(toUpdateAttachmentVideoUnit.courseId(), toUpdateAttachmentVideoUnit.lectureId(),
                 toUpdateAttachmentVideoUnit.lectureUnitId());
         var settings = irisSettingsService.getSettingsForCourse(course);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, settings.variant().jsonValue());
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, settings.variant().jsonValue(),
+                settings.supportLevel().jsonValue());
         PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentVideoUnit,
                 toUpdateAttachmentVideoUnit.lectureUnitId(), settingsDTO, List.of());
         pyrisConnectorService.executeLectureAdditionWebhook(executionDTO);
@@ -274,7 +275,8 @@ public class PyrisWebhookService {
     private String executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq, Course course) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(toUpdateFaq.courseId(), toUpdateFaq.faqId());
         var settings = irisSettingsService.getSettingsForCourse(course);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, settings.variant().jsonValue());
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, settings.variant().jsonValue(),
+                settings.supportLevel().jsonValue());
         PyrisWebhookFaqIngestionExecutionDTO executionDTO = new PyrisWebhookFaqIngestionExecutionDTO(toUpdateFaq, settingsDTO, List.of());
         pyrisConnectorService.executeFaqAdditionWebhook(toUpdateFaq, executionDTO);
         return jobToken;
@@ -301,7 +303,7 @@ public class PyrisWebhookService {
      */
     private String executeFaqDeletionWebhook(PyrisFaqWebhookDTO toUpdateFaqs) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(0, 0);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, "default");
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, "default", "moderate");
         PyrisWebhookFaqDeletionExecutionDTO executionDTO = new PyrisWebhookFaqDeletionExecutionDTO(toUpdateFaqs, settingsDTO, List.of());
         pyrisConnectorService.executeFaqDeletionWebhook(executionDTO);
         return jobToken;

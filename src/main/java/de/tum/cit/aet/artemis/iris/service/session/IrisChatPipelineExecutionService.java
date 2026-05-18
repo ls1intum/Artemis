@@ -142,8 +142,9 @@ public class IrisChatPipelineExecutionService {
             }
         }
 
-        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), chatSession, event, (executionDto, user, pyrisUser) -> buildChatDTO(chatSession.getMode(),
-                chatSession, executionDto, actualSettings.customInstructions(), course, user, pyrisUser, latestSubmission, uncommittedFiles));
+        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), actualSettings.supportLevel().jsonValue(), chatSession, event,
+                (executionDto, user, pyrisUser) -> buildChatDTO(chatSession.getMode(), chatSession, executionDto, actualSettings.customInstructions(), course, user, pyrisUser,
+                        latestSubmission, uncommittedFiles));
     }
 
     /**

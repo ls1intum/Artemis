@@ -148,6 +148,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
             throw new ConflictException("Tutor Suggestions are not enabled for this course", "Iris", "irisDisabled");
         }
         var variant = settings.variant().jsonValue();
+        var supportLevel = settings.supportLevel().jsonValue();
 
         var user = userRepository.findByIdElseThrow(session.getUserId());
         rateLimitService.checkRateLimitElseThrow(chatSession, user);
@@ -186,7 +187,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
                     }
                 }
             }
-            pyrisPipelineService.executeTutorSuggestionPipeline(variant, chatSession, event, lectureIdOptional, textExerciseDTOOptional, submissionDTOOptional,
+            pyrisPipelineService.executeTutorSuggestionPipeline(variant, supportLevel, chatSession, event, lectureIdOptional, textExerciseDTOOptional, submissionDTOOptional,
                     programmingExerciseDTOOptional, postDTO);
         }
     }
