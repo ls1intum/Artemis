@@ -6,7 +6,7 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subject, Subscription } from 'rxjs';
@@ -19,24 +19,15 @@ import { ProgrammingExerciseInputField } from 'app/programming/manage/update/pro
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgStyle } from '@angular/common';
 import { ExerciseTimeline, TimelineItem } from 'app/shared/exercise-timeline/exercise-timeline';
 
+// TODO: look at all usages and adapt styling of parent if necessary
 @Component({
     selector: 'jhi-programming-exercise-timeline',
     templateUrl: './programming-exercise-timeline.component.html',
-    styleUrls: ['./test-schedule-date-picker/programming-exercise-test-schedule-picker.scss'],
-    imports: [
-        ProgrammingExerciseTestScheduleDatePickerComponent,
-        FormsModule,
-        TranslateDirective,
-        HelpIconComponent,
-        FaIconComponent,
-        NgStyle,
-        ExerciseFeedbackSuggestionOptionsComponent,
-        ExerciseTimeline,
-    ],
+    styleUrls: ['./programming-exercise-timeline.component.scss'],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, ExerciseFeedbackSuggestionOptionsComponent, ExerciseTimeline],
 })
 export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDestroy, OnInit, OnChanges {
     private translateService = inject(TranslateService);
@@ -46,9 +37,7 @@ export class ProgrammingExerciseTimelineComponent implements AfterViewInit, OnDe
 
     protected readonly AssessmentType = AssessmentType;
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
-    protected readonly faCogs = faCogs;
     protected readonly faUserCheck = faUserCheck;
-    protected readonly faUserSlash = faUserSlash;
     protected readonly timelineItems = computed<TimelineItem[]>(() => this.computeTimelineItems());
 
     releaseDate = model<Dayjs | undefined>();

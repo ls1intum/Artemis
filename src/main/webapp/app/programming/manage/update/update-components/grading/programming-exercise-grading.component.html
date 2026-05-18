@@ -110,10 +110,6 @@
     }
     @if (isFieldDisplayedRecord().timeline) {
         <div class="form-group">
-            <div>
-                <label jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline"></label>
-                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeline.timelineTooltip" />
-            </div>
             <jhi-programming-exercise-timeline
                 id="timeline"
                 [(releaseDate)]="programmingExercise.releaseDate"
