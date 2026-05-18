@@ -83,22 +83,10 @@ export class CourseManagementPage {
         // asynchronously and the bare .click() races the render under parallel test load.
         const header = this.getCourse(courseID).locator('#course-card-header');
         await header.waitFor({ state: 'visible', timeout: 30_000 });
-        const expectedUrlRegex = new RegExp(`/course-management/${courseID}(/|$)`);
-        // Wait for SPA navigation into the course detail to complete before subsequent steps
-        // (e.g. openCourseSettings) race the next render. Under heavy multi-node load the click
-        // occasionally fires before Angular's router is ready and the page stays on the
-        // course-management list — retry the click + URL wait once via direct navigation
-        // instead of consuming the entire @fast budget on a single hung waitForURL.
         await header.click();
-        const urlSettled = await this.page
-            .waitForURL(expectedUrlRegex, { timeout: 20_000 })
-            .then(() => true)
-            .catch(() => false);
-        if (!urlSettled) {
-            await this.page.goto(`/course-management/${courseID}`);
-            await this.page.waitForLoadState('load');
-            await this.page.waitForURL(expectedUrlRegex, { timeout: 15_000 });
-        }
+        // Wait for SPA navigation into the course detail to complete before subsequent steps
+        // (e.g. openCourseSettings) race the next render.
+        await this.page.waitForURL(new RegExp(`/course-management/${courseID}(/|$)`));
     }
 
     private async assertCourseSummary(expectedCourseSummary: CourseSummary) {

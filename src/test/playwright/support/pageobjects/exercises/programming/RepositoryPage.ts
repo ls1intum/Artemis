@@ -11,34 +11,7 @@ export class RepositoryPage {
     }
 
     async openCommitHistory() {
-        const repositoryUrl = this.page.url();
-        console.log(`[RepositoryPage] Current URL before opening commit history: ${repositoryUrl}`);
-        // The repository view is opened on a new page created via `context.newPage()` in
-        // `openRepositoryOnNewPage`, bypassing the `page` fixture's Angular-render check.
-        // Under heavy parallel multi-node load that fresh page occasionally fails to fully
-        // bootstrap and Angular's router falls back to /courses. A bare reload of /courses
-        // never recovers, so navigate back to the repository URL on each attempt.
-        const link = this.page.locator('a', { hasText: 'Open Commit History' });
-        const maxAttempts = 5;
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            try {
-                await link.waitFor({ state: 'visible', timeout: 15_000 });
-                break;
-            } catch {
-                if (attempt === maxAttempts - 1) {
-                    throw new Error(`openCommitHistory: link did not appear after ${maxAttempts} attempts (last URL: ${this.page.url()}, expected: ${repositoryUrl})`);
-                }
-                if (this.page.url() !== repositoryUrl) {
-                    console.log(`[RepositoryPage] Page drifted to ${this.page.url()}; re-navigating to ${repositoryUrl}`);
-                    await this.page.goto(repositoryUrl);
-                } else {
-                    await this.page.reload();
-                }
-                await this.page.waitForLoadState('load');
-            }
-        }
-        await link.click();
-        console.log('[RepositoryPage] Clicked "Open Commit History" link');
+        await this.page.locator('a', { hasText: 'Open Commit History' }).click();
     }
 
     async checkCommitHistory(commits: ExerciseCommit[]) {

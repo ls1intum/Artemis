@@ -290,29 +290,12 @@ async function createExam(course: any, page: Page, customConfig?: any) {
 }
 
 async function navigateToExamDetailsPage(page: Page, course: any, exam: Exam) {
-    const url = `/course-management/${course.id}/exams/${exam.id}`;
     // The exam-detail page wraps every checklist row in `@if (exam)` (and several rows in
     // `@if (exam().publishResultsDate)`), so testid lookups fail until the GET /exams/{id}
     // round-trip completes. `domcontentloaded` only signals HTML parse — wait for the heading
     // explicitly so the page is fully hydrated before checklist assertions run.
-    //
-    // The `page.goto` fixture wrapper handles Angular bootstrap recovery when `#account-menu`
-    // is missing, but does not help when the navbar IS attached and only the route component
-    // failed to render. Try a short wait first, reload once if the title doesn't appear, and
-    // wait again — total budget ~30s so multiple calls fit inside @fast 60s.
-    await page.goto(url);
-    const title = page.locator('#exam-detail-title');
-    const visibleWithin = async (timeout: number): Promise<boolean> =>
-        title
-            .waitFor({ state: 'visible', timeout })
-            .then(() => true)
-            .catch(() => false);
-    if (await visibleWithin(15_000)) {
-        return;
-    }
-    await page.reload();
-    await page.waitForLoadState('load');
-    await title.waitFor({ state: 'visible', timeout: 15_000 });
+    await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
+    await page.locator('#exam-detail-title').waitFor({ state: 'visible', timeout: 30_000 });
 }
 
 async function addExamExerciseGroup(examExerciseGroups: ExamExerciseGroupsPage, examExerciseGroupCreation: ExamExerciseGroupCreationPage, isMandatory?: boolean) {

@@ -15,7 +15,6 @@ import { GitCloneMethod, ProgrammingExerciseOverviewPage } from 'src/test/playwr
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { GitExerciseParticipation } from '../../../support/pageobjects/exercises/programming/GitExerciseParticipation';
 import { SEED_COURSES } from '../../../support/seedData';
-import { Commands } from '../../../support/commands';
 
 const course = { id: SEED_COURSES.programmingParticipation.id } as any;
 
@@ -268,14 +267,9 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, cAllSuccessful, 'student commit');
             await login(instructor);
             await waitForExerciseBuildToFinish(exercise.id!);
-            // Use gotoVerified — under multi-node load the participations route occasionally
-            // fails to bootstrap and Angular falls back to /courses, after which the inner
-            // makeSubmission's reloadUntilFound just keeps reloading the wrong page until
-            // it consumes the test budget.
-            const participationsUrl = `/course-management/${course.id}/programming-exercises/${exercise.id!}/participations`;
-            await Commands.gotoVerified(page, participationsUrl, '/participations');
+            await page.goto(`/course-management/${course.id}/programming-exercises/${exercise.id!}/participations`);
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, instructor, cPartiallySuccessfulSubmission, 'instructor commit');
-            await Commands.gotoVerified(page, participationsUrl, '/participations');
+            await page.goto(`/course-management/${course.id}/programming-exercises/${exercise.id!}/participations`);
             await programmingExerciseParticipations.openStudentParticipationSubmissions(studentOne);
             await programmingExerciseSubmissions.checkInstructorSubmission(60000);
             await programmingExerciseSubmissions.checkStudentSubmission();

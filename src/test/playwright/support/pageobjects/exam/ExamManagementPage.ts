@@ -90,42 +90,9 @@ export class ExamManagementPage {
     }
 
     async verifySubmitted(courseID: number, examID: number, username: string) {
-        // Navigate to the exam students page. Under heavy multi-node load the Angular route
-        // occasionally fails to bootstrap on the first navigation (chunk-load race), leaving
-        // the page with only the app shell. Detect that case by waiting briefly for the
-        // navbar's account menu, and reload if the route component never mounts — a fresh
-        // chunk fetch reliably recovers.
-        const url = `/course-management/${courseID}/exams/${examID}/students`;
-        await this.page.goto(url);
-        if (
-            !(await this.page
-                .locator('#account-menu')
-                .waitFor({ state: 'attached', timeout: 10_000 })
-                .then(() => true)
-                .catch(() => false))
-        ) {
-            await this.page.reload();
-            await this.page.waitForLoadState('load');
-        }
+        await this.page.goto(`/course-management/${courseID}/exams/${examID}/students`);
         const row = this.page.locator('tbody tr', { hasText: username }).first();
-        // The student-exams list endpoint sometimes returns before the just-submitted
-        // participation has propagated through the submission-summary query. Reload up to
-        // two more times before giving up — each reload re-fetches the list.
-        const rowVisibleWithin = async (timeout: number): Promise<boolean> =>
-            row
-                .waitFor({ state: 'visible', timeout })
-                .then(() => true)
-                .catch(() => false);
-        for (let attempt = 0; attempt < 3; attempt++) {
-            if (await rowVisibleWithin(20_000)) {
-                break;
-            }
-            if (attempt === 2) {
-                throw new Error(`verifySubmitted: row for ${username} did not appear in the exam-students table after 3 reloads`);
-            }
-            await this.page.reload();
-            await this.page.waitForLoadState('load');
-        }
+        await row.waitFor({ state: 'visible', timeout: 30_000 });
         await expect(row).toContainText('Submitted');
     }
 

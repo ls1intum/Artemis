@@ -16,17 +16,6 @@ export class CoursesPage {
         // Wait explicitly for the course card to appear before clicking.
         await header.waitFor({ state: 'visible', timeout: 30000 });
         await header.click();
-        // Under heavy multi-node load the click occasionally fires before Angular's router
-        // is ready and the page stays at /courses — fall back to direct navigation instead
-        // of consuming the entire test budget on a single hung waitForURL.
-        const settled = await this.page
-            .waitForURL(/\/exercises/, { timeout: 20_000 })
-            .then(() => true)
-            .catch(() => false);
-        if (!settled) {
-            await this.page.goto(`/courses/${courseId}/exercises`);
-            await this.page.waitForLoadState('load');
-            await this.page.waitForURL(/\/exercises/, { timeout: 15_000 });
-        }
+        await this.page.waitForURL(/\/exercises/);
     }
 }
