@@ -1,4 +1,4 @@
-import { AfterContentInit, Component, Input, OnDestroy, ViewChild, inject, input, signal } from '@angular/core';
+import { AfterContentInit, AfterViewInit, Component, Input, OnDestroy, ViewChild, inject, input, signal } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -42,7 +42,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         ArtemisTranslatePipe,
     ],
 })
-export class ProgrammingExerciseGradingComponent implements AfterContentInit, OnDestroy {
+export class ProgrammingExerciseGradingComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     private translateService = inject(TranslateService);
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -77,8 +77,11 @@ export class ProgrammingExerciseGradingComponent implements AfterContentInit, On
         this.inputFieldSubscriptions.push(this.bonusPointsField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
         this.inputFieldSubscriptions.push(this.maxPenaltyField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
         this.inputFieldSubscriptions.push(this.submissionPolicyUpdateComponent?.form?.valueChanges?.subscribe(() => this.calculateFormStatus()));
-        this.inputFieldSubscriptions.push(this.lifecycleComponent?.formValidChanges?.subscribe(() => this.calculateFormStatus()));
         this.setEditPolicyPageLink();
+    }
+
+    ngAfterViewInit() {
+        this.inputFieldSubscriptions.push(this.lifecycleComponent?.formValidChanges?.subscribe(() => this.calculateFormStatus()));
     }
 
     ngOnDestroy() {

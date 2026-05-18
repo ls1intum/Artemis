@@ -2,7 +2,7 @@
     <div class="section">
         <h6 jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel"></h6>
         <!-- TODO: make exampleSolutionPublicationDate picker disabled on import -->
-        <jhi-exercise-timeline [timelineItems]="timelineItems()" />
+        <jhi-exercise-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="handleTimelineStatusChange($event)" />
     </div>
     <div class="section">
         @let isFieldDisplayed = isEditFieldDisplayedRecord();

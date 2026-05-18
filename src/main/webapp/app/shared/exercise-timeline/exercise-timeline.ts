@@ -1,4 +1,4 @@
-import { Component, WritableSignal, computed, input } from '@angular/core';
+import { Component, WritableSignal, computed, effect, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -9,6 +9,11 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 export type TimelineItem =
     | { kind: 'required'; labelStringKey: string; date: WritableSignal<Dayjs | undefined> }
     | { kind: 'optional'; labelStringKey: string; date: WritableSignal<Dayjs | undefined> };
+
+export type ExerciseTimelineStatus = {
+    valid: boolean;
+    empty: boolean;
+};
 
 type InternalTimelineItem = TimelineItem & {
     internalDate: Date | undefined;
@@ -26,6 +31,15 @@ type InternalTimelineItem = TimelineItem & {
 export class ExerciseTimeline {
     timelineItems = input.required<TimelineItem[]>();
     internalTimelineItems = computed<InternalTimelineItem[]>(() => this.computeInternalTimelineItems());
+    timelineStatus = computed<ExerciseTimelineStatus>(() => this.computeExerciseTimelineStatus());
+    timelineStatusChange = output<ExerciseTimelineStatus>();
+
+    constructor() {
+        effect(() => {
+            const timelineStatus = this.timelineStatus();
+            this.timelineStatusChange.emit(timelineStatus);
+        });
+    }
 
     updateDate(item: TimelineItem, newInternalDate: Date | string | null): void {
         const currentDate = item.date();
@@ -85,5 +99,13 @@ export class ExerciseTimeline {
                 tooltip,
             };
         });
+    }
+
+    private computeExerciseTimelineStatus(): ExerciseTimelineStatus {
+        const items = this.internalTimelineItems();
+        return {
+            valid: items.every((item) => !item.isBeforePreviousDate && !item.isInputRequiredButUndefined),
+            empty: items.some((item) => item.date() === undefined),
+        };
     }
 }
