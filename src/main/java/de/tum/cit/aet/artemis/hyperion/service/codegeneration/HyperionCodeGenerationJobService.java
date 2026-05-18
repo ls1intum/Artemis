@@ -75,13 +75,6 @@ public class HyperionCodeGenerationJobService {
         return jobId;
     }
 
-    public String startJob(User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType, boolean initialAutoGeneration) {
-        JobInfo job = claimJob(user.getLogin(), exercise.getId(), repositoryType);
-        String jobId = job.jobId();
-        taskService.runJobAsync(jobId, user, exercise, courseId, repositoryType, initialAutoGeneration, () -> clearJob(exercise.getId(), jobId));
-        return jobId;
-    }
-
     /**
      * Finds an active job for the user and exercise.
      *
