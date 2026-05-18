@@ -15,7 +15,7 @@ import { BuildAgentDetailsComponent } from 'app/buildagent/build-agent-details/b
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertCreationProperties, AlertService, AlertType } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
@@ -358,7 +358,7 @@ describe('BuildAgentDetailsComponent', () => {
         maintenanceTopicSubject.next(maintenanceResult({ actionType: 'WIPE_GRADLE_CACHE', outcome: 'SUCCESS' }));
         maintenanceTopicSubject.next(maintenanceResult({ actionType: 'CLEAR_DOCKER_IMAGES', outcome: 'SUCCESS' }));
 
-        const calls = alertServiceAddAlertStub.mock.calls.map(([alert]) => alert.translationParams?.action);
+        const calls = alertServiceAddAlertStub.mock.calls.map(([alert]: [AlertCreationProperties]) => alert.translationParams?.action);
         expect(calls).toEqual(expect.arrayContaining(['Cache cleanup', 'Gradle cache wipe', 'Docker image clear']));
     });
 

@@ -73,9 +73,9 @@ import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 @Service
 @Profile(PROFILE_BUILDAGENT)
 @Lazy(false)
-public class BuildAgentCacheDirectoryInitializer {
+public class BuildAgentCacheDirectoryService {
 
-    private static final Logger log = LoggerFactory.getLogger(BuildAgentCacheDirectoryInitializer.class);
+    private static final Logger log = LoggerFactory.getLogger(BuildAgentCacheDirectoryService.class);
 
     private static final Set<PosixFilePermission> CACHE_DIRECTORY_PERMISSIONS = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
             PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE, PosixFilePermission.OTHERS_READ,
@@ -86,7 +86,7 @@ public class BuildAgentCacheDirectoryInitializer {
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
-    public BuildAgentCacheDirectoryInitializer(BuildAgentConfiguration buildAgentConfiguration) {
+    public BuildAgentCacheDirectoryService(BuildAgentConfiguration buildAgentConfiguration) {
         this.buildAgentConfiguration = buildAgentConfiguration;
     }
 

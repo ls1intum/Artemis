@@ -5,22 +5,24 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 
 /**
- * Unit tests for {@link BuildAgentCacheDirectoryInitializer}. We deliberately do not assert anything about whether
+ * Unit tests for {@link BuildAgentCacheDirectoryService}. We deliberately do not assert anything about whether
  * {@code setfacl} actually ran — that depends on whether the {@code acl} package is installed on the test host, and
  * we want this test class to be portable across the developer fleet. We do assert the directory-creation contract
  * (idempotent, creates if missing, leaves existing dir alone) and that the initializer is a no-op when no cache is
  * configured.
  */
-class BuildAgentCacheDirectoryInitializerTest {
+class BuildAgentCacheDirectoryServiceTest {
 
     @TempDir
     Path scratch;
@@ -33,7 +35,7 @@ class BuildAgentCacheDirectoryInitializerTest {
         when(cfg.mavenCacheHostPath()).thenReturn(target);
         when(cfg.gradleCacheHostPath()).thenReturn(null);
 
-        BuildAgentCacheDirectoryInitializer initializer = new BuildAgentCacheDirectoryInitializer(cfg);
+        BuildAgentCacheDirectoryService initializer = new BuildAgentCacheDirectoryService(cfg);
 
         initializer.initializeCacheDirectories();
 
@@ -44,12 +46,13 @@ class BuildAgentCacheDirectoryInitializerTest {
     void doesNotFailWhenCacheDirectoryAlreadyExists() throws IOException {
         Path target = scratch.resolve("m2-existing");
         Files.createDirectories(target);
-        Files.writeString(target.resolve("existing-file.txt"), "hello");
+        // Architecture rule forbids Files.write* — use FileUtils.writeByteArrayToFile instead.
+        FileUtils.writeByteArrayToFile(target.resolve("existing-file.txt").toFile(), "hello".getBytes(StandardCharsets.UTF_8));
         BuildAgentConfiguration cfg = mock(BuildAgentConfiguration.class);
         when(cfg.mavenCacheHostPath()).thenReturn(target);
         when(cfg.gradleCacheHostPath()).thenReturn(null);
 
-        BuildAgentCacheDirectoryInitializer initializer = new BuildAgentCacheDirectoryInitializer(cfg);
+        BuildAgentCacheDirectoryService initializer = new BuildAgentCacheDirectoryService(cfg);
 
         initializer.initializeCacheDirectories();
 
@@ -64,7 +67,7 @@ class BuildAgentCacheDirectoryInitializerTest {
         when(cfg.mavenCacheHostPath()).thenReturn(null);
         when(cfg.gradleCacheHostPath()).thenReturn(null);
 
-        BuildAgentCacheDirectoryInitializer initializer = new BuildAgentCacheDirectoryInitializer(cfg);
+        BuildAgentCacheDirectoryService initializer = new BuildAgentCacheDirectoryService(cfg);
 
         // Must not throw and must not require any filesystem state.
         initializer.initializeCacheDirectories();
@@ -77,7 +80,7 @@ class BuildAgentCacheDirectoryInitializerTest {
         // and every run on staging produced "Invalid argument near character 1". Pin the full argv shape here.
         Path cacheDir = Path.of("/var/cache/artemis-buildagent/m2");
 
-        String[] cmd = BuildAgentCacheDirectoryInitializer.buildSetfaclCommand(cacheDir, "-R", "-m", "u:artemis:rwx", "-d", "-m", "u:artemis:rwx");
+        String[] cmd = BuildAgentCacheDirectoryService.buildSetfaclCommand(cacheDir, "-R", "-m", "u:artemis:rwx", "-d", "-m", "u:artemis:rwx");
 
         assertThat(cmd).containsExactly("setfacl", "-R", "-m", "u:artemis:rwx", "-d", "-m", "u:artemis:rwx", "/var/cache/artemis-buildagent/m2");
     }
@@ -86,7 +89,7 @@ class BuildAgentCacheDirectoryInitializerTest {
     void buildSetfaclCommand_acceptsAnEmptyArgsArrayWithoutOverwritingTheBinaryName() {
         Path cacheDir = Path.of("/tmp/cache");
 
-        String[] cmd = BuildAgentCacheDirectoryInitializer.buildSetfaclCommand(cacheDir);
+        String[] cmd = BuildAgentCacheDirectoryService.buildSetfaclCommand(cacheDir);
 
         assertThat(cmd).containsExactly("setfacl", "/tmp/cache");
     }
@@ -99,7 +102,7 @@ class BuildAgentCacheDirectoryInitializerTest {
         when(cfg.mavenCacheHostPath()).thenReturn(mavenPath);
         when(cfg.gradleCacheHostPath()).thenReturn(gradlePath);
 
-        BuildAgentCacheDirectoryInitializer initializer = new BuildAgentCacheDirectoryInitializer(cfg);
+        BuildAgentCacheDirectoryService initializer = new BuildAgentCacheDirectoryService(cfg);
 
         initializer.initializeCacheDirectories();
 
