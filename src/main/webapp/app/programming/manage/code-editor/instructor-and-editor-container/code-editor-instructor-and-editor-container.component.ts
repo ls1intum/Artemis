@@ -46,7 +46,7 @@ import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/
 import { Observable, Subscription, catchError, of, take, tap } from 'rxjs';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
@@ -358,7 +358,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Starts Hyperion code generation after user confirmation.
      */
     generateCode(): void {
-        if (!this.exercise?.id || this.isGeneratingCode()) {
+        if (!this.exercise?.id || !this.canGenerateCode() || this.isGeneratingCode()) {
             return;
         }
 
@@ -372,6 +372,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         modalRef.componentInstance.text = 'artemisApp.programmingExercise.codeGeneration.confirmText';
         modalRef.componentInstance.translateText = true;
         modalRef.result.then(() => this.startCodeGeneration(repositories)).catch(() => {});
+    }
+
+    /**
+     * Returns whether code generation is available for the current exercise.
+     * Hyperion code generation currently supports Java programming exercises only.
+     */
+    protected canGenerateCode(): boolean {
+        return this.exercise?.programmingLanguage === ProgrammingLanguage.JAVA;
     }
 
     /**
@@ -469,7 +477,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private maybeAutoStartCodeGenerationFromNavigation(): void {
-        if (!this.shouldAutoStartCodeGenerationAllRepositories || !this.exercise?.id || this.isGeneratingCode()) {
+        if (!this.shouldAutoStartCodeGenerationAllRepositories || !this.exercise?.id || !this.canGenerateCode() || this.isGeneratingCode()) {
             return;
         }
 

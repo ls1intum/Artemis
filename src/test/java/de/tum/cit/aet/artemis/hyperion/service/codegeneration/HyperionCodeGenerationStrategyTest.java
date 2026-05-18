@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -84,11 +83,11 @@ class HyperionCodeGenerationServiceTest {
 
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, "build logs", "repo structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues");
+        CodeGenerationResponseDTO result = strategy.generateCode(user, exercise, 1L, "build logs", "repo structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues");
 
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).path()).isEqualTo("Sort.java");
-        assertThat(result.get(1).path()).isEqualTo("SortTest.java");
+        assertThat(result.getFiles()).hasSize(2);
+        assertThat(result.getFiles().get(0).path()).isEqualTo("Sort.java");
+        assertThat(result.getFiles().get(1).path()).isEqualTo("SortTest.java");
 
         // Base orchestration triggers planning + final logic stage once for this test strategy.
         verify(chatModel, times(2)).call(any(Prompt.class));
@@ -101,10 +100,21 @@ class HyperionCodeGenerationServiceTest {
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Test.java\",\"content\":\"class Test {}\"}]}";
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, null, "repo structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues");
+        CodeGenerationResponseDTO result = strategy.generateCode(user, exercise, 1L, null, "repo structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues");
 
-        assertThat(result).hasSize(1);
+        assertThat(result.getFiles()).hasSize(1);
         verify(chatModel, times(2)).call(any(Prompt.class));
+    }
+
+    @Test
+    void generateCode_withDeletedFiles_returnsDeletionPaths() throws Exception {
+        String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"src/Sort.java\",\"content\":\"class Sort {}\"}],\"deletedFiles\":[\"src/OldSort.java\"]}";
+        setupMockTemplateAndChatResponses(coreLogicJson);
+
+        CodeGenerationResponseDTO result = strategy.generateCode(user, exercise, 1L, null, "repo structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues");
+
+        assertThat(result.getFiles()).hasSize(1);
+        assertThat(result.getDeletedFiles()).containsExactly("src/OldSort.java");
     }
 
     @Test

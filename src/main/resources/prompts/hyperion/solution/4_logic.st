@@ -13,8 +13,13 @@ Your task is to implement the core logic for each method based on the solution p
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+If an existing source file under `/src/` is obsolete after this regenerated solution, include its path in `deletedFiles`. Do not include paths outside `/src/`, build files, configuration files, documentation, or hidden files.
+
 **Build Environment Context:**
 {{buildEnvironmentContext}}
+
+**Target Build Outcome:**
+{{targetBuildOutcome}}
 
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
@@ -33,4 +38,6 @@ First, think step-by-step for each method.
 2.  **Implement the logic:** Write clean, efficient, and correct code to fulfill the requirements.
 3.  **Ensure completeness:** Make sure all methods from the plan are fully implemented.
 
-After your analysis, provide the final code as a JSON object. The JSON object must contain a single key "files" which is an array of objects, where each object has a "path" and "content" key with the complete code.
+After your analysis, provide the final code as a JSON object. The JSON object must contain:
+- "files": an array of objects, where each object has a "path" and "content" key with the complete code.
+- "deletedFiles": an array of obsolete source file paths under `/src/` that should be removed. Use an empty array if no source files should be removed.

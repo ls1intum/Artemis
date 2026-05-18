@@ -18,7 +18,21 @@ public record CodeGenerationResponseDTO(
         /**
          * List of generated files with path and content
          */
-        List<GeneratedFileDTO> files) {
+        List<GeneratedFileDTO> files,
+
+        /**
+         * Source files that are obsolete after this generation and should be removed.
+         */
+        List<String> deletedFiles) {
+
+    public CodeGenerationResponseDTO(String solutionPlan, List<GeneratedFileDTO> files) {
+        this(solutionPlan, files, List.of());
+    }
+
+    public CodeGenerationResponseDTO {
+        files = files != null ? files : List.of();
+        deletedFiles = deletedFiles != null ? deletedFiles : List.of();
+    }
 
     public String getSolutionPlan() {
         return solutionPlan;
@@ -26,5 +40,9 @@ public record CodeGenerationResponseDTO(
 
     public List<GeneratedFileDTO> getFiles() {
         return files;
+    }
+
+    public List<String> getDeletedFiles() {
+        return deletedFiles;
     }
 }

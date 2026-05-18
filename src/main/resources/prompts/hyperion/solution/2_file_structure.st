@@ -10,8 +10,13 @@ Based on the following solution plan and programming language, determine the nec
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+Existing `/src/` files that are no longer needed after this regenerated solution structure should be marked as obsolete. Do not mark files outside `/src/` for deletion.
+
 **Build Environment Context:**
 {{buildEnvironmentContext}}
+
+**Target Build Outcome:**
+{{targetBuildOutcome}}
 
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
@@ -31,11 +36,13 @@ First, think step-by-step.
 3.  **List the files:** Create a list of all the files that need to be created, including their full paths from the repository root.
 
 After your analysis, provide the file structure as a JSON object. The JSON object must contain a single key "files" which is an array of objects, where each object has a "path" key.
+You may also include a "deletedFiles" array with obsolete file paths under `/src/`.
 
 **Example Output:**
 {
   "files": [
     { "path": "src/main/java/com/example/BubbleSort.java" },
-    { "path": "README.md" }
-  ]
+    { "path": "src/main/java/com/example/SortStrategy.java" }
+  ],
+  "deletedFiles": ["src/main/java/com/example/OldSorter.java"]
 }

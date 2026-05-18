@@ -13,8 +13,13 @@ Your task is to complete the template code based on the template plan and existi
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+If an existing source file under `/src/` is obsolete after this regenerated template, include its path in `deletedFiles`. Do not include paths outside `/src/`, build files, configuration files, documentation, or hidden files.
+
 **Build Environment Context:**
 {{buildEnvironmentContext}}
+
+**Target Build Outcome:**
+{{targetBuildOutcome}}
 
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
@@ -44,4 +49,6 @@ First, think step-by-step for each file and method.
 5.  **Provide restrained guidance:** Include comments that clarify responsibility without revealing the implementation approach.
 6.  **Ensure compilability:** The template must compile successfully while still failing tests that require the student’s missing logic.
 
-After your analysis, provide the template code as a JSON object. The JSON object must contain a single key "files" which is an array of objects, where each object has a "path" and "content" key with the complete template code.
+After your analysis, provide the template code as a JSON object. The JSON object must contain:
+- "files": an array of objects, where each object has a "path" and "content" key with the complete template code.
+- "deletedFiles": an array of obsolete source file paths under `/src/` that should be removed. Use an empty array if no source files should be removed.

@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -19,6 +21,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -26,6 +29,7 @@ import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
@@ -67,6 +71,12 @@ public class HyperionCodeGenerationExecutionService {
     private static final long TIMEOUT = 180_000; // 3 minutes
 
     private static final long POLL_INTERVAL = 3_000; // 3 seconds
+
+    private static final int MAX_FEEDBACK_SUMMARY_ITEMS = 20;
+
+    private static final int MAX_FEEDBACK_SUMMARY_TEXT_LENGTH = 500;
+
+    private static final String DELETABLE_SOURCE_PATH_PREFIX = "src/";
 
     /**
      * Holds repository setup results
@@ -249,6 +259,46 @@ public class HyperionCodeGenerationExecutionService {
         }
     }
 
+    private boolean deleteObsoleteFiles(Repository repository, List<String> deletedFiles, ProgrammingExercise exercise) throws IOException {
+        boolean deletedAnyFile = false;
+        for (String deletedFile : deletedFiles) {
+            Optional<String> safePath = normalizeDeletableSourcePath(deletedFile);
+            if (safePath.isEmpty()) {
+                log.warn("Ignoring unsafe obsolete file path '{}' for exercise {}", deletedFile, exercise.getId());
+                continue;
+            }
+            if (gitService.getFileByName(repository, safePath.get()).isEmpty()) {
+                log.debug("Obsolete file {} does not exist in exercise {}, skipping deletion", safePath.get(), exercise.getId());
+                continue;
+            }
+            repositoryService.deleteFile(repository, safePath.get());
+            deletedAnyFile = true;
+            log.debug("Deleted obsolete file {} for exercise {}", safePath.get(), exercise.getId());
+        }
+        return deletedAnyFile;
+    }
+
+    private Optional<String> normalizeDeletableSourcePath(String rawPath) {
+        if (rawPath == null || rawPath.isBlank()) {
+            return Optional.empty();
+        }
+        String sanitizedPath = rawPath.replace('\\', '/').trim();
+        try {
+            Path normalizedPath = Path.of(sanitizedPath).normalize();
+            if (normalizedPath.isAbsolute()) {
+                return Optional.empty();
+            }
+            String normalized = normalizedPath.toString().replace('\\', '/');
+            if (!normalized.startsWith(DELETABLE_SOURCE_PATH_PREFIX) || normalized.equals("src") || normalized.equals("src/") || normalized.contains("/../")) {
+                return Optional.empty();
+            }
+            return Optional.of(normalized);
+        }
+        catch (InvalidPathException e) {
+            return Optional.empty();
+        }
+    }
+
     /**
      * Commits changes, triggers CI build, and returns the new commit hash together with trigger status.
      *
@@ -306,6 +356,50 @@ public class HyperionCodeGenerationExecutionService {
             }
         }
         return "Build failed to produce a result.";
+    }
+
+    /**
+     * Extracts build logs and compact test feedback from a result for the next generation attempt.
+     *
+     * @param result the build result
+     * @return build and test feedback summary for prompt context
+     */
+    private String extractBuildFeedback(Result result) {
+        String buildLogs = extractBuildLogs(result);
+        String testFeedback = extractTestFeedbackSummary(result);
+        if (testFeedback.isBlank()) {
+            return buildLogs;
+        }
+        return buildLogs + "\n\nTest feedback summary:\n" + testFeedback;
+    }
+
+    private String extractTestFeedbackSummary(Result result) {
+        if (result == null) {
+            return "";
+        }
+        try {
+            return result.getFeedbacks().stream().filter(Objects::nonNull).filter(feedback -> feedback.getTestCase() != null)
+                    .sorted((left, right) -> Boolean.compare(Boolean.TRUE.equals(left.isPositive()), Boolean.TRUE.equals(right.isPositive()))).limit(MAX_FEEDBACK_SUMMARY_ITEMS)
+                    .map(this::formatFeedbackSummary).filter(summary -> !summary.isBlank()).collect(Collectors.joining("\n"));
+        }
+        catch (LazyInitializationException e) {
+            log.warn("Could not load feedback entries for result {}: {}. Continuing with build logs only.", result.getId(), e.getMessage());
+            return "";
+        }
+    }
+
+    private String formatFeedbackSummary(Feedback feedback) {
+        String testName = Optional.ofNullable(feedback.getTestCase().getTestName()).filter(name -> !name.isBlank()).orElse("Unnamed test");
+        String status = Boolean.TRUE.equals(feedback.isPositive()) ? "PASSED" : "FAILED";
+        String text = Optional.ofNullable(feedback.getDetailText()).filter(detail -> !detail.isBlank()).orElse(feedback.getText());
+        if (text == null || text.isBlank()) {
+            return "- " + testName + ": " + status;
+        }
+        String summaryText = text.lines().findFirst().orElse("").trim();
+        if (summaryText.length() > MAX_FEEDBACK_SUMMARY_TEXT_LENGTH) {
+            summaryText = summaryText.substring(0, MAX_FEEDBACK_SUMMARY_TEXT_LENGTH) + "...";
+        }
+        return "- " + testName + ": " + status + " - " + summaryText;
     }
 
     /**
@@ -405,7 +499,7 @@ public class HyperionCodeGenerationExecutionService {
                 break;
             }
 
-            lastBuildLogs = extractBuildLogs(executionProgress.result);
+            lastBuildLogs = extractBuildFeedback(executionProgress.result);
         }
 
         return executionProgress.snapshot();
@@ -422,12 +516,19 @@ public class HyperionCodeGenerationExecutionService {
             RepositoryType repositoryType, HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri, String lastBuildLogs,
             String buildEnvironmentContext, String consistencyIssues, GenerationExecutionProgress executionProgress) throws Exception {
         String repositoryStructure = repositoryStructureService.getRepositoryStructure(repository);
-        List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, buildEnvironmentContext, consistencyIssues);
-        if (generatedFiles == null || generatedFiles.isEmpty()) {
+        CodeGenerationResponseDTO generationResponse = strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, buildEnvironmentContext,
+                consistencyIssues);
+        List<GeneratedFileDTO> generatedFiles = generationResponse != null ? generationResponse.getFiles() : List.of();
+        List<String> deletedFiles = generationResponse != null ? generationResponse.getDeletedFiles() : List.of();
+        if (generatedFiles.isEmpty() && deletedFiles.isEmpty()) {
             return null;
         }
 
-        publishGeneratedFiles(repository, generatedFiles, exercise, repositoryType, publisher, executionProgress.attemptsUsed);
+        boolean deletedAnyFile = deleteObsoleteFiles(repository, deletedFiles, exercise);
+        boolean publishedAnyFile = publishGeneratedFiles(repository, generatedFiles, exercise, repositoryType, publisher, executionProgress.attemptsUsed);
+        if (!deletedAnyFile && !publishedAnyFile) {
+            return null;
+        }
         CommitTriggerResult commitTriggerResult = commitAndGetHash(repository, user, repositoryUri, exercise, repositoryType);
         String commitHash = commitTriggerResult.commitHash();
         executionProgress.lastCommitHash = commitHash;
@@ -438,11 +539,13 @@ public class HyperionCodeGenerationExecutionService {
         return new GenerationAttemptResult(commitHash, waitForBuildResult(exercise, commitHash, repositoryType));
     }
 
-    private void publishGeneratedFiles(Repository repository, List<GeneratedFileDTO> generatedFiles, ProgrammingExercise exercise, RepositoryType repositoryType,
+    private boolean publishGeneratedFiles(Repository repository, List<GeneratedFileDTO> generatedFiles, ProgrammingExercise exercise, RepositoryType repositoryType,
             HyperionCodeGenerationEventPublisher publisher, int iteration) throws IOException {
+        boolean publishedAnyFile = false;
         for (GeneratedFileDTO file : generatedFiles) {
             boolean existed = gitService.getFileByName(repository, file.path()).isPresent();
             updateSingleFile(repository, file, exercise);
+            publishedAnyFile = true;
             if (existed) {
                 publisher.fileUpdated(file.path(), repositoryType, iteration);
             }
@@ -450,6 +553,7 @@ public class HyperionCodeGenerationExecutionService {
                 publisher.newFile(file.path(), repositoryType, iteration);
             }
         }
+        return publishedAnyFile;
     }
 
     private CompletionDetails buildCompletionDetails(RepositoryType repositoryType, boolean generatedFilesCommitted, BuildResultOutcome buildResultOutcome) {
@@ -637,7 +741,7 @@ public class HyperionCodeGenerationExecutionService {
 
                     if (result.isPresent()) {
                         log.debug("Found build result for commit {} after {} polls ({}ms)", commitHash, pollCount, System.currentTimeMillis() - startTime);
-                        return new BuildResultOutcome(result.get(), result.get().isSuccessful() ? BuildResultState.SUCCESS : BuildResultState.FAILED);
+                        return new BuildResultOutcome(result.get(), hasReachedTargetResult(repositoryType, result.get()) ? BuildResultState.SUCCESS : BuildResultState.FAILED);
                     }
                 }
 
@@ -656,5 +760,22 @@ public class HyperionCodeGenerationExecutionService {
         }
         log.warn("Timed out waiting for build result for commit {} in exercise {} after {} polls ({}ms)", commitHash, exercise.getId(), pollCount, TIMEOUT);
         return new BuildResultOutcome(null, BuildResultState.TIMED_OUT);
+    }
+
+    private boolean hasReachedTargetResult(RepositoryType repositoryType, Result result) {
+        if (result == null) {
+            return false;
+        }
+        return switch (repositoryType) {
+            case TEMPLATE -> isExactScore(result, 0.0);
+            case SOLUTION -> isExactScore(result, 100.0);
+            case TESTS -> Boolean.TRUE.equals(result.isSuccessful());
+            default -> false;
+        };
+    }
+
+    private boolean isExactScore(Result result, double targetScore) {
+        Double score = result.getScore();
+        return score != null && Double.compare(score, targetScore) == 0;
     }
 }

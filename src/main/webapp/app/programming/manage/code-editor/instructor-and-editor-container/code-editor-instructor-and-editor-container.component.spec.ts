@@ -48,7 +48,7 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
@@ -348,6 +348,36 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.setCodeGenerationRepositoryEnabled(RepositoryType.SOLUTION, repositories.includes(RepositoryType.SOLUTION));
             comp.setCodeGenerationRepositoryEnabled(RepositoryType.TESTS, repositories.includes(RepositoryType.TESTS));
         };
+
+        it('should only allow code generation for Java exercises', () => {
+            comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA });
+
+            expect((comp as any).canGenerateCode()).toBeTrue();
+
+            comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.PYTHON });
+
+            expect((comp as any).canGenerateCode()).toBeFalse();
+        });
+
+        it('should hide code generation controls for non-Java exercises', () => {
+            comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.PYTHON });
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[jhitranslate="artemisApp.programmingExercise.codeGeneration.generateCode"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[aria-label="artemisApp.programmingExercise.codeGeneration.statusTooltip"]')).toBeNull();
+        });
+
+        it('should not generate for non-Java exercises', async () => {
+            comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.PYTHON });
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
+
+            comp.generateCode();
+            await Promise.resolve();
+
+            expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
+        });
 
         it('should not generate when no exercise id', async () => {
             comp.exercise = undefined as any;

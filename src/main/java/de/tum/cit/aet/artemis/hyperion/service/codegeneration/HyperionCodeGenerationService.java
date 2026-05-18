@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -118,10 +117,10 @@ public abstract class HyperionCodeGenerationService {
      * @param repositoryStructure     tree-format representation of current repository structure
      * @param buildEnvironmentContext rendered build-file context for dependency and toolchain alignment
      * @param consistencyIssues       formatted consistency issues to inform the generation prompts
-     * @return list of generated code files
+     * @return generated code response containing files to write and obsolete files to remove
      * @throws NetworkingException if AI service communication fails
      */
-    public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
+    public CodeGenerationResponseDTO generateCode(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
             String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
         if (user == null) {
             throw new IllegalArgumentException("user must not be null");
@@ -139,7 +138,7 @@ public abstract class HyperionCodeGenerationService {
         CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure,
                 normalizedBuildEnvironmentContext, normalizedConsistencyIssues);
 
-        return coreLogicResponse.getFiles();
+        return coreLogicResponse;
     }
 
     private String normalizeBuildEnvironmentContext(String buildEnvironmentContext) {
@@ -223,7 +222,17 @@ public abstract class HyperionCodeGenerationService {
         variables.put("repositoryStructure", repositoryStructure);
         variables.put(BUILD_ENVIRONMENT_CONTEXT_TEMPLATE_VARIABLE, buildEnvironmentContext);
         variables.put("consistencyIssues", consistencyIssues);
+        variables.put("targetBuildOutcome", targetBuildOutcomeInstruction());
         return variables;
+    }
+
+    private String targetBuildOutcomeInstruction() {
+        return switch (getRepositoryType()) {
+            case TEMPLATE -> "The generated template repository must compile but achieve exactly 0% in the generated tests. "
+                    + "Keep all core exercise logic incomplete so no functional tests pass before students solve the task.";
+            case SOLUTION -> "The generated solution repository must compile and achieve exactly 100% in the generated tests. " + "Implement all required behavior completely.";
+            default -> "The generated repository must compile and satisfy the expected build outcome for this repository type.";
+        };
     }
 
     /**

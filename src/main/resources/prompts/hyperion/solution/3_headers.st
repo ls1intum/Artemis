@@ -13,8 +13,13 @@ Your task is to generate the boilerplate code for each file based on the solutio
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+If the regenerated solution no longer needs an existing source file, keep it out of the generated files and preserve it as obsolete for the final response. Only files under `/src/` may be deleted.
+
 **Build Environment Context:**
 {{buildEnvironmentContext}}
+
+**Target Build Outcome:**
+{{targetBuildOutcome}}
 
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
