@@ -718,9 +718,15 @@ public class BuildContainerCacheCleanupService {
     }
 
     /**
+     * Package-private so tests can spy/override to simulate a delete that fails for reasons the JVM running as
+     * {@code root} (the CI test container) cannot otherwise reproduce — POSIX permissions are bypassed by root,
+     * so a real "unwritable directory" still allows the wipe to succeed. The on-disk-permission scenario is the
+     * exact regression the ACL setup ultimately fixes, so the test that pins the error-counting behavior must
+     * work on every host.
+     *
      * @return {@code true} if the file was deleted (or already absent), {@code false} on I/O error
      */
-    private boolean tryDelete(Path file) {
+    boolean tryDelete(Path file) {
         try {
             return Files.deleteIfExists(file);
         }

@@ -927,50 +927,34 @@ class BuildContainerCacheCleanupServiceTest {
     // permission bits do not exist there.
 
     @Test
-    void wipeMavenCache_realPermissionDeniedFile_incrementsErrorsAndProducesPartialFailure() throws IOException {
-        // Skip on filesystems that don't expose POSIX permissions (Windows). The build agents run on Linux.
-        org.junit.jupiter.api.Assumptions.assumeTrue(
-                java.nio.file.attribute.PosixFileAttributeView.class != null && java.nio.file.FileSystems.getDefault().supportedFileAttributeViews().contains("posix"),
-                "POSIX permissions unavailable on this filesystem");
-        // Skip when running as root (the Linux CI container) — root bypasses POSIX permissions, so the "unwritable"
-        // directory is still writable from the JVM's perspective and the wipe completes successfully instead of
-        // reporting errors. The test is only meaningful when the JVM runs as a regular user, which is how the
-        // production agent (the `artemis` service user) runs in real deployments.
-        org.junit.jupiter.api.Assumptions.assumeFalse("root".equals(System.getProperty("user.name")), "root bypasses POSIX permissions; test only meaningful as a non-root user");
-        // Create a file inside a directory that is read-only to the JVM user — Files.delete on the file then fails
-        // with AccessDeniedException, which the wipe walker should catch as an error rather than aborting the run.
-        Path lockedDir = mavenCache.resolve("locked");
-        Files.createDirectories(lockedDir);
-        Path unremovable = touchFileWithAtime(lockedDir.resolve("guarded.jar"), 100, Instant.now());
-        Path writable = touchFileWithAtime(mavenCache.resolve("normal/regular.jar"), 200, Instant.now());
-        // Strip write permission from the parent so its children cannot be unlinked.
-        java.util.Set<java.nio.file.attribute.PosixFilePermission> readOnly = java.util.EnumSet.of(java.nio.file.attribute.PosixFilePermission.OWNER_READ,
-                java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE);
-        try {
-            Files.setPosixFilePermissions(lockedDir, readOnly);
+    void wipeMavenCache_perFileDeleteFailure_incrementsErrorsAndProducesPartialFailure() throws IOException {
+        // The production code increments the error counter when {@link BuildContainerCacheCleanupService#tryDelete}
+        // returns false (which it does on any IOException from {@code Files.deleteIfExists}). Reproducing a real
+        // IOException portably is hard — POSIX permission tricks are bypassed by root, which is how the CI test
+        // container runs — so we install a spy on {@code tryDelete} that simulates the failure for one specific
+        // file. The walker still walks the real on-disk cache; only the delete step for one path is forced to
+        // return false. This exercises the same error-counting code path the production deployment relies on
+        // (and that the host-side ACL setup ultimately fixes), reliably on every host.
+        Path guarded = touchFileWithAtime(mavenCache.resolve("locked/guarded.jar"), 100, Instant.now());
+        Path freelyDeletable = touchFileWithAtime(mavenCache.resolve("normal/regular.jar"), 200, Instant.now());
 
-            WipeOutcome outcome = service.wipeMavenCache();
+        BuildContainerCacheCleanupService spy = org.mockito.Mockito.spy(service);
+        org.mockito.Mockito.doReturn(false).when(spy).tryDelete(guarded);
 
-            assertThat(outcome.wasSkipped()).isFalse();
-            assertThat(outcome.stats()).isNotNull();
-            // The unwritable file remains on disk (delete failed) and the writable one is gone.
-            assertThat(Files.exists(unremovable)).isTrue();
-            assertThat(Files.exists(writable)).isFalse();
-            assertThat(outcome.stats().errors()).isGreaterThanOrEqualTo(1);
-            // The result mapping must surface PARTIAL_FAILURE so the admin toast shows the error count and prompts
-            // the operator to check logs (this is the regression the ACL setup ultimately fixes).
-            BuildAgentMaintenanceResult mapped = service.toResult(BuildAgentMaintenanceAction.Type.WIPE_MAVEN_CACHE, outcome, Instant.now(), Instant.now());
-            assertThat(mapped.outcome()).isEqualTo(BuildAgentMaintenanceResult.Outcome.PARTIAL_FAILURE);
-            assertThat(mapped.errorCount()).isGreaterThanOrEqualTo(1);
-        }
-        finally {
-            // Restore write permission so JUnit's @TempDir cleanup can remove the locked file. Guard against the
-            // dir no longer existing — in some scenarios the wipe could have removed it before the assertions fail.
-            if (Files.exists(lockedDir)) {
-                Files.setPosixFilePermissions(lockedDir, java.util.EnumSet.of(java.nio.file.attribute.PosixFilePermission.OWNER_READ,
-                        java.nio.file.attribute.PosixFilePermission.OWNER_WRITE, java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE));
-            }
-        }
+        WipeOutcome outcome = spy.wipeMavenCache();
+
+        assertThat(outcome.wasSkipped()).isFalse();
+        assertThat(outcome.stats()).isNotNull();
+        // The simulated-failure file is still on disk (delete reported false) and the other is gone.
+        assertThat(Files.exists(guarded)).as("simulated-failed delete: file must remain on disk").isTrue();
+        assertThat(Files.exists(freelyDeletable)).as("non-spied path must be deleted normally").isFalse();
+        assertThat(outcome.stats().errors()).as("wipe walker must count the failed delete as an error").isEqualTo(1);
+        assertThat(outcome.stats().deletedFiles()).as("only the non-failing file is counted as deleted").isEqualTo(1);
+        // The result mapping must surface PARTIAL_FAILURE so the admin toast shows the error count and prompts the
+        // operator to check logs (this is the regression the ACL setup ultimately fixes in real deployments).
+        BuildAgentMaintenanceResult mapped = spy.toResult(BuildAgentMaintenanceAction.Type.WIPE_MAVEN_CACHE, outcome, Instant.now(), Instant.now());
+        assertThat(mapped.outcome()).isEqualTo(BuildAgentMaintenanceResult.Outcome.PARTIAL_FAILURE);
+        assertThat(mapped.errorCount()).isEqualTo(1);
     }
 
     // --- Maintenance topic listener lifecycle (reconnect + initial register) --------------------------------
