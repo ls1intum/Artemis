@@ -1,6 +1,8 @@
-# Exercise Variants — Design Alternatives (Summary)
+# Exercise Variants — Design Alternatives
 
-Practice mode is done. We are now designing adaptive exercise variation. The original proposal extends exam `ExerciseGroup` to course scope; our supervisor wants deeper competency integration and suggested surfacing competency relationships at the exercise level. This document compares six approaches and closes with open questions we would like to align on.
+Practice mode is done. Next step: adaptive exercise variation.
+
+The original proposal extends the exam `ExerciseGroup` to courses. You asked for deeper competency integration and suggested showing competency relationships at the exercise level. Below are six options, then our take.
 
 ---
 
@@ -28,13 +30,15 @@ classDiagram
     CourseCompetency "1" --> "*" CompetencyRelation : tail/head
 ```
 
-No variant concept exists. `ExerciseGroup` is exam-only. Exercises link to competencies individually via `CompetencyExerciseLink`.
+- No variant concept exists.
+- `ExerciseGroup` is exam-only.
+- Exercises link to competencies one by one.
 
 ---
 
-## Approach 1 — Extend `ExerciseGroup` to Course Scope
+## Approach 1 — Extend `ExerciseGroup` to Courses
 
-Add nullable `course_id` to `ExerciseGroup`. Add `selectionMode`, `groupMaxPoints`, `sharedDueDate`, `practiceOnly` columns. Competency integration unchanged (per-exercise links only).
+Add `course_id` to `ExerciseGroup`, plus `selectionMode`, `groupMaxPoints`, `sharedDueDate`, `practiceOnly`. Competency links stay per-exercise.
 
 ```mermaid
 classDiagram
@@ -49,21 +53,21 @@ classDiagram
     class Course
     class Exam
 
-    Course "1" --> "*" ExerciseGroup : (new)
-    Exam "1" --> "*" ExerciseGroup
+    Course "0..1" --> "*" ExerciseGroup : (new)
+    Exam "0..1" --> "*" ExerciseGroup
     ExerciseGroup "0..1" --> "*" Exercise
     Exercise "1" --> "*" CompetencyExerciseLink
 ```
 
-**Pros:** Zero new entities; reuses familiar code; lowest effort.
-
-**Cons:** Dual-purpose entity with two incompatible modes (`exam != null` vs `course != null`); competency integration is UI-only; exam and course concerns become entangled.
+- Pro: no new entities, lowest effort.
+- Con: one entity doing two unrelated jobs (exam XOR course).
+- Con: competency integration stays UI-only.
 
 ---
 
 ## Approach 2 — Self-Referencing Exercise
 
-Add `parentExerciseId` FK and `variantSequence` to `Exercise`. No new entity. Group metadata lives on the parent.
+Add `parentExerciseId` and `variantSequence` to `Exercise`. Group settings sit on the parent.
 
 ```mermaid
 classDiagram
@@ -78,15 +82,15 @@ classDiagram
     Exercise "1" --> "*" CompetencyExerciseLink
 ```
 
-**Pros:** Minimal schema; maps naturally onto AI generation ("clone and set parent"); per-variant competency links unchanged.
-
-**Cons:** Group-level settings awkwardly live on parent; querying "all variants of X" is fiddly whether X is parent or child; no way to express exercise-level relationships beyond what competency links already give.
+- Pro: tiny schema change, fits AI generation ("clone and link to parent").
+- Con: group settings on the parent feel wrong.
+- Con: querying "all variants of X" is awkward.
 
 ---
 
 ## Approach 3 — Dedicated `ExerciseVariantGroup`
 
-New entity in the `exercise` module. Each exercise optionally references a group. `ExerciseGroup` (exam side) is untouched.
+New entity in the `exercise` module. Exam's `ExerciseGroup` stays untouched.
 
 ```mermaid
 classDiagram
@@ -106,22 +110,29 @@ classDiagram
     Exercise "1" --> "*" CompetencyExerciseLink
 ```
 
-**Pros:** Clean separation from exam code; group-level settings have a natural home; straightforward migration (one new table, one nullable FK).
-
-**Cons:** Competency targeting at the group level is still implicit (union of children's links); exercise-level competency relationships remain UI-only.
+- Pro: clean separation from exam code.
+- Pro: group settings have a proper home.
+- Con: competencies still only attach to single exercises, not the group.
 
 ---
 
-## Approach 4 — Variants as Relations (Mirror `CompetencyRelation`)
+## Approach 4 — Variants as Relations
 
-New `ExerciseRelation` entity with directed edges between exercises (`VARIANT_OF`, `HARDER_THAN`, `EASIER_THAN`). No container. Variant family = transitive closure in the graph.
+New `ExerciseRelation` entity with directed edges. Mirrors `CompetencyRelation`. No container. Variant family = connected exercises in the graph.
 
 ```mermaid
 classDiagram
     direction LR
     class ExerciseRelation { +ExerciseRelationType type }
+    class ExerciseRelationType {
+        <<enumeration>>
+        VARIANT_OF
+        HARDER_THAN
+    }
+    class CompetencyExerciseLink { +Double weight }
     class Exercise { <<abstract>> }
 
+    ExerciseRelation --> ExerciseRelationType
     Exercise "1" --> "*" ExerciseRelation : tail
     Exercise "1" --> "*" ExerciseRelation : head
     Exercise "1" --> "*" CompetencyExerciseLink
@@ -129,15 +140,16 @@ classDiagram
     CourseCompetency "1" --> "*" CompetencyRelation : tail/head
 ```
 
-**Pros:** Exercise relationships are first-class data; structurally symmetric with `CompetencyRelation`; familiar pattern in the codebase.
-
-**Cons:** Group-level settings have nowhere to live; instructor UX requires graph authoring (much harder than drag-and-drop into a list); adaptive routing needs extra logic layered on top.
+- Pro: exercise relationships become real data.
+- Pro: matches the existing `CompetencyRelation` pattern.
+- Con: no place for group-level settings.
+- Con: instructors would need a graph editor, not a list.
 
 ---
 
-## Approach 5 — Hybrid: VariantGroup + Group Competency Link + Optional Exercise Relations
+## Approach 5 — Hybrid (VariantGroup + Group Competency Link + Optional Relations)
 
-`ExerciseVariantGroup` from Approach 3, plus a `CompetencyVariantGroupLink` so a competency attaches to the whole group. Optionally add `ExerciseRelation` for pairwise comparisons (can be scoped as a stretch goal).
+Approach 3 plus a `CompetencyVariantGroupLink` so a competency can target the whole group. `ExerciseRelation` optional.
 
 ```mermaid
 classDiagram
@@ -158,18 +170,28 @@ classDiagram
     CourseCompetency "1" --> "*" CompetencyVariantGroupLink
     Exercise "1" --> "*" CompetencyExerciseLink
     CourseCompetency "1" --> "*" CompetencyProgress
-    Exercise "1" --> "*" ExerciseRelation : tail/head
+    Exercise "1" --> "*" ExerciseRelation : tail
+    Exercise "1" --> "*" ExerciseRelation : head
 ```
 
-**Pros:** Group-level competency targeting is queryable data; adaptive selection has a concrete substrate (compare `CompetencyProgress` vs `masteryThreshold`); `ExerciseRelation` is optional and can be dropped without breaking the core.
-
-**Cons:** Two competency link levels (per-exercise and per-group) can contradict each other — clear precedence rules needed; most implementation effort of approaches 1–5.
+- Pro: group-level competency targeting is real data.
+- Pro: adaptive selection has something to work on (`CompetencyProgress` vs `masteryThreshold`).
+- Con: two competency link levels — need precedence rules.
+- Con: most effort of all options.
 
 ---
 
 ## Approach 6 — Typed Collections on `Exercise`
 
-Each `Exercise` holds several typed `@ManyToMany` sets referencing other exercises — one set per relation type (e.g. `variantOf`, `easierThan`, `harderThan`). Each set maps to its own join table. No new entity class is introduced; relation types are expressed directly as named associations rather than as a discriminator column on a shared edge table.
+Each `Exercise` gets typed `@ManyToMany` sets to other exercises — one per relation type, one join table each. No new entity class.
+
+Three relations:
+
+| Relation | Direction | Meaning |
+| --- | --- | --- |
+| `variantOf` | symmetric | same goal and difficulty, different wording |
+| `easierThan` | A → B: A easier than B | pairwise difficulty |
+| `prerequisiteFor` | A → B: do A before B | sequencing |
 
 ```mermaid
 classDiagram
@@ -178,38 +200,49 @@ classDiagram
         <<abstract>>
         +Set~Exercise~ variantOf
         +Set~Exercise~ easierThan
-        +Set~Exercise~ harderThan
+        +Set~Exercise~ prerequisiteFor
     }
 
-    Exercise "0..*" --> "0..*" Exercise : variantOf
+    Exercise "0..*" -- "0..*" Exercise : variantOf
     Exercise "0..*" --> "0..*" Exercise : easierThan
-    Exercise "0..*" --> "0..*" Exercise : harderThan
-    Exercise "1" --> "*" CompetencyExerciseLink
+    Exercise "0..*" --> "0..*" Exercise : prerequisiteFor
 ```
 
-Relation types are defined by the set of named associations on the entity. Adding a new type means adding a field and a join table; removing one means dropping both. The relation is bidirectional only if explicitly modelled; a one-directional edge is enough for adaptive selection.
+`CompetencyExerciseLink` is dropped from this feature. Sequencing comes from `prerequisiteFor`, not from competency prerequisites. How an exercise links to a competency becomes a separate redesign — which you flagged as wanted anyway.
 
-**Pros:** No new entity or discriminator column; each relation type is directly queryable via a single join (e.g. `exercise.variantOf`); no graph traversal needed; familiar JPA pattern; low migration risk (additive only); easy to extend with new types.
-
-**Cons:** Adding a relation type requires a schema migration (new join table) and a code change; group-level settings still have no home (same gap as Approach 4); the set of relation types is closed at compile time, unlike a discriminator-based approach; bidirectionality must be maintained manually or via explicit inverse collections.
+- Pro: no new entity, no discriminator column.
+- Pro: each relation is a plain join-table query.
+- Pro: `prerequisiteFor` makes sequencing explicit data.
+- Pro: sets up a clean follow-up for competency linking.
+- Con: adding a relation type needs a migration.
+- Con: no place for group-level settings.
+- Con: competency attribution is left open.
 
 ---
 
 ## Comparison
 
-| | 1. Extend Group | 2. Self-ref | 3. VariantGroup | 4. Relations | 5. Hybrid | 6. Typed Collections |
+| | 1 | 2 | 3 | 4 | 5 | 6 |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
-| New entities (net) | 0 | 0 | +1 | +1 | +2 (+1 opt.) | 0 |
-| Exam code isolation | No | Yes | Yes | Yes | Yes | Yes |
-| Group-level settings | Overloaded | On parent | Clean | None | Clean | None |
-| Group-level competency target | No | No | No | No | Yes | No |
-| Exercise-level relations | UI only | UI only | UI only | Data model | Data model | Data model |
-| Adaptive selection | Hard | Hard | Hard | Partial | Built in | Partial |
-| Migration risk | Low | Low | Low | Low | Low | Low |
-| Sprint fit | Good | Good | Good | Risky | Realistic | Good |
+| New entities | 0 | 0 | +1 | +1 | +2 (+1 opt.) | 0 |
+| Exam code isolated | no | yes | yes | yes | yes | yes |
+| Group settings | overloaded | on parent | clean | none | clean | none |
+| Group-level competency target | no | no | no | no | yes | deferred |
+| Exercise-to-competency link | kept | kept | kept | kept | kept | removed |
+| Exercise-level relations | UI only | UI only | UI only | data | data | data |
+| Adaptive selection | hard | hard | hard | partial | built in | partial |
+| Migration risk | low | low | low | low | low | low |
+| Effort | lowest | low | low | medium | highest | medium |
+| Sprint fit | good | good | good | risky | realistic | good |
 
 ---
 
-## Discussion
+## Our Take
 
-We consider Approaches 1 and 2 too limited to meaningfully address the competency feedback and would lean toward one of 3–6. The main open question is how far to go on competency integration: Approaches 3–5 preserve `CompetencyExerciseLink` and add variant grouping on top; Approach 6 represents exercise-level relations without introducing a join entity, keeping the model flat and queryable per relation type at the cost of a closed, compile-time type set. We see Approach 5 as the realistic thesis deliverable and Approach 6 as an attractive alternative if lightweight exercise-level relations (without group-level settings) are sufficient. We would appreciate your guidance on which direction to pursue.
+- Approaches 1 and 2 don't address the competency feedback enough.
+- Approach 3 is fine but Approach 5 covers it and adds the group-level competency link.
+- Approach 4 is a weaker version of Approach 6.
+- Approach 5: safer thesis option. Keeps `CompetencyExerciseLink`, adds group-level link on top.
+- Approach 6: more ambitious. Drops `CompetencyExerciseLink` for this feature, replaces it with explicit `prerequisiteFor`. Pushes competency attribution into a follow-up redesign.
+
+Which direction would you like us to take?
