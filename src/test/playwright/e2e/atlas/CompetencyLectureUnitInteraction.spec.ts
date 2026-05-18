@@ -107,9 +107,10 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
     test.describe('Update/change the competency linked to a lecture unit', () => {
         test('Changes the competency linked to a lecture unit via UI', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
             // Three `competencyManagement.goto` calls plus several navigations to the
-            // unit-management edit page accumulate to more than the @fast 60s budget under
-            // heavy multi-node load. Triple the budget.
-            test.slow();
+            // unit-management edit page accumulate well beyond the @fast 60s budget under
+            // heavy multi-node load — even `test.slow()`'s 180s budget can be tight when
+            // any single navigation stretches past 30s. Set an explicit 6-minute budget.
+            test.setTimeout(360_000);
             const compA = await courseManagementAPIRequests.createCompetency(course, 'Comp A ' + uid, 'First competency');
             await courseManagementAPIRequests.createCompetency(course, 'Comp B ' + uid, 'Second competency');
 
