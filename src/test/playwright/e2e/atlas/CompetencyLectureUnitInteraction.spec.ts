@@ -145,6 +145,9 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
 
     test.describe('Remove competency from a lecture unit', () => {
         test('Unlinks a lecture unit from a competency via UI', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
+            // Two competencyManagement.goto calls + unit-management navigation + form save
+            // routinely exceed the @fast 60s budget under heavy multi-node load. Triple it.
+            test.slow();
             const title = makeCompetencyTitle('Unlink');
             const competency = await courseManagementAPIRequests.createCompetency(course, title, 'Test competency');
 

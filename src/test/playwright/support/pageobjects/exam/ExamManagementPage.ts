@@ -108,7 +108,24 @@ export class ExamManagementPage {
             await this.page.waitForLoadState('load');
         }
         const row = this.page.locator('tbody tr', { hasText: username }).first();
-        await row.waitFor({ state: 'visible', timeout: 60_000 });
+        // The student-exams list endpoint sometimes returns before the just-submitted
+        // participation has propagated through the submission-summary query. Reload up to
+        // two more times before giving up — each reload re-fetches the list.
+        const rowVisibleWithin = async (timeout: number): Promise<boolean> =>
+            row
+                .waitFor({ state: 'visible', timeout })
+                .then(() => true)
+                .catch(() => false);
+        for (let attempt = 0; attempt < 3; attempt++) {
+            if (await rowVisibleWithin(20_000)) {
+                break;
+            }
+            if (attempt === 2) {
+                throw new Error(`verifySubmitted: row for ${username} did not appear in the exam-students table after 3 reloads`);
+            }
+            await this.page.reload();
+            await this.page.waitForLoadState('load');
+        }
         await expect(row).toContainText('Submitted');
     }
 
