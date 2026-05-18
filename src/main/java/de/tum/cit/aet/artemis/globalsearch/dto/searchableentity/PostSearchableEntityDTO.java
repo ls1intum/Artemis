@@ -3,6 +3,10 @@ package de.tum.cit.aet.artemis.globalsearch.dto.searchableentity;
 import java.util.HashMap;
 import java.util.Map;
 
+import jakarta.validation.constraints.NotNull;
+
+import org.jspecify.annotations.Nullable;
+
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -12,7 +16,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * Weaviate collection. Only posts from public channels are indexed. The post content is stored in the
  * {@code description} field for BM25 search; the optional title goes into {@code title}.
  */
-public record PostSearchableEntityDTO(Long postId, Long courseId, Long channelId, String title, String content) {
+public record PostSearchableEntityDTO(@NotNull Long postId, @NotNull Long courseId, @NotNull Long channelId, @Nullable String title, @Nullable String content) {
 
     /**
      * Extracts all required data from a {@link Post} entity that belongs to a {@link Channel}.

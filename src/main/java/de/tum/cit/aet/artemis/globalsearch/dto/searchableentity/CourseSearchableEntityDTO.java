@@ -3,6 +3,10 @@ package de.tum.cit.aet.artemis.globalsearch.dto.searchableentity;
 import java.util.HashMap;
 import java.util.Map;
 
+import jakarta.validation.constraints.NotNull;
+
+import org.jspecify.annotations.Nullable;
+
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 
@@ -11,7 +15,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * collection. Courses are searchable by title, short name, and description. Admins can see all
  * courses; other users only see courses they are enrolled in.
  */
-public record CourseSearchableEntityDTO(Long courseId, String title, String shortName, String description) {
+public record CourseSearchableEntityDTO(@NotNull Long courseId, @NotNull String title, @Nullable String shortName, @Nullable String description) {
 
     /**
      * Extracts all required data from a {@link Course} entity.
