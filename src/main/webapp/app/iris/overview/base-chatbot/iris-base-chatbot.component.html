@@ -32,6 +32,7 @@
                             <button
                                 type="button"
                                 class="collapsed-icon-button"
+                                data-onboarding-target="info-icon"
                                 (click)="openAboutIrisModal()"
                                 [attr.aria-label]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate"
                             >
@@ -132,6 +133,7 @@
                             <div class="chat-history-divider"></div>
                             <div
                                 class="about-iris-button"
+                                data-onboarding-target="info-icon"
                                 (click)="openAboutIrisModal()"
                                 role="button"
                                 tabindex="0"
@@ -426,19 +428,23 @@
                                 </div>
                             }
                             <div class="textarea-controls">
-                                <jhi-context-selection [disabled]="isInputDisabled()" />
+                                <jhi-context-selection
+                                    [disabled]="isInputDisabled()"
+                                    data-onboarding-target="context-selector"
+                                    (contextChanged)="onContextChangedDuringOnboarding()"
+                                />
                                 <jhi-button id="irisSendButton" (onClick)="onSend()" [btnType]="ButtonType.SUCCESS_OUTLINE" [icon]="faPaperPlane" [disabled]="isSendDisabled()" />
                             </div>
                         </div>
                     </div>
                     @if (!messages()?.length && !isEmbeddedChat() && layout() === 'client' && activeSuggestionChips().length > 0) {
-                        <div class="prompt-suggestion-chips">
+                        <div class="prompt-suggestion-chips" data-onboarding-target="suggestion-chips">
                             @for (chip of activeSuggestionChips(); track chip.translationKey) {
                                 <button
                                     type="button"
                                     class="prompt-suggestion-chip"
                                     [disabled]="isInputDisabled()"
-                                    (click)="applyChipText(chip.starterKey)"
+                                    (click)="applyChipText(chip.starterKey, chip.translationKey)"
                                     (mouseenter)="onChipMouseEnter(chip.starterKey)"
                                     (mouseleave)="onChipMouseLeave()"
                                 >
