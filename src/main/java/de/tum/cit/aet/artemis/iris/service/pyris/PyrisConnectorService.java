@@ -212,35 +212,6 @@ public class PyrisConnectorService {
     }
 
     /**
-     * Searches for lecture units in Pyris using a query string, scoped to specific lecture unit IDs.
-     *
-     * @param query          the search query
-     * @param limit          the maximum number of results to return
-     * @param lectureUnitIds list of lecture unit IDs to restrict the search to
-     * @return list of matching lecture search results
-     */
-    public List<PyrisLectureSearchResultDTO> searchLectures(String query, int limit, List<Long> lectureUnitIds) {
-        record ScopedSearchRequest(String query, int limit, List<Long> lectureUnitIds) {
-        }
-        var endpoint = "/api/v1/search/lectures";
-        try {
-            var requestDTO = new ScopedSearchRequest(query, limit, lectureUnitIds);
-            var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, PyrisLectureSearchResultDTO[].class);
-            if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
-                return List.of();
-            }
-            return Arrays.asList(response.getBody());
-        }
-        catch (HttpStatusCodeException e) {
-            throw toIrisException(e);
-        }
-        catch (RestClientException | IllegalArgumentException e) {
-            log.error("Failed to search lectures in Pyris", e);
-            throw new PyrisConnectorException("Could not fetch lecture search results from Pyris");
-        }
-    }
-
-    /**
      * Asks Iris to answer a question using lecture content retrieved via HyDE.
      *
      * @param query the user's question or search text

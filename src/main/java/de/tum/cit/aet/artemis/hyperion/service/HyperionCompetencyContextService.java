@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,6 +36,9 @@ public class HyperionCompetencyContextService {
     private static final Logger log = LoggerFactory.getLogger(HyperionCompetencyContextService.class);
 
     private static final int LECTURE_SNIPPETS_PER_COMPETENCY = 20;
+
+    // Request a larger pool from Pyris so client-side filtering by lecture unit ID yields enough results.
+    private static final int PYRIS_SEARCH_LIMIT = 50;
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
 
@@ -111,7 +115,7 @@ public class HyperionCompetencyContextService {
         List<LectureUnit> lectureUnits = lectureUnitApi.get().findAllByIds(linkedLectureUnitIds);
 
         List<String> snippets = new ArrayList<>();
-        List<Long> nonTextUnitIds = new ArrayList<>();
+        Set<Long> nonTextUnitIds = new HashSet<>();
 
         // TextUnits: include content directly from the database.
         for (LectureUnit unit : lectureUnits) {
@@ -123,13 +127,14 @@ public class HyperionCompetencyContextService {
             }
         }
 
-        // Non-text units (slides etc.): retrieve snippets from Pyris scoped to the linked unit IDs.
+        // Non-text units (slides etc.): retrieve snippets from Pyris, then filter to linked units only.
         if (!nonTextUnitIds.isEmpty() && pyrisConnectorService.isPresent()) {
             for (CourseCompetency competency : selected) {
                 String query = competency.getTitle() + (competency.getDescription() != null ? " " + competency.getDescription() : "");
                 try {
-                    pyrisConnectorService.get().searchLectures(query, LECTURE_SNIPPETS_PER_COMPETENCY, nonTextUnitIds).stream()
-                            .map(result -> "[" + result.lecture().name() + " – " + result.lectureUnit().name() + "]\n" + result.snippet()).forEach(snippets::add);
+                    pyrisConnectorService.get().searchLectures(query, PYRIS_SEARCH_LIMIT).stream().filter(result -> nonTextUnitIds.contains(result.lectureUnit().id()))
+                            .limit(LECTURE_SNIPPETS_PER_COMPETENCY).map(result -> "[" + result.lecture().name() + " – " + result.lectureUnit().name() + "]\n" + result.snippet())
+                            .forEach(snippets::add);
                 }
                 catch (PyrisConnectorException e) {
                     log.warn("Failed to retrieve lecture snippets from Pyris for competency [{}]: {}", competency.getId(), e.getMessage());
