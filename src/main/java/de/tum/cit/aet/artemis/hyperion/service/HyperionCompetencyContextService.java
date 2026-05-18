@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,8 +26,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 
 /**
- * Resolves selected competencies for a course and derives the highest Bloom's taxonomy level
- * present in the selection to guide LLM question generation.
+ * Resolves selected competencies for a course and builds enriched context for LLM quiz question generation.
  */
 @Service
 @Lazy
@@ -95,12 +93,12 @@ public class HyperionCompetencyContextService {
         Set<Long> selectedIds = selected.stream().map(CourseCompetency::getId).filter(Objects::nonNull).collect(Collectors.toSet());
         Set<CompetencyRelation> relations = competencyRelationApi.map(relApi -> relApi.findRelationsInvolvingCompetencies(courseId, selectedIds)).orElse(Set.of());
 
-        List<String> lectureSnippets = fetchLectureSnippets(selected, selectedIds);
+        List<String> lectureSnippets = fetchLectureSnippets(courseId, selected, selectedIds);
 
         return new CompetencyContext(selected, relations, lectureSnippets);
     }
 
-    private List<String> fetchLectureSnippets(List<CourseCompetency> selected, Set<Long> selectedIds) {
+    private List<String> fetchLectureSnippets(long courseId, List<CourseCompetency> selected, Set<Long> selectedIds) {
         if (competencyRelationApi.isEmpty() || lectureUnitApi.isEmpty() || selectedIds.isEmpty()) {
             return List.of();
         }
@@ -113,24 +111,24 @@ public class HyperionCompetencyContextService {
         List<LectureUnit> lectureUnits = lectureUnitApi.get().findAllByIds(linkedLectureUnitIds);
 
         List<String> snippets = new ArrayList<>();
+        boolean hasNonTextUnits = false;
 
-        // TextUnits: include content directly
-        Set<Long> nonTextUnitIds = new HashSet<>();
+        // TextUnits: include content directly from the database.
         for (LectureUnit unit : lectureUnits) {
             if (unit instanceof TextUnit textUnit && textUnit.getContent() != null && !textUnit.getContent().isBlank()) {
                 snippets.add("[" + unit.getLecture().getTitle() + " – " + unit.getName() + "]\n" + textUnit.getContent());
             }
             else {
-                nonTextUnitIds.add(unit.getId());
+                hasNonTextUnits = true;
             }
         }
 
-        // Non-text units (slides etc.): retrieve snippets from Pyris, filtered to linked unit IDs
-        if (!nonTextUnitIds.isEmpty() && pyrisConnectorService.isPresent()) {
+        // Non-text units (slides etc.): retrieve snippets from Pyris.
+        if (hasNonTextUnits && pyrisConnectorService.isPresent()) {
             for (CourseCompetency competency : selected) {
                 String query = competency.getTitle() + (competency.getDescription() != null ? " " + competency.getDescription() : "");
                 try {
-                    pyrisConnectorService.get().searchLectures(query, LECTURE_SNIPPETS_PER_COMPETENCY).stream().filter(result -> nonTextUnitIds.contains(result.lectureUnit().id()))
+                    pyrisConnectorService.get().searchLectures(query, LECTURE_SNIPPETS_PER_COMPETENCY).stream().filter(result -> result.course().id() == courseId)
                             .map(result -> "[" + result.lecture().name() + " – " + result.lectureUnit().name() + "]\n" + result.snippet()).forEach(snippets::add);
                 }
                 catch (PyrisConnectorException e) {
