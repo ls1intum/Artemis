@@ -61,6 +61,7 @@ describe('SystemNotificationManagementResolve', () => {
 
     it('should return new notification when id parameter is not provided', () => {
         const expectedNotificationWithoutId = {
+            id: 1,
             notificationDate: dayJs(new Date('2023-01-01T00:00:00.000Z')),
             notificationText: 'Test notification',
             notificationType: 'INFO',
