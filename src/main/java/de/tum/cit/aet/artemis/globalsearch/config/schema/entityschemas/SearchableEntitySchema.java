@@ -192,5 +192,5 @@ public final class SearchableEntitySchema {
             nonSearchable(Properties.UNIT_TYPE, TEXT, "The lecture unit type: text, attachment_video, online (lecture_unit rows only)"),
 
             // Post-specific properties
-            filterable(Properties.CHANNEL_ID, INT, "The ID of the channel the post belongs to (post rows only)")));
+            filterable(Properties.CHANNEL_ID, INT, "The ID of the channel the post belongs to (only set for type 'post', null for all other types)")));
 }
