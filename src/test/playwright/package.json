@@ -23,12 +23,6 @@
         "uuid": "14.0.0",
         "archiver": "8.0.0"
     },
-    "pnpm": {
-        "overrides": {
-            "nodemailer": "8.0.5",
-            "lodash": "4.18.1"
-        }
-    },
     "scripts": {
         "playwright:test": "cross-env NODE_OPTIONS=--max-old-space-size=6144 npm-run-all --serial --continue-on-error playwright:test:parallel playwright:test:sequential merge-junit-reports merge-coverage-reports",
         "playwright:test:parallel": "cross-env NODE_OPTIONS=--max-old-space-size=6144 PLAYWRIGHT_TEST_TYPE=parallel playwright test e2e --project=fast-tests --project=slow-tests",
