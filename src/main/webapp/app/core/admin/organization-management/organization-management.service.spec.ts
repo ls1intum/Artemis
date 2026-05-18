@@ -16,6 +16,7 @@ import { User } from 'app/core/user/user.model';
 import { firstValueFrom } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { UserForRegistration } from 'app/shared/user-registration-modal/user-for-registration.model';
 
 describe('Organization Service', () => {
     setupTestBed({ zoneless: true });
@@ -135,6 +136,39 @@ describe('Organization Service', () => {
 
         const result = await resultPromise;
         expect(result.ok).toBe(true);
+    });
+
+    it('should bulk-add users to an organization in one request', async () => {
+        const resultPromise = firstValueFrom(service.addUsersToOrganization(elemDefault.id!, ['user1', 'user2']));
+
+        const req = httpMock.expectOne((r) => r.url.endsWith(`${elemDefault.id}/users`) && r.method === 'POST');
+        expect(req.request.body).toEqual(['user1', 'user2']);
+        req.flush(null, { status: 200, statusText: 'OK' });
+
+        const result = await resultPromise;
+        expect(result.ok).toBe(true);
+    });
+
+    it('should search users for organization registration and map isRegistered flag', async () => {
+        const orgId = 42;
+        const mockUsers: UserForRegistration[] = [
+            { id: 1, login: 'member', name: 'Member User', isRegistered: true },
+            { id: 2, login: 'nonmember', name: 'Non Member', isRegistered: false },
+        ];
+
+        const resultPromise = firstValueFrom(service.searchUsersForOrganizationRegistration(orgId, 'member', 0, 10));
+
+        const req = httpMock.expectOne((r) => r.url.includes(`${orgId}/users/search`) && r.method === 'GET');
+        expect(req.request.params.get('loginOrName')).toBe('member');
+        expect(req.request.params.get('pageIndex')).toBe('0');
+        expect(req.request.params.get('pageSize')).toBe('10');
+        req.flush(mockUsers, { headers: { 'X-Total-Count': '2' } });
+
+        const result = await resultPromise;
+        expect(result.content).toHaveLength(2);
+        expect(result.totalElements).toBe(2);
+        expect(result.content[0].isRegistered).toBe(true);
+        expect(result.content[1].isRegistered).toBe(false);
     });
 
     function createTestReturnElement() {

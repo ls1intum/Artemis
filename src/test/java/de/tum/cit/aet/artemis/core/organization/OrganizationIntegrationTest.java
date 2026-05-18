@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.core.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.organization.util.OrganizationUtilService;
@@ -698,6 +700,114 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         final Organization expectedOrganization = organization;
         Awaitility.await().atMost(5, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS)
                 .untilAsserted(() -> assertThat(organizationRepo.getAllMatchingOrganizationsByUserEmail(student.getEmail())).containsExactly(expectedOrganization));
+    }
+
+    /**
+     * Test that searchUsersForOrganizationRegistration returns all matching users
+     * and correctly marks existing members with isRegistered=true.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testSearchUsersForOrganizationRegistration() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+        User member = userUtilService.createAndSaveUser(TEST_PREFIX + "searchRegBasicMember");
+        User nonMember = userUtilService.createAndSaveUser(TEST_PREFIX + "searchRegBasicNonMember");
+        userTestRepository.addOrganizationToUser(member.getId(), organization);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("loginOrName", TEST_PREFIX + "searchRegBasic");
+        params.add("pageIndex", "0");
+        params.add("pageSize", "10");
+
+        List<UserForRegistrationDTO> result = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users/search", HttpStatus.OK,
+                UserForRegistrationDTO.class, params);
+
+        assertThat(result).hasSize(2);
+        UserForRegistrationDTO memberDTO = result.stream().filter(u -> u.id().equals(member.getId())).findFirst().orElseThrow();
+        UserForRegistrationDTO nonMemberDTO = result.stream().filter(u -> u.id().equals(nonMember.getId())).findFirst().orElseThrow();
+        assertThat(memberDTO.isRegistered()).isTrue();
+        assertThat(nonMemberDTO.isRegistered()).isFalse();
+    }
+
+    /**
+     * Test that searchUsersForOrganizationRegistration paginates correctly:
+     * page 0 of size 2 returns 2 results, page 1 returns the remaining one,
+     * and X-Total-Count reports 3 on both pages.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testSearchUsersForOrganizationRegistration_pagination() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+        String prefix = TEST_PREFIX + "searchRegPage";
+        userUtilService.createAndSaveUser(prefix + "A");
+        userUtilService.createAndSaveUser(prefix + "B");
+        userUtilService.createAndSaveUser(prefix + "C");
+
+        var firstPageParams = new LinkedMultiValueMap<String, String>();
+        firstPageParams.add("loginOrName", prefix);
+        firstPageParams.add("pageIndex", "0");
+        firstPageParams.add("pageSize", "2");
+
+        MvcResult firstPageResult = request
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/core/admin/organizations/" + organization.getId() + "/users/search").params(firstPageParams))
+                .andExpect(status().isOk()).andReturn();
+        List<UserForRegistrationDTO> firstPage = request.getObjectMapper().readValue(firstPageResult.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, UserForRegistrationDTO.class));
+
+        var secondPageParams = new LinkedMultiValueMap<String, String>();
+        secondPageParams.add("loginOrName", prefix);
+        secondPageParams.add("pageIndex", "1");
+        secondPageParams.add("pageSize", "2");
+
+        MvcResult secondPageResult = request
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/core/admin/organizations/" + organization.getId() + "/users/search").params(secondPageParams))
+                .andExpect(status().isOk()).andReturn();
+        List<UserForRegistrationDTO> secondPage = request.getObjectMapper().readValue(secondPageResult.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, UserForRegistrationDTO.class));
+
+        assertThat(firstPageResult.getResponse().getHeader("X-Total-Count")).isEqualTo("3");
+        assertThat(firstPage).hasSize(2);
+        assertThat(secondPageResult.getResponse().getHeader("X-Total-Count")).isEqualTo("3");
+        assertThat(secondPage).hasSize(1);
+    }
+
+    /**
+     * Test that searchUsersForOrganizationRegistration returns an empty list and zero total count
+     * when no users match the search term.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testSearchUsersForOrganizationRegistration_noMatchReturnsEmptyList() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("loginOrName", "thisTermMatchesNobody_xyz987qwerty");
+        params.add("pageIndex", "0");
+        params.add("pageSize", "10");
+
+        MvcResult result = request.performMvcRequest(MockMvcRequestBuilders.get("/api/core/admin/organizations/" + organization.getId() + "/users/search").params(params))
+                .andExpect(status().isOk()).andReturn();
+        List<UserForRegistrationDTO> body = request.getObjectMapper().readValue(result.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, UserForRegistrationDTO.class));
+
+        assertThat(result.getResponse().getHeader("X-Total-Count")).isEqualTo("0");
+        assertThat(body).isEmpty();
+    }
+
+    /**
+     * Test that searchUsersForOrganizationRegistration returns 403 for non-admin users.
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testSearchUsersForOrganizationRegistration_requiresAdmin() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("loginOrName", "test");
+        params.add("pageIndex", "0");
+        params.add("pageSize", "10");
+
+        request.getList("/api/core/admin/organizations/" + organization.getId() + "/users/search", HttpStatus.FORBIDDEN, UserForRegistrationDTO.class, params);
     }
 
     @Test
