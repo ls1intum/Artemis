@@ -150,11 +150,6 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         });
         this.resizeHandler = () => {
             this.syncTranscriptHeight();
-            // Reset split ratio on window resize if below mobile breakpoint
-            if (wrapperEl.getBoundingClientRect().width < 992) {
-                videoColumnEl.style.flex = '';
-                videoColumnEl.style.width = '';
-            }
         };
         window.addEventListener('resize', this.resizeHandler);
         this.resizeObserver = new ResizeObserver(() => {
