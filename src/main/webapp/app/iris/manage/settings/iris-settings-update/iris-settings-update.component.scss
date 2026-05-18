@@ -1,0 +1,85 @@
+.iris-card {
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.iris-toggle-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+}
+
+.iris-slider-labels {
+    display: flex;
+    justify-content: space-between;
+    color: var(--gray-700);
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+.iris-support-description {
+    background: var(--gray-100);
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+    margin-top: 1rem;
+}
+
+.iris-example-conversation {
+    background: var(--white);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.iris-message-user {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.75rem;
+
+    .bubble {
+        background: var(--gray-200);
+        border-radius: 1rem;
+        border-bottom-right-radius: 0.25rem;
+        padding: 0.5rem 0.75rem;
+        max-width: 80%;
+        font-size: 0.875rem;
+    }
+}
+
+.iris-message-iris {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+
+    .bubble {
+        background: var(--white);
+        border: 1px solid var(--gray-300);
+        border-radius: 1rem;
+        border-bottom-left-radius: 0.25rem;
+        padding: 0.5rem 0.75rem;
+        max-width: 80%;
+        font-size: 0.875rem;
+    }
+}
+
+.iris-info-banner {
+    background: color-mix(in srgb, var(--warning) 10%, var(--white));
+    border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    font-style: italic;
+    color: var(--gray-700);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.iris-save-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
