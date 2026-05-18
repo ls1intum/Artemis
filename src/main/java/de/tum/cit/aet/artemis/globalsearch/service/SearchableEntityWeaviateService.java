@@ -421,6 +421,29 @@ public class SearchableEntityWeaviateService {
         }
     }
 
+    /**
+     * Asynchronously deletes every post row belonging to the given course. Invoked when
+     * a course is reset so deleted posts don't remain searchable.
+     *
+     * @param courseId the course id
+     */
+    @Async
+    public void deleteAllPostsForCourseAsync(long courseId) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
+        try {
+            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            var filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
+                    Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId));
+            var result = collection.data.deleteMany(filter);
+            log.debug("Deleted {} post rows for course {}", result.successful(), courseId);
+        }
+        catch (Exception e) {
+            log.error("Failed to delete post rows for course {}: {}", courseId, e.getMessage(), e);
+        }
+    }
+
     // ----- Deletion (generic) -----
 
     /**

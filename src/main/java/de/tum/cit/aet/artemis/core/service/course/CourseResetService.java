@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 
@@ -124,6 +125,8 @@ public class CourseResetService {
 
     private final Optional<TutorialGroupApi> tutorialGroupApi;
 
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     private final ReactionRepository reactionRepository;
 
     private final AnswerPostRepository answerPostRepository;
@@ -162,7 +165,7 @@ public class CourseResetService {
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository,
             LLMTokenUsageRequestRepository llmTokenUsageRequestRepository, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseRepository courseRepository,
             UserRepository userRepository, UserService userService, CourseOperationProgressService progressService, CourseAdminService courseAdminService,
-            ParticipationRepository participationRepository, SubmissionRepository submissionRepository) {
+            ParticipationRepository participationRepository, SubmissionRepository submissionRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
         this.examDeletionApi = examDeletionApi;
@@ -186,6 +189,7 @@ public class CourseResetService {
         this.courseAdminService = courseAdminService;
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
     /**
@@ -430,6 +434,7 @@ public class CourseResetService {
         reactionRepository.deleteAllByPostCourseId(courseId);
         answerPostRepository.deleteAllByCourseId(courseId);
         postRepository.deleteAllByCourseId(courseId);
+        searchableEntityWeaviateService.ifPresent(service -> service.deleteAllPostsForCourseAsync(courseId));
     }
 
     /**
