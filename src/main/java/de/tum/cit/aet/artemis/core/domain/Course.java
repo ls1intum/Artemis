@@ -220,6 +220,10 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties("course")
     private Set<Organization> organizations = new HashSet<>();
 
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<UserCourseRole> courseRoles = new HashSet<>();
+
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     @OrderBy("title")
@@ -675,6 +679,14 @@ public class Course extends DomainObject {
 
     public void setOrganizations(Set<Organization> organizations) {
         this.organizations = organizations;
+    }
+
+    public Set<UserCourseRole> getCourseRoles() {
+        return courseRoles;
+    }
+
+    public void setCourseRoles(Set<UserCourseRole> courseRoles) {
+        this.courseRoles = courseRoles;
     }
 
     public Set<Prerequisite> getPrerequisites() {

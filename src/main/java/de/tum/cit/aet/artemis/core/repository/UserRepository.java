@@ -127,6 +127,44 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
 
+    // --- courseRoles variants (replacing the groups variants above in Phase 4) ---
+
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities" })
+    Optional<User> findOneWithCourseRolesAndAuthoritiesByLogin(String login);
+
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities" })
+    Optional<User> findOneWithCourseRolesAndAuthoritiesById(Long id);
+
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities" })
+    Optional<User> findOneWithCourseRolesAndAuthoritiesByEmail(String email);
+
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities" })
+    Optional<User> findOneWithCourseRolesAndAuthoritiesByRegistrationNumber(String registrationNumber);
+
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities" })
+    Optional<User> findOneWithCourseRolesAndAuthoritiesByLoginAndInternal(String login, boolean internal);
+
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities" })
+    Optional<User> findOneWithCourseRolesAndAuthoritiesByEmailAndInternal(String email, boolean internal);
+
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities", "organizations" })
+    Optional<User> findOneWithCourseRolesAndAuthoritiesAndOrganizationsById(Long id);
+
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities", "organizations" })
+    Optional<User> findOneWithCourseRolesAndAuthoritiesAndOrganizationsByLogin(String userLogin);
+
+    @Query("""
+            SELECT u
+            FROM User u
+            LEFT JOIN FETCH u.courseRoles
+            LEFT JOIN FETCH u.authorities
+            LEFT JOIN FETCH u.learnerProfile lp
+            LEFT JOIN FETCH lp.courseLearnerProfiles clp
+            WHERE u.login = :login
+                AND clp.course.id = :courseId
+            """)
+    Optional<User> findOneWithCourseRolesAndAuthoritiesAndLearnerProfileByLogin(@Param("login") String login, @Param("courseId") long courseId);
+
     /**
      * Retrieves a list of user roles within a specified course based on the provided user IDs. This method is highly optimized for performance.
      *

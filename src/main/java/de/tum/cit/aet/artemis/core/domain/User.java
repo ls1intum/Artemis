@@ -154,6 +154,13 @@ public class User extends AbstractAuditingEntity implements Participant {
     private Set<String> groups = new HashSet<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
+    private Set<UserCourseRole> courseRoles = new HashSet<>();
+
+    @Column(name = "lti_created", nullable = false)
+    private boolean ltiCreated = false; // default value
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private final Set<SavedPost> savedPosts = new HashSet<>();
 
     @ManyToMany
@@ -367,6 +374,22 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setGroups(Set<String> groups) {
         this.groups = groups;
+    }
+
+    public Set<UserCourseRole> getCourseRoles() {
+        return courseRoles;
+    }
+
+    public void setCourseRoles(Set<UserCourseRole> courseRoles) {
+        this.courseRoles = courseRoles;
+    }
+
+    public boolean isLtiCreated() {
+        return ltiCreated;
+    }
+
+    public void setLtiCreated(boolean ltiCreated) {
+        this.ltiCreated = ltiCreated;
     }
 
     public Set<Authority> getAuthorities() {

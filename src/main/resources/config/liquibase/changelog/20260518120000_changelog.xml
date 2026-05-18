@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Phase 1 of the course-groups → user_course_role refactor.
+
+        CS-1: Create user_course_role table + index; add lti_created to jhi_user.
+        CS-2: Backfill user_course_role from user_groups by joining the four
+              course.*_group_name columns. Each matched (user, course, role) pair
+              becomes one row. Non-course groups (e.g. "lti") are naturally excluded
+              because they match no course group-name column.
+        CS-3: Mark LTI-created users with lti_created = true, replacing the
+              former getGroups().contains("lti") check in LtiService.
+
+        CS-4 (separate follow-up PR after staging sign-off):
+              DROP the four *_group_name columns from course.
+              DROP the user_groups table.
+    -->
+
+    <changeSet id="20260518120000-1" author="ayca-cevdet">
+        <createTable tableName="user_course_role">
+            <column name="user_id" type="bigint">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_user_course_role"/>
+            </column>
+            <column name="course_id" type="bigint">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_user_course_role"/>
+            </column>
+            <column name="course_role" type="ENUM('STUDENT','TEACHING_ASSISTANT','EDITOR','INSTRUCTOR')">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_user_course_role"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="user_course_role" baseColumnNames="user_id"
+            constraintName="fk_ucr_user_id"
+            referencedTableName="jhi_user" referencedColumnNames="id"
+            onDelete="CASCADE" onUpdate="RESTRICT"/>
+
+        <addForeignKeyConstraint
+            baseTableName="user_course_role" baseColumnNames="course_id"
+            constraintName="fk_ucr_course_id"
+            referencedTableName="course" referencedColumnNames="id"
+            onDelete="CASCADE" onUpdate="RESTRICT"/>
+
+        <!-- Covering index for per-course role lookups (e.g. "all students in course X") -->
+        <createIndex indexName="idx_ucr_course_role" tableName="user_course_role">
+            <column name="course_id"/>
+            <column name="course_role"/>
+        </createIndex>
+
+        <addColumn tableName="jhi_user">
+            <column name="lti_created" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260518120000-2" author="ayca-cevdet">
+        <!--
+            Backfill user_course_role from the legacy user_groups string table.
+            Each of the four course group-name columns maps to its role constant.
+            DISTINCT per arm + UNION deduplication guard against duplicate rows in
+            user_groups (no unique constraint existed on that table).
+        -->
+        <sql>
+            INSERT INTO user_course_role (user_id, course_id, course_role)
+            SELECT DISTINCT ug.user_id, c.id, 'STUDENT'
+            FROM user_groups ug
+            INNER JOIN course c ON c.student_group_name IS NOT NULL
+                AND c.student_group_name = ug.user_groups
+            UNION
+            SELECT DISTINCT ug.user_id, c.id, 'TEACHING_ASSISTANT'
+            FROM user_groups ug
+            INNER JOIN course c ON c.teaching_assistant_group_name IS NOT NULL
+                AND c.teaching_assistant_group_name = ug.user_groups
+            UNION
+            SELECT DISTINCT ug.user_id, c.id, 'EDITOR'
+            FROM user_groups ug
+            INNER JOIN course c ON c.editor_group_name IS NOT NULL
+                AND c.editor_group_name = ug.user_groups
+            UNION
+            SELECT DISTINCT ug.user_id, c.id, 'INSTRUCTOR'
+            FROM user_groups ug
+            INNER JOIN course c ON c.instructor_group_name IS NOT NULL
+                AND c.instructor_group_name = ug.user_groups
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260518120000-3" author="ayca-cevdet">
+        <!-- Mark users created via LTI launch (LtiService.LTI_GROUP_NAME = "lti").
+             Replaces the former user.getGroups().contains("lti") check. -->
+        <sql>
+            UPDATE jhi_user
+            SET lti_created = TRUE
+            WHERE id IN (SELECT user_id FROM user_groups WHERE user_groups = 'lti')
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
