@@ -39,10 +39,20 @@ tasks.register("copySbomsToResources") {
     mustRunAfter "cyclonedxBom"
 
     doLast {
+        def serverSbom = file("build/reports/sbom/server-sbom.json")
+        def clientSbom = file("build/reports/client-sbom.json")
+
+        // Skip entirely when neither SBOM exists (the default for builds without `-Psbom`).
+        // Without this guard the empty sbom/ directory gets packaged into the WAR under
+        // BOOT-INF/classes/sbom/ on every build, which is misleading to anyone inspecting
+        // the artifact.
+        if (!serverSbom.exists() && !clientSbom.exists()) {
+            return
+        }
+
         def sbomDir = file("build/resources/main/sbom")
         sbomDir.mkdirs()
 
-        def serverSbom = file("build/reports/sbom/server-sbom.json")
         if (serverSbom.exists()) {
             copy {
                 from serverSbom
@@ -51,7 +61,6 @@ tasks.register("copySbomsToResources") {
             logger.lifecycle("Copied server SBOM to resources")
         }
 
-        def clientSbom = file("build/reports/client-sbom.json")
         if (clientSbom.exists()) {
             copy {
                 from clientSbom

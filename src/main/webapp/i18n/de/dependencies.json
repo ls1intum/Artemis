@@ -26,7 +26,6 @@
             "componentLicenses": "Lizenzen",
             "componentSource": "Quelle",
             "noComponents": "Keine Abhängigkeiten gefunden, die deinem Filter entsprechen.",
-            "notAvailable": "Abhängigkeitsinformationen sind nicht verfügbar. Die SBOM-Dateien wurden möglicherweise während des Build-Prozesses nicht generiert.",
             "notAvailableTitle": "Software Bill of Materials nicht in diesem Build enthalten",
             "notAvailableExplanation": "Diese Artemis-Instanz wurde ohne SBOM gebaut. SBOMs werden nur für release-fähige CI-Builds erzeugt (Branches develop und main, release/*-Branches, Versions-Tags sowie veröffentlichte Releases). Bei anderen Builds wird das Abhängigkeitsinventar weggelassen, um die Build-Dauer kurz zu halten.",
             "notAvailableLocalBuildHint": "Um lokal ein Artefakt inklusive SBOM zu erzeugen, führe aus: ./gradlew -Pprod -Pwar -Psbom bootWar",
