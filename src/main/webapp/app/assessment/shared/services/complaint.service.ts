@@ -255,17 +255,17 @@ export class ComplaintService implements IComplaintService {
         complaint.result = result;
         if (dto.participant) {
             if (dto.participant.isStudent === true) {
-                complaint.student = {
+                complaint.student = Object.assign(new User(), {
                     id: dto.participant.id,
                     name: dto.participant.name,
                     login: dto.participant.login,
-                } as User;
+                });
             } else if (dto.participant.isStudent === false) {
-                complaint.team = {
+                complaint.team = Object.assign(new Team(), {
                     id: dto.participant.id,
                     name: dto.participant.name,
-                    login: dto.participant.login,
-                } as Team;
+                    shortName: dto.participant.login,
+                });
             }
         }
         return complaint;
@@ -292,12 +292,12 @@ export class ComplaintService implements IComplaintService {
             result.assessmentType = dto.result.assessmentType;
 
             if (dto.result.assessor) {
-                result.assessor = {
+                result.assessor = Object.assign(new User(), {
                     id: dto.result.assessor.id,
                     login: dto.result.assessor.login,
                     name: dto.result.assessor.name,
                     email: dto.result.assessor.email,
-                } as User;
+                });
             }
 
             if (dto.result.feedbacks) {
@@ -310,19 +310,20 @@ export class ComplaintService implements IComplaintService {
                 } as Submission;
 
                 if (dto.result.submission.participation) {
+                    const participation = Object.assign(new StudentParticipation(), {
+                        id: dto.result.submission.participation.id,
+                    });
+
                     const exerciseDto = dto.result.submission.participation.exercise;
 
-                    submission.participation = {
-                        id: dto.result.submission.participation.id,
-                        exercise:
-                            exerciseDto || dto.result.exerciseTitle
-                                ? ({
-                                      id: exerciseDto?.id,
-                                      type: exerciseDto?.type,
-                                      title: dto.result.exerciseTitle,
-                                  } as Exercise)
-                                : undefined,
-                    } as StudentParticipation;
+                    if (exerciseDto || dto.result.exerciseTitle) {
+                        participation.exercise = {
+                            id: exerciseDto?.id,
+                            type: exerciseDto?.type,
+                            title: dto.result.exerciseTitle,
+                        } as Exercise;
+                    }
+                    submission.participation = participation;
                 }
                 result.submission = submission;
             }
@@ -330,17 +331,17 @@ export class ComplaintService implements IComplaintService {
         }
         if (dto.participant) {
             if (dto.participant.isStudent === true) {
-                complaint.student = {
+                complaint.student = Object.assign(new User(), {
                     id: dto.participant.id,
                     name: dto.participant.name,
                     login: dto.participant.login,
-                } as User;
+                });
             } else if (dto.participant.isStudent === false) {
-                complaint.team = {
+                complaint.team = Object.assign(new Team(), {
                     id: dto.participant.id,
                     name: dto.participant.name,
-                    login: dto.participant.login,
-                } as Team;
+                    shortName: dto.participant.login,
+                });
             }
         }
         return complaint;
@@ -350,29 +351,21 @@ export class ComplaintService implements IComplaintService {
      * Returns feedbacks without circular references.
      */
     public getFeedbacksForUpdateAfterComplaint(assessments: Feedback[]): Feedback[] {
-        return assessments.map((feedback) => {
-            const sanitizedFeedback = { ...feedback } as Feedback;
-
-            // Break circular structure:
-            // feedback.result -> result.submission -> submission.results -> result
-            sanitizedFeedback.result = undefined;
-
-            return sanitizedFeedback;
-        });
+        return assessments.map((feedback) => Object.assign(new Feedback(), feedback, { result: undefined }));
     }
 
     /**
      * Returns a complaint response payload without circular references.
      */
     public getComplaintResponseForUpdateAfterComplaint(complaintResponse: ComplaintResponse): ComplaintResponse {
-        const sanitizedComplaintResponse = { ...complaintResponse } as ComplaintResponse;
+        const sanitizedComplaintResponse = Object.assign(new ComplaintResponse(), complaintResponse);
 
         if (complaintResponse.complaint) {
-            sanitizedComplaintResponse.complaint = {
+            sanitizedComplaintResponse.complaint = Object.assign(new Complaint(), {
                 id: complaintResponse.complaint.id,
                 accepted: complaintResponse.complaint.accepted,
                 complaintType: complaintResponse.complaint.complaintType,
-            } as Complaint;
+            });
         }
 
         return sanitizedComplaintResponse;
