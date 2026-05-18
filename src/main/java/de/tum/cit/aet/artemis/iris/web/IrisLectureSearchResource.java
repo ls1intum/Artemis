@@ -121,6 +121,7 @@ public class IrisLectureSearchResource {
     @LimitRequestsPerMinute(type = RateLimitType.AI_SEARCH_PIPELINE)
     public ResponseEntity<Void> ask(@RequestBody @Valid PyrisSearchAskRequestDTO requestDTO, Principal principal) {
         var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
+        user.hasOptedIntoLLMUsageElseThrow();
         var accessContext = buildAccessContext(user);
         pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());
         // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
