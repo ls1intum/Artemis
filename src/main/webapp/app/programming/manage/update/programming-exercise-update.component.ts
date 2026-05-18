@@ -86,6 +86,7 @@ const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerati
         FormFooterComponent,
         FeatureOverlayComponent,
     ],
+    providers: [BuildPhasesTemplateService],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);

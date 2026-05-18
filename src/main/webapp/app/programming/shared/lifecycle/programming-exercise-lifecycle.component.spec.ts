@@ -21,6 +21,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     setupTestBed({ zoneless: true });
@@ -33,6 +34,10 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     const afterDueDate = dayjs().add(7, 'days');
     const exampleSolutionPublicationDate = dayjs().add(9, 'days');
     let exercise: ProgrammingExercise;
+
+    const mockBuildPhasesTemplateService = {
+        buildPlan: vi.fn().mockReturnValue(undefined),
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -48,6 +53,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: BuildPhasesTemplateService, useValue: mockBuildPhasesTemplateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

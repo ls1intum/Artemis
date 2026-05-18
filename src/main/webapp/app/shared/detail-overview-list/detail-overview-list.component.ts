@@ -20,6 +20,7 @@ import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update
 import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 
 export interface DetailOverviewSection {
     headline: string;
@@ -68,6 +69,7 @@ export enum DetailType {
         NoDataComponent,
         ArtemisTranslatePipe,
     ],
+    providers: [BuildPhasesTemplateService],
 })
 export class DetailOverviewListComponent implements OnInit {
     protected readonly isEmpty = isEmpty;

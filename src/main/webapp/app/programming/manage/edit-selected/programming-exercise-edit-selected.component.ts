@@ -14,11 +14,13 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { ProgrammingExerciseLifecycleComponent } from 'app/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',
     templateUrl: './programming-exercise-edit-selected.component.html',
     imports: [TranslateDirective, FormsModule, HelpIconComponent, ProgrammingExerciseLifecycleComponent, ButtonComponent, FaIconComponent],
+    providers: [BuildPhasesTemplateService],
 })
 export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);
