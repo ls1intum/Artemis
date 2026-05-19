@@ -28,7 +28,7 @@
             "noComponents": "No dependencies found matching your filter.",
             "notAvailableTitle": "Software Bill of Materials not included in this build",
             "notAvailableExplanation": "This Artemis instance was built without an SBOM. SBOMs are generated only for release-eligible CI builds (the develop and main branches, release/* branches, version tags, and published releases). On other builds the dependency inventory is omitted to keep the build fast.",
-            "notAvailableLocalBuildHint": "To produce a SBOM-included artifact locally, run: ./gradlew -Pprod -Pwar -Psbom bootWar",
+            "notAvailableLocalBuildHint": "To produce an SBOM-included artifact locally, run: ./gradlew -Pprod -Pwar -Psbom bootWar",
             "loadError": "Failed to load dependency information.",
             "downloadServer": "Download Server SBOM",
             "downloadClient": "Download Client SBOM",

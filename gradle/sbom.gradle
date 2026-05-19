@@ -29,28 +29,34 @@ tasks.register("generateAllSbom") {
     group = "reporting"
 }
 
-// Copy SBOMs to resources for runtime access (if they exist)
-// This task copies pre-generated SBOMs without forcing regeneration
+// Copy SBOMs to resources for runtime access (if they exist).
+//
+// Behaviour is tied to the `-Psbom` property rather than the on-disk presence of the SBOM
+// files. Without `-Psbom` we proactively delete any stale `build/resources/main/sbom/` left
+// over from a previous `-Psbom` run, so an incremental rebuild (no `clean`) cannot leak
+// SBOM artefacts from a prior build into the new WAR.
 tasks.register("copySbomsToResources") {
-    description = "Copy SBOM files to resources if they exist"
+    description = "Copy SBOM files into the WAR resources when -Psbom is set"
     group = "build"
 
     // If cyclonedxBom runs, it must run before this task
     mustRunAfter "cyclonedxBom"
 
     doLast {
-        def serverSbom = file("build/reports/sbom/server-sbom.json")
-        def clientSbom = file("build/reports/client-sbom.json")
+        def sbomDir = file("build/resources/main/sbom")
 
-        // Skip entirely when neither SBOM exists (the default for builds without `-Psbom`).
-        // Without this guard the empty sbom/ directory gets packaged into the WAR under
-        // BOOT-INF/classes/sbom/ on every build, which is misleading to anyone inspecting
-        // the artifact.
-        if (!serverSbom.exists() && !clientSbom.exists()) {
+        if (!project.hasProperty("sbom")) {
+            // Ensure the build is reliably SBOM-free even after a prior -Psbom run.
+            if (sbomDir.exists()) {
+                sbomDir.deleteDir()
+                logger.lifecycle("Removed stale SBOM resources (-Psbom not set)")
+            }
             return
         }
 
-        def sbomDir = file("build/resources/main/sbom")
+        def serverSbom = file("build/reports/sbom/server-sbom.json")
+        def clientSbom = file("build/reports/client-sbom.json")
+
         sbomDir.mkdirs()
 
         if (serverSbom.exists()) {
