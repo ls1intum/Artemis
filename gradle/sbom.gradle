@@ -45,11 +45,11 @@ tasks.register("copySbomsToResources") {
     doLast {
         def sbomDir = file("build/resources/main/sbom")
 
-        if (!project.hasProperty("sbom")) {
-            // Ensure the build is reliably SBOM-free even after a prior -Psbom run.
+        if (!(project.hasProperty("prod") && project.hasProperty("sbom"))) {
+            // Ensure the build is reliably SBOM-free even after a prior -Pprod -Psbom run.
             if (sbomDir.exists()) {
                 sbomDir.deleteDir()
-                logger.lifecycle("Removed stale SBOM resources (-Psbom not set)")
+                logger.lifecycle("Removed stale SBOM resources (-Pprod -Psbom not both set)")
             }
             return
         }
@@ -97,14 +97,15 @@ if (project.hasProperty("prod") && project.hasProperty("sbom")) {
     }
 }
 
-// When -Psbom is not set, fully suppress SBOM generation and bundling. The CycloneDX
-// Gradle plugin is applied unconditionally in build.gradle (so its tasks remain referenceable
-// for the -Psbom case), and the Spring Boot Gradle plugin auto-wires cyclonedxBom into
-// bootJar/bootWar, copying the output to `META-INF/sbom/application.cdx.json` inside the
-// artefact. Disabling the SBOM tasks alone is not enough: bootWar still picks up any leftover
-// `META-INF/sbom/` resources from a previous -Psbom build, so we also exclude that path from
-// the final archive.
-if (!project.hasProperty("sbom")) {
+// Unless BOTH -Pprod and -Psbom are set, fully suppress SBOM generation and bundling. The
+// CycloneDX Gradle plugin is applied unconditionally in build.gradle (so its tasks remain
+// referenceable for the release path), and the Spring Boot Gradle plugin auto-wires
+// cyclonedxBom into bootJar/bootWar, copying the output to `META-INF/sbom/application.cdx.json`
+// inside the artefact. Disabling the SBOM tasks alone is not enough: bootWar still picks up
+// any leftover `META-INF/sbom/` resources from a previous -Pprod -Psbom build, so we also
+// exclude that path from the final archive. The combined `prod && sbom` predicate matches the
+// dependency-hook gate above so the two paths cannot diverge.
+if (!(project.hasProperty("prod") && project.hasProperty("sbom"))) {
     tasks.named("cyclonedxBom").configure { enabled = false }
     tasks.named("cyclonedxDirectBom").configure { enabled = false }
     tasks.matching { it.name == "generateClientSbom" }.configureEach { enabled = false }

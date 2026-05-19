@@ -685,4 +685,4 @@ tasks.named("dependencyUpdates").configure {
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
 // 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups and hyperion at the moment)
 // 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups and hyperion at the moment)
-// 16) Generate SBOM (Software Bill of Materials):  ./gradlew cyclonedxBom -x webapp
+// 16) Generate SBOM (Software Bill of Materials):  ./gradlew -Pprod -Psbom cyclonedxBom -x webapp
