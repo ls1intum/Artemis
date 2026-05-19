@@ -57,6 +57,7 @@ jobs:
       has_docs: ${{ steps.decide.outputs.has_docs }}
       has_i18n: ${{ steps.decide.outputs.has_i18n }}
       has_gradle: ${{ steps.decide.outputs.has_gradle }}
+      has_workflows: ${{ steps.decide.outputs.has_workflows }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -109,6 +110,10 @@ jobs:
               - 'gradle/wrapper/**'
               - 'gradlew'
               - 'gradlew.bat'
+            has_workflows:
+              - '.github/workflows/**'
+              - '.github/actions/**'
+              - '.github/actionlint.yaml'
 
       - id: decide
         env:
@@ -124,11 +129,12 @@ jobs:
           F_DOCS: ${{ steps.filter.outputs.has_docs }}
           F_I18N: ${{ steps.filter.outputs.has_i18n }}
           F_GRADLE: ${{ steps.filter.outputs.has_gradle }}
+          F_WORKFLOWS: ${{ steps.filter.outputs.has_workflows }}
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
             echo "Forced run — every gate set to true."
-            for k in build_relevant has_java has_docs has_i18n has_gradle; do
+            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -138,6 +144,7 @@ jobs:
               echo "has_docs=${F_DOCS:-false}"
               echo "has_i18n=${F_I18N:-false}"
               echo "has_gradle=${F_GRADLE:-false}"
+              echo "has_workflows=${F_WORKFLOWS:-false}"
             } >> "$GITHUB_OUTPUT"
           fi
 
@@ -192,6 +199,14 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.has_gradle == 'true'
     uses: ./.github/workflows/ci-gradle-wrapper.yml
+    permissions:
+      contents: read
+
+  workflows:
+    name: Workflow Lint
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_workflows == 'true'
+    uses: ./.github/workflows/ci-workflows.yml
     permissions:
       contents: read
 
@@ -263,6 +278,7 @@ jobs:
       - test
       - java-analysis
       - gradle-wrapper
+      - workflows
       - docs
       - translation
       - e2e
@@ -305,7 +321,7 @@ jobs:
           #   - build/test skip on docs-only PRs (build_relevant=false).
           #   - e2e skips when build or test failed or skipped.
           # `detect-changes` always runs, so if it fails the gate must fail closed.
-          ALLOWED_SKIP: 'build test e2e docs translation java-analysis gradle-wrapper'
+          ALLOWED_SKIP: 'build test e2e docs translation java-analysis gradle-wrapper workflows'
         run: |
           set -Eeuo pipefail
           failing=$(jq -r --arg allowed "$ALLOWED_SKIP" '

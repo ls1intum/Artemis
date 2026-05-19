@@ -1,0 +1,30 @@
+name: Workflow Lint
+
+# Reusable workflow called by ci.yml when files under .github/ change.
+# Validates every workflow with actionlint, using `.github/actionlint.yaml` to declare
+# the self-hosted runner labels in use across the repo.
+#
+# No `concurrency:` block — that belongs to the parent.
+
+on:
+  workflow_call: {}
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run actionlint
+        # Reads .github/actionlint.yaml for the list of self-hosted runner labels.
+        # `bash <(curl …)` is the official install snippet from the actionlint README.
+        run: |
+          set -Eeuo pipefail
+          bash <(curl --silent --location https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color

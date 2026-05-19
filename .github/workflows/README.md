@@ -19,6 +19,7 @@ ci.yml                                                            (single entry 
 ├── gradle-wrapper  ── uses ci-gradle-wrapper.yml                 (workflow_call, if has_gradle)
 ├── docs            ── uses ci-docs.yml                           (workflow_call, if has_docs)
 ├── translation     ── uses ci-translation.yml                    (workflow_call, if has_i18n)
+├── workflows       ── uses ci-workflows.yml                      (workflow_call, if has_workflows — actionlint)
 ├── e2e             ── uses ci-e2e.yml                            (workflow_call, after build + test)
 └── all-ci-passed                (jq-based gate — the single required status check)
 ```
