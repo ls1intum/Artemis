@@ -112,6 +112,11 @@ jobs:
     outputs:
       reporter_failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
     steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+
       - name: Create pending status
         uses: ./.github/actions/e2e-set-commit-status
         with:
@@ -121,11 +126,6 @@ jobs:
           target-url: ${{ env.TARGET_URL }}
           statuses-url: ${{ env.STATUSES_REQUEST_URL }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.commit_sha }}
-          fetch-depth: 1
 
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup
@@ -299,6 +299,11 @@ jobs:
       PLAYWRIGHT_REPORT_PHASE: phase2
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+
       - name: Update status to Phase 2
         uses: ./.github/actions/e2e-set-commit-status
         with:
@@ -308,11 +313,6 @@ jobs:
           target-url: ${{ env.TARGET_URL }}
           statuses-url: ${{ env.STATUSES_REQUEST_URL }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.commit_sha }}
-          fetch-depth: 1
 
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup
@@ -485,6 +485,11 @@ jobs:
       PLAYWRIGHT_REPORT_PHASE: all
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+
       - name: Create pending status
         uses: ./.github/actions/e2e-set-commit-status
         with:
@@ -494,11 +499,6 @@ jobs:
           target-url: ${{ env.TARGET_URL }}
           statuses-url: ${{ env.STATUSES_REQUEST_URL }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.commit_sha }}
-          fetch-depth: 1
 
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup
@@ -655,6 +655,11 @@ jobs:
     env:
       PLAYWRIGHT_REPORT_PHASE: all
     steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+
       - name: Create pending status
         uses: ./.github/actions/e2e-set-commit-status
         with:
@@ -664,11 +669,6 @@ jobs:
           target-url: ${{ env.TARGET_URL }}
           statuses-url: ${{ env.STATUSES_REQUEST_URL }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.commit_sha }}
-          fetch-depth: 1
 
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup
@@ -751,6 +751,15 @@ jobs:
             *)       echo "description=E2E tests encountered an error" >> "$GITHUB_OUTPUT" ;;
           esac
 
+      # Sparse-checkout the local composite actions used in the steps below — needed on
+      # both PR and non-PR runs (status update is non-PR-safe; find-e2e-comment only fires
+      # for PRs but the composite must be on disk before its `uses:` resolves).
+      - uses: actions/checkout@v6
+        if: always()
+        with:
+          sparse-checkout: .github/actions
+          fetch-depth: 1
+
       - name: Update status with results
         if: always()
         # Informational only; the umbrella gate is the source of truth.
@@ -763,12 +772,6 @@ jobs:
           target-url: ${{ env.TARGET_URL }}
           statuses-url: ${{ env.STATUSES_REQUEST_URL }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/checkout@v6
-        if: always() && inputs.is_pr
-        with:
-          sparse-checkout: .github/actions
-          fetch-depth: 1
 
       - name: Find E2E PR comment
         id: find-e2e-comment
