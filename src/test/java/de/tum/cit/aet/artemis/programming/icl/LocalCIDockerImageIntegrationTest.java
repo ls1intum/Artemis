@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIEventListenerService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIResultListenerService;
@@ -70,6 +71,8 @@ import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 @Isolated
 class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
+    private static final Logger log = LoggerFactory.getLogger(LocalCIDockerImageIntegrationTest.class);
+
     private static final String TEST_PREFIX = "localcidockerimage";
 
     private static final String GCC_DOCKER_IMAGE = "ls1tum/artemis-c-minimal-docker:1.0.0";
@@ -78,23 +81,19 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
 
     private static final int FACT_SUCCESSFUL_TEST_CASES = 3;
 
-    // TestOutputLSan is excluded because LeakSanitizer requires the SYS_PTRACE capability,
-    // which is unavailable in Docker containers by default (both on CI and many local setups).
-    // TestCompileLeak still validates that the code compiles with leak sanitizer flags.
-    private static final List<String> GCC_TEST_CASE_NAMES = List.of("TestCompile", "TestOutput", "TestCompileASan", "TestOutputASan", "TestCompileUBSan", "TestOutputUBSan",
-            "TestCompileLeak");
-
     private static final List<String> FACT_TEST_CASE_NAMES = List.of("Compile", "CodeStructure", "InputOutput");
 
-    private static final Duration BUILD_JOB_CREATION_TIMEOUT = Duration.ofSeconds(30);
+    // TestCompileLeak and TestOutputLSan are excluded because LeakSanitizer requires liblsan and the SYS_PTRACE capability,
+    // both inconsistently available or restricted in CI Docker environments.
+    private static final List<String> GCC_TEST_CASE_NAMES = List.of("TestCompile", "TestOutput", "TestCompileASan", "TestOutputASan", "TestCompileUBSan", "TestOutputUBSan");
 
-    private static final Duration BUILD_TIMEOUT = Duration.ofMinutes(2);
+    private static final Duration BUILD_JOB_CREATION_TIMEOUT = Duration.ofSeconds(60);
 
-    private static final int MAX_DIAGNOSTIC_LOG_LENGTH = 4000;
+    private static final Duration BUILD_TIMEOUT = Duration.ofMinutes(5);
+
+    private static final int MAX_DIAGNOSTIC_LOG_LENGTH = 8000;
 
     private static final int MAX_BUILD_ATTEMPTS = 2;
-
-    private static final Logger log = LoggerFactory.getLogger(LocalCIDockerImageIntegrationTest.class);
 
     private DockerClient realDockerClient;
 
@@ -165,6 +164,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         doReturn(true).when(buildAgentConfiguration).isDockerAvailable();
         dockerClient = realDockerClient;
         String architecture = normalizeDockerArchitecture(realDockerClient.infoCmd().exec().getArchitecture());
+        log.info("Running with Docker architecture: {}", architecture);
         ReflectionTestUtils.setField(buildAgentDockerService, "imageArchitecture", architecture);
         distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
@@ -239,9 +239,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
             }
             catch (AssertionError failure) {
                 lastFailure = failure;
-                if (attempt < MAX_BUILD_ATTEMPTS) {
-                    log.warn("Docker build attempt {} for project type {} did not match expectations; retrying. Failure: {}", attempt, projectType, failure.getMessage());
-                }
+                logBuildJobDiagnostics(buildJob, attempt, projectType, failure);
             }
         }
         throw lastFailure;
@@ -258,6 +256,13 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         assertThat(persistedSubmission.isBuildFailed()).isFalse();
         Result result = persistedSubmission.getLatestResult();
         assertThat(result.getCompletionDate()).isNotNull();
+
+        // Log the DB test case state at assertion time — helps diagnose flaky testCaseCount mismatches
+        var dbTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
+        log.info("At assertion time for exercise {} (projectType={}): result has testCaseCount={}, passedTestCaseCount={}, score={}; DB has {} active test cases (names: {})",
+                programmingExercise.getId(), projectType, result.getTestCaseCount(), result.getPassedTestCaseCount(), result.getScore(), dbTestCases.size(),
+                dbTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
+
         // Attach per-feedback PASS/FAIL detail to the assertion description so a CI failure
         // names the offending test case directly instead of just printing the numeric mismatch.
         String feedbackDiagnostics = loadAndFormatTestCaseFeedback(result.getId());
@@ -288,10 +293,13 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         programmingExercise.setProjectType(projectType);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.getBuildConfig().setBuildScript(null);
-        programmingExercise.getBuildConfig()
-                .setBuildPlanConfiguration(objectMapper.writeValueAsString(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise)));
+        var phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
+        var dockerImage = buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise);
+        var buildPlanPhasesDTO = new BuildPlanPhasesDTO(phases, dockerImage);
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(buildPlanPhasesDTO.toBuildPlanConfiguration());
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExerciseRepository.save(programmingExercise);
+        // Capture the managed entity returned by merge() to avoid stale detached entity issues
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
     }
 
     private void replaceExerciseTestCases(ProjectType projectType) {
@@ -301,10 +309,22 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
             default -> throw new IllegalArgumentException("Unsupported project type: " + projectType);
         };
 
-        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        var existingTestCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        log.info("Deleting {} existing test cases for exercise {} (names: {})", existingTestCases.size(), programmingExercise.getId(),
+                existingTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
+        testCaseRepository.deleteAll(existingTestCases);
+        testCaseRepository.flush();
+
         List<ProgrammingExerciseTestCase> testCases = testCaseNames.stream().map(testCaseName -> new ProgrammingExerciseTestCase().testName(testCaseName).weight(1.0).active(true)
                 .exercise(programmingExercise).visibility(de.tum.cit.aet.artemis.assessment.domain.Visibility.ALWAYS).bonusMultiplier(1D).bonusPoints(0D)).toList();
         testCaseRepository.saveAll(testCases);
+        testCaseRepository.flush();
+
+        // Verify the exact number of test cases persisted — any mismatch here means a JPA/cache issue
+        var verifiedTestCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        log.info("After replacement: {} test cases in DB for exercise {} (expected {}, names: {})", verifiedTestCases.size(), programmingExercise.getId(), testCaseNames.size(),
+                verifiedTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
+        assertThat(verifiedTestCases).as("Test case count after replacement for exercise %d", programmingExercise.getId()).hasSize(testCaseNames.size());
     }
 
     private RepositoryExportTestUtil.BaseRepositories createAndSeedBaseRepositories(ProjectType projectType) throws Exception {
@@ -321,7 +341,14 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         seedRepositoryFromTemplate(baseRepositories.solutionRepository(), Path.of("templates", "c", templateDirectory, "solution"), "solution");
         seedRepositoryFromTemplate(baseRepositories.testsRepository(), Path.of("templates", "c", templateDirectory, "test"), "tests");
 
-        programmingExerciseRepository.save(programmingExercise);
+        // Capture the managed entity returned by merge() to avoid stale detached entity issues
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        // Verify test cases were not disturbed by saving the exercise entity (orphanRemoval/cascade check)
+        var testCasesAfterRepoSetup = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
+        log.info("After repository setup: {} active test cases for exercise {} (names: {})", testCasesAfterRepoSetup.size(), programmingExercise.getId(),
+                testCasesAfterRepoSetup.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
+
         return baseRepositories;
     }
 
@@ -424,6 +451,24 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         });
 
         return diagnostics.toString();
+    }
+
+    private void logBuildJobDiagnostics(BuildJob buildJob, int attempt, ProjectType projectType, AssertionError failure) {
+        StringBuilder diag = new StringBuilder();
+        diag.append("Docker build attempt ").append(attempt).append(" for project type ").append(projectType).append(" did not match expectations.");
+        diag.append(System.lineSeparator()).append("Failure: ").append(failure.getMessage());
+        diag.append(System.lineSeparator()).append("Build job: id=").append(buildJob.getBuildJobId()).append(", status=").append(buildJob.getBuildStatus()).append(", dockerImage=")
+                .append(buildJob.getDockerImage());
+        if (buildJob.getBuildStartDate() != null && buildJob.getBuildCompletionDate() != null) {
+            diag.append(", duration=").append(Duration.between(buildJob.getBuildStartDate().toInstant(), buildJob.getBuildCompletionDate().toInstant()));
+        }
+        appendBuildLogFile(diag, buildJob);
+        if (attempt < MAX_BUILD_ATTEMPTS) {
+            log.warn("Build attempt {} failed, retrying. Full diagnostics:{}{}", attempt, System.lineSeparator(), diag);
+        }
+        else {
+            log.error("Build attempt {} failed (final attempt). Full diagnostics:{}{}", attempt, System.lineSeparator(), diag);
+        }
     }
 
     private void appendBuildLogFile(StringBuilder diagnostics, BuildJob buildJob) {

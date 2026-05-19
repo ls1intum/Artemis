@@ -4,7 +4,6 @@ import { FormsModule, NgModel } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -98,7 +97,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
 
-    AssessmentType = AssessmentType;
     UMLDiagramType = UMLDiagramType;
 
     modelingExercise: ModelingExercise;
@@ -113,7 +111,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     examCourseId?: number;
     isImport: boolean;
     isExamMode: boolean;
-    semiAutomaticAssessmentAvailable = true;
 
     formSectionStatus: FormSectionStatus[];
 
@@ -369,14 +366,5 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             onError(this.alertService, errorRes);
         }
         this.isSaving = false;
-    }
-
-    /**
-     * When the diagram type changes, we need to check whether {@link AssessmentType.SEMI_AUTOMATIC} is available for the type. If not, we revert to {@link AssessmentType.MANUAL}
-     */
-    diagramTypeChanged() {
-        if (!this.semiAutomaticAssessmentAvailable) {
-            this.modelingExercise.assessmentType = AssessmentType.MANUAL;
-        }
     }
 }

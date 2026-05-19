@@ -21,7 +21,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -496,19 +495,6 @@ describe('ModelingExerciseUpdateComponent', () => {
         comp.validateDate();
 
         expect(exerciseService.validateDate).toHaveBeenCalledWith(comp.modelingExercise);
-    });
-
-    it('should set assessmentType to manual in exam mode', async () => {
-        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
-        comp = fixture.componentInstance;
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        comp.isExamMode = true;
-        comp.semiAutomaticAssessmentAvailable = false;
-        comp.diagramTypeChanged();
-
-        expect(comp.modelingExercise.assessmentType).toEqual(AssessmentType.MANUAL);
     });
 
     it('should updateCategories properly by making category available for selection again when removing it', async () => {
