@@ -1,13 +1,7 @@
-/**
- * Minimal static file server for the prebuilt Artemis Angular bundle.
- *
- * Serves build/resources/main/static/ on :9000, proxies all backend
- * API routes (matching proxy.conf.mjs) to localhost:8080, and upgrades
- * WebSocket connections to ws://127.0.0.1:8080.
- *
- * Requires no external dependencies — Node 22+ built-ins only.
- * Intended for use with start-playwright-stack.sh --static.
- */
+// Static file server for the prebuilt Artemis Angular bundle (--static mode).
+// Serves build/resources/main/static/ on :9000, proxies API routes to
+// localhost:8080, and upgrades WebSocket connections for /websocket/*.
+// No external dependencies — Node 22+ built-ins only.
 
 import { createServer } from 'node:http';
 import { createReadStream, existsSync, statSync } from 'node:fs';
@@ -30,21 +24,17 @@ const PROXY_PREFIXES = [
 
 const MIME = {
     '.html': 'text/html; charset=utf-8',
-    '.js': 'application/javascript',
-    '.mjs': 'application/javascript',
-    '.css': 'text/css',
+    '.js':   'application/javascript',
+    '.css':  'text/css',
     '.json': 'application/json',
-    '.png': 'image/png',
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.svg': 'image/svg+xml',
-    '.ico': 'image/x-icon',
+    '.png':  'image/png',
+    '.jpg':  'image/jpeg',
+    '.svg':  'image/svg+xml',
+    '.ico':  'image/x-icon',
     '.woff': 'font/woff',
-    '.woff2': 'font/woff2',
-    '.ttf': 'font/ttf',
-    '.eot': 'application/vnd.ms-fontobject',
+    '.woff2':'font/woff2',
+    '.ttf':  'font/ttf',
     '.webp': 'image/webp',
-    '.txt': 'text/plain',
 };
 
 function shouldProxy(url) {
@@ -77,7 +67,6 @@ const server = createServer((req, res) => {
         return;
     }
 
-    // Static file serving with SPA fallback
     const fallbackPath = join(STATIC_DIR, 'index.html');
     let filePath = join(STATIC_DIR, url.pathname === '/' ? 'index.html' : url.pathname);
     if (!existsSync(filePath) || statSync(filePath).isDirectory()) {
@@ -89,13 +78,12 @@ const server = createServer((req, res) => {
         filePath = fallbackPath;
     }
 
-    const contentType = MIME[extname(filePath)] ?? 'application/octet-stream';
     const stream = createReadStream(filePath);
     stream.on('error', () => {
         if (!res.headersSent) res.writeHead(500);
         res.end('Internal Server Error');
     });
-    res.writeHead(200, { 'Content-Type': contentType });
+    res.writeHead(200, { 'Content-Type': MIME[extname(filePath)] ?? 'application/octet-stream' });
     stream.pipe(res, { end: true });
 });
 
@@ -106,9 +94,7 @@ server.on('upgrade', (req, socket, head) => {
         return;
     }
     const upstream = connect(BACKEND_PORT, BACKEND_HOST, () => {
-        const headers = Object.entries(req.headers)
-            .map(([k, v]) => `${k}: ${v}`)
-            .join('\r\n');
+        const headers = Object.entries(req.headers).map(([k, v]) => `${k}: ${v}`).join('\r\n');
         upstream.write(`${req.method} ${req.url} HTTP/1.1\r\n${headers}\r\n\r\n`);
         if (head.length) upstream.write(head);
     });
@@ -119,5 +105,5 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 server.listen(PORT, () => {
-    console.log(`[static-server] ready at http://localhost:${PORT} → static: ${STATIC_DIR}, backend: ${BACKEND_HOST}:${BACKEND_PORT}`);
+    console.log(`[static-server] ready at http://localhost:${PORT}`);
 });
