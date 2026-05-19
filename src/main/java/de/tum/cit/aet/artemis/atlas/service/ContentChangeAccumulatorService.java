@@ -6,7 +6,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -275,16 +274,16 @@ public class ContentChangeAccumulatorService {
             if (now != null && debounceWindow != null && current.lastEventTime().plus(debounceWindow).isAfter(now)) {
                 return null;
             }
+            // Lecture-only batches are deferred by the scheduler (orchestrator does not yet accept
+            // lecture units), so the daily cap is irrelevant to them. Gating their claim by the cap
+            // would leave the bucket re-firing every tick until its TTL expires.
+            boolean batchTriggersOrchestration = !current.exerciseIds().isEmpty();
             int effectiveDailyCount = today.equals(current.dailyRunCountDate()) ? current.dailyRunCount() : 0;
-            if (effectiveDailyCount >= dailyCap) {
+            if (batchTriggersOrchestration && effectiveDailyCount >= dailyCap) {
                 return null;
             }
             BatchClaim claim = new BatchClaim(current.exerciseIds(), current.lectureUnitIds());
-            // Only bump the daily counter when the batch actually triggers an orchestrator run.
-            // Lecture-only batches are deferred by the scheduler (orchestrator does not yet accept
-            // lecture units) — bumping the cap for them would block real programming-exercise runs.
-            boolean countAgainstCap = !current.exerciseIds().isEmpty();
-            entry.setValue(current.claim(today, countAgainstCap));
+            entry.setValue(current.claim(today, batchTriggersOrchestration));
             return claim;
         }
     }
@@ -294,9 +293,9 @@ public class ContentChangeAccumulatorService {
         map.clear();
     }
 
-    /** Hook for integration test scenarios that must cross a day boundary — expose zone-aware now. */
+    /** Hook for integration test scenarios that must cross a day boundary. */
     LocalDate today() {
-        return LocalDate.now(clock.withZone(ZoneId.systemDefault()));
+        return LocalDate.now(clock);
     }
 
     /** Log helper — keep out of production flow; used when manual operators need to inspect state. */
