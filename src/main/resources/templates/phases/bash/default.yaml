@@ -2,8 +2,8 @@
   script: 'find "${studentParentWorkingDirectoryName}" -type f -exec chmod +x "{}" +'
 - name: create_results_directory
   script: mkdir results
-- name: check
-  script: 'find "${studentParentWorkingDirectoryName}" -name "*.sh" -exec bash -n {} \;'
+- name: syntax_check
+  script: 'find "${studentParentWorkingDirectoryName}" -name "*.bash" -print0 | xargs -0 -n1 bash -n'
 - name: test
   script: 'bats --report-formatter junit --output results "${testWorkingDirectory}" || true'
   resultPaths:

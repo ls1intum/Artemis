@@ -80,9 +80,9 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
         programmingExercise = new ProgrammingExercise(course, undefined);
         programmingExercise.customizeBuildPlan = true;
         creationConfig = {
+            isExamMode: false,
             buildPlanLoaded: false,
             isImportFromFile: false,
-            isExamMode: false,
             customBuildPlansSupported: '',
         } as ProgrammingExerciseCreationConfig;
 
@@ -142,11 +142,11 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
         comp.loadBuildPhasesTemplate();
 
         expect(buildPhasesTemplateServiceMock.fetchTemplate).toHaveBeenCalledWith(
+            false,
             programmingExercise.programmingLanguage,
             programmingExercise.projectType,
             programmingExercise.staticCodeAnalysisEnabled,
             programmingExercise.buildConfig?.sequentialTestRuns,
-            false,
         );
         expect(buildPlanSignal()).toEqual(templatePhases);
         expect(comp.programmingExerciseCreationConfig.buildPlanLoaded).toBe(true);

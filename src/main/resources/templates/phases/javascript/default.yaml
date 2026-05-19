@@ -1,7 +1,7 @@
 - name: install_dependencies
   script: 'npm ci --prefer-offline --no-audit'
 - name: syntax_check
-  script: 'find ${studentParentWorkingDirectoryName}/src -type f -name "*.js" -exec node --check {} +'
+  script: 'find ${studentParentWorkingDirectoryName}/src -type f -name "*.js" -print0 | xargs -0 -n1 node --check'
 - name: test
   script: 'npm run test:ci'
   resultPaths:

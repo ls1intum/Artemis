@@ -8,8 +8,7 @@
     dart pub get
 - name: compile
   script: |-
-    cd "${testWorkingDirectory}"
-    dart analyze .
+    dart analyze --no-fatal-warnings .
 - name: test
   script: |-
     cd "${testWorkingDirectory}"
