@@ -66,7 +66,7 @@ class CourseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalC
     void testUpsertCourse_indexesInWeaviate() throws Exception {
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
 
-        assertCourseExistsInWeaviate(weaviateService, course);
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertCourseExistsInWeaviate(weaviateService, course));
     }
 
     @Test
@@ -95,7 +95,7 @@ class CourseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalC
         long courseId = course.getId();
         request.delete("/api/core/admin/courses/" + courseId, HttpStatus.OK);
 
-        assertCourseNotInWeaviate(weaviateService, courseId);
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertCourseNotInWeaviate(weaviateService, courseId));
     }
 
     @Test

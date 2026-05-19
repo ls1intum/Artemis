@@ -3,9 +3,11 @@ package de.tum.cit.aet.artemis.globalsearch;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertChannelExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostNotInWeaviate;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 
+import java.time.Duration;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -101,8 +103,10 @@ class CourseResetWeaviateIntegrationTest extends AbstractProgrammingIntegrationL
         long post2Id = post2.getId();
         request.post("/api/core/admin/courses/" + course.getId() + "/reset", null, HttpStatus.OK);
 
-        assertPostNotInWeaviate(weaviateService, post1Id);
-        assertPostNotInWeaviate(weaviateService, post2Id);
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            assertPostNotInWeaviate(weaviateService, post1Id);
+            assertPostNotInWeaviate(weaviateService, post2Id);
+        });
     }
 
     @Test
@@ -118,8 +122,10 @@ class CourseResetWeaviateIntegrationTest extends AbstractProgrammingIntegrationL
         long postId = post.getId();
         request.post("/api/core/admin/courses/" + course.getId() + "/reset", null, HttpStatus.OK);
 
-        assertPostNotInWeaviate(weaviateService, postId);
-        assertChannelExistsInWeaviate(weaviateService, channel);
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            assertPostNotInWeaviate(weaviateService, postId);
+            assertChannelExistsInWeaviate(weaviateService, channel);
+        });
     }
 
     @Test
@@ -147,7 +153,9 @@ class CourseResetWeaviateIntegrationTest extends AbstractProgrammingIntegrationL
         long otherPostId = otherPost.getId();
         request.post("/api/core/admin/courses/" + course.getId() + "/reset", null, HttpStatus.OK);
 
-        assertPostNotInWeaviate(weaviateService, postId);
-        assertPostExistsInWeaviate(weaviateService, otherPostId);
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            assertPostNotInWeaviate(weaviateService, postId);
+            assertPostExistsInWeaviate(weaviateService, otherPostId);
+        });
     }
 }
