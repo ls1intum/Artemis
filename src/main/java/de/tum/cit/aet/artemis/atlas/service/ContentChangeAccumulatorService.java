@@ -270,7 +270,11 @@ public class ContentChangeAccumulatorService {
                 return null;
             }
             BatchClaim claim = new BatchClaim(current.exerciseIds(), current.lectureUnitIds());
-            entry.setValue(current.claim(today));
+            // Only bump the daily counter when the batch actually triggers an orchestrator run.
+            // Lecture-only batches are deferred by the scheduler (orchestrator does not yet accept
+            // lecture units) — bumping the cap for them would block real programming-exercise runs.
+            boolean countAgainstCap = !current.exerciseIds().isEmpty();
+            entry.setValue(current.claim(today, countAgainstCap));
             return claim;
         }
     }

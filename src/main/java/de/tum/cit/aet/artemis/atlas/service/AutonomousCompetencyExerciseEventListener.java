@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * Feeds the automatic competency pipeline whenever an exercise version is created. Hooks into the
@@ -60,6 +61,11 @@ public class AutonomousCompetencyExerciseEventListener {
         }
         Exercise exercise = event.exercise();
         if (exercise == null || exercise.getId() == null || exercise.isExamExercise()) {
+            return;
+        }
+        // Orchestrator currently only supports programming exercises — recording other types would
+        // burn the per-course daily cap on guaranteed-failure runs.
+        if (!(exercise instanceof ProgrammingExercise)) {
             return;
         }
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();

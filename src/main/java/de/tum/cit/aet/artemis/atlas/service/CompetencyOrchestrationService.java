@@ -177,8 +177,8 @@ public class CompetencyOrchestrationService {
         RunInfo claim = new RunInfo(UUID.randomUUID().toString(), exerciseId, Instant.now());
         RunInfo existing = runMap.putIfAbsent(courseId, claim);
         if (existing != null) {
-            log.info("Atlas orchestrator (manual flush) rejected for exercise {} (course {}): run {} already in progress for exercise {}", exerciseId, courseId,
-                    existing.runId(), existing.exerciseId());
+            log.info("Atlas orchestrator (manual flush) rejected for exercise {} (course {}): run {} already in progress for exercise {}", exerciseId, courseId, existing.runId(),
+                    existing.exerciseId());
             return CompetencyOrchestrationResultDTO.inProgress("Another Atlas orchestrator run is already in progress for this course. Please wait for it to finish.");
         }
         try {
@@ -192,6 +192,14 @@ public class CompetencyOrchestrationService {
                     ProgrammingExercise queued = programmingExerciseRepository.findById(queuedId).orElse(null);
                     if (queued == null || queued.isExamExercise()) {
                         log.info("Atlas orchestrator (manual flush) skipping queued exercise {}: not a programming course exercise", queuedId);
+                        continue;
+                    }
+                    // Defence against a stale/corrupt accumulator entry — never run a queued exercise
+                    // under a course id that does not own it, otherwise we would mix course content.
+                    var queuedCourse = queued.getCourseViaExerciseGroupOrCourseMember();
+                    if (queuedCourse == null || queuedCourse.getId() == null || queuedCourse.getId() != courseId) {
+                        log.warn("Atlas orchestrator (manual flush) skipping queued exercise {}: course ownership mismatch (expected {}, got {})", queuedId, courseId,
+                                queuedCourse == null ? null : queuedCourse.getId());
                         continue;
                     }
                     orchestrateExercise(queued, courseId);

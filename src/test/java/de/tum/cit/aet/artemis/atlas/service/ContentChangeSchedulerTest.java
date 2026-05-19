@@ -122,6 +122,27 @@ class ContentChangeSchedulerTest {
     }
 
     @Test
+    void tick_inProgressResult_requeuesAndExcludesFromSummary() {
+        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
+        when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
+        when(accumulator.tryClaimLock(COURSE_ID)).thenReturn(true);
+        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(10L, 11L), Set.of())));
+        when(orchestrationService.run(10L)).thenReturn(CompetencyOrchestrationResultDTO.inProgress("Already running"));
+        when(orchestrationService.run(11L)).thenReturn(CompetencyOrchestrationResultDTO.success("ok"));
+
+        scheduler.tick();
+
+        // The IN_PROGRESS exercise should be requeued — not counted as a permanent failure.
+        verify(accumulator).record(COURSE_ID, 10L, false);
+        ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
+        verify(websocketMessagingService).sendMessage(org.mockito.ArgumentMatchers.eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        AutoOrchestrationSummaryDTO summary = payload.getValue();
+        assertThat(summary.exerciseCount()).isEqualTo(1);
+        assertThat(summary.successCount()).isEqualTo(1);
+        assertThat(summary.failureCount()).isEqualTo(0);
+    }
+
+    @Test
     void tick_perExerciseException_countsAsFailure() {
         when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));

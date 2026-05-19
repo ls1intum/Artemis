@@ -129,23 +129,33 @@ public class ContentChangeScheduler {
     private void processBatch(long courseId, String runId, BatchClaim claim) {
         int success = 0;
         int failure = 0;
+        int reported = 0;
         log.info("atlas.automatic course {} firing run {} with {} exercise(s)", courseId, runId, claim.exerciseIds().size());
         for (Long exerciseId : claim.exerciseIds()) {
             try {
                 CompetencyOrchestrationResultDTO result = orchestrationService.run(exerciseId);
                 if (result != null && result.status() == CompetencyOrchestrationResultDTO.Status.SUCCESS) {
                     success++;
+                    reported++;
+                }
+                else if (result != null && result.status() == CompetencyOrchestrationResultDTO.Status.IN_PROGRESS) {
+                    // Concurrent course orchestration — requeue and let the next tick pick it up
+                    // instead of consuming the change event as a permanent failure.
+                    log.info("atlas.automatic course {} requeueing exercise {} (run {}): concurrent run in progress", courseId, exerciseId, runId);
+                    accumulator.record(courseId, exerciseId, false);
                 }
                 else {
                     failure++;
+                    reported++;
                 }
             }
             catch (Exception ex) {
                 failure++;
+                reported++;
                 log.warn("atlas.automatic per-exercise run failed exerciseId={}: {}", exerciseId, ex.getMessage());
             }
         }
-        AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, claim.exerciseIds().size(), success, failure, Instant.now(clock));
+        AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, reported, success, failure, Instant.now(clock));
         websocketMessagingService.sendMessage(String.format(TOPIC_TEMPLATE, courseId), summary);
     }
 }

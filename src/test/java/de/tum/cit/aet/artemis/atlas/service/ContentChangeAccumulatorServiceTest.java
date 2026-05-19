@@ -114,6 +114,26 @@ class ContentChangeAccumulatorServiceTest {
     }
 
     @Test
+    void claimDueBatch_lectureOnlyBatchesDoNotConsumeDailyCap() {
+        // Drain DAILY_CAP lecture-only batches; per cap should not be consumed because no
+        // orchestrator run actually fires for lecture-only batches.
+        for (int i = 0; i < DAILY_CAP + 2; i++) {
+            service.record(1L, 100L + i, true);
+            clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+            Optional<BatchClaim> claim = service.claimDueBatch(1L);
+            assertThat(claim).as("lecture-only run #%d", i + 1).isPresent();
+            assertThat(claim.get().exerciseIds()).isEmpty();
+        }
+
+        // A programming-exercise change should still fire after the lecture-only drains.
+        service.record(1L, 999L, false);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        Optional<BatchClaim> exerciseClaim = service.claimDueBatch(1L);
+        assertThat(exerciseClaim).isPresent();
+        assertThat(exerciseClaim.get().exerciseIds()).containsExactly(999L);
+    }
+
+    @Test
     void listDueCourseIds_keepsCoursesIndependent() {
         service.record(1L, 10L, false);
         clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
@@ -137,19 +157,18 @@ class ContentChangeAccumulatorServiceTest {
     }
 
     @Test
-    void tryClaimLock_secondAcquirerIsRejectedUntilRelease() {
+    void tryClaimLock_secondAcquirerIsRejectedUntilRelease() throws Exception {
         assertThat(service.tryClaimLock(42L)).isTrue();
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();
         try {
             // Same JVM, same thread re-entering — Hazelcast IMap.tryLock is reentrant, so this would
-            // succeed. Spawn a fresh thread to model a second scheduler tick on another node.
-            Thread other = new Thread(() -> assertThat(service.tryClaimLock(42L)).as("second acquirer must be rejected while lock is held").isFalse());
-            other.start();
-            other.join();
-        }
-        catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
+            // succeed. Run on a separate thread (via Future#get so the assertion bubbles back to the
+            // JUnit thread) to model a second scheduler tick on another node.
+            java.util.concurrent.Future<Boolean> future = executor.submit(() -> service.tryClaimLock(42L));
+            assertThat(future.get()).as("second acquirer must be rejected while lock is held").isFalse();
         }
         finally {
+            executor.shutdownNow();
             service.releaseLock(42L);
         }
 

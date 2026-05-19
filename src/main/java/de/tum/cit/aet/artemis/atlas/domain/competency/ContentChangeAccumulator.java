@@ -53,11 +53,14 @@ public record ContentChangeAccumulator(Set<Long> exerciseIds, Set<Long> lectureU
     }
 
     /**
-     * Clears the buffered id sets after the scheduler claims them, increments the daily counter,
-     * and resets it when the day rolls over.
+     * Clears the buffered id sets after the scheduler claims them; the daily counter is bumped only
+     * when {@code countAgainstCap} is {@code true} (i.e. the batch actually triggers an
+     * orchestrator run). Lecture-only batches drain without consuming the per-day cap, otherwise
+     * repeated lecture edits could exhaust the cap without any orchestration firing.
      */
-    public ContentChangeAccumulator claim(LocalDate today) {
-        int newCount = today.equals(dailyRunCountDate) ? dailyRunCount + 1 : 1;
+    public ContentChangeAccumulator claim(LocalDate today, boolean countAgainstCap) {
+        int baseCount = today.equals(dailyRunCountDate) ? dailyRunCount : 0;
+        int newCount = countAgainstCap ? baseCount + 1 : baseCount;
         return new ContentChangeAccumulator(Set.of(), Set.of(), lastEventTime, newCount, today);
     }
 

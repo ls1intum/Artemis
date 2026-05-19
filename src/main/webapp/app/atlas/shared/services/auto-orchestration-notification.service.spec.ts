@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
+import { vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AlertService } from 'app/shared/service/alert.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -37,7 +38,7 @@ describe('AutoOrchestrationNotificationService', () => {
         service.subscribeToCourse(42);
         service.subscribeToCourse(42);
 
-        expect(websocketSubscribeSpy).toHaveBeenCalledTimes(1);
+        expect(websocketSubscribeSpy).toHaveBeenCalledOnce();
         expect(websocketSubscribeSpy).toHaveBeenCalledWith('/topic/atlas/orchestrator/42');
     });
 

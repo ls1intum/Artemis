@@ -192,8 +192,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                 const currentCourseId = this.courseId();
                 if (isActive && currentCourseId !== undefined) {
                     this.subscribeToAutoOrchestrationNotifications(currentCourseId);
-                }
-                else if (!isActive && this.autoOrchestrationCourseId !== undefined) {
+                } else if (!isActive && this.autoOrchestrationCourseId !== undefined) {
                     this.autoOrchestrationNotificationService.unsubscribeFromCourse(this.autoOrchestrationCourseId);
                     this.autoOrchestrationCourseId = undefined;
                 }

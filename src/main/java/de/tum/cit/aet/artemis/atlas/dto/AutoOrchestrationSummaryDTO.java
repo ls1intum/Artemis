@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.atlas.dto;
 import java.time.Instant;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * WebSocket payload broadcast after the automatic orchestrator finishes draining a course's
  * accumulated batch. One message per scheduler tick that actually fired a run; subscribers (the
@@ -15,6 +17,7 @@ import java.util.Objects;
  * @param failureCount  exercises whose orchestrator run returned {@code FAILED} (or threw)
  * @param completedAt   wall-clock time the broadcast was generated
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AutoOrchestrationSummaryDTO(long courseId, String runId, int exerciseCount, int successCount, int failureCount, Instant completedAt) {
 
     public AutoOrchestrationSummaryDTO {

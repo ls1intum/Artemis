@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR;
+import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.FailureReason.INTERNAL_ERROR;
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.FailureReason.NO_CHAT_CLIENT;
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_EXERCISE;
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.FAILED;
@@ -117,7 +117,7 @@ class CompetencyOrchestrationServiceTest {
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(14L);
 
         assertThat(result.status()).isEqualTo(FAILED);
-        assertThat(result.failureReason()).isEqualTo(LLM_ERROR);
+        assertThat(result.failureReason()).isEqualTo(INTERNAL_ERROR);
         verify(runMap).remove(eq(COURSE_ID), any(RunInfo.class));
     }
 

@@ -18,12 +18,14 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Behaviour of {@link AutonomousCompetencyExerciseEventListener} — the event listener that feeds
  * the automatic pipeline from exercise creation / update events. Verifies the feature-toggle gate,
- * exam filtering, and null guards without needing a full Spring context.
+ * the programming-exercise scope filter, exam filtering, and null guards without needing a full
+ * Spring context.
  */
 @ExtendWith(MockitoExtension.class)
 class AutonomousCompetencyExerciseEventListenerTest {
@@ -48,7 +50,7 @@ class AutonomousCompetencyExerciseEventListenerTest {
     @Test
     void onExerciseVersionCreated_toggleEnabled_recordsAccumulator() {
         when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
-        TextExercise exercise = courseExercise();
+        ProgrammingExercise exercise = courseExercise();
 
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
 
@@ -58,7 +60,7 @@ class AutonomousCompetencyExerciseEventListenerTest {
     @Test
     void onExerciseVersionCreated_toggleDisabled_doesNothing() {
         when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(false);
-        TextExercise exercise = courseExercise();
+        ProgrammingExercise exercise = courseExercise();
 
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
 
@@ -68,10 +70,24 @@ class AutonomousCompetencyExerciseEventListenerTest {
     @Test
     void onExerciseVersionCreated_examExercise_filtered() {
         when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
-        TextExercise exercise = new TextExercise();
+        ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
         ExerciseGroup group = new ExerciseGroup();
         exercise.setExerciseGroup(group);
+
+        listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
+
+        verify(accumulator, never()).record(anyLong(), anyLong(), anyBoolean());
+    }
+
+    @Test
+    void onExerciseVersionCreated_nonProgrammingExercise_filtered() {
+        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
+        Course course = new Course();
+        course.setId(COURSE_ID);
+        TextExercise exercise = new TextExercise();
+        exercise.setId(EXERCISE_ID);
+        exercise.setCourse(course);
 
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
 
@@ -90,7 +106,7 @@ class AutonomousCompetencyExerciseEventListenerTest {
     @Test
     void onExerciseVersionCreated_dedupedByAccumulator() {
         when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
-        TextExercise exercise = courseExercise();
+        ProgrammingExercise exercise = courseExercise();
 
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
@@ -98,10 +114,10 @@ class AutonomousCompetencyExerciseEventListenerTest {
         verify(accumulator, times(2)).record(COURSE_ID, EXERCISE_ID, false);
     }
 
-    private TextExercise courseExercise() {
+    private ProgrammingExercise courseExercise() {
         Course course = new Course();
         course.setId(COURSE_ID);
-        TextExercise exercise = new TextExercise();
+        ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
         exercise.setCourse(course);
         return exercise;

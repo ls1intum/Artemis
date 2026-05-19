@@ -1367,10 +1367,11 @@ public class HazelcastConfiguration {
         // Must be longer than the longest plausible LLM session (GPT-5.4 + medium reasoning ~5min).
         config.getMapConfigs().put("atlas-orchestrator-runs", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(30 * 60));
         // Per-course buckets for the automatic competency orchestrator. Entries are claimed by the
-        // scheduler after the debounce window elapses; a 24h TTL bounds memory growth if a course's
-        // last orchestrator run dies before draining the bucket.
+        // scheduler after the debounce window elapses. 48h TTL gives a one-day safety margin so
+        // cap-deferred batches survive into the next day even with debounce + scheduler skew
+        // (a strict 24h would expire entries before the next-day claim).
         config.getMapConfigs().put("atlas-content-change-accumulator",
-                new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()).setTimeToLiveSeconds(24 * 60 * 60));
+                new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()).setTimeToLiveSeconds(48 * 60 * 60));
     }
 
     /**

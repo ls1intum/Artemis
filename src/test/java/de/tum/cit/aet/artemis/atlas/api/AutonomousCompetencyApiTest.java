@@ -6,8 +6,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,15 +15,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
-import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
-import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 /**
  * Exercises the manual notification path for lecture units. Lecture units have no equivalent to
- * {@code ExerciseVersionCreatedEvent}, so each lecture-unit resource injects this API and calls
- * {@link AutonomousCompetencyApi#notifyLectureUnitChange}; the tests here lock in the feature
- * toggle gate, missing-unit handling, and the ExerciseUnit filter.
+ * {@code ExerciseVersionCreatedEvent}, so each lecture-unit creator (the relevant service or
+ * resource) calls {@link AutonomousCompetencyApi#notifyLectureUnitChange}; the tests here lock in
+ * the feature-toggle gate and the accumulator hand-off.
  */
 @ExtendWith(MockitoExtension.class)
 class AutonomousCompetencyApiTest {
@@ -40,22 +35,16 @@ class AutonomousCompetencyApiTest {
     @Mock
     private FeatureToggleService featureToggleService;
 
-    @Mock
-    private LectureUnitRepository lectureUnitRepository;
-
     private AutonomousCompetencyApi api;
 
     @BeforeEach
     void setUp() {
-        api = new AutonomousCompetencyApi(accumulator, featureToggleService, lectureUnitRepository);
+        api = new AutonomousCompetencyApi(accumulator, featureToggleService);
     }
 
     @Test
-    void notifyLectureUnitChange_textUnit_recordsAccumulator() {
+    void notifyLectureUnitChange_recordsAccumulator() {
         when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
-        TextUnit unit = new TextUnit();
-        unit.setId(LECTURE_UNIT_ID);
-        when(lectureUnitRepository.findById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
 
         api.notifyLectureUnitChange(COURSE_ID, LECTURE_UNIT_ID);
 
@@ -63,31 +52,8 @@ class AutonomousCompetencyApiTest {
     }
 
     @Test
-    void notifyLectureUnitChange_exerciseUnit_skipped() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
-        ExerciseUnit unit = new ExerciseUnit();
-        unit.setId(LECTURE_UNIT_ID);
-        when(lectureUnitRepository.findById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
-
-        api.notifyLectureUnitChange(COURSE_ID, LECTURE_UNIT_ID);
-
-        verify(accumulator, never()).record(anyLong(), anyLong(), anyBoolean());
-    }
-
-    @Test
     void notifyLectureUnitChange_toggleOff_doesNothing() {
         when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(false);
-
-        api.notifyLectureUnitChange(COURSE_ID, LECTURE_UNIT_ID);
-
-        verify(lectureUnitRepository, never()).findById(anyLong());
-        verify(accumulator, never()).record(anyLong(), anyLong(), anyBoolean());
-    }
-
-    @Test
-    void notifyLectureUnitChange_missingUnit_noop() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
-        when(lectureUnitRepository.findById(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
 
         api.notifyLectureUnitChange(COURSE_ID, LECTURE_UNIT_ID);
 

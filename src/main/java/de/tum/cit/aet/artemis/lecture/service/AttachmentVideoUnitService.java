@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.atlas.api.AutonomousCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -43,18 +44,21 @@ public class AttachmentVideoUnitService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
+    private final Optional<AutonomousCompetencyApi> autonomousCompetencyApi;
+
     private final LectureUnitService lectureUnitService;
 
     private final Optional<LectureContentProcessingService> contentProcessingService;
 
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
-            Optional<LectureContentProcessingService> contentProcessingService) {
+            AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi,
+            Optional<AutonomousCompetencyApi> autonomousCompetencyApi, LectureUnitService lectureUnitService, Optional<LectureContentProcessingService> contentProcessingService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
         this.competencyProgressApi = competencyProgressApi;
+        this.autonomousCompetencyApi = autonomousCompetencyApi;
         this.lectureUnitService = lectureUnitService;
         this.contentProcessingService = contentProcessingService;
     }
@@ -78,6 +82,8 @@ public class AttachmentVideoUnitService {
 
         // Trigger automated content processing (transcription and ingestion)
         contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
+
+        autonomousCompetencyApi.ifPresent(api -> api.notifyLectureUnitChange(savedAttachmentVideoUnit.getLecture().getCourse().getId(), savedAttachmentVideoUnit.getId()));
 
         return savedAttachmentVideoUnit;
     }
@@ -157,6 +163,8 @@ public class AttachmentVideoUnitService {
         }
 
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
+
+        autonomousCompetencyApi.ifPresent(api -> api.notifyLectureUnitChange(savedAttachmentVideoUnit.getLecture().getCourse().getId(), savedAttachmentVideoUnit.getId()));
 
         return savedAttachmentVideoUnit;
     }

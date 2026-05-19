@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.atlas.api.AutonomousCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
@@ -89,8 +88,6 @@ public class AttachmentVideoUnitResource {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final Optional<AutonomousCompetencyApi> autonomousCompetencyApi;
-
     private final SlideSplitterService slideSplitterService;
 
     private final FileService fileService;
@@ -105,8 +102,8 @@ public class AttachmentVideoUnitResource {
 
     public AttachmentVideoUnitResource(AttachmentVideoUnitRepository attachmentVideoUnitRepository, LectureRepository lectureRepository,
             LectureUnitProcessingService lectureUnitProcessingService, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
-            AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<AutonomousCompetencyApi> autonomousCompetencyApi,
-            SlideSplitterService slideSplitterService, FileService fileService, LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService,
+            AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService,
+            FileService fileService, LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService,
             Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
@@ -115,7 +112,6 @@ public class AttachmentVideoUnitResource {
         this.groupNotificationService = groupNotificationService;
         this.attachmentVideoUnitService = attachmentVideoUnitService;
         this.competencyProgressApi = competencyProgressApi;
-        this.autonomousCompetencyApi = autonomousCompetencyApi;
         this.slideSplitterService = slideSplitterService;
         this.fileService = fileService;
         this.lectureUnitRepository = lectureUnitRepository;
@@ -183,8 +179,6 @@ public class AttachmentVideoUnitResource {
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnitDTO, attachment, file,
                 keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
 
-        autonomousCompetencyApi.ifPresent(api -> api.notifyLectureUnitChange(savedAttachmentVideoUnit.getLecture().getCourse().getId(), savedAttachmentVideoUnit.getId()));
-
         if (notificationText != null && attachment != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment());
         }
@@ -250,7 +244,6 @@ public class AttachmentVideoUnitResource {
         }
         attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
-        autonomousCompetencyApi.ifPresent(api -> api.notifyLectureUnitChange(lecture.getCourse().getId(), persistedUnit.getId()));
 
         searchableEntityWeaviateService.ifPresent(service -> {
             if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {
