@@ -24,8 +24,9 @@ concurrency: ${{ github.event.inputs.environment_name }}
 
 env:
   CI: true
-  # Keep filename in sync with the workflow responsible for automatic builds on PRs
-  PR_AUTO_BUILD_FILE_NAME: "build.yml"
+  # The single CI entry point that publishes the docker-tag artifact (via ci-build.yml).
+  # When ci.yml is renamed, update this constant.
+  CI_WORKFLOW_FILE_NAME: "ci.yml"
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.inputs.branch_name }}
 
 # ------------------------------------------------------------------------------
@@ -137,7 +138,7 @@ jobs:
         id: check_build
         uses: octokit/request-action@v2.x
         with:
-          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=pull_request&status=success&head_sha=${{ needs.determine-build-context.outputs.head_sha }}
+          route: GET /repos/${{ github.repository }}/actions/workflows/${{ env.CI_WORKFLOW_FILE_NAME }}/runs?event=pull_request&status=success&head_sha=${{ needs.determine-build-context.outputs.head_sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Fail if no successful build found
@@ -157,7 +158,7 @@ jobs:
         id: check_main_build
         uses: octokit/request-action@v2.x
         with:
-          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=push&status=success&branch=${{ github.event.inputs.branch_name }}&head_sha=${{ needs.determine-build-context.outputs.head_sha }}
+          route: GET /repos/${{ github.repository }}/actions/workflows/${{ env.CI_WORKFLOW_FILE_NAME }}/runs?event=push&status=success&branch=${{ github.event.inputs.branch_name }}&head_sha=${{ needs.determine-build-context.outputs.head_sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -26,7 +26,8 @@ on:
 concurrency: ${{ github.event.inputs.environment_name }}
 
 env:
-  build_workflow_name: build.yml
+  # The single CI entry point that publishes the Artemis.war artifact (via ci-build.yml).
+  build_workflow_name: ci.yml
 
 jobs:
   check-build-status:

@@ -202,7 +202,7 @@ def display_pr_context(
             print("ℹ️  None of the violating files were modified in this PR.")
             print("The violations likely come from another PR that was merged recently.")
             print()
-            print("You can bump the thresholds in .github/workflows/quality.yml:")
+            print("You can bump the thresholds in .github/workflows/ci-java-analysis.yml:")
             if large_class_violation:
                 print(f"  - max_large_classes: {max_large_classes} → {len(large_classes)}")
             if complex_bean_violation:

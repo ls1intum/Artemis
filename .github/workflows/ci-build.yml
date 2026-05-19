@@ -1,0 +1,217 @@
+name: Build
+
+# Reusable workflow called by ci.yml. Do NOT add a `concurrency:` block here — the parent's
+# group already applies. A child concurrency group can cancel queued children without
+# cancelling the parent, leaving the parent run hung.
+
+on:
+  workflow_call:
+    inputs:
+      ref_name:
+        description: 'Human-readable branch/ref the build represents (used for cache keys, logs).'
+        required: true
+        type: string
+      commit_sha:
+        description: 'SHA the build is for. PR builds use the PR head SHA, not the merge commit.'
+        required: true
+        type: string
+      is_pr:
+        description: 'True when the umbrella was triggered by pull_request.'
+        required: true
+        type: boolean
+      is_internal_pr:
+        description: 'True only for PRs from branches inside ls1intum/Artemis (fork PRs cannot push to GHCR).'
+        required: false
+        type: boolean
+        default: false
+      is_release:
+        description: 'True when the umbrella was triggered by a release.'
+        required: false
+        type: boolean
+        default: false
+      release_tag:
+        description: 'Tag name of the release (only set when is_release).'
+        required: false
+        type: string
+        default: ''
+      release_upload_url:
+        description: 'Upload URL provided by the release event (only set when is_release).'
+        required: false
+        type: string
+        default: ''
+
+# Keep in sync with ci-test.yml, ci-java-analysis.yml and codeql-analysis.yml.
+env:
+  CI: true
+  node: 24
+  java: 25
+
+jobs:
+  build-war:
+    name: Build .war artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 0
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'pnpm'
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+          cache: 'gradle'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build Angular Client
+        # Build the Angular client separately so that Node.js/esbuild get full system
+        # memory without competing with the Gradle JVM (which reserves up to 4g).
+        # --optimization=false works around an esbuild crash during script optimization.
+        run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false
+      - name: Build .war
+        # Skip the webapp Gradle task since the Angular client was already built above.
+        run: ./gradlew -Pprod -Pwar bootWar -x webapp
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: Artemis.war
+          path: build/libs/Artemis-*.war
+          if-no-files-found: error
+      - name: Upload Release Artifact
+        # Inputs are coming from a trusted caller (ci.yml) but we still go via env to keep
+        # the value out of shell-injection paths in case the caller is later refactored.
+        if: ${{ inputs.is_release }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -Eeuo pipefail
+          # Validate the tag matches the expected format before passing it to gh.
+          if ! [[ "$RELEASE_TAG" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::Refusing to upload release artifact: tag '$RELEASE_TAG' is not a valid version."
+            exit 1
+          fi
+          mv "build/libs/Artemis-${RELEASE_TAG}.war" /tmp/Artemis.war
+          gh release upload "$RELEASE_TAG" /tmp/Artemis.war --clobber --repo "${GITHUB_REPOSITORY}"
+
+  # Fast PR path: single-arch (linux/amd64) image that reuses the .war produced by
+  # `build-war` via the Dockerfile's `external_builder` stage. Skips the duplicate
+  # Angular + Gradle build that the reusable multi-arch workflow would otherwise
+  # run inside the image.
+  #
+  # Fork PRs are skipped because they cannot push to ghcr.io/ls1intum/artemis.
+  # E2E is consequently skipped for fork PRs (ci.yml's e2e job needs this image).
+  docker-pr:
+    name: Build and Push Docker Image (PR, amd64)
+    needs: build-war
+    if: ${{ inputs.is_pr && inputs.is_internal_pr }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Download .war artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: Artemis.war
+          path: build/libs
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/ls1intum/artemis
+          tags: |
+            type=ref,event=pr
+      - name: Build and push (linux/amd64)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./docker/artemis/Dockerfile
+          platforms: linux/amd64
+          # Skip the in-image .war build; COPY the artifact produced by `build-war` instead.
+          build-args: WAR_FILE_STAGE=external_builder
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # Consumed by .github/actions/e2e-setup, which downloads the `docker-tag` artifact
+      # from the current parent run and pulls ghcr.io/ls1intum/artemis:<tag>.
+      - name: Save Docker tag to file
+        env:
+          DOCKER_TAG: ${{ steps.meta.outputs.version }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$DOCKER_TAG" > docker-tag.txt
+          echo "Using Docker tag: $DOCKER_TAG"
+      - name: Upload Docker tag as artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: docker-tag
+          path: docker-tag.txt
+          if-no-files-found: error
+
+  # Release / default-branch path: multi-arch publish via the shared reusable workflow.
+  # The reusable workflow runs its own checkout and cannot see `build-war`'s artifact,
+  # so it rebuilds the .war inside the image. This path only fires for push/release.
+  docker-release:
+    name: Build and Push Docker Image
+    if: ${{ !inputs.is_pr }}
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.1.1
+    with:
+      ref: ${{ inputs.ref_name }}
+      image-name: ls1intum/artemis
+      docker-file: ./docker/artemis/Dockerfile
+      tags: |
+        type=ref,event=tag
+
+  # Mirrors the `docker-tag` artifact upload from `docker-pr` for the release path so that
+  # .github/actions/e2e-setup can consume it uniformly regardless of which docker job produced
+  # the image.
+  save-docker-tag:
+    name: Save Docker Image Tag
+    needs: docker-release
+    if: ${{ !inputs.is_pr }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Save Docker tag to file
+        env:
+          DOCKER_TAG: ${{ needs.docker-release.outputs.image_tag }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$DOCKER_TAG" > docker-tag.txt
+          echo "Using Docker tag: $DOCKER_TAG"
+      - name: Upload Docker tag as artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: docker-tag
+          path: docker-tag.txt
+          if-no-files-found: error

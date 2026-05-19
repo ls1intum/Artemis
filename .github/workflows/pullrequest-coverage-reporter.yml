@@ -1,16 +1,22 @@
 name: PR Coverage Reporter
 
-# Reuses coverage artifacts produced by the `Test` workflow to render the
-# coverage table in the PR description, instead of re-running the entire
-# test suite a second time (which was the historical bottleneck).
+# Reuses coverage artifacts produced by the CI umbrella's `test` job (ci-test.yml) to render
+# the coverage table in the PR description, instead of re-running the entire test suite a
+# second time (which was the historical bottleneck).
+#
+# `workflow_run` listens for the umbrella's name. Coverage artifacts are uploaded by
+# ci-test.yml's `server-tests` job under the umbrella's run id, so artifact lookups via
+# `workflow_run.id` continue to work after the migration.
 on:
   workflow_run:
-    # Must match the name of test.yml's `name:` field.
-    workflows: ["Test"]
+    # Must match the `name:` field of .github/workflows/ci.yml.
+    workflows: ["CI"]
     types: [completed]
 
+# Group by PR number when available, falling back to head_sha — head_branch alone collides
+# across PRs that share a branch name on a shared fork.
 concurrency:
-  group: coverage-${{ github.event.workflow_run.head_branch }}
+  group: coverage-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_sha }}
   cancel-in-progress: true
 
 env:

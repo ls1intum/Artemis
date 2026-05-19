@@ -9,7 +9,7 @@ concurrency:
   group: test-mysql-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
-# Keep in sync with test.yml
+# Keep in sync with ci-test.yml
 env:
   CI: true
   node: 24

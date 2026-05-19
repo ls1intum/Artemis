@@ -1,0 +1,339 @@
+name: Test
+
+# Reusable workflow called by ci.yml. Do NOT add a `concurrency:` block — that belongs to the parent.
+
+on:
+  workflow_call:
+    inputs:
+      base_branch:
+        description: 'Base branch used for module-affected test selection. Defaults to the default branch.'
+        required: true
+        type: string
+      run_all_tests:
+        description: 'When true, run every test. When false, only run tests in modules affected by changes vs base_branch.'
+        required: true
+        type: boolean
+      is_pr:
+        description: 'True when the umbrella was triggered by pull_request.'
+        required: true
+        type: boolean
+      is_internal_pr:
+        description: 'True only for PRs from branches inside ls1intum/Artemis (external services like Codacy skip on fork PRs).'
+        required: false
+        type: boolean
+        default: false
+      pr_author:
+        description: 'PR author login. Used to skip noisy annotations for bots.'
+        required: false
+        type: string
+        default: ''
+    secrets:
+      CODACY_PROJECT_TOKEN:
+        description: 'Coverage upload token. Optional — coverage is uploaded only on internal PRs by non-bot authors.'
+        required: false
+
+# Keep in sync with ci-build.yml, ci-java-analysis.yml and codeql-analysis.yml.
+env:
+  CI: true
+  node: 24
+  java: 25
+
+jobs:
+  server-tests:
+    name: Server Tests (PostgreSQL)
+    runs-on: aet-large-ubuntu
+    timeout-minutes: 80
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          # Java 17 is required to run programming templates.
+          java-version: |
+            17
+            ${{ env.java }}
+          cache: 'gradle'
+      - name: Java Tests (module-affected)
+        if: ${{ !inputs.run_all_tests }}
+        env:
+          DEFAULT_BRANCH: ${{ inputs.base_branch }}
+        run: |
+          set -Eeuo pipefail
+
+          # Explicitly fetch — the checkout action only clones the current branch.
+          git fetch origin "$DEFAULT_BRANCH"
+
+          chmod +x ./supporting_scripts/get_changed_modules.sh
+          CHANGED_MODULES=$(./supporting_scripts/get_changed_modules.sh "origin/$DEFAULT_BRANCH")
+
+          if [ -n "${CHANGED_MODULES}" ]; then
+            TEST_MODULE_TAGS="-DincludeModules=${CHANGED_MODULES}"
+            echo "Executing tests for modules: $CHANGED_MODULES"
+            ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification "$TEST_MODULE_TAGS" 2>&1 | tee tests.log
+            exit 0
+          fi
+
+          echo "No module-specific changes detected — executing all tests."
+          ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification 2>&1 | tee tests.log
+      - name: Java Tests (All)
+        if: ${{ inputs.run_all_tests }}
+        run: |
+          set -Eeuo pipefail
+          ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification 2>&1 | tee tests.log
+      - name: Upload JUnit Test Results
+        if: success() || failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: JUnit Test Results
+          path: build/test-results/test/*.xml
+      - name: Print failed tests
+        if: failure()
+        # DataExportResourceIntegrationTest has a parameterized test with a FAILED enum and
+        # needs to be excluded, as it is not an actual test failure.
+        run: |
+          set -Eeuo pipefail
+          FAILED_TESTS=$(grep "Test >.* FAILED\$" tests.log | grep -v "Starting logs for .* > .*state = FAILED\$" || true)
+          if [ -n "$FAILED_TESTS" ]; then
+            echo "$FAILED_TESTS"
+            exit 1
+          else
+            echo "No failed tests."
+          fi
+      - name: JaCoCo Coverage Verification
+        id: jacoco-verification
+        if: ${{ inputs.run_all_tests }}
+        continue-on-error: true
+        run: |
+          set -Eeuo pipefail
+          ./gradlew --console=plain jacocoTestCoverageVerification -x test -x webapp 2>&1 | tee jacoco-verification.log
+      - name: Print JaCoCo coverage violations
+        if: steps.jacoco-verification.outcome == 'failure'
+        run: |
+          set -Eeuo pipefail
+          VIOLATIONS=$(grep "Rule violated for bundle" jacoco-verification.log || true)
+          if [ -n "$VIOLATIONS" ]; then
+            MODULES=$(grep 'jacocoTestCoverageVerification-.*FAILED' jacoco-verification.log | sed 's/.*jacocoTestCoverageVerification-\([a-zA-Z]*\).*/\1/' | sort -u | tr '\n' ', ' | sed 's/, $//' || true)
+            echo "::error::JaCoCo code coverage thresholds violated${MODULES:+ in module(s): $MODULES}"
+            echo ""
+            echo "$VIOLATIONS"
+            echo ""
+            if [ -n "$MODULES" ]; then
+              echo "If this is not related to your PR, adjust the thresholds for module(s) [$MODULES] in gradle/jacoco.gradle (ModuleCoverageThresholds)."
+            else
+              echo "If this is not related to your PR, adjust the thresholds in gradle/jacoco.gradle (ModuleCoverageThresholds)."
+            fi
+          fi
+      - name: Diagnostic info
+        if: success() || failure()
+        run: |
+          echo "=== Docker containers ==="
+          docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
+          echo ""
+          echo "=== Memory ==="
+          free -h || true
+          echo ""
+          echo "=== Disk usage ==="
+          df -h /tmp || true
+          echo ""
+          echo "=== PostgreSQL connection errors in test log ==="
+          grep -c "PSQLException\|SQLSTATE(08006)\|Connection.*broken\|I/O error occurred while sending" tests.log || echo "0 connection errors found"
+          echo ""
+          echo "=== Unique PostgreSQL errors ==="
+          grep "PSQLException\|SQLSTATE(08006)" tests.log | sort -u | head -10 || echo "No PostgreSQL errors"
+      - name: 'Codacy: Report coverage'
+        # Pinned to v1.3.0 (was @master — floating ref was the only supply-chain risk in the repo).
+        # Coverage upload runs only on internal PRs by non-bot authors; fork PRs lack the secret.
+        uses: codacy/codacy-coverage-reporter-action@a38818475bb21847788496e9f0fddaa4e84955ba
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: build/reports/jacoco/aggregated/jacocoTestReport.xml
+        if: ${{ (success() || failure()) && inputs.is_internal_pr && inputs.pr_author != 'dependabot[bot]' }}
+      - name: Annotate Server Test Results
+        uses: ashley-taylor/junit-report-annotations-action@f9c1a5cbe28479439f82b80a5402a6d3aa1990ac
+        if: ${{ always() && inputs.pr_author != 'dependabot[bot]' }}
+        with:
+          access-token: ${{ secrets.GITHUB_TOKEN }}
+          path: build/test-results/test/*.xml
+          numFailures: 99
+      - name: Test Report
+        uses: dorny/test-reporter@v3
+        if: success() || failure()
+        with:
+          name: Server Tests (PostgreSQL)
+          path: build/test-results/test/*.xml
+          reporter: java-junit
+      - name: Number of Server Starts
+        if: success() || failure()
+        run: bash supporting_scripts/extract_number_of_server_starts.sh
+      - name: Upload Server Test Coverage Report
+        if: success() || failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: Coverage Report Server Tests
+          path: build/reports/jacoco/aggregated/html
+      - name: Upload JaCoCo XML Reports
+        if: success() || failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: Server JaCoCo XML
+          path: build/reports/jacoco/**/jacocoTestReport.xml
+          if-no-files-found: ignore
+      - name: Append Per-Module Coverage to Job Summary
+        if: success() || failure()
+        run: |
+          set -Eeuo pipefail
+          AGGREGATED_REPORT_FILE=./module_coverage_report.md
+          python3 ./supporting_scripts/code-coverage/per_module_cov_report/parse_module_coverage.py build/reports/jacoco "$AGGREGATED_REPORT_FILE"
+          cat "$AGGREGATED_REPORT_FILE" > "$GITHUB_STEP_SUMMARY"
+
+  server-style:
+    name: Server Style
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+          cache: 'gradle'
+      - name: Java Code Style
+        run: ./gradlew spotlessCheck
+      - name: Java Documentation
+        run: ./gradlew checkstyleMain -x webapp
+        if: success() || failure()
+      - name: Java Architecture Tests
+        run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
+        if: success() || failure()
+      - name: Test Report
+        uses: dorny/test-reporter@v3
+        if: success() || failure()
+        with:
+          name: Java Architecture Tests
+          path: build/test-results/test/*.xml
+          reporter: java-junit
+
+  client-tests:
+    name: Client Tests
+    runs-on: aet-large-ubuntu
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      # Some client tests OOM with the project-wide --max-old-space-size in .npmrc.
+      # We strip that single line as a workaround; the rest of .npmrc stays.
+      - name: Remove project-wide node options set in .npmrc just for this test
+        run: sed -i '/^node-options=/d' .npmrc || true
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'pnpm'
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Compile TypeScript Test Files With Typechecking
+        run: pnpm run compile:tests
+      - name: TypeScript Test Without Typechecking
+        run: pnpm run test:ci
+      - name: Upload Client Test Coverage Report
+        if: success() || failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: Coverage Report Client Tests
+          path: build/test-results/lcov-report/
+      - name: Upload Vitest Coverage Report
+        if: success() || failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: Vitest Coverage Report
+          path: build/test-results/vitest/coverage/
+      - name: Upload Client Coverage Summaries
+        if: success() || failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: Client Coverage Summaries
+          path: |
+            build/test-results/jest/coverage-summary.json
+            build/test-results/vitest/coverage/coverage-summary.json
+          if-no-files-found: ignore
+      - name: Upload JUnit Test Results
+        if: success() || failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: Client JUnit Test Results
+          path: junit.xml
+      - name: Upload Vitest JUnit Test Results
+        if: success() || failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: Vitest JUnit Test Results
+          path: build/test-results/vitest/junit.xml
+
+  client-style:
+    name: Client Style
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'pnpm'
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: TypeScript Formatting
+        run: pnpm run prettier:check
+      - name: TypeScript Code Style
+        run: pnpm run lint
+        if: success() || failure()
+      - name: Install Playwright Dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: src/test/playwright
+        if: success() || failure()
+      - name: Playwright Code Style
+        run: pnpm run lint
+        working-directory: src/test/playwright
+        if: success() || failure()
+
+  client-compilation:
+    name: Client Compilation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'pnpm'
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Compile TypeScript Files With Typechecking
+        run: pnpm run compile

@@ -20,7 +20,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
-# Keep in sync with build.yml and test.yml and analysis-of-endpoint-connections.yml
+# Keep in sync with ci-build.yml and ci-test.yml.
 env:
   CI: true
   node: 24

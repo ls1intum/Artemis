@@ -1,0 +1,322 @@
+name: CI
+# Single CI entry point for ls1intum/Artemis.
+#
+#  - One workflow registers all triggers (pull_request / push / release / merge_group / workflow_dispatch)
+#    so there is exactly one place that answers "what runs on event X?".
+#  - All heavy work lives in `workflow_call` reusables (ci-build.yml, ci-test.yml, …).
+#  - The `all-ci-passed` job is the single required status check; branch protection requires only this one.
+#
+# Reusables must NOT declare their own `concurrency:` — the parent's group already applies, and a child
+# group would cancel queued children while the parent keeps running (deadlock).
+# See .github/workflows/README.md for the full contract.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches:
+      - develop
+      - main
+      - release/*
+    tags:
+      - '[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+'
+  release:
+    types: [published]
+  merge_group:
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Bypass change detection and run every job'
+        type: boolean
+        default: false
+
+# Event-aware concurrency. PRs cancel on rebase; push/release/merge-queue runs serialize per ref.
+concurrency:
+  group: >-
+    ${{ github.event_name == 'pull_request' && format('ci-pr-{0}', github.event.pull_request.number)
+     || github.event_name == 'merge_group'  && format('ci-mq-{0}', github.event.merge_group.head_sha)
+     || github.event_name == 'release'      && format('ci-release-{0}', github.event.release.tag_name)
+     || format('ci-{0}', github.ref) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Default-deny: each job opts in to the permissions it needs.
+permissions: {}
+
+jobs:
+
+  detect-changes:
+    name: Detect Changed Areas
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      build_relevant: ${{ steps.decide.outputs.build_relevant }}
+      has_java: ${{ steps.decide.outputs.has_java }}
+      has_docs: ${{ steps.decide.outputs.has_docs }}
+      has_i18n: ${{ steps.decide.outputs.has_i18n }}
+      has_gradle: ${{ steps.decide.outputs.has_gradle }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # paths-filter needs at least two commits for push diffs.
+          fetch-depth: 2
+
+      # dorny/paths-filter handles the edge cases hand-rolled `git diff` does not:
+      # initial commits, force-pushes, missing merge-base, and `merge_group` events.
+      - id: filter
+        if: github.event_name != 'workflow_dispatch' || !inputs.force_build
+        uses: dorny/paths-filter@v3
+        with:
+          # On push/merge_group: diff against the previous commit. On PR: against base.ref.
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '' }}
+          filters: |
+            build_relevant:
+              - 'src/main/**'
+              - 'src/test/**'
+              - 'build.gradle'
+              - 'settings.gradle'
+              - 'gradle.properties'
+              - 'gradle/**'
+              - 'gradlew'
+              - 'gradlew.bat'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'tsconfig*.json'
+              - 'angular.json'
+              - 'jest.config.js'
+              - 'vite.config.*'
+              - 'webpack.config.*'
+              - 'docker/**'
+              - '.ci/**'
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-*.yml'
+              - '.github/actions/**'
+              - '.github/scripts/**'
+            has_java:
+              - 'src/main/java/**'
+              - 'src/test/java/**'
+              - 'build.gradle'
+              - 'gradle/**'
+            has_docs:
+              - 'documentation/**'
+            has_i18n:
+              - 'src/main/webapp/i18n/**'
+            has_gradle:
+              - 'gradle/wrapper/**'
+              - 'gradlew'
+              - 'gradlew.bat'
+
+      - id: decide
+        env:
+          # When force_build is set on workflow_dispatch, OR the event has no diff baseline
+          # (release, tag push, merge_group root commit), run everything.
+          FORCE: >-
+            ${{ (github.event_name == 'workflow_dispatch' && inputs.force_build)
+             || github.event_name == 'release'
+             || github.event_name == 'merge_group'
+             || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) }}
+          F_BUILD: ${{ steps.filter.outputs.build_relevant }}
+          F_JAVA: ${{ steps.filter.outputs.has_java }}
+          F_DOCS: ${{ steps.filter.outputs.has_docs }}
+          F_I18N: ${{ steps.filter.outputs.has_i18n }}
+          F_GRADLE: ${{ steps.filter.outputs.has_gradle }}
+        run: |
+          set -Eeuo pipefail
+          if [ "$FORCE" = "true" ]; then
+            echo "Forced run — every gate set to true."
+            for k in build_relevant has_java has_docs has_i18n has_gradle; do
+              echo "$k=true" >> "$GITHUB_OUTPUT"
+            done
+          else
+            {
+              echo "build_relevant=${F_BUILD:-false}"
+              echo "has_java=${F_JAVA:-false}"
+              echo "has_docs=${F_DOCS:-false}"
+              echo "has_i18n=${F_I18N:-false}"
+              echo "has_gradle=${F_GRADLE:-false}"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build
+    needs: detect-changes
+    if: needs.detect-changes.outputs.build_relevant == 'true'
+    uses: ./.github/workflows/ci-build.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      ref_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      is_pr: ${{ github.event_name == 'pull_request' }}
+      is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+      is_release: ${{ github.event_name == 'release' }}
+      release_tag: ${{ github.event.release.tag_name || '' }}
+      release_upload_url: ${{ github.event.release.upload_url || '' }}
+
+  test:
+    name: Test
+    needs: detect-changes
+    if: needs.detect-changes.outputs.build_relevant == 'true'
+    uses: ./.github/workflows/ci-test.yml
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    with:
+      base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
+      # Module-affected mode is opt-in for draft PRs. Default branch and non-PR events run everything.
+      run_all_tests: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+      is_pr: ${{ github.event_name == 'pull_request' }}
+      is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+      pr_author: ${{ github.event.pull_request.user.login || '' }}
+    secrets:
+      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+
+  java-analysis:
+    name: Java Analysis
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_java == 'true'
+    uses: ./.github/workflows/ci-java-analysis.yml
+    permissions:
+      contents: read
+    with:
+      base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
+
+  gradle-wrapper:
+    name: Gradle Wrapper
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_gradle == 'true'
+    uses: ./.github/workflows/ci-gradle-wrapper.yml
+    permissions:
+      contents: read
+
+  docs:
+    name: Documentation
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_docs == 'true'
+    uses: ./.github/workflows/ci-docs.yml
+    permissions:
+      contents: read
+
+  translation:
+    name: Translation Keys
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_i18n == 'true'
+    uses: ./.github/workflows/ci-translation.yml
+    permissions:
+      contents: read
+
+  e2e:
+    name: E2E
+    needs: [detect-changes, build, test]
+    # E2E needs the Docker image from `build` and the test setup from `test`.
+    # If either skipped (build_relevant=false) or failed, E2E skips — the gate distinguishes the two
+    # via the `build`/`test` results directly (they are in the gate's `needs:` allow-list).
+    if: |
+      always() &&
+      needs.detect-changes.outputs.build_relevant == 'true' &&
+      needs.build.result == 'success' &&
+      needs.test.result == 'success'
+    uses: ./.github/workflows/ci-e2e.yml
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: write
+      actions: read
+    with:
+      branch_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
+      is_pr: ${{ github.event_name == 'pull_request' }}
+      pr_number: ${{ github.event.pull_request.number || 0 }}
+    secrets:
+      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+      PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
+      HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+
+  # ----------------------------------------------------------------------------
+  # The single required status check.
+  #
+  # Branch protection should require exactly one check: "CI / All CI Passed".
+  # All other status names produced by this workflow are informational.
+  #
+  # Gate rules:
+  #   - Every child whose result is failure or cancelled fails the gate.
+  #   - Skipped children are accepted only when listed in ALLOWED_SKIP — every job that
+  #     can legitimately skip on path-filtered or upstream-failed PRs is in that list.
+  #   - `detect-changes` is NOT in the allow-list. If change detection itself fails,
+  #     children skip cascadingly — the gate must catch this by failing on
+  #     `detect-changes` itself, which is the only job guaranteed to run.
+  # ----------------------------------------------------------------------------
+  all-ci-passed:
+    name: All CI Passed
+    if: always()
+    needs:
+      - detect-changes
+      - build
+      - test
+      - java-analysis
+      - gradle-wrapper
+      - docs
+      - translation
+      - e2e
+    runs-on: ubuntu-latest
+    permissions: {}
+    timeout-minutes: 5
+    steps:
+      - name: Render job summary
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          set -Eeuo pipefail
+          {
+            echo "## CI Summary"
+            echo ""
+            echo "| Job | Result |"
+            echo "|-----|--------|"
+            jq -r 'to_entries[] | "| \(.key) | \(.value.result // "n/a") |"' <<< "$NEEDS"
+            echo ""
+            echo "_Run: [#${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})_"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Persist machine-readable summary artifact
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: printf '%s\n' "$NEEDS" > ci-summary.json
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ci-summary
+          path: ci-summary.json
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Evaluate gate
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          # Every job EXCEPT `detect-changes` may legitimately skip:
+          #   - docs/translation/java-analysis/gradle-wrapper skip when their path filter is false.
+          #   - build/test skip on docs-only PRs (build_relevant=false).
+          #   - e2e skips when build or test failed or skipped.
+          # `detect-changes` always runs, so if it fails the gate must fail closed.
+          ALLOWED_SKIP: 'build test e2e docs translation java-analysis gradle-wrapper'
+        run: |
+          set -Eeuo pipefail
+          failing=$(jq -r --arg allowed "$ALLOWED_SKIP" '
+            to_entries[]
+            | select(.value.result != "success")
+            | select(.value.result != "skipped" or (($allowed | split(" ")) | index(.key) | not))
+            | "\(.key): \(.value.result)"
+          ' <<< "$NEEDS")
+          if [ -n "$failing" ]; then
+            echo "::error::One or more required CI jobs did not pass:"
+            echo "$failing"
+            exit 1
+          fi
+          echo "All required CI jobs passed."

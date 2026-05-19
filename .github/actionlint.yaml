@@ -1,0 +1,9 @@
+# Configuration for rhysd/actionlint.
+# Self-hosted runner labels in use across ls1intum/Artemis workflows.
+self-hosted-runner:
+  labels:
+    - aet-large-ubuntu
+    - e2e-test
+    - artemis-test-deployment
+    - artemis-prod-deployment
+    - ase-large-android-sdk-34

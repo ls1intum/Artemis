@@ -1,0 +1,141 @@
+# GitHub Actions Workflows
+
+This directory hosts the Artemis CI/CD pipeline. The model is **one entry point + reusable
+children + one required status check**.
+
+## Entry point — `ci.yml`
+
+`ci.yml` is the single CI entry point. It registers every trigger that should run the main
+CI pipeline (pull requests, pushes to `develop` / `main` / `release/*`, tag pushes, published
+releases, merge-queue runs, and a manual `workflow_dispatch`) so that the answer to "what
+runs on event X?" is in exactly one file.
+
+```
+ci.yml                                                            (single entry workflow)
+├── detect-changes               (dorny/paths-filter, emits per-area booleans)
+├── build           ── uses ci-build.yml                          (workflow_call)
+├── test            ── uses ci-test.yml                           (workflow_call)
+├── java-analysis   ── uses ci-java-analysis.yml                  (workflow_call, if has_java)
+├── gradle-wrapper  ── uses ci-gradle-wrapper.yml                 (workflow_call, if has_gradle)
+├── docs            ── uses ci-docs.yml                           (workflow_call, if has_docs)
+├── translation     ── uses ci-translation.yml                    (workflow_call, if has_i18n)
+├── e2e             ── uses ci-e2e.yml                            (workflow_call, after build + test)
+└── all-ci-passed                (jq-based gate — the single required status check)
+```
+
+### Why one entry point and not many
+
+- **One trigger surface.** Path filters, branch filters, and concurrency live in one place.
+- **No `workflow_run` chain.** E2E is invoked directly with `needs: [build, test]`. The old
+  `workflow_run` listener (a) ran from the default-branch copy of the workflow file, so PRs
+  modifying E2E never tested their own changes, and (b) needed a hand-rolled cancellation
+  workaround for queue-stacking on the self-hosted runner pool.
+- **Stable required check.** Branch protection requires exactly one job: `CI / All CI Passed`.
+  Renaming or adding child jobs does not require updating branch protection.
+
+### Why one required status check and not many
+
+The community consensus pattern in 2026 (TypeScript, Vite, Ruff, Rust, Turborepo) is:
+require a single umbrella job, evaluate every child's `result` via `jq`, and accept
+`skipped` only for children that may legitimately be path-filtered out. Listing every
+child as required is fragile — every rename or refactor breaks branch protection, and
+path-filtered children leave required checks stuck on "pending".
+
+The gate's allow-list of children that may skip is in `ci.yml` (`ALLOWED_SKIP`).
+**`build` and `test` are NOT in the allow-list**: if they skip cascadingly (because
+`detect-changes` failed), the gate fails closed.
+
+## Reusable workflows — `ci-*.yml`
+
+Each `ci-*.yml` file has `on: workflow_call:` and is invoked only by `ci.yml`. Rules:
+
+1. **No `concurrency:` block inside a reusable.** The parent's group already applies. A
+   child-level `concurrency:` block can cancel a queued child while the parent run stays
+   alive, leaving the parent hung. This is the documented pitfall in
+   [actions/runner#3205](https://github.com/actions/runner/issues/3205).
+2. **Per-job `permissions:`** with default-deny at workflow level. Reusables cannot elevate
+   permissions above what the caller grants — they can only narrow them.
+3. **Secrets declared explicitly.** No `secrets: inherit`. The
+   [2026 Actions security roadmap](https://github.blog/news-insights/product-news/whats-coming-to-our-github-actions-2026-security-roadmap/)
+   removes implicit inheritance.
+4. **Inputs typed as `boolean` / `number` where appropriate** (not stringy).
+
+## Retained top-level workflows
+
+These workflows are intentionally NOT folded into the umbrella:
+
+| Workflow | Reason |
+|---|---|
+| `codeql-analysis.yml` | Security/compliance scan. Independent schedule, default-branch only. |
+| `test-android.yml` | Different self-hosted runner pool, clones a separate repo, 60-minute job. |
+| `test-mysql.yml` | Manual-only (`workflow_dispatch`). Sibling DB engine to PostgreSQL. |
+| `bean-instantiations.yml` | Java-source-only, independent. Out of scope for this consolidation. |
+| `version-consistency.yml` | Trivial, fires on a tiny path set. |
+| `deploy-documentation.yml` | Owns the `pages` concurrency slot. |
+| `testserver-deployment.yml`, `prod-like-deployment.yml` | Manual deploy workflows. |
+| `pullrequest-coverage-reporter.yml` | `workflow_run` consumer of CI artifacts. Listens for `CI`. |
+| All `pull_request_target` / `issues` / `schedule` workflows | Need elevated tokens or run on different trigger surfaces. |
+
+## Branch protection migration
+
+When this PR lands, branch protection (or the corresponding ruleset) must be updated
+from per-workflow checks to one umbrella check.
+
+Recommended path — **GitHub Rulesets** (not legacy branch protection):
+
+1. **Before merging**: dump the current required checks.
+   ```bash
+   gh api repos/ls1intum/Artemis/branches/develop/protection/required_status_checks/contexts
+   ```
+   Keep the output in a runbook in case rollback is needed.
+
+2. **Merge this PR**. The new `CI` workflow runs in parallel with the dropped checks
+   (since the dropped checks no longer exist, branch protection will allow PRs to merge
+   once those required checks are removed from the rule — proceed to step 3 immediately).
+
+3. **Replace the required checks** for `develop`, `main`, and `release/*`:
+   - Remove: every per-workflow check that used to come from the deleted files (`Build /
+     Build .war artifact`, `Test / server-tests`, `Test / client-tests`, `Test / server-style`,
+     `Test / client-style`, `Test / client-compilation`, `Java Code Quality Analysis /
+     code-quality-analysis`, `Query Quality Check / query-quality-check`, `Build
+     Documentation / build`, `Validate Gradle Wrapper / Gradle Wrapper Validation`, `Check
+     if German and English translations are consistent / build`, `End-to-End (E2E) Tests`).
+   - Add: **`CI / All CI Passed`** (the only required check from `ci.yml`).
+   - Keep: checks coming from retained workflows (e.g. `CodeQL / Analyse`, `Android E2E
+     Tests / Android E2E Tests`, `Validate PR Title / validate-pr-title`, `Validate PR
+     Description / validate-pr-description`).
+
+4. **Verify** by opening a fresh PR. Wait for `CI / All CI Passed` to turn green.
+
+5. **Rollback path** (only if something blocks merges): re-add the old required-check
+   contexts from the dump in step 1 — the deleted files would need to be restored from
+   git history. Keep this PR's deletions in a single commit to make `git revert` easy.
+
+## Concurrency model
+
+| Event | Group key | Cancel in progress? |
+|---|---|---|
+| `pull_request` | `ci-pr-{N}` | yes |
+| `merge_group` | `ci-mq-{head_sha}` | no |
+| `release` | `ci-release-{tag}` | no |
+| `push` / `workflow_dispatch` | `ci-{github.ref}` | no |
+
+Concurrency lives only on the umbrella. Children inherit the parent's group; **never** add
+a `concurrency:` block to a `ci-*.yml` reusable.
+
+## Adding a new CI check
+
+1. Create a new reusable `ci-<name>.yml` with `on: workflow_call:` (no concurrency block).
+2. Add a job in `ci.yml`:
+   ```yaml
+   <name>:
+     name: <Human-readable name>
+     needs: detect-changes
+     if: needs.detect-changes.outputs.<flag> == 'true'
+     uses: ./.github/workflows/ci-<name>.yml
+   ```
+3. Add `<name>` to the `needs:` list of `all-ci-passed`.
+4. Decide whether the new child may legitimately skip on path-filtered PRs:
+   - **Yes** (most reusables): add `<name>` to `ALLOWED_SKIP` in the gate.
+   - **No** (the work must always run when triggered): leave it out of `ALLOWED_SKIP`.
+   No branch-protection change is needed — the gate's `name:` field is what's required.

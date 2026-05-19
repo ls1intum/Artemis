@@ -1,0 +1,121 @@
+name: Java Analysis
+
+# Reusable workflow called by ci.yml. Collapses the former `quality.yml` (code-quality-analysis)
+# and `query-quality.yml` (query-quality-check) workflows into one reusable so they share the
+# parent's concurrency group and a single trigger surface.
+#
+# Do NOT add a `concurrency:` block here — that belongs to the parent.
+
+on:
+  workflow_call:
+    inputs:
+      base_branch:
+        description: 'Base branch used by analyze_java_files.py for diff context.'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  code-quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - name: Check LOC and number of class dependencies
+        env:
+          EVENT_TYPE: ${{ github.event_name }}
+          BASE_BRANCH: ${{ inputs.base_branch }}
+        run: |
+          set -Eeuo pipefail
+          # TODO these values should become zero in the future
+          max_large_classes=17
+          max_complex_beans=17
+
+          python supporting_scripts/analyze_java_files.py \
+            --max-large-classes "$max_large_classes" \
+            --max-complex-beans "$max_complex_beans" \
+            --event-type "$EVENT_TYPE" \
+            --base-branch "$BASE_BRANCH"
+
+  query-quality:
+    name: Query Quality Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - name: Query quality check
+        run: |
+          set -Eeuo pipefail
+          # Run the analysis and capture output
+          output=$(python supporting_scripts/find_slow_queries.py)
+
+          echo "$output"
+          echo ""
+
+          # Extract violation counts
+          entitygraph_violations=$(echo "$output" | grep -c "\[EntityGraph\] Potential over-fetch" || echo "0")
+          query_violations=$(echo "$output" | grep -c "\[@Query\] Potential over-fetch" || echo "0")
+          total_violations=$((entitygraph_violations + query_violations))
+
+          # TODO these values should become zero in the future
+          max_entitygraph_violations=11
+          max_query_violations=25
+          max_total_violations=$((max_entitygraph_violations + max_query_violations))
+
+          echo "=========================================="
+          echo "QUERY QUALITY ANALYSIS SUMMARY"
+          echo "=========================================="
+          echo "EntityGraph violations found: $entitygraph_violations (max allowed: $max_entitygraph_violations)"
+          echo "Query violations found: $query_violations (max allowed: $max_query_violations)"
+          echo "Total violations found: $total_violations (max allowed: $max_total_violations)"
+          echo ""
+
+          violation_detected=false
+
+          if [ "$entitygraph_violations" -gt "$max_entitygraph_violations" ]; then
+            echo "::error::Too many EntityGraph violations: $entitygraph_violations > $max_entitygraph_violations"
+            violation_detected=true
+          else
+            echo "EntityGraph violations within threshold: $entitygraph_violations <= $max_entitygraph_violations"
+          fi
+
+          if [ "$query_violations" -gt "$max_query_violations" ]; then
+            echo "::error::Too many Query violations: $query_violations > $max_query_violations"
+            violation_detected=true
+          else
+            echo "Query violations within threshold: $query_violations <= $max_query_violations"
+          fi
+
+          if [ "$total_violations" -gt "$max_total_violations" ]; then
+            echo "::error::Too many total violations: $total_violations > $max_total_violations"
+            violation_detected=true
+          else
+            echo "Total violations within threshold: $total_violations <= $max_total_violations"
+          fi
+
+          echo "=========================================="
+
+          if [ "$violation_detected" = "true" ]; then
+            echo "::error::Query Quality check failed. See https://docs.artemis.tum.de/developer/guidelines/performance and https://docs.artemis.tum.de/developer/guidelines/database for guidance."
+            exit 1
+          fi
+          echo "Query Quality check passed"
