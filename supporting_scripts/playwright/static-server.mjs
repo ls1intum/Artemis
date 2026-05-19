@@ -48,7 +48,10 @@ const MIME = {
 };
 
 function shouldProxy(url) {
-    return PROXY_PREFIXES.some(p => url === p.replace(/\/$/, '') || url.startsWith(p));
+    return PROXY_PREFIXES.some(p => {
+        const prefix = p.replace(/\/$/, '');
+        return url === prefix || url.startsWith(prefix + '/');
+    });
 }
 
 const server = createServer((req, res) => {
@@ -75,14 +78,25 @@ const server = createServer((req, res) => {
     }
 
     // Static file serving with SPA fallback
+    const fallbackPath = join(STATIC_DIR, 'index.html');
     let filePath = join(STATIC_DIR, url.pathname === '/' ? 'index.html' : url.pathname);
     if (!existsSync(filePath) || statSync(filePath).isDirectory()) {
-        filePath = join(STATIC_DIR, 'index.html');
+        if (!existsSync(fallbackPath)) {
+            res.writeHead(500);
+            res.end('Internal Server Error: build not found — run pnpm run webapp:prod first');
+            return;
+        }
+        filePath = fallbackPath;
     }
 
     const contentType = MIME[extname(filePath)] ?? 'application/octet-stream';
+    const stream = createReadStream(filePath);
+    stream.on('error', () => {
+        if (!res.headersSent) res.writeHead(500);
+        res.end('Internal Server Error');
+    });
     res.writeHead(200, { 'Content-Type': contentType });
-    createReadStream(filePath).pipe(res, { end: true });
+    stream.pipe(res, { end: true });
 });
 
 // WebSocket proxy for /websocket/ paths
