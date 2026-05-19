@@ -155,6 +155,11 @@ public class ContentChangeScheduler {
                 log.warn("atlas.automatic per-exercise run failed exerciseId={}: {}", exerciseId, ex.getMessage());
             }
         }
+        if (reported == 0) {
+            // Whole batch came back IN_PROGRESS and was requeued — no completion to surface.
+            log.debug("atlas.automatic course {} run {} requeued all {} exercise(s); no summary broadcast", courseId, runId, claim.exerciseIds().size());
+            return;
+        }
         AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, reported, success, failure, Instant.now(clock));
         websocketMessagingService.sendMessage(String.format(TOPIC_TEMPLATE, courseId), summary);
     }

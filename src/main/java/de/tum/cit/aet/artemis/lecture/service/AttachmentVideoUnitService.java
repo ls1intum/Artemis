@@ -126,6 +126,7 @@ public class AttachmentVideoUnitService {
             // Trigger processing for video-only updates (video source change detection is done inside the service)
             contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
             prepareAttachmentVideoUnitForClient(existingAttachmentVideoUnit);
+            autonomousCompetencyApi.ifPresent(api -> api.notifyLectureUnitChange(savedAttachmentVideoUnit.getLecture().getCourse().getId(), savedAttachmentVideoUnit.getId()));
             return existingAttachmentVideoUnit;
         }
 
