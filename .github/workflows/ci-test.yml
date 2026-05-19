@@ -1,6 +1,6 @@
 name: Test
 
-# Reusable workflow called by ci.yml. Do NOT add a `concurrency:` block — that belongs to the parent.
+# Reusable workflow called by ci.yml. See .github/workflows/README.md for the contract.
 
 on:
   workflow_call:
@@ -30,7 +30,7 @@ on:
         description: 'Coverage upload token. Optional — coverage is uploaded only on internal PRs by non-bot authors.'
         required: false
 
-# node/java pins are enforced consistent across every workflow by ci-workflows.yml.
+# Workflow-level node/java pins are drift-checked by ci-workflows.yml.
 env:
   CI: true
   node: 24
@@ -144,9 +144,7 @@ jobs:
           coverage-reports: build/reports/jacoco/aggregated/jacocoTestReport.xml
         if: ${{ (success() || failure()) && inputs.is_internal_pr && inputs.pr_author != 'dependabot[bot]' }}
       - name: Test Report
-        # Renders the JUnit report as a check-run AND annotates failing tests in the PR
-        # diff — covering what ashley-taylor/junit-report-annotations-action used to do
-        # before it was unmaintained.
+        # Renders JUnit results as a check-run with diff annotations.
         uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
         if: ${{ (success() || failure()) && inputs.pr_author != 'dependabot[bot]' }}
         with:
@@ -223,7 +221,8 @@ jobs:
       # Some client tests OOM with the project-wide --max-old-space-size in .npmrc.
       # We strip that single line as a workaround; the rest of .npmrc stays.
       - name: Remove project-wide node options set in .npmrc just for this test
-        run: sed -i '/^node-options=/d' .npmrc || true
+        # `sed` with no match exits 0; missing .npmrc would fail loudly (intended).
+        run: sed -i '/^node-options=/d' .npmrc
       - name: Setup pnpm
         uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
         with:

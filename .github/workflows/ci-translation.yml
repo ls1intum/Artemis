@@ -1,6 +1,6 @@
 name: Translation Keys
 
-# Reusable workflow. No `concurrency:` block here — that belongs to the parent ci.yml.
+# Reusable workflow called by ci.yml. See .github/workflows/README.md for the contract.
 
 on:
   workflow_call: {}

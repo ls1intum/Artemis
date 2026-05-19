@@ -1,10 +1,8 @@
 name: Workflow Lint
 
 # Reusable workflow called by ci.yml when files under .github/ change.
-# Validates every workflow with actionlint, using `.github/actionlint.yaml` to declare
-# the self-hosted runner labels in use across the repo.
-#
-# No `concurrency:` block — that belongs to the parent.
+# Runs actionlint (configured via .github/actionlint.yaml) and the node/java version
+# drift check.
 
 on:
   workflow_call: {}
@@ -34,8 +32,8 @@ jobs:
           ./actionlint -color
 
       - name: Check version pins are in sync
-        # Every workflow that pins `node:` or `java:` at the top-level env block must agree.
-        # File discovery is by grep so a new workflow that pins either is picked up automatically.
+        # Catches drift in top-level `env: { node, java }` blocks (auto-discovered).
+        # Does NOT catch values hard-coded inline at `with: java-version: '...'` etc.
         run: |
           set -Eeuo pipefail
           for key in node java; do

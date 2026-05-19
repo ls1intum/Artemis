@@ -1,8 +1,8 @@
 name: Java Analysis
 
-# Reusable workflow called by ci.yml. Two checks:
-#   - code-quality: enforces caps on large classes / complex Spring beans.
-#   - query-quality: detects over-fetching @EntityGraph / @Query annotations.
+# Reusable workflow called by ci.yml. See .github/workflows/README.md for the contract.
+# Two checks: code-quality (caps on large classes / complex Spring beans) and
+# query-quality (over-fetching @EntityGraph / @Query annotations).
 
 on:
   workflow_call:
@@ -71,46 +71,26 @@ jobs:
           query_violations=$(echo "$output" | grep -c "\[@Query\] Potential over-fetch" || echo "0")
           total_violations=$((entitygraph_violations + query_violations))
 
-          # Thresholds are technical debt; lower them as violations are fixed (no open issue).
-          max_entitygraph_violations=11
-          max_query_violations=25
-          max_total_violations=$((max_entitygraph_violations + max_query_violations))
+          # Thresholds are technical debt; lower as violations are fixed.
+          max_entitygraph=11
+          max_query=25
+          max_total=$((max_entitygraph + max_query))
 
-          echo "=========================================="
-          echo "QUERY QUALITY ANALYSIS SUMMARY"
-          echo "=========================================="
-          echo "EntityGraph violations found: $entitygraph_violations (max allowed: $max_entitygraph_violations)"
-          echo "Query violations found: $query_violations (max allowed: $max_query_violations)"
-          echo "Total violations found: $total_violations (max allowed: $max_total_violations)"
-          echo ""
-
-          violation_detected=false
-
-          if [ "$entitygraph_violations" -gt "$max_entitygraph_violations" ]; then
-            echo "::error::Too many EntityGraph violations: $entitygraph_violations > $max_entitygraph_violations"
-            violation_detected=true
-          else
-            echo "EntityGraph violations within threshold: $entitygraph_violations <= $max_entitygraph_violations"
+          fail=false
+          if [ "$entitygraph_violations" -gt "$max_entitygraph" ]; then
+            echo "::error::EntityGraph violations: $entitygraph_violations > $max_entitygraph"
+            fail=true
+          fi
+          if [ "$query_violations" -gt "$max_query" ]; then
+            echo "::error::@Query violations: $query_violations > $max_query"
+            fail=true
+          fi
+          if [ "$total_violations" -gt "$max_total" ]; then
+            echo "::error::Total over-fetch violations: $total_violations > $max_total"
+            fail=true
           fi
 
-          if [ "$query_violations" -gt "$max_query_violations" ]; then
-            echo "::error::Too many Query violations: $query_violations > $max_query_violations"
-            violation_detected=true
-          else
-            echo "Query violations within threshold: $query_violations <= $max_query_violations"
-          fi
-
-          if [ "$total_violations" -gt "$max_total_violations" ]; then
-            echo "::error::Too many total violations: $total_violations > $max_total_violations"
-            violation_detected=true
-          else
-            echo "Total violations within threshold: $total_violations <= $max_total_violations"
-          fi
-
-          echo "=========================================="
-
-          if [ "$violation_detected" = "true" ]; then
-            echo "::error::Query Quality check failed. See https://docs.artemis.tum.de/developer/guidelines/performance and https://docs.artemis.tum.de/developer/guidelines/database for guidance."
+          if [ "$fail" = "true" ]; then
+            echo "::error::Query Quality failed. See https://docs.artemis.tum.de/developer/guidelines/performance and https://docs.artemis.tum.de/developer/guidelines/database."
             exit 1
           fi
-          echo "Query Quality check passed"

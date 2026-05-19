@@ -1,14 +1,5 @@
 name: CI
-# Single CI entry point for ls1intum/Artemis.
-#
-#  - One workflow registers all triggers (pull_request / push / release / merge_group / workflow_dispatch)
-#    so there is exactly one place that answers "what runs on event X?".
-#  - All heavy work lives in `workflow_call` reusables (ci-build.yml, ci-test.yml, …).
-#  - The `all-ci-passed` job is the single required status check; branch protection requires only this one.
-#
-# Reusables must NOT declare their own `concurrency:` — the parent's group already applies, and a child
-# group would cancel queued children while the parent keeps running (deadlock).
-# See .github/workflows/README.md for the full contract.
+# Single CI entry point. See .github/workflows/README.md for the contract.
 
 on:
   pull_request:
@@ -31,7 +22,6 @@ on:
         type: boolean
         default: false
 
-# Event-aware concurrency. PRs cancel on rebase; push/release/merge-queue runs serialize per ref.
 concurrency:
   group: >-
     ${{ github.event_name == 'pull_request' && format('ci-pr-{0}', github.event.pull_request.number)
@@ -40,7 +30,6 @@ concurrency:
      || format('ci-{0}', github.ref) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Default-deny: each job opts in to the permissions it needs.
 permissions: {}
 
 jobs:
@@ -252,10 +241,8 @@ jobs:
       PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
       HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
 
-  # Single required status check. Branch protection should require exactly this one.
-  # `detect-changes` always runs; if it fails, child jobs cascade to `skipped` but
-  # `detect-changes` itself surfaces as `failure`, so the gate fails closed — no
-  # allow-list needed (matches the TypeScript/Ruff/Vite idiom).
+  # Single required status check. `detect-changes` is in `needs:` so its own failure
+  # fails the gate even when downstream children cascade to `skipped`.
   all-ci-passed:
     name: All CI Passed
     if: always()
@@ -276,7 +263,6 @@ jobs:
       - name: Evaluate gate
         env:
           NEEDS: ${{ toJSON(needs) }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           {
             echo "## CI Summary"
@@ -284,8 +270,6 @@ jobs:
             echo "| Job | Result |"
             echo "|-----|--------|"
             jq -r 'to_entries[] | "| \(.key) | \(.value.result // "n/a") |"' <<< "$NEEDS"
-            echo ""
-            echo "_[View run]($RUN_URL)_"
           } >> "$GITHUB_STEP_SUMMARY"
 
           failing=$(jq -r '

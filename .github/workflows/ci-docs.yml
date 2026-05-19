@@ -1,6 +1,6 @@
 name: Build Documentation
 
-# Reusable workflow. Validates that the Docusaurus documentation builds successfully.
+# Reusable workflow called by ci.yml. See .github/workflows/README.md for the contract.
 
 on:
   workflow_call: {}

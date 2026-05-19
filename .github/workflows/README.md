@@ -122,6 +122,43 @@ Recommended path — **GitHub Rulesets** (not legacy branch protection):
    contexts from the dump in step 1 — the deleted files would need to be restored from
    git history. Keep this PR's deletions in a single commit to make `git revert` easy.
 
+## Helios re-mapping (operations / Helios admin)
+
+Helios (`helios.aet.cit.tum.de`) keys deployment-readiness gates on GitHub workflow IDs.
+Deleting the eight legacy workflows leaves any
+`environment_required_pre_deployment_workflow` row that referenced them unsatisfiable —
+Helios will report `MISSING_RUN` and block deployment to the affected environment.
+
+Run on the Helios DB (or read-replica) post-merge:
+
+```sql
+-- Audit: any Artemis env gated on a deleted workflow?
+SELECT e.id          AS environment_id,
+       e.name        AS environment_name,
+       w.id          AS workflow_id,
+       w.path
+  FROM environment_required_pre_deployment_workflow erpw
+  JOIN environment e ON e.id = erpw.environment_id
+  JOIN workflow    w ON w.id = erpw.workflow_id
+ WHERE w.path IN (
+   '.github/workflows/build.yml',
+   '.github/workflows/test.yml',
+   '.github/workflows/test-e2e.yml',
+   '.github/workflows/quality.yml',
+   '.github/workflows/query-quality.yml',
+   '.github/workflows/gradle-wrapper-validation.yml',
+   '.github/workflows/check-translation-keys.yml',
+   '.github/workflows/build-documentation.yml');
+```
+
+For each row returned, re-point the gate to `ci.yml` via the Helios environment-edit UI
+(Settings → Environments → Required pre-deployment workflows → select `CI`).
+
+Empty result set = no action required. Other Helios-tracked fields stay stable: workflow
+rows for the deleted files persist with `state=DELETED` (so historical runs are still
+queryable), and the flakiness API contract (`HELIOS_REPO_SECRET`, `POST /api/tests/flakiness-scores`)
+is unchanged.
+
 ## Concurrency model
 
 | Event | Group key | Cancel in progress? |

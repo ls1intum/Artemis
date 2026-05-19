@@ -1,8 +1,7 @@
 name: Build
 
-# Reusable workflow called by ci.yml. Do NOT add a `concurrency:` block here — the parent's
-# group already applies. A child concurrency group can cancel queued children without
-# cancelling the parent, leaving the parent run hung.
+# Reusable workflow called by ci.yml. See .github/workflows/README.md for the
+# workflow_call + concurrency contract.
 
 on:
   workflow_call:
@@ -32,7 +31,7 @@ on:
         required: true
         type: string
 
-# node/java pins are enforced consistent across every workflow by ci-workflows.yml.
+# Workflow-level node/java pins are drift-checked by ci-workflows.yml.
 env:
   CI: true
   node: 24

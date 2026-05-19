@@ -62,10 +62,8 @@ runs:
     - name: Clean old test results
       shell: bash
       run: |
-        echo "Cleaning up old test results from previous runs..."
-        rm -rf src/test/playwright/test-reports/*.xml || true
-        rm -rf src/test/playwright/test-reports/monocart-report-* || true
-        rm -rf src/test/playwright/test-reports/client-coverage || true
-        rm -f src/test/playwright/test-reports/.reporter-failed || true
-        ls -la src/test/playwright/test-reports/ 2>/dev/null || echo "test-reports directory does not exist yet"
-        echo "Test results cleanup complete"
+        # `rm -rf`/`rm -f` of non-existent paths exit 0; no fallback needed.
+        rm -rf src/test/playwright/test-reports/*.xml \
+               src/test/playwright/test-reports/monocart-report-* \
+               src/test/playwright/test-reports/client-coverage \
+               src/test/playwright/test-reports/.reporter-failed

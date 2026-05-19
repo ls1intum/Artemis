@@ -1,9 +1,6 @@
 name: E2E Tests
 
-# Reusable workflow called by ci.yml. See .github/workflows/README.md for the
-# workflow_call + concurrency contract. The `workflow-run-id` passed to
-# .github/actions/e2e-setup is github.run_id because ci-build.yml uploads the
-# docker-tag artifact in the same parent run.
+# Reusable workflow called by ci.yml. See .github/workflows/README.md for the contract.
 
 on:
   workflow_call:
@@ -40,8 +37,7 @@ on:
         required: false
 
 env:
-  # Commit-status context displayed in the GitHub Actions UI. Kept stable across the
-  # workflow_run → workflow_call migration so historical statuses remain searchable.
+  # Stable commit-status context. Do not rename — historical statuses are looked up by this string.
   STATUS_CONTEXT: 'End-to-End (E2E) Tests'
   STATUSES_REQUEST_URL: "https://api.github.com/repos/${{ github.repository }}/statuses/${{ inputs.commit_sha }}"
   TARGET_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
@@ -117,19 +113,14 @@ jobs:
       reporter_failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
     steps:
       - name: Create pending status
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STATUSES_URL: ${{ env.STATUSES_REQUEST_URL }}
-          STATUS_CONTEXT: ${{ env.STATUS_CONTEXT }}
-          TARGET_URL: ${{ env.TARGET_URL }}
-          DESC_COUNT: ${{ needs.determine-tests.outputs.relevant_count }}
-        run: |
-          set -Eeuo pipefail
-          curl -sSf -X POST \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "$STATUSES_URL" \
-            -d "{\"state\":\"pending\",\"context\":\"$STATUS_CONTEXT\",\"description\":\"Phase 1: Running relevant tests ($DESC_COUNT test paths)...\",\"target_url\":\"$TARGET_URL\"}"
+        uses: ./.github/actions/e2e-set-commit-status
+        with:
+          state: pending
+          description: "Phase 1: Running relevant tests (${{ needs.determine-tests.outputs.relevant_count }} test paths)..."
+          context: ${{ env.STATUS_CONTEXT }}
+          target-url: ${{ env.TARGET_URL }}
+          statuses-url: ${{ env.STATUSES_REQUEST_URL }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/checkout@v6
         with:
@@ -309,19 +300,14 @@ jobs:
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
       - name: Update status to Phase 2
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STATUSES_URL: ${{ env.STATUSES_REQUEST_URL }}
-          STATUS_CONTEXT: ${{ env.STATUS_CONTEXT }}
-          TARGET_URL: ${{ env.TARGET_URL }}
-          DESC_COUNT: ${{ needs.determine-tests.outputs.remaining_count }}
-        run: |
-          set -Eeuo pipefail
-          curl -sSf -X POST \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "$STATUSES_URL" \
-            -d "{\"state\":\"pending\",\"context\":\"$STATUS_CONTEXT\",\"description\":\"Phase 2: Running remaining tests ($DESC_COUNT test paths)...\",\"target_url\":\"$TARGET_URL\"}"
+        uses: ./.github/actions/e2e-set-commit-status
+        with:
+          state: pending
+          description: "Phase 2: Running remaining tests (${{ needs.determine-tests.outputs.remaining_count }} test paths)..."
+          context: ${{ env.STATUS_CONTEXT }}
+          target-url: ${{ env.TARGET_URL }}
+          statuses-url: ${{ env.STATUSES_REQUEST_URL }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/checkout@v6
         with:
@@ -500,18 +486,14 @@ jobs:
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
       - name: Create pending status
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STATUSES_URL: ${{ env.STATUSES_REQUEST_URL }}
-          STATUS_CONTEXT: ${{ env.STATUS_CONTEXT }}
-          TARGET_URL: ${{ env.TARGET_URL }}
-        run: |
-          set -Eeuo pipefail
-          curl -sSf -X POST \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "$STATUSES_URL" \
-            -d "{\"state\":\"pending\",\"context\":\"$STATUS_CONTEXT\",\"description\":\"E2E tests are running (all tests - infrastructure changes detected)...\",\"target_url\":\"$TARGET_URL\"}"
+        uses: ./.github/actions/e2e-set-commit-status
+        with:
+          state: pending
+          description: 'E2E tests are running (all tests - infrastructure changes detected)...'
+          context: ${{ env.STATUS_CONTEXT }}
+          target-url: ${{ env.TARGET_URL }}
+          statuses-url: ${{ env.STATUSES_REQUEST_URL }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/checkout@v6
         with:
@@ -674,18 +656,14 @@ jobs:
       PLAYWRIGHT_REPORT_PHASE: all
     steps:
       - name: Create pending status
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STATUSES_URL: ${{ env.STATUSES_REQUEST_URL }}
-          STATUS_CONTEXT: ${{ env.STATUS_CONTEXT }}
-          TARGET_URL: ${{ env.TARGET_URL }}
-        run: |
-          set -Eeuo pipefail
-          curl -sSf -X POST \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "$STATUSES_URL" \
-            -d "{\"state\":\"pending\",\"context\":\"$STATUS_CONTEXT\",\"description\":\"E2E tests are running (all tests - multi-node)...\",\"target_url\":\"$TARGET_URL\"}"
+        uses: ./.github/actions/e2e-set-commit-status
+        with:
+          state: pending
+          description: 'E2E tests are running (all tests - multi-node)...'
+          context: ${{ env.STATUS_CONTEXT }}
+          target-url: ${{ env.TARGET_URL }}
+          statuses-url: ${{ env.STATUSES_REQUEST_URL }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/checkout@v6
         with:
@@ -753,67 +731,38 @@ jobs:
           ALL_NON_PR_RESULT: ${{ needs.run-e2e-all-non-pr.result }}
         run: |
           set -Eeuo pipefail
-          echo "Phase 1 (relevant): $RELEVANT_RESULT"
-          echo "Phase 2 (remaining): $REMAINING_RESULT"
-          echo "All tests (PR): $ALL_PR_RESULT"
-          echo "All tests (Non-PR): $ALL_NON_PR_RESULT"
-
-          if [ "$ALL_NON_PR_RESULT" = "success" ]; then
-            echo "status=success" >> "$GITHUB_OUTPUT"
-            echo "description=All E2E tests passed (multi-node)" >> "$GITHUB_OUTPUT"
-          elif [ "$ALL_NON_PR_RESULT" = "failure" ]; then
-            echo "status=failure" >> "$GITHUB_OUTPUT"
-            echo "description=E2E tests failed (multi-node)" >> "$GITHUB_OUTPUT"
-          elif [ "$ALL_PR_RESULT" = "success" ]; then
-            echo "status=success" >> "$GITHUB_OUTPUT"
-            echo "description=All E2E tests passed" >> "$GITHUB_OUTPUT"
-          elif [ "$ALL_PR_RESULT" = "failure" ]; then
-            echo "status=failure" >> "$GITHUB_OUTPUT"
-            echo "description=E2E tests failed" >> "$GITHUB_OUTPUT"
-          elif [ "$RELEVANT_RESULT" = "failure" ]; then
-            echo "status=failure" >> "$GITHUB_OUTPUT"
-            echo "description=Phase 1 (relevant tests) failed" >> "$GITHUB_OUTPUT"
-          elif [ "$REMAINING_RESULT" = "failure" ]; then
-            echo "status=failure" >> "$GITHUB_OUTPUT"
-            echo "description=Phase 2 (remaining tests) failed" >> "$GITHUB_OUTPUT"
-          elif [ "$RELEVANT_RESULT" = "success" ] && [ "$REMAINING_RESULT" = "success" ]; then
-            echo "status=success" >> "$GITHUB_OUTPUT"
-            echo "description=All E2E tests passed (both phases)" >> "$GITHUB_OUTPUT"
-          elif [ "$RELEVANT_RESULT" = "success" ] && [ "$REMAINING_RESULT" = "skipped" ]; then
-            echo "status=success" >> "$GITHUB_OUTPUT"
-            echo "description=Phase 1 passed, Phase 2 skipped (no remaining tests)" >> "$GITHUB_OUTPUT"
-          elif [ "$RELEVANT_RESULT" = "skipped" ] && [ "$REMAINING_RESULT" = "skipped" ] && [ "$ALL_PR_RESULT" = "skipped" ] && [ "$ALL_NON_PR_RESULT" = "skipped" ]; then
-            echo "status=success" >> "$GITHUB_OUTPUT"
-            echo "description=No tests needed to run" >> "$GITHUB_OUTPUT"
-          else
-            # GitHub commit-status state must be one of: error|failure|pending|success.
-            # Map cancellation/unknown to "error" to keep the API call valid.
-            echo "status=error" >> "$GITHUB_OUTPUT"
-            echo "description=E2E tests encountered an error" >> "$GITHUB_OUTPUT"
-          fi
+          # Pick the first non-skipped result across the four E2E variants. Any
+          # `failure` wins; otherwise the first `success`. Anything else (cancelled,
+          # null) maps to `error` so the commit-status API accepts the state —
+          # GitHub only allows error|failure|pending|success.
+          status=error
+          for r in "$ALL_NON_PR_RESULT" "$ALL_PR_RESULT" "$RELEVANT_RESULT" "$REMAINING_RESULT"; do
+            case "$r" in
+              failure) status=failure; break ;;
+              success) [ "$status" = error ] && status=success ;;
+              skipped|"") ;;
+              *)       status=error ;;
+            esac
+          done
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          case "$status" in
+            success) echo "description=E2E tests passed" >> "$GITHUB_OUTPUT" ;;
+            failure) echo "description=E2E tests failed" >> "$GITHUB_OUTPUT" ;;
+            *)       echo "description=E2E tests encountered an error" >> "$GITHUB_OUTPUT" ;;
+          esac
 
       - name: Update status with results
         if: always()
-        # The commit status is informational; the umbrella's `All CI Passed` gate is the
-        # source of truth. A statuses-API blip must not flip the aggregator job result.
+        # Informational only; the umbrella gate is the source of truth.
         continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STATUSES_URL: ${{ env.STATUSES_REQUEST_URL }}
-          STATUS_CONTEXT: ${{ env.STATUS_CONTEXT }}
-          TARGET_URL: ${{ env.TARGET_URL }}
-          STATUS: ${{ steps.overall-status.outputs.status }}
-          DESCRIPTION: ${{ steps.overall-status.outputs.description }}
-        run: |
-          set -Eeuo pipefail
-          DESCRIPTION_ESCAPED=$(printf '%s' "$DESCRIPTION" | sed 's/"/\\"/g')
-          JSON_PAYLOAD="{\"state\":\"$STATUS\",\"context\":\"$STATUS_CONTEXT\",\"description\":\"$DESCRIPTION_ESCAPED\",\"target_url\":\"$TARGET_URL\"}"
-          echo "JSON payload: $JSON_PAYLOAD"
-          curl -sSf -X POST \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "$STATUSES_URL" \
-            -d "$JSON_PAYLOAD"
+        uses: ./.github/actions/e2e-set-commit-status
+        with:
+          state: ${{ steps.overall-status.outputs.status }}
+          description: ${{ steps.overall-status.outputs.description }}
+          context: ${{ env.STATUS_CONTEXT }}
+          target-url: ${{ env.TARGET_URL }}
+          statuses-url: ${{ env.STATUSES_REQUEST_URL }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/checkout@v6
         if: always() && inputs.is_pr

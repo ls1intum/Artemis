@@ -14,19 +14,14 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Clean up intermediate test result files
+    - name: Drop intermediate Playwright XML files
       shell: bash
+      # Playwright emits results-parallel.xml, results-sequential.xml, and a merged
+      # results.xml. Uploading all three double-counts (e.g. ~418 instead of ~223
+      # tests). Keep only results.xml.
       run: |
-        # Playwright generates 3 XML files: results-parallel.xml, results-sequential.xml, and results.xml (merged).
-        # If all 3 are uploaded, the JUnit reporter counts tests from each file, causing double-counting
-        # (e.g., ~418 tests reported instead of ~223 actual tests).
-        # We remove the intermediate files to keep only the merged results.xml.
-        echo "Removing intermediate XML files (results-parallel.xml, results-sequential.xml) to prevent"
-        echo "double-counting in test reports. Only the merged results.xml should be uploaded."
-        rm -f src/test/playwright/test-reports/results-parallel.xml || true
-        rm -f src/test/playwright/test-reports/results-sequential.xml || true
-        echo "Listing remaining XML files:"
-        ls -la src/test/playwright/test-reports/*.xml 2>/dev/null || echo "No XML files found"
+        rm -f src/test/playwright/test-reports/results-parallel.xml \
+              src/test/playwright/test-reports/results-sequential.xml
 
     - name: Upload JUnit Test Results
       if: success() || failure()
@@ -45,4 +40,6 @@ runs:
 
     - name: Run cleanup script (after E2E)
       shell: bash
-      run: .ci/E2E-tests/cleanup.sh || true
+      # Best-effort: tearing down containers/networks must not flip the E2E job result.
+      continue-on-error: true
+      run: .ci/E2E-tests/cleanup.sh

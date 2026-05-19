@@ -1,7 +1,6 @@
 # Artemis: Interactive Learning with Individual Feedback 
 
-[![Build & Deploy](https://github.com/ls1intum/Artemis/actions/workflows/build.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/build.yml)
-[![Test](https://github.com/ls1intum/Artemis/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/test.yml)
+[![CI](https://github.com/ls1intum/Artemis/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/ci.yml)
 [![Documentation](https://github.com/ls1intum/Artemis/actions/workflows/deploy-documentation.yml/badge.svg?event=push)](https://docs.artemis.tum.de)
 [![Code Quality Status](https://app.codacy.com/project/badge/Grade/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ls1intum/Artemis&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://app.codacy.com/project/badge/Coverage/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&utm_medium=referral&utm_content=ls1intum/Artemis&utm_campaign=Badge_Coverage)

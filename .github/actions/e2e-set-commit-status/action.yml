@@ -1,0 +1,46 @@
+name: 'Set E2E Commit Status'
+description: 'POST a commit status for the E2E pipeline (state + description + target_url).'
+
+inputs:
+  state:
+    description: 'GitHub commit-status state: error | failure | pending | success.'
+    required: true
+  description:
+    description: 'Short status description (shown in the GitHub UI).'
+    required: true
+  context:
+    description: 'Commit-status context (the stable identifier across runs).'
+    required: true
+  target-url:
+    description: 'Link the status points at (typically the workflow run).'
+    required: true
+  statuses-url:
+    description: 'The /repos/.../statuses/<sha> URL.'
+    required: true
+  github-token:
+    description: 'Token with `statuses: write` on the calling repository.'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        STATE: ${{ inputs.state }}
+        DESCRIPTION: ${{ inputs.description }}
+        STATUS_CONTEXT: ${{ inputs.context }}
+        TARGET_URL: ${{ inputs.target-url }}
+        STATUSES_URL: ${{ inputs.statuses-url }}
+      run: |
+        payload=$(jq -nc \
+          --arg state "$STATE" \
+          --arg context "$STATUS_CONTEXT" \
+          --arg description "$DESCRIPTION" \
+          --arg target_url "$TARGET_URL" \
+          '{state: $state, context: $context, description: $description, target_url: $target_url}')
+        curl -sSf -X POST \
+          -H "Authorization: token $GH_TOKEN" \
+          -H "Accept: application/vnd.github.v3+json" \
+          "$STATUSES_URL" \
+          -d "$payload"

@@ -150,7 +150,7 @@ jobs:
         with:
           name: Client Coverage Summaries
           # upload-artifact@v6 strips the common ancestor of the uploaded paths.
-          # test.yml's uploader ships build/test-results/jest/coverage-summary.json
+          # ci-test.yml's uploader ships build/test-results/jest/coverage-summary.json
           # and build/test-results/vitest/coverage/coverage-summary.json, so the
           # archive contains jest/coverage-summary.json and vitest/coverage/coverage-summary.json.
           # Restore the stripped ancestor here so the files land where
@@ -161,7 +161,7 @@ jobs:
 
       - name: Setup pnpm
         if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
         with:
           run_install: false
       - name: Setup Node.js

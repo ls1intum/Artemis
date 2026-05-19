@@ -1,7 +1,6 @@
 name: Gradle Wrapper
 
-# Reusable workflow called by ci.yml. Do NOT add a `concurrency:` block here — the parent's
-# group already applies, and a child group can deadlock the parent run.
+# Reusable workflow called by ci.yml. See .github/workflows/README.md for the contract.
 
 on:
   workflow_call: {}
