@@ -204,6 +204,16 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
                     .then(() => true)
                     .catch(() => false);
                 if (!attached) {
+                    // Before reloading, re-check the URL — Angular's auth guard may have
+                    // redirected to /sign-in (or another unauthenticated route) during the
+                    // 1s wait, in which case reloading would disrupt that redirect and pin
+                    // the page back to a route the user cannot access. The reload-recovery
+                    // is for "Angular lazy chunk failed to bootstrap", not "user is
+                    // unauthenticated and Angular redirected them out".
+                    const urlAfterWait = page.url();
+                    if (Commands.isNoNavbarRoute(urlAfterWait) || isUnauthenticatedRoute(urlAfterWait)) {
+                        return response;
+                    }
                     await page.reload();
                     await page.waitForLoadState('load');
                     await page
