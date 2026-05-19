@@ -84,8 +84,8 @@ tasks.named("processResources") {
 
 // SBOM generation is expensive (cdxgen for the client pulls ~220 npm packages and the
 // CycloneDX Gradle plugin walks the full runtime classpath). On a cold build these legs
-// add ~60 s of work that is only needed for release-eligible artifacts. Gate the dependency
-// hook behind an explicit `-Psbom` opt-in so:
+// add ~60 s of work that is only needed for release-eligible artifacts. Gate behaviour
+// behind an explicit `-Psbom` opt-in so:
 //   - PR / feature-branch CI builds and local E2E runs skip SBOM generation by default
 //   - Release-eligible CI builds (develop / main / release/* / tags / release events)
 //     opt in via `-Psbom` and ship a WAR containing the SBOM files
@@ -94,5 +94,21 @@ tasks.named("processResources") {
 if (project.hasProperty("prod") && project.hasProperty("sbom")) {
     tasks.named("copySbomsToResources") {
         dependsOn "cyclonedxBom", "generateClientSbom"
+    }
+}
+
+// When -Psbom is not set, fully suppress SBOM generation and bundling. The CycloneDX
+// Gradle plugin is applied unconditionally in build.gradle (so its tasks remain referenceable
+// for the -Psbom case), and the Spring Boot Gradle plugin auto-wires cyclonedxBom into
+// bootJar/bootWar, copying the output to `META-INF/sbom/application.cdx.json` inside the
+// artefact. Disabling the SBOM tasks alone is not enough: bootWar still picks up any leftover
+// `META-INF/sbom/` resources from a previous -Psbom build, so we also exclude that path from
+// the final archive.
+if (!project.hasProperty("sbom")) {
+    tasks.named("cyclonedxBom").configure { enabled = false }
+    tasks.named("cyclonedxDirectBom").configure { enabled = false }
+    tasks.matching { it.name == "generateClientSbom" }.configureEach { enabled = false }
+    tasks.matching { it.name == "bootWar" || it.name == "bootJar" }.configureEach {
+        exclude "META-INF/sbom/**"
     }
 }
