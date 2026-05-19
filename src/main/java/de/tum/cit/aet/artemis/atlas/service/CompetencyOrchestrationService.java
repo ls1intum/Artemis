@@ -17,9 +17,9 @@ import jakarta.annotation.PostConstruct;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
@@ -224,8 +224,7 @@ public class CompetencyOrchestrationService {
 
     /** GPT-5 reasoning models reject explicit temperature alongside reasoningEffort, so we omit one when the other is set. */
     private ToolCallingChatOptions buildChatOptions() {
-        // LOCAL PATCH: self-hosted OpenAI-compatible endpoint — do NOT commit
-        var builder = OpenAiChatOptions.builder().model(deploymentName);
+        var builder = AzureOpenAiChatOptions.builder().deploymentName(deploymentName);
         if (reasoningEffort != null && !reasoningEffort.isBlank()) {
             builder.reasoningEffort(reasoningEffort);
         }

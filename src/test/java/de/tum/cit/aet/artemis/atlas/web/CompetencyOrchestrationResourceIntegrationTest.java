@@ -66,7 +66,7 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
                 .andExpect(status().isBadGateway()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value("LLM_ERROR"))
                 .andExpect(jsonPath("$.summary").isNotEmpty()).andExpect(jsonPath("$.appliedActions").isArray()).andExpect(jsonPath("$.appliedActions").isEmpty());
 
-        assertThat(competencyExerciseLinkRepository.findAll()).isEmpty();
+        assertThat(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(programmingExercise.getId())).isEmpty();
     }
 
     @Test

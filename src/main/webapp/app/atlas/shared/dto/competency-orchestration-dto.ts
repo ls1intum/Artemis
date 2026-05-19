@@ -8,6 +8,7 @@ export enum CompetencyOrchestrationStatus {
 export enum CompetencyOrchestrationFailureReason {
     NoChatClient = 'NO_CHAT_CLIENT',
     LlmError = 'LLM_ERROR',
+    UnsupportedExercise = 'UNSUPPORTED_EXERCISE',
 }
 
 export enum AppliedActionType {
@@ -30,7 +31,7 @@ export interface AppliedActionDTO {
 
 export interface CompetencyOrchestrationResultDTO {
     status: CompetencyOrchestrationStatus;
-    summary?: string;
-    appliedActions?: AppliedActionDTO[];
+    summary: string;
+    appliedActions: AppliedActionDTO[];
     failureReason?: CompetencyOrchestrationFailureReason;
 }

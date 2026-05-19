@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -10,11 +10,11 @@ import { AppliedActionDTO, AppliedActionType } from 'app/atlas/shared/dto/compet
     standalone: true,
     selector: 'jhi-host',
     imports: [OrchestrationResultDialogComponent],
-    template: '<jhi-orchestration-result-dialog [visible]="true" [summaryMessage]="msg" [appliedActions]="actions" />',
+    template: '<jhi-orchestration-result-dialog [visible]="true" [summaryMessage]="msg()" [appliedActions]="actions()" />',
 })
 class HostComponent {
-    msg = '';
-    actions: AppliedActionDTO[] = [];
+    msg = signal('');
+    actions = signal<AppliedActionDTO[]>([]);
 }
 
 describe('OrchestrationResultDialogComponent', () => {
@@ -78,7 +78,7 @@ describe('OrchestrationResultDialogComponent', () => {
     });
 
     it('renders the summary text inside .summary-box when summary is set', () => {
-        fixture.componentInstance.msg = 'Hello competency world.';
+        fixture.componentInstance.msg.set('Hello competency world.');
         fixture.detectChanges();
 
         expect(document.querySelector('.summary-box')?.textContent?.trim()).toBe('Hello competency world.');

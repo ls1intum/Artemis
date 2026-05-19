@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -303,7 +304,7 @@ public class OrchestratorToolsService {
         if (courseId == null) {
             return missingCourseContextError();
         }
-        if (writeQuotaReached(toolContext)) {
+        if (!tryReserveWriteSlot(toolContext)) {
             return writeQuotaError();
         }
         if (isBlank(title)) {
@@ -377,7 +378,7 @@ public class OrchestratorToolsService {
         if (courseId == null) {
             return missingCourseContextError();
         }
-        if (writeQuotaReached(toolContext)) {
+        if (!tryReserveWriteSlot(toolContext)) {
             return writeQuotaError();
         }
         if (competencyId == null) {
@@ -483,7 +484,7 @@ public class OrchestratorToolsService {
         if (courseId == null) {
             return missingCourseContextError();
         }
-        if (writeQuotaReached(toolContext)) {
+        if (!tryReserveWriteSlot(toolContext)) {
             return writeQuotaError();
         }
         if (competencyId == null || exerciseId == null) {
@@ -565,7 +566,7 @@ public class OrchestratorToolsService {
         if (courseId == null) {
             return missingCourseContextError();
         }
-        if (writeQuotaReached(toolContext)) {
+        if (!tryReserveWriteSlot(toolContext)) {
             return writeQuotaError();
         }
         if (competencyId == null || exerciseId == null) {
@@ -624,7 +625,7 @@ public class OrchestratorToolsService {
         if (courseId == null) {
             return missingCourseContextError();
         }
-        if (writeQuotaReached(toolContext)) {
+        if (!tryReserveWriteSlot(toolContext)) {
             return writeQuotaError();
         }
         if (competencyId == null) {
@@ -645,10 +646,11 @@ public class OrchestratorToolsService {
 
         String title = competency.getTitle();
         Course course = competency.getCourse();
+        // Snapshot the entity for Atlas ML before the cascade wipes it; notification is sent only after the delete commits.
+        Competency competencyForAtlasMl = null;
         if (competency instanceof Competency competencyToDelete) {
-            Competency competencyForAtlasMl = new Competency(competencyToDelete);
+            competencyForAtlasMl = new Competency(competencyToDelete);
             competencyForAtlasMl.setId(competencyToDelete.getId());
-            atlasMLNotificationService.notifyAtlasML(List.of(competencyForAtlasMl), OperationTypeDTO.DELETE, "orchestrator competency deletion");
         }
         try {
             // Cascades inside CourseCompetencyService: competency relations, progress records,
@@ -659,6 +661,9 @@ public class OrchestratorToolsService {
         catch (DataAccessException ex) {
             log.warn("deleteCompetency failed for competency {}: {}", competencyId, ex.getMessage());
             return errorJson("Failed to delete competency.");
+        }
+        if (competencyForAtlasMl != null) {
+            atlasMLNotificationService.notifyAtlasML(List.of(competencyForAtlasMl), OperationTypeDTO.DELETE, "orchestrator competency deletion");
         }
         appendAction(toolContext, AppliedActionDTO.delete(competencyId, title, "Deleted competency " + title + ".", justification.trim()));
         return toJson(Map.of("status", "ok", "deletedId", competencyId));
@@ -759,13 +764,16 @@ public class OrchestratorToolsService {
     }
 
     /**
-     * True when {@link #MAX_WRITE_CALLS} successful write tool calls have already been recorded
-     * for this run. Each write tool checks this before doing any work so a hallucinating model
-     * cannot exceed the cap regardless of the prompt wording.
+     * Atomically reserves one slot against {@link #MAX_WRITE_CALLS} for this run, returning
+     * {@code false} when the cap is already exhausted. Reservation happens before any persistence
+     * or external notification so a hallucinating model cannot exceed the cap even under Spring
+     * AI's roadmap parallel-tool-call execution — the previous separate {@code size()} pre-check
+     * followed by {@code add()} was a TOCTOU race that could let concurrent tools both pass the
+     * cap and exceed it.
      */
-    private static boolean writeQuotaReached(@Nullable ToolContext toolContext) {
+    private static boolean tryReserveWriteSlot(@Nullable ToolContext toolContext) {
         AppliedActionsBuffer buffer = appliedActionsBufferFromContext(toolContext);
-        return buffer != null && buffer.actions().size() >= MAX_WRITE_CALLS;
+        return buffer == null || buffer.tryReserveSlot(MAX_WRITE_CALLS);
     }
 
     private static String formatWeight(double weight) {
@@ -820,15 +828,35 @@ public class OrchestratorToolsService {
 
     /**
      * Typed wrapper for the per-run applied-actions list passed through Spring AI's
-     * {@link ToolContext}. Replaces the previous raw {@code List<?>} cast so the unchecked-cast
-     * warning is gone and so callers cannot accidentally drop a non-{@link AppliedActionDTO}
-     * element into the buffer. The contained list MUST be a synchronized list — Spring AI's
-     * roadmap includes parallel tool-call execution, and {@link #appendAction} is the only path
-     * that mutates it.
+     * {@link ToolContext}. The contained list MUST be a synchronized list — Spring AI's roadmap
+     * includes parallel tool-call execution, and {@link #appendAction} is the only path that
+     * mutates it. The {@code reservedSlots} counter enforces {@link #MAX_WRITE_CALLS} atomically
+     * via {@link #tryReserveSlot(int)} so concurrent tool callbacks cannot both pass the cap and
+     * exceed it (the old {@code size()}-then-{@code add()} pre-check was racy).
      */
-    record AppliedActionsBuffer(List<AppliedActionDTO> actions) implements Serializable {
+    record AppliedActionsBuffer(List<AppliedActionDTO> actions, AtomicInteger reservedSlots) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;
+
+        AppliedActionsBuffer(List<AppliedActionDTO> actions) {
+            this(actions, new AtomicInteger());
+        }
+
+        boolean tryReserveSlot(int cap) {
+            // Both completed appends (actions.size()) and in-flight reservations count toward
+            // the cap so concurrent callers cannot collectively exceed it. Reads of actions.size()
+            // are stable because the underlying list is synchronized and only grows via
+            // appendAction, which is invoked after a successful reservation.
+            while (true) {
+                int current = reservedSlots.get();
+                if (actions.size() + current >= cap) {
+                    return false;
+                }
+                if (reservedSlots.compareAndSet(current, current + 1)) {
+                    return true;
+                }
+            }
+        }
     }
 }
