@@ -46,6 +46,17 @@ err()  { echo -e "${RED}[stack]${NC} $*"; }
 
 check_client() { curl -sf http://localhost:9000 >/dev/null 2>&1 || curl -sf http://127.0.0.1:9000 >/dev/null 2>&1; }
 
+# Kill any process listening on a given port (fallback when no PID file exists).
+# Safer than pkill -f <name> because it is scoped to the port, not the process name.
+kill_by_port() {
+    local port=$1
+    local pids
+    pids=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null | awk 'NR>1 {print $2}' | sort -u)
+    for pid in $pids; do
+        kill "$pid" 2>/dev/null || true
+    done
+}
+
 cd "$(dirname "$0")"
 REPO_ROOT="$(pwd)"
 LOCAL_DIR=".e2e-local"
@@ -61,8 +72,7 @@ if [ "${1:-}" = "--stop" ]; then
     if [ -f "$LOCAL_DIR/client.pid" ]; then
         kill "$(cat "$LOCAL_DIR/client.pid")" 2>/dev/null || true
     fi
-    pkill -f "ng serve" 2>/dev/null || true
-    pkill -f "static-server.mjs" 2>/dev/null || true
+    kill_by_port 9000
     rm -f "$LOCAL_DIR/client.pid"
     ok "Client stopped. Server + postgres still running."
     exit 0
@@ -75,9 +85,8 @@ if [ "${1:-}" = "--stop-all" ]; then
     if [ -f "$LOCAL_DIR/server.pid" ]; then
         kill "$(cat "$LOCAL_DIR/server.pid")" 2>/dev/null || true
     fi
-    pkill -f "ng serve" 2>/dev/null || true
-    pkill -f "static-server.mjs" 2>/dev/null || true
-    pkill -f "bootRun"  2>/dev/null || true
+    kill_by_port 9000
+    kill_by_port 8080
     docker compose --env-file .env -f "$COMPOSE_FILE" down -v 2>/dev/null || true
     rm -f "$LOCAL_DIR/server.pid" "$LOCAL_DIR/client.pid"
     ok "All stopped."
