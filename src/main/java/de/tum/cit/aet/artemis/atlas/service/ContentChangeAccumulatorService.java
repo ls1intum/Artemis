@@ -16,7 +16,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -26,6 +25,7 @@ import com.hazelcast.map.EntryProcessor;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
 
 /**
@@ -66,12 +66,11 @@ public class ContentChangeAccumulatorService {
 
     private final int dailyCap;
 
-    public ContentChangeAccumulatorService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, Clock clock,
-            @Value("${artemis.atlas.debounce-window-seconds:300}") int debounceWindowSeconds, @Value("${artemis.atlas.max-daily-orchestrations:10}") int dailyCap) {
+    public ContentChangeAccumulatorService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, Clock clock, AtlasOrchestratorProperties properties) {
         this.map = hazelcastInstance.getMap(MAP_NAME);
         this.clock = clock;
-        this.debounceWindowSeconds = debounceWindowSeconds;
-        this.dailyCap = dailyCap;
+        this.debounceWindowSeconds = properties.debounceWindowSeconds();
+        this.dailyCap = properties.maxDailyOrchestrations();
     }
 
     /**

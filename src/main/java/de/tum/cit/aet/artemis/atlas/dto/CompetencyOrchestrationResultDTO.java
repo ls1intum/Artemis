@@ -37,6 +37,11 @@ public record CompetencyOrchestrationResultDTO(Status status, String summary, @N
         /** The LLM call itself threw — surfaced as 502. */
         LLM_ERROR,
         /**
+         * A non-LLM step in the orchestrator failed (content extraction, repository lookup,
+         * template rendering, tool-index assembly) — surfaced as 500.
+         */
+        INTERNAL_ERROR,
+        /**
          * The exercise the orchestrator was triggered for is not a course exercise (currently:
          * exam exercises). Advising on competencies for an exam exercise would silently affect
          * the underlying course's competencies, which is never what the instructor wants —

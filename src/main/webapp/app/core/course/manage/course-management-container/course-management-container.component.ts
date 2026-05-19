@@ -100,6 +100,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private readonly autoOrchestrationNotificationService = inject(AutoOrchestrationNotificationService);
 
     private autoOrchestrationCourseId?: number;
+    private autoOrchestrationActive = false;
 
     protected readonly faTimes = faTimes;
     protected readonly faEye = faEye;
@@ -183,6 +184,21 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                 this.learningPathsActive.set(isActive);
             });
 
+        this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.AutomaticCompetencyManagement)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((isActive) => {
+                this.autoOrchestrationActive = isActive;
+                const currentCourseId = this.courseId();
+                if (isActive && currentCourseId !== undefined) {
+                    this.subscribeToAutoOrchestrationNotifications(currentCourseId);
+                }
+                else if (!isActive && this.autoOrchestrationCourseId !== undefined) {
+                    this.autoOrchestrationNotificationService.unsubscribeFromCourse(this.autoOrchestrationCourseId);
+                    this.autoOrchestrationCourseId = undefined;
+                }
+            });
+
         await super.ngOnInit();
 
         // Subscribe to course modifications and reload the course after a change.
@@ -211,6 +227,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private subscribeToAutoOrchestrationNotifications(courseId: number) {
+        if (!this.autoOrchestrationActive) {
+            return;
+        }
         if (this.autoOrchestrationCourseId === courseId) {
             return;
         }

@@ -232,18 +232,24 @@ public class CompetencyOrchestrationService {
      */
     private CompetencyOrchestrationResultDTO orchestrateExercise(ProgrammingExercise exercise, long courseId) {
         long exerciseId = exercise.getId();
-        String content;
+        String systemPrompt;
         try {
             ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
             CompetencyIndexResponseDTO competencyIndex = orchestratorToolsService.listCompetencyIndex(courseId);
             String renderedIndex = renderCompetencyIndex(competencyIndex);
             String renderedChanges = renderExerciseChangeBatch(exerciseId, extracted.title(), extracted.extractedLearningText());
-            String systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
-
+            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
+        }
+        catch (Exception ex) {
+            log.warn("Atlas orchestrator preparation failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
+            return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.INTERNAL_ERROR);
+        }
+        String content;
+        try {
             content = callChatClient(systemPrompt, courseId);
         }
         catch (Exception ex) {
-            log.warn("Atlas orchestrator failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
+            log.warn("Atlas orchestrator LLM call failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
             return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
         }
         log.info("Atlas orchestrator completed for exercise {} (course {})", exerciseId, courseId);

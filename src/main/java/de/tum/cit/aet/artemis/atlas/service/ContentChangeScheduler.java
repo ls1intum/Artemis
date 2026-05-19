@@ -69,12 +69,12 @@ public class ContentChangeScheduler {
     }
 
     /**
-     * Scheduler entry point: every {@code artemis.atlas.scheduler-rate-ms} milliseconds, walk the
-     * accumulator for courses whose debounce window has elapsed and drive each through the
+     * Scheduler entry point: every {@code artemis.atlas.orchestrator.scheduler-rate-ms} milliseconds,
+     * walk the accumulator for courses whose debounce window has elapsed and drive each through the
      * orchestrator under the per-course lock. A no-op when the feature toggle is disabled so the
      * toggle is a zero-cost operational kill switch.
      */
-    @Scheduled(fixedRateString = "${artemis.atlas.scheduler-rate-ms:30000}", initialDelayString = "${artemis.atlas.scheduler-rate-ms:30000}")
+    @Scheduled(fixedRateString = "${artemis.atlas.orchestrator.scheduler-rate-ms:30000}", initialDelayString = "${artemis.atlas.orchestrator.scheduler-rate-ms:30000}")
     public void tick() {
         SecurityUtils.setAuthorizationObject();
         if (!featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)) {

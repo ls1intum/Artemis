@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.dto;
 
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * WebSocket payload broadcast after the automatic orchestrator finishes draining a course's
@@ -15,4 +16,15 @@ import java.time.Instant;
  * @param completedAt   wall-clock time the broadcast was generated
  */
 public record AutoOrchestrationSummaryDTO(long courseId, String runId, int exerciseCount, int successCount, int failureCount, Instant completedAt) {
+
+    public AutoOrchestrationSummaryDTO {
+        Objects.requireNonNull(runId, "runId must not be null");
+        Objects.requireNonNull(completedAt, "completedAt must not be null");
+        if (exerciseCount < 0 || successCount < 0 || failureCount < 0) {
+            throw new IllegalArgumentException("counts must be non-negative");
+        }
+        if (successCount + failureCount != exerciseCount) {
+            throw new IllegalArgumentException("successCount + failureCount must equal exerciseCount");
+        }
+    }
 }

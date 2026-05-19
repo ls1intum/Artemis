@@ -18,6 +18,7 @@ import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 
@@ -60,7 +61,8 @@ class ContentChangeAccumulatorServiceTest {
     @BeforeEach
     void setUp() {
         clock = new MutableClock(Instant.parse("2026-04-24T12:00:00Z"));
-        service = new ContentChangeAccumulatorService(hazelcastInstance, clock, DEBOUNCE_WINDOW_SECONDS, DAILY_CAP);
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-test", 1.0, "", DEBOUNCE_WINDOW_SECONDS, DAILY_CAP, 30000L);
+        service = new ContentChangeAccumulatorService(hazelcastInstance, clock, properties);
         service.clearForTesting();
     }
 

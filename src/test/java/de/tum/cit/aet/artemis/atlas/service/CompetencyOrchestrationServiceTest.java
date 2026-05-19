@@ -62,11 +62,14 @@ class CompetencyOrchestrationServiceTest {
     @Mock
     private IMap<Long, RunInfo> runMap;
 
+    @Mock
+    private ContentChangeAccumulatorService contentChangeAccumulatorService;
+
     private AtlasOrchestratorProperties properties;
 
     @BeforeEach
     void setUp() {
-        properties = new AtlasOrchestratorProperties("gpt-test-orchestrator", 1.0, "");
+        properties = new AtlasOrchestratorProperties("gpt-test-orchestrator", 1.0, "", 300, 10, 30000L);
     }
 
     @Test
@@ -120,7 +123,7 @@ class CompetencyOrchestrationServiceTest {
 
     private CompetencyOrchestrationService createService(@Nullable ChatClient chatClient) {
         return new CompetencyOrchestrationService(programmingExerciseRepository, contentExtractionService, orchestratorToolsService, templateService, chatClient,
-                toolCallbackFactory, hazelcastInstance, properties);
+                toolCallbackFactory, hazelcastInstance, properties, contentChangeAccumulatorService);
     }
 
     private CompetencyOrchestrationService createServiceWithRunMap(@Nullable ChatClient chatClient) {
