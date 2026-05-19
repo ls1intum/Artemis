@@ -107,7 +107,7 @@ jobs:
 
       - name: Test Report
         uses: dorny/test-reporter@v3
-        if: success() || failure()    # run this step even if previous step failed
+        if: ${{ !cancelled() }}    # run this step even if previous step failed
         with:
           name: Android E2E Test Results
           path: android-repo/test-outputs/**/*.xml

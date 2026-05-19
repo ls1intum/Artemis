@@ -168,8 +168,10 @@ is unchanged.
 | `release` | `ci-release-{tag}` | no |
 | `push` / `workflow_dispatch` | `ci-{github.ref}` | no |
 
-Concurrency lives only on the umbrella. Children inherit the parent's group; **never** add
-a `concurrency:` block to a `ci-*.yml` reusable.
+Concurrency lives only on the umbrella. Reusables share the umbrella's `run_id`, so the
+parent's concurrency lock applies transitively. **Never** add a `concurrency:` block to a
+`ci-*.yml` reusable — it creates a second lock that can deadlock the parent
+([actions/runner#3205](https://github.com/actions/runner/issues/3205)).
 
 ## Adding a new CI check
 

@@ -49,12 +49,6 @@ runs:
           exit 1
         fi
 
-    - name: Make scripts executable
-      shell: bash
-      run: |
-        chmod +x .ci/E2E-tests/cleanup.sh
-        chmod +x .ci/E2E-tests/execute.sh
-
     - name: Run cleanup script (before E2E)
       shell: bash
       run: .ci/E2E-tests/cleanup.sh

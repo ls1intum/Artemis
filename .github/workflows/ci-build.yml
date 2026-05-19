@@ -1,6 +1,5 @@
 name: Build
 
-# Reusable workflow called by ci.yml. See .github/workflows/README.md for the
 # workflow_call + concurrency contract.
 
 on:
@@ -43,7 +42,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
-      contents: read
+      # `contents: write` required by `gh release upload` in the release path; the rest
+      # of this job uses only `contents: read` access (gradle build, war upload).
+      contents: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -63,7 +64,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '${{ env.java }}'
-          cache: 'gradle'
+          # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e  # v6.1.0
       - name: Install pnpm dependencies
@@ -91,7 +92,6 @@ jobs:
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           set -Eeuo pipefail
-          # Validate the tag matches the expected format before passing it to gh.
           if ! [[ "$RELEASE_TAG" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
             echo "::error::Refusing to upload release artifact: tag '$RELEASE_TAG' is not a valid version."
             exit 1

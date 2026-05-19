@@ -1,7 +1,5 @@
 name: Translation Keys
 
-# Reusable workflow called by ci.yml. See .github/workflows/README.md for the contract.
-
 on:
   workflow_call: {}
 

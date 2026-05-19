@@ -1,6 +1,5 @@
 name: Java Analysis
 
-# Reusable workflow called by ci.yml. See .github/workflows/README.md for the contract.
 # Two checks: code-quality (caps on large classes / complex Spring beans) and
 # query-quality (over-fetching @EntityGraph / @Query annotations).
 

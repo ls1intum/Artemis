@@ -1,7 +1,5 @@
 name: Test
 
-# Reusable workflow called by ci.yml. See .github/workflows/README.md for the contract.
-
 on:
   workflow_call:
     inputs:
@@ -71,7 +69,6 @@ jobs:
           # Explicitly fetch — the checkout action only clones the current branch.
           git fetch origin "$DEFAULT_BRANCH"
 
-          chmod +x ./supporting_scripts/get_changed_modules.sh
           CHANGED_MODULES=$(./supporting_scripts/get_changed_modules.sh "origin/$DEFAULT_BRANCH")
 
           if [ -n "${CHANGED_MODULES}" ]; then
@@ -89,7 +86,7 @@ jobs:
           set -Eeuo pipefail
           ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification 2>&1 | tee tests.log
       - name: Upload JUnit Test Results
-        if: success() || failure()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           # Disambiguated from `JUnit Test Results` (E2E) because both jobs upload in the
@@ -152,23 +149,23 @@ jobs:
           path: build/test-results/test/*.xml
           reporter: java-junit
       - name: Number of Server Starts
-        if: success() || failure()
+        if: ${{ !cancelled() }}
         run: bash supporting_scripts/extract_number_of_server_starts.sh
       - name: Upload Server Test Coverage Report
-        if: success() || failure()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: Coverage Report Server Tests
           path: build/reports/jacoco/aggregated/html
       - name: Upload JaCoCo XML Reports
-        if: success() || failure()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: Server JaCoCo XML
           path: build/reports/jacoco/**/jacocoTestReport.xml
           if-no-files-found: ignore
       - name: Append Per-Module Coverage to Job Summary
-        if: success() || failure()
+        if: ${{ !cancelled() }}
         run: |
           set -Eeuo pipefail
           AGGREGATED_REPORT_FILE=./module_coverage_report.md
@@ -196,13 +193,13 @@ jobs:
         run: ./gradlew spotlessCheck
       - name: Java Documentation
         run: ./gradlew checkstyleMain -x webapp
-        if: success() || failure()
+        if: ${{ !cancelled() }}
       - name: Java Architecture Tests
         run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
-        if: success() || failure()
+        if: ${{ !cancelled() }}
       - name: Test Report
         uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
-        if: success() || failure()
+        if: ${{ !cancelled() }}
         with:
           name: Java Architecture Tests
           path: build/test-results/test/*.xml
@@ -239,19 +236,19 @@ jobs:
       - name: TypeScript Test Without Typechecking
         run: pnpm run test:ci
       - name: Upload Client Test Coverage Report
-        if: success() || failure()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: Coverage Report Client Tests
           path: build/test-results/lcov-report/
       - name: Upload Vitest Coverage Report
-        if: success() || failure()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: Vitest Coverage Report
           path: build/test-results/vitest/coverage/
       - name: Upload Client Coverage Summaries
-        if: success() || failure()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: Client Coverage Summaries
@@ -260,13 +257,13 @@ jobs:
             build/test-results/vitest/coverage/coverage-summary.json
           if-no-files-found: ignore
       - name: Upload JUnit Test Results
-        if: success() || failure()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: Client JUnit Test Results
           path: junit.xml
       - name: Upload Vitest JUnit Test Results
-        if: success() || failure()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: Vitest JUnit Test Results
@@ -297,15 +294,15 @@ jobs:
         run: pnpm run prettier:check
       - name: TypeScript Code Style
         run: pnpm run lint
-        if: success() || failure()
+        if: ${{ !cancelled() }}
       - name: Install Playwright Dependencies
         run: pnpm install --frozen-lockfile
         working-directory: src/test/playwright
-        if: success() || failure()
+        if: ${{ !cancelled() }}
       - name: Playwright Code Style
         run: pnpm run lint
         working-directory: src/test/playwright
-        if: success() || failure()
+        if: ${{ !cancelled() }}
 
   client-compilation:
     name: Client Compilation

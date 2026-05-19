@@ -10,9 +10,8 @@ on:
       - main
       - release/*
   release:
-    # Release events fire on `published` (also covers drafts being promoted).
-    # We deliberately do NOT also listen for `push:` tag events — a UI release publish
-    # fires both, producing duplicate runs in separate concurrency groups.
+    # `published` covers draft promotion. No `push: tags:` trigger — UI release publish
+    # would otherwise double-fire.
     types: [published]
   merge_group:
   workflow_dispatch:
@@ -50,7 +49,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # paths-filter needs at least two commits for push diffs.
           fetch-depth: 2
 
       # dorny/paths-filter handles the edge cases hand-rolled `git diff` does not:
@@ -121,7 +119,6 @@ jobs:
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            echo "Forced run — every gate set to true."
             for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
@@ -142,7 +139,8 @@ jobs:
     if: needs.detect-changes.outputs.build_relevant == 'true'
     uses: ./.github/workflows/ci-build.yml
     permissions:
-      contents: read
+      # `contents: write` required by `gh release upload` in build-war's release path.
+      contents: write
       packages: write
     with:
       ref_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
@@ -264,14 +262,6 @@ jobs:
         env:
           NEEDS: ${{ toJSON(needs) }}
         run: |
-          {
-            echo "## CI Summary"
-            echo ""
-            echo "| Job | Result |"
-            echo "|-----|--------|"
-            jq -r 'to_entries[] | "| \(.key) | \(.value.result // "n/a") |"' <<< "$NEEDS"
-          } >> "$GITHUB_STEP_SUMMARY"
-
           failing=$(jq -r '
             to_entries[]
             | select(.value.result != "success" and .value.result != "skipped")

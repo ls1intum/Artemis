@@ -54,29 +54,5 @@ jobs:
           done
 
       - name: Check local composite actions are preceded by actions/checkout in their job
-        # actionlint doesn't catch step ordering. A `uses: ./.github/actions/<x>` before
-        # the workspace is checked out fails at runtime because the action.yml isn't on
-        # disk yet. This check enforces that every job using a local composite has at
-        # least one `actions/checkout` step earlier in the same job.
-        run: |
-          set -Eeuo pipefail
-          python3 <<'PY'
-          import sys, yaml, glob
-          fail = False
-          for f in sorted(glob.glob('.github/workflows/*.yml')):
-              doc = yaml.safe_load(open(f))
-              if not isinstance(doc, dict):
-                  continue
-              for jname, job in (doc.get('jobs') or {}).items():
-                  if not isinstance(job, dict) or 'steps' not in job:
-                      continue
-                  seen_checkout = False
-                  for step in job['steps']:
-                      uses = (step or {}).get('uses', '')
-                      if isinstance(uses, str) and uses.startswith('actions/checkout@'):
-                          seen_checkout = True
-                      if isinstance(uses, str) and uses.startswith('./.github/actions/') and not seen_checkout:
-                          print(f"::error file={f}::Job '{jname}' uses local composite '{uses}' before actions/checkout — the action.yml is not on disk yet")
-                          fail = True
-          sys.exit(1 if fail else 0)
-          PY
+        # actionlint doesn't catch step ordering; this script does.
+        run: python3 supporting_scripts/check_composite_checkout_order.py
