@@ -34,6 +34,7 @@ export class ExerciseTimeline {
     private translateService = inject(TranslateService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     timelineItems = input.required<TimelineItem[]>();
+    readonly = input.required<boolean>();
     internalTimelineItems = computed<InternalTimelineItem[]>(() => this.computeInternalTimelineItems());
     timelineStatus = computed<ExerciseTimelineStatus>(() => this.computeExerciseTimelineStatus());
     timelineStatusChange = output<ExerciseTimelineStatus>();

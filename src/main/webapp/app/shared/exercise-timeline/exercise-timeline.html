@@ -40,11 +40,12 @@
                         slotChar="dd . mm . yyyy | hh : mm"
                         keepInvalid="true"
                         showClear="true"
-                        showIcon="true"
+                        [showIcon]="!readonly()"
                         iconDisplay="input"
                         appendTo="body"
                         showOnFocus="false"
                         [invalid]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
+                        [disabled]="readonly()"
                     />
                     <i
                         class="pi pi-info-circle timeline-datepicker-info-icon"

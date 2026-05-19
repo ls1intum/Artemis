@@ -28,7 +28,19 @@
                     }
                     @case (DetailType.ProgrammingTimeline) {
                         <dd id="detail-value-{{ detail.title }}">
-                            <jhi-programming-exercise-timeline [isExamMode]="detail.data.isExamMode ?? false" [exercise]="detail.data.exercise" [readOnly]="true" />
+                            <jhi-programming-exercise-timeline
+                                [(releaseDate)]="detail.data.exercise.releaseDate"
+                                [(startDate)]="detail.data.exercise.startDate"
+                                [(dueDate)]="detail.data.exercise.dueDate"
+                                [(buildAndTestStudentSubmissionsAfterDueDate)]="detail.data.exercise.buildAndTestStudentSubmissionsAfterDueDate"
+                                [(assessmentDueDate)]="detail.data.exercise.assessmentDueDate"
+                                [(exampleSolutionPublicationDate)]="detail.data.exercise.exampleSolutionPublicationDate"
+                                [(assessmentType)]="detail.data.exercise.assessmentType"
+                                [(allowFeedbackRequests)]="detail.data.exercise.allowFeedbackRequests"
+                                [exercise]="detail.data.exercise"
+                                [readOnly]="true"
+                                [isExamMode]="detail.data.isExamMode ?? false"
+                            />
                         </dd>
                     }
                     @case (DetailType.Markdown) {
