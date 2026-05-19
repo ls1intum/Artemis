@@ -140,10 +140,7 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
-          workflow-head-branch: ${{ inputs.branch_name }}
-          workflow-head-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          artifact-name-suffix: phase1
           test-notice: "Running Phase 1 with relevant tests: ${{ needs.determine-tests.outputs.relevant_tests }}"
 
       - name: Record test start time
@@ -333,10 +330,7 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
-          workflow-head-branch: ${{ inputs.branch_name }}
-          workflow-head-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          artifact-name-suffix: phase2
           test-notice: "Running Phase 2 with remaining tests: ${{ needs.determine-tests.outputs.remaining_tests }}"
 
       - name: Record test start time
@@ -525,8 +519,6 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
-          workflow-head-branch: ${{ inputs.branch_name }}
-          workflow-head-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-notice: 'Running all tests (infrastructure/config changes detected)'
 
@@ -700,8 +692,6 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
-          workflow-head-branch: ${{ inputs.branch_name }}
-          workflow-head-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run E2E Playwright tests (PostgreSQL, Local, Multi-Node)

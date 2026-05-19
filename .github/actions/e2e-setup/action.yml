@@ -3,23 +3,13 @@ description: 'Common setup steps for E2E test jobs'
 
 inputs:
   workflow-run-id:
-    description: 'The triggering workflow run ID'
-    required: true
-  workflow-head-branch:
-    description: 'The branch being tested'
-    required: true
-  workflow-head-sha:
-    description: 'The commit SHA'
+    description: 'Run ID that holds the `docker-tag` artifact (the umbrella run id under workflow_call).'
     required: true
   github-token:
-    description: 'Token for downloading artifacts'
+    description: 'Token for the cross-job artifact download.'
     required: true
-  artifact-name-suffix:
-    description: 'Optional suffix for workflow context artifact (e.g., "phase1")'
-    required: false
-    default: ''
   test-notice:
-    description: 'Optional notice message about test selection'
+    description: 'Optional human-readable notice describing the test selection (logged for the run).'
     required: false
     default: ''
 
