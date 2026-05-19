@@ -97,6 +97,37 @@ describe('build-plan-phases.model', () => {
                 ],
             }),
         );
+        expect(parsed?.phases[0].resultPaths).toEqual([]);
+    });
+
+    it('defaults undefined condition, forceRun, and resultPaths', () => {
+        const parsed = parseBuildPlanPhases(
+            JSON.stringify({
+                phases: [
+                    {
+                        name: 'test',
+                        script: './gradlew test',
+                        // condition, forceRun, and resultPaths intentionally omitted
+                    },
+                ],
+            }),
+        );
+        expect(parsed?.phases[0].condition).toBe('ALWAYS');
+        expect(parsed?.phases[0].forceRun).toBe(false);
+        expect(parsed?.phases[0].resultPaths).toStrictEqual([]);
+    });
+
+    it('handles all optional fields missing simultaneously', () => {
+        const parsed = parseBuildPlanPhases(
+            JSON.stringify({
+                phases: [
+                    {
+                        name: 'test',
+                        script: './gradlew test',
+                    },
+                ],
+            }),
+        );
         expect(parsed).toEqual({
             phases: [
                 {
@@ -108,5 +139,49 @@ describe('build-plan-phases.model', () => {
                 },
             ],
         });
+    });
+
+    it('returns undefined if forceRun is not a boolean', () => {
+        expect(
+            parseBuildPlanPhases(
+                JSON.stringify({
+                    phases: [
+                        {
+                            name: 'test',
+                            script: './gradlew test',
+                            forceRun: 'not-a-boolean',
+                        },
+                    ],
+                }),
+            ),
+        ).toBeUndefined();
+    });
+
+    it('returns undefined if mandatory fields are missing', () => {
+        // Missing name
+        expect(
+            parseBuildPlanPhases(
+                JSON.stringify({
+                    phases: [
+                        {
+                            script: './gradlew test',
+                        },
+                    ],
+                }),
+            ),
+        ).toBeUndefined();
+
+        // Missing script
+        expect(
+            parseBuildPlanPhases(
+                JSON.stringify({
+                    phases: [
+                        {
+                            name: 'test',
+                        },
+                    ],
+                }),
+            ),
+        ).toBeUndefined();
     });
 });
