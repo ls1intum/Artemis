@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -10,6 +13,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -19,11 +25,12 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.iris.exception.IrisException;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorException;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 
@@ -36,24 +43,18 @@ public class HyperionCompetencyContextService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCompetencyContextService.class);
 
-    private static final int LECTURE_SNIPPETS_PER_COMPETENCY = 20;
-
-    // Pyris enforces 20 on the search endpoint
-    private static final int PYRIS_SEARCH_LIMIT = 20;
+    private static final int MAX_TOTAL_CHARS = 50_000;
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
 
     private final Optional<CompetencyRelationApi> competencyRelationApi;
 
-    private final Optional<PyrisConnectorService> pyrisConnectorService;
-
     private final Optional<LectureUnitApi> lectureUnitApi;
 
     public HyperionCompetencyContextService(Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi,
-            Optional<PyrisConnectorService> pyrisConnectorService, Optional<LectureUnitApi> lectureUnitApi) {
+            Optional<LectureUnitApi> lectureUnitApi) {
         this.courseCompetencyApi = courseCompetencyApi;
         this.competencyRelationApi = competencyRelationApi;
-        this.pyrisConnectorService = pyrisConnectorService;
         this.lectureUnitApi = lectureUnitApi;
     }
 
@@ -69,7 +70,7 @@ public class HyperionCompetencyContextService {
      *
      * @param competencies    the competencies in the selected set
      * @param relations       relations involving the selected competencies (ASSUMES / EXTENDS / MATCHES)
-     * @param lectureSnippets relevant lecture content snippets retrieved from Pyris (may be empty)
+     * @param lectureSnippets relevant lecture content snippets extracted from linked units (may be empty)
      */
     public record CompetencyContext(List<CourseCompetency> competencies, Set<CompetencyRelation> relations, List<String> lectureSnippets) {
     }
@@ -98,12 +99,12 @@ public class HyperionCompetencyContextService {
         Set<Long> selectedIds = selected.stream().map(CourseCompetency::getId).filter(Objects::nonNull).collect(Collectors.toSet());
         Set<CompetencyRelation> relations = competencyRelationApi.map(relApi -> relApi.findRelationsInvolvingCompetencies(courseId, selectedIds)).orElse(Set.of());
 
-        List<String> lectureSnippets = fetchLectureSnippets(selected, selectedIds);
+        List<String> lectureSnippets = fetchLectureSnippets(selectedIds);
 
         return new CompetencyContext(selected, relations, lectureSnippets);
     }
 
-    private List<String> fetchLectureSnippets(List<CourseCompetency> selected, Set<Long> selectedIds) {
+    private List<String> fetchLectureSnippets(Set<Long> selectedIds) {
         if (competencyRelationApi.isEmpty() || lectureUnitApi.isEmpty() || selectedIds.isEmpty()) {
             return List.of();
         }
@@ -115,34 +116,43 @@ public class HyperionCompetencyContextService {
 
         List<LectureUnit> lectureUnits = lectureUnitApi.get().findAllByIds(linkedLectureUnitIds);
 
+        int perUnitBudget = MAX_TOTAL_CHARS / lectureUnits.size();
         List<String> snippets = new ArrayList<>();
-        Set<Long> nonTextUnitIds = new HashSet<>();
 
-        // TextUnits: include content directly from the database.
         for (LectureUnit unit : lectureUnits) {
-            if (unit instanceof TextUnit textUnit && textUnit.getContent() != null && !textUnit.getContent().isBlank()) {
-                snippets.add("[" + unit.getLecture().getTitle() + " – " + unit.getName() + "]\n" + textUnit.getContent());
+            String raw = extractUnitText(unit);
+            if (raw == null || raw.isBlank()) {
+                continue;
             }
-            else if (unit.getId() != null) {
-                nonTextUnitIds.add(unit.getId());
-            }
-        }
-
-        // Non-text units (slides etc.): retrieve snippets from Pyris, then filter to linked units only.
-        if (!nonTextUnitIds.isEmpty() && pyrisConnectorService.isPresent()) {
-            for (CourseCompetency competency : selected) {
-                String query = competency.getTitle() + (competency.getDescription() != null ? " " + competency.getDescription() : "");
-                try {
-                    pyrisConnectorService.get().searchLectures(query, PYRIS_SEARCH_LIMIT).stream().filter(result -> nonTextUnitIds.contains(result.lectureUnit().id()))
-                            .limit(LECTURE_SNIPPETS_PER_COMPETENCY).map(result -> "[" + result.lecture().name() + " – " + result.lectureUnit().name() + "]\n" + result.snippet())
-                            .forEach(snippets::add);
-                }
-                catch (PyrisConnectorException | IrisException e) {
-                    log.warn("Failed to retrieve lecture snippets from Pyris for competency [{}]: {}", competency.getId(), e.getMessage());
-                }
-            }
+            String truncated = raw.length() > perUnitBudget ? raw.substring(0, perUnitBudget) + "…[truncated]" : raw;
+            snippets.add("[" + unit.getLecture().getTitle() + " – " + unit.getName() + "]\n" + truncated);
         }
 
         return snippets.stream().distinct().toList();
+    }
+
+    private String extractUnitText(LectureUnit unit) {
+        if (unit instanceof TextUnit textUnit) {
+            return textUnit.getContent();
+        }
+        if (unit instanceof AttachmentVideoUnit avu && avu.getAttachment() != null && avu.getAttachment().getAttachmentType() == AttachmentType.FILE
+                && avu.getAttachment().getLink() != null && avu.getAttachment().getLink().endsWith(".pdf")) {
+            return extractPdfText(avu.getAttachment().getLink());
+        }
+        return null;
+    }
+
+    private String extractPdfText(String attachmentLink) {
+        try {
+            Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentLink), FilePathType.ATTACHMENT_UNIT);
+            byte[] fileBytes = Files.readAllBytes(path);
+            try (PDDocument doc = Loader.loadPDF(fileBytes)) {
+                return new PDFTextStripper().getText(doc);
+            }
+        }
+        catch (IOException e) {
+            log.warn("Could not extract text from PDF attachment [{}]: {}", attachmentLink, e.getMessage());
+            return null;
+        }
     }
 }
