@@ -130,14 +130,11 @@ $delete-delay-duration: 6s;
     }
 }
 .modal {
-    // take all available place
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
     height: 100% !important;
-
-    // center the form
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -154,7 +151,6 @@ $delete-delay-duration: 6s;
 }
 
 .modal-content {
-    // add scroll for big content
     max-height: 90vh;
     overflow-y: auto;
 }
