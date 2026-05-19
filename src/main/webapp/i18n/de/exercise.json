@@ -134,6 +134,8 @@
             "noReleaseAndStartDateWarning": "Du hast kein Veröffentlichungs- und Startdatum definiert, daher wird die Aufgabe sofort veröffentlicht und Studierende können direkt an der Aufgabe teilnehmen.",
             "dates": "Termine",
             "dateNotSet": "Kein Datum gesetzt",
+            "timelineDateOrderTooltip": "Dieses Datum muss nach oder zeitgleich mit allen vorhergehenden Daten liegen.",
+            "timelineDateRequiredTooltip": "Dieses Datum ist erforderlich.",
             "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung",
             "exampleSolutionPublicationDateError": "Bei benoteten Übungen muss das Veröffentlichungsdatum der Beispiellösung nach dem Veröffentlichungsdatum, dem Startdatum und nach der Einreichungsfrist für Aufgaben sein, falls diese festgelegt wurden. Bitte überprüfe deine Auswahl nochmal.",
             "exampleSolutionPublicationDateImportInfo": "Einstellung nicht für den Import verfügbar. Bitte setze diese ggf. nach dem Import.",

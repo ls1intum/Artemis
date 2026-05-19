@@ -1,10 +1,12 @@
-import { Component, WritableSignal, computed, effect, input, output } from '@angular/core';
+import { Component, WritableSignal, computed, effect, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DatePickerModule } from 'primeng/datepicker';
 import { InputMaskModule } from 'primeng/inputmask';
 import { TooltipModule } from 'primeng/tooltip';
 import dayjs, { Dayjs } from 'dayjs/esm';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { TranslateService } from '@ngx-translate/core';
 
 export type TimelineItem =
     | { kind: 'required'; labelStringKey: string; date: WritableSignal<Dayjs | undefined> }
@@ -29,6 +31,8 @@ type InternalTimelineItem = TimelineItem & {
     styleUrl: './exercise-timeline.scss',
 })
 export class ExerciseTimeline {
+    private translateService = inject(TranslateService);
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
     timelineItems = input.required<TimelineItem[]>();
     internalTimelineItems = computed<InternalTimelineItem[]>(() => this.computeInternalTimelineItems());
     timelineStatus = computed<ExerciseTimelineStatus>(() => this.computeExerciseTimelineStatus());
@@ -74,6 +78,7 @@ export class ExerciseTimeline {
 
     private computeInternalTimelineItems(): InternalTimelineItem[] {
         return this.timelineItems().map((item, index, items) => {
+            this.currentLocale();
             const date = item.date();
             const isBeforePreviousDate =
                 date !== undefined &&
@@ -84,9 +89,9 @@ export class ExerciseTimeline {
             const isInputRequiredButUndefined = item.kind === 'required' && date === undefined;
             let tooltip: string | undefined;
             if (isBeforePreviousDate) {
-                tooltip = 'This date must be after or equal to all preceding dates.';
+                tooltip = this.translateService.instant('artemisApp.exercise.timelineDateOrderTooltip');
             } else if (isInputRequiredButUndefined) {
-                tooltip = 'This date is required.';
+                tooltip = this.translateService.instant('artemisApp.exercise.timelineDateRequiredTooltip');
             }
 
             return {

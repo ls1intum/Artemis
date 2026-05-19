@@ -139,6 +139,8 @@
             "noReleaseAndStartDateWarning": "You have not defined a release and start date for this exercise, this means that it will be immediately published and students can participate in the exercise.",
             "dates": "Dates",
             "dateNotSet": "No date set",
+            "timelineDateOrderTooltip": "This date must be after or equal to all preceding dates.",
+            "timelineDateRequiredTooltip": "This date is required.",
             "exampleSolutionPublicationDate": "Example Solution Publication Date",
             "points": "Points",
             "pointsError": "Must be a number between 1 and 9999.",
