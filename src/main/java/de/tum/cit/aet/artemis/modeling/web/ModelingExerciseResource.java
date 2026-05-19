@@ -318,7 +318,7 @@ public class ModelingExerciseResource {
                     updateModelingExerciseDTO.athenaConfig().preliminaryFeedbackModule(), updateModelingExerciseDTO.athenaConfig().gradedFeedbackModule());
             persistedExercise.setAthenaConfig(athenaConfig);
         }
-        else if (persistedExercise.getAthenaConfig() != null) {
+        else {
             exerciseAthenaConfigService.deleteByExerciseId(persistedExercise.getId());
             persistedExercise.setAthenaConfig(null);
         }

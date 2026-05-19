@@ -279,7 +279,7 @@ public class TextExerciseCreationUpdateResource {
                     updateTextExerciseDTO.athenaConfig().preliminaryFeedbackModule(), updateTextExerciseDTO.athenaConfig().gradedFeedbackModule());
             persistedExercise.setAthenaConfig(updatedConfig);
         }
-        else if (persistedExercise.getAthenaConfig() != null) {
+        else {
             exerciseAthenaConfigService.deleteByExerciseId(persistedExercise.getId());
             persistedExercise.setAthenaConfig(null);
         }

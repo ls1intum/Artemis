@@ -314,7 +314,7 @@ public class ProgrammingExerciseUpdateResource {
                     updateDTO.athenaConfig().gradedFeedbackModule());
             savedProgrammingExercise.setAthenaConfig(updatedConfig);
         }
-        else if (savedProgrammingExercise.getAthenaConfig() != null) {
+        else {
             exerciseAthenaConfigService.deleteByExerciseId(savedProgrammingExercise.getId());
             savedProgrammingExercise.setAthenaConfig(null);
         }
