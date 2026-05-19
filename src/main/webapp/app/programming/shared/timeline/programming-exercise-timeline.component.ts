@@ -50,20 +50,11 @@ export class ProgrammingExerciseTimelineComponent implements OnDestroy, OnInit {
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
 
     isDatePickableForRunningTestsAfterDueDate = signal(false);
-    isEnablingToRunTestsAfterDueDateToggleEnabled = computed(() => {
-        const isFieldDisplayed = this.isEditFieldDisplayedRecord();
-        return (!isFieldDisplayed || isFieldDisplayed.runTestsAfterDueDate) && (this.isExamMode() || !!this.dueDate());
-    });
+    isEnablingToRunTestsAfterDueDateToggleEnabled = computed(() => this.computeIsEnablingToRunTestsAfterDueDateToggleEnabled());
     isDatePickableForSemiAutomaticAssessmentDueDate = signal(false);
-    isSemiAutomaticAssessmentToggleEnabled = computed(() => {
-        const isFieldDisplayed = this.isEditFieldDisplayedRecord();
-        return (!isFieldDisplayed || isFieldDisplayed.assessmentDueDate) && (this.isImport() || !!this.dueDate() || this.isExamMode());
-    });
+    isSemiAutomaticAssessmentToggleEnabled = computed(() => this.computeIsSemiAutomaticAssessmentToggleEnabled());
     isDatePickableForExampleSolutionPublicationDate = signal(this.exampleSolutionPublicationDate() !== undefined);
-    isExampleSolutionPublicationDateToggleEnabled = computed(() => {
-        const isFieldDisplayed = this.isEditFieldDisplayedRecord();
-        return (!isFieldDisplayed || isFieldDisplayed.exampleSolutionPublicationDate) && !this.isExamMode();
-    });
+    isExampleSolutionPublicationDateToggleEnabled = computed(() => this.computeIsExampleSolutionPublicationDateToggleEnabled());
 
     isImport = signal(false);
     formValid: boolean;
@@ -215,6 +206,21 @@ export class ProgrammingExerciseTimelineComponent implements OnDestroy, OnInit {
         }
 
         return timelineItems;
+    }
+
+    private computeIsEnablingToRunTestsAfterDueDateToggleEnabled(): boolean {
+        const isFieldDisplayed = this.isEditFieldDisplayedRecord();
+        return (!isFieldDisplayed || isFieldDisplayed.runTestsAfterDueDate) && (this.isExamMode() || !!this.dueDate());
+    }
+
+    private computeIsSemiAutomaticAssessmentToggleEnabled(): boolean {
+        const isFieldDisplayed = this.isEditFieldDisplayedRecord();
+        return (!isFieldDisplayed || isFieldDisplayed.assessmentDueDate) && (this.isImport() || !!this.dueDate() || this.isExamMode());
+    }
+
+    private computeIsExampleSolutionPublicationDateToggleEnabled(): boolean {
+        const isFieldDisplayed = this.isEditFieldDisplayedRecord();
+        return (!isFieldDisplayed || isFieldDisplayed.exampleSolutionPublicationDate) && !this.isExamMode();
     }
 
     private updateIsImportBasedOnUrl() {
