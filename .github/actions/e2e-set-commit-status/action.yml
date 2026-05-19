@@ -42,5 +42,6 @@ runs:
         curl -sSf -X POST \
           -H "Authorization: token $GH_TOKEN" \
           -H "Accept: application/vnd.github.v3+json" \
+          -H "Content-Type: application/json" \
           "$STATUSES_URL" \
           -d "$payload"
