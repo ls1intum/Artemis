@@ -7,14 +7,14 @@
 # the playwright workspace itself. Idempotent — skips anything already running.
 #
 # What it does:
-#   1. Ensures Node 24 is active (via nvm)
-#   2. Ensures Docker daemon is running (starts Docker Desktop if not)
+#   1. Ensures Node (version from .nvmrc) is active (via nvm)
+#   2. Ensures Docker daemon is running (starts Docker Desktop on macOS if not)
 #   3. Ensures Postgres container is up (via e2e-local-fast-postgres.yml)
 #   4. Ensures Artemis server is running on :8080
 #   5. Ensures frontend is serving on :9000 (ng serve, or prebuilt static + proxy)
 #   6. Ensures ssh-keys symlink exists at repo root (for cwd-relative lookup)
-#   7. Runs prepareVSCodeForE2ETests.sh (installs deps + patches config)
-#   8. Ensures playwright.env BASE_URL uses localhost
+#   7. Ensures playwright.env BASE_URL uses localhost
+#   8. Runs prepareVSCodeForE2ETests.sh (installs deps + patches config)
 #
 # Usage:
 #   ./start-playwright-stack.sh           # ng serve client (HMR, slow startup)
@@ -25,8 +25,18 @@
 # =============================================================================
 
 set -e
-STATIC_MODE=false
-[ "${1:-}" = "--static" ] && STATIC_MODE=true
+
+case "${1:-}" in
+    ""|--)        STATIC_MODE=false ;;
+    --static)     STATIC_MODE=true ;;
+    --stop|--stop-all) ;; # handled below
+    *)
+        echo "Unknown option: ${1}"
+        echo "Usage: $0 [--static | --stop | --stop-all]"
+        exit 1
+        ;;
+esac
+STATIC_MODE="${STATIC_MODE:-false}"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
 log()  { echo -e "${BLUE}[stack]${NC} $*"; }
@@ -74,13 +84,13 @@ if [ "${1:-}" = "--stop-all" ]; then
     exit 0
 fi
 
-# ----- 1. Node 24 via nvm ---------------------------------------------------
-log "Ensuring Node 24 is active..."
+# ----- 1. Node (from .nvmrc) via nvm ----------------------------------------
+log "Ensuring correct Node version is active..."
 export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 # shellcheck disable=SC1091
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 if command -v nvm >/dev/null 2>&1; then
-    nvm use 24 >/dev/null
+    nvm use >/dev/null
     ok "Node $(node -v)"
 else
     warn "nvm not found — using system node $(node -v 2>/dev/null || echo 'NONE')"
@@ -89,13 +99,18 @@ fi
 # ----- 2. Docker daemon -----------------------------------------------------
 log "Ensuring Docker is running..."
 if ! docker info >/dev/null 2>&1; then
-    warn "Docker not running — starting Docker Desktop..."
-    open -a Docker
-    for _ in $(seq 1 60); do
-        sleep 2
-        docker info >/dev/null 2>&1 && break
-    done
-    docker info >/dev/null 2>&1 || { err "Docker did not start in time"; exit 1; }
+    if [ "$(uname)" = "Darwin" ]; then
+        warn "Docker not running — starting Docker Desktop..."
+        open -a Docker
+        for _ in $(seq 1 60); do
+            sleep 2
+            docker info >/dev/null 2>&1 && break
+        done
+        docker info >/dev/null 2>&1 || { err "Docker did not start in time"; exit 1; }
+    else
+        err "Docker is not running. Start Docker and re-run this script."
+        exit 1
+    fi
 fi
 ok "Docker ready"
 
@@ -169,17 +184,16 @@ if check_client; then
     ok "Client already serving"
 elif [ "$STATIC_MODE" = true ]; then
     if [ ! -f "build/resources/main/static/index.html" ]; then
-        if [ ! -d "node_modules" ]; then
-            log "Installing root npm deps (needed for webapp build)..."
-            npm install --no-audit --no-fund --silent
+        if command -v corepack >/dev/null 2>&1; then
+            corepack enable >/dev/null 2>&1 || true
         fi
-        log "No prebuilt bundle found — running npm run webapp:prod (one-time, ~3-5 min)..."
-        npm run webapp:prod
+        log "No prebuilt bundle found — running pnpm run webapp:prod (one-time, ~3-5 min)..."
+        pnpm run webapp:prod
     else
         ok "Prebuilt bundle found at build/resources/main/static"
     fi
     log "Starting static server on :9000..."
-    nohup node "$LOCAL_DIR/static-server.mjs" > "$LOCAL_DIR/client.log" 2>&1 &
+    nohup node "supporting_scripts/playwright/static-server.mjs" > "$LOCAL_DIR/client.log" 2>&1 &
     echo $! > "$LOCAL_DIR/client.pid"
     for _ in $(seq 1 20); do
         sleep 1
@@ -189,8 +203,8 @@ elif [ "$STATIC_MODE" = true ]; then
         || { err "Static server failed. Tail: $LOCAL_DIR/client.log"; tail -30 "$LOCAL_DIR/client.log"; exit 1; }
     ok "Static server ready (starts in ~1s on subsequent runs)"
 else
-    log "Starting client (npm start)..."
-    nohup npm start > "$LOCAL_DIR/client.log" 2>&1 &
+    log "Starting client (pnpm start)..."
+    nohup pnpm start > "$LOCAL_DIR/client.log" 2>&1 &
     echo $! > "$LOCAL_DIR/client.pid"
     log "Waiting for client (up to 3 min)..."
     for _ in $(seq 1 60); do
@@ -227,6 +241,6 @@ log "Running prepareVSCodeForE2ETests.sh..."
 ./supporting_scripts/playwright/prepareVSCodeForE2ETests.sh
 
 echo ""
-ok "Stack ready. Run tests via VS Code play button or 'npm --prefix src/test/playwright run playwright:test'."
+ok "Stack ready. Run tests via VS Code play button or 'pnpm --prefix src/test/playwright run playwright:test'."
 echo "  Logs: $LOCAL_DIR/server.log  |  $LOCAL_DIR/client.log"
 echo "  Stop everything: ./start-playwright-stack.sh --stop-all"
