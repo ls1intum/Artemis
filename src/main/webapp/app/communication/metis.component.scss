@@ -129,3 +129,41 @@ $delete-delay-duration: 6s;
         width: 100%;
     }
 }
+.modal {
+    // take all available place
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+
+    // center the form
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+}
+
+.modal-dialog {
+    margin: 0 !important;
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content {
+    // add scroll for big content
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-backdrop {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+}
