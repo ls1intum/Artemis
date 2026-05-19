@@ -141,8 +141,7 @@ public class TextUnitResource {
             competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingTextUnit);
         }
 
-        final TextUnit notifyUnit = existingTextUnit;
-        autonomousCompetencyApi.ifPresent(api -> api.notifyLectureUnitChange(notifyUnit.getLecture().getCourse().getId(), notifyUnit.getId()));
+        autonomousCompetencyApi.ifPresent(api -> api.notifyLectureUnitChange(savedTextUnit.getLecture().getCourse().getId(), savedTextUnit.getId()));
 
         searchableEntityWeaviateService.ifPresent(service -> {
             if (LectureUnitSearchableEntityDTO.isIndexable(savedTextUnit)) {

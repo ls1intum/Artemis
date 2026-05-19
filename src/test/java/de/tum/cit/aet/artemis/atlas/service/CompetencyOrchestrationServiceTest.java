@@ -9,17 +9,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
+import java.util.Optional;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
@@ -30,6 +34,7 @@ import com.hazelcast.map.IMap;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService.RunInfo;
+import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -119,6 +124,65 @@ class CompetencyOrchestrationServiceTest {
         assertThat(result.status()).isEqualTo(FAILED);
         assertThat(result.failureReason()).isEqualTo(INTERNAL_ERROR);
         verify(runMap).remove(eq(COURSE_ID), any(RunInfo.class));
+    }
+
+    @Test
+    void runWithQueuedFlush_alreadyInProgress_skipsAccumulator() {
+        when(programmingExerciseRepository.findByIdElseThrow(20L)).thenReturn(courseExercise(20L));
+        stubRunMap();
+        when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(new RunInfo("other-run", 99L, Instant.now()));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runWithQueuedFlush(20L);
+
+        assertThat(result.status()).isEqualTo(IN_PROGRESS);
+        verify(contentChangeAccumulatorService, never()).claimBatchNow(anyLong());
+        verify(runMap, never()).remove(anyLong(), any());
+    }
+
+    @Test
+    void runWithQueuedFlush_skipsQueuedExerciseFromDifferentCourse() {
+        ProgrammingExercise clicked = courseExercise(20L);
+        ProgrammingExercise foreignQueued = new ProgrammingExercise();
+        foreignQueued.setId(77L);
+        Course otherCourse = new Course();
+        otherCourse.setId(COURSE_ID + 1);
+        foreignQueued.setCourse(otherCourse);
+
+        when(programmingExerciseRepository.findByIdElseThrow(20L)).thenReturn(clicked);
+        when(programmingExerciseRepository.findById(77L)).thenReturn(Optional.of(foreignQueued));
+        stubRunMap();
+        when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
+        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(77L), Set.of())));
+        when(contentExtractionService.extractContent(clicked)).thenThrow(new RuntimeException("stop after queued"));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runWithQueuedFlush(20L);
+
+        assertThat(result.status()).isEqualTo(FAILED);
+        assertThat(result.failureReason()).isEqualTo(INTERNAL_ERROR);
+        // Wrong-course queued exercise was inspected but never orchestrated (no content extraction).
+        verify(programmingExerciseRepository).findById(77L);
+        verify(contentExtractionService, never()).extractContent(foreignQueued);
+        verify(runMap).remove(eq(COURSE_ID), any(RunInfo.class));
+    }
+
+    @Test
+    void runWithQueuedFlush_orchestratesQueuedBeforeClicked() {
+        ProgrammingExercise clicked = courseExercise(20L);
+        ProgrammingExercise queued = courseExercise(33L);
+
+        when(programmingExerciseRepository.findByIdElseThrow(20L)).thenReturn(clicked);
+        when(programmingExerciseRepository.findById(33L)).thenReturn(Optional.of(queued));
+        stubRunMap();
+        when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
+        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(33L), Set.of())));
+        // Both calls to extractContent throw so we can verify ordering without driving the full LLM path.
+        when(contentExtractionService.extractContent(any(ProgrammingExercise.class))).thenThrow(new RuntimeException("stop"));
+
+        createServiceWithRunMap(mock(ChatClient.class)).runWithQueuedFlush(20L);
+
+        InOrder order = inOrder(contentExtractionService);
+        order.verify(contentExtractionService).extractContent(queued);
+        order.verify(contentExtractionService).extractContent(clicked);
     }
 
     private CompetencyOrchestrationService createService(@Nullable ChatClient chatClient) {
