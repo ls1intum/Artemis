@@ -189,6 +189,11 @@
                     "name": "Global Search",
                     "description": "Enables a unified search interface accessible via Cmd+K/Ctrl+K that allows users to quickly search across courses, exercises, lectures, and other content.",
                     "disableWarning": "Users will not have access to the global search functionality and must navigate manually through the interface."
+                },
+                "AutomaticCompetencyManagement": {
+                    "name": "Automatic Competency Management",
+                    "description": "Automatically runs the Atlas competency orchestrator after instructors edit course content. A debounce window collapses bursts of edits into a single orchestrator run; a daily cap limits cost per course.",
+                    "disableWarning": "Instructors will need to trigger the Atlas orchestrator manually from each exercise's detail page. Automatic runs on content change will stop."
                 }
             }
         }

@@ -44,7 +44,7 @@ public class CompetencyOrchestrationResource {
     @FeatureToggle(Feature.AtlasAgent)
     public ResponseEntity<CompetencyOrchestrationResultDTO> runForProgrammingExercise(@PathVariable Long exerciseId) {
         log.info("REST request to run Atlas orchestrator for programming exercise: {}", exerciseId);
-        CompetencyOrchestrationResultDTO result = competencyOrchestrationService.run(exerciseId);
+        CompetencyOrchestrationResultDTO result = competencyOrchestrationService.runWithQueuedFlush(exerciseId);
         return ResponseEntity.status(httpStatusFor(result)).body(result);
     }
 

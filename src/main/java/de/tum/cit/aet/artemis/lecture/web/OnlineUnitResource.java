@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.atlas.api.AutonomousCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -69,6 +70,8 @@ public class OnlineUnitResource {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
+    private final Optional<AutonomousCompetencyApi> autonomousCompetencyApi;
+
     private final LectureUnitService lectureUnitService;
 
     private final LectureUnitRepository lectureUnitRepository;
@@ -76,10 +79,12 @@ public class OnlineUnitResource {
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public OnlineUnitResource(LectureRepository lectureRepository, OnlineUnitRepository onlineUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+            Optional<AutonomousCompetencyApi> autonomousCompetencyApi, LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.lectureRepository = lectureRepository;
         this.onlineUnitRepository = onlineUnitRepository;
         this.competencyProgressApi = competencyProgressApi;
+        this.autonomousCompetencyApi = autonomousCompetencyApi;
         this.lectureUnitService = lectureUnitService;
         this.lectureUnitRepository = lectureUnitRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
@@ -144,6 +149,9 @@ public class OnlineUnitResource {
             competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingOnlineUnit);
         }
 
+        final OnlineUnit notifyUnit = existingOnlineUnit;
+        autonomousCompetencyApi.ifPresent(api -> api.notifyLectureUnitChange(notifyUnit.getLecture().getCourse().getId(), notifyUnit.getId()));
+
         searchableEntityWeaviateService.ifPresent(service -> {
             if (LectureUnitSearchableEntityDTO.isIndexable(savedOnlineUnit)) {
                 service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(savedOnlineUnit));
@@ -193,6 +201,7 @@ public class OnlineUnitResource {
         // From now on, only use persistedUnit
         onlineUnitRepository.save(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
+        autonomousCompetencyApi.ifPresent(api -> api.notifyLectureUnitChange(lecture.getCourse().getId(), persistedUnit.getId()));
 
         // TODO: return a DTO instead to avoid manipulation of the entity before sending it to the client
         lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedUnit);

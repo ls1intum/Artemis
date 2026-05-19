@@ -4,10 +4,13 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import jakarta.annotation.PostConstruct;
@@ -33,6 +36,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
+import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -93,11 +97,14 @@ public class CompetencyOrchestrationService {
 
     private final HazelcastInstance hazelcastInstance;
 
+    private final ContentChangeAccumulatorService contentChangeAccumulatorService;
+
     private IMap<Long, RunInfo> runMap;
 
     public CompetencyOrchestrationService(ProgrammingExerciseRepository programmingExerciseRepository, ContentExtractionService contentExtractionService,
             OrchestratorToolsService orchestratorToolsService, AtlasPromptTemplateService templateService, @Nullable ChatClient chatClient,
-            AtlasAgentToolCallbackService toolCallbackFactory, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AtlasOrchestratorProperties properties) {
+            AtlasAgentToolCallbackService toolCallbackFactory, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AtlasOrchestratorProperties properties,
+            ContentChangeAccumulatorService contentChangeAccumulatorService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.contentExtractionService = contentExtractionService;
         this.orchestratorToolsService = orchestratorToolsService;
@@ -108,6 +115,7 @@ public class CompetencyOrchestrationService {
         this.temperature = properties.temperature();
         this.reasoningEffort = properties.reasoningEffort();
         this.hazelcastInstance = hazelcastInstance;
+        this.contentChangeAccumulatorService = contentChangeAccumulatorService;
     }
 
     /** TTL configured in {@code HazelcastConfiguration#registerCustomMaps}. */
@@ -126,19 +134,13 @@ public class CompetencyOrchestrationService {
      */
     public CompetencyOrchestrationResultDTO run(long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        if (exercise.isExamExercise()) {
-            log.info("Atlas orchestrator rejected for exam exercise {}", exerciseId);
-            return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator only operates on course exercises.",
-                    CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_EXERCISE);
-        }
-        if (chatClient == null) {
-            log.info("Atlas orchestrator requested for exercise {} but no ChatClient is available", exerciseId);
-            return CompetencyOrchestrationResultDTO.failed("Atlas chat model is not configured.", CompetencyOrchestrationResultDTO.FailureReason.NO_CHAT_CLIENT);
+        CompetencyOrchestrationResultDTO precheck = precheckExercise(exercise);
+        if (precheck != null) {
+            return precheck;
         }
         long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
-        String runId = UUID.randomUUID().toString();
-        RunInfo claim = new RunInfo(runId, exerciseId, Instant.now());
+        RunInfo claim = new RunInfo(UUID.randomUUID().toString(), exerciseId, Instant.now());
         RunInfo existing = runMap.putIfAbsent(courseId, claim);
         if (existing != null) {
             log.info("Atlas orchestrator rejected for exercise {} (course {}): run {} already in progress for exercise {}", exerciseId, courseId, existing.runId(),
@@ -146,28 +148,107 @@ public class CompetencyOrchestrationService {
             return CompetencyOrchestrationResultDTO.inProgress("Another Atlas orchestrator run is already in progress for this course. Please wait for it to finish.");
         }
         try {
-            String content;
-            try {
-                ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
-                CompetencyIndexResponseDTO competencyIndex = orchestratorToolsService.listCompetencyIndex(courseId);
-                String renderedIndex = renderCompetencyIndex(competencyIndex);
-                String renderedChanges = renderExerciseChangeBatch(exerciseId, extracted.title(), extracted.extractedLearningText());
-                String systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
-
-                content = callChatClient(systemPrompt, courseId);
-            }
-            catch (Exception ex) {
-                log.warn("Atlas orchestrator failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
-                return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
-            }
-            log.info("Atlas orchestrator completed for exercise {} (course {})", exerciseId, courseId);
-            String summary = content.isBlank() ? "Atlas orchestrator run completed." : content;
-            return CompetencyOrchestrationResultDTO.success(summary);
+            return orchestrateExercise(exercise, courseId);
         }
         finally {
             // Compare-and-remove: leaves a TTL-evicted entry replaced by another claim untouched.
             runMap.remove(courseId, claim);
         }
+    }
+
+    /**
+     * Runs the manual "suggest competencies" flow: force-drains the course's accumulator
+     * (bypassing the debounce window) so any pending changes are processed in this single
+     * user-initiated invocation, then orchestrates the clicked exercise last so its result becomes
+     * the HTTP response. Holds the per-course run lock for the whole batch — a concurrent manual
+     * press or a scheduled tick observes IN_PROGRESS while we are running.
+     *
+     * @param exerciseId the manually triggered exercise (always processed, even when not queued)
+     * @return the orchestration result for the manually triggered exercise
+     */
+    public CompetencyOrchestrationResultDTO runWithQueuedFlush(long exerciseId) {
+        ProgrammingExercise clicked = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        CompetencyOrchestrationResultDTO precheck = precheckExercise(clicked);
+        if (precheck != null) {
+            return precheck;
+        }
+        long courseId = clicked.getCourseViaExerciseGroupOrCourseMember().getId();
+
+        RunInfo claim = new RunInfo(UUID.randomUUID().toString(), exerciseId, Instant.now());
+        RunInfo existing = runMap.putIfAbsent(courseId, claim);
+        if (existing != null) {
+            log.info("Atlas orchestrator (manual flush) rejected for exercise {} (course {}): run {} already in progress for exercise {}", exerciseId, courseId,
+                    existing.runId(), existing.exerciseId());
+            return CompetencyOrchestrationResultDTO.inProgress("Another Atlas orchestrator run is already in progress for this course. Please wait for it to finish.");
+        }
+        try {
+            Optional<BatchClaim> drained = contentChangeAccumulatorService.claimBatchNow(courseId);
+            Set<Long> queuedExerciseIds = drained.map(BatchClaim::exerciseIds).orElseGet(Set::of);
+            Set<Long> mergedExerciseIds = new LinkedHashSet<>(queuedExerciseIds);
+            mergedExerciseIds.remove(exerciseId);
+            log.info("Atlas orchestrator (manual flush) course {} processing {} queued exercise(s) before exercise {}", courseId, mergedExerciseIds.size(), exerciseId);
+            for (Long queuedId : mergedExerciseIds) {
+                try {
+                    ProgrammingExercise queued = programmingExerciseRepository.findById(queuedId).orElse(null);
+                    if (queued == null || queued.isExamExercise()) {
+                        log.info("Atlas orchestrator (manual flush) skipping queued exercise {}: not a programming course exercise", queuedId);
+                        continue;
+                    }
+                    orchestrateExercise(queued, courseId);
+                }
+                catch (Exception ex) {
+                    log.warn("Atlas orchestrator (manual flush) per-exercise run failed exerciseId={}: {}", queuedId, ex.getMessage(), ex);
+                }
+            }
+            return orchestrateExercise(clicked, courseId);
+        }
+        finally {
+            runMap.remove(courseId, claim);
+        }
+    }
+
+    /**
+     * Validates an exercise before orchestration. Returns a terminal failure result when the
+     * exercise is unsupported (exam) or the chat client is missing; returns {@code null} when the
+     * caller may proceed.
+     */
+    @Nullable
+    private CompetencyOrchestrationResultDTO precheckExercise(ProgrammingExercise exercise) {
+        if (exercise.isExamExercise()) {
+            log.info("Atlas orchestrator rejected for exam exercise {}", exercise.getId());
+            return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator only operates on course exercises.",
+                    CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_EXERCISE);
+        }
+        if (chatClient == null) {
+            log.info("Atlas orchestrator requested for exercise {} but no ChatClient is available", exercise.getId());
+            return CompetencyOrchestrationResultDTO.failed("Atlas chat model is not configured.", CompetencyOrchestrationResultDTO.FailureReason.NO_CHAT_CLIENT);
+        }
+        return null;
+    }
+
+    /**
+     * Orchestrates a single exercise. Caller is responsible for holding the per-course
+     * {@link #runMap} claim around all invocations within a logical run.
+     */
+    private CompetencyOrchestrationResultDTO orchestrateExercise(ProgrammingExercise exercise, long courseId) {
+        long exerciseId = exercise.getId();
+        String content;
+        try {
+            ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
+            CompetencyIndexResponseDTO competencyIndex = orchestratorToolsService.listCompetencyIndex(courseId);
+            String renderedIndex = renderCompetencyIndex(competencyIndex);
+            String renderedChanges = renderExerciseChangeBatch(exerciseId, extracted.title(), extracted.extractedLearningText());
+            String systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
+
+            content = callChatClient(systemPrompt, courseId);
+        }
+        catch (Exception ex) {
+            log.warn("Atlas orchestrator failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
+            return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
+        }
+        log.info("Atlas orchestrator completed for exercise {} (course {})", exerciseId, courseId);
+        String summary = content.isBlank() ? "Atlas orchestrator run completed." : content;
+        return CompetencyOrchestrationResultDTO.success(summary);
     }
 
     /** Drives the Spring AI tool-calling loop; caller guarantees {@link #chatClient} is non-null. */

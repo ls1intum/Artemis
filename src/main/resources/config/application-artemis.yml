@@ -102,6 +102,12 @@ artemis:
       model: gpt-5.4
       temperature: 1.0
       reasoning-effort: medium
+    # Automatic competency orchestration (Feature.AutomaticCompetencyManagement). Disabled by default;
+    # admins flip the toggle to opt the instance in. The scheduler ticks at scheduler-rate-ms and only
+    # claims a course's bucket once debounce-window-seconds have elapsed since the last content edit.
+    debounce-window-seconds: 300
+    max-daily-orchestrations: 10
+    scheduler-rate-ms: 30000
     atlasml:
       enabled: false # If disabled, no artifacts of the AtlasML service are accessible. This might impact the experience for instructors, i.e. some of the AI recommendations are not available.
       base-url: <your-atlasml-url> # Required address to you own AtlasML instance

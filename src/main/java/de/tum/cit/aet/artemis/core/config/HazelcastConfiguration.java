@@ -1341,6 +1341,7 @@ public class HazelcastConfiguration {
      * <li><strong>atlas-session-exercise-preview:</strong> Cross-node fallback for exercise mapping preview DTOs</li>
      * <li><strong>atlas-session-relation-preview:</strong> Cross-node fallback for relation mapping preview DTOs</li>
      * <li><strong>atlas-session-preview-history:</strong> Atlas preview history for incremental updates</li>
+     * <li><strong>atlas-content-change-accumulator:</strong> Per-course debounce buckets that drive the automatic competency orchestrator</li>
      * <li><strong>nodeMetrics:</strong> Per-node metrics snapshots (TTL 60s, no backups) for the multi-node admin metrics page</li>
      * </ul>
      *
@@ -1365,6 +1366,11 @@ public class HazelcastConfiguration {
         // MapConfig changes after the proxy is built are silently ignored on most cluster topologies.
         // Must be longer than the longest plausible LLM session (GPT-5.4 + medium reasoning ~5min).
         config.getMapConfigs().put("atlas-orchestrator-runs", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(30 * 60));
+        // Per-course buckets for the automatic competency orchestrator. Entries are claimed by the
+        // scheduler after the debounce window elapses; a 24h TTL bounds memory growth if a course's
+        // last orchestrator run dies before draining the bucket.
+        config.getMapConfigs().put("atlas-content-change-accumulator",
+                new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()).setTimeToLiveSeconds(24 * 60 * 60));
     }
 
     /**

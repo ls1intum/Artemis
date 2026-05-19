@@ -7,6 +7,11 @@
             "resultDialog": {
                 "title": "Atlas orchestrator result",
                 "empty": "The orchestrator did not return a summary."
+            },
+            "autoToast": {
+                "success": "Atlas ran automatically on {{count}} exercise(s).",
+                "partial": "Atlas ran on {{count}} exercise(s): {{success}} succeeded, {{failure}} failed.",
+                "failure": "Atlas ran automatically on {{count}} exercise(s) but all runs failed. Check the server logs."
             }
         }
     }

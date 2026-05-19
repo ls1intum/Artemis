@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.atlas.api.AutonomousCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -54,6 +55,8 @@ public class TextUnitResource {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
+    private final Optional<AutonomousCompetencyApi> autonomousCompetencyApi;
+
     private final LectureRepository lectureRepository;
 
     private final TextUnitRepository textUnitRepository;
@@ -63,10 +66,12 @@ public class TextUnitResource {
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+            Optional<AutonomousCompetencyApi> autonomousCompetencyApi, LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.lectureRepository = lectureRepository;
         this.textUnitRepository = textUnitRepository;
         this.competencyProgressApi = competencyProgressApi;
+        this.autonomousCompetencyApi = autonomousCompetencyApi;
         this.lectureUnitService = lectureUnitService;
         this.lectureUnitRepository = lectureUnitRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
@@ -136,6 +141,9 @@ public class TextUnitResource {
             competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingTextUnit);
         }
 
+        final TextUnit notifyUnit = existingTextUnit;
+        autonomousCompetencyApi.ifPresent(api -> api.notifyLectureUnitChange(notifyUnit.getLecture().getCourse().getId(), notifyUnit.getId()));
+
         searchableEntityWeaviateService.ifPresent(service -> {
             if (LectureUnitSearchableEntityDTO.isIndexable(savedTextUnit)) {
                 service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(savedTextUnit));
@@ -180,6 +188,7 @@ public class TextUnitResource {
         // From now on, only use persistedUnit
         textUnitRepository.save(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
+        autonomousCompetencyApi.ifPresent(api -> api.notifyLectureUnitChange(lecture.getCourse().getId(), persistedUnit.getId()));
 
         searchableEntityWeaviateService.ifPresent(service -> {
             if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {
