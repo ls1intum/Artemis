@@ -212,6 +212,8 @@ jobs:
       - name: Post E2E comment (Phase 1)
         if: (success() || failure()) && inputs.is_pr
         uses: actions/github-script@v9
+        # Cosmetic PR comment; a GitHub API blip must not fail the E2E job whose
+        # actual result has already been determined.
         continue-on-error: true
         env:
           HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
@@ -402,6 +404,7 @@ jobs:
         id: update-comment
         if: (success() || failure()) && inputs.is_pr
         uses: actions/github-script@v9
+        # Cosmetic PR comment update; do not gate Phase 2's job result.
         continue-on-error: true
         env:
           HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
@@ -598,6 +601,7 @@ jobs:
       - name: Post E2E comment (All Tests)
         if: success() || failure()
         uses: actions/github-script@v9
+        # Cosmetic PR comment; do not gate the job result on a GitHub API blip.
         continue-on-error: true
         env:
           HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
@@ -790,6 +794,8 @@ jobs:
 
       - name: Update status with results
         if: always()
+        # The commit status is informational; the umbrella's `All CI Passed` gate is the
+        # source of truth. A statuses-API blip must not flip the aggregator job result.
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -825,6 +831,7 @@ jobs:
       - name: Update E2E comment with overall status
         if: always() && inputs.is_pr
         uses: actions/github-script@v9
+        # Cosmetic PR comment finalisation; do not flip the aggregator job result.
         continue-on-error: true
         env:
           INPUT_PHASE2_NOTES: ${{ needs.run-e2e-remaining.outputs.phase2_notes || '' }}

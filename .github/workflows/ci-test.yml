@@ -17,10 +17,6 @@ on:
         description: 'When true, run every test. When false, only run tests in modules affected by changes vs base_branch.'
         required: true
         type: boolean
-      is_pr:
-        description: 'True when the umbrella was triggered by pull_request.'
-        required: true
-        type: boolean
       is_internal_pr:
         description: 'True only for PRs from branches inside ls1intum/Artemis (external services like Codacy skip on fork PRs).'
         required: true
@@ -142,14 +138,15 @@ jobs:
           fi
       - name: 'Codacy: Report coverage'
         # Coverage upload runs only on internal PRs by non-bot authors; fork PRs lack the secret.
-        # Pinned to v1.3.0 commit.
-        uses: codacy/codacy-coverage-reporter-action@a38818475bb21847788496e9f0fddaa4e84955ba
+        uses: codacy/codacy-coverage-reporter-action@a38818475bb21847788496e9f0fddaa4e84955ba  # v1.3.0
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: build/reports/jacoco/aggregated/jacocoTestReport.xml
         if: ${{ (success() || failure()) && inputs.is_internal_pr && inputs.pr_author != 'dependabot[bot]' }}
       - name: Annotate Server Test Results
-        uses: ashley-taylor/junit-report-annotations-action@f9c1a5cbe28479439f82b80a5402a6d3aa1990ac
+        # Pinned to a post-1.4 commit (the action has no release tag for this SHA);
+        # the action is largely unmaintained, kept for the JUnit annotation contract.
+        uses: ashley-taylor/junit-report-annotations-action@f9c1a5cbe28479439f82b80a5402a6d3aa1990ac  # master @ 2022-09
         if: ${{ always() && inputs.pr_author != 'dependabot[bot]' }}
         with:
           access-token: ${{ secrets.GITHUB_TOKEN }}
