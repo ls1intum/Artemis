@@ -270,6 +270,10 @@ test.describe('Course management', { tag: '@fast' }, () => {
             courseMessages,
             communicationAPIRequests,
         }) => {
+            // Course delete with summary spawns several API requests + a slow DELETE on a
+            // course that has exercises/exam/messages attached — the @fast 60s budget is
+            // too tight under heavy multi-node load. Triple it.
+            test.slow();
             // Use API calls instead of UI navigation for faster user creation
             await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
             await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
