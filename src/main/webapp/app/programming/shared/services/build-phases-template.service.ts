@@ -15,18 +15,18 @@ export class BuildPhasesTemplateService {
     readonly buildPlan = signal<BuildPlanPhases | undefined>(BuildPhasesTemplateService.createDefaultBuildPlan());
 
     private fetchTemplateSubject = new Subject<{
+        examMode: boolean;
         language: ProgrammingLanguage;
         projectType?: ProjectType;
         staticAnalysis?: boolean;
         sequentialRuns?: boolean;
-        examMode?: boolean;
     }>();
 
     constructor() {
         this.fetchTemplateSubject
             .pipe(
-                switchMap(({ language, projectType, staticAnalysis, sequentialRuns, examMode }) => {
-                    const uriWithParams = this.buildURIWithParams(language, projectType, staticAnalysis, sequentialRuns, examMode);
+                switchMap(({ examMode, language, projectType, staticAnalysis, sequentialRuns }) => {
+                    const uriWithParams = this.buildURIWithParams(examMode, language, projectType, staticAnalysis, sequentialRuns);
 
                     return this.http.get<BuildPlanPhases>(`${this.resourceUrl}/${uriWithParams.uri}`, { params: uriWithParams.params }).pipe(
                         catchError(() => {
@@ -45,13 +45,13 @@ export class BuildPhasesTemplateService {
      * Fetches the build plan template for the given programming language and project type from the server.
      * Updates the shared buildPlan signal with the result.
      *
+     * @param examMode whether the template should be used in an exam
      * @param language the programming language for which the template should be fetched
      * @param projectType the project type for which the template should be fetched
      * @param staticAnalysis whether the static analysis template should be used
      * @param sequentialRuns whether the sequential runs template should be used
-     * @param examMode whether the template should be used in an exam
      */
-    fetchTemplate(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, examMode?: boolean): void {
+    fetchTemplate(examMode: boolean, language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean): void {
         this.fetchTemplateSubject.next({ language, projectType, staticAnalysis, sequentialRuns, examMode });
     }
 
@@ -63,17 +63,17 @@ export class BuildPhasesTemplateService {
     }
 
     private buildURIWithParams(
+        examMode: boolean,
         language: ProgrammingLanguage,
         projectType?: ProjectType,
         staticAnalysis?: boolean,
         sequentialRuns?: boolean,
-        examMode?: boolean,
     ): { uri: string; params: any } {
         const path: string = [language, projectType].filter(Boolean).join('/');
         const params = {
             staticAnalysis: !!staticAnalysis,
             sequentialRuns: !!sequentialRuns,
-            examMode: !!examMode,
+            examMode: examMode,
         };
         return {
             uri: path,

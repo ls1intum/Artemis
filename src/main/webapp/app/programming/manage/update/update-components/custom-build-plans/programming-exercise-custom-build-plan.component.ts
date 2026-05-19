@@ -108,11 +108,11 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
         this.isImportFromFile = isImportFromFile;
         if (!isImportFromFile || !this.programmingExercise.buildConfig?.buildPlanConfiguration) {
             this.buildPhasesTemplateService.fetchTemplate(
+                this.programmingExerciseCreationConfig.isExamMode,
                 this.programmingLanguage,
                 this.projectType,
                 this.staticCodeAnalysisEnabled,
                 this.sequentialTestRuns,
-                this.programmingExerciseCreationConfig.isExamMode,
             );
         }
         this.programmingExerciseCreationConfig.buildPlanLoaded = true;

@@ -40,26 +40,26 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     private static Stream<Arguments> templateProvider() {
         // @formatter:off
         return Stream.of(
-            new TestProvider("JAVA/PLAIN_GRADLE", 2),
-            new TestProvider("JAVA/PLAIN_GRADLE?sequentialRuns=true", 3),
-            new TestProvider("JAVA/PLAIN_GRADLE?staticAnalysis=true", 3),
-            new TestProvider("JAVA/PLAIN_MAVEN", 2),
-            new TestProvider("JAVA/PLAIN_MAVEN?sequentialRuns=true", 4),
-            new TestProvider("JAVA/PLAIN_MAVEN?staticAnalysis=true", 3),
-            new TestProvider("JAVA/MAVEN_BLACKBOX", 7),
-            new TestProvider("JAVA/MAVEN_BLACKBOX?staticAnalysis=true", 8),
-            new TestProvider("ASSEMBLER", 5),
-            new TestProvider("C/FACT", 3),
-            new TestProvider("C/GCC", 4),
-            new TestProvider("C/GCC?staticAnalysis=true", 5),
-            new TestProvider("KOTLIN", 2),
-            new TestProvider("KOTLIN?sequentialRuns=true", 4),
-            new TestProvider("VHDL", 4),
-            new TestProvider("HASKELL", 2),
-            new TestProvider("HASKELL?sequentialRuns=true", 3),
-            new TestProvider("OCAML", 3),
-            new TestProvider("SWIFT/PLAIN", 4),
-            new TestProvider("SWIFT/PLAIN?staticAnalysis=true", 5)
+            new TestProvider("JAVA/PLAIN_GRADLE?examMode=false", 2),
+            new TestProvider("JAVA/PLAIN_GRADLE?sequentialRuns=true&examMode=false", 3),
+            new TestProvider("JAVA/PLAIN_GRADLE?staticAnalysis=true&examMode=false", 3),
+            new TestProvider("JAVA/PLAIN_MAVEN?examMode=false", 2),
+            new TestProvider("JAVA/PLAIN_MAVEN?sequentialRuns=true&examMode=false", 4),
+            new TestProvider("JAVA/PLAIN_MAVEN?staticAnalysis=true&examMode=false", 3),
+            new TestProvider("JAVA/MAVEN_BLACKBOX?examMode=false", 7),
+            new TestProvider("JAVA/MAVEN_BLACKBOX?staticAnalysis=true&examMode=false", 8),
+            new TestProvider("ASSEMBLER?examMode=false", 5),
+            new TestProvider("C/FACT?examMode=false", 3),
+            new TestProvider("C/GCC?examMode=false", 4),
+            new TestProvider("C/GCC?staticAnalysis=true&examMode=false", 5),
+            new TestProvider("KOTLIN?examMode=false", 2),
+            new TestProvider("KOTLIN?sequentialRuns=true&examMode=false", 4),
+            new TestProvider("VHDL?examMode=false", 4),
+            new TestProvider("HASKELL?examMode=false", 2),
+            new TestProvider("HASKELL?sequentialRuns=true&examMode=false", 3),
+            new TestProvider("OCAML?examMode=false", 3),
+            new TestProvider("SWIFT/PLAIN?examMode=false", 4),
+            new TestProvider("SWIFT/PLAIN?staticAnalysis=true&examMode=false", 5)
         ).map(provider -> Arguments.of(provider.templateKey(), provider.expectedPhases()));
         // @formatter:on
     }
@@ -76,13 +76,13 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetNonExistingBuildPhasesTemplateFile() throws Exception {
-        request.get("/api/programming/phases/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/programming/phases/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true&examMode=true", HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFactTemplateUsesConfiguredDockerImage() throws Exception {
-        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/programming/phases/templates/C/FACT", HttpStatus.OK, BuildPlanPhasesDTO.class);
+        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/programming/phases/templates/C/FACT?examMode=false", HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
         assertThat(buildPlanPhases.dockerImage()).isEqualTo(FACT_DOCKER_IMAGE);
     }
@@ -90,7 +90,7 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGccTemplateUsesConfiguredDockerImage() throws Exception {
-        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/programming/phases/templates/C/GCC", HttpStatus.OK, BuildPlanPhasesDTO.class);
+        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/programming/phases/templates/C/GCC?examMode=true", HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
         assertThat(buildPlanPhases.dockerImage()).isEqualTo(C_DOCKER_IMAGE);
     }

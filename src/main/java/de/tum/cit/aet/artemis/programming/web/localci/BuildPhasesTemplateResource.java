@@ -65,7 +65,7 @@ public class BuildPhasesTemplateResource {
     @EnforceAtLeastEditor
     public ResponseEntity<BuildPlanPhasesDTO> getBuildPhasesTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
-            @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns, @RequestParam(value = "examMode", defaultValue = "false") boolean examMode) {
+            @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns, @RequestParam(value = "examMode") boolean examMode) {
         log.debug("REST request to get phases template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, exam mode {}", language,
                 projectType, staticAnalysis, sequentialRuns, examMode);
 
