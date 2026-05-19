@@ -982,6 +982,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(username));
     }
 
+    @NonNull
+    default User getUserWithCourseRolesAndAuthorities() {
+        String currentUserLogin = getCurrentUserLogin();
+        return getValueElseThrow(findOneWithCourseRolesAndAuthoritiesByLogin(currentUserLogin));
+    }
+
+    @NonNull
+    default User getUserWithCourseRolesAndAuthorities(@NonNull String username) {
+        return getValueElseThrow(findOneWithCourseRolesAndAuthoritiesByLogin(username));
+    }
+
     /**
      * Finds a single user with groups and authorities using the registration number
      *
@@ -1250,46 +1261,58 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT COUNT(user) > 0
             FROM User user
-                INNER JOIN Course course ON user.login = :login AND course.id = :courseId
-            WHERE (course.studentGroupName MEMBER OF user.groups)
-                OR (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            WHERE user.login = :login
+                AND (
+                    EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId)
+                    OR :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                    OR :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                )
             """)
     boolean isAtLeastStudentInCourse(@Param("login") String login, @Param("courseId") long courseId);
 
     @Query("""
             SELECT COUNT(user) > 0
             FROM User user
-                INNER JOIN Course course ON user.login = :login AND course.id = :courseId
-            WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            WHERE user.login = :login
+                AND (
+                    EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId
+                        AND ucr.role IN (
+                            de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                            de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                            de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
+                        ))
+                    OR :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                    OR :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                )
             """)
     boolean isAtLeastTeachingAssistantInCourse(@Param("login") String login, @Param("courseId") long courseId);
 
     @Query("""
             SELECT COUNT(user) > 0
             FROM User user
-                INNER JOIN Course course ON user.login = :login AND course.id = :courseId
-            WHERE (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            WHERE user.login = :login
+                AND (
+                    EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId
+                        AND ucr.role IN (
+                            de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                            de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
+                        ))
+                    OR :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                    OR :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                )
             """)
     boolean isAtLeastEditorInCourse(@Param("login") String login, @Param("courseId") long courseId);
 
     @Query("""
             SELECT COUNT(user) > 0
             FROM User user
-                INNER JOIN Course course ON user.login = :login AND course.id = :courseId
-            WHERE (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            WHERE user.login = :login
+                AND (
+                    EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId
+                        AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+                    OR :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                    OR :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                )
             """)
     boolean isAtLeastInstructorInCourse(@Param("login") String login, @Param("courseId") long courseId);
 

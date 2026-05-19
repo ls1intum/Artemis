@@ -19,8 +19,10 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -43,11 +45,22 @@ public class AuthorizationCheckService {
 
     private final UserRepository userRepository;
 
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
     private final TeamRepository teamRepository;
 
-    public AuthorizationCheckService(UserRepository userRepository, TeamRepository teamRepository) {
+    public AuthorizationCheckService(UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, TeamRepository teamRepository) {
         this.userRepository = userRepository;
+        this.userCourseRoleRepository = userCourseRoleRepository;
         this.teamRepository = teamRepository;
+    }
+
+    private boolean hasCourseRole(User user, Course course, CourseRole role) {
+        return user.getCourseRoles().stream().anyMatch(r -> course.getId().equals(r.getCourse().getId()) && r.getRole() == role);
+    }
+
+    private boolean hasCourseRoleAtLeast(User user, Course course, CourseRole role) {
+        return user.getCourseRoles().stream().anyMatch(r -> course.getId().equals(r.getCourse().getId()) && r.getRole().isAtLeast(role));
     }
 
     /**
@@ -98,7 +111,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastEditorInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
+        return hasCourseRoleAtLeast(user, course, CourseRole.EDITOR) || isAdmin(user);
     }
 
     /**
@@ -213,7 +226,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
+        return hasCourseRoleAtLeast(user, course, CourseRole.TEACHING_ASSISTANT) || isAdmin(user);
     }
 
     /**
@@ -263,8 +276,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isStudentInCourse(course, user) || isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user)
-                || isSuperAdmin(user);
+        return hasCourseRoleAtLeast(user, course, CourseRole.STUDENT) || isAdmin(user) || isSuperAdmin(user);
     }
 
     /**
@@ -373,7 +385,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastInstructorInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin(user);
+        return hasCourseRoleAtLeast(user, course, CourseRole.INSTRUCTOR) || isAdmin(user);
     }
 
     /**
@@ -410,7 +422,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isInstructorInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return user.getGroups().contains(course.getInstructorGroupName());
+        return hasCourseRole(user, course, CourseRole.INSTRUCTOR);
     }
 
     /**
@@ -423,7 +435,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isEditorInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return user.getGroups().contains(course.getEditorGroupName());
+        return hasCourseRole(user, course, CourseRole.EDITOR);
     }
 
     /**
@@ -436,7 +448,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isTeachingAssistantInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return user.getGroups().contains(course.getTeachingAssistantGroupName());
+        return hasCourseRole(user, course, CourseRole.TEACHING_ASSISTANT);
     }
 
     /**
@@ -449,7 +461,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isOnlyStudentInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return user.getGroups().contains(course.getStudentGroupName()) && !isAtLeastTeachingAssistantInCourse(course, user);
+        return hasCourseRole(user, course, CourseRole.STUDENT) && !isAtLeastTeachingAssistantInCourse(course, user);
     }
 
     /**
@@ -462,7 +474,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isStudentInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return user.getGroups().contains(course.getStudentGroupName());
+        return hasCourseRole(user, course, CourseRole.STUDENT);
     }
 
     /**
@@ -749,10 +761,10 @@ public class AuthorizationCheckService {
 
     private User loadUserIfNeeded(@Nullable User user) {
         if (user == null) {
-            user = userRepository.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithCourseRolesAndAuthorities();
         }
-        else if (user.getGroups() == null || !Hibernate.isInitialized(user.getGroups())) {
-            user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
+        else if (user.getCourseRoles() == null || !Hibernate.isInitialized(user.getCourseRoles())) {
+            user = userRepository.getUserWithCourseRolesAndAuthorities(user.getLogin());
         }
 
         return user;
