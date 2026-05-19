@@ -128,6 +128,7 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
         } else {
             this.exercise.feedbackSuggestionModule = undefined;
             this.gradedFeedbackModule = undefined;
+            this.exercise.allowFeedbackRequests = false;
         }
     }
 

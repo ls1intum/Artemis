@@ -124,7 +124,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         const event = { target: { checked: true } };
         component.toggleFeedbackRequests(event); // for students
 
-        expect(component.exercise.feedbackSuggestionModule).toBe('Module1');
+        expect(component.exercise.athenaConfig?.preliminaryFeedbackModule).toBe('Module1');
 
         event.target.checked = false;
         component.toggleFeedbackSuggestions(event); // for tutors, should disable both
