@@ -10,18 +10,14 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasAgentProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 
-/**
- * Service for delegating messages to AI agents.
- * Extracted from {@link AtlasAgentService} to break the circular dependency between
- * {@link AtlasAgentService} and {@link AtlasAgentToolsService}.
- */
+/** Delegates messages to AI agents; extracted from {@code AtlasAgentService} to break a circular dependency with {@code AtlasAgentToolsService}. */
 @Lazy
 @Service
 @Conditional(AtlasEnabled.class)
@@ -38,25 +34,15 @@ public class AtlasAgentDelegationService {
     private final double temperature;
 
     public AtlasAgentDelegationService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ChatMemory chatMemory,
-            @Value("${artemis.atlas.chat-model:gpt-5.4-mini}") String deploymentName, @Value("${artemis.atlas.temperature:0.8}") double temperature) {
+            AtlasAgentProperties properties) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.chatMemory = chatMemory;
-        this.deploymentName = deploymentName;
-        this.temperature = temperature;
+        this.deploymentName = properties.chatModel();
+        this.temperature = properties.temperature();
     }
 
-    /**
-     * Delegate message processing to an AI agent with the given prompt template and tool provider.
-     *
-     * @param promptResourcePath   the classpath resource path of the system prompt template
-     * @param message              the user's message
-     * @param courseId             the course ID for context
-     * @param sessionId            the session ID for chat memory
-     * @param saveToMemory         whether to add message to chat memory
-     * @param toolCallbackProvider the tool callback provider for this agent (may be null)
-     * @return the agent's response
-     */
+    /** Delegates a message to an AI agent with the given prompt template and tool provider; returns the agent's response. */
     String delegateToAgent(String promptResourcePath, String message, Long courseId, String sessionId, boolean saveToMemory, @Nullable ToolCallbackProvider toolCallbackProvider) {
         if (chatClient == null) {
             throw new IllegalStateException("ChatClient is not configured. Atlas Agent delegation is unavailable.");
