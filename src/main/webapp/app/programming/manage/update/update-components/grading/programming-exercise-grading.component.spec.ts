@@ -20,6 +20,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 
 describe('ProgrammingExerciseGradingComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseGradingComponent>;
@@ -43,6 +44,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: BuildPhasesTemplateService, useValue: { buildPlan: jest.fn(), resetToDefault: jest.fn(), fetchTemplate: jest.fn() } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
