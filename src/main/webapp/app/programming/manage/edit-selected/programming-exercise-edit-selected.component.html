@@ -42,11 +42,19 @@
                     </div>
                     <form name="editForm" role="form" novalidate (ngSubmit)="saveAll()">
                         <div class="form-group-narrow mt-2">
-                            <div>
-                                <label class="label-narrow label-timeline" jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline"></label>
-                                <jhi-help-icon text="artemisApp.programmingExercise.timeline.timelineTooltip" />
-                            </div>
-                            <jhi-programming-exercise-timeline id="timeline" [exercise]="newProgrammingExercise" [isExamMode]="false" />
+                            <jhi-programming-exercise-timeline
+                                id="timeline"
+                                [(releaseDate)]="newProgrammingExercise.releaseDate"
+                                [(startDate)]="newProgrammingExercise.startDate"
+                                [(dueDate)]="newProgrammingExercise.dueDate"
+                                [(buildAndTestStudentSubmissionsAfterDueDate)]="newProgrammingExercise.buildAndTestStudentSubmissionsAfterDueDate"
+                                [(assessmentDueDate)]="newProgrammingExercise.assessmentDueDate"
+                                [(exampleSolutionPublicationDate)]="newProgrammingExercise.exampleSolutionPublicationDate"
+                                [(assessmentType)]="newProgrammingExercise.assessmentType"
+                                [(allowFeedbackRequests)]="newProgrammingExercise.allowFeedbackRequests"
+                                [exercise]="newProgrammingExercise"
+                                [isExamMode]="false"
+                            />
                             <jhi-button class="text-center" id="save-entity" [icon]="faSave" [title]="'entity.action.save'" [isLoading]="isSaving">
                                 <fa-icon [icon]="faSave" />
                                 <span jhiTranslate="entity.action.save"></span>

@@ -18,7 +18,6 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { NgStyle } from '@angular/common';
 import { ExerciseTimeline, ExerciseTimelineStatus, TimelineItem } from 'app/shared/exercise-timeline/exercise-timeline';
 
-// TODO: look at all usages and adapt styling of parent if necessary
 @Component({
     selector: 'jhi-programming-exercise-timeline',
     templateUrl: './programming-exercise-timeline.component.html',
