@@ -22,10 +22,12 @@ import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
 import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingPresetRepository;
 import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingSpecificationRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseOperationType;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.exam.api.ExamDeletionApi;
@@ -154,6 +156,8 @@ public class CourseResetService {
 
     private final SubmissionRepository submissionRepository;
 
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
     public CourseResetService(ExerciseDeletionService exerciseDeletionService, ExerciseRepository exerciseRepository, Optional<ExamDeletionApi> examDeletionApi,
             Optional<ExamRepositoryApi> examRepositoryApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<LearnerProfileApi> learnerProfileApi,
             Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupApi> tutorialGroupApi, ReactionRepository reactionRepository,
@@ -162,7 +166,7 @@ public class CourseResetService {
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository,
             LLMTokenUsageRequestRepository llmTokenUsageRequestRepository, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseRepository courseRepository,
             UserRepository userRepository, UserService userService, CourseOperationProgressService progressService, CourseAdminService courseAdminService,
-            ParticipationRepository participationRepository, SubmissionRepository submissionRepository) {
+            ParticipationRepository participationRepository, SubmissionRepository submissionRepository, UserCourseRoleRepository userCourseRoleRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
         this.examDeletionApi = examDeletionApi;
@@ -186,6 +190,7 @@ public class CourseResetService {
         this.courseAdminService = courseAdminService;
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
+        this.userCourseRoleRepository = userCourseRoleRepository;
     }
 
     /**
@@ -495,19 +500,20 @@ public class CourseResetService {
      * @param courseId the ID of the course whose students, tutors, and editors should be unenrolled
      */
     private void unenrollStudentsTutorsAndEditors(long courseId) {
-        // Remove students using bulk operation
+        // Remove from new user_course_role table
+        userCourseRoleRepository.deleteByCourse_IdAndRoleIn(courseId, List.of(CourseRole.STUDENT, CourseRole.TEACHING_ASSISTANT, CourseRole.EDITOR));
+
+        // Also remove from legacy user_groups table until Phase 9 drops it
         String studentGroupName = courseRepository.getStudentGroupNameById(courseId);
         if (studentGroupName != null) {
             userService.removeGroupFromAllUsers(studentGroupName);
         }
 
-        // Remove tutors (teaching assistants) using bulk operation
         String tutorGroupName = courseRepository.getTeachingAssistantGroupNameById(courseId);
         if (tutorGroupName != null) {
             userService.removeGroupFromAllUsers(tutorGroupName);
         }
 
-        // Remove editors using bulk operation
         String editorGroupName = courseRepository.getEditorGroupNameById(courseId);
         if (editorGroupName != null) {
             userService.removeGroupFromAllUsers(editorGroupName);

@@ -35,6 +35,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -170,7 +171,7 @@ public class CourseAccessResource {
     public ResponseEntity<Set<User>> getStudentsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all students in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseAccessService.getAllUsersInGroup(course, course.getStudentGroupName());
+        return courseAccessService.getUsersWithRole(course, CourseRole.STUDENT);
     }
 
     /**
@@ -259,7 +260,7 @@ public class CourseAccessResource {
     public ResponseEntity<Set<User>> getTutorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseAccessService.getAllUsersInGroup(course, course.getTeachingAssistantGroupName());
+        return courseAccessService.getUsersWithRole(course, CourseRole.TEACHING_ASSISTANT);
     }
 
     /**
@@ -273,7 +274,7 @@ public class CourseAccessResource {
     public ResponseEntity<Set<User>> getEditorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all editors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseAccessService.getAllUsersInGroup(course, course.getEditorGroupName());
+        return courseAccessService.getUsersWithRole(course, CourseRole.EDITOR);
     }
 
     /**
@@ -287,7 +288,7 @@ public class CourseAccessResource {
     public ResponseEntity<Set<User>> getInstructorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all instructors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseAccessService.getAllUsersInGroup(course, course.getInstructorGroupName());
+        return courseAccessService.getUsersWithRole(course, CourseRole.INSTRUCTOR);
     }
 
     /**
@@ -345,7 +346,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addStudentToCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to course : {}", studentLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseGroup(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName());
+        return addUserToCourseWithRole(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.STUDENT);
     }
 
     /**
@@ -360,7 +361,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addTutorToCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to add {} as tutors to course : {}", tutorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
+        return addUserToCourseWithRole(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.TEACHING_ASSISTANT);
     }
 
     /**
@@ -376,7 +377,7 @@ public class CourseAccessResource {
         log.debug("REST request to add {} as editors to course : {}", editorLogin, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         courseAccessService.checkIfEditorGroupsNeedsToBeCreated(course);
-        return addUserToCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName());
+        return addUserToCourseWithRole(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.EDITOR);
     }
 
     /**
@@ -391,7 +392,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addInstructorToCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to add {} as instructors to course : {}", instructorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseGroup(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName());
+        return addUserToCourseWithRole(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.INSTRUCTOR);
     }
 
     /**
@@ -404,14 +405,14 @@ public class CourseAccessResource {
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
      */
     @NonNull
-    private ResponseEntity<Void> addUserToCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
+    private ResponseEntity<Void> addUserToCourseWithRole(String userLogin, User instructorOrAdmin, Course course, CourseRole role) {
         if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             Optional<User> userToAddToGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
             if (userToAddToGroup.isEmpty()) {
                 throw new EntityNotFoundException("User with login " + userLogin + " does not exist");
             }
             User user = userToAddToGroup.get();
-            courseAccessService.addUserToGroup(user, group, course);
+            courseAccessService.addUserToCourse(user, course, role);
             return ResponseEntity.ok().body(null);
         }
         else {
@@ -431,7 +432,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeStudentFromCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to remove {} as student from course : {}", studentLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName());
+        return removeUserFromCourseWithRole(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.STUDENT);
     }
 
     /**
@@ -446,7 +447,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeTutorFromCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to remove {} as tutor from course : {}", tutorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
+        return removeUserFromCourseWithRole(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.TEACHING_ASSISTANT);
     }
 
     /**
@@ -461,7 +462,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeEditorFromCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to remove {} as editor from course : {}", editorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName());
+        return removeUserFromCourseWithRole(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.EDITOR);
     }
 
     /**
@@ -477,7 +478,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeInstructorFromCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to remove {} as instructor from course : {}", instructorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName());
+        return removeUserFromCourseWithRole(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.INSTRUCTOR);
     }
 
     /**
@@ -490,7 +491,7 @@ public class CourseAccessResource {
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
      */
     @NonNull
-    private ResponseEntity<Void> removeUserFromCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
+    private ResponseEntity<Void> removeUserFromCourseWithRole(String userLogin, User instructorOrAdmin, Course course, CourseRole role) {
         if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             throw new AccessForbiddenException();
         }
@@ -498,7 +499,7 @@ public class CourseAccessResource {
         if (userToRemoveFromGroup.isEmpty()) {
             throw new EntityNotFoundException("User with login " + userLogin + " does not exist");
         }
-        courseAccessService.removeUserFromGroup(userToRemoveFromGroup.get(), group);
+        courseAccessService.removeUserFromCourse(userToRemoveFromGroup.get(), course, role);
         return ResponseEntity.ok().body(null);
     }
 
@@ -519,7 +520,7 @@ public class CourseAccessResource {
     public ResponseEntity<List<StudentDTO>> addUsersToCourseGroup(@PathVariable Long courseId, @PathVariable String courseGroup, @RequestBody List<StudentDTO> studentDtos) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, courseRepository.findByIdElseThrow(courseId), null);
         log.debug("REST request to add {} as {} to course {}", studentDtos, courseGroup, courseId);
-        List<StudentDTO> notFoundStudentsDtos = courseAccessService.registerUsersForCourseGroup(courseId, studentDtos, courseGroup);
+        List<StudentDTO> notFoundStudentsDtos = courseAccessService.registerUsersForCourse(courseId, studentDtos, courseGroup);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
 }

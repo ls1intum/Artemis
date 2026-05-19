@@ -45,7 +45,10 @@ import de.tum.cit.aet.artemis.communication.service.GlobalNotificationSettingSer
 import de.tum.cit.aet.artemis.communication.service.UserCourseNotificationStatusService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Authority;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -55,6 +58,7 @@ import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
 import de.tum.cit.aet.artemis.core.exception.UsernameAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.RandomUtil;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -90,6 +94,8 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
     private final PasswordService passwordService;
 
     private final AuthorityService authorityService;
@@ -118,13 +124,15 @@ public class UserService {
 
     private final GlobalNotificationSettingService globalNotificationSettingService;
 
-    public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
-            Optional<LdapUserService> ldapUserService, PasswordService passwordService, InstanceMessageSendService instanceMessageSendService, FileService fileService,
-            Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi,
-            SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
+    public UserService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
+            AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
+            InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
+            UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
             UserCourseNotificationStatusService userCourseNotificationStatusService, GlobalNotificationSettingService globalNotificationSettingService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
+        this.userCourseRoleRepository = userCourseRoleRepository;
         this.authorityService = authorityService;
         this.authorityRepository = authorityRepository;
         this.ldapUserService = ldapUserService;
@@ -589,35 +597,45 @@ public class UserService {
     }
 
     /**
-     * Add the user to the specified group and update in CIS (like Jenkins) if used, and registers the user to necessary channels
+     * Add the user to a course with the given role.
+     * Writes to the user_course_role table and also keeps the legacy user_groups table in sync until Phase 9 removes it.
      *
-     * @param user  the user
-     * @param group the group
+     * @param user   the user to add
+     * @param course the course to add the user to
+     * @param role   the role the user should have in the course
      */
-    public void addUserToGroup(User user, String group) {
-        // internal Artemis database
-        log.debug("Add user {} to group {}", user.getLogin(), group);
-        if (!user.getGroups().contains(group)) {
-            user.getGroups().add(group);
-            user.setAuthorities(authorityService.buildAuthorities(user));
-            saveUser(user);
+    public void addUserToCourse(User user, Course course, CourseRole role) {
+        log.debug("Add user {} to course {} with role {}", user.getLogin(), course.getId(), role);
+        if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
+            userCourseRoleRepository.save(new UserCourseRole(user, course, role));
         }
+        // Dual-write: also write to legacy user_groups table until Phase 9 removes it
+        String groupName = course.getGroupNameForRole(role);
+        if (groupName != null && !user.getGroups().contains(groupName)) {
+            user.getGroups().add(groupName);
+        }
+        user.setAuthorities(authorityService.buildAuthorities(user));
+        saveUser(user);
     }
 
     /**
-     * remove the user from the specified group
+     * Remove the user from a course role.
+     * Removes from user_course_role and also keeps the legacy user_groups table in sync until Phase 9 removes it.
      *
-     * @param user  the user
-     * @param group the group
+     * @param user   the user to remove
+     * @param course the course from which the user should be removed
+     * @param role   the role to revoke
      */
-    public void removeUserFromGroup(User user, String group) {
-        // internal Artemis database
-        log.info("Remove user {} from group {}", user.getLogin(), group);
-        if (user.getGroups().contains(group)) {
-            user.getGroups().remove(group);
-            user.setAuthorities(authorityService.buildAuthorities(user));
-            saveUser(user);
+    public void removeUserFromCourse(User user, Course course, CourseRole role) {
+        log.info("Remove user {} from course {} role {}", user.getLogin(), course.getId(), role);
+        userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
+        // Dual-write: also remove from legacy user_groups table until Phase 9 removes it
+        String groupName = course.getGroupNameForRole(role);
+        if (groupName != null) {
+            user.getGroups().remove(groupName);
         }
+        user.setAuthorities(authorityService.buildAuthorities(user));
+        saveUser(user);
     }
 
     /**
@@ -662,22 +680,22 @@ public class UserService {
     }
 
     /**
-     * This method first tries to find the user and then adds the user to the course
+     * This method first tries to find the user and then enrolls them in the course with the given role.
      *
      * @param registrationNumber the registration number of the user
      * @param login              the login of the user
      * @param email              the email of the user
-     * @param courseGroupName    the courseGroup the user has to be added to
+     * @param course             the course the user should be added to
+     * @param role               the role the user should have in the course
      * @return the found user, otherwise returns an empty optional
      */
-    public Optional<User> findUserAndAddToCourse(@Nullable String registrationNumber, @Nullable String login, @Nullable String email, String courseGroupName) {
+    public Optional<User> findUserAndAddToCourse(@Nullable String registrationNumber, @Nullable String login, @Nullable String email, Course course, CourseRole role) {
         var optionalUser = findUser(registrationNumber, login, email);
 
         if (optionalUser.isPresent()) {
             var user = optionalUser.get();
-            // we only need to add the user to the course group, if the user is not yet part of it, otherwise the user cannot access the course
-            if (!user.getGroups().contains(courseGroupName)) {
-                this.addUserToGroup(user, courseGroupName);
+            if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
+                this.addUserToCourse(user, course, role);
             }
             return optionalUser;
         }

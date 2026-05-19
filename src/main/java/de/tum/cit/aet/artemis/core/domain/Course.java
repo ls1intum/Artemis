@@ -1010,6 +1010,15 @@ public class Course extends DomainObject {
         };
     }
 
+    public String getGroupNameForRole(CourseRole role) {
+        return switch (role) {
+            case STUDENT -> studentGroupName;
+            case TEACHING_ASSISTANT -> teachingAssistantGroupName;
+            case EDITOR -> editorGroupName;
+            case INSTRUCTOR -> instructorGroupName;
+        };
+    }
+
     public TutorialGroupsConfiguration getTutorialGroupsConfiguration() {
         return tutorialGroupsConfiguration;
     }

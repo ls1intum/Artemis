@@ -25,7 +25,8 @@ public interface UserCourseRoleRepository extends ArtemisJpaRepository<UserCours
 
     List<UserCourseRole> findByUser_Id(Long userId);
 
-    List<UserCourseRole> findByCourse_IdAndRole(Long courseId, CourseRole role);
+    @Query("SELECT ucr FROM UserCourseRole ucr JOIN FETCH ucr.user WHERE ucr.course.id = :courseId AND ucr.role = :role")
+    List<UserCourseRole> findByCourse_IdAndRole(@Param("courseId") Long courseId, @Param("role") CourseRole role);
 
     Set<UserCourseRole> findByUser_IdAndCourse_Id(Long userId, Long courseId);
 
@@ -44,6 +45,14 @@ public interface UserCourseRoleRepository extends ArtemisJpaRepository<UserCours
     @Transactional
     @Modifying
     void deleteByUser_Id(Long userId);
+
+    @Transactional
+    @Modifying
+    void deleteByCourse_IdAndRoleIn(Long courseId, Collection<CourseRole> roles);
+
+    @Transactional
+    @Modifying
+    void deleteByCourse_Id(Long courseId);
 
     @Query("""
             SELECT ucr
