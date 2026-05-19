@@ -40,7 +40,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "9.1.3"
+version = "9.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -56,7 +56,7 @@ wrapper {
 node {
     download = true
     version = "${node_version}"
-    npmVersion = "${npm_version}"
+    pnpmVersion = "${pnpm_version}"
 }
 
 apply from: "gradle/liquibase.gradle"
@@ -588,6 +588,13 @@ configurations.matching { it.name != 'mockitoAgent' }.configureEach {
             details.useVersion("${netty_version}")
             details.because("Patched Netty release; pre-${netty_version} contains multiple high-severity CVEs.")
         }
+        // Force every io.opentelemetry module (BOM-managed by Spring Boot at 1.55.x and pulled in
+        // directly by micrometer-tracing-bridge-otel) up to the patched line. Pre-1.62.0 has
+        // GHSA-rcgg-9c38-7xpx (unbounded memory allocation in W3C Baggage propagation).
+        if (details.requested.group == "io.opentelemetry") {
+            details.useVersion("${opentelemetry_version}")
+            details.because("Patched OpenTelemetry release; pre-${opentelemetry_version} contains GHSA-rcgg-9c38-7xpx.")
+        }
     }
 }
 
@@ -618,9 +625,9 @@ tasks.register("stage") {
     dependsOn "bootWar"
 }
 
-// Set the npm cache (used in the Dockerfile)
-tasks.register("npmSetCacheDockerfile", NpmTask) {
-    args = ["set", "cache", "/opt/artemis/.npm"]
+// Set the pnpm store directory (used in the Dockerfile for build-time caching).
+tasks.register("pnpmSetCacheDockerfile", PnpmTask) {
+    args = ["config", "set", "store-dir", "/opt/artemis/.pnpm-store"]
 }
 
 
