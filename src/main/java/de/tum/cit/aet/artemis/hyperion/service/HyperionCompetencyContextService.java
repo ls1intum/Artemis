@@ -116,16 +116,34 @@ public class HyperionCompetencyContextService {
 
         List<LectureUnit> lectureUnits = lectureUnitApi.get().findAllByIds(linkedLectureUnitIds);
 
-        int perUnitBudget = MAX_TOTAL_CHARS / lectureUnits.size();
-        List<String> snippets = new ArrayList<>();
-
+        // Extract all texts upfront so we can redistribute unused budget from short units to long ones.
+        record UnitText(LectureUnit unit, String text) {
+        }
+        List<UnitText> extracted = new ArrayList<>();
         for (LectureUnit unit : lectureUnits) {
-            String raw = extractUnitText(unit);
-            if (raw == null || raw.isBlank()) {
-                continue;
+            String text = extractUnitText(unit);
+            if (text != null && !text.isBlank()) {
+                extracted.add(new UnitText(unit, text));
             }
-            String truncated = raw.length() > perUnitBudget ? raw.substring(0, perUnitBudget) + "…[truncated]" : raw;
-            snippets.add("[" + unit.getLecture().getTitle() + " – " + unit.getName() + "]\n" + truncated);
+        }
+        if (extracted.isEmpty()) {
+            return List.of();
+        }
+
+        // Two-pass fair allocation: equal share first, then redistribute leftover from short units.
+        int equalShare = MAX_TOTAL_CHARS / extracted.size();
+        int leftover = 0;
+        for (UnitText ut : extracted) {
+            leftover += Math.max(0, equalShare - ut.text().length());
+        }
+        int oversizeCount = (int) extracted.stream().filter(ut -> ut.text().length() > equalShare).count();
+        int bonus = oversizeCount > 0 ? leftover / oversizeCount : 0;
+
+        List<String> snippets = new ArrayList<>();
+        for (UnitText ut : extracted) {
+            int budget = ut.text().length() <= equalShare ? equalShare : equalShare + bonus;
+            String truncated = ut.text().length() > budget ? ut.text().substring(0, budget) + "…[truncated]" : ut.text();
+            snippets.add("[" + ut.unit().getLecture().getTitle() + " – " + ut.unit().getName() + "]\n" + truncated);
         }
 
         return snippets.stream().distinct().toList();

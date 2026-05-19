@@ -2,13 +2,14 @@
 Course: {{courseTitle}}
 Course Description: {{courseDescription}}
 
+{{lectureSection}}
+
 ## Competencies to Assess
 The following competencies should be covered across the generated questions.
 Across all questions, every competency must appear at least once:
 {{competencyList}}
 
 {{relationSection}}
-{{lectureSection}}
 
 Questions should require students to integrate and connect the listed competencies rather than treating each in isolation.
 
