@@ -1,18 +1,9 @@
 name: E2E Tests
 
-# Reusable workflow called by ci.yml. Replaces the old workflow_run-based test-e2e.yml.
-#
-# Critical changes vs the old workflow:
-# - Triggered as workflow_call from ci.yml (no longer workflow_run-listening on Build).
-#   This fixes the long-standing bug where PRs modifying test-e2e.yml never tested their
-#   own changes (workflow_run runs from the default-branch copy, not the PR's).
-# - No own `concurrency:` block. The parent's group applies — adding one here would
-#   cancel queued children while the parent run keeps running, deadlocking the umbrella.
-# - The `cancel-superseded` self-hosted-queue workaround is removed. Built-in concurrency
-#   on the parent reliably cancels superseded runs because the parent isn't queued behind
-#   a saturated self-hosted pool.
-# - `workflow-run-id` passed to .github/actions/e2e-setup is the current run id, since
-#   the docker-tag artifact is uploaded in the same run by ci-build.yml.
+# Reusable workflow called by ci.yml. See .github/workflows/README.md for the
+# workflow_call + concurrency contract. The `workflow-run-id` passed to
+# .github/actions/e2e-setup is github.run_id because ci-build.yml uploads the
+# docker-tag artifact in the same parent run.
 
 on:
   workflow_call:
@@ -54,11 +45,22 @@ env:
   STATUS_CONTEXT: 'End-to-End (E2E) Tests'
   STATUSES_REQUEST_URL: "https://api.github.com/repos/${{ github.repository }}/statuses/${{ inputs.commit_sha }}"
   TARGET_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+  # Playwright runner config + secrets shared by every E2E job. Each job sets only the
+  # fields that differ (PLAYWRIGHT_REPORT_PHASE, PLAYWRIGHT_REPORT_PR_NUMBER).
   PLAYWRIGHT_REPORT_SERVER_URL: ${{ vars.PLAYWRIGHT_REPORT_SERVER_URL }}
   PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
   PLAYWRIGHT_REPORT_BRANCH: ${{ inputs.branch_name }}
   PLAYWRIGHT_REPORT_COMMIT_SHA: ${{ inputs.commit_sha }}
   PLAYWRIGHT_REPORT_TRIGGERED_BY: ${{ inputs.is_pr && 'pull_request' || 'push' }}
+  ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+  ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+  PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
+  PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
+  PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
+  SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
+  TEST_RETRIES: ${{ vars.TEST_RETRIES }}
+  TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
+  TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
 
 jobs:
   determine-tests:
@@ -92,7 +94,6 @@ jobs:
           chmod +x .ci/E2E-tests/determine-relevant-tests.sh
           .ci/E2E-tests/determine-relevant-tests.sh base_branch
 
-  # Phase 1: Run relevant tests for PR changes.
   run-e2e-relevant:
     name: 'Phase 1: Relevant E2E Tests'
     needs: determine-tests
@@ -110,15 +111,6 @@ jobs:
       pull-requests: write
       actions: read
     env:
-      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
-      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
-      PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
-      PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
-      PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
-      SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
-      TEST_RETRIES: ${{ vars.TEST_RETRIES }}
-      TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
-      TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
       PLAYWRIGHT_REPORT_PHASE: phase1
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     outputs:
@@ -215,6 +207,8 @@ jobs:
         id: find-e2e-comment
         if: (success() || failure()) && inputs.is_pr
         uses: ./.github/actions/find-e2e-comment
+        with:
+          pr-number: ${{ inputs.pr_number }}
 
       - name: Post E2E comment (Phase 1)
         if: (success() || failure()) && inputs.is_pr
@@ -288,7 +282,6 @@ jobs:
               });
             }
 
-  # Phase 2: Run remaining tests if Phase 1 succeeded.
   run-e2e-remaining:
     name: 'Phase 2: Remaining E2E Tests'
     needs: [determine-tests, run-e2e-relevant]
@@ -311,15 +304,6 @@ jobs:
       reporter_failed: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
       phase2_notes: ${{ steps.update-comment.outputs.phase2_notes }}
     env:
-      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
-      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
-      PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
-      PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
-      PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
-      SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
-      TEST_RETRIES: ${{ vars.TEST_RETRIES }}
-      TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
-      TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
       PLAYWRIGHT_REPORT_PHASE: phase2
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
@@ -413,6 +397,8 @@ jobs:
         id: find-e2e-comment
         if: (success() || failure()) && inputs.is_pr
         uses: ./.github/actions/find-e2e-comment
+        with:
+          pr-number: ${{ inputs.pr_number }}
 
       - name: Update E2E comment (Phase 2)
         id: update-comment
@@ -490,7 +476,6 @@ jobs:
               });
             }
 
-  # Run all tests for PR when run_all_tests is triggered, or when no specific tests detected.
   run-e2e-all-pr:
     name: Run All E2E Tests (PR)
     needs: determine-tests
@@ -510,15 +495,6 @@ jobs:
     outputs:
       reporter_failed: ${{ steps.run-tests-all-pr.outputs.reporter_failed }}
     env:
-      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
-      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
-      PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
-      PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
-      PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
-      SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
-      TEST_RETRIES: ${{ vars.TEST_RETRIES }}
-      TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
-      TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
       PLAYWRIGHT_REPORT_PHASE: all
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
@@ -619,6 +595,8 @@ jobs:
         id: find-e2e-comment
         if: success() || failure()
         uses: ./.github/actions/find-e2e-comment
+        with:
+          pr-number: ${{ inputs.pr_number }}
 
       - name: Post E2E comment (All Tests)
         if: success() || failure()
@@ -681,7 +659,6 @@ jobs:
               });
             }
 
-  # Run all tests for non-PR events (push to develop, main, release branches).
   run-e2e-all-non-pr:
     name: Run All E2E Tests (Non-PR)
     if: ${{ !inputs.is_pr }}
@@ -693,15 +670,6 @@ jobs:
       statuses: write
       actions: read
     env:
-      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
-      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
-      PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
-      PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
-      PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
-      SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
-      TEST_RETRIES: ${{ vars.TEST_RETRIES }}
-      TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
-      TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
       PLAYWRIGHT_REPORT_PHASE: all
     steps:
       - name: Create pending status
@@ -857,6 +825,8 @@ jobs:
         id: find-e2e-comment
         if: always() && inputs.is_pr
         uses: ./.github/actions/find-e2e-comment
+        with:
+          pr-number: ${{ inputs.pr_number }}
 
       - name: Update E2E comment with overall status
         if: always() && inputs.is_pr

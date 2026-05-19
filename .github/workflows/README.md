@@ -36,15 +36,14 @@ ci.yml                                                            (single entry 
 
 ### Why one required status check and not many
 
-The community consensus pattern in 2026 (TypeScript, Vite, Ruff, Rust, Turborepo) is:
-require a single umbrella job, evaluate every child's `result` via `jq`, and accept
-`skipped` only for children that may legitimately be path-filtered out. Listing every
-child as required is fragile — every rename or refactor breaks branch protection, and
-path-filtered children leave required checks stuck on "pending".
+The community consensus pattern in 2026 (TypeScript, Vite, Ruff) is: require a single
+umbrella job, evaluate every child's `result` via `jq`, and accept both `success` and
+`skipped`. Listing every child as required is fragile — every rename or refactor breaks
+branch protection, and path-filtered children leave required checks stuck on "pending".
 
-The gate's allow-list of children that may skip is in `ci.yml` (`ALLOWED_SKIP`).
-**`build` and `test` are NOT in the allow-list**: if they skip cascadingly (because
-`detect-changes` failed), the gate fails closed.
+Cascading skips don't bypass the gate because `detect-changes` (the gating job) is itself
+in `needs:` — if it fails, its own `failure` result fails the gate, even when downstream
+children all show `skipped`.
 
 ## Reusable workflows — `ci-*.yml`
 
@@ -135,8 +134,6 @@ a `concurrency:` block to a `ci-*.yml` reusable.
      if: needs.detect-changes.outputs.<flag> == 'true'
      uses: ./.github/workflows/ci-<name>.yml
    ```
-3. Add `<name>` to the `needs:` list of `all-ci-passed`.
-4. Decide whether the new child may legitimately skip on path-filtered PRs:
-   - **Yes** (most reusables): add `<name>` to `ALLOWED_SKIP` in the gate.
-   - **No** (the work must always run when triggered): leave it out of `ALLOWED_SKIP`.
-   No branch-protection change is needed — the gate's `name:` field is what's required.
+3. Add `<name>` to the `needs:` list of `all-ci-passed`. The gate accepts `success`
+   and `skipped`, so path-filtered skips pass naturally. No branch-protection change
+   is needed — the gate's `name:` field is what's required.

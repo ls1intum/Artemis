@@ -20,7 +20,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
-# Keep in sync with ci-build.yml and ci-test.yml.
+# node/java are enforced consistent with ci-build.yml and ci-test.yml by ci-workflows.yml.
 env:
   CI: true
   node: 24

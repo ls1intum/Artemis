@@ -28,17 +28,27 @@ runs:
   steps:
     - name: Log triggering workflow info
       shell: bash
+      env:
+        RUN_ID: ${{ inputs.workflow-run-id }}
+        HEAD_BRANCH: ${{ inputs.workflow-head-branch }}
+        HEAD_SHA: ${{ inputs.workflow-head-sha }}
       run: |
-        echo "TRIGGERING_WORKFLOW_RUN_ID=${{ inputs.workflow-run-id }}"
-        echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=${{ inputs.workflow-head-branch }}"
-        echo "TRIGGERING_WORKFLOW_HEAD_SHA=${{ inputs.workflow-head-sha }}"
+        echo "TRIGGERING_WORKFLOW_RUN_ID=$RUN_ID"
+        echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=$HEAD_BRANCH"
+        echo "TRIGGERING_WORKFLOW_HEAD_SHA=$HEAD_SHA"
 
     - name: Add link to triggering workflow
       shell: bash
+      env:
+        RUN_ID: ${{ inputs.workflow-run-id }}
+        REPO: ${{ github.repository }}
+        # `test-notice` is composed from determine-relevant-tests.sh output; route through
+        # env to keep its content out of shell-injection paths.
+        NOTICE: ${{ inputs.test-notice }}
       run: |
-        echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #${{ inputs.workflow-run-id }} - View it at https://github.com/${{ github.repository }}/actions/runs/${{ inputs.workflow-run-id }}"
-        if [ -n "${{ inputs.test-notice }}" ]; then
-          echo "::notice title=Test Selection::${{ inputs.test-notice }}"
+        echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #$RUN_ID - View it at https://github.com/$REPO/actions/runs/$RUN_ID"
+        if [ -n "$NOTICE" ]; then
+          echo "::notice title=Test Selection::$NOTICE"
         fi
 
     - name: Download Docker tag

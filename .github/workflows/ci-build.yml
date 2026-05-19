@@ -34,13 +34,8 @@ on:
         required: false
         type: string
         default: ''
-      release_upload_url:
-        description: 'Upload URL provided by the release event (only set when is_release).'
-        required: false
-        type: string
-        default: ''
 
-# Keep in sync with ci-test.yml, ci-java-analysis.yml and codeql-analysis.yml.
+# node/java are enforced consistent with ci-test.yml and codeql-analysis.yml by ci-workflows.yml.
 env:
   CI: true
   node: 24
@@ -167,7 +162,6 @@ jobs:
         env:
           DOCKER_TAG: ${{ steps.meta.outputs.version }}
         run: |
-          set -Eeuo pipefail
           printf '%s' "$DOCKER_TAG" > docker-tag.txt
           echo "Using Docker tag: $DOCKER_TAG"
       - name: Upload Docker tag as artifact
@@ -206,7 +200,6 @@ jobs:
         env:
           DOCKER_TAG: ${{ needs.docker-release.outputs.image_tag }}
         run: |
-          set -Eeuo pipefail
           printf '%s' "$DOCKER_TAG" > docker-tag.txt
           echo "Using Docker tag: $DOCKER_TAG"
       - name: Upload Docker tag as artifact

@@ -68,7 +68,7 @@ jobs:
       # initial commits, force-pushes, missing merge-base, and `merge_group` events.
       - id: filter
         if: github.event_name != 'workflow_dispatch' || !inputs.force_build
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         with:
           # On push/merge_group: diff against the previous commit. On PR: against base.ref.
           base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '' }}
@@ -163,7 +163,6 @@ jobs:
       is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
       is_release: ${{ github.event_name == 'release' }}
       release_tag: ${{ github.event.release.tag_name || '' }}
-      release_upload_url: ${{ github.event.release.upload_url || '' }}
 
   test:
     name: Test
@@ -173,7 +172,6 @@ jobs:
     permissions:
       contents: read
       checks: write
-      pull-requests: write
     with:
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
       # Module-affected mode is opt-in for draft PRs. Default branch and non-PR events run everything.
@@ -229,9 +227,9 @@ jobs:
   e2e:
     name: E2E
     needs: [detect-changes, build, test]
-    # E2E needs the Docker image from `build` and the test setup from `test`.
-    # If either skipped (build_relevant=false) or failed, E2E skips — the gate distinguishes the two
-    # via the `build`/`test` results directly (they are in the gate's `needs:` allow-list).
+    # E2E consumes the Docker image from `build` and the artifacts from `test`. Skips when
+    # either upstream skipped (no source change) or failed — the gate reports the upstream
+    # failure directly.
     if: |
       always() &&
       needs.detect-changes.outputs.build_relevant == 'true' &&
@@ -255,20 +253,10 @@ jobs:
       PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
       HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
 
-  # ----------------------------------------------------------------------------
-  # The single required status check.
-  #
-  # Branch protection should require exactly one check: "CI / All CI Passed".
-  # All other status names produced by this workflow are informational.
-  #
-  # Gate rules:
-  #   - Every child whose result is failure or cancelled fails the gate.
-  #   - Skipped children are accepted only when listed in ALLOWED_SKIP — every job that
-  #     can legitimately skip on path-filtered or upstream-failed PRs is in that list.
-  #   - `detect-changes` is NOT in the allow-list. If change detection itself fails,
-  #     children skip cascadingly — the gate must catch this by failing on
-  #     `detect-changes` itself, which is the only job guaranteed to run.
-  # ----------------------------------------------------------------------------
+  # Single required status check. Branch protection should require exactly this one.
+  # `detect-changes` always runs; if it fails, child jobs cascade to `skipped` but
+  # `detect-changes` itself surfaces as `failure`, so the gate fails closed — no
+  # allow-list needed (matches the TypeScript/Ruff/Vite idiom).
   all-ci-passed:
     name: All CI Passed
     if: always()
@@ -286,11 +274,11 @@ jobs:
     permissions: {}
     timeout-minutes: 5
     steps:
-      - name: Render job summary
+      - name: Evaluate gate
         env:
           NEEDS: ${{ toJSON(needs) }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          set -Eeuo pipefail
           {
             echo "## CI Summary"
             echo ""
@@ -298,36 +286,12 @@ jobs:
             echo "|-----|--------|"
             jq -r 'to_entries[] | "| \(.key) | \(.value.result // "n/a") |"' <<< "$NEEDS"
             echo ""
-            echo "_Run: [#${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})_"
+            echo "_[View run]($RUN_URL)_"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Persist machine-readable summary artifact
-        env:
-          NEEDS: ${{ toJSON(needs) }}
-        run: printf '%s\n' "$NEEDS" > ci-summary.json
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: ci-summary
-          path: ci-summary.json
-          retention-days: 14
-          if-no-files-found: error
-
-      - name: Evaluate gate
-        env:
-          NEEDS: ${{ toJSON(needs) }}
-          # Every job EXCEPT `detect-changes` may legitimately skip:
-          #   - docs/translation/java-analysis/gradle-wrapper skip when their path filter is false.
-          #   - build/test skip on docs-only PRs (build_relevant=false).
-          #   - e2e skips when build or test failed or skipped.
-          # `detect-changes` always runs, so if it fails the gate must fail closed.
-          ALLOWED_SKIP: 'build test e2e docs translation java-analysis gradle-wrapper workflows'
-        run: |
-          set -Eeuo pipefail
-          failing=$(jq -r --arg allowed "$ALLOWED_SKIP" '
+          failing=$(jq -r '
             to_entries[]
-            | select(.value.result != "success")
-            | select(.value.result != "skipped" or (($allowed | split(" ")) | index(.key) | not))
+            | select(.value.result != "success" and .value.result != "skipped")
             | "\(.key): \(.value.result)"
           ' <<< "$NEEDS")
           if [ -n "$failing" ]; then
@@ -335,4 +299,3 @@ jobs:
             echo "$failing"
             exit 1
           fi
-          echo "All required CI jobs passed."

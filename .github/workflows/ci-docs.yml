@@ -1,13 +1,15 @@
 name: Build Documentation
 
 # Reusable workflow. Validates that the Docusaurus documentation builds successfully.
-# Keep the build steps in sync with deploy-documentation.yml.
 
 on:
   workflow_call: {}
 
 permissions:
   contents: read
+
+env:
+  node: 24
 
 jobs:
   build:
@@ -26,7 +28,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: '${{ env.node }}'
           cache: 'pnpm'
           cache-dependency-path: documentation/pnpm-lock.yaml
 

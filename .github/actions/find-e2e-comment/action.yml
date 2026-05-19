@@ -1,10 +1,15 @@
 name: 'Find E2E PR Comment'
-description: 'Look up the PR number for the current workflow run and find the existing E2E comment, if any'
+description: 'Find the existing E2E comment on a PR, if any'
+
+inputs:
+  pr-number:
+    description: 'PR number to search within'
+    required: true
 
 outputs:
   pr-number:
-    description: 'The PR number (empty string if not found)'
-    value: ${{ steps.find-pr.outputs.result }}
+    description: 'The PR number, echoed for caller convenience (empty string if pr-number is 0)'
+    value: ${{ inputs.pr-number != '0' && inputs.pr-number || '' }}
   comment-id:
     description: 'The existing E2E comment ID (empty string if not found)'
     value: ${{ steps.find-comment.outputs.result }}
@@ -12,35 +17,17 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Find PR number
-      id: find-pr
-      uses: actions/github-script@v9
-      continue-on-error: true
-      with:
-        result-encoding: string
-        script: |
-          const branch = '${{ github.event.workflow_run.head_branch }}';
-          const { data: prs } = await github.rest.pulls.list({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            head: `${{ github.repository_owner }}:${branch}`,
-            state: 'open'
-          });
-          if (!prs.length) {
-            console.log(`No open PR found for branch ${branch}`);
-            return '';
-          }
-          return prs[0].number;
-
     - name: Find existing E2E comment
       id: find-comment
-      if: steps.find-pr.outputs.result != ''
+      if: inputs.pr-number != '0'
       uses: actions/github-script@v9
       continue-on-error: true
+      env:
+        PR_NUMBER: ${{ inputs.pr-number }}
       with:
         result-encoding: string
         script: |
-          const prNumber = Number('${{ steps.find-pr.outputs.result }}');
+          const prNumber = Number(process.env.PR_NUMBER);
           const marker = '<!-- E2E Test Results -->';
           const MAX_PAGES = 50;
           for (let page = 1; page <= MAX_PAGES; page++) {
@@ -49,7 +36,7 @@ runs:
               repo: context.repo.repo,
               issue_number: prNumber,
               per_page: 100,
-              page: page
+              page,
             });
             if (!comments.length) break;
             const found = comments.find(c => c.body && c.body.includes(marker));

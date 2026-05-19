@@ -1,10 +1,8 @@
 name: Java Analysis
 
-# Reusable workflow called by ci.yml. Collapses the former `quality.yml` (code-quality-analysis)
-# and `query-quality.yml` (query-quality-check) workflows into one reusable so they share the
-# parent's concurrency group and a single trigger surface.
-#
-# Do NOT add a `concurrency:` block here — that belongs to the parent.
+# Reusable workflow called by ci.yml. Two checks:
+#   - code-quality: enforces caps on large classes / complex Spring beans.
+#   - query-quality: detects over-fetching @EntityGraph / @Query annotations.
 
 on:
   workflow_call:
@@ -39,7 +37,7 @@ jobs:
           BASE_BRANCH: ${{ inputs.base_branch }}
         run: |
           set -Eeuo pipefail
-          # TODO these values should become zero in the future
+          # Thresholds are technical debt; lower them as violations are fixed.
           max_large_classes=17
           max_complex_beans=17
 
@@ -65,18 +63,15 @@ jobs:
       - name: Query quality check
         run: |
           set -Eeuo pipefail
-          # Run the analysis and capture output
           output=$(python supporting_scripts/find_slow_queries.py)
-
           echo "$output"
           echo ""
 
-          # Extract violation counts
           entitygraph_violations=$(echo "$output" | grep -c "\[EntityGraph\] Potential over-fetch" || echo "0")
           query_violations=$(echo "$output" | grep -c "\[@Query\] Potential over-fetch" || echo "0")
           total_violations=$((entitygraph_violations + query_violations))
 
-          # TODO these values should become zero in the future
+          # Thresholds are technical debt; lower them as violations are fixed (no open issue).
           max_entitygraph_violations=11
           max_query_violations=25
           max_total_violations=$((max_entitygraph_violations + max_query_violations))

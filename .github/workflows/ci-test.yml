@@ -32,7 +32,7 @@ on:
         description: 'Coverage upload token. Optional — coverage is uploaded only on internal PRs by non-bot authors.'
         required: false
 
-# Keep in sync with ci-build.yml, ci-java-analysis.yml and codeql-analysis.yml.
+# node/java are enforced consistent with ci-build.yml and codeql-analysis.yml by ci-workflows.yml.
 env:
   CI: true
   node: 24
@@ -46,9 +46,13 @@ jobs:
     permissions:
       contents: read
       checks: write
-      pull-requests: write
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Module-affected diff (`git diff "origin/$DEFAULT_BRANCH"`) needs the full
+          # history; a shallow clone silently returns empty and falls back to running
+          # every test, defeating the optimisation.
+          fetch-depth: 0
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
@@ -89,7 +93,9 @@ jobs:
         if: success() || failure()
         uses: actions/upload-artifact@v7
         with:
-          name: JUnit Test Results
+          # Disambiguated from `JUnit Test Results` (E2E) because both jobs upload in the
+          # same parent run; `actions/upload-artifact@v4+` rejects duplicate artifact names.
+          name: Server JUnit Test Results
           path: build/test-results/test/*.xml
       - name: Print failed tests
         if: failure()
@@ -104,9 +110,12 @@ jobs:
           else
             echo "No failed tests."
           fi
-      - name: JaCoCo Coverage Verification
+      - name: JaCoCo Coverage Verification (advisory)
         id: jacoco-verification
         if: ${{ inputs.run_all_tests }}
+        # Advisory: violations surface via ::error:: annotations from the next step but do
+        # not fail the job. Tightening this to gating requires removing continue-on-error
+        # AND dropping the `|| true` in the violation-print step.
         continue-on-error: true
         run: |
           set -Eeuo pipefail
@@ -128,26 +137,9 @@ jobs:
               echo "If this is not related to your PR, adjust the thresholds in gradle/jacoco.gradle (ModuleCoverageThresholds)."
             fi
           fi
-      - name: Diagnostic info
-        if: success() || failure()
-        run: |
-          echo "=== Docker containers ==="
-          docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
-          echo ""
-          echo "=== Memory ==="
-          free -h || true
-          echo ""
-          echo "=== Disk usage ==="
-          df -h /tmp || true
-          echo ""
-          echo "=== PostgreSQL connection errors in test log ==="
-          grep -c "PSQLException\|SQLSTATE(08006)\|Connection.*broken\|I/O error occurred while sending" tests.log || echo "0 connection errors found"
-          echo ""
-          echo "=== Unique PostgreSQL errors ==="
-          grep "PSQLException\|SQLSTATE(08006)" tests.log | sort -u | head -10 || echo "No PostgreSQL errors"
       - name: 'Codacy: Report coverage'
-        # Pinned to v1.3.0 (was @master — floating ref was the only supply-chain risk in the repo).
         # Coverage upload runs only on internal PRs by non-bot authors; fork PRs lack the secret.
+        # Pinned to v1.3.0 commit.
         uses: codacy/codacy-coverage-reporter-action@a38818475bb21847788496e9f0fddaa4e84955ba
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}

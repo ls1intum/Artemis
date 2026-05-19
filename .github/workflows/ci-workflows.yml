@@ -22,9 +22,30 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Run actionlint
-        # Reads .github/actionlint.yaml for the list of self-hosted runner labels.
-        # `bash <(curl …)` is the official install snippet from the actionlint README.
+        # `bash <(curl …)` is the install snippet from the actionlint README; pin to a release
+        # tag instead of `main` because it executes a downloaded binary. Reads
+        # `.github/actionlint.yaml` for the self-hosted runner labels in use.
+        env:
+          ACTIONLINT_VERSION: '1.7.12'
         run: |
-          set -Eeuo pipefail
-          bash <(curl --silent --location https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          bash <(curl --silent --location \
+            "https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash") \
+            "${ACTIONLINT_VERSION}"
           ./actionlint -color
+
+      - name: Check version pins are in sync
+        # Every workflow that pins `node:` or `java:` must agree. Drift fails CI.
+        run: |
+          files=(.github/workflows/ci-build.yml
+                 .github/workflows/ci-test.yml
+                 .github/workflows/codeql-analysis.yml)
+          for key in node java; do
+            values=$(grep -hE "^  ${key}: " "${files[@]}" | awk '{print $2}' | sort -u)
+            count=$(printf '%s\n' "$values" | wc -l)
+            if [ "$count" -ne 1 ]; then
+              echo "::error::Version drift on '${key}:' across ${files[*]} — values:"
+              printf '  %s\n' $values
+              exit 1
+            fi
+            echo "${key}: $values (consistent across $(printf '%s ' "${files[@]}"))"
+          done
