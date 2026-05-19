@@ -161,5 +161,6 @@ $delete-delay-duration: 6s;
     left: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    background-color: rgba(0, 0, 0, 0.5) !important;
+    background-color: var(--bs-backdrop-bg, #000) !important;
+    opacity: var(--bs-backdrop-opacity, 0.5) !important;
 }
