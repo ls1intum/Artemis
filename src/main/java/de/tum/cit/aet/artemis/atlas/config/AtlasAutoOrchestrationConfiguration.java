@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
  * untouched — the auto-trigger feature ships independently.
  */
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Configuration
 public class AtlasAutoOrchestrationConfiguration {
 

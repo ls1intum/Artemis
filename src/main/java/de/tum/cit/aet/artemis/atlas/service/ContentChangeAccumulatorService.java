@@ -12,6 +12,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.annotation.PostConstruct;
+
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +60,9 @@ public class ContentChangeAccumulatorService {
 
     private static final Logger log = LoggerFactory.getLogger(ContentChangeAccumulatorService.class);
 
-    private final IMap<Long, ContentChangeAccumulator> map;
+    private final HazelcastInstance hazelcastInstance;
+
+    private IMap<Long, ContentChangeAccumulator> map;
 
     private final Clock clock;
 
@@ -67,10 +71,16 @@ public class ContentChangeAccumulatorService {
     private final int dailyCap;
 
     public ContentChangeAccumulatorService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, Clock clock, AtlasOrchestratorProperties properties) {
-        this.map = hazelcastInstance.getMap(MAP_NAME);
+        this.hazelcastInstance = hazelcastInstance;
         this.clock = clock;
         this.debounceWindowSeconds = properties.debounceWindowSeconds();
         this.dailyCap = properties.maxDailyOrchestrations();
+    }
+
+    /** Resolved here (not in the constructor) so application startup is not blocked on Hazelcast. */
+    @PostConstruct
+    void initMap() {
+        this.map = hazelcastInstance.getMap(MAP_NAME);
     }
 
     /**
