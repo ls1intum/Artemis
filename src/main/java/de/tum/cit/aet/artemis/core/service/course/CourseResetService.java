@@ -15,12 +15,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
-import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
-import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
 import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingPresetRepository;
 import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingSpecificationRepository;
+import de.tum.cit.aet.artemis.communication.service.ConversationDataCleanupService;
 import de.tum.cit.aet.artemis.core.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.core.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -36,7 +34,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
-import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 
@@ -125,13 +122,7 @@ public class CourseResetService {
 
     private final Optional<TutorialGroupApi> tutorialGroupApi;
 
-    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
-
-    private final ReactionRepository reactionRepository;
-
-    private final AnswerPostRepository answerPostRepository;
-
-    private final PostRepository postRepository;
+    private final ConversationDataCleanupService conversationDataCleanupService;
 
     private final CourseNotificationRepository courseNotificationRepository;
 
@@ -159,13 +150,12 @@ public class CourseResetService {
 
     public CourseResetService(ExerciseDeletionService exerciseDeletionService, ExerciseRepository exerciseRepository, Optional<ExamDeletionApi> examDeletionApi,
             Optional<ExamRepositoryApi> examRepositoryApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<LearnerProfileApi> learnerProfileApi,
-            Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupApi> tutorialGroupApi, ReactionRepository reactionRepository,
-            AnswerPostRepository answerPostRepository, PostRepository postRepository, CourseNotificationRepository courseNotificationRepository,
-            UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
+            Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupApi> tutorialGroupApi, ConversationDataCleanupService conversationDataCleanupService,
+            CourseNotificationRepository courseNotificationRepository, UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository,
             LLMTokenUsageRequestRepository llmTokenUsageRequestRepository, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseRepository courseRepository,
             UserRepository userRepository, UserService userService, CourseOperationProgressService progressService, CourseAdminService courseAdminService,
-            ParticipationRepository participationRepository, SubmissionRepository submissionRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            ParticipationRepository participationRepository, SubmissionRepository submissionRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
         this.examDeletionApi = examDeletionApi;
@@ -174,9 +164,7 @@ public class CourseResetService {
         this.learnerProfileApi = learnerProfileApi;
         this.irisSettingsApi = irisSettingsApi;
         this.tutorialGroupApi = tutorialGroupApi;
-        this.reactionRepository = reactionRepository;
-        this.answerPostRepository = answerPostRepository;
-        this.postRepository = postRepository;
+        this.conversationDataCleanupService = conversationDataCleanupService;
         this.courseNotificationRepository = courseNotificationRepository;
         this.userCourseNotificationSettingPresetRepository = userCourseNotificationSettingPresetRepository;
         this.userCourseNotificationSettingSpecificationRepository = userCourseNotificationSettingSpecificationRepository;
@@ -189,7 +177,6 @@ public class CourseResetService {
         this.courseAdminService = courseAdminService;
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
     /**
@@ -428,13 +415,7 @@ public class CourseResetService {
      * @param courseId the ID of the course whose posts should be deleted
      */
     private void deletePostsFromConversations(long courseId) {
-        // Delete in correct order: reactions first, then answers, then posts
-        // This is necessary because bulk delete queries bypass JPA cascade
-        reactionRepository.deleteAllByAnswerPostCourseId(courseId);
-        reactionRepository.deleteAllByPostCourseId(courseId);
-        answerPostRepository.deleteAllByCourseId(courseId);
-        postRepository.deleteAllByCourseId(courseId);
-        searchableEntityWeaviateService.ifPresent(service -> service.deleteAllPostsForCourseAsync(courseId));
+        conversationDataCleanupService.deleteAllConversationDataForCourse(courseId);
     }
 
     /**
