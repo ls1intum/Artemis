@@ -41,6 +41,7 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -560,6 +561,46 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     @Query("""
+            SELECT DISTINCT user.id
+            FROM User user
+                JOIN ConversationParticipant cp ON cp.user.id = user.id AND cp.conversation.id = :conversationId
+                JOIN UserCourseRole ucr ON ucr.user.id = user.id AND ucr.course.id = :courseId AND ucr.role IN :roles
+            WHERE user.deleted = FALSE
+                AND (
+                    :loginOrName = ''
+                    OR user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                )
+            """)
+    List<Long> findUserIdsByLoginOrNameInConversationWithCourseRoles(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
+            @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles, Pageable pageable);
+
+    @Query("""
+            SELECT COUNT(DISTINCT user)
+            FROM User user
+                JOIN ConversationParticipant cp ON cp.user.id = user.id AND cp.conversation.id = :conversationId
+                JOIN UserCourseRole ucr ON ucr.user.id = user.id AND ucr.course.id = :courseId AND ucr.role IN :roles
+            WHERE user.deleted = FALSE
+                AND (
+                    :loginOrName = ''
+                    OR user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                )
+            """)
+    long countUsersByLoginOrNameInConversationWithCourseRoles(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
+            @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles);
+
+    default Page<User> searchAllWithCourseRolesByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId, long courseId, Set<CourseRole> roles) {
+        List<Long> ids = findUserIdsByLoginOrNameInConversationWithCourseRoles(loginOrName, conversationId, courseId, roles, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<User> users = findUsersByIdsWithCourseRolesOrdered(ids);
+        long total = countUsersByLoginOrNameInConversationWithCourseRoles(loginOrName, conversationId, courseId, roles);
+        return new PageImpl<>(users, pageable, total);
+    }
+
+    @Query("""
             SELECT DISTINCT user
             FROM User user
                 JOIN user.groups userGroup
@@ -677,6 +718,40 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     List<User> findUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
 
+    @Query("""
+            SELECT DISTINCT user.id
+            FROM User user
+            JOIN UserCourseRole ucr ON ucr.user.id = user.id AND ucr.course.id = :courseId
+            WHERE user.deleted = FALSE
+                AND (
+                    user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                )
+            """)
+    List<Long> findUserIdsByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
+
+    @Query("""
+            SELECT COUNT(DISTINCT user)
+            FROM User user
+            JOIN UserCourseRole ucr ON ucr.user.id = user.id AND ucr.course.id = :courseId
+            WHERE user.deleted = FALSE
+                AND (
+                    user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                )
+            """)
+    long countUserIdsByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
+
+    default Page<User> searchAllWithCourseRolesByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
+        List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable);
+        if (userIds.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
+        List<User> users = findUsersByIdsWithCourseRolesOrdered(userIds);
+        long total = countUserIdsByLoginOrNameInCourse(loginOrName, courseId);
+        return new PageImpl<>(users, pageable, total);
+    }
+
     @EntityGraph(type = LOAD, attributePaths = "groups")
     List<User> findDistinctUsersWithGroupsByIdIn(List<Long> ids);
 
@@ -737,6 +812,58 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         long total = countUsersByLoginOrNameInCourse(loginOrName, courseId);
 
         return new PageImpl<>(users, pageable, total);
+    }
+
+    // --- courseRoles-based search variants (replacing group-name searches) ---
+
+    @Query("""
+            SELECT DISTINCT user.id
+            FROM User user
+            JOIN UserCourseRole ucr ON ucr.user.id = user.id
+                AND ucr.course.id = :courseId
+                AND ucr.role IN :roles
+            WHERE user.deleted = FALSE
+                AND user.id <> :idOfUser
+                AND (
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                )
+            """)
+    List<Long> findUserIdsByLoginOrNameInCourseWithRolesNotUserId(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles,
+            @Param("idOfUser") long idOfUser, Pageable pageable);
+
+    @Query("""
+            SELECT COUNT(DISTINCT user)
+            FROM User user
+            JOIN UserCourseRole ucr ON ucr.user.id = user.id
+                AND ucr.course.id = :courseId
+                AND ucr.role IN :roles
+            WHERE user.deleted = FALSE
+                AND user.id <> :idOfUser
+                AND (
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                )
+            """)
+    long countUsersByLoginOrNameInCourseWithRolesNotUserId(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles,
+            @Param("idOfUser") long idOfUser);
+
+    @Query("""
+            SELECT user
+            FROM User user
+                LEFT JOIN FETCH user.courseRoles
+            WHERE user.id IN :ids
+            ORDER BY CONCAT(user.firstName, ' ', user.lastName)
+            """)
+    List<User> findUsersByIdsWithCourseRolesOrdered(@Param("ids") List<Long> ids);
+
+    default Page<User> searchAllWithCourseRolesByLoginOrNameInCourseNotUserId(Pageable pageable, String loginOrName, long courseId, Set<CourseRole> roles, long idOfUser) {
+        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRolesNotUserId(loginOrName, courseId, roles, idOfUser, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<User> users = findUsersByIdsWithCourseRolesOrdered(ids);
+        return new PageImpl<>(users, pageable, countUsersByLoginOrNameInCourseWithRolesNotUserId(loginOrName, courseId, roles, idOfUser));
     }
 
     @Modifying
@@ -1035,6 +1162,11 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @NonNull
     default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesById(userId), userId);
+    }
+
+    @NonNull
+    default User findByIdWithCourseRolesAndAuthoritiesElseThrow(long userId) {
+        return getValueElseThrow(findOneWithCourseRolesAndAuthoritiesById(userId), userId);
     }
 
     /**

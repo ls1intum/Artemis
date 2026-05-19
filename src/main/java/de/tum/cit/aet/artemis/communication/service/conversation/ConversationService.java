@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRep
 import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -389,20 +390,20 @@ public class ConversationService {
             Optional<ConversationMemberSearchFilters> filter) {
         if (filter.isEmpty()) {
             if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                return userRepository.searchAllWithGroupsByLoginOrNameInCourseAndReturnPage(pageable, searchTerm, course.getId());
+                return userRepository.searchAllWithCourseRolesByLoginOrNameInCourseAndReturnPage(pageable, searchTerm, course.getId());
             }
             return userRepository.searchAllWithGroupsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
         }
         else {
-            var groups = new HashSet<String>();
+            var roles = new HashSet<CourseRole>();
             switch (filter.get()) {
-                case INSTRUCTOR -> groups.add(course.getInstructorGroupName());
+                case INSTRUCTOR -> roles.add(CourseRole.INSTRUCTOR);
                 case TUTOR -> {
-                    groups.add(course.getTeachingAssistantGroupName());
+                    roles.add(CourseRole.TEACHING_ASSISTANT);
                     // searching for tutors also searches for editors
-                    groups.add(course.getEditorGroupName());
+                    roles.add(CourseRole.EDITOR);
                 }
-                case STUDENT -> groups.add(course.getStudentGroupName());
+                case STUDENT -> roles.add(CourseRole.STUDENT);
                 case CHANNEL_MODERATOR -> {
                     if (!(conversation instanceof Channel)) {
                         throw new IllegalArgumentException("The filter CHANNEL_MODERATOR is only allowed for channels!");
@@ -413,10 +414,10 @@ public class ConversationService {
             }
 
             if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                return userRepository.searchAllWithGroupsByLoginOrNameInGroups(pageable, searchTerm, groups);
+                return userRepository.searchAllWithCourseRolesByLoginOrNameInCourseNotUserId(pageable, searchTerm, course.getId(), roles, -1L);
             }
 
-            return userRepository.searchAllWithCourseGroupsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId(), groups);
+            return userRepository.searchAllWithCourseRolesByLoginOrNameInConversation(pageable, searchTerm, conversation.getId(), course.getId(), roles);
         }
 
     }

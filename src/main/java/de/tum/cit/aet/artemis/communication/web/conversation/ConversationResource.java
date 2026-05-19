@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.persistence.Persistence;
+
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -312,6 +314,10 @@ public class ConversationResource extends ConversationManagementResource {
         var resultDTO = new ArrayList<ConversationUserDTO>();
         for (var user : originalPage) {
             var dto = new ConversationUserDTO(user);
+            var courseRolesInitialized = Persistence.getPersistenceUtil().isLoaded(user, "courseRoles") && user.getCourseRoles() != null;
+            if (!courseRolesInitialized) {
+                user = userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(user.getId());
+            }
             UserPublicInfoDTO.assignRoleProperties(course, user, dto);
             if (conversationFromDatabase instanceof Channel channel) {
                 dto.setIsChannelModerator(channelAuthorizationService.isChannelModerator(channel.getId(), user.getId()));

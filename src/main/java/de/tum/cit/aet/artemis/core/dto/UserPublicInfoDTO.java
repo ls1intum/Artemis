@@ -1,11 +1,15 @@
 package de.tum.cit.aet.artemis.core.dto;
 
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 
 /**
  * A DTO representing a user with the minimal information allowed to be seen by other users in a course
@@ -56,10 +60,12 @@ public class UserPublicInfoDTO {
      * @param userPublicInfoDTO the DTO to assign the roles to
      */
     public static void assignRoleProperties(Course course, User user, UserPublicInfoDTO userPublicInfoDTO) {
-        userPublicInfoDTO.setIsStudent(user.getGroups().contains(course.getStudentGroupName()));
-        userPublicInfoDTO.setIsTeachingAssistant(user.getGroups().contains(course.getTeachingAssistantGroupName()));
-        userPublicInfoDTO.setIsInstructor(user.getGroups().contains(course.getInstructorGroupName()));
-        userPublicInfoDTO.setIsEditor(user.getGroups().contains(course.getEditorGroupName()));
+        Long courseId = course.getId();
+        Set<CourseRole> roles = user.getCourseRoles().stream().filter(r -> courseId.equals(r.getCourse().getId())).map(UserCourseRole::getRole).collect(Collectors.toSet());
+        userPublicInfoDTO.setIsStudent(roles.contains(CourseRole.STUDENT));
+        userPublicInfoDTO.setIsTeachingAssistant(roles.contains(CourseRole.TEACHING_ASSISTANT));
+        userPublicInfoDTO.setIsEditor(roles.contains(CourseRole.EDITOR));
+        userPublicInfoDTO.setIsInstructor(roles.contains(CourseRole.INSTRUCTOR));
     }
 
     @SuppressWarnings("PMD.ShortVariable")

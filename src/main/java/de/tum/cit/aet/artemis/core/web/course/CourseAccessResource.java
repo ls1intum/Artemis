@@ -216,9 +216,10 @@ public class CourseAccessResource {
         if (loginOrName.length() < 3 && requestedRoles.contains(Role.STUDENT)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer if you search for students.");
         }
-        final var relevantCourseGroupNames = getRelevantCourseGroupNames(requestedRoles, course);
+        final var relevantCourseRoles = getRelevantCourseRoles(requestedRoles);
         User searchingUser = userRepository.getUser();
-        var originalPage = userRepository.searchAllWithGroupsByLoginOrNameInGroupsNotUserId(PageRequest.of(0, 25), loginOrName, relevantCourseGroupNames, searchingUser.getId());
+        var originalPage = userRepository.searchAllWithCourseRolesByLoginOrNameInCourseNotUserId(PageRequest.of(0, 25), loginOrName, course.getId(), relevantCourseRoles,
+                searchingUser.getId());
 
         var resultDTOs = new ArrayList<UserPublicInfoDTO>();
         for (var user : originalPage) {
@@ -233,20 +234,20 @@ public class CourseAccessResource {
         return new ResponseEntity<>(dtoPage.getContent(), headers, HttpStatus.OK);
     }
 
-    private static HashSet<String> getRelevantCourseGroupNames(Set<Role> requestedRoles, Course course) {
-        var groups = new HashSet<String>();
+    private static Set<CourseRole> getRelevantCourseRoles(Set<Role> requestedRoles) {
+        var roles = new HashSet<CourseRole>();
         if (requestedRoles.contains(Role.STUDENT)) {
-            groups.add(course.getStudentGroupName());
+            roles.add(CourseRole.STUDENT);
         }
         if (requestedRoles.contains(Role.TEACHING_ASSISTANT)) {
-            groups.add(course.getTeachingAssistantGroupName());
+            roles.add(CourseRole.TEACHING_ASSISTANT);
             // searching for tutors also searches for editors
-            groups.add(course.getEditorGroupName());
+            roles.add(CourseRole.EDITOR);
         }
         if (requestedRoles.contains(Role.INSTRUCTOR)) {
-            groups.add(course.getInstructorGroupName());
+            roles.add(CourseRole.INSTRUCTOR);
         }
-        return groups;
+        return roles;
     }
 
     /**
