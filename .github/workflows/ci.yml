@@ -68,7 +68,7 @@ jobs:
       # initial commits, force-pushes, missing merge-base, and `merge_group` events.
       - id: filter
         if: github.event_name != 'workflow_dispatch' || !inputs.force_build
-        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4.0.1
         with:
           # On push/merge_group: diff against the previous commit. On PR: against base.ref.
           base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '' }}

@@ -68,15 +68,9 @@ jobs:
     - name: Print failed tests
       if: failure()
       run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
-    - name: Annotate Server Test Results
-      uses: ashley-taylor/junit-report-annotations-action@f9c1a5cbe28479439f82b80a5402a6d3aa1990ac
-      if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
-      with:
-        access-token: ${{ secrets.GITHUB_TOKEN }}
-        path: build/test-results/test/*.xml
-        numFailures: 99
     - name: Test Report
-      uses: dorny/test-reporter@v3
+      # Renders the JUnit report as a check-run AND annotates failing tests in the PR diff.
+      uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
       if: success() || failure()
       with:
         name: MySQL Tests

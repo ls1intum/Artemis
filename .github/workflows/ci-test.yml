@@ -143,18 +143,12 @@ jobs:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: build/reports/jacoco/aggregated/jacocoTestReport.xml
         if: ${{ (success() || failure()) && inputs.is_internal_pr && inputs.pr_author != 'dependabot[bot]' }}
-      - name: Annotate Server Test Results
-        # Pinned to a post-1.4 commit (the action has no release tag for this SHA);
-        # the action is largely unmaintained, kept for the JUnit annotation contract.
-        uses: ashley-taylor/junit-report-annotations-action@f9c1a5cbe28479439f82b80a5402a6d3aa1990ac  # master @ 2022-09
-        if: ${{ always() && inputs.pr_author != 'dependabot[bot]' }}
-        with:
-          access-token: ${{ secrets.GITHUB_TOKEN }}
-          path: build/test-results/test/*.xml
-          numFailures: 99
       - name: Test Report
-        uses: dorny/test-reporter@1cc81a5edf733718d4850df304aaa21c05cd7280  # v3
-        if: success() || failure()
+        # Renders the JUnit report as a check-run AND annotates failing tests in the PR
+        # diff — covering what ashley-taylor/junit-report-annotations-action used to do
+        # before it was unmaintained.
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
+        if: ${{ (success() || failure()) && inputs.pr_author != 'dependabot[bot]' }}
         with:
           name: Server Tests (PostgreSQL)
           path: build/test-results/test/*.xml
@@ -209,7 +203,7 @@ jobs:
         run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
         if: success() || failure()
       - name: Test Report
-        uses: dorny/test-reporter@1cc81a5edf733718d4850df304aaa21c05cd7280  # v3
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
         if: success() || failure()
         with:
           name: Java Architecture Tests
@@ -231,7 +225,7 @@ jobs:
       - name: Remove project-wide node options set in .npmrc just for this test
         run: sed -i '/^node-options=/d' .npmrc || true
       - name: Setup pnpm
-        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa  # v4
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
         with:
           run_install: false
       - name: Setup Node.js
@@ -290,7 +284,7 @@ jobs:
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup pnpm
-        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa  # v4
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
         with:
           run_install: false
       - name: Setup Node.js
@@ -325,7 +319,7 @@ jobs:
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup pnpm
-        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa  # v4
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
         with:
           run_install: false
       - name: Setup Node.js
