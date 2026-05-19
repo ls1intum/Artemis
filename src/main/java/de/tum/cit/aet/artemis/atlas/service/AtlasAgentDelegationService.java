@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.atlas.service;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -58,7 +58,8 @@ public class AtlasAgentDelegationService {
         }
         ChatClient sessionClient = clientBuilder.build();
 
-        ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build();
+        // LOCAL PATCH: self-hosted OpenAI-compatible endpoint — do NOT commit
+        ToolCallingChatOptions options = OpenAiChatOptions.builder().model(deploymentName).temperature(temperature).build();
 
         ChatClientRequestSpec promptSpec = sessionClient.prompt().system(systemPromptWithContext).user(message).options(options);
 

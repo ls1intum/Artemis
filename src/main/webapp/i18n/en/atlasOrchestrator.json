@@ -3,10 +3,29 @@
         "atlasOrchestrator": {
             "tooltip": "Run the Atlas competency orchestrator on this exercise",
             "error": "Atlas orchestrator run failed. Please try again later.",
+            "partial": "Atlas orchestrator run failed midway — review the partial actions in the dialog and revert any that are incorrect.",
             "inProgress": "Another Atlas orchestrator run is already in progress for this course. Please wait for it to finish.",
             "resultDialog": {
                 "title": "Atlas orchestrator result",
-                "empty": "The orchestrator did not return a summary."
+                "empty": "The orchestrator did not make any changes to this course.",
+                "columns": {
+                    "action": "Action",
+                    "competency": "Competency",
+                    "detail": "Detail",
+                    "reason": "Reason"
+                },
+                "types": {
+                    "CREATE": "Create",
+                    "EDIT": "Edit",
+                    "ASSIGN": "Assign",
+                    "UNASSIGN": "Unassign",
+                    "DELETE": "Delete"
+                },
+                "weightBands": {
+                    "primary": "primary",
+                    "partial": "partial",
+                    "incidental": "incidental"
+                }
             }
         }
     }

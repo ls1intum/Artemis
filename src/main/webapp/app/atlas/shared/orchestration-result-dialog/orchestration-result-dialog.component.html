@@ -1,12 +1,43 @@
-<p-dialog [(visible)]="visible" [modal]="true" [closable]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '640px', maxWidth: '95vw' }">
+<p-dialog [(visible)]="visible" [modal]="true" [closable]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '840px', maxWidth: '95vw' }">
     <ng-template pTemplate="header">
         <h4 class="m-0" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.title"></h4>
     </ng-template>
 
-    @if (summary()) {
-        <div class="summary-box">{{ summary() }}</div>
+    @if (summaryMessage()) {
+        <p class="summary-box mb-3">{{ summaryMessage() }}</p>
+    }
+
+    @if (hasActions()) {
+        <p-table [value]="appliedActions()" styleClass="p-datatable-sm" [scrollable]="true" scrollHeight="360px">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.action"></th>
+                    <th jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.competency"></th>
+                    <th jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.detail"></th>
+                    <th jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.reason"></th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-action>
+                <tr>
+                    <td>
+                        <p-tag [severity]="actionSeverity(action.type)" [value]="actionTypeKey(action.type) | artemisTranslate" />
+                    </td>
+                    <td>
+                        {{ action.competencyTitle }}
+                        <span class="muted ms-1">#{{ action.competencyId }}</span>
+                        @if (weightBandTag(action.weight); as tag) {
+                            <p-tag severity="secondary" class="ms-2" [value]="(tag.translationKey | artemisTranslate) + ' · ' + (tag.weight | number: '1.1-1')" />
+                        }
+                    </td>
+                    <td>{{ action.detail }}</td>
+                    <td>
+                        <span class="muted">{{ action.justification }}</span>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
     } @else {
-        <p jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.empty"></p>
+        <p class="muted mb-0" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.empty"></p>
     }
 
     <ng-template pTemplate="footer">

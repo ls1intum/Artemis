@@ -69,7 +69,7 @@ import { RepositoryType } from '../../shared/code-editor/model/code-editor.model
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
-import { CompetencyOrchestrationResultDTO } from 'app/atlas/shared/dto/competency-orchestration-dto';
+import { AppliedActionDTO, CompetencyOrchestrationResultDTO, CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
 import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
 import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 
@@ -119,7 +119,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
 
     protected readonly orchestrationDialogVisible = signal(false);
-    protected readonly orchestrationDialogSummary = signal('');
+    protected readonly orchestrationDialogMessage = signal('');
+    protected readonly orchestrationDialogActions = signal<AppliedActionDTO[]>([]);
     protected readonly orchestrationRunning = signal(false);
     protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
 
@@ -800,9 +801,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             // Backend returns 2xx only for SUCCESS; IN_PROGRESS (409) and FAILED (422/502/503)
             // surface as HttpErrorResponse and are handled in the catch block below.
             const result = await this.competencyOrchestrationApiService.runForProgrammingExercise(exerciseId);
+            // PARTIAL responds with 207 (MULTI_STATUS, still 2xx), so both SUCCESS and PARTIAL land here.
             const summary = result.summary?.trim() || '';
-            this.orchestrationDialogSummary.set(summary);
+            this.orchestrationDialogMessage.set(summary);
+            this.orchestrationDialogActions.set(result.appliedActions ?? []);
             this.orchestrationDialogVisible.set(true);
+            if (result.status === CompetencyOrchestrationStatus.Partial) {
+                this.alertService.addAlert({
+                    type: AlertType.WARNING,
+                    message: summary || 'artemisApp.atlasOrchestrator.partial',
+                    disableTranslation: summary.length > 0,
+                });
+            }
         } catch (err) {
             const httpErr = err as HttpErrorResponse;
             const body = httpErr?.error as CompetencyOrchestrationResultDTO | undefined;

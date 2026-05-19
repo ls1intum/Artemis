@@ -2,13 +2,24 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,14 +30,22 @@ import org.springframework.ai.chat.model.ToolContext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyAtlasMLNotificationService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -36,6 +55,13 @@ class OrchestratorToolsServiceTest {
 
     private static final long COURSE_ID = 42L;
 
+    private static final long OTHER_COURSE_ID = 99L;
+
+    private static final String JUSTIFICATION = "Evidence test passed: solution demonstrates the competency stand-alone (band 1.0).";
+
+    @Mock
+    private CourseRepository courseRepository;
+
     @Mock
     private CourseCompetencyRepository courseCompetencyRepository;
 
@@ -43,18 +69,333 @@ class OrchestratorToolsServiceTest {
     private ExerciseTestRepository exerciseRepository;
 
     @Mock
+    private CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+
+    @Mock
     private ContentExtractionService contentExtractionService;
+
+    @Mock
+    private CompetencyService competencyService;
+
+    @Mock
+    private CourseCompetencyService courseCompetencyService;
+
+    @Mock
+    private CompetencyProgressApi competencyProgressApi;
+
+    @Mock
+    private CompetencyAtlasMLNotificationService atlasMLNotificationService;
+
+    private final CompetencyValidationService competencyValidator = new CompetencyValidationService();
 
     private OrchestratorToolsService service;
 
     private ToolContext toolContext;
 
+    private List<AppliedActionDTO> appliedActions;
+
     @BeforeEach
     void setUp() {
-        service = new OrchestratorToolsService(new ObjectMapper(), courseCompetencyRepository, exerciseRepository, contentExtractionService);
+        service = new OrchestratorToolsService(new ObjectMapper(), courseRepository, courseCompetencyRepository, exerciseRepository, competencyExerciseLinkRepository,
+                contentExtractionService, competencyService, courseCompetencyService, Optional.of(competencyProgressApi), competencyValidator, atlasMLNotificationService);
+        // Synchronized list mirrors the production wiring in CompetencyOrchestrationService.run();
+        // tests assert against the same reference so the buffer's append path is exercised.
+        appliedActions = Collections.synchronizedList(new ArrayList<>());
         Map<String, Object> ctx = new HashMap<>();
         ctx.put(OrchestratorToolsService.COURSE_ID_KEY, COURSE_ID);
+        ctx.put(OrchestratorToolsService.APPLIED_ACTIONS_KEY, new OrchestratorToolsService.AppliedActionsBuffer(appliedActions));
         toolContext = new ToolContext(ctx);
+    }
+
+    @Test
+    void createCompetency_validInput_persistsAndLogsActionWithJustification() {
+        Course course = new Course();
+        course.setId(COURSE_ID);
+        when(courseRepository.findById(COURSE_ID)).thenReturn(Optional.of(course));
+        Competency persisted = new Competency("Sorting Algorithms", "Understand sorting basics.", null, CourseCompetency.DEFAULT_MASTERY_THRESHOLD, CompetencyTaxonomy.UNDERSTAND,
+                false);
+        persisted.setId(101L);
+        when(competencyService.createCompetencies(any(), eq(course))).thenReturn(List.of(persisted));
+
+        String result = service.createCompetency("Sorting Algorithms", "Understand sorting basics.", "UNDERSTAND", JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("\"id\":101").contains("Sorting Algorithms").contains("UNDERSTAND");
+        assertThat(appliedActions).singleElement().satisfies(action -> {
+            assertThat(action.type()).isEqualTo(AppliedActionDTO.ActionType.CREATE);
+            assertThat(action.competencyId()).isEqualTo(101L);
+            assertThat(action.competencyTitle()).isEqualTo("Sorting Algorithms");
+            assertThat(action.justification()).isEqualTo(JUSTIFICATION);
+        });
+    }
+
+    @Test
+    void createCompetency_missingJustification_returnsError() {
+        String result = service.createCompetency("Title", "Desc", "APPLY", "   ", toolContext);
+
+        assertThat(result).contains("justification is required");
+        verify(competencyService, never()).createCompetencies(any(), any());
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void createCompetency_invalidTaxonomy_returnsError() {
+        String result = service.createCompetency("Title", "Description", "WIZARD", JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("error").contains("taxonomy");
+        assertThat(appliedActions).isEmpty();
+        verify(competencyService, never()).createCompetencies(any(), any());
+    }
+
+    @Test
+    void createCompetency_missingCourseContext_returnsError() {
+        String result = service.createCompetency("Title", "Desc", "APPLY", JUSTIFICATION, new ToolContext(Map.of()));
+
+        assertThat(result).contains("No course context");
+        verify(competencyService, never()).createCompetencies(any(), any());
+    }
+
+    @Test
+    void editCompetency_titleChange_updatesAndLogsActionWithJustification() {
+        CourseCompetency existing = newCompetency(10L, "Old Title", "Desc", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
+        when(courseCompetencyRepository.findById(10L)).thenReturn(Optional.of(existing));
+        when(courseCompetencyRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        String result = service.editCompetency(10L, "New Title", null, null, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("New Title").contains("\"changed\"");
+        assertThat(existing.getTitle()).isEqualTo("New Title");
+        assertThat(appliedActions).singleElement().satisfies(a -> {
+            assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.EDIT);
+            assertThat(a.justification()).isEqualTo(JUSTIFICATION);
+        });
+    }
+
+    @Test
+    void editCompetency_missingJustification_returnsError() {
+        String result = service.editCompetency(10L, "New Title", null, null, null, toolContext);
+
+        assertThat(result).contains("justification is required");
+        verify(courseCompetencyRepository, never()).save(any());
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void editCompetency_wrongCourse_returnsErrorAndDoesNotSave() {
+        CourseCompetency existing = newCompetency(10L, "Old Title", "Desc", CompetencyTaxonomy.APPLY, courseWithId(OTHER_COURSE_ID));
+        when(courseCompetencyRepository.findById(10L)).thenReturn(Optional.of(existing));
+
+        String result = service.editCompetency(10L, "New", null, null, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("does not belong to the current course");
+        verify(courseCompetencyRepository, never()).save(any());
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void editCompetency_noFieldsChanged_returnsNoopWithoutSaving() {
+        CourseCompetency existing = newCompetency(10L, "Keep", "Desc", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
+        when(courseCompetencyRepository.findById(10L)).thenReturn(Optional.of(existing));
+
+        String result = service.editCompetency(10L, null, null, null, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("noop");
+        verify(courseCompetencyRepository, never()).save(any());
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void assignExerciseToCompetency_newLink_createsAndTriggersProgressRecalcAndLogsWeight() {
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(5L, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
+        ProgrammingExercise exercise = exerciseInCourse(20L, "Implement Quicksort", course);
+        when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
+        when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(exercise);
+        when(competencyExerciseLinkRepository.findById(new CompetencyExerciseLink.CompetencyExerciseId(20L, 5L))).thenReturn(Optional.empty());
+
+        String result = service.assignExerciseToCompetency(5L, 20L, 1.0, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("\"status\":\"ok\"").contains("\"weight\":1.0");
+        verify(competencyExerciseLinkRepository).save(any(CompetencyExerciseLink.class));
+        verify(competencyProgressApi).updateProgressByLearningObjectAsync(exercise);
+        assertThat(appliedActions).singleElement().satisfies(a -> {
+            assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.ASSIGN);
+            assertThat(a.exerciseId()).isEqualTo(20L);
+            assertThat(a.weight()).isEqualTo(1.0);
+            assertThat(a.justification()).isEqualTo(JUSTIFICATION);
+        });
+    }
+
+    @Test
+    void assignExerciseToCompetency_missingWeight_returnsError() {
+        String result = service.assignExerciseToCompetency(5L, 20L, null, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("weight is required");
+        verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void assignExerciseToCompetency_zeroWeight_returnsBandError() {
+        String result = service.assignExerciseToCompetency(5L, 20L, 0.0, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("weight must be one of 1.0").contains("0.5").contains("0.3");
+        verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void assignExerciseToCompetency_weightAboveRange_returnsBandError() {
+        String result = service.assignExerciseToCompetency(5L, 20L, 1.5, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("weight must be one of 1.0").contains("0.5").contains("0.3");
+        verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void assignExerciseToCompetency_weightBetweenBands_returnsBandError() {
+        // 0.7 is technically in (0, 1.0] but doesn't match any band — the prompt forbids it and
+        // the code now enforces it.
+        String result = service.assignExerciseToCompetency(5L, 20L, 0.7, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("weight must be one of 1.0");
+        verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void assignExerciseToCompetency_weightAtBandWithFloatTolerance_succeedsWithCanonicalBand() {
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(5L, "Comp", "Desc", CompetencyTaxonomy.APPLY, course);
+        ProgrammingExercise exercise = exerciseInCourse(20L, "Exercise", course);
+        when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
+        when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(exercise);
+        when(competencyExerciseLinkRepository.findById(new CompetencyExerciseLink.CompetencyExerciseId(20L, 5L))).thenReturn(Optional.empty());
+
+        // LLMs sometimes return 0.30000001 due to JSON float formatting; the canonical band is 0.3.
+        String result = service.assignExerciseToCompetency(5L, 20L, 0.30000001, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("\"status\":\"ok\"").contains("\"weight\":0.3");
+        assertThat(appliedActions).singleElement().satisfies(a -> assertThat(a.weight()).isEqualTo(0.3));
+    }
+
+    @Test
+    void assignExerciseToCompetency_missingJustification_returnsError() {
+        String result = service.assignExerciseToCompetency(5L, 20L, 0.5, " ", toolContext);
+
+        assertThat(result).contains("justification is required");
+        verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void assignExerciseToCompetency_sameWeightAsExisting_isNoop() {
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(5L, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
+        ProgrammingExercise exercise = exerciseInCourse(20L, "Implement Quicksort", course);
+        CompetencyExerciseLink existing = new CompetencyExerciseLink(competency, exercise, 1.0);
+        when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
+        when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(exercise);
+        when(competencyExerciseLinkRepository.findById(new CompetencyExerciseLink.CompetencyExerciseId(20L, 5L))).thenReturn(Optional.of(existing));
+
+        String result = service.assignExerciseToCompetency(5L, 20L, 1.0, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("noop");
+        verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
+        verify(competencyProgressApi, never()).updateProgressByLearningObjectAsync(any());
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void assignExerciseToCompetency_differentCourse_returnsError() {
+        Course course = courseWithId(OTHER_COURSE_ID);
+        CourseCompetency competency = newCompetency(5L, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
+        when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
+
+        String result = service.assignExerciseToCompetency(5L, 20L, 1.0, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("does not belong to the current course");
+        verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
+    }
+
+    @Test
+    void unassignExerciseFromCompetency_existingLink_deletesAndLogs() {
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(5L, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
+        ProgrammingExercise exercise = exerciseInCourse(20L, "Implement Quicksort", course);
+        CompetencyExerciseLink existing = new CompetencyExerciseLink(competency, exercise, 1.0);
+        when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
+        when(competencyExerciseLinkRepository.findById(new CompetencyExerciseLink.CompetencyExerciseId(20L, 5L))).thenReturn(Optional.of(existing));
+
+        String result = service.unassignExerciseFromCompetency(5L, 20L, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("\"status\":\"ok\"");
+        verify(competencyExerciseLinkRepository).delete(existing);
+        verify(competencyProgressApi).updateProgressByLearningObjectAsync(exercise);
+        assertThat(appliedActions).singleElement().satisfies(a -> {
+            assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.UNASSIGN);
+            assertThat(a.justification()).isEqualTo(JUSTIFICATION);
+        });
+    }
+
+    @Test
+    void unassignExerciseFromCompetency_missingLink_returnsNoop() {
+        CourseCompetency competency = newCompetency(5L, "Target", "Desc", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
+        when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
+        when(competencyExerciseLinkRepository.findById(new CompetencyExerciseLink.CompetencyExerciseId(20L, 5L))).thenReturn(Optional.empty());
+
+        String result = service.unassignExerciseFromCompetency(5L, 20L, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("noop");
+        verify(competencyExerciseLinkRepository, never()).delete(any(CompetencyExerciseLink.class));
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void unassignExerciseFromCompetency_missingJustification_returnsError() {
+        String result = service.unassignExerciseFromCompetency(5L, 20L, "", toolContext);
+
+        assertThat(result).contains("justification is required");
+        verify(competencyExerciseLinkRepository, never()).delete(any(CompetencyExerciseLink.class));
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void deleteCompetency_validCompetency_delegatesToServiceWithJustification() {
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(7L, "Remove Me", "Desc", CompetencyTaxonomy.UNDERSTAND, course);
+        when(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(7L)).thenReturn(Optional.of(competency));
+
+        String result = service.deleteCompetency(7L, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("\"deletedId\":7");
+        verify(courseCompetencyService).deleteCourseCompetency(competency, course);
+        assertThat(appliedActions).singleElement().satisfies(a -> {
+            assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.DELETE);
+            assertThat(a.justification()).isEqualTo(JUSTIFICATION);
+        });
+    }
+
+    @Test
+    void deleteCompetency_wrongCourse_returnsErrorWithoutDelete() {
+        Course course = courseWithId(OTHER_COURSE_ID);
+        CourseCompetency competency = newCompetency(7L, "Remove Me", "Desc", CompetencyTaxonomy.UNDERSTAND, course);
+        when(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(7L)).thenReturn(Optional.of(competency));
+
+        String result = service.deleteCompetency(7L, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("does not belong to the current course");
+        verify(courseCompetencyService, never()).deleteCourseCompetency(any(), any());
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void deleteCompetency_missingJustification_returnsError() {
+        String result = service.deleteCompetency(7L, null, toolContext);
+
+        assertThat(result).contains("justification is required");
+        verify(courseCompetencyService, never()).deleteCourseCompetency(any(), any());
+        assertThat(appliedActions).isEmpty();
     }
 
     @Test
@@ -131,8 +472,109 @@ class OrchestratorToolsServiceTest {
         assertThat(result).contains("\"title\":\"Hash Maps in Practice\"").contains("\"weight\":0.5");
     }
 
+    // Write-call cap, justification cap, description trim, concurrency ----------------------------
+
     @Test
-    void getExerciseContent_examExercise_isRejectedDefenseInDepth() throws Exception {
+    void editCompetency_descriptionIsTrimmed() {
+        CourseCompetency existing = newCompetency(10L, "Old Title", "Original description", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
+        when(courseCompetencyRepository.findById(10L)).thenReturn(Optional.of(existing));
+        when(courseCompetencyRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        String result = service.editCompetency(10L, null, "  New description.  ", null, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("description");
+        assertThat(existing.getDescription()).isEqualTo("New description.");
+    }
+
+    @Test
+    void writeQuotaReached_furtherWriteToolCallsReturnError() {
+        // Saturate the buffer with the cap. Any 9th write tool call must short-circuit before
+        // touching repositories or pulling competencies/exercises.
+        for (int i = 0; i < 8; i++) {
+            appliedActions.add(AppliedActionDTO.create(100L + i, "Already Created", "details", JUSTIFICATION));
+        }
+
+        String createResult = service.createCompetency("Title", "Desc", "APPLY", JUSTIFICATION, toolContext);
+        String editResult = service.editCompetency(10L, "Title", null, null, JUSTIFICATION, toolContext);
+        String assignResult = service.assignExerciseToCompetency(10L, 20L, 1.0, JUSTIFICATION, toolContext);
+        String unassignResult = service.unassignExerciseFromCompetency(10L, 20L, JUSTIFICATION, toolContext);
+        String deleteResult = service.deleteCompetency(10L, JUSTIFICATION, toolContext);
+
+        assertThat(createResult).contains("Write tool call cap (8)");
+        assertThat(editResult).contains("Write tool call cap (8)");
+        assertThat(assignResult).contains("Write tool call cap (8)");
+        assertThat(unassignResult).contains("Write tool call cap (8)");
+        assertThat(deleteResult).contains("Write tool call cap (8)");
+        verify(competencyService, never()).createCompetencies(any(), any());
+        verify(courseCompetencyRepository, never()).save(any());
+        verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
+        verify(competencyExerciseLinkRepository, never()).delete(any());
+        verify(courseCompetencyService, never()).deleteCourseCompetency(any(), any());
+    }
+
+    @Test
+    void createCompetency_justificationTooLong_returnsErrorAndDoesNotPersist() {
+        String tooLong = "x".repeat(501);
+
+        String result = service.createCompetency("Title", "Desc", "APPLY", tooLong, toolContext);
+
+        assertThat(result).contains("justification must be at most 500 characters");
+        verify(competencyService, never()).createCompetencies(any(), any());
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void appendAction_concurrentCallers_doNotLoseEntries() throws Exception {
+        // Defensive concurrency check: appliedActions is a synchronized list, so N concurrent
+        // create calls must all show up in the buffer. Spring AI's tool-calling roadmap includes
+        // parallel calls; this guards against accidental ArrayList regression.
+        Course course = courseWithId(COURSE_ID);
+        when(courseRepository.findById(COURSE_ID)).thenReturn(Optional.of(course));
+        when(competencyService.createCompetencies(any(), eq(course))).thenAnswer(inv -> {
+            Competency persisted = new Competency("Concurrent", "Desc", null, CourseCompetency.DEFAULT_MASTERY_THRESHOLD, CompetencyTaxonomy.APPLY, false);
+            persisted.setId(System.nanoTime());
+            return List.of(persisted);
+        });
+
+        int callers = 4;
+        ExecutorService pool = Executors.newFixedThreadPool(callers);
+        CountDownLatch start = new CountDownLatch(1);
+        try {
+            for (int i = 0; i < callers; i++) {
+                pool.submit(() -> {
+                    start.await();
+                    return service.createCompetency("Concurrent", "Desc", "APPLY", JUSTIFICATION, toolContext);
+                });
+            }
+            start.countDown();
+        }
+        finally {
+            pool.shutdown();
+            assertThat(pool.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
+        }
+
+        assertThat(appliedActions).hasSize(callers);
+    }
+
+    @Test
+    void exerciseBelongsToCourse_examExercise_isRejectedDefenseInDepth() {
+        // Defense in depth: even if an exam exercise reaches the tool layer (the orchestrator's
+        // run() should reject it earlier), the assign tool must not silently mutate course-wide
+        // competencies via the lazy exerciseGroup.exam.course chain.
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(5L, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
+        ProgrammingExercise examExercise = examExercise(20L, "Exam Exercise");
+        when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
+        when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(examExercise);
+
+        String result = service.assignExerciseToCompetency(5L, 20L, 1.0, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("does not belong to the current course");
+        verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
+    }
+
+    @Test
+    void getExerciseContent_examExercise_isRejectedDefenseInDepth() {
         // Defense in depth: even if an exam exercise reaches the tool layer (the orchestrator's
         // run() should reject it earlier), no read tool may walk the lazy
         // exerciseGroup.exam.course chain to expose course-wide data.
@@ -141,8 +583,7 @@ class OrchestratorToolsServiceTest {
 
         String result = service.getExerciseContent(20L, toolContext);
 
-        // Assert on the JSON `error` key, not the wording, so message copy edits do not break this test.
-        assertThat(new ObjectMapper().readTree(result).get("error").asText()).contains("20");
+        assertThat(result).contains("does not belong to the current course");
     }
 
     // Helpers --------------------------------------------------------------------------------------

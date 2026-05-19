@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -59,10 +60,13 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
     void runForProgrammingExercise_featureEnabledChatClientFails_returnsBadGateway() throws Exception {
         // The shared test base autowires a Mockito-mocked ChatClient, so the orchestrator's
         // null-check passes but invoking chatClient.prompt() yields null and the service catches
-        // the NPE, returning FAILED with LLM_ERROR (mapped to 502 by the controller).
+        // the NPE, returning FAILED with LLM_ERROR (mapped to 502 by the controller). No tool
+        // call ever runs so no CompetencyExerciseLink can have been created.
         request.performMvcRequest(post("/api/atlas/orchestrator/programming-exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadGateway()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value("LLM_ERROR"))
-                .andExpect(jsonPath("$.summary").isNotEmpty());
+                .andExpect(jsonPath("$.summary").isNotEmpty()).andExpect(jsonPath("$.appliedActions").isArray()).andExpect(jsonPath("$.appliedActions").isEmpty());
+
+        assertThat(competencyExerciseLinkRepository.findAll()).isEmpty();
     }
 
     @Test
