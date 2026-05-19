@@ -349,9 +349,9 @@ public class OrchestratorToolsService {
             return errorJson("Failed to create competency.");
         }
         Competency persisted = created.get(0);
-        atlasMLNotificationService.notifyAtlasML(List.of(persisted), OperationTypeDTO.UPDATE, "orchestrator competency creation");
         String detail = "Created competency " + persisted.getTitle() + " (" + parsedTaxonomy.name() + ").";
         appendAction(toolContext, AppliedActionDTO.create(persisted.getId(), persisted.getTitle(), detail, justification.trim()));
+        atlasMLNotificationService.notifyAtlasML(List.of(persisted), OperationTypeDTO.UPDATE, "orchestrator competency creation");
         return toJson(Map.of("id", persisted.getId(), "title", persisted.getTitle(), "taxonomy", parsedTaxonomy.name()));
     }
 
@@ -454,11 +454,11 @@ public class OrchestratorToolsService {
             log.warn("editCompetency failed for competency {}: {}", competencyId, ex.getMessage());
             return errorJson("Failed to update competency.");
         }
+        String detail = "Updated " + String.join(", ", changes) + " for competency " + saved.getTitle() + ".";
+        appendAction(toolContext, AppliedActionDTO.edit(saved.getId(), saved.getTitle(), detail, justification.trim()));
         if (saved instanceof Competency persisted) {
             atlasMLNotificationService.notifyAtlasML(List.of(persisted), OperationTypeDTO.UPDATE, "orchestrator competency update");
         }
-        String detail = "Updated " + String.join(", ", changes) + " for competency " + saved.getTitle() + ".";
-        appendAction(toolContext, AppliedActionDTO.edit(saved.getId(), saved.getTitle(), detail, justification.trim()));
         return toJson(Map.of("id", saved.getId(), "title", saved.getTitle(), "changed", changes));
     }
 
@@ -542,8 +542,8 @@ public class OrchestratorToolsService {
             detail = "Linked exercise " + exercise.getTitle() + " to competency " + competency.getTitle() + " (weight " + formatWeight(effectiveWeight) + ").";
         }
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
         appendAction(toolContext, AppliedActionDTO.assign(competencyId, competency.getTitle(), exerciseId, effectiveWeight, detail, justification.trim()));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
         return toJson(Map.of("status", "ok", "competencyId", competencyId, "exerciseId", exerciseId, "weight", effectiveWeight));
     }
 
@@ -599,12 +599,10 @@ public class OrchestratorToolsService {
             return errorJson("Exercise " + exerciseId + " does not belong to the current course.");
         }
         competencyExerciseLinkRepository.delete(existingLink);
-        if (exercise != null) {
-            competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
-        }
-        String exerciseTitle = exercise != null && exercise.getTitle() != null ? exercise.getTitle() : "exercise " + exerciseId;
+        String exerciseTitle = exercise.getTitle() != null ? exercise.getTitle() : "exercise " + exerciseId;
         String detail = "Removed link between exercise " + exerciseTitle + " and competency " + competency.getTitle() + ".";
         appendAction(toolContext, AppliedActionDTO.unassign(competencyId, competency.getTitle(), exerciseId, detail, justification.trim()));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
         return toJson(Map.of("status", "ok", "competencyId", competencyId, "exerciseId", exerciseId));
     }
 
