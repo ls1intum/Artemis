@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
-import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -34,6 +31,7 @@ import io.weaviate.client6.v1.api.collections.CollectionConfig;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.ReferenceProperty;
+import io.weaviate.client6.v1.api.collections.Tokenization;
 import io.weaviate.client6.v1.api.collections.VectorConfig;
 import io.weaviate.client6.v1.api.collections.vectorizers.Text2VecOpenAiVectorizer;
 
@@ -52,12 +50,38 @@ public class WeaviateService {
 
     private final WeaviateConfigurationProperties properties;
 
-    private final boolean isTestProfile;
+    private final boolean isOpenApiDocsGeneration;
 
-    public WeaviateService(WeaviateClient client, WeaviateConfigurationProperties properties, Environment environment) {
-        this.client = client;
+    private final WeaviateMigrationService migrationService;
+
+    /**
+     * The {@code WeaviateClient} bean is created lazily because the enclosing
+     * {@link WeaviateClientConfiguration} and this service are both {@code @Lazy}.
+     * <p>
+     * Note: {@code @Lazy} must <b>not</b> be placed on the {@code client} parameter
+     * itself, because the Weaviate Java client exposes {@code collections} as a
+     * <b>public field</b>. A CGLIB lazy-proxy only intercepts method calls — direct
+     * field access bypasses the proxy and returns {@code null}, which causes a
+     * {@link NullPointerException} in {@link #ensureCollectionExists}.
+     * <p>
+     * The client parameter is {@code Optional} because during OpenAPI docs generation
+     * ({@code artemis.openapi-docs-generation=true}) no Weaviate server is available.
+     * The {@link WeaviateClientConfiguration#weaviateClient()} bean method returns
+     * {@code null} in that mode, so no {@code WeaviateClient} bean is registered.
+     * Using {@code Optional} here prevents a {@code NoSuchBeanDefinitionException}
+     * from cascading through the entire dependency tree and crashing the application.
+     *
+     * @throws IllegalStateException if the client is not available outside of OpenAPI docs generation
+     */
+    public WeaviateService(Optional<WeaviateClient> clientOptional, WeaviateConfigurationProperties properties, Environment environment,
+            WeaviateMigrationService migrationService) {
+        this.isOpenApiDocsGeneration = Boolean.parseBoolean(environment.getProperty("artemis.openapi-docs-generation", "false"));
+        if (clientOptional.isEmpty() && !isOpenApiDocsGeneration) {
+            throw new IllegalStateException("WeaviateClient bean is required when Weaviate is enabled and not in OpenAPI docs generation mode");
+        }
+        this.client = clientOptional.orElse(null);
         this.properties = properties;
-        this.isTestProfile = environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST));
+        this.migrationService = migrationService;
     }
 
     /**
@@ -76,9 +100,28 @@ public class WeaviateService {
      */
     @PostConstruct
     public void initializeCollections() {
+        if (isOpenApiDocsGeneration) {
+            log.info("OpenAPI docs generation mode: skipping Weaviate collection initialization");
+            return;
+        }
+
         log.info("Initializing Weaviate collections at {}://{}:{} (gRPC: {}) with vectorizer module: {}", properties.scheme(), properties.httpHost(), properties.httpPort(),
                 properties.grpcPort(), properties.vectorizerModule());
 
+        for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {
+            ensureCollectionExists(schema);
+        }
+
+        try {
+            migrationService.runPendingMigrations();
+        }
+        catch (Exception e) {
+            log.error("Weaviate migration failed during startup, but the server will continue. Search may return incomplete results until entities are re-indexed: {}",
+                    e.getMessage());
+        }
+
+        // Second pass: recreate any collections that a migration dropped to apply schema changes
+        // (e.g. V0→V1 drops SearchableEntities so it is rebuilt with trigram tokenization).
         for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {
             ensureCollectionExists(schema);
         }
@@ -158,10 +201,11 @@ public class WeaviateService {
             throw new WeaviateException("Failed to create Weaviate collection '" + collectionName + "': " + e.getMessage(), e);
         }
         catch (WeaviateApiException e) {
-            // In test environments, multiple Spring contexts may share one Weaviate instance,
-            // causing a race condition between the exists() check and create() call.
-            if (isTestProfile && e.getMessage() != null && e.getMessage().contains("already exists")) {
-                log.debug("Collection '{}' was created concurrently (test environment), ignoring", collectionName);
+            // Multiple Spring contexts (or concurrent startups) may race between the
+            // exists() check and the create() call, causing an "already exists" error.
+            if (e.getMessage() != null
+                    && (e.getMessage().contains("already exists") || e.getMessage().contains("CLASS_ALREADY_EXISTS") || e.getMessage().contains("TYPE_ADD_CLASS"))) {
+                log.debug("Collection '{}' was created concurrently, ignoring", collectionName);
             }
             else {
                 log.error("Failed to create collection '{}': {}", collectionName, e.getMessage(), e);
@@ -264,7 +308,15 @@ public class WeaviateService {
             // indexSearchable is only applicable to text properties; Weaviate ignores it for numeric types
             // See https://docs.weaviate.io/weaviate/config-refs/indexing/inverted-index
             case INT -> Property.integer(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
-            case TEXT -> Property.text(definition.name(), property -> property.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable()));
+            case TEXT -> Property.text(definition.name(), property -> {
+                var builder = property.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable());
+                // Trigram tokenization indexes every 3-char sliding window of text values, enabling
+                // BM25 to match partial words and typos (e.g. "strateg" → "strategy").
+                if (definition.indexSearchable()) {
+                    builder.tokenization(Tokenization.TRIGRAM);
+                }
+                return builder;
+            });
             case NUMBER -> Property.number(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
             case BOOLEAN -> Property.bool(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
             case DATE -> Property.date(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));

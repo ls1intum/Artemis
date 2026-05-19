@@ -119,7 +119,7 @@ jobs:
         ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification 2>&1 | tee tests.log
     - name: Upload JUnit Test Results
       if: success() || failure()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: JUnit Test Results
         path: build/test-results/test/*.xml
@@ -189,7 +189,7 @@ jobs:
         path: build/test-results/test/*.xml
         numFailures: 99
     - name: Test Report
-      uses: dorny/test-reporter@v2
+      uses: dorny/test-reporter@v3
       if: success() || failure()    # run this step even if previous step failed
       with:
         name: Server Tests (PostgreSQL)
@@ -200,13 +200,13 @@ jobs:
       run: bash supporting_scripts/extract_number_of_server_starts.sh
     - name: Upload Server Test Coverage Report
       if: success() || failure()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: Coverage Report Server Tests
         path: build/reports/jacoco/aggregated/html
     - name: Upload JaCoCo XML Reports
       if: success() || failure()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: Server JaCoCo XML
         path: build/reports/jacoco/**/jacocoTestReport.xml
@@ -238,7 +238,7 @@ jobs:
       run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
       if: success() || failure()
     - name: Test Report
-      uses: dorny/test-reporter@v2
+      uses: dorny/test-reporter@v3
       if: success() || failure()    # run this step even if previous step failed
       with:
         name: Java Architecture Tests
@@ -251,35 +251,41 @@ jobs:
     steps:
         - uses: actions/checkout@v6
         # It seems like there is some memory issue with these tests with the project-wide default node option
-        # `--max-old-space-size` set in the .npmrc, therefore we delete it for this test as a workaround
+        # `--max-old-space-size` set in the .npmrc, therefore we strip that single line as a workaround.
+        # The rest of .npmrc (currently just Node settings) stays. pnpm install/resolution settings now
+        # live in pnpm-workspace.yaml, which we deliberately do not touch here.
         - name: remove project-wide node options set in .npmrc just for this test
-          run: rm .npmrc || true
+          run: sed -i '/^node-options=/d' .npmrc || true
+        - name: Setup pnpm
+          uses: pnpm/action-setup@v4
+          with:
+              run_install: false
         - name: Setup Node.js
           uses: actions/setup-node@v6
           with:
               node-version: '${{ env.node }}'
-              cache: 'npm'
+              cache: 'pnpm'
         - name: Install Dependencies
-          run: npm install
+          run: pnpm install --frozen-lockfile
         - name: Compile TypeScript Test Files With Typechecking
-          run: npm run compile:tests
+          run: pnpm run compile:tests
         - name: TypeScript Test Without Typechecking
-          run: npm run test:ci
+          run: pnpm run test:ci
         - name: Upload Client Test Coverage Report
           if: success() || failure()
-          uses: actions/upload-artifact@v6
+          uses: actions/upload-artifact@v7
           with:
               name: Coverage Report Client Tests
               path: build/test-results/lcov-report/
         - name: Upload Vitest Coverage Report
           if: success() || failure()
-          uses: actions/upload-artifact@v6
+          uses: actions/upload-artifact@v7
           with:
               name: Vitest Coverage Report
               path: build/test-results/vitest/coverage/
         - name: Upload Client Coverage Summaries
           if: success() || failure()
-          uses: actions/upload-artifact@v6
+          uses: actions/upload-artifact@v7
           with:
               name: Client Coverage Summaries
               path: |
@@ -288,13 +294,13 @@ jobs:
               if-no-files-found: ignore
         - name: Upload JUnit Test Results
           if: success() || failure()
-          uses: actions/upload-artifact@v6
+          uses: actions/upload-artifact@v7
           with:
             name: Client JUnit Test Results
             path: junit.xml
         - name: Upload Vitest JUnit Test Results
           if: success() || failure()
-          uses: actions/upload-artifact@v6
+          uses: actions/upload-artifact@v7
           with:
             name: Vitest JUnit Test Results
             path: build/test-results/vitest/junit.xml
@@ -304,24 +310,28 @@ jobs:
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v6
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        run_install: false
     - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
         node-version: '${{ env.node }}'
-        cache: 'npm'
+        cache: 'pnpm'
     - name: Install Dependencies
-      run: npm install
+      run: pnpm install --frozen-lockfile
     - name: TypeScript Formatting
-      run: npm run prettier:check
+      run: pnpm run prettier:check
     - name: TypeScript Code Style
-      run: npm run lint
+      run: pnpm run lint
       if: success() || failure()
     - name: Install Playwright Dependencies
-      run: npm ci
+      run: pnpm install --frozen-lockfile
       working-directory: src/test/playwright
       if: success() || failure()
     - name: Playwright Code Style
-      run: npm run lint
+      run: pnpm run lint
       working-directory: src/test/playwright
       if: success() || failure()
 
@@ -330,12 +340,16 @@ jobs:
     timeout-minutes: 5
     steps:
     - uses: actions/checkout@v6
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        run_install: false
     - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
         node-version: '${{ env.node }}'
-        cache: 'npm'
+        cache: 'pnpm'
     - name: Install Dependencies
-      run: npm install
+      run: pnpm install --frozen-lockfile
     - name: Compile TypeScript Files With Typechecking
-      run: npm run compile
+      run: pnpm run compile

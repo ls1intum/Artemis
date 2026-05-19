@@ -1,0 +1,15 @@
+# pnpm 11+ install/resolution settings for the Playwright tests subproject.
+# Default isolated layout: no hoist shim.
+
+preferFrozenLockfile: true
+enablePrePostScripts: true
+autoInstallPeers: true
+
+# Dependency overrides. pnpm 11 reads overrides from this file in preference to
+# `pnpm.overrides` in package.json (which it silently ignores).
+overrides:
+    nodemailer: '8.0.7'
+    lodash: '4.18.1'
+
+allowBuilds:
+    esbuild: true

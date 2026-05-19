@@ -26,42 +26,47 @@ FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25-jdk AS build
 
 # python3/build-essential were previously installed defensively for npm deps that
 # trigger node-gyp; no current Artemis dep needs that. If a future dep does, the
-# npm step below fails loudly and these can be reinstated.
+# pnpm step below fails loudly and these can be reinstated.
 
 WORKDIR /opt/artemis
 # copy gradle related files
 COPY gradlew gradlew.bat ./
 COPY build.gradle gradle.properties settings.gradle ./
 COPY gradle gradle/
-# copy npm related files and install node modules
-COPY package.json package-lock.json ./
+# copy pnpm related files and install node modules
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+# patches/ is referenced by pnpm.patchedDependencies in pnpm-workspace.yaml and must
+# be present at install time (pnpm applies patches during resolution, not via a
+# postinstall hook like patch-package did).
+COPY patches patches/
 # also copy this script which is required by postinstall lifecycle hook
 COPY src/main/webapp/app/lecture/manage/pdf-preview/pdfjs_copy_worker_script.mjs ./src/main/webapp/app/lecture/manage/pdf-preview/
 
-# One Gradle invocation does both the cache config and the npm install. Uses
-# `npm_install` so the BuildKit npm cache mount below is reused on warm builds
-# (`npm_ci` ignores the cache).
+# One Gradle invocation does both the cache config and the pnpm install. The
+# BuildKit pnpm-store cache mount below is reused on warm builds; pnpm's
+# content-addressable store makes the second build of an unchanged tree
+# essentially free.
 RUN \
   --mount=type=cache,target=/root/.gradle/caches \
-  --mount=type=cache,target=/opt/artemis/.npm \
-  mkdir -p /opt/artemis/.npm \
-  && ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npmSetCacheDockerfile npm_install
+  --mount=type=cache,target=/opt/artemis/.pnpm-store \
+  mkdir -p /opt/artemis/.pnpm-store \
+  && ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar pnpmSetCacheDockerfile pnpmInstall
 
 # so far just using the .dockerignore to define what isn't necessary here
 COPY . .
 
-# `-x npm_install` skips re-running the install task — node_modules is already
+# `-x pnpmInstall` skips re-running the install task — node_modules is already
 # in place from the previous RUN.
 RUN \
   --mount=type=cache,target=/root/.gradle/caches \
-  --mount=type=cache,target=/opt/artemis/.npm \
+  --mount=type=cache,target=/opt/artemis/.pnpm-store \
   --mount=type=cache,target=/opt/artemis/.cache \
-  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar -x npm_install
+  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar -x pnpmInstall
 
 #-----------------------------------------------------------------------------------------------------------------------
 # external build stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/alpine:3.23.2 AS external_builder
+FROM docker.io/library/alpine:3.23.4 AS external_builder
 
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"
