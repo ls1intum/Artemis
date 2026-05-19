@@ -114,6 +114,21 @@ public class OrchestratorToolsService {
      */
     private static final int MAX_JUSTIFICATION_LENGTH = 500;
 
+    /**
+     * Hard cap on competency title length for LLM-driven create/edit. Matches Hibernate's default
+     * {@code varchar(255)} for unannotated String columns on {@code BaseCompetency.title}.
+     * {@link CompetencyValidationService} does not enforce a length cap, so an LLM with prompt-
+     * injected content would otherwise be able to persist arbitrarily long titles.
+     */
+    private static final int MAX_TITLE_LENGTH = 255;
+
+    /**
+     * Hard cap on competency description length for LLM-driven create/edit. The {@code description}
+     * column is unbounded {@code text}; this cap prevents a hallucinating or prompt-injected model
+     * from bloating the per-action JSON and the underlying row.
+     */
+    private static final int MAX_DESCRIPTION_LENGTH = 10_000;
+
     private final ObjectMapper objectMapper;
 
     private final CourseRepository courseRepository;
@@ -294,6 +309,12 @@ public class OrchestratorToolsService {
         if (isBlank(title)) {
             return errorJson("title is required.");
         }
+        if (title.length() > MAX_TITLE_LENGTH) {
+            return errorJson("title must be at most " + MAX_TITLE_LENGTH + " characters.");
+        }
+        if (description != null && description.length() > MAX_DESCRIPTION_LENGTH) {
+            return errorJson("description must be at most " + MAX_DESCRIPTION_LENGTH + " characters.");
+        }
         String justificationError = validateJustification(justification);
         if (justificationError != null) {
             return justificationError;
@@ -361,6 +382,12 @@ public class OrchestratorToolsService {
         }
         if (competencyId == null) {
             return errorJson("competencyId is required.");
+        }
+        if (title != null && title.length() > MAX_TITLE_LENGTH) {
+            return errorJson("title must be at most " + MAX_TITLE_LENGTH + " characters.");
+        }
+        if (description != null && description.length() > MAX_DESCRIPTION_LENGTH) {
+            return errorJson("description must be at most " + MAX_DESCRIPTION_LENGTH + " characters.");
         }
         String justificationError = validateJustification(justification);
         if (justificationError != null) {
@@ -564,6 +591,12 @@ public class OrchestratorToolsService {
         }
 
         Exercise exercise = existingLink.getExercise();
+        // Defense-in-depth: assignExerciseToCompetency already scopes both ends, but a stale or
+        // out-of-band link could still exist; refuse to delete it here so an LLM cannot cross
+        // course boundaries via a forged exerciseId.
+        if (exercise == null || !exerciseBelongsToCourse(exercise, courseId)) {
+            return errorJson("Exercise " + exerciseId + " does not belong to the current course.");
+        }
         competencyExerciseLinkRepository.delete(existingLink);
         if (exercise != null) {
             competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
@@ -618,6 +651,9 @@ public class OrchestratorToolsService {
             atlasMLNotificationService.notifyAtlasML(List.of(competencyForAtlasMl), OperationTypeDTO.DELETE, "orchestrator competency deletion");
         }
         try {
+            // Cascades inside CourseCompetencyService: competency relations, progress records,
+            // and all CompetencyExerciseLink / CompetencyLectureUnitLink rows for this competency.
+            // Blast radius per run is bounded by MAX_WRITE_CALLS (each delete consumes one slot).
             courseCompetencyService.deleteCourseCompetency(competency, course);
         }
         catch (DataAccessException ex) {

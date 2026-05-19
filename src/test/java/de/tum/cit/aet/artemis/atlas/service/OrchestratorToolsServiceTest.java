@@ -210,7 +210,7 @@ class OrchestratorToolsServiceTest {
         ProgrammingExercise exercise = exerciseInCourse(20L, "Implement Quicksort", course);
         when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
         when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(exercise);
-        when(competencyExerciseLinkRepository.findById(new CompetencyExerciseLink.CompetencyExerciseId(20L, 5L))).thenReturn(Optional.empty());
+        when(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(20L, 5L)).thenReturn(Optional.empty());
 
         String result = service.assignExerciseToCompetency(5L, 20L, 1.0, JUSTIFICATION, toolContext);
 
@@ -270,7 +270,7 @@ class OrchestratorToolsServiceTest {
         ProgrammingExercise exercise = exerciseInCourse(20L, "Exercise", course);
         when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
         when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(exercise);
-        when(competencyExerciseLinkRepository.findById(new CompetencyExerciseLink.CompetencyExerciseId(20L, 5L))).thenReturn(Optional.empty());
+        when(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(20L, 5L)).thenReturn(Optional.empty());
 
         // LLMs sometimes return 0.30000001 due to JSON float formatting; the canonical band is 0.3.
         String result = service.assignExerciseToCompetency(5L, 20L, 0.30000001, JUSTIFICATION, toolContext);
@@ -296,7 +296,7 @@ class OrchestratorToolsServiceTest {
         CompetencyExerciseLink existing = new CompetencyExerciseLink(competency, exercise, 1.0);
         when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
         when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(exercise);
-        when(competencyExerciseLinkRepository.findById(new CompetencyExerciseLink.CompetencyExerciseId(20L, 5L))).thenReturn(Optional.of(existing));
+        when(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(20L, 5L)).thenReturn(Optional.of(existing));
 
         String result = service.assignExerciseToCompetency(5L, 20L, 1.0, JUSTIFICATION, toolContext);
 
@@ -325,7 +325,7 @@ class OrchestratorToolsServiceTest {
         ProgrammingExercise exercise = exerciseInCourse(20L, "Implement Quicksort", course);
         CompetencyExerciseLink existing = new CompetencyExerciseLink(competency, exercise, 1.0);
         when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
-        when(competencyExerciseLinkRepository.findById(new CompetencyExerciseLink.CompetencyExerciseId(20L, 5L))).thenReturn(Optional.of(existing));
+        when(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(20L, 5L)).thenReturn(Optional.of(existing));
 
         String result = service.unassignExerciseFromCompetency(5L, 20L, JUSTIFICATION, toolContext);
 
@@ -342,7 +342,7 @@ class OrchestratorToolsServiceTest {
     void unassignExerciseFromCompetency_missingLink_returnsNoop() {
         CourseCompetency competency = newCompetency(5L, "Target", "Desc", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
         when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
-        when(competencyExerciseLinkRepository.findById(new CompetencyExerciseLink.CompetencyExerciseId(20L, 5L))).thenReturn(Optional.empty());
+        when(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(20L, 5L)).thenReturn(Optional.empty());
 
         String result = service.unassignExerciseFromCompetency(5L, 20L, JUSTIFICATION, toolContext);
 
@@ -357,6 +357,26 @@ class OrchestratorToolsServiceTest {
 
         assertThat(result).contains("justification is required");
         verify(competencyExerciseLinkRepository, never()).delete(any(CompetencyExerciseLink.class));
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void unassignExerciseFromCompetency_exerciseInDifferentCourse_returnsErrorWithoutDelete() {
+        // Defense-in-depth: even if a stale cross-course link existed, the tool must refuse to
+        // delete it because the linked exercise does not belong to the run's course context.
+        Course currentCourse = courseWithId(COURSE_ID);
+        Course otherCourse = courseWithId(OTHER_COURSE_ID);
+        CourseCompetency competency = newCompetency(5L, "Target", "Desc", CompetencyTaxonomy.APPLY, currentCourse);
+        ProgrammingExercise exercise = exerciseInCourse(20L, "Foreign Exercise", otherCourse);
+        CompetencyExerciseLink staleLink = new CompetencyExerciseLink(competency, exercise, 1.0);
+        when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
+        when(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(20L, 5L)).thenReturn(Optional.of(staleLink));
+
+        String result = service.unassignExerciseFromCompetency(5L, 20L, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("does not belong to the current course");
+        verify(competencyExerciseLinkRepository, never()).delete(any(CompetencyExerciseLink.class));
+        verify(competencyProgressApi, never()).updateProgressByLearningObjectAsync(any());
         assertThat(appliedActions).isEmpty();
     }
 
@@ -520,6 +540,50 @@ class OrchestratorToolsServiceTest {
 
         assertThat(result).contains("justification must be at most 500 characters");
         verify(competencyService, never()).createCompetencies(any(), any());
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void createCompetency_titleTooLong_returnsErrorAndDoesNotPersist() {
+        String tooLong = "x".repeat(256);
+
+        String result = service.createCompetency(tooLong, "Desc", "APPLY", JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("title must be at most 255 characters");
+        verify(competencyService, never()).createCompetencies(any(), any());
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void createCompetency_descriptionTooLong_returnsErrorAndDoesNotPersist() {
+        String tooLong = "x".repeat(10_001);
+
+        String result = service.createCompetency("Title", tooLong, "APPLY", JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("description must be at most 10000 characters");
+        verify(competencyService, never()).createCompetencies(any(), any());
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void editCompetency_titleTooLong_returnsErrorAndDoesNotSave() {
+        String tooLong = "x".repeat(256);
+
+        String result = service.editCompetency(10L, tooLong, null, null, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("title must be at most 255 characters");
+        verify(courseCompetencyRepository, never()).save(any());
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void editCompetency_descriptionTooLong_returnsErrorAndDoesNotSave() {
+        String tooLong = "x".repeat(10_001);
+
+        String result = service.editCompetency(10L, null, tooLong, null, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("description must be at most 10000 characters");
+        verify(courseCompetencyRepository, never()).save(any());
         assertThat(appliedActions).isEmpty();
     }
 
