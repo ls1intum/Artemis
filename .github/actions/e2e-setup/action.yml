@@ -26,17 +26,6 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Log triggering workflow info
-      shell: bash
-      env:
-        RUN_ID: ${{ inputs.workflow-run-id }}
-        HEAD_BRANCH: ${{ inputs.workflow-head-branch }}
-        HEAD_SHA: ${{ inputs.workflow-head-sha }}
-      run: |
-        echo "TRIGGERING_WORKFLOW_RUN_ID=$RUN_ID"
-        echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=$HEAD_BRANCH"
-        echo "TRIGGERING_WORKFLOW_HEAD_SHA=$HEAD_SHA"
-
     - name: Add link to triggering workflow
       shell: bash
       env:

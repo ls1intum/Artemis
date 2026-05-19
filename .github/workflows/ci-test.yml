@@ -5,8 +5,12 @@ name: Test
 on:
   workflow_call:
     inputs:
+      commit_sha:
+        description: 'SHA to test. PR builds use the PR head SHA (matching ci-build.yml) — not the GitHub-generated merge commit, so Build and Test exercise the same tree.'
+        required: true
+        type: string
       base_branch:
-        description: 'Base branch used for module-affected test selection. Defaults to the default branch.'
+        description: 'Base branch used for module-affected test selection.'
         required: true
         type: string
       run_all_tests:
@@ -19,20 +23,18 @@ on:
         type: boolean
       is_internal_pr:
         description: 'True only for PRs from branches inside ls1intum/Artemis (external services like Codacy skip on fork PRs).'
-        required: false
+        required: true
         type: boolean
-        default: false
       pr_author:
-        description: 'PR author login. Used to skip noisy annotations for bots.'
-        required: false
+        description: 'PR author login. Used to skip noisy annotations for bots. Empty when not a PR.'
+        required: true
         type: string
-        default: ''
     secrets:
       CODACY_PROJECT_TOKEN:
         description: 'Coverage upload token. Optional — coverage is uploaded only on internal PRs by non-bot authors.'
         required: false
 
-# node/java are enforced consistent with ci-build.yml and codeql-analysis.yml by ci-workflows.yml.
+# node/java pins are enforced consistent across every workflow by ci-workflows.yml.
 env:
   CI: true
   node: 24
@@ -49,6 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.commit_sha }}
           # Module-affected diff (`git diff "origin/$DEFAULT_BRANCH"`) needs the full
           # history; a shallow clone silently returns empty and falls back to running
           # every test, defeating the optimisation.
@@ -153,7 +156,7 @@ jobs:
           path: build/test-results/test/*.xml
           numFailures: 99
       - name: Test Report
-        uses: dorny/test-reporter@v3
+        uses: dorny/test-reporter@1cc81a5edf733718d4850df304aaa21c05cd7280  # v3
         if: success() || failure()
         with:
           name: Server Tests (PostgreSQL)
@@ -192,6 +195,8 @@ jobs:
       checks: write
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
@@ -207,7 +212,7 @@ jobs:
         run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
         if: success() || failure()
       - name: Test Report
-        uses: dorny/test-reporter@v3
+        uses: dorny/test-reporter@1cc81a5edf733718d4850df304aaa21c05cd7280  # v3
         if: success() || failure()
         with:
           name: Java Architecture Tests
@@ -222,12 +227,14 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
       # Some client tests OOM with the project-wide --max-old-space-size in .npmrc.
       # We strip that single line as a workaround; the rest of .npmrc stays.
       - name: Remove project-wide node options set in .npmrc just for this test
         run: sed -i '/^node-options=/d' .npmrc || true
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa  # v4
         with:
           run_install: false
       - name: Setup Node.js
@@ -283,8 +290,10 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa  # v4
         with:
           run_install: false
       - name: Setup Node.js
@@ -316,8 +325,10 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa  # v4
         with:
           run_install: false
       - name: Setup Node.js

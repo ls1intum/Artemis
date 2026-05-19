@@ -163,7 +163,9 @@ jobs:
         id: wall-clock
         if: success() || failure()
         shell: bash
-        run: .github/scripts/wall-clock-timer.sh stop ${{ steps.test-timer.outputs.start }}
+        env:
+          START: ${{ steps.test-timer.outputs.start }}
+        run: .github/scripts/wall-clock-timer.sh stop "$START"
 
       - name: E2E Teardown
         if: success() || failure()
@@ -353,7 +355,9 @@ jobs:
         id: wall-clock
         if: success() || failure()
         shell: bash
-        run: .github/scripts/wall-clock-timer.sh stop ${{ steps.test-timer.outputs.start }}
+        env:
+          START: ${{ steps.test-timer.outputs.start }}
+        run: .github/scripts/wall-clock-timer.sh stop "$START"
 
       - name: E2E Teardown
         if: success() || failure()
@@ -541,7 +545,9 @@ jobs:
         id: wall-clock
         if: success() || failure()
         shell: bash
-        run: .github/scripts/wall-clock-timer.sh stop ${{ steps.test-timer.outputs.start }}
+        env:
+          START: ${{ steps.test-timer.outputs.start }}
+        run: .github/scripts/wall-clock-timer.sh stop "$START"
 
       - name: E2E Teardown
         if: success() || failure()
@@ -552,14 +558,13 @@ jobs:
       - name: Download all tests results
         if: success() || failure()
         uses: actions/download-artifact@v8
-        continue-on-error: true
         with:
           name: JUnit Test Results
           path: all-test-results
 
       - name: All Tests Report (PR)
         id: test-report
-        uses: mikepenz/action-junit-report@v6.4.0
+        uses: mikepenz/action-junit-report@bccf2e31636835cf0874589931c4116687171386  # v6.4.0
         if: success() || failure()
         with:
           commit: ${{ inputs.commit_sha }}
@@ -714,13 +719,12 @@ jobs:
       - name: Download all tests results
         if: success() || failure()
         uses: actions/download-artifact@v8
-        continue-on-error: true
         with:
           name: JUnit Test Results
           path: all-test-results
 
       - name: All Tests Report (Non-PR)
-        uses: mikepenz/action-junit-report@v6.4.0
+        uses: mikepenz/action-junit-report@bccf2e31636835cf0874589931c4116687171386  # v6.4.0
         if: success() || failure()
         with:
           commit: ${{ inputs.commit_sha }}

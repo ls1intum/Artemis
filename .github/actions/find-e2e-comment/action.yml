@@ -21,7 +21,6 @@ runs:
       id: find-comment
       if: inputs.pr-number != '0'
       uses: actions/github-script@v9
-      continue-on-error: true
       env:
         PR_NUMBER: ${{ inputs.pr-number }}
       with:

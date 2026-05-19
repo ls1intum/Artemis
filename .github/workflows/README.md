@@ -45,6 +45,17 @@ Cascading skips don't bypass the gate because `detect-changes` (the gating job) 
 in `needs:` — if it fails, its own `failure` result fails the gate, even when downstream
 children all show `skipped`.
 
+## Action pinning policy
+
+- **Third-party actions** (anything outside `actions/*`, `github/*`) are pinned to a
+  40-character commit SHA with a `# vX.Y.Z` trailing comment. This is the
+  [GitHub-recommended supply-chain mitigation](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions)
+  and matches the org policy GitHub now supports enforcing.
+- **First-party `actions/*` and `github/*` actions** may use a major-version tag
+  (`@v6`, `@v9`) because they are governed by GitHub's own release process.
+  `actionlint`'s install script is pinned to a release tag because the script itself
+  is the third party, not the binary it downloads.
+
 ## Reusable workflows — `ci-*.yml`
 
 Each `ci-*.yml` file has `on: workflow_call:` and is invoked only by `ci.yml`. Rules:

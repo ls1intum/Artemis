@@ -34,18 +34,20 @@ jobs:
           ./actionlint -color
 
       - name: Check version pins are in sync
-        # Every workflow that pins `node:` or `java:` must agree. Drift fails CI.
+        # Every workflow that pins `node:` or `java:` at the top-level env block must agree.
+        # File discovery is by grep so a new workflow that pins either is picked up automatically.
         run: |
-          files=(.github/workflows/ci-build.yml
-                 .github/workflows/ci-test.yml
-                 .github/workflows/codeql-analysis.yml)
+          set -Eeuo pipefail
           for key in node java; do
-            values=$(grep -hE "^  ${key}: " "${files[@]}" | awk '{print $2}' | sort -u)
-            count=$(printf '%s\n' "$values" | wc -l)
-            if [ "$count" -ne 1 ]; then
-              echo "::error::Version drift on '${key}:' across ${files[*]} — values:"
-              printf '  %s\n' $values
+            mapfile -t files < <(grep -lE "^  ${key}: " .github/workflows/*.yml)
+            if [ "${#files[@]}" -eq 0 ]; then
+              echo "::error::No workflow pins '${key}:'. Did the env blocks move?"
               exit 1
             fi
-            echo "${key}: $values (consistent across $(printf '%s ' "${files[@]}"))"
+            mapfile -t values < <(grep -hE "^  ${key}: " "${files[@]}" | awk '{print $2}' | sort -u)
+            if [ "${#values[@]}" -ne 1 ]; then
+              echo "::error::Version drift on '${key}:' across ${files[*]} — values: ${values[*]}"
+              exit 1
+            fi
+            echo "${key}: ${values[0]} (consistent across ${files[*]})"
           done

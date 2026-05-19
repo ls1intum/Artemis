@@ -18,10 +18,10 @@ on:
       - develop
       - main
       - release/*
-    tags:
-      - '[0-9]+.[0-9]+'
-      - '[0-9]+.[0-9]+.[0-9]+'
   release:
+    # Release events fire on `published` (also covers drafts being promoted).
+    # We deliberately do NOT also listen for `push:` tag events — a UI release publish
+    # fires both, producing duplicate runs in separate concurrency groups.
     types: [published]
   merge_group:
   workflow_dispatch:
@@ -68,7 +68,7 @@ jobs:
       # initial commits, force-pushes, missing merge-base, and `merge_group` events.
       - id: filter
         if: github.event_name != 'workflow_dispatch' || !inputs.force_build
-        uses: dorny/paths-filter@v4
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4
         with:
           # On push/merge_group: diff against the previous commit. On PR: against base.ref.
           base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '' }}
@@ -117,13 +117,12 @@ jobs:
 
       - id: decide
         env:
-          # When force_build is set on workflow_dispatch, OR the event has no diff baseline
-          # (release, tag push, merge_group root commit), run everything.
+          # Events with no diff baseline (release, merge_group root commit) or an explicit
+          # opt-in (workflow_dispatch + force_build) run everything.
           FORCE: >-
             ${{ (github.event_name == 'workflow_dispatch' && inputs.force_build)
              || github.event_name == 'release'
-             || github.event_name == 'merge_group'
-             || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) }}
+             || github.event_name == 'merge_group' }}
           F_BUILD: ${{ steps.filter.outputs.build_relevant }}
           F_JAVA: ${{ steps.filter.outputs.has_java }}
           F_DOCS: ${{ steps.filter.outputs.has_docs }}
@@ -173,6 +172,7 @@ jobs:
       contents: read
       checks: write
     with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
       # Module-affected mode is opt-in for draft PRs. Default branch and non-PR events run everything.
       run_all_tests: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}

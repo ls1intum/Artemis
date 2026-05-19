@@ -26,14 +26,13 @@ runs:
     - name: Download test results
       if: success() || failure()
       uses: actions/download-artifact@v8
-      continue-on-error: true
       with:
         name: ${{ inputs.artifact-name }}
         path: ${{ inputs.download-path }}
 
     - name: Generate Test Report
       id: test-report
-      uses: mikepenz/action-junit-report@v6.4.0
+      uses: mikepenz/action-junit-report@bccf2e31636835cf0874589931c4116687171386  # v6.4.0
       if: success() || failure()
       with:
         commit: ${{ inputs.commit-sha }}
