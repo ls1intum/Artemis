@@ -381,6 +381,7 @@ public class ConversationMessagingService extends PostingService {
         conversationMessageRepository.deleteById(postId);
         if (searchableEntityWeaviateService != null) {
             searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.POST, postId);
+            searchableEntityWeaviateService.deleteAllAnswerPostsForPostAsync(postId);
         }
         conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), user.getId());
         conversation = conversationService.getConversationById(conversation.getId());

@@ -425,6 +425,29 @@ public class SearchableEntityWeaviateService {
     }
 
     /**
+     * Asynchronously deletes every answer post row belonging to the given post. Invoked when
+     * a post is deleted so its cascade-deleted replies don't remain orphaned in Weaviate.
+     *
+     * @param postId the parent post id
+     */
+    @Async
+    public void deleteAllAnswerPostsForPostAsync(long postId) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
+        try {
+            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            var filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST),
+                    Filter.property(SearchableEntitySchema.Properties.POST_ID).eq(postId));
+            var result = collection.data.deleteMany(filter);
+            log.debug("Deleted {} answer post rows for post {}", result.successful(), postId);
+        }
+        catch (Exception e) {
+            log.error("Failed to delete answer post rows for post {}: {}", postId, e.getMessage(), e);
+        }
+    }
+
+    /**
      * Asynchronously deletes every post row belonging to the given channel. Invoked when
      * a channel is deleted or archived so posts don't remain searchable.
      *
