@@ -111,7 +111,7 @@ public class AdminCourseResource {
 
     private final CourseOperationProgressService progressService;
 
-    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
             FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseAccessService courseAccessService,
@@ -127,7 +127,7 @@ public class AdminCourseResource {
         this.courseAccessService = courseAccessService;
         this.courseResetService = courseResetService;
         this.progressService = progressService;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateService.orElse(null);
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
     /**
@@ -216,9 +216,7 @@ public class AdminCourseResource {
 
         channelService.createDefaultChannels(createdCourse);
 
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(createdCourse));
-        }
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(createdCourse)));
 
         return ResponseEntity.created(new URI("/api/core/courses/" + createdCourse.getId())).body(createdCourse);
     }

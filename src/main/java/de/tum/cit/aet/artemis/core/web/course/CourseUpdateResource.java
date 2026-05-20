@@ -79,7 +79,7 @@ public class CourseUpdateResource {
 
     private final UserRepository userRepository;
 
-    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public CourseUpdateResource(Optional<LtiApi> ltiApi, AuthorizationCheckService authCheckService, FileService fileService,
             Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<LearningPathApi> learningPathApi,
@@ -95,7 +95,7 @@ public class CourseUpdateResource {
         this.learnerProfileApi = learnerProfileApi;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateService.orElse(null);
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
     private static Set<String> getChangedGroupNames(CourseUpdateDTO courseUpdateDTO, Course existingCourse) {
@@ -213,9 +213,7 @@ public class CourseUpdateResource {
 
         Course result = courseRepository.save(existingCourse);
 
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(result));
-        }
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(result)));
 
         // if learning paths got enabled, generate learning paths for students
         if (!oldLearningPathsEnabled && courseUpdateDTO.learningPathsEnabled() && learningPathApi.isPresent()) {

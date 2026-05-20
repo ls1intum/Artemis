@@ -75,7 +75,7 @@ public class AnswerMessageService extends PostingService {
 
     private final Optional<AutonomousTutorApi> autonomousTutorApi;
 
-    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     @SuppressWarnings("PMD.ExcessiveParameterList")
     public AnswerMessageService(SingleUserNotificationService singleUserNotificationService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
@@ -93,7 +93,7 @@ public class AnswerMessageService extends PostingService {
         this.postRepository = postRepository;
         this.courseNotificationService = courseNotificationService;
         this.autonomousTutorApi = autonomousTutorApi;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateService.orElse(null);
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
     /**
@@ -273,9 +273,7 @@ public class AnswerMessageService extends PostingService {
 
         // delete
         answerPostRepository.deleteById(answerMessageId);
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.ANSWER_POST, answerMessageId);
-        }
+        searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.ANSWER_POST, answerMessageId));
         preparePostForBroadcast(updatedMessage);
 
         // Delete all connected saved posts
@@ -324,11 +322,13 @@ public class AnswerMessageService extends PostingService {
      * Synchronizes an answer post with Weaviate. Only answer posts in public, non-archived channels are indexed.
      */
     private void syncAnswerPostWithWeaviate(AnswerPost answerPost, Conversation conversation) {
-        if (searchableEntityWeaviateService == null || !(conversation instanceof Channel channel)) {
+        if (!(conversation instanceof Channel channel)) {
             return;
         }
-        if (PostSearchableEntityDTO.isIndexable(channel)) {
-            searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answerPost, channel));
-        }
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (PostSearchableEntityDTO.isIndexable(channel)) {
+                service.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answerPost, channel));
+            }
+        });
     }
 }

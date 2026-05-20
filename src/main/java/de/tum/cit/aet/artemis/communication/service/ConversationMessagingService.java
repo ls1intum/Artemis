@@ -83,7 +83,7 @@ public class ConversationMessagingService extends PostingService {
 
     private final Optional<AutonomousTutorApi> autonomousTutorApi;
 
-    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, ConversationMessageRepository conversationMessageRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService, UserRepository userRepository,
@@ -99,7 +99,7 @@ public class ConversationMessagingService extends PostingService {
         this.postRepository = postRepository;
         this.singleUserNotificationService = singleUserNotificationService;
         this.autonomousTutorApi = autonomousTutorApi;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateService != null ? searchableEntityWeaviateService.orElse(null) : null;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
     /**
@@ -379,10 +379,10 @@ public class ConversationMessagingService extends PostingService {
 
         // delete
         conversationMessageRepository.deleteById(postId);
-        if (searchableEntityWeaviateService != null) {
-            searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.POST, postId);
-            searchableEntityWeaviateService.deleteAllAnswerPostsForPostAsync(postId);
-        }
+        searchableEntityWeaviateService.ifPresent(service -> {
+            service.deleteEntityAsync(SearchableEntitySchema.TypeValues.POST, postId);
+            service.deleteAllAnswerPostsForPostAsync(postId);
+        });
         conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), user.getId());
         conversation = conversationService.getConversationById(conversation.getId());
 
@@ -457,12 +457,14 @@ public class ConversationMessagingService extends PostingService {
      * Synchronizes a post with Weaviate. Only posts in public, non-archived channels are indexed.
      */
     private void syncPostWithWeaviate(Post post, Conversation conversation) {
-        if (searchableEntityWeaviateService == null || !(conversation instanceof Channel channel)) {
+        if (!(conversation instanceof Channel channel)) {
             return;
         }
-        if (PostSearchableEntityDTO.isIndexable(channel)) {
-            searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
-        }
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (PostSearchableEntityDTO.isIndexable(channel)) {
+                service.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
+            }
+        });
     }
 
     @Override
