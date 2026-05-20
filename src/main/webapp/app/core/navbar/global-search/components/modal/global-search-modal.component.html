@@ -18,10 +18,12 @@
     <jhi-global-search-input
         [searchQuery]="searchQuery()"
         [activeFilters]="activeFilters()"
+        [courseFilterLabel]="activeCourseLabel()"
         [isLoading]="isLoading()"
         (searchInput)="onSearchInput($event)"
         (searchKeyDown)="onSearchKeyDown($event)"
         (filterRemoved)="removeFilter($event)"
+        (courseFilterRemoved)="removeCourseFilter()"
     />
     <!-- Results Area -->
     <div class="results-container" [class.results-container--split]="currentView() === SearchView.Iris">

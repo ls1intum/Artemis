@@ -18,6 +18,7 @@ import { SearchInputComponent } from './search-input/search-input.component';
 import { SearchableEntity } from '../../models/searchable-entity.model';
 import { GlobalSearchLectureResultsComponent } from 'app/core/navbar/global-search/components/views/lecture-results/global-search-lecture-results.component';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 
 interface SearchState {
     query: string;
@@ -46,6 +47,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
     private readonly searchService = inject(GlobalSearchApiService);
+    private readonly courseStorageService = inject(CourseStorageService);
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
     protected readonly searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
@@ -55,6 +57,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly SearchView = SearchView;
     protected readonly searchQuery = signal('');
     protected readonly activeFilters = signal<string[]>([]);
+    protected readonly activeCourseId = signal<number | undefined>(undefined);
+    protected readonly activeCourseLabel = signal<string | undefined>(undefined);
     protected readonly results = signal<GlobalSearchResult[]>([]);
     protected readonly isLoading = signal<boolean>(false);
     protected readonly hasSearched = signal<boolean>(false);
@@ -104,11 +108,12 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
                     const { query, filters } = event;
                     const hasFilter = filters.length > 0;
+                    const hasCourseFilter = this.activeCourseId() !== undefined;
                     const trimmedQuery = query?.trim() || '';
                     const hasValidQuery = trimmedQuery.length >= 2;
 
-                    // No valid query and no filter — clear results synchronously
-                    if (!hasValidQuery && !hasFilter) {
+                    // No valid query and no filter (type or course) — clear results synchronously
+                    if (!hasValidQuery && !hasFilter && !hasCourseFilter) {
                         this.results.set([]);
                         this.hasSearched.set(false);
                         this.isLoading.set(false);
@@ -119,10 +124,12 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     this.searchError.set(undefined);
                     const typeFilter = hasFilter ? filters[0] : undefined;
                     const searchQuery = hasValidQuery ? trimmedQuery : '';
+                    const courseId = this.activeCourseId();
+                    const cacheKey = `${typeFilter ?? ''}_${courseId ?? ''}`;
 
                     // Empty query with filter — serve from cache synchronously if available
-                    if (!hasValidQuery && hasFilter) {
-                        const cached = this.placeholderCache.get(typeFilter!);
+                    if (!hasValidQuery && (hasFilter || hasCourseFilter)) {
+                        const cached = this.placeholderCache.get(cacheKey);
                         if (cached) {
                             this.isLoading.set(false);
                             return of(cached);
@@ -133,10 +140,10 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     this.isLoading.set(true);
                     return timer(SEARCH_DEBOUNCE_MS).pipe(
                         switchMap(() =>
-                            this.searchService.globalSearch(searchQuery, typeFilter).pipe(
+                            this.searchService.globalSearch(searchQuery, typeFilter, courseId).pipe(
                                 tap((results) => {
-                                    if (!hasValidQuery && hasFilter && typeFilter) {
-                                        this.placeholderCache.set(typeFilter, results);
+                                    if (!hasValidQuery && (hasFilter || hasCourseFilter)) {
+                                        this.placeholderCache.set(cacheKey, results);
                                     }
                                 }),
                                 catchError(() => {
@@ -168,12 +175,55 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 }
             });
 
-        // Reset state when modal is closed
+        // Reset state when modal is closed; apply context filters when opened
         effect(() => {
-            if (!this.overlay.isOpen()) {
+            if (this.overlay.isOpen()) {
+                this.applyContextFilters();
+            } else {
                 this.resetSearch();
             }
         });
+    }
+
+    /**
+     * Maps route segments (e.g. 'exercises') to search filter tags (e.g. 'exercise').
+     */
+    private static readonly ROUTE_TO_FILTER_TAG: Record<string, string> = {
+        exercises: 'exercise',
+        lectures: 'lecture',
+        exams: 'exam',
+        communication: 'channel',
+        faq: 'faq',
+    };
+
+    /**
+     * Parses the current URL to detect course context and tab,
+     * then pre-populates the course filter and type filter accordingly.
+     */
+    private applyContextFilters(): void {
+        const url = this.router.url;
+        // Match /courses/:courseId and optionally /:tab
+        const match = url.match(/\/courses\/(\d+)(?:\/([^/?#]+))?/);
+        if (!match) {
+            return;
+        }
+
+        const courseId = Number(match[1]);
+        const tabSegment = match[2];
+
+        // Set course filter
+        const course = this.courseStorageService.getCourse(courseId);
+        const courseLabel = course?.title ?? `Course ${courseId}`;
+        this.activeCourseId.set(courseId);
+        this.activeCourseLabel.set(courseLabel);
+
+        // Set type filter based on the active tab
+        if (tabSegment) {
+            const filterTag = GlobalSearchModalComponent.ROUTE_TO_FILTER_TAG[tabSegment];
+            if (filterTag) {
+                this.activeFilters.set([filterTag]);
+            }
+        }
     }
 
     protected onSearchInput(query: string): void {
@@ -182,7 +232,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
         // Show skeleton immediately while debounce waits, for a responsive feel
         const trimmedQuery = query?.trim() || '';
-        const hasFilter = this.activeFilters().length > 0;
+        const hasFilter = this.activeFilters().length > 0 || this.activeCourseId() !== undefined;
         if (trimmedQuery.length >= 2 || hasFilter) {
             this.isLoading.set(true);
         }
@@ -196,21 +246,25 @@ export class GlobalSearchModalComponent implements OnDestroy {
         if (event.key === 'Backspace' && this.searchQuery() === '') {
             const filters = this.activeFilters();
             if (filters.length > 0) {
-                // Remove the rightmost (last) filter
+                // Remove the rightmost (last) type filter
                 this.removeFilter(filters[filters.length - 1]);
+            } else if (this.activeCourseId() !== undefined) {
+                // No type filters left — remove the course filter
+                this.removeCourseFilter();
             }
         }
     }
 
     protected addFilter(filterType: string) {
-        // For now, only one filter at a time (can be extended later)
+        // For now, only one type filter at a time (can be extended later)
         if (!this.activeFilters().includes(filterType)) {
             const newFilters = [filterType];
             this.activeFilters.set(newFilters);
 
             // Only show loading if we don't have cached placeholder results
             const query = this.searchQuery()?.trim() || '';
-            const hasCached = !query && this.placeholderCache.has(filterType);
+            const cacheKey = `${filterType}_${this.activeCourseId() ?? ''}`;
+            const hasCached = !query && this.placeholderCache.has(cacheKey);
             if (!hasCached) {
                 this.isLoading.set(true);
             }
@@ -224,6 +278,13 @@ export class GlobalSearchModalComponent implements OnDestroy {
         const newFilters = this.activeFilters().filter((f) => f !== filterType);
         this.activeFilters.set(newFilters);
         this.searchSubject.next({ query: this.searchQuery(), filters: newFilters });
+    }
+
+    protected removeCourseFilter() {
+        this.activeCourseId.set(undefined);
+        this.activeCourseLabel.set(undefined);
+        this.placeholderCache.clear();
+        this.searchSubject.next({ query: this.searchQuery(), filters: this.activeFilters() });
     }
 
     protected onEntityClick(entity: SearchableEntity) {
@@ -244,6 +305,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.searchSubject.next(null);
         this.searchQuery.set('');
         this.activeFilters.set([]);
+        this.activeCourseId.set(undefined);
+        this.activeCourseLabel.set(undefined);
         this.results.set([]);
         this.selectedIndex.set(-1);
         this.hasSearched.set(false);

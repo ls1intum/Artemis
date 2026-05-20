@@ -15,15 +15,17 @@ export class SearchInputComponent {
 
     searchQuery = input.required<string>();
     activeFilters = input.required<string[]>();
+    courseFilterLabel = input<string | undefined>(undefined);
     isLoading = input.required<boolean>();
 
     searchInput = output<string>();
     searchKeyDown = output<KeyboardEvent>();
     filterRemoved = output<string>();
+    courseFilterRemoved = output<void>();
 
     protected searchInputElement = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
-    protected hasActiveFilters = computed(() => this.activeFilters().length > 0);
+    protected hasActiveFilters = computed(() => this.activeFilters().length > 0 || this.courseFilterLabel() !== undefined);
 
     focusInput() {
         setTimeout(() => {
@@ -42,5 +44,9 @@ export class SearchInputComponent {
 
     protected onFilterRemove(filter: string) {
         this.filterRemoved.emit(filter);
+    }
+
+    protected onCourseFilterRemove() {
+        this.courseFilterRemoved.emit();
     }
 }

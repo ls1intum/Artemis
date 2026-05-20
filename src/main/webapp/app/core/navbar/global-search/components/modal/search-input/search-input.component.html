@@ -3,6 +3,15 @@
 
     <!-- Active Filters -->
     @if (hasActiveFilters()) {
+        @if (courseFilterLabel()) {
+            <p-chip
+                [label]="courseFilterLabel()!"
+                [removable]="true"
+                (onRemove)="onCourseFilterRemove()"
+                styleClass="me-2 search-filter-chip"
+                [attr.aria-label]="'global.search.filterChipAriaLabel' | artemisTranslate: { filter: courseFilterLabel()! }"
+            />
+        }
         @for (filter of activeFilters(); track filter) {
             <p-chip
                 [label]="filter"

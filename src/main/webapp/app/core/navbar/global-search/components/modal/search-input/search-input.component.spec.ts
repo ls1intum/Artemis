@@ -71,4 +71,17 @@ describe('SearchInputComponent', () => {
         component['onFilterRemove']('filter1');
         expect(spy).toHaveBeenCalledWith('filter1');
     });
+
+    it('should compute hasActiveFilters true when courseFilterLabel is set', () => {
+        fixture.componentRef.setInput('activeFilters', []);
+        fixture.componentRef.setInput('courseFilterLabel', 'Intro to CS');
+        fixture.detectChanges();
+        expect(component['hasActiveFilters']()).toBe(true);
+    });
+
+    it('should emit courseFilterRemoved on course filter remove', () => {
+        const spy = vi.spyOn(component.courseFilterRemoved, 'emit');
+        component['onCourseFilterRemove']();
+        expect(spy).toHaveBeenCalled();
+    });
 });
