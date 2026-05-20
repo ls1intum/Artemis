@@ -84,7 +84,8 @@
                 "due": "Fällig: {{ date }}",
                 "point": "Punkt",
                 "points": "Punkte",
-                "examExercise": "Klausur"
+                "examExercise": "Klausur",
+                "reply": "Antwort"
             },
             "comingSoon": "Demnächst verfügbar",
             "enterToActivate": "Eingabetaste drücken zum Aktivieren",

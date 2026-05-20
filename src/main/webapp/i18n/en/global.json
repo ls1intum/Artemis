@@ -84,7 +84,8 @@
                 "due": "Due: {{ date }}",
                 "point": "point",
                 "points": "points",
-                "examExercise": "Exam"
+                "examExercise": "Exam",
+                "reply": "Reply"
             },
             "comingSoon": "Coming soon",
             "enterToActivate": "Press Enter to activate",

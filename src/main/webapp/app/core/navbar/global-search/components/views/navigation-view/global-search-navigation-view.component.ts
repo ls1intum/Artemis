@@ -17,7 +17,6 @@ import {
     faProjectDiagram,
     faQuestion,
     faQuestionCircle,
-    faReply,
 } from '@fortawesome/free-solid-svg-icons';
 import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
@@ -218,11 +217,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         if (type === 'channel') {
             return faHashtag;
         }
-        if (type === 'post') {
+        if (type === 'post' || type === 'answer_post') {
             return faComment;
-        }
-        if (type === 'answer_post') {
-            return faReply;
         }
         if (type === 'faq') {
             return faQuestionCircle;

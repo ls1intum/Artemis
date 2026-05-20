@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -71,13 +72,16 @@ public class GlobalSearchResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final ChannelRepository channelRepository;
+
     public GlobalSearchResource(SearchableEntityWeaviateService searchableEntityWeaviateService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository) {
+            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, ChannelRepository channelRepository) {
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
+        this.channelRepository = channelRepository;
     }
 
     /**
@@ -140,9 +144,11 @@ public class GlobalSearchResource {
         coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
 
         Map<Long, Long> exerciseGroupIdByExerciseId = resolveExerciseGroupIds(rawResults);
+        Map<Long, String> channelNameById = resolveChannelNames(rawResults);
         List<GlobalSearchResultDTO> resultDTOs = new ArrayList<>();
         for (Map<String, Object> properties : rawResults) {
-            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds);
+            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds,
+                    channelNameById);
             if (dto != null) {
                 resultDTOs.add(dto);
             }
@@ -222,6 +228,29 @@ public class GlobalSearchResource {
         for (var dto : exerciseRepository.findExerciseAndGroupIdsByExerciseIds(examExerciseIds)) {
             result.put(dto.exerciseId(), dto.exerciseGroupId());
         }
+        return result;
+    }
+
+    /**
+     * Resolves channel names for all post and answer_post results in the Weaviate results.
+     */
+    private Map<Long, String> resolveChannelNames(List<Map<String, Object>> rawResults) {
+        Set<Long> channelIds = new HashSet<>();
+        for (Map<String, Object> properties : rawResults) {
+            Object type = properties.get(SearchableEntitySchema.Properties.TYPE);
+            if (!SearchableEntitySchema.TypeValues.POST.equals(type) && !SearchableEntitySchema.TypeValues.ANSWER_POST.equals(type)) {
+                continue;
+            }
+            Object rawId = properties.get(SearchableEntitySchema.Properties.CHANNEL_ID);
+            if (rawId instanceof Number number) {
+                channelIds.add(number.longValue());
+            }
+        }
+        if (channelIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, String> result = new HashMap<>();
+        channelRepository.findAllById(channelIds).forEach(channel -> result.put(channel.getId(), channel.getName()));
         return result;
     }
 
