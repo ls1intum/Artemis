@@ -113,7 +113,14 @@ export const appConfig: ApplicationConfig = {
             // AppComponent rendering on the HTTP load instead of racing against it.
             translateService.setFallbackLang('en');
             const languageKey: string = sessionStorageService.retrieve('locale') || languageHelper.determinePreferredLanguage();
-            const translationsLoaded = lastValueFrom(translateService.use(languageKey));
+            // The .catch is load-bearing: Promise.all below short-circuits on the first rejection,
+            // and a flaky i18n endpoint must degrade gracefully (missing-key placeholders, same as
+            // the previous fire-and-forget behavior) rather than block the SPA from booting at all.
+            const translationsLoaded = lastValueFrom(translateService.use(languageKey)).catch((error) => {
+                // eslint-disable-next-line no-undef
+                console.warn('Translation load failed during app initialization', error);
+                return undefined;
+            });
             // Load profile info, resolve user identity, and fetch translations in parallel to minimize startup time.
             // Profile info is required for all components; identity resolution avoids a sequential HTTP call in route guards.
             return Promise.all([profileService.loadProfileInfo(), completeSaml2.then(() => accountService.identity().catch(() => undefined)), translationsLoaded]).then(
