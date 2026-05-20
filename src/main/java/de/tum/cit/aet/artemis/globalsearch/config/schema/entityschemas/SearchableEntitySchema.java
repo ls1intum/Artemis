@@ -59,6 +59,8 @@ public final class SearchableEntitySchema {
 
         public static final String POST = "post";
 
+        public static final String ANSWER_POST = "answer_post";
+
         private TypeValues() {
         }
     }
@@ -143,6 +145,9 @@ public final class SearchableEntitySchema {
         // Post-specific properties
         public static final String CHANNEL_ID = "channel_id";
 
+        // Answer-post-specific properties
+        public static final String POST_ID = "post_id";
+
         private Properties() {
         }
     }
@@ -192,5 +197,8 @@ public final class SearchableEntitySchema {
             nonSearchable(Properties.UNIT_TYPE, TEXT, "The lecture unit type: text, attachment_video, online (lecture_unit rows only)"),
 
             // Post-specific properties
-            filterable(Properties.CHANNEL_ID, INT, "The ID of the channel the post belongs to (only set for type 'post', null for all other types)")));
+            filterable(Properties.CHANNEL_ID, INT, "The ID of the channel the post belongs to (only set for type 'post' and 'answer_post', null for all other types)"),
+
+            // Answer-post-specific properties
+            filterable(Properties.POST_ID, INT, "The ID of the parent post (only set for type 'answer_post', null for all other types)")));
 }

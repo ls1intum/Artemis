@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateDateUtil;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
@@ -398,6 +399,31 @@ public class SearchableEntityWeaviateService {
         }
     }
 
+    // ----- Answer Post sync -----
+
+    /**
+     * Asynchronously upserts an answer post (reply) into the unified collection.
+     *
+     * @param dto the extracted answer post data
+     */
+    @Async
+    public void upsertAnswerPostAsync(AnswerPostSearchableEntityDTO dto) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
+        if (dto == null || dto.answerPostId() == null) {
+            log.warn("Cannot upsert answer post without an ID");
+            return;
+        }
+        try {
+            upsertRow(SearchableEntitySchema.TypeValues.ANSWER_POST, dto.answerPostId(), dto.toPropertyMap());
+            log.debug("Successfully upserted answer post {} in Weaviate", dto.answerPostId());
+        }
+        catch (Exception e) {
+            log.error("Failed to upsert answer post {} in Weaviate: {}", dto.answerPostId(), e.getMessage(), e);
+        }
+    }
+
     /**
      * Asynchronously deletes every post row belonging to the given channel. Invoked when
      * a channel is deleted or archived so posts don't remain searchable.
@@ -411,13 +437,14 @@ public class SearchableEntityWeaviateService {
         }
         try {
             var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-            var filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
-                    Filter.property(SearchableEntitySchema.Properties.CHANNEL_ID).eq(channelId));
+            var typeFilter = Filter.or(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
+                    Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST));
+            var filter = Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.CHANNEL_ID).eq(channelId));
             var result = collection.data.deleteMany(filter);
-            log.debug("Deleted {} post rows for channel {}", result.successful(), channelId);
+            log.debug("Deleted {} post/answer post rows for channel {}", result.successful(), channelId);
         }
         catch (Exception e) {
-            log.error("Failed to delete post rows for channel {}: {}", channelId, e.getMessage(), e);
+            log.error("Failed to delete post/answer post rows for channel {}: {}", channelId, e.getMessage(), e);
         }
     }
 
@@ -434,13 +461,14 @@ public class SearchableEntityWeaviateService {
         }
         try {
             var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-            var filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
-                    Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId));
+            var typeFilter = Filter.or(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
+                    Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST));
+            var filter = Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId));
             var result = collection.data.deleteMany(filter);
-            log.debug("Deleted {} post rows for course {}", result.successful(), courseId);
+            log.debug("Deleted {} post/answer post rows for course {}", result.successful(), courseId);
         }
         catch (Exception e) {
-            log.error("Failed to delete post rows for course {}: {}", courseId, e.getMessage(), e);
+            log.error("Failed to delete post/answer post rows for course {}: {}", courseId, e.getMessage(), e);
         }
     }
 

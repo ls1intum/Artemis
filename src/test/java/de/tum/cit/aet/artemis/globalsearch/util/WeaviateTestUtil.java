@@ -675,4 +675,50 @@ public final class WeaviateTestUtil {
             assertThat(properties).as("Post %d should not exist in Weaviate", postId).isNull();
         });
     }
+
+    // -- Answer Post utilities --
+
+    /**
+     * Queries Weaviate for the answer post with the given ID and returns its properties,
+     * or {@code null} if no answer post was found.
+     */
+    public static Map<String, Object> queryAnswerPostProperties(WeaviateService weaviateService, long answerPostId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return null;
+        }
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        var response = collection.query
+                .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST),
+                        Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(answerPostId))).limit(1));
+        if (response.objects().isEmpty()) {
+            return null;
+        }
+        return response.objects().getFirst().properties();
+    }
+
+    /**
+     * Asserts that the answer post exists in Weaviate.
+     */
+    public static void assertAnswerPostExistsInWeaviate(WeaviateService weaviateService, long answerPostId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryAnswerPostProperties(weaviateService, answerPostId);
+            assertThat(properties).as("Answer post %d should exist in Weaviate", answerPostId).isNotNull();
+        });
+    }
+
+    /**
+     * Asserts that no answer post with the given ID exists in Weaviate.
+     */
+    public static void assertAnswerPostNotInWeaviate(WeaviateService weaviateService, long answerPostId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryAnswerPostProperties(weaviateService, answerPostId);
+            assertThat(properties).as("Answer post %d should not exist in Weaviate", answerPostId).isNull();
+        });
+    }
 }

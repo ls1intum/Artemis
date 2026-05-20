@@ -50,6 +50,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
             case SearchableEntitySchema.TypeValues.CHANNEL -> fromChannelRow(properties, courseNameById);
             case SearchableEntitySchema.TypeValues.COURSE -> fromCourseRow(properties);
             case SearchableEntitySchema.TypeValues.POST -> fromPostRow(properties, courseNameById);
+            case SearchableEntitySchema.TypeValues.ANSWER_POST -> fromAnswerPostRow(properties, courseNameById);
             default -> null;
         };
     }
@@ -184,6 +185,22 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
 
         return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.POST, getString(properties, SearchableEntitySchema.Properties.TITLE),
                 getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Message", metadata);
+    }
+
+    private static GlobalSearchResultDTO fromAnswerPostRow(Map<String, Object> properties, Map<Long, String> courseNameById) {
+        Map<String, Object> metadata = new HashMap<>();
+        addCourseContext(properties, metadata, courseNameById);
+        Long channelId = getLong(properties, SearchableEntitySchema.Properties.CHANNEL_ID);
+        if (channelId != null) {
+            metadata.put("channelId", channelId);
+        }
+        Long postId = getLong(properties, SearchableEntitySchema.Properties.POST_ID);
+        if (postId != null) {
+            metadata.put("postId", postId);
+        }
+
+        return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.ANSWER_POST, null,
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Reply", metadata);
     }
 
     private static void addCourseContext(Map<String, Object> properties, Map<String, Object> metadata, Map<Long, String> courseNameById) {

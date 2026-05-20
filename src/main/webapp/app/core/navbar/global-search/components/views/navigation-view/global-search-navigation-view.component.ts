@@ -17,6 +17,7 @@ import {
     faProjectDiagram,
     faQuestion,
     faQuestionCircle,
+    faReply,
 } from '@fortawesome/free-solid-svg-icons';
 import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
@@ -159,7 +160,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faComment,
             type: 'filter',
             enabled: true,
-            filterTag: 'post',
+            filterTag: 'post,answer_post',
         },
         {
             id: 'faqs',
@@ -220,6 +221,9 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         if (type === 'post') {
             return faComment;
         }
+        if (type === 'answer_post') {
+            return faReply;
+        }
         if (type === 'faq') {
             return faQuestionCircle;
         }
@@ -263,6 +267,9 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
                 break;
             case 'post':
                 this.navigateToPost(result, courseId);
+                break;
+            case 'answer_post':
+                this.navigateToAnswerPost(result, courseId);
                 break;
         }
 
@@ -327,6 +334,14 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const channelId = result.metadata?.['channelId'];
         if (channelId) {
             this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, messageId: result.id } });
+        }
+    }
+
+    private navigateToAnswerPost(result: GlobalSearchResult, courseId: string) {
+        const channelId = result.metadata?.['channelId'];
+        const postId = result.metadata?.['postId'];
+        if (channelId && postId) {
+            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, messageId: postId } });
         }
     }
 

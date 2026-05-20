@@ -44,6 +44,10 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.AutonomousTutorApi;
 
 @Profile(PROFILE_CORE)
@@ -71,13 +75,15 @@ public class AnswerMessageService extends PostingService {
 
     private final Optional<AutonomousTutorApi> autonomousTutorApi;
 
+    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+
     @SuppressWarnings("PMD.ExcessiveParameterList")
     public AnswerMessageService(SingleUserNotificationService singleUserNotificationService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
             UserRepository userRepository, AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository,
             ConversationService conversationService, ExerciseRepository exerciseRepository, SavedPostRepository savedPostRepository,
             WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
             ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, CourseNotificationService courseNotificationService,
-            Optional<AutonomousTutorApi> autonomousTutorApi) {
+            Optional<AutonomousTutorApi> autonomousTutorApi, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.answerPostRepository = answerPostRepository;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -87,6 +93,7 @@ public class AnswerMessageService extends PostingService {
         this.postRepository = postRepository;
         this.courseNotificationService = courseNotificationService;
         this.autonomousTutorApi = autonomousTutorApi;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService.orElse(null);
     }
 
     /**
@@ -159,6 +166,8 @@ public class AnswerMessageService extends PostingService {
 
         this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
 
+        syncAnswerPostWithWeaviate(savedAnswerMessage, conversation);
+
         this.preparePostAndBroadcast(savedAnswerMessage, course);
 
         // Include the new answer in the parent post's in-memory answers set so it is part of the thread context forwarded to Iris
@@ -219,6 +228,8 @@ public class AnswerMessageService extends PostingService {
         updatedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
         updatedAnswerMessage.getPost().setConversation(conversation);
 
+        syncAnswerPostWithWeaviate(updatedAnswerMessage, conversation);
+
         this.preparePostAndBroadcast(updatedAnswerMessage, course);
         return updatedAnswerMessage;
     }
@@ -262,6 +273,9 @@ public class AnswerMessageService extends PostingService {
 
         // delete
         answerPostRepository.deleteById(answerMessageId);
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.ANSWER_POST, answerMessageId);
+        }
         preparePostForBroadcast(updatedMessage);
 
         // Delete all connected saved posts
@@ -303,6 +317,18 @@ public class AnswerMessageService extends PostingService {
     void mayMarkAnswerMessageAsResolvingElseThrow(AnswerPost answerMessage, User user, Course course) {
         if (!answerMessage.getPost().getAuthor().equals(user)) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+        }
+    }
+
+    /**
+     * Synchronizes an answer post with Weaviate. Only answer posts in public, non-archived channels are indexed.
+     */
+    private void syncAnswerPostWithWeaviate(AnswerPost answerPost, Conversation conversation) {
+        if (searchableEntityWeaviateService == null || !(conversation instanceof Channel channel)) {
+            return;
+        }
+        if (PostSearchableEntityDTO.isIndexable(channel)) {
+            searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answerPost, channel));
         }
     }
 }
