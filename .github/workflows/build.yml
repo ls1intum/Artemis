@@ -119,6 +119,26 @@ jobs:
           cache: 'gradle'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
+      - name: Restore Angular build cache
+        # Restore the Angular CLI esbuild disk cache (build/angular/) from the most
+        # recent run on the same config, falling back to any run on the same OS/node.
+        # Saving is intentionally split into a separate step below so that only builds
+        # on long-lived branches write new entries — mirroring the default behaviour of
+        # gradle/actions/setup-gradle (see https://github.com/gradle/actions/blob/main/docs/setup-gradle.md#select-which-branches-should-write-to-the-cache).
+        # Key includes hashes of files whose changes require a fresh cache:
+        #   pnpm-lock.yaml    — dependency versions (affects angular-compiler.db / LMDB)
+        #   angular.json      — build configuration
+        #   tsconfig.json     — TypeScript compiler options (affects .tsbuildinfo)
+        #   tsconfig.app.json — app-specific TS options
+        # run_id makes the primary key unique so every save captures the latest
+        # incremental state; restore-keys pick the most recent matching snapshot.
+        uses: actions/cache/restore@v5
+        with:
+          path: build/angular
+          key: angular-build-cache-${{ runner.os }}-node${{ env.node }}-${{ hashFiles('pnpm-lock.yaml', 'angular.json', 'tsconfig.json', 'tsconfig.app.json') }}-${{ github.run_id }}
+          restore-keys: |
+            angular-build-cache-${{ runner.os }}-node${{ env.node }}-${{ hashFiles('pnpm-lock.yaml', 'angular.json', 'tsconfig.json', 'tsconfig.app.json') }}-
+            angular-build-cache-${{ runner.os }}-node${{ env.node }}-
       - name: Install pnpm dependencies
         run: pnpm install --frozen-lockfile
       - name: Build Angular Client
@@ -129,6 +149,17 @@ jobs:
       - name: Build .war
         # Skip the webapp Gradle task since the Angular client was already built above.
         run: ./gradlew -Pprod -Pwar bootWar -x webapp
+      - name: Save Angular build cache
+        # Only write cache entries from the default branch and release/* branches.
+        # PR caches are scoped to the merge ref and invisible to other PRs, so saving
+        # from PRs wastes cache quota without benefiting other contributors.
+        if: |
+          github.ref == format('refs/heads/{0}', github.event.repository.default_branch) ||
+          startsWith(github.ref, 'refs/heads/release/')
+        uses: actions/cache/save@v5
+        with:
+          path: build/angular
+          key: angular-build-cache-${{ runner.os }}-node${{ env.node }}-${{ hashFiles('pnpm-lock.yaml', 'angular.json', 'tsconfig.json', 'tsconfig.app.json') }}-${{ github.run_id }}
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:

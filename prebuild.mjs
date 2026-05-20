@@ -11,12 +11,33 @@ import { hashElement } from 'folder-hash';
 import { fileURLToPath } from 'url';
 import * as esbuild from 'esbuild';
 
+/**
+ * Write `content` to `filePath` only when the file's current content differs.
+ * Preserving the mtime for unchanged files keeps Angular CLI's esbuild disk
+ * cache valid across repeated builds, avoiding unnecessary recompilation of
+ * every module that imports the generated file.
+ */
+function writeIfChanged(filePath, content) {
+    try {
+        if (fs.readFileSync(filePath, 'utf8') === content) return;
+    } catch {
+        // File does not exist yet — fall through to write
+    }
+    fs.writeFileSync(filePath, content);
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+// Hash only the source translation files (en/, de/ subdirectories).
+// Excluding the merged outputs (en.json, de.json) keeps the hash stable across
+// repeated prebuild runs: those files are gitignored, so they don't exist on a
+// fresh checkout but do exist locally after the first run.  Including them caused
+// the hash — and therefore environment.override.ts — to change every warm local
+// build, invalidating Angular's esbuild disk cache unnecessarily.
 const languagesHash = await hashElement(path.resolve(__dirname, 'src', 'main', 'webapp', 'i18n'), {
     algo: 'md5',
     encoding: 'hex',
-    files: { include: ['*.json'] },
+    files: { include: ['*.json'], exclude: ['en.json', 'de.json'] },
 });
 
 // =====================
@@ -55,7 +76,7 @@ export const __VERSION__ = '${process.env.APP_VERSION || inferVersion()}';
 // (see the \`jhipster.cors\` common JHipster property in the \`application-*.yml\` configurations)
 export const I18N_HASH = '${languagesHash.hash}';
 `;
-fs.writeFileSync(path.resolve(__dirname, 'src', 'main', 'webapp', 'app', 'core', 'environments', 'environment.override.ts'), environmentConfig);
+writeIfChanged(path.resolve(__dirname, 'src', 'main', 'webapp', 'app', 'core', 'environments', 'environment.override.ts'), environmentConfig);
 
 
 // =====================
@@ -106,7 +127,7 @@ for (const group of groups) {
             return deepMerge(acc, content);
         }, {});
 
-        await fs.promises.writeFile(group.output, JSON.stringify(mergedContent));
+        writeIfChanged(group.output, JSON.stringify(mergedContent));
     } catch (error) {
         console.error(`Error merging JSON files for ${group.output}:`, error);
     }
