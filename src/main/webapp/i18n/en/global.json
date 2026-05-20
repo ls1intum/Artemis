@@ -208,6 +208,7 @@
                     "audits": "Audits",
                     "configuration": "Configuration",
                     "health": "Health",
+                    "irisDashboard": "Iris Dashboard",
                     "logs": "Logs",
                     "metrics": "Metrics",
                     "statistics": "Statistics",

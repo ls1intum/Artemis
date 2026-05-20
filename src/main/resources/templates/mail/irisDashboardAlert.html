@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="#{email.irisDashboard.alert.title}">Iris dashboard alert</title>
+</head>
+<body>
+<p th:text="#{email.greetings} + ' ' + ${user.firstName} + ','">Hello Administrator,</p>
+<p>
+    <span th:text="#{email.irisDashboard.alert.intro}">Iris no-response rate exceeded the configured threshold.</span>
+</p>
+<ul>
+    <li><strong th:text="#{email.irisDashboard.noResponseRate}">No-response rate</strong>: <span th:text="${#numbers.formatDecimal(overview.noResponseRate, 1, 2)}">0.00</span>%</li>
+    <li><strong th:text="#{email.irisDashboard.threshold}">Threshold</strong>: <span th:text="${#numbers.formatDecimal(threshold, 1, 2)}">0.00</span>%</li>
+    <li><strong th:text="#{email.irisDashboard.eligibleSessions}">Eligible sessions</strong>: <span th:text="${overview.eligibleSessions}">0</span></li>
+    <li><strong th:text="#{email.irisDashboard.userMessages}">User messages</strong>: <span th:text="${overview.userMessageCount}">0</span></li>
+    <li><strong th:text="#{email.irisDashboard.noResponseMessages}">No-response messages</strong>: <span th:text="${overview.noResponseMessageCount}">0</span></li>
+</ul>
+<p><a th:href="${baseUrl + dashboardUrl}" th:text="#{email.irisDashboard.openDashboard}">Open Iris dashboard</a></p>
+<p>
+    <span th:text="#{email.signature}">The Artemis Team.</span>
+</p>
+</body>
+</html>

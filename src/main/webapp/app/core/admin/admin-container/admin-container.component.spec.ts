@@ -17,6 +17,7 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({ template: '', standalone: true })
 class MockEmptyComponent {}
@@ -101,6 +102,12 @@ describe('AdminContainerComponent', () => {
                         isBreakpointActive: vi.fn().mockReturnValue(true),
                     },
                 },
+                {
+                    provide: AccountService,
+                    useValue: {
+                        hasAnyAuthorityDirect: vi.fn().mockReturnValue(false),
+                    },
+                },
             ],
         })
             .overrideTemplate(AdminContainerComponent, '')
@@ -132,12 +139,13 @@ describe('AdminContainerComponent', () => {
         expect(component.standardizedCompetenciesEnabled()).toBe(false);
         expect(component.passkeyEnabled()).toBe(false);
         expect(component.passkeyRequiredForAdmin()).toBe(false);
+        expect(component.irisEnabled()).toBe(false);
         expect(component.isSuperAdmin()).toBe(false);
     });
 
     it('should detect feature flags from profile info', () => {
         vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile: string) => profile === 'localci');
-        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => ['atlas', 'exam', 'lti'].includes(feature));
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => ['atlas', 'exam', 'lti', 'iris'].includes(feature));
 
         const newFixture = TestBed.createComponent(AdminContainerComponent);
         const newComponent = newFixture.componentInstance;
@@ -147,6 +155,7 @@ describe('AdminContainerComponent', () => {
         expect(newComponent.ltiEnabled()).toBe(true);
         expect(newComponent.atlasEnabled()).toBe(true);
         expect(newComponent.examEnabled()).toBe(true);
+        expect(newComponent.irisEnabled()).toBe(true);
     });
 
     it('should detect passkey feature flags from profile info', () => {

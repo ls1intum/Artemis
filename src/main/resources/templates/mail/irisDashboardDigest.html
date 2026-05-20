@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="#{email.irisDashboard.digest.title}">Iris dashboard digest</title>
+</head>
+<body>
+<p th:text="#{email.greetings} + ' ' + ${user.firstName} + ','">Hello Administrator,</p>
+<p th:text="#{email.irisDashboard.digest.intro}">The Iris usage digest is ready.</p>
+<ul>
+    <li><strong th:text="#{email.irisDashboard.totalSessions}">Total sessions</strong>: <span th:text="${overview.totalSessions}">0</span></li>
+    <li><strong th:text="#{email.irisDashboard.activeSessions}">Active sessions</strong>: <span th:text="${overview.activeSessions}">0</span></li>
+    <li><strong th:text="#{email.irisDashboard.noResponseRate}">No-response rate</strong>: <span th:text="${#numbers.formatDecimal(overview.noResponseRate, 1, 2)}">0.00</span>%</li>
+    <li><strong th:text="#{email.irisDashboard.averageResponseTime}">Average response time</strong>: <span th:text="${#numbers.formatDecimal(overview.averageResponseTimeSeconds, 1, 2)}">0.00</span>s</li>
+    <li><strong th:text="#{email.irisDashboard.totalTokenCost}">Token cost</strong>: EUR <span th:text="${#numbers.formatDecimal(overview.totalTokenCostEur, 1, 4)}">0.0000</span></li>
+</ul>
+<p><a th:href="${baseUrl + dashboardUrl}" th:text="#{email.irisDashboard.openDashboard}">Open Iris dashboard</a></p>
+<p>
+    <span th:text="#{email.signature}">The Artemis Team.</span>
+</p>
+</body>
+</html>

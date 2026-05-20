@@ -1,6 +1,109 @@
 {
     "artemisApp": {
         "iris": {
+            "dashboard": {
+                "title": "Iris Dashboard",
+                "refresh": "Aktualisieren",
+                "loadError": "Die Iris Dashboard Daten konnten nicht geladen werden.",
+                "aria": {
+                    "kpiSummary": "Iris Dashboard KPI-Zusammenfassung",
+                    "charts": "Iris Dashboard Diagramme",
+                    "breakdowns": "Iris Dashboard Aufschlüsselungen",
+                    "loading": "Laden"
+                },
+                "ranges": {
+                    "day": "Tag",
+                    "week": "Woche",
+                    "month": "Monat",
+                    "quarter": "Quartal",
+                    "year": "Jahr"
+                },
+                "chatModes": {
+                    "all": "Alle Iris-Sitzungen",
+                    "programming": "Programmieraufgaben-Chat",
+                    "text": "Textaufgaben-Chat",
+                    "course": "Kurs-Chat",
+                    "lecture": "Vorlesungs-Chat",
+                    "tutorSuggestion": "Tutorvorschlag"
+                },
+                "charts": {
+                    "sessions": "Sitzungen pro Zeitraum",
+                    "messages": "Nachrichten pro Zeitraum",
+                    "noResponse": "No-Response-Rate",
+                    "responseTime": "Antwortzeit",
+                    "ratings": "Bewertungsverteilung",
+                    "tokenCost": "Tokenkosten (EUR)",
+                    "engagement": "Aktivitätsrate"
+                },
+                "kpis": {
+                    "totalSessions": "Sitzungen insgesamt",
+                    "activeSessions": "Aktive Sitzungen",
+                    "engagementRate": "Aktivitätsrate",
+                    "uniqueUsers": "Eindeutige Nutzer",
+                    "noResponseRate": "No-Response-Rate",
+                    "noResponseDetail": "{{messages}} Nachrichten / {{sessions}} Sitzungen",
+                    "thumbsUp": "Daumen hoch",
+                    "thumbsDown": "Daumen runter",
+                    "llmMessageDetail": "{{rate}} der LLM-Nachrichten",
+                    "sessionsWithThumbsUp": "Sitzungen mit Daumen hoch",
+                    "sessionsWithThumbsDown": "Sitzungen mit Daumen runter",
+                    "averageResponseTime": "Durchschnittliche Antwortzeit",
+                    "responseTimePercentiles": "P50 / P95 Antwortzeit",
+                    "tokenCost": "Tokenkosten"
+                },
+                "series": {
+                    "programming": "Programmieraufgaben",
+                    "text": "Textaufgaben",
+                    "course": "Kurs",
+                    "lecture": "Vorlesung",
+                    "tutorSuggestion": "Tutorvorschlag",
+                    "chatAttributed": "Chat-zugeordnet",
+                    "otherIris": "Andere Iris-Nutzung",
+                    "user": "Nutzer",
+                    "iris": "Iris",
+                    "artifact": "Artefakt",
+                    "thumbsUp": "Daumen hoch",
+                    "thumbsDown": "Daumen runter",
+                    "unrated": "Unbewertet",
+                    "average": "Durchschnitt",
+                    "p50": "P50",
+                    "p95": "P95",
+                    "noResponseRate": "No-Response-Rate",
+                    "engagementRate": "Aktivitätsrate"
+                },
+                "tabs": {
+                    "chatMode": "Chat-Modus",
+                    "course": "Kurs",
+                    "model": "Modell"
+                },
+                "tables": {
+                    "mode": "Modus",
+                    "sessions": "Sitzungen",
+                    "messages": "Nachrichten",
+                    "noResponse": "No-Response",
+                    "thumbsUp": "Daumen hoch",
+                    "thumbsDown": "Daumen runter",
+                    "avgResponse": "Durchschn. Antwort",
+                    "cost": "Kosten",
+                    "course": "Kurs",
+                    "model": "Modell",
+                    "inputTokens": "Eingabe-Token",
+                    "outputTokens": "Ausgabe-Token",
+                    "totalTokens": "Token gesamt"
+                },
+                "config": {
+                    "title": "Konfiguration",
+                    "maxQueryWindow": "Maximales Abfragefenster",
+                    "staleThreshold": "Inaktivitätsgrenze",
+                    "digest": "Zusammenfassung",
+                    "alert": "Alarm",
+                    "alertThreshold": "Alarmschwelle",
+                    "days": "Tage",
+                    "minutes": "Minuten",
+                    "enabled": "Aktiviert",
+                    "disabled": "Deaktiviert"
+                }
+            },
             "onboarding": {
                 "title": "Lerne Iris kennen",
                 "description": "Iris ist ein in Artemis integrierter KI-Programmier-Tutor. Sie kennt den Kontext der aktuellen Übung und deinen neuesten Code, sodass du direkt Fragen stellen kannst.",

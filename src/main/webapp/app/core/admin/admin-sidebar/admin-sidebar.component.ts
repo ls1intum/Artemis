@@ -16,6 +16,7 @@ import {
     faLock,
     faPlug,
     faPuzzlePiece,
+    faRobot,
     faStamp,
     faTachometerAlt,
     faTasks,
@@ -65,6 +66,7 @@ export class AdminSidebarComponent {
     examEnabled = input<boolean>(false);
     passkeyEnabled = input<boolean>(false);
     passkeyRequiredForAdmin = input<boolean>(false);
+    irisEnabled = input<boolean>(false);
     isSuperAdmin = input<boolean>(false);
 
     toggleCollapseState = output<void>();
@@ -162,66 +164,79 @@ export class AdminSidebarComponent {
         });
 
         // Group 3: Monitoring & Diagnostics
+        const monitoringItems: AdminSidebarItem[] = [
+            {
+                routerLink: '/admin/audits',
+                icon: faBell,
+                title: 'Audits',
+                translation: 'global.menu.admin.sidebar.audits',
+                testId: 'admin-audits',
+            },
+            {
+                routerLink: '/admin/configuration',
+                icon: faList,
+                title: 'Configuration',
+                translation: 'global.menu.admin.sidebar.configuration',
+                testId: 'admin-configuration',
+            },
+            {
+                routerLink: '/admin/health',
+                icon: faHeart,
+                title: 'Health',
+                translation: 'global.menu.admin.sidebar.health',
+                testId: 'admin-health',
+            },
+            ...(this.irisEnabled()
+                ? [
+                      {
+                          routerLink: '/admin/iris-dashboard',
+                          icon: faRobot,
+                          title: 'Iris Dashboard',
+                          translation: 'global.menu.admin.sidebar.irisDashboard',
+                          testId: 'admin-iris-dashboard',
+                      },
+                  ]
+                : []),
+            {
+                routerLink: '/admin/logs',
+                icon: faTasks,
+                title: 'Logs',
+                translation: 'global.menu.admin.sidebar.logs',
+                testId: 'admin-logs',
+            },
+            {
+                routerLink: '/admin/metrics',
+                icon: faTachometerAlt,
+                title: 'Metrics',
+                translation: 'global.menu.admin.sidebar.metrics',
+                testId: 'admin-metrics',
+            },
+            {
+                routerLink: '/admin/dependencies',
+                icon: faCubes,
+                title: 'Dependencies',
+                translation: 'global.menu.admin.sidebar.dependencies',
+                testId: 'admin-dependencies',
+            },
+            {
+                routerLink: '/admin/user-statistics',
+                icon: faEye,
+                title: 'Statistics',
+                translation: 'global.menu.admin.sidebar.statistics',
+                testId: 'admin-statistics',
+            },
+            {
+                routerLink: '/admin/websocket',
+                icon: faPlug,
+                title: 'Websocket',
+                translation: 'global.menu.admin.sidebar.websocket',
+                testId: 'admin-websocket',
+            },
+        ];
+
         groups.push({
             translation: 'global.menu.admin.groups.monitoringAndDiagnostics',
-            items: [
-                {
-                    routerLink: '/admin/audits',
-                    icon: faBell,
-                    title: 'Audits',
-                    translation: 'global.menu.admin.sidebar.audits',
-                    testId: 'admin-audits',
-                },
-                {
-                    routerLink: '/admin/configuration',
-                    icon: faList,
-                    title: 'Configuration',
-                    translation: 'global.menu.admin.sidebar.configuration',
-                    testId: 'admin-configuration',
-                },
-                {
-                    routerLink: '/admin/health',
-                    icon: faHeart,
-                    title: 'Health',
-                    translation: 'global.menu.admin.sidebar.health',
-                    testId: 'admin-health',
-                },
-                {
-                    routerLink: '/admin/logs',
-                    icon: faTasks,
-                    title: 'Logs',
-                    translation: 'global.menu.admin.sidebar.logs',
-                    testId: 'admin-logs',
-                },
-                {
-                    routerLink: '/admin/metrics',
-                    icon: faTachometerAlt,
-                    title: 'Metrics',
-                    translation: 'global.menu.admin.sidebar.metrics',
-                    testId: 'admin-metrics',
-                },
-                {
-                    routerLink: '/admin/dependencies',
-                    icon: faCubes,
-                    title: 'Dependencies',
-                    translation: 'global.menu.admin.sidebar.dependencies',
-                    testId: 'admin-dependencies',
-                },
-                {
-                    routerLink: '/admin/user-statistics',
-                    icon: faEye,
-                    title: 'Statistics',
-                    translation: 'global.menu.admin.sidebar.statistics',
-                    testId: 'admin-statistics',
-                },
-                {
-                    routerLink: '/admin/websocket',
-                    icon: faPlug,
-                    title: 'Websocket',
-                    translation: 'global.menu.admin.sidebar.websocket',
-                    testId: 'admin-websocket',
-                },
-            ],
+            items: monitoringItems,
         });
 
         // Group 4: Build System (conditional)

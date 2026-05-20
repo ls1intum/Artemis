@@ -46,6 +46,7 @@ describe('AdminSidebarComponent', () => {
         expect(component.examEnabled()).toBe(false);
         expect(component.passkeyEnabled()).toBe(false);
         expect(component.passkeyRequiredForAdmin()).toBe(false);
+        expect(component.irisEnabled()).toBe(false);
         expect(component.isSuperAdmin()).toBe(false);
     });
 
@@ -142,5 +143,27 @@ describe('AdminSidebarComponent', () => {
 
         const passkeyManagementItem = userManagementGroup!.items.find((i) => i.routerLink === '/admin/passkey-management');
         expect(passkeyManagementItem).toBeFalsy();
+    });
+
+    it('should include Iris dashboard link when Iris is enabled', () => {
+        fixture.componentRef.setInput('irisEnabled', true);
+        fixture.detectChanges();
+
+        const monitoringGroup = component.sidebarGroups().find((group) => group.translation === 'global.menu.admin.groups.monitoringAndDiagnostics');
+        expect(monitoringGroup).toBeTruthy();
+
+        const irisDashboardItem = monitoringGroup!.items.find((item) => item.routerLink === '/admin/iris-dashboard');
+        expect(irisDashboardItem).toBeTruthy();
+        expect(irisDashboardItem!.translation).toBe('global.menu.admin.sidebar.irisDashboard');
+        expect(irisDashboardItem!.testId).toBe('admin-iris-dashboard');
+    });
+
+    it('should not include Iris dashboard link when Iris is disabled', () => {
+        fixture.componentRef.setInput('irisEnabled', false);
+        fixture.detectChanges();
+
+        const monitoringGroup = component.sidebarGroups().find((group) => group.translation === 'global.menu.admin.groups.monitoringAndDiagnostics');
+        expect(monitoringGroup).toBeTruthy();
+        expect(monitoringGroup!.items.find((item) => item.routerLink === '/admin/iris-dashboard')).toBeFalsy();
     });
 });

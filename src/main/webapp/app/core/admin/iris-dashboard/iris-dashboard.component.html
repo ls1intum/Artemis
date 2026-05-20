@@ -1,0 +1,227 @@
+<h5 *adminTitleBarTitle id="iris-dashboard-heading" class="mb-0" jhiTranslate="artemisApp.iris.dashboard.title" data-cy="irisDashboardHeading"></h5>
+
+<div *adminTitleBarActions class="iris-dashboard-actions">
+    <p-select
+        [(ngModel)]="selectedRange"
+        [options]="rangeOptions"
+        optionLabel="label"
+        optionValue="value"
+        size="small"
+        (onChange)="onFilterChange()"
+        inputId="iris-dashboard-range"
+    />
+    <p-select
+        [(ngModel)]="selectedChatMode"
+        [options]="chatModeOptions"
+        optionLabel="label"
+        optionValue="value"
+        size="small"
+        (onChange)="onFilterChange()"
+        inputId="iris-dashboard-chat-mode"
+    />
+    <button pButton type="button" class="p-button-sm" (click)="loadDashboard()" [disabled]="loading()">
+        <fa-icon [icon]="faRotateRight" />
+        <span jhiTranslate="artemisApp.iris.dashboard.refresh"></span>
+    </button>
+</div>
+
+@if (loadError()) {
+    <div class="dashboard-error" jhiTranslate="artemisApp.iris.dashboard.loadError"></div>
+}
+
+@if (loading() && !overview()) {
+    <div class="dashboard-loading">
+        <p-progressSpinner [ariaLabel]="loadingLabel" />
+    </div>
+}
+
+@if (overview()) {
+    <section class="kpi-grid" [attr.aria-label]="kpiSummaryLabel">
+        @for (card of kpiCards(); track card.label) {
+            <p-card styleClass="kpi-card">
+                <div class="kpi-label">{{ card.label }}</div>
+                <div class="kpi-value">{{ card.value }}</div>
+                @if (card.detail) {
+                    <div class="kpi-detail">{{ card.detail }}</div>
+                }
+            </p-card>
+        }
+    </section>
+
+    <section class="chart-grid" [attr.aria-label]="chartsLabel">
+        @for (chart of chartDefinitions; track chart.metric) {
+            <div class="chart-panel">
+                <h6>{{ chart.title }}</h6>
+                @if (chart.type === 'stacked-bar') {
+                    <ngx-charts-bar-vertical-stacked
+                        [results]="barData(chart.metric)"
+                        [scheme]="chartColorScheme"
+                        [xAxis]="true"
+                        [yAxis]="true"
+                        [legend]="true"
+                        [legendPosition]="legendPosition"
+                        [animations]="false"
+                        [roundDomains]="true"
+                    />
+                } @else if (chart.type === 'grouped-bar') {
+                    <ngx-charts-bar-vertical-2d
+                        [results]="barData(chart.metric)"
+                        [scheme]="chartColorScheme"
+                        [xAxis]="true"
+                        [yAxis]="true"
+                        [legend]="true"
+                        [legendPosition]="legendPosition"
+                        [animations]="false"
+                        [roundDomains]="true"
+                    />
+                } @else {
+                    <ngx-charts-line-chart
+                        [results]="lineData(chart.metric)"
+                        [scheme]="chartColorScheme"
+                        [xAxis]="true"
+                        [yAxis]="true"
+                        [legend]="true"
+                        [legendPosition]="legendPosition"
+                        [animations]="false"
+                        [roundDomains]="true"
+                    />
+                }
+            </div>
+        }
+    </section>
+
+    <section class="breakdown-section">
+        <div class="dashboard-tablist" role="tablist" [attr.aria-label]="breakdownsLabel">
+            <button
+                id="iris-breakdown-chat-mode-tab"
+                type="button"
+                role="tab"
+                [class.active]="activeBreakdownTab === 0"
+                [attr.aria-selected]="activeBreakdownTab === 0"
+                aria-controls="iris-breakdown-chat-mode-panel"
+                (click)="activeBreakdownTab = 0"
+            >
+                <span [jhiTranslate]="translationBase + '.tabs.chatMode'"></span>
+            </button>
+            <button
+                id="iris-breakdown-course-tab"
+                type="button"
+                role="tab"
+                [class.active]="activeBreakdownTab === 1"
+                [attr.aria-selected]="activeBreakdownTab === 1"
+                aria-controls="iris-breakdown-course-panel"
+                (click)="activeBreakdownTab = 1"
+            >
+                <span [jhiTranslate]="translationBase + '.tabs.course'"></span>
+            </button>
+            <button
+                id="iris-breakdown-model-tab"
+                type="button"
+                role="tab"
+                [class.active]="activeBreakdownTab === 2"
+                [attr.aria-selected]="activeBreakdownTab === 2"
+                aria-controls="iris-breakdown-model-panel"
+                (click)="activeBreakdownTab = 2"
+            >
+                <span [jhiTranslate]="translationBase + '.tabs.model'"></span>
+            </button>
+        </div>
+
+        @if (activeBreakdownTab === 0) {
+            <div id="iris-breakdown-chat-mode-panel" role="tabpanel" aria-labelledby="iris-breakdown-chat-mode-tab">
+                <p-table [value]="chatModeBreakdown()" styleClass="p-datatable-sm" [tableStyle]="{ 'min-width': '58rem' }">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th [jhiTranslate]="translationBase + '.tables.mode'"></th>
+                            <th [jhiTranslate]="translationBase + '.tables.sessions'"></th>
+                            <th [jhiTranslate]="translationBase + '.tables.messages'"></th>
+                            <th [jhiTranslate]="translationBase + '.tables.noResponse'"></th>
+                            <th [jhiTranslate]="translationBase + '.tables.thumbsUp'"></th>
+                            <th [jhiTranslate]="translationBase + '.tables.thumbsDown'"></th>
+                            <th [jhiTranslate]="translationBase + '.tables.avgResponse'"></th>
+                            <th [jhiTranslate]="translationBase + '.tables.cost'"></th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-entry>
+                        <tr>
+                            <td>{{ seriesLabel(entry.name) }}</td>
+                            <td>{{ integer(metric(entry, 'sessions')) }}</td>
+                            <td>{{ integer(metric(entry, 'messages')) }}</td>
+                            <td>{{ percent(metric(entry, 'noResponseRate')) }}</td>
+                            <td>{{ percent(metric(entry, 'thumbsUpRatio')) }}</td>
+                            <td>{{ percent(metric(entry, 'thumbsDownRatio')) }}</td>
+                            <td>{{ seconds(metric(entry, 'averageResponseTimeSeconds')) }}</td>
+                            <td>{{ euro(metric(entry, 'costEur')) }}</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        } @else if (activeBreakdownTab === 1) {
+            <div id="iris-breakdown-course-panel" role="tabpanel" aria-labelledby="iris-breakdown-course-tab">
+                <p-table [value]="courseBreakdown()" styleClass="p-datatable-sm" [tableStyle]="{ 'min-width': '44rem' }">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th [jhiTranslate]="translationBase + '.tables.course'"></th>
+                            <th [jhiTranslate]="translationBase + '.tables.sessions'"></th>
+                            <th [jhiTranslate]="translationBase + '.tables.messages'"></th>
+                            <th [jhiTranslate]="translationBase + '.tables.noResponse'"></th>
+                            <th [jhiTranslate]="translationBase + '.tables.cost'"></th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-entry>
+                        <tr>
+                            <td>{{ entry.name }}</td>
+                            <td>{{ integer(metric(entry, 'sessions')) }}</td>
+                            <td>{{ integer(metric(entry, 'messages')) }}</td>
+                            <td>{{ percent(metric(entry, 'noResponseRate')) }}</td>
+                            <td>{{ euro(metric(entry, 'costEur')) }}</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        } @else {
+            <div id="iris-breakdown-model-panel" role="tabpanel" aria-labelledby="iris-breakdown-model-tab">
+                <p-table [value]="modelBreakdown()" styleClass="p-datatable-sm" [tableStyle]="{ 'min-width': '40rem' }">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th [jhiTranslate]="translationBase + '.tables.model'"></th>
+                            <th [jhiTranslate]="translationBase + '.tables.inputTokens'"></th>
+                            <th [jhiTranslate]="translationBase + '.tables.outputTokens'"></th>
+                            <th [jhiTranslate]="translationBase + '.tables.totalTokens'"></th>
+                            <th [jhiTranslate]="translationBase + '.tables.cost'"></th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-entry>
+                        <tr>
+                            <td>{{ entry.name }}</td>
+                            <td>{{ integer(metric(entry, 'inputTokens')) }}</td>
+                            <td>{{ integer(metric(entry, 'outputTokens')) }}</td>
+                            <td>{{ integer(metric(entry, 'totalTokens')) }}</td>
+                            <td>{{ euro(metric(entry, 'costEur')) }}</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        }
+    </section>
+
+    @if (config(); as currentConfig) {
+        <p-panel styleClass="config-panel">
+            <ng-template pTemplate="header">
+                <span [jhiTranslate]="translationBase + '.config.title'"></span>
+            </ng-template>
+            <div class="config-grid">
+                <span [jhiTranslate]="translationBase + '.config.maxQueryWindow'"></span>
+                <strong>{{ currentConfig.maxQueryWindowDays }} <span [jhiTranslate]="translationBase + '.config.days'"></span></strong>
+                <span [jhiTranslate]="translationBase + '.config.staleThreshold'"></span>
+                <strong>{{ currentConfig.staleThresholdMinutes }} <span [jhiTranslate]="translationBase + '.config.minutes'"></span></strong>
+                <span [jhiTranslate]="translationBase + '.config.digest'"></span>
+                <strong [jhiTranslate]="currentConfig.digest.enabled ? translationBase + '.config.enabled' : translationBase + '.config.disabled'"></strong>
+                <span [jhiTranslate]="translationBase + '.config.alert'"></span>
+                <strong [jhiTranslate]="currentConfig.alert.enabled ? translationBase + '.config.enabled' : translationBase + '.config.disabled'"></strong>
+                <span [jhiTranslate]="translationBase + '.config.alertThreshold'"></span>
+                <strong>{{ percent(currentConfig.alert.noResponseRateThreshold) }}</strong>
+            </div>
+        </p-panel>
+    }
+}

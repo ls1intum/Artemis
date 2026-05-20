@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260520120000-1-iris-dashboard-indexes" author="iris-dashboard">
+        <createIndex tableName="iris_message" indexName="idx_iris_message_sent_at_sender_session">
+            <column name="sent_at"/>
+            <column name="sender"/>
+            <column name="session_id"/>
+            <column name="id"/>
+        </createIndex>
+
+        <createIndex tableName="iris_message" indexName="idx_iris_message_session_sent_at">
+            <column name="session_id"/>
+            <column name="sent_at"/>
+            <column name="id"/>
+            <column name="sender"/>
+        </createIndex>
+
+        <createIndex tableName="iris_session" indexName="idx_iris_session_creation_date_disc_mode">
+            <column name="creation_date"/>
+            <column name="discriminator"/>
+            <column name="chat_mode"/>
+        </createIndex>
+
+        <createIndex tableName="llm_token_usage_trace" indexName="idx_llm_trace_service_time">
+            <column name="service"/>
+            <column name="time"/>
+            <column name="course_id"/>
+            <column name="iris_message_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

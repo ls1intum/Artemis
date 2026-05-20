@@ -13,6 +13,7 @@ import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { UpcomingExamsAndExercisesComponent } from 'app/core/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
 import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN } from 'app/shared/constants/authority.constants';
 import { AdminContainerComponent } from 'app/core/admin/admin-container/admin-container.component';
+import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 
 const childRoutes: Routes = [
     {
@@ -69,6 +70,14 @@ const childRoutes: Routes = [
         data: {
             pageTitle: 'metrics.title',
         },
+    },
+    {
+        path: 'iris-dashboard',
+        loadComponent: () => import('app/core/admin/iris-dashboard/iris-dashboard.component').then((m) => m.IrisDashboardComponent),
+        data: {
+            pageTitle: 'artemisApp.iris.dashboard.title',
+        },
+        canActivate: [IrisGuard],
     },
     {
         path: 'user-statistics',
