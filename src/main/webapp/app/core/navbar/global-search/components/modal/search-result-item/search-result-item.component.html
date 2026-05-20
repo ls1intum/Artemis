@@ -62,11 +62,9 @@
                 </div>
             }
 
-            <!-- Description -->
-            @if (result().description) {
-                <p class="result-description mb-0 text-secondary small text-truncate-2">
-                    {{ result().description }}
-                </p>
+            <!-- Description (rendered as markdown, first line stripped if it repeats the title) -->
+            @if (cleanedDescription()) {
+                <div class="result-description mb-0 text-secondary small" [innerHTML]="cleanedDescription() | htmlForMarkdown"></div>
             }
         </div>
     </div>
