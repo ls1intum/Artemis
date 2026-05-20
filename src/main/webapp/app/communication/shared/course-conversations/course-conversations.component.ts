@@ -63,7 +63,7 @@ import { EventManager } from 'app/shared/service/event-manager.service';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, map, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
@@ -179,6 +179,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     messagingEnabled = false;
     postInThread?: Post;
     private preservePostInThread = false;
+    private pendingThreadPostId: number | undefined;
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
     previousConversationBeforeSearch?: ConversationDTO;
@@ -225,7 +226,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     private subscribeToMetis() {
         this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
-            if (this.postInThread?.id && posts) {
+            if (this.pendingThreadPostId && posts) {
+                const found = posts.find((post) => post.id === this.pendingThreadPostId);
+                if (found) {
+                    this.postInThread = found;
+                    this.pendingThreadPostId = undefined;
+                }
+            } else if (this.postInThread?.id && posts) {
                 this.postInThread = posts.find((post) => post.id === this.postInThread?.id);
             }
         });
@@ -367,8 +374,20 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.openThreadOnFocus = queryParams.openThreadOnFocus;
             }
             if (queryParams.messageId) {
-                this.postInThread = { id: Number(queryParams.messageId) } as Post;
+                const messageId = Number(queryParams.messageId);
+                this.pendingThreadPostId = messageId;
+                this.postInThread = { id: messageId } as Post;
                 this.preservePostInThread = true;
+                // Immediately try to resolve the full post from already-loaded posts
+                this.metisService.posts.pipe(take(1)).subscribe((posts) => {
+                    if (posts) {
+                        const found = posts.find((post) => post.id === messageId);
+                        if (found) {
+                            this.postInThread = found;
+                            this.pendingThreadPostId = undefined;
+                        }
+                    }
+                });
                 if (queryParams.focusReplyId) {
                     this.focusReplyId = Number(queryParams.focusReplyId);
                     this.scrollToAndHighlightReply(this.focusReplyId);
@@ -712,6 +731,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     openThread(postToOpen: Post | undefined) {
         this.selectionState.setOpenPostId(postToOpen?.id);
         this.postInThread = postToOpen;
+        this.pendingThreadPostId = undefined;
     }
 
     private scrollToAndHighlightReply(replyId: number, attempt = 0): void {
