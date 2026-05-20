@@ -37,10 +37,10 @@ export class GlobalSearchApiService extends BaseService {
 
     /**
      * Perform a unified semantic search across entity types
-     * Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels, courses, posts) with a consistent response format. When courseId is not specified, the search is performed globally across all courses the authenticated user has access to. Per-type access rules are enforced server-side via compound Weaviate filters.
+     * Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels, courses, posts, answer posts) with a consistent response format. When courseId is not specified, the search is performed globally across all courses the authenticated user has access to. Per-type access rules are enforced server-side via compound Weaviate filters.
      * @endpoint get /api/search
      * @param q Search query; can be empty to retrieve recent items
-     * @param types Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel, course, post) or \&#39;all\&#39;; default \&#39;all\&#39;
+     * @param types Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel, course, post, answer_post) or \&#39;all\&#39;; default \&#39;all\&#39;
      * @param courseId Course ID to restrict the search to a single course
      * @param limit Maximum number of results (1–25, default 10)
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
