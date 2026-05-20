@@ -2,8 +2,11 @@ package de.tum.cit.aet.artemis.iris.config;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.scheduling.support.CronExpression;
+import org.springframework.util.StringUtils;
 
 @ConfigurationProperties(prefix = "artemis.iris.dashboard")
 public class IrisDashboardProperties {
@@ -21,6 +24,9 @@ public class IrisDashboardProperties {
     }
 
     public void setMaxQueryWindowDays(int maxQueryWindowDays) {
+        if (maxQueryWindowDays < 1) {
+            throw new IllegalArgumentException("maxQueryWindowDays must be >= 1");
+        }
         this.maxQueryWindowDays = maxQueryWindowDays;
     }
 
@@ -29,6 +35,9 @@ public class IrisDashboardProperties {
     }
 
     public void setStaleThresholdMinutes(int staleThresholdMinutes) {
+        if (staleThresholdMinutes < 1) {
+            throw new IllegalArgumentException("staleThresholdMinutes must be >= 1");
+        }
         this.staleThresholdMinutes = staleThresholdMinutes;
     }
 
@@ -37,7 +46,7 @@ public class IrisDashboardProperties {
     }
 
     public void setDigest(Digest digest) {
-        this.digest = digest;
+        this.digest = Objects.requireNonNull(digest, "digest must not be null");
     }
 
     public Alert getAlert() {
@@ -45,7 +54,7 @@ public class IrisDashboardProperties {
     }
 
     public void setAlert(Alert alert) {
-        this.alert = alert;
+        this.alert = Objects.requireNonNull(alert, "alert must not be null");
     }
 
     public static class Digest {
@@ -68,7 +77,16 @@ public class IrisDashboardProperties {
             return cron;
         }
 
+        /**
+         * Set the cron expression and fail fast if it cannot be parsed.
+         *
+         * @param cron the cron expression for the digest schedule
+         */
         public void setCron(String cron) {
+            if (!StringUtils.hasText(cron)) {
+                throw new IllegalArgumentException("cron must not be blank");
+            }
+            CronExpression.parse(cron);
             this.cron = cron;
         }
 
@@ -77,7 +95,7 @@ public class IrisDashboardProperties {
         }
 
         public void setRecipients(List<String> recipients) {
-            this.recipients = recipients;
+            this.recipients = new ArrayList<>(List.copyOf(Objects.requireNonNull(recipients, "recipients must not be null")));
         }
     }
 
@@ -112,6 +130,9 @@ public class IrisDashboardProperties {
         }
 
         public void setNoResponseRateThreshold(double noResponseRateThreshold) {
+            if (noResponseRateThreshold < 0 || noResponseRateThreshold > 100) {
+                throw new IllegalArgumentException("noResponseRateThreshold must be between 0 and 100");
+            }
             this.noResponseRateThreshold = noResponseRateThreshold;
         }
 
@@ -120,6 +141,9 @@ public class IrisDashboardProperties {
         }
 
         public void setCheckIntervalMinutes(int checkIntervalMinutes) {
+            if (checkIntervalMinutes < 1) {
+                throw new IllegalArgumentException("checkIntervalMinutes must be >= 1");
+            }
             this.checkIntervalMinutes = checkIntervalMinutes;
         }
 
@@ -128,6 +152,9 @@ public class IrisDashboardProperties {
         }
 
         public void setCooldownMinutes(int cooldownMinutes) {
+            if (cooldownMinutes < 1) {
+                throw new IllegalArgumentException("cooldownMinutes must be >= 1");
+            }
             this.cooldownMinutes = cooldownMinutes;
         }
 
@@ -136,6 +163,9 @@ public class IrisDashboardProperties {
         }
 
         public void setLookbackMinutes(int lookbackMinutes) {
+            if (lookbackMinutes < 1) {
+                throw new IllegalArgumentException("lookbackMinutes must be >= 1");
+            }
             this.lookbackMinutes = lookbackMinutes;
         }
 
@@ -144,6 +174,9 @@ public class IrisDashboardProperties {
         }
 
         public void setMinimumActiveSessions(int minimumActiveSessions) {
+            if (minimumActiveSessions < 1) {
+                throw new IllegalArgumentException("minimumActiveSessions must be >= 1");
+            }
             this.minimumActiveSessions = minimumActiveSessions;
         }
 
@@ -152,6 +185,9 @@ public class IrisDashboardProperties {
         }
 
         public void setMinimumUserMessages(int minimumUserMessages) {
+            if (minimumUserMessages < 1) {
+                throw new IllegalArgumentException("minimumUserMessages must be >= 1");
+            }
             this.minimumUserMessages = minimumUserMessages;
         }
 
@@ -160,7 +196,7 @@ public class IrisDashboardProperties {
         }
 
         public void setRecipients(List<String> recipients) {
-            this.recipients = recipients;
+            this.recipients = new ArrayList<>(List.copyOf(Objects.requireNonNull(recipients, "recipients must not be null")));
         }
     }
 }

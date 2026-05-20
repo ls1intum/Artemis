@@ -30,8 +30,12 @@ public enum IrisDashboardSessionType {
      * @return the matching dashboard session type
      */
     public static IrisDashboardSessionType fromRequestParameter(String value) {
+        if (value == null || value.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Unsupported Iris dashboard chatMode '" + value + "'. Supported values are " + Arrays.toString(IrisDashboardSessionType.values()));
+        }
         try {
-            return IrisDashboardSessionType.valueOf(value);
+            return IrisDashboardSessionType.valueOf(value.trim());
         }
         catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,

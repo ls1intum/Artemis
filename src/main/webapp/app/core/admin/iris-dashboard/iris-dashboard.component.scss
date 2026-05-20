@@ -9,6 +9,19 @@
     gap: 0.5rem;
 }
 
+.filter-control {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+
+    label {
+        color: var(--bs-secondary-color);
+        font-size: 0.8rem;
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
+}
+
 .dashboard-loading {
     min-height: 14rem;
     display: flex;

@@ -18,12 +18,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
 import de.tum.cit.aet.artemis.iris.domain.dashboard.IrisDashboardMetric;
+import de.tum.cit.aet.artemis.iris.domain.dashboard.IrisDashboardSessionType;
 import de.tum.cit.aet.artemis.iris.domain.dashboard.IrisDashboardSpan;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardOverviewDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardUserMessageResultDTO;
@@ -49,7 +51,7 @@ class IrisAdminDashboardServiceTest {
     @BeforeEach
     void setUp() {
         properties = new IrisDashboardProperties();
-        service = new IrisAdminDashboardService(repository, properties);
+        service = new IrisAdminDashboardService(repository, properties, new ConcurrentMapCacheManager("iris-dashboard-data"));
         TimeUtil.setClock(Clock.fixed(Instant.parse("2026-01-01T02:00:00Z"), ZoneOffset.UTC));
     }
 
@@ -145,6 +147,12 @@ class IrisAdminDashboardServiceTest {
         properties.setMaxQueryWindowDays(1);
 
         assertThatThrownBy(() -> service.getOverview(FROM, FROM.plusSeconds(2 * 24 * 60 * 60), null)).isInstanceOf(ResponseStatusException.class).extracting("statusCode")
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void rejectsBlankDashboardSessionTypeParameter() {
+        assertThatThrownBy(() -> IrisDashboardSessionType.fromRequestParameter(" ")).isInstanceOf(ResponseStatusException.class).extracting("statusCode")
                 .isEqualTo(HttpStatus.BAD_REQUEST);
     }
 

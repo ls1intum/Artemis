@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardOverviewDTO;
 
-@Lazy
+@Lazy(false)
 @Service
 @Profile(PROFILE_CORE)
 @Conditional(IrisEnabled.class)

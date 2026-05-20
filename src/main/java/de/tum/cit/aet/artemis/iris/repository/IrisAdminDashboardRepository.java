@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.repository;
 
+import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -231,14 +232,14 @@ public class IrisAdminDashboardRepository {
         return value == null ? null : toZonedDateTime(value);
     }
 
-    public record SessionRow(long sessionId, String sessionType, @Nullable Long courseId, @Nullable String courseTitle, ZonedDateTime creationDate) {
+    public record SessionRow(long sessionId, String sessionType, @Nullable Long courseId, @Nullable String courseTitle, ZonedDateTime creationDate) implements Serializable {
     }
 
     public record MessageRow(long messageId, long sessionId, String sessionType, @Nullable Long courseId, @Nullable String courseTitle, String sender, ZonedDateTime sentAt,
-            @Nullable Boolean helpful, @Nullable Long userId) {
+            @Nullable Boolean helpful, @Nullable Long userId) implements Serializable {
     }
 
     public record TokenUsageRow(long traceId, ZonedDateTime time, @Nullable Long courseId, @Nullable String courseTitle, @Nullable String sessionType, @Nullable String model,
-            int inputTokens, int outputTokens, double costEur, boolean chatAttributed) {
+            int inputTokens, int outputTokens, double costEur, boolean chatAttributed) implements Serializable {
     }
 }

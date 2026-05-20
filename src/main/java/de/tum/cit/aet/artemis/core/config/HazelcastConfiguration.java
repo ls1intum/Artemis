@@ -1341,6 +1341,7 @@ public class HazelcastConfiguration {
      * <li><strong>atlas-session-exercise-preview:</strong> Cross-node fallback for exercise mapping preview DTOs</li>
      * <li><strong>atlas-session-relation-preview:</strong> Cross-node fallback for relation mapping preview DTOs</li>
      * <li><strong>atlas-session-preview-history:</strong> Atlas preview history for incremental updates</li>
+     * <li><strong>iris-dashboard-data:</strong> Short-lived shared admin dashboard query results</li>
      * <li><strong>nodeMetrics:</strong> Per-node metrics snapshots (TTL 60s, no backups) for the multi-node admin metrics page</li>
      * </ul>
      *
@@ -1357,6 +1358,8 @@ public class HazelcastConfiguration {
         config.getMapConfigs().put("atlas-session-exercise-preview", createAtlasSessionMapConfig(artemisProperties));
         config.getMapConfigs().put("atlas-session-relation-preview", createAtlasSessionMapConfig(artemisProperties));
         config.getMapConfigs().put("atlas-session-preview-history", createAtlasSessionMapConfig(artemisProperties));
+        // Iris dashboard data is fetched by multiple endpoint calls for the same filter set; keep it shared briefly across nodes.
+        config.getMapConfigs().put("iris-dashboard-data", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(15));
         // Node metrics snapshots for multi-node admin metrics page (pushed every 15s, expire after 60s)
         config.getMapConfigs().put("nodeMetrics", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(60));
         // Atlas competency-orchestrator per-course locks. The lock is normally released explicitly

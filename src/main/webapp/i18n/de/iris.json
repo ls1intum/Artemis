@@ -18,6 +18,10 @@
                     "quarter": "Quartal",
                     "year": "Jahr"
                 },
+                "filters": {
+                    "range": "Zeitraum",
+                    "chatMode": "Chat-Modus"
+                },
                 "chatModes": {
                     "all": "Alle Iris-Sitzungen",
                     "programming": "Programmieraufgaben-Chat",

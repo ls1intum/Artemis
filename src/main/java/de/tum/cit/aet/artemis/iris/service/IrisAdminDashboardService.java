@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service;
 
+import java.io.Serializable;
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
@@ -16,13 +17,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
@@ -64,19 +65,18 @@ public class IrisAdminDashboardService {
 
     private static final List<String> TOKEN_COST_SERIES = List.of("CHAT_ATTRIBUTED", "OTHER_IRIS");
 
-    private static final Duration DASHBOARD_DATA_CACHE_TTL = Duration.ofSeconds(15);
-
-    private static final int MAX_DASHBOARD_DATA_CACHE_ENTRIES = 16;
+    private static final String DASHBOARD_DATA_CACHE_NAME = "iris-dashboard-data";
 
     private final IrisAdminDashboardRepository repository;
 
     private final IrisDashboardProperties properties;
 
-    private final ConcurrentMap<DashboardDataCacheKey, DashboardDataCacheEntry> dashboardDataCache = new ConcurrentHashMap<>();
+    private final CacheManager cacheManager;
 
-    public IrisAdminDashboardService(IrisAdminDashboardRepository repository, IrisDashboardProperties properties) {
+    public IrisAdminDashboardService(IrisAdminDashboardRepository repository, IrisDashboardProperties properties, CacheManager cacheManager) {
         this.repository = repository;
         this.properties = properties;
+        this.cacheManager = cacheManager;
     }
 
     /**
@@ -236,14 +236,17 @@ public class IrisAdminDashboardService {
 
     private DashboardData loadData(QueryWindow window, @Nullable IrisDashboardSessionType sessionType) {
         DashboardDataCacheKey cacheKey = new DashboardDataCacheKey(window.from(), window.to(), sessionType);
-        Instant now = TimeUtil.now().toInstant();
-        evictExpiredCacheEntries(now);
-        return dashboardDataCache.compute(cacheKey, (key, cachedEntry) -> {
-            if (cachedEntry != null && cachedEntry.expiresAt().isAfter(now)) {
-                return cachedEntry;
-            }
-            return new DashboardDataCacheEntry(fetchData(window, sessionType), now.plus(DASHBOARD_DATA_CACHE_TTL));
-        }).data();
+        Cache cache = cacheManager.getCache(DASHBOARD_DATA_CACHE_NAME);
+        if (cache == null) {
+            return fetchData(window, sessionType);
+        }
+        DashboardData cachedData = cache.get(cacheKey, DashboardData.class);
+        if (cachedData != null) {
+            return cachedData;
+        }
+        DashboardData data = fetchData(window, sessionType);
+        cache.put(cacheKey, data);
+        return data;
     }
 
     private DashboardData fetchData(QueryWindow window, @Nullable IrisDashboardSessionType sessionType) {
@@ -253,18 +256,6 @@ public class IrisAdminDashboardService {
         return new DashboardData(window, repository.findSessions(window.fromZoned(), window.toZoned(), sessionType),
                 repository.findMessages(window.fromZoned(), window.toZoned(), sessionType), userMessageResults, noResponseCandidates,
                 repository.findTokenUsage(window.fromZoned(), window.toZoned(), sessionType));
-    }
-
-    private void evictExpiredCacheEntries(Instant now) {
-        if (dashboardDataCache.size() <= MAX_DASHBOARD_DATA_CACHE_ENTRIES) {
-            return;
-        }
-        dashboardDataCache.entrySet().removeIf(entry -> !entry.getValue().expiresAt().isAfter(now));
-        if (dashboardDataCache.size() <= MAX_DASHBOARD_DATA_CACHE_ENTRIES) {
-            return;
-        }
-        List<DashboardDataCacheKey> keysToRemove = dashboardDataCache.keySet().stream().limit(dashboardDataCache.size() - MAX_DASHBOARD_DATA_CACHE_ENTRIES).toList();
-        keysToRemove.forEach(dashboardDataCache::remove);
     }
 
     private QueryWindow validateWindow(Instant from, Instant to) {
@@ -314,7 +305,7 @@ public class IrisAdminDashboardService {
             }
         }
         values.forEach((bucket, series) -> {
-            List<Double> valuesForBucket = responseTimes.getOrDefault(bucket, List.of());
+            List<Double> valuesForBucket = responseTimes.getOrDefault(bucket, List.of()).stream().sorted().toList();
             series.put("AVERAGE", average(valuesForBucket));
             series.put("P50", percentile(valuesForBucket, 0.5));
             series.put("P95", percentile(valuesForBucket, 0.95));
@@ -458,17 +449,14 @@ public class IrisAdminDashboardService {
         return first.isBefore(second) ? first : second;
     }
 
-    private record QueryWindow(Instant from, Instant to, ZonedDateTime fromZoned, ZonedDateTime toZoned, ZonedDateTime staleBeforeZoned) {
+    private record QueryWindow(Instant from, Instant to, ZonedDateTime fromZoned, ZonedDateTime toZoned, ZonedDateTime staleBeforeZoned) implements Serializable {
     }
 
     private record DashboardData(QueryWindow window, List<SessionRow> sessions, List<MessageRow> messages, List<IrisDashboardUserMessageResultDTO> userMessageResults,
-            List<IrisDashboardUserMessageResultDTO> noResponseCandidates, List<TokenUsageRow> tokenUsage) {
+            List<IrisDashboardUserMessageResultDTO> noResponseCandidates, List<TokenUsageRow> tokenUsage) implements Serializable {
     }
 
-    private record DashboardDataCacheKey(Instant from, Instant to, @Nullable IrisDashboardSessionType sessionType) {
-    }
-
-    private record DashboardDataCacheEntry(DashboardData data, Instant expiresAt) {
+    private record DashboardDataCacheKey(Instant from, Instant to, @Nullable IrisDashboardSessionType sessionType) implements Serializable {
     }
 
     private record NoResponseStats(long failedMessages, long failedSessions, long eligibleSessions, double rate) {

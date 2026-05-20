@@ -1,24 +1,30 @@
 <h5 *adminTitleBarTitle id="iris-dashboard-heading" class="mb-0" jhiTranslate="artemisApp.iris.dashboard.title" data-cy="irisDashboardHeading"></h5>
 
 <div *adminTitleBarActions class="iris-dashboard-actions">
-    <p-select
-        [(ngModel)]="selectedRange"
-        [options]="rangeOptions"
-        optionLabel="label"
-        optionValue="value"
-        size="small"
-        (onChange)="onFilterChange()"
-        inputId="iris-dashboard-range"
-    />
-    <p-select
-        [(ngModel)]="selectedChatMode"
-        [options]="chatModeOptions"
-        optionLabel="label"
-        optionValue="value"
-        size="small"
-        (onChange)="onFilterChange()"
-        inputId="iris-dashboard-chat-mode"
-    />
+    <div class="filter-control">
+        <label for="iris-dashboard-range" jhiTranslate="artemisApp.iris.dashboard.filters.range"></label>
+        <p-select
+            [(ngModel)]="selectedRange"
+            [options]="rangeOptions"
+            optionLabel="label"
+            optionValue="value"
+            size="small"
+            (onChange)="onFilterChange()"
+            inputId="iris-dashboard-range"
+        />
+    </div>
+    <div class="filter-control">
+        <label for="iris-dashboard-chat-mode" jhiTranslate="artemisApp.iris.dashboard.filters.chatMode"></label>
+        <p-select
+            [(ngModel)]="selectedChatMode"
+            [options]="chatModeOptions"
+            optionLabel="label"
+            optionValue="value"
+            size="small"
+            (onChange)="onFilterChange()"
+            inputId="iris-dashboard-chat-mode"
+        />
+    </div>
     <button pButton type="button" class="p-button-sm" (click)="loadDashboard()" [disabled]="loading()">
         <fa-icon [icon]="faRotateRight" />
         <span jhiTranslate="artemisApp.iris.dashboard.refresh"></span>
