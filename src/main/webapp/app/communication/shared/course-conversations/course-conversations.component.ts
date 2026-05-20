@@ -178,6 +178,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isServiceSetUp = false;
     messagingEnabled = false;
     postInThread?: Post;
+    private preservePostInThread = false;
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
     previousConversationBeforeSearch?: ConversationDTO;
@@ -367,11 +368,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             }
             if (queryParams.messageId) {
                 this.postInThread = { id: Number(queryParams.messageId) } as Post;
+                this.preservePostInThread = true;
                 if (queryParams.focusReplyId) {
                     this.focusReplyId = Number(queryParams.focusReplyId);
                     this.scrollToAndHighlightReply(this.focusReplyId);
                 }
                 this.closeSidebarOnMobile();
+            } else if (this.preservePostInThread) {
+                this.preservePostInThread = false;
             } else {
                 this.postInThread = undefined;
             }
@@ -390,15 +394,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     updateQueryParameters() {
-        const queryParams: Record<string, string | number | undefined> = {
-            conversationId: this.activeConversation?.id ?? this.selectedSavedPostStatus?.toLowerCase(),
-        };
-        if (this.postInThread?.id) {
-            queryParams.messageId = this.postInThread.id;
-        }
         this.router.navigate([], {
             relativeTo: this.activatedRoute,
-            queryParams,
+            queryParams: {
+                conversationId: this.activeConversation?.id ?? this.selectedSavedPostStatus?.toLowerCase(),
+            },
             replaceUrl: true,
         });
     }
