@@ -216,7 +216,8 @@ public class AdminCourseResource {
 
         channelService.createDefaultChannels(createdCourse);
 
-        searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(createdCourse)));
+        final Course finalCourse = createdCourse;
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(finalCourse)));
 
         return ResponseEntity.created(new URI("/api/core/courses/" + createdCourse.getId())).body(createdCourse);
     }
