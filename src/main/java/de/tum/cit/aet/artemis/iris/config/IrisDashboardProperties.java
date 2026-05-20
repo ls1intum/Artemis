@@ -6,7 +6,7 @@ import java.util.Objects;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.scheduling.support.CronExpression;
-import org.springframework.util.StringUtils;
+import org.springframework.util.Assert;
 
 @ConfigurationProperties(prefix = "artemis.iris.dashboard")
 public class IrisDashboardProperties {
@@ -24,9 +24,7 @@ public class IrisDashboardProperties {
     }
 
     public void setMaxQueryWindowDays(int maxQueryWindowDays) {
-        if (maxQueryWindowDays < 1) {
-            throw new IllegalArgumentException("maxQueryWindowDays must be >= 1");
-        }
+        Assert.isTrue(maxQueryWindowDays >= 1, "maxQueryWindowDays must be >= 1");
         this.maxQueryWindowDays = maxQueryWindowDays;
     }
 
@@ -35,9 +33,7 @@ public class IrisDashboardProperties {
     }
 
     public void setStaleThresholdMinutes(int staleThresholdMinutes) {
-        if (staleThresholdMinutes < 1) {
-            throw new IllegalArgumentException("staleThresholdMinutes must be >= 1");
-        }
+        Assert.isTrue(staleThresholdMinutes >= 1, "staleThresholdMinutes must be >= 1");
         this.staleThresholdMinutes = staleThresholdMinutes;
     }
 
@@ -83,9 +79,7 @@ public class IrisDashboardProperties {
          * @param cron the cron expression for the digest schedule
          */
         public void setCron(String cron) {
-            if (!StringUtils.hasText(cron)) {
-                throw new IllegalArgumentException("cron must not be blank");
-            }
+            Assert.hasText(cron, "cron must not be blank");
             CronExpression.parse(cron);
             this.cron = cron;
         }
@@ -130,9 +124,7 @@ public class IrisDashboardProperties {
         }
 
         public void setNoResponseRateThreshold(double noResponseRateThreshold) {
-            if (noResponseRateThreshold < 0 || noResponseRateThreshold > 100) {
-                throw new IllegalArgumentException("noResponseRateThreshold must be between 0 and 100");
-            }
+            Assert.isTrue(noResponseRateThreshold >= 0 && noResponseRateThreshold <= 100, "noResponseRateThreshold must be between 0 and 100");
             this.noResponseRateThreshold = noResponseRateThreshold;
         }
 
@@ -141,9 +133,7 @@ public class IrisDashboardProperties {
         }
 
         public void setCheckIntervalMinutes(int checkIntervalMinutes) {
-            if (checkIntervalMinutes < 1) {
-                throw new IllegalArgumentException("checkIntervalMinutes must be >= 1");
-            }
+            Assert.isTrue(checkIntervalMinutes >= 1, "checkIntervalMinutes must be >= 1");
             this.checkIntervalMinutes = checkIntervalMinutes;
         }
 
@@ -152,9 +142,7 @@ public class IrisDashboardProperties {
         }
 
         public void setCooldownMinutes(int cooldownMinutes) {
-            if (cooldownMinutes < 1) {
-                throw new IllegalArgumentException("cooldownMinutes must be >= 1");
-            }
+            Assert.isTrue(cooldownMinutes >= 1, "cooldownMinutes must be >= 1");
             this.cooldownMinutes = cooldownMinutes;
         }
 
@@ -163,9 +151,7 @@ public class IrisDashboardProperties {
         }
 
         public void setLookbackMinutes(int lookbackMinutes) {
-            if (lookbackMinutes < 1) {
-                throw new IllegalArgumentException("lookbackMinutes must be >= 1");
-            }
+            Assert.isTrue(lookbackMinutes >= 1, "lookbackMinutes must be >= 1");
             this.lookbackMinutes = lookbackMinutes;
         }
 
@@ -174,9 +160,7 @@ public class IrisDashboardProperties {
         }
 
         public void setMinimumActiveSessions(int minimumActiveSessions) {
-            if (minimumActiveSessions < 1) {
-                throw new IllegalArgumentException("minimumActiveSessions must be >= 1");
-            }
+            Assert.isTrue(minimumActiveSessions >= 1, "minimumActiveSessions must be >= 1");
             this.minimumActiveSessions = minimumActiveSessions;
         }
 
@@ -185,9 +169,7 @@ public class IrisDashboardProperties {
         }
 
         public void setMinimumUserMessages(int minimumUserMessages) {
-            if (minimumUserMessages < 1) {
-                throw new IllegalArgumentException("minimumUserMessages must be >= 1");
-            }
+            Assert.isTrue(minimumUserMessages >= 1, "minimumUserMessages must be >= 1");
             this.minimumUserMessages = minimumUserMessages;
         }
 
