@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -49,7 +50,7 @@ public class IrisUsageDigestScheduleService {
 
     private static final int DIGEST_SENT_STATE_TTL_DAYS = 3;
 
-    private final IrisAdminDashboardService dashboardService;
+    private final ApplicationContext applicationContext;
 
     private final IrisDashboardProperties properties;
 
@@ -68,9 +69,9 @@ public class IrisUsageDigestScheduleService {
     @Value("${info.testServer:false}")
     private boolean isTestServer;
 
-    public IrisUsageDigestScheduleService(@Lazy IrisAdminDashboardService dashboardService, IrisDashboardProperties properties, ProfileService profileService,
+    public IrisUsageDigestScheduleService(ApplicationContext applicationContext, IrisDashboardProperties properties, ProfileService profileService,
             MailSendingService mailSendingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        this.dashboardService = dashboardService;
+        this.applicationContext = applicationContext;
         this.properties = properties;
         this.profileService = profileService;
         this.mailSendingService = mailSendingService;
@@ -105,7 +106,7 @@ public class IrisUsageDigestScheduleService {
             return false;
         }
 
-        IrisDashboardOverviewDTO overview = dashboardService.getOverview(from, to, null);
+        IrisDashboardOverviewDTO overview = dashboardService().getOverview(from, to, null);
         Map<String, Object> context = new HashMap<>();
         context.put("overview", overview);
         context.put("from", from);
@@ -132,6 +133,10 @@ public class IrisUsageDigestScheduleService {
         finally {
             stateMap.unlock(digestSentKey);
         }
+    }
+
+    private IrisAdminDashboardService dashboardService() {
+        return applicationContext.getBean(IrisAdminDashboardService.class);
     }
 
     private IMap<String, Instant> getScheduleStateMap() {

@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -47,7 +48,7 @@ public class IrisUsageAlertService {
 
     private static final String LAST_ALERT_SENT_AT_KEY = "last-alert-sent-at";
 
-    private final IrisAdminDashboardService dashboardService;
+    private final ApplicationContext applicationContext;
 
     private final IrisDashboardProperties properties;
 
@@ -66,9 +67,9 @@ public class IrisUsageAlertService {
     @Value("${info.testServer:false}")
     private boolean isTestServer;
 
-    public IrisUsageAlertService(@Lazy IrisAdminDashboardService dashboardService, IrisDashboardProperties properties, ProfileService profileService,
-            MailSendingService mailSendingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        this.dashboardService = dashboardService;
+    public IrisUsageAlertService(ApplicationContext applicationContext, IrisDashboardProperties properties, ProfileService profileService, MailSendingService mailSendingService,
+            @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+        this.applicationContext = applicationContext;
         this.properties = properties;
         this.profileService = profileService;
         this.mailSendingService = mailSendingService;
@@ -103,7 +104,7 @@ public class IrisUsageAlertService {
             }
 
             Instant from = now.minus(alert.getLookbackMinutes(), ChronoUnit.MINUTES);
-            IrisDashboardOverviewDTO overview = dashboardService.getOverview(from, now, null);
+            IrisDashboardOverviewDTO overview = dashboardService().getOverview(from, now, null);
             if (overview.activeSessions() < alert.getMinimumActiveSessions() || overview.userMessageCount() < alert.getMinimumUserMessages()
                     || overview.noResponseRate() <= alert.getNoResponseRateThreshold()) {
                 return false;
@@ -129,6 +130,10 @@ public class IrisUsageAlertService {
         finally {
             stateMap.unlock(LAST_ALERT_SENT_AT_KEY);
         }
+    }
+
+    private IrisAdminDashboardService dashboardService() {
+        return applicationContext.getBean(IrisAdminDashboardService.class);
     }
 
     private IMap<String, Instant> getScheduleStateMap() {

@@ -21,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.hazelcast.core.HazelcastInstance;
@@ -38,6 +39,9 @@ class IrisUsageAlertServiceTest {
 
     @Mock
     private IrisAdminDashboardService dashboardService;
+
+    @Mock
+    private ApplicationContext applicationContext;
 
     @Mock
     private ProfileService profileService;
@@ -66,7 +70,7 @@ class IrisUsageAlertServiceTest {
         scheduleState = new HashMap<>();
         when(hazelcastInstance.<String, Instant>getMap("iris-dashboard-schedule-state")).thenReturn(scheduleStateMap);
         when(scheduleStateMap.get(anyString())).thenAnswer(invocation -> scheduleState.get(invocation.getArgument(0)));
-        alertService = new IrisUsageAlertService(dashboardService, properties, profileService, mailSendingService, hazelcastInstance);
+        alertService = new IrisUsageAlertService(applicationContext, properties, profileService, mailSendingService, hazelcastInstance);
         ReflectionTestUtils.setField(alertService, "adminEmail", "admin@example.org");
         TimeUtil.setClock(Clock.fixed(Instant.parse("2026-01-01T02:00:00Z"), ZoneOffset.UTC));
     }
@@ -78,6 +82,7 @@ class IrisUsageAlertServiceTest {
 
     @Test
     void doesNotSendAlertWhenMinimumUserMessagesAreNotMet() {
+        when(applicationContext.getBean(IrisAdminDashboardService.class)).thenReturn(dashboardService);
         when(dashboardService.getOverview(Instant.parse("2026-01-01T01:00:00Z"), Instant.parse("2026-01-01T02:00:00Z"), null))
                 .thenReturn(new IrisDashboardOverviewDTO(2, 2, 100, 19, 2, 19, 2, 50, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
 
@@ -89,6 +94,7 @@ class IrisUsageAlertServiceTest {
 
     @Test
     void sendsAlertAndAppliesCooldown() {
+        when(applicationContext.getBean(IrisAdminDashboardService.class)).thenReturn(dashboardService);
         when(scheduleStateMap.put(anyString(), any(Instant.class))).thenAnswer(invocation -> scheduleState.put(invocation.getArgument(0), invocation.getArgument(1)));
         when(dashboardService.getOverview(Instant.parse("2026-01-01T01:00:00Z"), Instant.parse("2026-01-01T02:00:00Z"), null))
                 .thenReturn(new IrisDashboardOverviewDTO(2, 2, 100, 20, 2, 20, 2, 50, 3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));

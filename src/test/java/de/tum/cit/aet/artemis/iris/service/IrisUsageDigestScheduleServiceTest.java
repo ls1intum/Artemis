@@ -21,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.hazelcast.core.HazelcastInstance;
@@ -38,6 +39,9 @@ class IrisUsageDigestScheduleServiceTest {
 
     @Mock
     private IrisAdminDashboardService dashboardService;
+
+    @Mock
+    private ApplicationContext applicationContext;
 
     @Mock
     private ProfileService profileService;
@@ -61,7 +65,7 @@ class IrisUsageDigestScheduleServiceTest {
     void setUp() {
         properties = new IrisDashboardProperties();
         scheduleState = new HashMap<>();
-        digestScheduleService = new IrisUsageDigestScheduleService(dashboardService, properties, profileService, mailSendingService, hazelcastInstance);
+        digestScheduleService = new IrisUsageDigestScheduleService(applicationContext, properties, profileService, mailSendingService, hazelcastInstance);
         ReflectionTestUtils.setField(digestScheduleService, "adminEmail", "admin@example.org");
     }
 
@@ -74,6 +78,7 @@ class IrisUsageDigestScheduleServiceTest {
     void sendsDigestToInfoContactFallback() {
         Instant from = Instant.parse("2026-01-01T00:00:00Z");
         Instant to = Instant.parse("2026-01-02T00:00:00Z");
+        when(applicationContext.getBean(IrisAdminDashboardService.class)).thenReturn(dashboardService);
         when(dashboardService.getOverview(from, to, null)).thenReturn(overview());
 
         digestScheduleService.sendDigestForWindow(from, to);
@@ -88,6 +93,7 @@ class IrisUsageDigestScheduleServiceTest {
         Instant from = Instant.parse("2026-01-01T00:00:00Z");
         Instant to = Instant.parse("2026-01-02T00:00:00Z");
         properties.getAlert().setRecipients(java.util.List.of("alert@example.org"));
+        when(applicationContext.getBean(IrisAdminDashboardService.class)).thenReturn(dashboardService);
         when(dashboardService.getOverview(from, to, null)).thenReturn(overview());
 
         digestScheduleService.sendDigestForWindow(from, to);
@@ -117,6 +123,7 @@ class IrisUsageDigestScheduleServiceTest {
         });
         Instant from = Instant.parse("2026-01-01T00:00:00Z");
         Instant to = Instant.parse("2026-01-02T00:00:00Z");
+        when(applicationContext.getBean(IrisAdminDashboardService.class)).thenReturn(dashboardService);
         when(dashboardService.getOverview(from, to, null)).thenReturn(overview());
 
         digestScheduleService.sendDailyDigest();
